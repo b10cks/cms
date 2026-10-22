@@ -1242,7 +1242,6 @@
     },
     "auditLog": {
       "title": "Audit Log",
-      "description": "Track all changes and actions performed in this space.",
       "emptyState": "No audit events found.",
       "columns": {
         "time": "Time",
@@ -1394,7 +1393,6 @@
     },
     "blocks": {
       "title": "Blocks",
-      "description": "Build and manage your reusable content blocks.",
       "summary": {
         "required": "Required",
         "indexable": "Is indexed",
@@ -1722,7 +1720,6 @@
     },
     "blockTags": {
       "title": "Block Tags",
-      "description": "Tag your blocks to organize and filter them.",
       "createTag": "New tag",
       "editTag": "Edit tag",
       "deleteTitle": "Delete this tag?",
@@ -1827,7 +1824,6 @@
       "emptyTitle": "Create the space where your next project comes to life.",
       "emptyDescription": "Spaces give your team a home for content, assets, workflows, and structure — all in one place. Start with your first one and build from there.",
       "newPageTitle": "Create a new space",
-      "newPageDescription": "Create a new content space to organize your content.",
       "noCreateAccess": "You can select {team}, but you do not have permission to create spaces in that team.",
       "steps": {
         "blueprint": {
@@ -1943,7 +1939,6 @@
     },
     "redirects": {
       "title": "Redirects",
-      "description": "Manage URL redirects for your site",
       "createRedirect": "Create Redirect",
       "editRedirect": "Edit Redirect",
       "createDescription": "Add a redirect rule with a source path, target path, and status code.",
@@ -2027,7 +2022,6 @@
     },
     "migrations": {
       "title": "Migrations",
-      "description": "Migrate content between spaces on this instance",
       "createTitle": "New Migration",
       "createDescription": "Push content from this space into another space on this instance",
       "noMigrations": "No migrations found. Start a new migration to copy content between spaces.",
@@ -2078,7 +2072,6 @@
     },
     "backups": {
       "title": "Backups",
-      "description": "Create and manage space backups to protect your content and data",
       "listTitle": "Backup History",
       "listDescription": "View and manage all your space backups",
       "createTitle": "Create Backup",
@@ -2198,15 +2191,11 @@
     "usage": {
       "history": {
         "title": "Usage & billing",
-        "description": "Track usage per plan period over time and access your invoices.",
         "periods": "Plan periods",
         "empty": "No billing periods recorded yet.",
         "current": "Current",
-        "currentHint": "This period is still running — see the subscription overview for live usage.",
         "present": "Present",
-        "trend": "Usage trend",
         "noTrend": "No usage recorded in this period.",
-        "trafficMb": "Traffic (MB)",
         "columns": {
           "plan": "Plan",
           "period": "Period",
@@ -2219,10 +2208,12 @@
           "downgraded": "Downgraded",
           "cancelled": "Cancelled",
           "expired": "Expired"
-        }
+        },
+        "traffic": "Traffic"
       },
       "overLimit": "Over the included limit — {percentage}% used",
-      "live": "Current usage"
+      "live": "Current usage",
+      "resets": "Resets {date}"
     },
     "invoices": {
       "title": "Invoices",
@@ -2235,12 +2226,10 @@
     },
     "settings": {
       "general": {
-        "title": "General Settings",
-        "description": "Manage your space settings and preferences."
+        "title": "General Settings"
       },
       "configuration": {
-        "title": "Configuration",
-        "description": "Manage technical settings and integrations for your space."
+        "title": "Configuration"
       },
       "automationActions": {
         "title": "Actions",
@@ -2252,7 +2241,6 @@
       },
       "people": {
         "title": "People",
-        "description": "Manage team members and their access to your space.",
         "invitesTitle": "Pending Invites",
         "invitesDescription": "These collaborators have been invited but haven't accepted yet."
       },
@@ -2265,8 +2253,7 @@
         "description": "Migrate content between spaces on this instance."
       },
       "subscription": {
-        "title": "Subscription",
-        "description": "Manage your plan, billing and quota usage."
+        "title": "Subscription"
       },
       "space": {
         "title": "Space",
@@ -2457,7 +2444,6 @@
       },
       "ai": {
         "title": "AI Settings",
-        "description": "Configure AI features and monitor usage.",
         "enableAIFeatures": "Enable AI Features",
         "featuresDescription": "AI features include content suggestions, auto-tagging, and smart search.",
         "usage": "AI Usage",
@@ -2560,7 +2546,6 @@
     "account": {
       "profile": {
         "title": "Profile",
-        "description": "Manage your personal information and profile settings.",
         "personalInfo": "Personal Information",
         "personalInfoDescription": "Update your name and profile picture.",
         "avatar": "Profile Picture",
@@ -2582,7 +2567,6 @@
       },
       "invites": {
         "title": "Invitations",
-        "description": "View and manage your pending invitations to spaces and teams.",
         "myInvites": "My Invitations",
         "myInvitesDescription": "Invitations you've received to join spaces and teams.",
         "columns": {
@@ -2611,7 +2595,6 @@
       },
       "security": {
         "title": "Security",
-        "description": "Manage your password and account security settings.",
         "changePassword": "Change Password",
         "changePasswordDescription": "Update your password to keep your account secure.",
         "oldPassword": "Current Password",
@@ -2790,7 +2773,6 @@
     "teams": {
       "selectPlaceholder": "Select a team...",
       "pageTitle": "Teams",
-      "pageDescription": "Manage your teams and their members",
       "listTitle": "All Teams",
       "hierarchyTitle": "Team Hierarchy",
       "hierarchyError": "Couldn't load the team hierarchy. Please try again later.",
@@ -3776,7 +3758,6 @@
     },
     "icons": {
       "pageTitle": "Icons",
-      "pageDescription": "Upload and manage SVG icons for this space.",
       "searchPlaceholder": "Search icons by key or name…",
       "allTags": "All",
       "empty": "No icons yet. Upload SVGs to get started.",
@@ -4199,8 +4180,7 @@
   },
   "dashboard": {
     "title": "Dashboard",
-    "loading": "Loading statistics...",
-    "no_data": "No statistics available.",
+    "updated": "Content updated {date}",
     "filters": {
       "date_range": "Date Range",
       "last_7_days": "Last 7 days",
@@ -4213,60 +4193,55 @@
       "weekly": "Weekly",
       "monthly": "Monthly"
     },
-    "sections": {
-      "content_stats": "Content Stats",
-      "activity": "Activity",
-      "content_distribution": "Content Distribution",
-      "usage_stats": "Usage Stats",
-      "trends": "Trends",
-      "space_stats": "Space Stats"
-    },
-    "cards": {
-      "total_content": "Total Content",
-      "published": "published",
-      "draft": "draft",
-      "assets": "Assets",
-      "assets_count": "Assets",
+    "tiles": {
+      "entries": "Entries",
+      "storage": "Storage",
+      "files": "{count} file | {count} files",
+      "traffic": "Traffic",
+      "cached": "{rate}% from cache",
+      "api": "API requests",
+      "new_in_range": "New in the selected range",
       "blocks": "Blocks",
-      "data_sources": "Data Sources",
+      "data_sources": "Data sources",
       "redirects": "Redirects",
-      "traffic_usage": "Traffic usage",
-      "cache_hit_rate": "Cache hit rate",
-      "api_requests": "API Requests",
-      "success_rate": "success rate",
-      "avg_response_time": "Avg Response Time",
-      "api_response_time": "API response time",
-      "total_users": "Total Users",
-      "languages": "Languages"
+      "success": "{rate}% success rate",
+      "response_time": "Avg response time",
+      "response_detail": "Delivery API",
+      "people": "People",
+      "languages": "Languages",
+      "events": "Events in 12 months",
+      "active_days": "{count} active day | {count} active days",
+      "data_entries": "Data entries",
+      "drafts": "{count} draft | {count} drafts"
+    },
+    "panels": {
+      "content_activity": "Content activity",
+      "content_by_type": "Content by type",
+      "activity": "Activity",
+      "assets_by_type": "Assets by type",
+      "entries_by_source": "Data entries by source"
     },
     "charts": {
-      "assets_by_type": "Assets by Type",
-      "content_by_type": "Content by Type",
-      "traffic_usage": "Traffic Usage",
-      "bytes": "Bytes",
-      "kb": "KB",
-      "mb": "MB",
-      "gb": "GB",
-      "tb": "TB",
-      "api_usage": "API Usage",
-      "requests": "Requests",
-      "asset_upload_trend": "Asset Upload Trend",
-      "upload_count": "Upload Count",
-      "upload_size_mb": "Upload Size (MB)",
-      "content_activity": "Content Activity",
-      "content_created": "Content Created",
-      "content_edited": "Content Edited",
-      "content_published": "Content Published"
+      "edited": "Edited",
+      "published": "Published",
+      "created": "Created",
+      "period": "Period",
+      "other": "Other"
     },
     "activity": {
-      "title": "Space Activity",
-      "summary": "{count} events in the last 12 months · {days} active days",
-      "events": "{count} events",
-      "current_streak": "Current streak",
-      "longest_streak": "Longest streak",
+      "view_log": "Audit log",
+      "events": "{count} event | {count} events",
       "less": "Less",
       "more": "More",
-      "view_log": "View audit log"
+      "current_streak": "Current streak",
+      "longest_streak": "Longest streak",
+      "days": "{count} day | {count} days"
+    },
+    "sections": {
+      "content": "Content",
+      "delivery": "Delivery",
+      "assets": "Assets",
+      "team": "Team"
     }
   },
   "actions": {

@@ -1242,7 +1242,6 @@
     },
     "auditLog": {
       "title": "Journal d'audit",
-      "description": "Suivez toutes les modifications et actions effectuées dans cet espace.",
       "emptyState": "Aucun événement d'audit trouvé.",
       "columns": {
         "time": "Heure",
@@ -1394,7 +1393,6 @@
     },
     "blocks": {
       "title": "Blocs",
-      "description": "Créez et gérez vos blocs de contenu réutilisables.",
       "summary": {
         "required": "Requis",
         "indexable": "Est indexé",
@@ -1722,7 +1720,6 @@
     },
     "blockTags": {
       "title": "Étiquettes de blocs",
-      "description": "Étiquetez vos blocs pour les organiser et les filtrer.",
       "createTag": "Nouvelle étiquette",
       "editTag": "Modifier l'étiquette",
       "deleteTitle": "Supprimer cette étiquette ?",
@@ -1827,7 +1824,6 @@
       "emptyTitle": "Créez l'espace où votre prochain projet prendra vie.",
       "emptyDescription": "Les espaces offrent à votre équipe un foyer pour le contenu, les actifs, les flux de travail et la structure — tout au même endroit. Commencez par le premier et construisez à partir de là.",
       "newPageTitle": "Créer un nouvel espace",
-      "newPageDescription": "Créez un nouvel espace de contenu pour organiser votre contenu.",
       "noCreateAccess": "Vous pouvez sélectionner {team}, mais vous n'avez pas l'autorisation de créer des espaces dans cette équipe.",
       "steps": {
         "blueprint": {
@@ -1943,7 +1939,6 @@
     },
     "redirects": {
       "title": "Redirections",
-      "description": "Gérez les redirections d'URL pour votre site",
       "createRedirect": "Créer une redirection",
       "editRedirect": "Modifier la redirection",
       "createDescription": "Ajoutez une règle de redirection avec un chemin source, un chemin cible et un code de statut.",
@@ -2027,7 +2022,6 @@
     },
     "migrations": {
       "title": "Migrations",
-      "description": "Migrez du contenu entre les espaces de cette instance",
       "createTitle": "Nouvelle migration",
       "createDescription": "Poussez du contenu de cet espace vers un autre espace sur cette instance",
       "noMigrations": "Aucune migration trouvée. Démarrez une nouvelle migration pour copier du contenu entre les espaces.",
@@ -2078,7 +2072,6 @@
     },
     "backups": {
       "title": "Sauvegardes",
-      "description": "Créez et gérez des sauvegardes d'espace pour protéger votre contenu et vos données",
       "listTitle": "Historique des sauvegardes",
       "listDescription": "Consultez et gérez toutes vos sauvegardes d'espace",
       "createTitle": "Créer une sauvegarde",
@@ -2198,15 +2191,11 @@
     "usage": {
       "history": {
         "title": "Utilisation et facturation",
-        "description": "Suivez l'utilisation par période de forfait dans le temps et accédez à vos factures.",
         "periods": "Périodes de forfait",
         "empty": "Aucune période de facturation enregistrée pour le moment.",
         "current": "Actuelle",
-        "currentHint": "Cette période est toujours en cours — consultez la vue d'ensemble de l'abonnement pour l'utilisation en direct.",
         "present": "Présent",
-        "trend": "Tendance d'utilisation",
         "noTrend": "Aucune utilisation enregistrée sur cette période.",
-        "trafficMb": "Trafic (Mo)",
         "columns": {
           "plan": "Forfait",
           "period": "Période",
@@ -2219,10 +2208,12 @@
           "downgraded": "Rétrogradé",
           "cancelled": "Annulé",
           "expired": "Expiré"
-        }
+        },
+        "traffic": "Trafic"
       },
       "overLimit": "Au-dessus de la limite incluse — {percentage}% utilisés",
-      "live": "Utilisation actuelle"
+      "live": "Utilisation actuelle",
+      "resets": "Réinitialisé le {date}"
     },
     "invoices": {
       "title": "Factures",
@@ -2235,12 +2226,10 @@
     },
     "settings": {
       "general": {
-        "title": "Paramètres généraux",
-        "description": "Gérez les paramètres et préférences de votre espace."
+        "title": "Paramètres généraux"
       },
       "configuration": {
-        "title": "Configuration",
-        "description": "Gérez les paramètres techniques et les intégrations de votre espace."
+        "title": "Configuration"
       },
       "automationActions": {
         "title": "Actions",
@@ -2252,7 +2241,6 @@
       },
       "people": {
         "title": "Personnes",
-        "description": "Gérez les membres de l'équipe et leur accès à votre espace.",
         "invitesTitle": "Invitations en attente",
         "invitesDescription": "Ces collaborateurs ont été invités mais n'ont pas encore accepté."
       },
@@ -2265,8 +2253,7 @@
         "description": "Migrez du contenu entre les espaces de cette instance."
       },
       "subscription": {
-        "title": "Abonnement",
-        "description": "Gérez votre forfait, votre facturation et l'utilisation de vos quotas."
+        "title": "Abonnement"
       },
       "space": {
         "title": "Espace",
@@ -2457,7 +2444,6 @@
       },
       "ai": {
         "title": "Paramètres IA",
-        "description": "Configurez les fonctionnalités IA et surveillez l'utilisation.",
         "enableAIFeatures": "Activer les fonctionnalités IA",
         "featuresDescription": "Les fonctionnalités IA incluent les suggestions de contenu, l'étiquetage automatique et la recherche intelligente.",
         "usage": "Utilisation IA",
@@ -2560,7 +2546,6 @@
     "account": {
       "profile": {
         "title": "Profil",
-        "description": "Gérez vos informations personnelles et les paramètres de votre profil.",
         "personalInfo": "Informations personnelles",
         "personalInfoDescription": "Mettez à jour votre nom et votre photo de profil.",
         "avatar": "Photo de profil",
@@ -2582,7 +2567,6 @@
       },
       "invites": {
         "title": "Invitations",
-        "description": "Consultez et gérez vos invitations en attente pour les espaces et les équipes.",
         "myInvites": "Mes invitations",
         "myInvitesDescription": "Les invitations que vous avez reçues pour rejoindre des espaces et des équipes.",
         "columns": {
@@ -2611,7 +2595,6 @@
       },
       "security": {
         "title": "Sécurité",
-        "description": "Gérez votre mot de passe et les paramètres de sécurité de votre compte.",
         "changePassword": "Changer le mot de passe",
         "changePasswordDescription": "Mettez à jour votre mot de passe pour assurer la sécurité de votre compte.",
         "oldPassword": "Mot de passe actuel",
@@ -2790,7 +2773,6 @@
     "teams": {
       "selectPlaceholder": "Sélectionner une équipe…",
       "pageTitle": "Équipes",
-      "pageDescription": "Gérez vos équipes et leurs membres",
       "listTitle": "Toutes les équipes",
       "hierarchyTitle": "Hiérarchie des équipes",
       "hierarchyError": "Impossible de charger la hiérarchie des équipes. Veuillez réessayer ultérieurement.",
@@ -3776,7 +3758,6 @@
     },
     "icons": {
       "pageTitle": "Icônes",
-      "pageDescription": "Téléversez et gérez des icônes SVG pour cet espace.",
       "searchPlaceholder": "Rechercher des icônes par clé ou nom…",
       "allTags": "Toutes",
       "empty": "Aucune icône pour le moment. Téléversez des SVG pour commencer.",
@@ -4199,8 +4180,7 @@
   },
   "dashboard": {
     "title": "Tableau de bord",
-    "loading": "Chargement des statistiques…",
-    "no_data": "Aucune statistique disponible.",
+    "updated": "Contenu mis à jour {date}",
     "filters": {
       "date_range": "Plage de dates",
       "last_7_days": "7 derniers jours",
@@ -4213,60 +4193,55 @@
       "weekly": "Hebdomadaire",
       "monthly": "Mensuel"
     },
-    "sections": {
-      "content_stats": "Statistiques de contenu",
-      "activity": "Activité",
-      "content_distribution": "Répartition du contenu",
-      "usage_stats": "Statistiques d'utilisation",
-      "trends": "Tendances",
-      "space_stats": "Statistiques d'espace"
-    },
-    "cards": {
-      "total_content": "Contenu total",
-      "published": "publié",
-      "draft": "brouillon",
-      "assets": "Actifs",
-      "assets_count": "Actifs",
+    "tiles": {
+      "entries": "Entrées",
+      "storage": "Stockage",
+      "files": "{count} fichier | {count} fichiers",
+      "traffic": "Trafic",
+      "cached": "{rate} % depuis le cache",
+      "api": "Requêtes API",
+      "new_in_range": "Nouveau sur la période choisie",
       "blocks": "Blocs",
       "data_sources": "Sources de données",
       "redirects": "Redirections",
-      "traffic_usage": "Utilisation du trafic",
-      "cache_hit_rate": "Taux de succès du cache",
-      "api_requests": "Requêtes API",
-      "success_rate": "taux de succès",
-      "avg_response_time": "Temps de réponse moyen",
-      "api_response_time": "Temps de réponse API",
-      "total_users": "Utilisateurs totaux",
-      "languages": "Langues"
+      "success": "{rate} % de réussite",
+      "response_time": "Temps de réponse moyen",
+      "response_detail": "API de diffusion",
+      "people": "Personnes",
+      "languages": "Langues",
+      "events": "Événements sur 12 mois",
+      "active_days": "{count} jour actif | {count} jours actifs",
+      "data_entries": "Entrées de données",
+      "drafts": "{count} brouillon | {count} brouillons"
+    },
+    "panels": {
+      "content_activity": "Activité du contenu",
+      "content_by_type": "Contenu par type",
+      "activity": "Activité",
+      "assets_by_type": "Ressources par type",
+      "entries_by_source": "Entrées par source"
     },
     "charts": {
-      "assets_by_type": "Actifs par type",
-      "content_by_type": "Contenu par type",
-      "traffic_usage": "Utilisation du trafic",
-      "bytes": "Octets",
-      "kb": "Ko",
-      "mb": "Mo",
-      "gb": "Go",
-      "tb": "To",
-      "api_usage": "Utilisation API",
-      "requests": "Requêtes",
-      "asset_upload_trend": "Tendance des téléversements d'actifs",
-      "upload_count": "Nombre de téléversements",
-      "upload_size_mb": "Taille du téléversement (Mo)",
-      "content_activity": "Activité du contenu",
-      "content_created": "Contenu créé",
-      "content_edited": "Contenu modifié",
-      "content_published": "Contenu publié"
+      "edited": "Modifié",
+      "published": "Publié",
+      "created": "Créé",
+      "period": "Période",
+      "other": "Autres"
     },
     "activity": {
-      "title": "Activité de l'espace",
-      "summary": "{count} événements au cours des 12 derniers mois · {days} jours actifs",
-      "events": "{count} événements",
-      "current_streak": "Série actuelle",
-      "longest_streak": "Plus longue série",
+      "view_log": "Journal d’audit",
+      "events": "{count} événement | {count} événements",
       "less": "Moins",
       "more": "Plus",
-      "view_log": "Voir le journal d'audit"
+      "current_streak": "Série en cours",
+      "longest_streak": "Plus longue série",
+      "days": "{count} jour | {count} jours"
+    },
+    "sections": {
+      "content": "Contenu",
+      "delivery": "Diffusion",
+      "assets": "Ressources",
+      "team": "Équipe"
     }
   },
   "actions": {

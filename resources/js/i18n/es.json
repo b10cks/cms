@@ -1242,7 +1242,6 @@
     },
     "auditLog": {
       "title": "Registro de auditoría",
-      "description": "Rastrea todos los cambios y acciones realizadas en este espacio.",
       "emptyState": "No se han encontrado eventos de auditoría.",
       "columns": {
         "time": "Hora",
@@ -1394,7 +1393,6 @@
     },
     "blocks": {
       "title": "Bloques",
-      "description": "Cree y gestione sus bloques de contenido reutilizables.",
       "summary": {
         "required": "Requerido",
         "indexable": "Está indexado",
@@ -1722,7 +1720,6 @@
     },
     "blockTags": {
       "title": "Etiquetas de Bloque",
-      "description": "Etiquete sus bloques para organizarlos y filtrarlos.",
       "createTag": "Nueva etiqueta",
       "editTag": "Editar etiqueta",
       "deleteTitle": "¿Eliminar esta etiqueta?",
@@ -1827,7 +1824,6 @@
       "emptyTitle": "Cree el espacio donde cobrará vida su próximo proyecto.",
       "emptyDescription": "Los espacios brindan a su equipo un lugar para contenido, activos, flujos de trabajo y estructura — todo en un solo lugar. Comience con el primero y construya desde allí.",
       "newPageTitle": "Crear un nuevo espacio",
-      "newPageDescription": "Crear un nuevo espacio de contenido para organizar su contenido.",
       "noCreateAccess": "Puede seleccionar {team}, pero no tiene permiso para crear espacios en ese equipo.",
       "steps": {
         "blueprint": {
@@ -1943,7 +1939,6 @@
     },
     "redirects": {
       "title": "Redirecciones",
-      "description": "Gestionar redirecciones de URL para su sitio",
       "createRedirect": "Crear Redirección",
       "editRedirect": "Editar Redirección",
       "createDescription": "Añada una regla de redirección con una ruta de origen, ruta de destino y código de estado.",
@@ -2027,7 +2022,6 @@
     },
     "migrations": {
       "title": "Migraciones",
-      "description": "Migre contenido entre espacios en esta instancia",
       "createTitle": "Nueva Migración",
       "createDescription": "Empuje contenido desde este espacio a otro espacio en esta instancia",
       "noMigrations": "No se encontraron migraciones. Inicie una nueva migración para copiar contenido entre espacios.",
@@ -2078,7 +2072,6 @@
     },
     "backups": {
       "title": "Copias de Seguridad",
-      "description": "Cree y gestione copias de seguridad del espacio para proteger su contenido y datos",
       "listTitle": "Historial de Copias",
       "listDescription": "Vea y gestione todas sus copias de seguridad del espacio",
       "createTitle": "Crear Copia de Seguridad",
@@ -2198,15 +2191,11 @@
     "usage": {
       "history": {
         "title": "Uso y facturación",
-        "description": "Siga el uso por período de plan a lo largo del tiempo y acceda a sus facturas.",
         "periods": "Períodos de plan",
         "empty": "Aún no hay períodos de facturación registrados.",
         "current": "Actual",
-        "currentHint": "Este período sigue en ejecución — consulte la visión general de la suscripción para el uso en vivo.",
         "present": "Presente",
-        "trend": "Tendencia de uso",
         "noTrend": "No hay uso registrado en este período.",
-        "trafficMb": "Tráfico (MB)",
         "columns": {
           "plan": "Plan",
           "period": "Período",
@@ -2219,10 +2208,12 @@
           "downgraded": "Degradado",
           "cancelled": "Cancelado",
           "expired": "Expirado"
-        }
+        },
+        "traffic": "Tráfico"
       },
       "overLimit": "Por encima del límite incluido — {percentage}% usado",
-      "live": "Uso actual"
+      "live": "Uso actual",
+      "resets": "Se reinicia el {date}"
     },
     "invoices": {
       "title": "Facturas",
@@ -2235,12 +2226,10 @@
     },
     "settings": {
       "general": {
-        "title": "Configuración General",
-        "description": "Gestione la configuración y preferencias de su espacio."
+        "title": "Configuración General"
       },
       "configuration": {
-        "title": "Configuración",
-        "description": "Gestione la configuración técnica y las integraciones para su espacio."
+        "title": "Configuración"
       },
       "automationActions": {
         "title": "Acciones",
@@ -2252,7 +2241,6 @@
       },
       "people": {
         "title": "Personas",
-        "description": "Gestione los miembros del equipo y su acceso a su espacio.",
         "invitesTitle": "Invitaciones Pendientes",
         "invitesDescription": "Estos colaboradores han sido invitados pero aún no han aceptado."
       },
@@ -2265,8 +2253,7 @@
         "description": "Migre contenido entre espacios en esta instancia."
       },
       "subscription": {
-        "title": "Suscripción",
-        "description": "Gestione su plan, facturación y uso de cuotas."
+        "title": "Suscripción"
       },
       "space": {
         "title": "Espacio",
@@ -2457,7 +2444,6 @@
       },
       "ai": {
         "title": "Configuración de IA",
-        "description": "Configure las funciones de IA y supervise el uso.",
         "enableAIFeatures": "Habilitar Funciones de IA",
         "featuresDescription": "Las funciones de IA incluyen sugerencias de contenido, etiquetado automático y búsqueda inteligente.",
         "usage": "Uso de IA",
@@ -2560,7 +2546,6 @@
     "account": {
       "profile": {
         "title": "Perfil",
-        "description": "Gestione su información personal y la configuración de su perfil.",
         "personalInfo": "Información Personal",
         "personalInfoDescription": "Actualice su nombre y foto de perfil.",
         "avatar": "Foto de Perfil",
@@ -2582,7 +2567,6 @@
       },
       "invites": {
         "title": "Invitaciones",
-        "description": "Vea y gestione sus invitaciones pendientes a espacios y equipos.",
         "myInvites": "Mis Invitaciones",
         "myInvitesDescription": "Invitaciones que ha recibido para unirse a espacios y equipos.",
         "columns": {
@@ -2611,7 +2595,6 @@
       },
       "security": {
         "title": "Seguridad",
-        "description": "Gestione su contraseña y la configuración de seguridad de su cuenta.",
         "changePassword": "Cambiar Contraseña",
         "changePasswordDescription": "Actualice su contraseña para mantener segura su cuenta.",
         "oldPassword": "Contraseña Actual",
@@ -2790,7 +2773,6 @@
     "teams": {
       "selectPlaceholder": "Seleccionar un equipo...",
       "pageTitle": "Equipos",
-      "pageDescription": "Gestione sus equipos y sus miembros",
       "listTitle": "Todos los Equipos",
       "hierarchyTitle": "Jerarquía de Equipos",
       "hierarchyError": "No se pudo cargar la jerarquía del equipo. Por favor inténtelo de nuevo más tarde.",
@@ -3776,7 +3758,6 @@
     },
     "icons": {
       "pageTitle": "Iconos",
-      "pageDescription": "Suba y gestione iconos SVG para este espacio.",
       "searchPlaceholder": "Buscar iconos por clave o nombre…",
       "allTags": "Todos",
       "empty": "Aún no hay iconos. Suba SVGs para comenzar.",
@@ -4199,8 +4180,7 @@
   },
   "dashboard": {
     "title": "Panel",
-    "loading": "Cargando estadísticas...",
-    "no_data": "No hay estadísticas disponibles.",
+    "updated": "Contenido actualizado {date}",
     "filters": {
       "date_range": "Rango de Fecha",
       "last_7_days": "Últimos 7 días",
@@ -4213,60 +4193,55 @@
       "weekly": "Semanal",
       "monthly": "Mensual"
     },
-    "sections": {
-      "content_stats": "Estadísticas de Contenido",
-      "activity": "Actividad",
-      "content_distribution": "Distribución de Contenido",
-      "usage_stats": "Estadísticas de Uso",
-      "trends": "Tendencias",
-      "space_stats": "Estadísticas del Espacio"
-    },
-    "cards": {
-      "total_content": "Contenido Total",
-      "published": "publicado",
-      "draft": "borrador",
-      "assets": "Activos",
-      "assets_count": "Activos",
+    "tiles": {
+      "entries": "Entradas",
+      "storage": "Almacenamiento",
+      "files": "{count} archivo | {count} archivos",
+      "traffic": "Tráfico",
+      "cached": "{rate} % desde caché",
+      "api": "Solicitudes API",
+      "new_in_range": "Nuevo en el rango seleccionado",
       "blocks": "Bloques",
-      "data_sources": "Fuentes de Datos",
+      "data_sources": "Fuentes de datos",
       "redirects": "Redirecciones",
-      "traffic_usage": "Uso de tráfico",
-      "cache_hit_rate": "Tasa de aciertos de caché",
-      "api_requests": "Peticiones API",
-      "success_rate": "tasa de éxito",
-      "avg_response_time": "Tiempo de Respuesta Medio",
-      "api_response_time": "tiempo de respuesta de la API",
-      "total_users": "Usuarios Totales",
-      "languages": "Idiomas"
+      "success": "{rate} % de éxito",
+      "response_time": "Tiempo de respuesta medio",
+      "response_detail": "API de entrega",
+      "people": "Personas",
+      "languages": "Idiomas",
+      "events": "Eventos en 12 meses",
+      "active_days": "{count} día activo | {count} días activos",
+      "data_entries": "Entradas de datos",
+      "drafts": "{count} borrador | {count} borradores"
+    },
+    "panels": {
+      "content_activity": "Actividad de contenido",
+      "content_by_type": "Contenido por tipo",
+      "activity": "Actividad",
+      "assets_by_type": "Recursos por tipo",
+      "entries_by_source": "Entradas por fuente"
     },
     "charts": {
-      "assets_by_type": "Activos por Tipo",
-      "content_by_type": "Contenido por Tipo",
-      "traffic_usage": "Uso de Tráfico",
-      "bytes": "Bytes",
-      "kb": "KB",
-      "mb": "MB",
-      "gb": "GB",
-      "tb": "TB",
-      "api_usage": "Uso de la API",
-      "requests": "Peticiones",
-      "asset_upload_trend": "Tendencia de Subida de Activos",
-      "upload_count": "Número de Subidas",
-      "upload_size_mb": "Tamaño de Subida (MB)",
-      "content_activity": "Actividad de Contenido",
-      "content_created": "Contenido Creado",
-      "content_edited": "Contenido Editado",
-      "content_published": "Contenido Publicado"
+      "edited": "Editado",
+      "published": "Publicado",
+      "created": "Creado",
+      "period": "Periodo",
+      "other": "Otros"
     },
     "activity": {
-      "title": "Actividad del Espacio",
-      "summary": "{count} eventos en los últimos 12 meses · {days} días activos",
-      "events": "{count} eventos",
-      "current_streak": "Racha actual",
-      "longest_streak": "Racha más larga",
+      "view_log": "Registro de auditoría",
+      "events": "{count} evento | {count} eventos",
       "less": "Menos",
       "more": "Más",
-      "view_log": "Ver registro de auditoría"
+      "current_streak": "Racha actual",
+      "longest_streak": "Racha más larga",
+      "days": "{count} día | {count} días"
+    },
+    "sections": {
+      "content": "Contenido",
+      "delivery": "Entrega",
+      "assets": "Recursos",
+      "team": "Equipo"
     }
   },
   "actions": {

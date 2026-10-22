@@ -1251,7 +1251,6 @@
     },
     "auditLog": {
       "title": "Audit-Log",
-      "description": "Verfolge alle Änderungen und Aktionen in diesem Space.",
       "emptyState": "Keine Audit-Einträge gefunden.",
       "columns": {
         "time": "Zeit",
@@ -1403,7 +1402,6 @@
     },
     "blocks": {
       "title": "Blocks",
-      "description": "Erstelle und verwalte deine wiederverwendbaren Content Blocks.",
       "summary": {
         "required": "Erforderlich",
         "indexable": "Indexierbar",
@@ -1731,7 +1729,6 @@
     },
     "blockTags": {
       "title": "Block Tags",
-      "description": "Tagge deine Blocks, um sie zu organisieren und zu filtern.",
       "createTag": "Neuer Tag",
       "editTag": "Tag bearbeiten",
       "deleteTitle": "Diesen Tag löschen?",
@@ -1837,7 +1834,6 @@
       "emptyDescription": "Spaces geben deinem Team ein gemeinsames Zuhause für Inhalte, Assets, Workflows und Struktur. Starte mit deinem ersten Space und baue von dort aus weiter.",
       "empty": "Noch keine Spaces.",
       "newPageTitle": "Erstelle einen neuen Space",
-      "newPageDescription": "Erstelle einen neuen Content Space, um deine Inhalte zu organisieren.",
       "noCreateAccess": "Du kannst {team} auswählen, aber in diesem Team keine Spaces erstellen.",
       "steps": {
         "blueprint": {
@@ -1953,7 +1949,6 @@
     },
     "redirects": {
       "title": "Redirects",
-      "description": "Verwalte URL-Redirects für deine Website",
       "createRedirect": "Redirect erstellen",
       "editRedirect": "Redirect bearbeiten",
       "createDescription": "Lege eine Redirect-Regel mit Quellpfad, Zielpfad und Status-Code an.",
@@ -2037,7 +2032,6 @@
     },
     "migrations": {
       "title": "Migrationen",
-      "description": "Inhalte zwischen Spaces auf dieser Instanz migrieren",
       "createTitle": "Neue Migration",
       "createDescription": "Inhalte aus diesem Space in einen anderen Space übertragen",
       "noMigrations": "Keine Migrationen gefunden. Starte eine neue Migration, um Inhalte zwischen Spaces zu kopieren.",
@@ -2088,7 +2082,6 @@
     },
     "backups": {
       "title": "Sicherungen",
-      "description": "Erstelle und verwalte Space-Sicherungen zum Schutz deiner Inhalte und Daten",
       "listTitle": "Sicherungsverlauf",
       "listDescription": "Anzeigen und Verwalten aller deiner Space-Sicherungen",
       "createTitle": "Sicherung erstellen",
@@ -2208,15 +2201,11 @@
     "usage": {
       "history": {
         "title": "Nutzung & Abrechnung",
-        "description": "Verfolge die Nutzung je Plan-Zeitraum im Zeitverlauf und greife auf deine Rechnungen zu.",
         "periods": "Plan-Zeiträume",
         "empty": "Noch keine Abrechnungszeiträume erfasst.",
         "current": "Aktuell",
-        "currentHint": "Dieser Zeitraum läuft noch — die Live-Nutzung findest du in der Abonnement-Übersicht.",
         "present": "Heute",
-        "trend": "Nutzungsverlauf",
         "noTrend": "In diesem Zeitraum wurde keine Nutzung erfasst.",
-        "trafficMb": "Traffic (MB)",
         "columns": {
           "plan": "Plan",
           "period": "Zeitraum",
@@ -2229,10 +2218,12 @@
           "downgraded": "Downgrade",
           "cancelled": "Gekündigt",
           "expired": "Abgelaufen"
-        }
+        },
+        "traffic": "Datenverkehr"
       },
       "overLimit": "Über dem inkludierten Limit — {percentage}% verbraucht",
-      "live": "Aktuelle Nutzung"
+      "live": "Aktuelle Nutzung",
+      "resets": "Zurückgesetzt am {date}"
     },
     "invoices": {
       "title": "Rechnungen",
@@ -2245,12 +2236,10 @@
     },
     "settings": {
       "general": {
-        "title": "Allgemeine Einstellungen",
-        "description": "Verwalte deine Space-Einstellungen und Voreinstellungen."
+        "title": "Allgemeine Einstellungen"
       },
       "configuration": {
-        "title": "Konfiguration",
-        "description": "Verwalte technische Einstellungen und Integrationen für deinen Space."
+        "title": "Konfiguration"
       },
       "automationActions": {
         "title": "Aktionen",
@@ -2262,7 +2251,6 @@
       },
       "people": {
         "title": "Personen",
-        "description": "Verwalte Teamkollegen und ihren Zugang zu deinem Space.",
         "invitesTitle": "Ausstehende Einladungen",
         "invitesDescription": "Diese Mitarbeitenden wurden eingeladen, haben aber noch nicht akzeptiert."
       },
@@ -2275,8 +2263,7 @@
         "description": "Inhalte zwischen Spaces auf dieser Instanz migrieren."
       },
       "subscription": {
-        "title": "Abonnement",
-        "description": "Plan, Abrechnung und Kontingentnutzung verwalten."
+        "title": "Abonnement"
       },
       "space": {
         "title": "Space",
@@ -2467,7 +2454,6 @@
       },
       "ai": {
         "title": "KI-Einstellungen",
-        "description": "Konfiguriere KI-Features und überwache die Nutzung.",
         "configTitle": "KI-Verhalten & Regeln",
         "configDescription": "Passe Verhalten, Tonalität und Regeln dafür an, wie die KI Inhalte in deinem Space erstellt und ändert.",
         "temperatureDescription": "Steuert die Zufälligkeit der KI-Ausgabe. Niedrigere Werte liefern fokussiertere, deterministischere Ergebnisse.",
@@ -2574,7 +2560,6 @@
     "account": {
       "profile": {
         "title": "Profil",
-        "description": "Verwalte deine persönlichen Informationen und Profileinstellungen.",
         "personalInfo": "Persönliche Informationen",
         "personalInfoDescription": "Aktualisiere deinen Namen und Profilbild.",
         "avatar": "Profilbild",
@@ -2596,7 +2581,6 @@
       },
       "invites": {
         "title": "Einladungen",
-        "description": "Anzeigen und Verwalten deiner ausstehenden Einladungen zu Spaces und Teams.",
         "myInvites": "Meine Einladungen",
         "myInvitesDescription": "Einladungen, die du erhalten hast, um Spaces und Teams beizutreten.",
         "columns": {
@@ -2625,7 +2609,6 @@
       },
       "security": {
         "title": "Sicherheit",
-        "description": "Verwalte dein Passwort und Konto-Sicherheitseinstellungen.",
         "changePassword": "Passwort ändern",
         "changePasswordDescription": "Aktualisiere dein Passwort, um dein Konto sicher zu halten.",
         "oldPassword": "Aktuelles Passwort",
@@ -2804,7 +2787,6 @@
     "teams": {
       "selectPlaceholder": "Wähle ein Team...",
       "pageTitle": "Teams",
-      "pageDescription": "Verwalte deine Teams und deren Mitglieder",
       "listTitle": "Alle Teams",
       "hierarchyTitle": "Team-Hierarchie",
       "hierarchyError": "Die Team-Hierarchie konnte nicht geladen werden. Bitte versuche es später erneut.",
@@ -3790,7 +3772,6 @@
     },
     "icons": {
       "pageTitle": "Icons",
-      "pageDescription": "SVG-Icons für diesen Space hochladen und verwalten.",
       "searchPlaceholder": "Icons nach Schlüssel oder Name suchen…",
       "allTags": "Alle",
       "empty": "Noch keine Icons. Lade SVGs hoch, um zu starten.",
@@ -4213,8 +4194,7 @@
   },
   "dashboard": {
     "title": "Dashboard",
-    "loading": "Lädt Statistiken...",
-    "no_data": "Keine Statistiken verfügbar.",
+    "updated": "Inhalte aktualisiert {date}",
     "filters": {
       "date_range": "Zeitraum",
       "last_7_days": "Letzte 7 Tage",
@@ -4227,60 +4207,55 @@
       "weekly": "Wöchentlich",
       "monthly": "Monatlich"
     },
-    "sections": {
-      "content_stats": "Content-Statistiken",
-      "activity": "Aktivität",
-      "content_distribution": "Content-Verteilung",
-      "usage_stats": "Nutzungsstatistiken",
-      "trends": "Trends",
-      "space_stats": "Space-Statistiken"
-    },
-    "cards": {
-      "total_content": "Gesamter Inhalt",
-      "published": "veröffentlicht",
-      "draft": "Entwurf",
-      "assets": "Assets",
-      "assets_count": "Assets",
+    "tiles": {
+      "entries": "Einträge",
+      "storage": "Speicher",
+      "files": "{count} Datei | {count} Dateien",
+      "traffic": "Datenverkehr",
+      "cached": "{rate} % aus dem Cache",
+      "api": "API-Anfragen",
+      "new_in_range": "Neu im gewählten Zeitraum",
       "blocks": "Blocks",
       "data_sources": "Datenquellen",
-      "redirects": "Redirects",
-      "traffic_usage": "Datenverkehrnutzung",
-      "cache_hit_rate": "Cache-Hit-Rate",
-      "api_requests": "API-Anfragen",
-      "success_rate": "Erfolgsquote",
-      "avg_response_time": "Durchschnittliche Antwortzeit",
-      "api_response_time": "API-Antwortzeit",
-      "total_users": "Gesamte Benutzer",
-      "languages": "Sprachen"
+      "redirects": "Weiterleitungen",
+      "success": "{rate} % Erfolgsquote",
+      "response_time": "Durchschnittliche Antwortzeit",
+      "response_detail": "Delivery-API",
+      "people": "Personen",
+      "languages": "Sprachen",
+      "events": "Ereignisse in 12 Monaten",
+      "active_days": "{count} aktiver Tag | {count} aktive Tage",
+      "data_entries": "Dateneinträge",
+      "drafts": "{count} Entwurf | {count} Entwürfe"
+    },
+    "panels": {
+      "content_activity": "Content-Aktivität",
+      "content_by_type": "Content nach Typ",
+      "activity": "Aktivität",
+      "assets_by_type": "Assets nach Typ",
+      "entries_by_source": "Dateneinträge nach Quelle"
     },
     "charts": {
-      "assets_by_type": "Assets nach Typ",
-      "content_by_type": "Content nach Typ",
-      "traffic_usage": "Datenverkehrnutzung",
-      "bytes": "Bytes",
-      "kb": "KB",
-      "mb": "MB",
-      "gb": "GB",
-      "tb": "TB",
-      "api_usage": "API-Nutzung",
-      "requests": "Anfragen",
-      "asset_upload_trend": "Asset-Upload-Trend",
-      "upload_count": "Upload-Anzahl",
-      "upload_size_mb": "Upload-Größe (MB)",
-      "content_activity": "Content-Aktivität",
-      "content_created": "Content erstellt",
-      "content_edited": "Content bearbeitet",
-      "content_published": "Content veröffentlicht"
+      "edited": "Bearbeitet",
+      "published": "Veröffentlicht",
+      "created": "Erstellt",
+      "period": "Zeitraum",
+      "other": "Sonstige"
     },
     "activity": {
-      "title": "Space-Aktivität",
-      "summary": "{count} Ereignisse in den letzten 12 Monaten · {days} aktive Tage",
-      "events": "{count} Ereignisse",
-      "current_streak": "Aktuelle Serie",
-      "longest_streak": "Längste Serie",
+      "view_log": "Audit-Log",
+      "events": "{count} Ereignis | {count} Ereignisse",
       "less": "Weniger",
       "more": "Mehr",
-      "view_log": "Audit-Log ansehen"
+      "current_streak": "Aktuelle Serie",
+      "longest_streak": "Längste Serie",
+      "days": "{count} Tag | {count} Tage"
+    },
+    "sections": {
+      "content": "Inhalte",
+      "delivery": "Auslieferung",
+      "assets": "Assets",
+      "team": "Team"
     }
   },
   "actions": {

@@ -1242,7 +1242,6 @@
     },
     "auditLog": {
       "title": "Denetim Kaydı",
-      "description": "Bu çalışma alanında gerçekleştirilen tüm değişiklikleri ve işlemleri izleyin.",
       "emptyState": "Denetim olayı bulunamadı.",
       "columns": {
         "time": "Zaman",
@@ -1394,7 +1393,6 @@
     },
     "blocks": {
       "title": "Bloklar",
-      "description": "Tekrar kullanılabilir içerik Bloklarınızı oluşturun ve yönetin.",
       "summary": {
         "required": "Gerekli",
         "indexable": "İndekslendi",
@@ -1722,7 +1720,6 @@
     },
     "blockTags": {
       "title": "Blok Etiketleri",
-      "description": "Bloklarınızı düzenlemek ve filtrelemek için etiketleyin.",
       "createTag": "Yeni etiket",
       "editTag": "Etiketi düzenle",
       "deleteTitle": "Bu etiket silinsin mi?",
@@ -1827,7 +1824,6 @@
       "emptyTitle": "Bir sonraki projenizin canlandığı çalışma alanını oluşturun.",
       "emptyDescription": "Çalışma Alanları, ekibinize içerik, varlıklar, iş akışları ve yapı için bir ev verir — hepsi tek bir yerde. İlkinizle başlayın ve oradan ilerleyin.",
       "newPageTitle": "Yeni bir çalışma alanı oluştur",
-      "newPageDescription": "İçeriğinizi düzenlemek için yeni bir içerik çalışma alanı oluşturun.",
       "noCreateAccess": "{team} seçebilirsiniz, ancak o ekipte çalışma alanları oluşturma izniniz yok.",
       "steps": {
         "blueprint": {
@@ -1943,7 +1939,6 @@
     },
     "redirects": {
       "title": "Yönlendirmeler",
-      "description": "Siteniz için URL yönlendirmelerini yönetin",
       "createRedirect": "Yönlendirme Oluştur",
       "editRedirect": "Yönlendirmeyi Düzenle",
       "createDescription": "Kaynak yol, hedef yol ve durum kodu ile bir yönlendirme kuralı ekleyin.",
@@ -2027,7 +2022,6 @@
     },
     "migrations": {
       "title": "Geçişler",
-      "description": "Bu örnekteki çalışma alanları arasında içerik taşıyın",
       "createTitle": "Yeni Geçiş",
       "createDescription": "İçeriği bu çalışma alanından bu örnekteki başka bir çalışma alanına aktarın",
       "noMigrations": "Geçiş bulunamadı. Çalışma alanları arasında içerik kopyalamak için yeni bir geçiş başlatın.",
@@ -2078,7 +2072,6 @@
     },
     "backups": {
       "title": "Yedekler",
-      "description": "İçeriğinizi ve verilerinizi korumak için çalışma alanı yedekleri oluşturun ve yönetin",
       "listTitle": "Yedek Geçmişi",
       "listDescription": "Tüm çalışma alanı yedeklerinizi görüntüleyin ve yönetin",
       "createTitle": "Yedek Oluştur",
@@ -2198,15 +2191,11 @@
     "usage": {
       "history": {
         "title": "Kullanım ve faturalandırma",
-        "description": "Plan dönemi başına kullanımı zaman içinde izleyin ve faturalarınıza erişin.",
         "periods": "Plan dönemleri",
         "empty": "Henüz faturalandırma dönemi kaydedilmedi.",
         "current": "Geçerli",
-        "currentHint": "Bu dönem hala çalışıyor — canlı kullanım için abonelik genel bakışına bakın.",
         "present": "Şu anki",
-        "trend": "Kullanım eğilimi",
         "noTrend": "Bu dönemde kaydedilmiş kullanım yok.",
-        "trafficMb": "Trafik (MB)",
         "columns": {
           "plan": "Plan",
           "period": "Dönem",
@@ -2219,10 +2208,12 @@
           "downgraded": "Düşürüldü",
           "cancelled": "İptal Edildi",
           "expired": "Süresi Doldu"
-        }
+        },
+        "traffic": "Trafik"
       },
       "overLimit": "Dahil edilen limitin üzerinde — %{percentage} kullanıldı",
-      "live": "Geçerli kullanım"
+      "live": "Geçerli kullanım",
+      "resets": "Sıfırlanma: {date}"
     },
     "invoices": {
       "title": "Faturalar",
@@ -2235,12 +2226,10 @@
     },
     "settings": {
       "general": {
-        "title": "Genel Ayarlar",
-        "description": "Çalışma alanınız ayarlarını ve tercihlerinizi yönetin."
+        "title": "Genel Ayarlar"
       },
       "configuration": {
-        "title": "Yapılandırma",
-        "description": "Çalışma alanınız için teknik ayarları ve entegrasyonları yönetin."
+        "title": "Yapılandırma"
       },
       "automationActions": {
         "title": "Eylemler",
@@ -2252,7 +2241,6 @@
       },
       "people": {
         "title": "Kişiler",
-        "description": "Ekip üyelerini ve çalışma alanınıza erişimlerini yönetin.",
         "invitesTitle": "Bekleyen Davetler",
         "invitesDescription": "Bu işbirlikçiler davet edildi ancak henüz kabul etmediler."
       },
@@ -2265,8 +2253,7 @@
         "description": "Bu örnekteki çalışma alanları arasında içerik taşıyın."
       },
       "subscription": {
-        "title": "Abonelik",
-        "description": "Planınızı, faturalandırmanızı ve kota kullanımınızı yönetin."
+        "title": "Abonelik"
       },
       "space": {
         "title": "Çalışma Alanı",
@@ -2457,7 +2444,6 @@
       },
       "ai": {
         "title": "Yapay Zeka Ayarları",
-        "description": "Yapay Zeka özelliklerini yapılandırın ve kullanımı izleyin.",
         "enableAIFeatures": "Yapay Zeka Özelliklerini Etkinleştir",
         "featuresDescription": "Yapay Zeka özellikleri içerik önerileri, otomatik etiketleme ve akıllı aramayı içerir.",
         "usage": "Yapay Zeka Kullanımı",
@@ -2560,7 +2546,6 @@
     "account": {
       "profile": {
         "title": "Profil",
-        "description": "Kişisel bilgilerinizi ve profil ayarlarınızı yönetin.",
         "personalInfo": "Kişisel Bilgiler",
         "personalInfoDescription": "Adınızı ve profil resminizi güncelleyin.",
         "avatar": "Profil Resmi",
@@ -2582,7 +2567,6 @@
       },
       "invites": {
         "title": "Davetler",
-        "description": "Çalışma alanlarına ve ekiplere aldığınız bekleyen davetleri görüntüleyin ve yönetin.",
         "myInvites": "Davetlerim",
         "myInvitesDescription": "Çalışma alanlarına ve ekiplere katılmak için aldığınız davetler.",
         "columns": {
@@ -2611,7 +2595,6 @@
       },
       "security": {
         "title": "Güvenlik",
-        "description": "Şifrenizi ve hesap güvenliği ayarlarınızı yönetin.",
         "changePassword": "Şifre Değiştir",
         "changePasswordDescription": "Hesabınızı güvende tutmak için şifrenizi güncelleyin.",
         "oldPassword": "Mevcut Şifre",
@@ -2790,7 +2773,6 @@
     "teams": {
       "selectPlaceholder": "Bir ekip seçin...",
       "pageTitle": "Ekipler",
-      "pageDescription": "Ekiplerinizi ve üyelerini yönetin",
       "listTitle": "Tüm Ekipler",
       "hierarchyTitle": "Ekip Hiyerarşisi",
       "hierarchyError": "Ekip hiyerarşisi yüklenemedi. Lütfen daha sonra tekrar deneyin.",
@@ -3776,7 +3758,6 @@
     },
     "icons": {
       "pageTitle": "Simgeler",
-      "pageDescription": "Bu çalışma alanı için SVG simgeleri yükleyin ve yönetin.",
       "searchPlaceholder": "Simgeleri anahtara veya ada göre ara…",
       "allTags": "Tümü",
       "empty": "Henüz simge yok. Başlamak için SVG yükleyin.",
@@ -4199,8 +4180,7 @@
   },
   "dashboard": {
     "title": "Panel",
-    "loading": "İstatistikler yükleniyor…",
-    "no_data": "İstatistik mevcut değil.",
+    "updated": "İçerik güncellendi: {date}",
     "filters": {
       "date_range": "Tarih Aralığı",
       "last_7_days": "Son 7 gün",
@@ -4213,60 +4193,55 @@
       "weekly": "Haftalık",
       "monthly": "Aylık"
     },
-    "sections": {
-      "content_stats": "İçerik İstatistikleri",
-      "activity": "Etkinlik",
-      "content_distribution": "İçerik Dağılımı",
-      "usage_stats": "Kullanım İstatistikleri",
-      "trends": "Eğilimler",
-      "space_stats": "Çalışma Alanı İstatistikleri"
-    },
-    "cards": {
-      "total_content": "Toplam İçerik",
-      "published": "yayınlanan",
-      "draft": "taslak",
-      "assets": "Varlıklar",
-      "assets_count": "Varlıklar",
+    "tiles": {
+      "entries": "Girdiler",
+      "storage": "Depolama",
+      "files": "{count} dosya",
+      "traffic": "Trafik",
+      "cached": "%{rate} önbellekten",
+      "api": "API istekleri",
+      "new_in_range": "Seçilen aralıkta yeni",
       "blocks": "Bloklar",
-      "data_sources": "Veri Kaynakları",
+      "data_sources": "Veri kaynakları",
       "redirects": "Yönlendirmeler",
-      "traffic_usage": "Trafik kullanımı",
-      "cache_hit_rate": "Önbellek isabet oranı",
-      "api_requests": "API İstekleri",
-      "success_rate": "başarı oranı",
-      "avg_response_time": "Ort. Yanıt Süresi",
-      "api_response_time": "API yanıt süresi",
-      "total_users": "Toplam Kullanıcı",
-      "languages": "Diller"
+      "success": "%{rate} başarı oranı",
+      "response_time": "Ort. yanıt süresi",
+      "response_detail": "Teslim API'si",
+      "people": "Kişiler",
+      "languages": "Diller",
+      "events": "12 aydaki olaylar",
+      "active_days": "{count} aktif gün",
+      "data_entries": "Veri girdileri",
+      "drafts": "{count} taslak"
+    },
+    "panels": {
+      "content_activity": "İçerik etkinliği",
+      "content_by_type": "Türe göre içerik",
+      "activity": "Etkinlik",
+      "assets_by_type": "Türe göre varlıklar",
+      "entries_by_source": "Kaynağa göre girdiler"
     },
     "charts": {
-      "assets_by_type": "Türüne Göre Varlıklar",
-      "content_by_type": "Türüne Göre İçerik",
-      "traffic_usage": "Trafik Kullanımı",
-      "bytes": "Bayt",
-      "kb": "KB",
-      "mb": "MB",
-      "gb": "GB",
-      "tb": "TB",
-      "api_usage": "API Kullanımı",
-      "requests": "İstekler",
-      "asset_upload_trend": "Varlık Yükleme Eğilimi",
-      "upload_count": "Yükleme Sayısı",
-      "upload_size_mb": "Yükleme Boyutu (MB)",
-      "content_activity": "İçerik Etkinliği",
-      "content_created": "İçerik Oluşturuldu",
-      "content_edited": "İçerik Düzenlendi",
-      "content_published": "İçerik Yayınlandı"
+      "edited": "Düzenlendi",
+      "published": "Yayınlandı",
+      "created": "Oluşturuldu",
+      "period": "Dönem",
+      "other": "Diğer"
     },
     "activity": {
-      "title": "Çalışma Alanı Etkinliği",
-      "summary": "Son 12 ayda {count} olay · {days} aktif gün",
+      "view_log": "Denetim günlüğü",
       "events": "{count} olay",
+      "less": "Az",
+      "more": "Çok",
       "current_streak": "Mevcut seri",
       "longest_streak": "En uzun seri",
-      "less": "Daha az",
-      "more": "Daha fazla",
-      "view_log": "Denetim kaydını gör"
+      "days": "{count} gün"
+    },
+    "sections": {
+      "content": "İçerik",
+      "delivery": "Teslim",
+      "assets": "Varlıklar",
+      "team": "Ekip"
     }
   },
   "actions": {
