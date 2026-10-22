@@ -940,7 +940,7 @@ provide('reloadServerContent', reloadServerContent)
     </div>
     <TabsList
       :class="[
-        'flex h-full flex-col shrink-0 border-l border-l-border select-none transition-[width,padding] duration-200 ease-butter',
+        'flex h-full flex-col shrink-0 border-l border-l-sidebar-border bg-sidebar text-sidebar-foreground select-none transition-[width,padding] duration-200 ease-butter',
         isExtendedSidebar ? 'w-18 p-1' : 'w-14 p-3',
       ]"
     >
@@ -962,9 +962,9 @@ provide('reloadServerContent', reloadServerContent)
             <TabsTrigger
               :value="tab.value"
               :class="[
-                'icon-anim relative flex w-full flex-col items-center justify-center rounded-lg text-center transition-[padding,gap,background-color,color] duration-200 ease-butter hover:bg-border',
+                'icon-anim relative flex w-full cursor-pointer flex-col items-center justify-center rounded-lg text-center transition-[padding,gap,background-color,color] duration-200 ease-butter hover:bg-sidebar-accent',
                 isExtendedSidebar ? 'gap-1 p-2' : 'gap-0 p-1.5',
-                mode === tab.value ? 'bg-border text-primary' : '',
+                mode === tab.value ? 'bg-sidebar-accent text-sidebar-accent-foreground' : '',
               ]"
             >
               <component
@@ -1004,12 +1004,14 @@ provide('reloadServerContent', reloadServerContent)
         </div>
       </div>
       <div class="flex flex-col">
-        <Button
+        <button
+          type="button"
+          :aria-pressed="showAi"
           :class="[
-            'flex w-full flex-col items-center justify-center rounded-lg transition-[padding,gap,background-color,color] duration-200 ease-butter hover:bg-border',
+            'flex w-full cursor-pointer flex-col items-center justify-center rounded-lg transition-[padding,gap,background-color,color] duration-200 ease-butter hover:bg-sidebar-accent',
             isExtendedSidebar ? 'gap-1 p-2' : 'gap-0 p-1.5',
+            showAi ? 'bg-sidebar-accent text-sidebar-accent-foreground' : '',
           ]"
-          :variant="showAi ? 'default' : 'ghost'"
           @click="showAi = !showAi"
         >
           <Icon
@@ -1029,7 +1031,7 @@ provide('reloadServerContent', reloadServerContent)
           >
             <span class="line-clamp-2 min-h-0 overflow-hidden text-[10px] leading-tight">AI</span>
           </span>
-        </Button>
+        </button>
       </div>
     </TabsList>
   </TabsRoot>
