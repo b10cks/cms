@@ -4,18 +4,11 @@ import { toast } from 'vue-sonner'
 import Icon from '~/components/Icon.vue'
 import { Avatar } from '~/components/ui/avatar'
 import { Button } from '~/components/ui/button'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '~/components/ui/card'
 import TeamSelectField, { type TeamSelectOption } from '~/components/teams/TeamSelectField.vue'
 import TeamTypeField from '~/components/teams/TeamTypeField.vue'
 import { FormField, TextField } from '~/components/ui/form'
 import IconNameField from '~/components/ui/IconNameField.vue'
+import { SettingsSection } from '~/components/ui/settings-section'
 import { useFileUpload } from '~/composables/useFileUpload'
 import { flattenNestedTeams } from '~/lib/team-hierarchy'
 import type { TeamHierarchyItem, TeamResource, UpdateTeamPayload } from '~/types/teams'
@@ -131,98 +124,95 @@ const handleRemoveAvatar = () => {
 </script>
 
 <template>
-  <Card variant="none">
-    <CardHeader>
-      <CardTitle>{{ $t('labels.teams.settings.title') }}</CardTitle>
-      <CardDescription>{{ $t('labels.teams.settings.description') }}</CardDescription>
-    </CardHeader>
-    <CardContent class="grid max-w-2xl gap-6">
-      <FormField
-        name="team-avatar"
-        :label="$t('labels.teams.settings.avatar')"
-        :description="$t('labels.teams.settings.avatarDescription')"
+  <SettingsSection
+    :title="$t('labels.teams.settings.title')"
+    :description="$t('labels.teams.settings.description')"
+  >
+    <FormField
+      name="team-avatar"
+      :label="$t('labels.teams.settings.avatar')"
+      :description="$t('labels.teams.settings.avatarDescription')"
+    >
+      <div
+        class="flex items-center gap-4"
+        @drop="onDropAvatar"
+        @dragover.prevent
       >
-        <div
-          class="flex items-center gap-4"
-          @drop="onDropAvatar"
-          @dragover.prevent
+        <button
+          type="button"
+          class="cursor-pointer rounded-2xl transition-opacity hover:opacity-80"
+          @click="avatarInputRef?.click()"
         >
-          <button
+          <Avatar
+            :name="team.name"
+            :avatar="team.avatar"
+            :border-color="team.color"
+            size="lg"
+          />
+        </button>
+        <div class="flex items-center gap-2">
+          <Button
             type="button"
-            class="cursor-pointer rounded-2xl transition-opacity hover:opacity-80"
+            variant="outline"
+            size="sm"
+            :loading="isUploading"
             @click="avatarInputRef?.click()"
           >
-            <Avatar
-              :name="team.name"
-              :avatar="team.avatar"
-              :border-color="team.color"
-              size="lg"
-            />
-          </button>
-          <div class="flex items-center gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              :loading="isUploading"
-              @click="avatarInputRef?.click()"
-            >
-              <Icon name="lucide:upload" />
-              {{ $t('labels.teams.settings.uploadAvatar') }}
-            </Button>
-            <Button
-              v-if="team.avatar"
-              type="button"
-              variant="ghost"
-              size="sm"
-              :loading="deleteAvatarMutation.isPending.value"
-              @click="handleRemoveAvatar"
-            >
-              <Icon name="lucide:trash-2" />
-              {{ $t('labels.teams.settings.removeAvatar') }}
-            </Button>
-          </div>
-          <input
-            ref="avatarInputRef"
-            type="file"
-            accept="image/*"
-            class="hidden"
-            @change="onAvatarInputChange"
-          />
+            <Icon name="lucide:upload" />
+            {{ $t('labels.teams.settings.uploadAvatar') }}
+          </Button>
+          <Button
+            v-if="team.avatar"
+            type="button"
+            variant="ghost"
+            size="sm"
+            :loading="deleteAvatarMutation.isPending.value"
+            @click="handleRemoveAvatar"
+          >
+            <Icon name="lucide:trash-2" />
+            {{ $t('labels.teams.settings.removeAvatar') }}
+          </Button>
         </div>
-      </FormField>
+        <input
+          ref="avatarInputRef"
+          type="file"
+          accept="image/*"
+          class="hidden"
+          @change="onAvatarInputChange"
+        />
+      </div>
+    </FormField>
 
-      <IconNameField
-        v-model="formData"
-        name="team-name"
-        :label="$t('labels.teams.fields.name')"
-        :placeholder="$t('labels.teams.fields.namePlaceholder')"
-      />
+    <IconNameField
+      v-model="formData"
+      name="team-name"
+      :label="$t('labels.teams.fields.name')"
+      :placeholder="$t('labels.teams.fields.namePlaceholder')"
+    />
 
-      <TextField
-        v-model="formData.description"
-        name="team-description"
-        :label="$t('labels.teams.fields.description')"
-        :placeholder="$t('labels.teams.fields.descriptionPlaceholder')"
-        :rows="3"
-      />
+    <TextField
+      v-model="formData.description"
+      name="team-description"
+      :label="$t('labels.teams.fields.description')"
+      :placeholder="$t('labels.teams.fields.descriptionPlaceholder')"
+      :rows="3"
+    />
 
-      <TeamTypeField
-        v-model="formData.type"
-        name="team-type"
-        :editable="isRoot"
-      />
+    <TeamTypeField
+      v-model="formData.type"
+      name="team-type"
+      :editable="isRoot"
+    />
 
-      <TeamSelectField
-        v-model="formData.parent_id"
-        name="team-parent"
-        :teams="parentTeams"
-        :no-team-option="noParentOption"
-        :label="$t('labels.teams.fields.parent')"
-        :placeholder="$t('labels.teams.fields.parentPlaceholder')"
-      />
-    </CardContent>
-    <CardFooter>
+    <TeamSelectField
+      v-model="formData.parent_id"
+      name="team-parent"
+      :teams="parentTeams"
+      :no-team-option="noParentOption"
+      :label="$t('labels.teams.fields.parent')"
+      :placeholder="$t('labels.teams.fields.parentPlaceholder')"
+    />
+    <template #footer>
       <Button
         variant="primary"
         :loading="updateMutation.isPending.value"
@@ -231,6 +221,6 @@ const handleRemoveAvatar = () => {
       >
         {{ $t('actions.saveChanges') }}
       </Button>
-    </CardFooter>
-  </Card>
+    </template>
+  </SettingsSection>
 </template>

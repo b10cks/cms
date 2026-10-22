@@ -2,14 +2,6 @@
 import { deepClone } from '@vue/devtools-shared'
 
 import { Button } from '~/components/ui/button'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '~/components/ui/card'
 import { FormField, Label } from '~/components/ui/form'
 import { Input } from '~/components/ui/input'
 import {
@@ -19,11 +11,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from '~/components/ui/select'
+import { SettingsSection } from '~/components/ui/settings-section'
 import SettingsTable, {
   type ColumnDefinition,
   type TableItem,
 } from '~/components/ui/settings-table.vue'
 import { Switch } from '~/components/ui/switch'
+import { TooltipIcon } from '~/components/ui/tooltip'
 
 import IconName from '../ui/IconName.vue'
 
@@ -191,184 +185,172 @@ const handleSave = () => {
 </script>
 
 <template>
-  <Card variant="none">
-    <CardHeader>
-      <CardTitle>{{ $t('labels.settings.content.title') }}</CardTitle>
-      <CardDescription>{{ $t('labels.settings.content.description') }}</CardDescription>
-    </CardHeader>
-    <CardContent class="space-y-6">
-      <FormField
-        name="default-block"
-        :label="$t('labels.settings.content.defaultBlock')"
-        :description="$t('labels.settings.content.defaultBlockDescription')"
-      >
-        <Select v-model="defaultBlockId">
-          <SelectTrigger id="default-block">
-            <SelectValue>
-              <IconName
-                v-if="defaultBlock"
-                :icon="defaultBlock?.icon"
-                :color="defaultBlock?.color"
-                :name="defaultBlock?.name"
-              />
-              <span v-else>{{ $t('labels.settings.content.selectDefaultBlock') }}</span>
-            </SelectValue>
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem
-              v-for="block in availableBlocks"
-              :key="block.id"
-              :value="block.id"
-            >
-              <IconName
-                :icon="block.icon"
-                :color="block.color"
-                :name="block.name"
-              />
-            </SelectItem>
-            <div v-if="!availableBlocks.length">{{ $t('labels.settings.content.noBlocks') }}</div>
-          </SelectContent>
-        </Select>
-      </FormField>
-      <div class="space-y-2">
-        <div class="flex items-center space-x-2">
-          <Switch
-            id="filter-hidden-blocks"
-            v-model="filterHiddenBlocks"
-            aria-label="Filter hidden blocks from Data API"
-          />
-          <Label
-            for="filter-hidden-blocks"
-            class="text-sm font-medium"
-            :label="$t('labels.settings.content.filterHiddenBlocks')"
-          />
-        </div>
-        <p class="text-xs text-muted">
-          {{ $t('labels.settings.content.filterHiddenBlocksDescription') }}
-        </p>
-      </div>
-      <div class="space-y-2">
-        <div class="flex items-center space-x-2">
-          <Switch
-            id="content-sorting"
-            v-model="contentSorting"
-            aria-label="Enable manual content sorting"
-          />
-          <Label
-            for="content-sorting"
-            class="text-sm font-medium"
-            :label="$t('labels.settings.content.contentSorting')"
-          />
-        </div>
-        <p class="text-xs text-muted">
-          {{ $t('labels.settings.content.contentSortingDescription') }}
-        </p>
-      </div>
-      <div class="space-y-2">
-        <Label
-          class="text-sm font-medium"
-          :label="$t('labels.settings.content.serialGaps')"
-        />
-        <p class="text-xs text-muted">
-          {{ $t('labels.settings.content.serialGapsDescription') }}
-        </p>
-        <div class="space-y-2 pt-1">
-          <label
-            v-for="option in serialGapOptions"
-            :key="option.value"
-            class="flex cursor-pointer items-start gap-3 rounded-lg border border-border p-3"
-            :class="serialGaps === option.value ? 'border-accent bg-surface' : ''"
-          >
-            <input
-              v-model="serialGaps"
-              type="radio"
-              name="serial-gaps"
-              :value="option.value"
-              class="mt-1"
+  <SettingsSection
+    wide
+    :title="$t('labels.settings.content.title')"
+    :description="$t('labels.settings.content.description')"
+  >
+    <FormField
+      name="default-block"
+      :label="$t('labels.settings.content.defaultBlock')"
+      :description="$t('labels.settings.content.defaultBlockDescription')"
+    >
+      <Select v-model="defaultBlockId">
+        <SelectTrigger id="default-block">
+          <SelectValue>
+            <IconName
+              v-if="defaultBlock"
+              :icon="defaultBlock?.icon"
+              :color="defaultBlock?.color"
+              :name="defaultBlock?.name"
             />
-            <span class="space-y-1">
-              <span class="block text-sm font-medium">{{ option.label }}</span>
-              <span class="block text-xs text-muted">{{ option.description }}</span>
-            </span>
-          </label>
-        </div>
+            <span v-else>{{ $t('labels.settings.content.selectDefaultBlock') }}</span>
+          </SelectValue>
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem
+            v-for="block in availableBlocks"
+            :key="block.id"
+            :value="block.id"
+          >
+            <IconName
+              :icon="block.icon"
+              :color="block.color"
+              :name="block.name"
+            />
+          </SelectItem>
+          <div v-if="!availableBlocks.length">{{ $t('labels.settings.content.noBlocks') }}</div>
+        </SelectContent>
+      </Select>
+    </FormField>
+    <div class="flex items-center gap-2">
+      <Switch
+        id="filter-hidden-blocks"
+        v-model="filterHiddenBlocks"
+        aria-label="Filter hidden blocks from Data API"
+      />
+      <Label
+        for="filter-hidden-blocks"
+        class="text-sm font-medium"
+        :label="$t('labels.settings.content.filterHiddenBlocks')"
+      />
+      <TooltipIcon>
+        <span class="block max-w-xs whitespace-pre-line">
+          {{ $t('labels.settings.content.filterHiddenBlocksDescription') }}
+        </span>
+      </TooltipIcon>
+    </div>
+    <div class="flex items-center gap-2">
+      <Switch
+        id="content-sorting"
+        v-model="contentSorting"
+        aria-label="Enable manual content sorting"
+      />
+      <Label
+        for="content-sorting"
+        class="text-sm font-medium"
+        :label="$t('labels.settings.content.contentSorting')"
+      />
+      <TooltipIcon>
+        <span class="block max-w-xs whitespace-pre-line">
+          {{ $t('labels.settings.content.contentSortingDescription') }}
+        </span>
+      </TooltipIcon>
+    </div>
+    <FormField
+      name="serial-gaps"
+      :label="$t('labels.settings.content.serialGaps')"
+      :description="$t('labels.settings.content.serialGapsDescription')"
+    >
+      <div class="space-y-2">
+        <label
+          v-for="option in serialGapOptions"
+          :key="option.value"
+          class="flex cursor-pointer items-start gap-3 rounded-lg border border-border p-3"
+          :class="serialGaps === option.value ? 'border-accent bg-surface' : ''"
+        >
+          <input
+            v-model="serialGaps"
+            type="radio"
+            name="serial-gaps"
+            :value="option.value"
+            class="mt-1"
+          />
+          <span class="space-y-1">
+            <span class="block text-sm font-medium">{{ option.label }}</span>
+            <span class="block text-sm text-muted">{{ option.description }}</span>
+          </span>
+        </label>
       </div>
-      <div class="space-y-4">
-        <div class="space-y-1">
-          <h3 class="text-sm font-semibold">
-            {{ $t('labels.settings.content.sitemap.title') }}
-          </h3>
-          <p class="text-xs text-muted">
-            {{ $t('labels.settings.content.sitemap.description') }}
-          </p>
+    </FormField>
+    <FormField
+      name="sitemap-types"
+      :label="$t('labels.settings.content.sitemap.title')"
+      :description="$t('labels.settings.content.sitemap.description')"
+    >
+      <SettingsTable
+        v-model:items="sitemapTypes"
+        :columns="sitemapColumns"
+        :new-item-template="sitemapNewItemTemplate"
+        @add="addSitemapType"
+        @remove="removeSitemapType"
+        @update:items="(items) => (sitemapTypes = items as unknown as SpaceSitemapType[])"
+      />
+    </FormField>
+    <FormField
+      name="named-sitemaps"
+      :label="$t('labels.settings.content.sitemaps.title')"
+      :description="$t('labels.settings.content.sitemaps.description')"
+    >
+      <div
+        v-for="(sitemap, index) in namedSitemaps"
+        :key="index"
+        class="space-y-4 rounded-lg border border-border p-4"
+      >
+        <div class="flex items-end gap-2">
+          <FormField
+            :name="`sitemap-slug-${index}`"
+            class="grow"
+            :label="$t('labels.settings.content.sitemaps.slug')"
+            :description="$t('labels.settings.content.sitemaps.slugDescription')"
+          >
+            <Input
+              :id="`sitemap-slug-${index}`"
+              v-model="sitemap.slug"
+              :placeholder="$t('labels.settings.content.sitemaps.slugPlaceholder')"
+            />
+          </FormField>
+          <Button
+            variant="ghost"
+            @click="removeNamedSitemap(index)"
+          >
+            {{ $t('labels.settings.content.sitemaps.remove') }}
+          </Button>
         </div>
         <SettingsTable
-          v-model:items="sitemapTypes"
-          :columns="sitemapColumns"
+          v-model:items="sitemap.types"
+          :columns="namedSitemapColumns(sitemap)"
           :new-item-template="sitemapNewItemTemplate"
-          @add="addSitemapType"
-          @remove="removeSitemapType"
-          @update:items="(items) => (sitemapTypes = items as unknown as SpaceSitemapType[])"
+          @add="(item) => addNamedSitemapType(sitemap, item)"
+          @remove="(typeIndex) => sitemap.types.splice(typeIndex, 1)"
+          @update:items="(items) => (sitemap.types = items as unknown as SpaceSitemapType[])"
         />
       </div>
-      <div class="space-y-4">
-        <div class="space-y-1">
-          <h3 class="text-sm font-semibold">
-            {{ $t('labels.settings.content.sitemaps.title') }}
-          </h3>
-          <p class="text-xs text-muted">
-            {{ $t('labels.settings.content.sitemaps.description') }}
-          </p>
-        </div>
-        <div
-          v-for="(sitemap, index) in namedSitemaps"
-          :key="index"
-          class="space-y-4 rounded-lg border border-border p-4"
-        >
-          <div class="flex items-end gap-2">
-            <FormField
-              :name="`sitemap-slug-${index}`"
-              class="grow"
-              :label="$t('labels.settings.content.sitemaps.slug')"
-              :description="$t('labels.settings.content.sitemaps.slugDescription')"
-            >
-              <Input
-                :id="`sitemap-slug-${index}`"
-                v-model="sitemap.slug"
-                :placeholder="$t('labels.settings.content.sitemaps.slugPlaceholder')"
-              />
-            </FormField>
-            <Button
-              variant="ghost"
-              @click="removeNamedSitemap(index)"
-            >
-              {{ $t('labels.settings.content.sitemaps.remove') }}
-            </Button>
-          </div>
-          <SettingsTable
-            v-model:items="sitemap.types"
-            :columns="namedSitemapColumns(sitemap)"
-            :new-item-template="sitemapNewItemTemplate"
-            @add="(item) => addNamedSitemapType(sitemap, item)"
-            @remove="(typeIndex) => sitemap.types.splice(typeIndex, 1)"
-            @update:items="(items) => (sitemap.types = items as unknown as SpaceSitemapType[])"
-          />
-        </div>
-        <Button
-          variant="outline"
-          @click="addNamedSitemap"
-        >
-          {{ $t('labels.settings.content.sitemaps.add') }}
-        </Button>
-      </div>
-    </CardContent>
-    <CardFooter>
+      <Button
+        variant="outline"
+        class="justify-self-start"
+        @click="addNamedSitemap"
+      >
+        {{ $t('labels.settings.content.sitemaps.add') }}
+      </Button>
+    </FormField>
+    <template #footer>
       <Button
         v-if="canUpdateSpace"
         variant="primary"
         @click="handleSave"
         >{{ $t('actions.saveChanges') }}
       </Button>
-    </CardFooter>
-  </Card>
+    </template>
+  </SettingsSection>
 </template>

@@ -3,15 +3,7 @@ import { deepClone } from '@vue/devtools-shared'
 
 import Icon from '~/components/Icon.vue'
 import { Button } from '~/components/ui/button'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '~/components/ui/card'
-import { Label } from '~/components/ui/form'
+import { FormField, Label } from '~/components/ui/form'
 import { safeHref } from '~/lib/sanitize'
 import {
   Select,
@@ -20,6 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '~/components/ui/select'
+import { SettingsSection } from '~/components/ui/settings-section'
 import SettingsTable, { type ColumnDefinition } from '~/components/ui/settings-table.vue'
 import { Switch } from '~/components/ui/switch'
 
@@ -90,101 +83,88 @@ const saveSettings = async () => {
 </script>
 
 <template>
-  <Card variant="none">
-    <CardHeader>
-      <CardTitle>{{ $t('labels.settings.editor.title') }}</CardTitle>
-      <CardDescription>{{ $t('labels.settings.editor.description') }}</CardDescription>
-    </CardHeader>
-    <CardContent class="space-y-6">
-      <div class="space-y-4">
-        <div class="flex items-center justify-between">
-          <div>
-            <h4 class="text-sm font-medium">{{ $t('labels.settings.editor.environments') }}</h4>
-            <p class="text-xs text-muted">
-              {{ $t('labels.settings.editor.environmentsDescription') }}
-            </p>
-          </div>
-        </div>
-        <SettingsTable
-          v-model:items="environments"
-          :columns="columns"
-          :new-item-template="newItemTemplate"
-          :allow-sort="true"
-          @add="(item) => environments.push(item)"
-          @remove="removeEnvironment"
-          @update:items="(items) => (environments = items)"
-        >
-          <template #actions="{ item }">
-            <Button
-              variant="ghost"
-              size="icon"
-              @click="openInTab(item.url)"
-            >
-              <Icon name="lucide:external-link" />
-              <span class="sr-only">{{ $t('actions.open') }}</span>
-            </Button>
-          </template>
-        </SettingsTable>
-      </div>
+  <SettingsSection
+    wide
+    :title="$t('labels.settings.editor.title')"
+    :description="$t('labels.settings.editor.description')"
+  >
+    <FormField
+      name="environments"
+      :label="$t('labels.settings.editor.environments')"
+      :description="$t('labels.settings.editor.environmentsDescription')"
+    >
+      <SettingsTable
+        v-model:items="environments"
+        :columns="columns"
+        :new-item-template="newItemTemplate"
+        :allow-sort="true"
+        @add="(item) => environments.push(item)"
+        @remove="removeEnvironment"
+        @update:items="(items) => (environments = items)"
+      >
+        <template #actions="{ item }">
+          <Button
+            variant="ghost"
+            size="icon"
+            @click="openInTab(item.url)"
+          >
+            <Icon name="lucide:external-link" />
+            <span class="sr-only">{{ $t('actions.open') }}</span>
+          </Button>
+        </template>
+      </SettingsTable>
+    </FormField>
 
-      <div class="space-y-4">
-        <div>
-          <h4 class="text-sm font-medium">{{ $t('labels.settings.editor.defaultEnvironment') }}</h4>
-          <p class="text-xs text-muted">
-            {{ $t('labels.settings.editor.defaultEnvironmentDescription') }}
-          </p>
-        </div>
-        <Select
-          v-model="defaultEnvironment"
-          :disabled="environments.length === 0"
-        >
-          <SelectTrigger>
-            <SelectValue :placeholder="$t('labels.settings.editor.selectDefaultEnvironment')" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem
-              v-for="env in environments"
-              :key="env.name"
-              :value="env.name"
-            >
-              {{ env.name }}
-            </SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
+    <FormField
+      name="default-environment"
+      :label="$t('labels.settings.editor.defaultEnvironment')"
+      :description="$t('labels.settings.editor.defaultEnvironmentDescription')"
+    >
+      <Select
+        v-model="defaultEnvironment"
+        :disabled="environments.length === 0"
+      >
+        <SelectTrigger>
+          <SelectValue :placeholder="$t('labels.settings.editor.selectDefaultEnvironment')" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem
+            v-for="env in environments"
+            :key="env.name"
+            :value="env.name"
+          >
+            {{ env.name }}
+          </SelectItem>
+        </SelectContent>
+      </Select>
+    </FormField>
 
-      <div class="space-y-4">
-        <div>
-          <h4 class="text-sm font-medium">{{ $t('labels.settings.editor.visualEditor') }}</h4>
-          <p class="text-xs text-muted">
-            {{ $t('labels.settings.editor.visualEditorDescription') }}
-          </p>
-        </div>
-
-        <div class="flex items-center space-x-2">
-          <Switch
-            id="visual-editor"
-            v-model="visualEditorEnabled"
-            aria-label="Enable Visual Editor"
-          />
-          <Label
-            for="visual-editor"
-            class="text-sm font-medium"
-            :label="$t('labels.settings.editor.enableVisualEditor')"
-          />
-        </div>
-        <p class="text-xs text-muted">
-          {{ $t('labels.settings.editor.visualEditorInfo') }}
-        </p>
+    <FormField
+      name="visual-editor"
+      :label="$t('labels.settings.editor.visualEditor')"
+      :description="$t('labels.settings.editor.visualEditorDescription')"
+      :tooltip="$t('labels.settings.editor.visualEditorInfo')"
+    >
+      <div class="flex items-center space-x-2">
+        <Switch
+          id="visual-editor"
+          v-model="visualEditorEnabled"
+          aria-label="Enable Visual Editor"
+        />
+        <Label
+          for="visual-editor"
+          class="text-sm font-medium"
+          :label="$t('labels.settings.editor.enableVisualEditor')"
+        />
       </div>
-    </CardContent>
-    <CardFooter>
+    </FormField>
+    <template #footer>
       <Button
         v-if="canUpdateSpace"
         variant="primary"
         @click="saveSettings"
         >{{ $t('actions.saveChanges') }}
       </Button>
-    </CardFooter>
-  </Card>
+    </template>
+  </SettingsSection>
 </template>

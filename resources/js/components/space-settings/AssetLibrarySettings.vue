@@ -4,20 +4,14 @@ import { deepClone } from '@vue/devtools-shared'
 import AssetAiClassifyDialog from '~/components/assets/AssetAiClassifyDialog.vue'
 import Icon from '~/components/Icon.vue'
 import { Button } from '~/components/ui/button'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '~/components/ui/card'
-import { ComboboxField, Label } from '~/components/ui/form'
+import { ComboboxField, FormField, Label } from '~/components/ui/form'
+import { SettingsSection } from '~/components/ui/settings-section'
 import SettingsTable, {
   type ColumnDefinition,
   type TableItem,
 } from '~/components/ui/settings-table.vue'
 import { Switch } from '~/components/ui/switch'
+import { TooltipIcon } from '~/components/ui/tooltip'
 
 const { useUpdateSpaceMutation } = useSpaces()
 const { mutate: updateSpace } = useUpdateSpaceMutation()
@@ -129,124 +123,122 @@ const saveSettings = async () => {
 </script>
 
 <template>
-  <Card variant="none">
-    <CardHeader>
-      <CardTitle>{{ $t('labels.settings.assetLibrary.title') }}</CardTitle>
-      <CardDescription>{{ $t('labels.settings.assetLibrary.description') }}</CardDescription>
-    </CardHeader>
-    <CardContent class="space-y-6">
-      <div class="space-y-2">
-        <div class="flex items-center justify-between gap-2">
-          <h4 class="text-sm font-medium">{{ $t('labels.settings.assetLibrary.metadataFields') }}</h4>
-          <Button
-            v-if="canUpdateSpace && !hasAllRightsLicensingFields"
-            variant="outline"
-            size="sm"
-            @click="addRightsLicensingGroup"
-            >{{ $t('labels.settings.assetLibrary.rights.addGroup') }}
-          </Button>
-        </div>
-        <p class="text-xs text-muted-foreground">
-          {{ $t('labels.settings.assetLibrary.requiredHint') }}
-        </p>
-        <SettingsTable
-          v-model:items="assetFields"
-          :columns="columns"
-          :new-item-template="newItemTemplate"
-          :allow-sort="true"
-          :empty-message="$t('labels.settings.assetLibrary.noMetadataFields')"
-          :remove-button-label="$t('actions.remove')"
-          @add="addField"
-          @remove="removeField"
-        />
+  <SettingsSection
+    wide
+    :title="$t('labels.settings.assetLibrary.title')"
+    :description="$t('labels.settings.assetLibrary.description')"
+  >
+    <FormField
+      name="metadata-fields"
+      :label="$t('labels.settings.assetLibrary.metadataFields')"
+      :description="$t('labels.settings.assetLibrary.requiredHint')"
+    >
+      <div class="flex justify-end">
+        <Button
+          v-if="canUpdateSpace && !hasAllRightsLicensingFields"
+          variant="outline"
+          size="sm"
+          @click="addRightsLicensingGroup"
+          >{{ $t('labels.settings.assetLibrary.rights.addGroup') }}
+        </Button>
       </div>
+      <SettingsTable
+        v-model:items="assetFields"
+        :columns="columns"
+        :new-item-template="newItemTemplate"
+        :allow-sort="true"
+        :empty-message="$t('labels.settings.assetLibrary.noMetadataFields')"
+        :remove-button-label="$t('actions.remove')"
+        @add="addField"
+        @remove="removeField"
+      />
+    </FormField>
+
+    <div
+      v-if="aiEnabled"
+      class="space-y-4 border-t border-border pt-6"
+    >
+      <div class="space-y-1">
+        <h4 class="text-sm font-semibold text-primary">{{ $t('labels.settings.assetLibrary.ai.title') }}</h4>
+        <p class="text-sm text-muted">{{ $t('labels.settings.assetLibrary.ai.description') }}</p>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <Switch
+          id="ai-auto-on-upload"
+          v-model="autoOnUpload"
+          :disabled="!canUpdateSpace"
+        />
+        <Label
+          for="ai-auto-on-upload"
+          class="text-sm font-medium"
+          :label="$t('labels.settings.assetLibrary.ai.autoOnUpload')"
+        />
+        <TooltipIcon>
+          <span class="block max-w-xs whitespace-pre-line">
+            {{ $t('labels.settings.assetLibrary.ai.autoOnUploadHint') }}
+          </span>
+        </TooltipIcon>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <Switch
+          id="ai-suggest-tags"
+          v-model="suggestTags"
+          :disabled="!canUpdateSpace"
+        />
+        <Label
+          for="ai-suggest-tags"
+          class="text-sm font-medium"
+          :label="$t('labels.settings.assetLibrary.ai.suggestTags')"
+        />
+        <TooltipIcon>
+          <span class="block max-w-xs whitespace-pre-line">
+            {{ $t('labels.settings.assetLibrary.ai.suggestTagsHint') }}
+          </span>
+        </TooltipIcon>
+      </div>
+
+      <ComboboxField
+        v-model="allowedFields"
+        name="ai_allowed_fields"
+        :label="$t('labels.settings.assetLibrary.ai.allowedFields')"
+        :description="$t('labels.settings.assetLibrary.ai.allowedFieldsHint')"
+        :options="allowedFieldOptions"
+        :disabled="!canUpdateSpace"
+        multiple
+      />
 
       <div
-        v-if="aiEnabled"
-        class="space-y-4 border-t border-border pt-6"
+        v-if="canManageAssets"
+        class="space-y-2"
       >
-        <div>
-          <h4 class="text-sm font-medium">{{ $t('labels.settings.assetLibrary.ai.title') }}</h4>
-          <p class="text-xs text-muted">{{ $t('labels.settings.assetLibrary.ai.description') }}</p>
-        </div>
-
-        <div class="space-y-2">
-          <div class="flex items-center space-x-2">
-            <Switch
-              id="ai-auto-on-upload"
-              v-model="autoOnUpload"
-              :disabled="!canUpdateSpace"
-            />
-            <Label
-              for="ai-auto-on-upload"
-              class="text-sm font-medium"
-              :label="$t('labels.settings.assetLibrary.ai.autoOnUpload')"
-            />
-          </div>
-          <p class="text-xs text-muted">
-            {{ $t('labels.settings.assetLibrary.ai.autoOnUploadHint') }}
-          </p>
-        </div>
-
-        <div class="space-y-2">
-          <div class="flex items-center space-x-2">
-            <Switch
-              id="ai-suggest-tags"
-              v-model="suggestTags"
-              :disabled="!canUpdateSpace"
-            />
-            <Label
-              for="ai-suggest-tags"
-              class="text-sm font-medium"
-              :label="$t('labels.settings.assetLibrary.ai.suggestTags')"
-            />
-          </div>
-          <p class="text-xs text-muted">
-            {{ $t('labels.settings.assetLibrary.ai.suggestTagsHint') }}
-          </p>
-        </div>
-
-        <ComboboxField
-          v-model="allowedFields"
-          name="ai_allowed_fields"
-          :label="$t('labels.settings.assetLibrary.ai.allowedFields')"
-          :description="$t('labels.settings.assetLibrary.ai.allowedFieldsHint')"
-          :options="allowedFieldOptions"
-          :disabled="!canUpdateSpace"
-          multiple
-        />
-
-        <div
-          v-if="canManageAssets"
-          class="space-y-2"
+        <Button
+          variant="outline"
+          size="sm"
+          @click="classifyAllOpen = true"
         >
-          <Button
-            variant="outline"
-            size="sm"
-            @click="classifyAllOpen = true"
-          >
-            <Icon name="lucide:sparkles" />
-            {{ $t('labels.settings.assetLibrary.ai.classifyExisting') }}
-          </Button>
-          <p class="text-xs text-muted">
-            {{ $t('labels.settings.assetLibrary.ai.requiresVision') }}
-          </p>
-        </div>
-
-        <AssetAiClassifyDialog
-          v-model:open="classifyAllOpen"
-          :space-id="space.id"
-          scope="all"
-        />
+          <Icon name="lucide:sparkles" />
+          {{ $t('labels.settings.assetLibrary.ai.classifyExisting') }}
+        </Button>
+        <p class="text-sm text-muted">
+          {{ $t('labels.settings.assetLibrary.ai.requiresVision') }}
+        </p>
       </div>
-    </CardContent>
-    <CardFooter>
+
+      <AssetAiClassifyDialog
+        v-model:open="classifyAllOpen"
+        :space-id="space.id"
+        scope="all"
+      />
+    </div>
+    <template #footer>
       <Button
         v-if="canUpdateSpace"
         variant="primary"
         @click="saveSettings"
         >{{ $t('actions.saveChanges') }}
       </Button>
-    </CardFooter>
-  </Card>
+    </template>
+  </SettingsSection>
 </template>

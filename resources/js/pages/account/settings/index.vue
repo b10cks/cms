@@ -4,9 +4,9 @@ import { toast } from 'vue-sonner'
 import Icon from '~/components/Icon.vue'
 import NuxtImg from '~/components/NuxtImg.vue'
 import { Button } from '~/components/ui/button'
-import { Card, CardContent, CardFooter, CardHeaderCombined } from '~/components/ui/card'
 import ContentHeader from '~/components/ui/ContentHeader.vue'
 import { ComboboxField, FormField, InputField, SelectField } from '~/components/ui/form'
+import { SettingsSection } from '~/components/ui/settings-section'
 import { useFileUpload } from '~/composables/useFileUpload'
 import type { Clock, DateOrder } from '~/lib/display-formats'
 import {
@@ -150,103 +150,96 @@ const onDragOverAvatar = (e: DragEvent) => {
   <div class="content-grid gap-6 pb-6">
     <ContentHeader
       :header="$t('labels.account.profile.title')"
-      :description="$t('labels.account.profile.description')"
     />
 
-    <div class="pt-6 space-y-12 divide-y divide-border">
-      <Card
+    <div class="divide-y divide-border pt-6">
+      <SettingsSection
         v-if="user"
-        variant="none"
+        :title="$t('labels.account.profile.avatar')"
       >
-        <CardHeaderCombined :title="$t('labels.account.profile.avatar')" />
-        <CardContent class="grid gap-6">
-          <FormField
-            name="avatar"
-            :label="$t('labels.account.profile.avatar')"
-            :description="$t('labels.account.profile.avatarDescription')"
+        <FormField
+          name="avatar"
+          :label="$t('labels.account.profile.avatar')"
+          :description="$t('labels.account.profile.avatarDescription')"
+        >
+          <div
+            class="flex items-center gap-4"
+            @drop="onDropAvatar"
+            @dragover="onDragOverAvatar"
           >
             <div
-              class="flex items-center gap-4"
-              @drop="onDropAvatar"
-              @dragover="onDragOverAvatar"
+              v-if="user.avatar"
+              role="button"
+              tabindex="0"
+              :aria-label="$t('labels.account.profile.uploadAvatar')"
+              class="flex h-20 w-20 cursor-pointer items-center justify-center overflow-hidden rounded-full bg-surface"
+              @click="handleUploadAvatar"
+              @keydown.enter.prevent="handleUploadAvatar"
+              @keydown.space.prevent="handleUploadAvatar"
             >
-              <div
-                v-if="user.avatar"
-                role="button"
-                tabindex="0"
-                :aria-label="$t('labels.account.profile.uploadAvatar')"
-                class="flex h-20 w-20 cursor-pointer items-center justify-center overflow-hidden rounded-full bg-surface"
-                @click="handleUploadAvatar"
-                @keydown.enter.prevent="handleUploadAvatar"
-                @keydown.space.prevent="handleUploadAvatar"
-              >
-                <NuxtImg
-                  :src="user.avatar"
-                  alt="Avatar"
-                  class="h-full w-full object-cover"
-                />
-              </div>
-              <div
-                v-else
-                role="button"
-                tabindex="0"
-                :aria-label="$t('labels.account.profile.uploadAvatar')"
-                class="flex h-20 w-20 cursor-pointer items-center justify-center rounded-full border border-dashed border-muted bg-surface"
-                @click="handleUploadAvatar"
-                @keydown.enter.prevent="handleUploadAvatar"
-                @keydown.space.prevent="handleUploadAvatar"
-              >
-                <Icon
-                  name="lucide:user"
-                  class="h-10 w-10 text-muted"
-                />
-              </div>
-              <input
-                ref="avatarInputRef"
-                type="file"
-                accept="image/*"
-                class="hidden"
-                @change="onAvatarInputChange"
+              <NuxtImg
+                :src="user.avatar"
+                alt="Avatar"
+                class="h-full w-full object-cover"
               />
-              <span
-                v-if="fileUploadIsUploading"
-                class="ml-2 text-xs text-muted"
-                >{{ uploadProgress }}%</span
-              >
             </div>
-          </FormField>
-          <InputField
-            :label="$t('labels.account.profile.userId')"
-            name="user-id"
-            :model-value="user.id"
-            readonly
-            :actions="['copy']"
-          />
-        </CardContent>
-      </Card>
-      <Card variant="none">
-        <CardHeaderCombined
-          :title="$t('labels.account.profile.personalInfo')"
-          :description="$t('labels.account.profile.personalInfoDescription')"
+            <div
+              v-else
+              role="button"
+              tabindex="0"
+              :aria-label="$t('labels.account.profile.uploadAvatar')"
+              class="flex h-20 w-20 cursor-pointer items-center justify-center rounded-full border border-dashed border-muted bg-surface"
+              @click="handleUploadAvatar"
+              @keydown.enter.prevent="handleUploadAvatar"
+              @keydown.space.prevent="handleUploadAvatar"
+            >
+              <Icon
+                name="lucide:user"
+                class="h-10 w-10 text-muted"
+              />
+            </div>
+            <input
+              ref="avatarInputRef"
+              type="file"
+              accept="image/*"
+              class="hidden"
+              @change="onAvatarInputChange"
+            />
+            <span
+              v-if="fileUploadIsUploading"
+              class="ml-2 text-sm text-muted"
+              >{{ uploadProgress }}%</span
+            >
+          </div>
+        </FormField>
+        <InputField
+          :label="$t('labels.account.profile.userId')"
+          name="user-id"
+          :model-value="user.id"
+          readonly
+          :actions="['copy']"
         />
-        <CardContent class="grid gap-6">
-          <InputField
-            v-model="firstname"
-            :label="$t('labels.account.profile.firstname')"
-            :placeholder="$t('labels.account.profile.firstnamePlaceholder')"
-            name="firstname"
-            required
-          />
+      </SettingsSection>
+      <SettingsSection
+        :title="$t('labels.account.profile.personalInfo')"
+        :description="$t('labels.account.profile.personalInfoDescription')"
+      >
+        <InputField
+          v-model="firstname"
+          :label="$t('labels.account.profile.firstname')"
+          :placeholder="$t('labels.account.profile.firstnamePlaceholder')"
+          name="firstname"
+          required
+        />
 
-          <InputField
-            v-model="lastname"
-            :label="$t('labels.account.profile.lastname')"
-            :placeholder="$t('labels.account.profile.lastnamePlaceholder')"
-            name="lastname"
-            required
-          />
-        </CardContent>
-        <CardFooter>
+        <InputField
+          v-model="lastname"
+          :label="$t('labels.account.profile.lastname')"
+          :placeholder="$t('labels.account.profile.lastnamePlaceholder')"
+          name="lastname"
+          required
+        />
+        <template #footer>
           <Button
             variant="primary"
             :loading="isUpdating"
@@ -254,96 +247,81 @@ const onDragOverAvatar = (e: DragEvent) => {
           >
             {{ $t('actions.saveChanges') }}
           </Button>
-        </CardFooter>
-      </Card>
-      <Card
+        </template>
+      </SettingsSection>
+      <SettingsSection
         v-if="user"
-        variant="none"
+        :title="$t('labels.account.profile.email')"
+        :description="$t('labels.account.profile.emailReadonly')"
       >
-        <CardHeaderCombined
-          :title="$t('labels.account.profile.email')"
-          :description="$t('labels.account.profile.emailReadonly')"
+        <InputField
+          :label="$t('labels.account.profile.email')"
+          name="email"
+          :model-value="user.email"
+          readonly
+        >
+          <template #append>
+            <span
+              v-if="user.email_verified_at"
+              class="flex items-center gap-1 text-success text-sm pr-2"
+            >
+              <Icon name="lucide:circle-check" />
+              <span>verified</span>
+            </span>
+          </template>
+        </InputField>
+      </SettingsSection>
+      <SettingsSection
+        v-if="user"
+        :title="$t('labels.account.settings.localization')"
+        :description="$t('labels.account.settings.localizationDescription')"
+      >
+        <SelectField
+          :label="$t('labels.account.settings.language')"
+          name="language"
+          :description="$t('labels.account.settings.languageDescription')"
+          :placeholder="$t('labels.account.settings.selectLanguage')"
+          :model-value="settings.languageIso"
+          @update:model-value="onLanguageChange"
+          :options="locales.map((locale) => ({ label: locale.name, value: locale.code }))"
         />
-        <CardContent>
-          <InputField
-            :label="$t('labels.account.profile.email')"
-            name="email"
-            :model-value="user.email"
-            readonly
-          >
-            <template #append>
-              <span
-                v-if="user.email_verified_at"
-                class="flex items-center gap-1 text-success text-sm pr-2"
-              >
-                <Icon name="lucide:circle-check" />
-                <span>verified</span>
-              </span>
-            </template>
-          </InputField>
-        </CardContent>
-      </Card>
-      <Card
+      </SettingsSection>
+      <SettingsSection
         v-if="user"
-        variant="none"
-      >
-        <CardHeaderCombined
-          :title="$t('labels.account.settings.localization')"
-          :description="$t('labels.account.settings.localizationDescription')"
-        />
-        <CardContent class="grid gap-6">
-          <SelectField
-            :label="$t('labels.account.settings.language')"
-            name="language"
-            :description="$t('labels.account.settings.languageDescription')"
-            :placeholder="$t('labels.account.settings.selectLanguage')"
-            :model-value="settings.languageIso"
-            @update:model-value="onLanguageChange"
-            :options="locales.map((locale) => ({ label: locale.name, value: locale.code }))"
-          />
-        </CardContent>
-      </Card>
-      <Card
-        v-if="user"
-        variant="none"
-      >
-        <CardHeaderCombined
-          :title="$t('labels.account.settings.displayFormats')"
-          :description="
+        :title="$t('labels.account.settings.displayFormats')"
+        :description="
             $t('labels.account.settings.displayFormatsDescription', {
               example: formatDateTime(now),
             })
           "
+      >
+        <SelectField
+          :label="$t('labels.account.settings.dateOrder')"
+          name="date-order"
+          :description="$t('labels.account.settings.dateOrderDescription')"
+          :model-value="settings.dateOrder"
+          :options="dateOrderOptions"
+          @update:model-value="(value) => (settings.dateOrder = value)"
         />
-        <CardContent class="grid gap-6">
-          <SelectField
-            :label="$t('labels.account.settings.dateOrder')"
-            name="date-order"
-            :description="$t('labels.account.settings.dateOrderDescription')"
-            :model-value="settings.dateOrder"
-            :options="dateOrderOptions"
-            @update:model-value="(value) => (settings.dateOrder = value)"
-          />
-          <SelectField
-            :label="$t('labels.account.settings.clock')"
-            name="clock"
-            :description="$t('labels.account.settings.clockDescription')"
-            :model-value="settings.clock"
-            :options="clockOptions"
-            @update:model-value="(value) => (settings.clock = value)"
-          />
-          <ComboboxField
-            :label="$t('labels.account.settings.timeZone')"
-            name="time-zone"
-            :description="$t('labels.account.settings.timeZoneDescription')"
-            placeholder="labels.account.settings.searchTimeZone"
-            :model-value="settings.timeZone"
-            :options="timeZoneOptions"
-            searchable
-            @update:model-value="onTimeZoneChange"
-          />
-        </CardContent>
-      </Card>
+        <SelectField
+          :label="$t('labels.account.settings.clock')"
+          name="clock"
+          :description="$t('labels.account.settings.clockDescription')"
+          :model-value="settings.clock"
+          :options="clockOptions"
+          @update:model-value="(value) => (settings.clock = value)"
+        />
+        <ComboboxField
+          :label="$t('labels.account.settings.timeZone')"
+          name="time-zone"
+          :description="$t('labels.account.settings.timeZoneDescription')"
+          placeholder="labels.account.settings.searchTimeZone"
+          :model-value="settings.timeZone"
+          :options="timeZoneOptions"
+          searchable
+          @update:model-value="onTimeZoneChange"
+        />
+      </SettingsSection>
     </div>
   </div>
 </template>

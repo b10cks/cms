@@ -3,7 +3,7 @@ import { toast } from 'vue-sonner'
 
 import Icon from '~/components/Icon.vue'
 import { Button } from '~/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '~/components/ui/card'
+import { SettingsSection } from '~/components/ui/settings-section'
 
 const props = defineProps<{
   space: SpaceResource
@@ -35,12 +35,11 @@ const handleToggle = () => {
 </script>
 
 <template>
-  <Card>
-    <CardHeader>
-      <CardTitle>{{ t('labels.settings.onboarding.title') }}</CardTitle>
-      <CardDescription>{{ t('labels.settings.onboarding.description') }}</CardDescription>
-    </CardHeader>
-    <CardContent>
+  <SettingsSection
+    :title="t('labels.settings.onboarding.title')"
+    :description="t('labels.settings.onboarding.description')"
+  >
+    <div>
       <Button
         variant="outline"
         :loading="isPending"
@@ -55,6 +54,6 @@ const handleToggle = () => {
           }}
         </span>
       </Button>
-    </CardContent>
-  </Card>
+    </div>
+  </SettingsSection>
 </template>

@@ -6,10 +6,10 @@ import Icon from '~/components/Icon.vue'
 import TwoFactorSetupDialog from '~/components/TwoFactorSetupDialog.vue'
 import { Alert } from '~/components/ui/alert'
 import { Button } from '~/components/ui/button'
-import { Card, CardContent, CardFooter, CardHeaderCombined } from '~/components/ui/card'
 import ContentHeader from '~/components/ui/ContentHeader.vue'
 import { Dialog, DialogContent, DialogFooter, DialogHeaderCombined } from '~/components/ui/dialog'
 import { InputField } from '~/components/ui/form'
+import { SettingsSection } from '~/components/ui/settings-section'
 import { useAlertDialog } from '~/composables/useAlertDialog'
 
 const { useChangePasswordMutation } = useUser()
@@ -117,45 +117,41 @@ const handleConfirmRegenerate = () => {
   <div class="content-grid gap-6 pb-6">
     <ContentHeader
       :header="$t('labels.account.security.title')"
-      :description="$t('labels.account.security.description')"
     />
 
-    <div class="pt-6 space-y-12 divide-y divide-border">
-      <Card variant="none">
-        <CardHeaderCombined
-          :title="$t('labels.account.security.changePassword')"
-          :description="$t('labels.account.security.changePasswordDescription')"
+    <div class="divide-y divide-border pt-6">
+      <SettingsSection
+        :title="$t('labels.account.security.changePassword')"
+        :description="$t('labels.account.security.changePasswordDescription')"
+      >
+        <InputField
+          v-model="oldPassword"
+          type="password"
+          :label="$t('labels.account.security.oldPassword')"
+          :placeholder="$t('labels.account.security.oldPasswordPlaceholder')"
+          name="old-password"
+          required
         />
-        <CardContent class="grid gap-6">
-          <InputField
-            v-model="oldPassword"
-            type="password"
-            :label="$t('labels.account.security.oldPassword')"
-            :placeholder="$t('labels.account.security.oldPasswordPlaceholder')"
-            name="old-password"
-            required
-          />
 
-          <InputField
-            v-model="newPassword"
-            type="password"
-            :label="$t('labels.account.security.newPassword')"
-            :placeholder="$t('labels.account.security.newPasswordPlaceholder')"
-            name="new-password"
-            required
-          />
+        <InputField
+          v-model="newPassword"
+          type="password"
+          :label="$t('labels.account.security.newPassword')"
+          :placeholder="$t('labels.account.security.newPasswordPlaceholder')"
+          name="new-password"
+          required
+        />
 
-          <InputField
-            v-model="confirmPassword"
-            type="password"
-            :label="$t('labels.account.security.confirmPassword')"
-            :placeholder="$t('labels.account.security.confirmPasswordPlaceholder')"
-            name="confirm-password"
-            required
-            :error="passwordError"
-          />
-        </CardContent>
-        <CardFooter>
+        <InputField
+          v-model="confirmPassword"
+          type="password"
+          :label="$t('labels.account.security.confirmPassword')"
+          :placeholder="$t('labels.account.security.confirmPasswordPlaceholder')"
+          name="confirm-password"
+          required
+          :error="passwordError"
+        />
+        <template #footer>
           <Button
             variant="primary"
             :loading="isChanging"
@@ -164,68 +160,65 @@ const handleConfirmRegenerate = () => {
           >
             {{ $t('labels.account.security.changePasswordButton') }}
           </Button>
-        </CardFooter>
-      </Card>
+        </template>
+      </SettingsSection>
 
       <ApiTokenSettings />
 
       <SocialProfileSettings />
 
-      <Card variant="none">
-        <CardHeaderCombined
-          :title="$t('labels.twoFactor.title')"
-          :description="$t('labels.twoFactor.description')"
-        />
-        <CardContent class="space-y-6">
-          <div
-            v-if="twoFactorStatus?.enabled"
-            class="space-y-4"
+      <SettingsSection
+        :title="$t('labels.twoFactor.title')"
+        :description="$t('labels.twoFactor.description')"
+      >
+        <div
+          v-if="twoFactorStatus?.enabled"
+          class="space-y-4"
+        >
+          <Alert
+            color="success"
+            variant="modern"
+            icon="lucide:shield-check"
           >
-            <Alert
-              color="success"
-              variant="modern"
-              icon="lucide:shield-check"
+            <b>{{ $t('labels.twoFactor.enabled') }}</b>
+          </Alert>
+
+          <div class="flex flex-wrap gap-2">
+            <Button
+              variant="outline"
+              @click="handleRegenerateBackupCodes"
             >
-              <b>{{ $t('labels.twoFactor.enabled') }}</b>
-            </Alert>
-
-            <div class="flex flex-wrap gap-2">
-              <Button
-                variant="outline"
-                @click="handleRegenerateBackupCodes"
-              >
-                <Icon name="lucide:refresh-cw" />
-                {{ $t('labels.twoFactor.regenerateCodes') }}
-              </Button>
-              <Button
-                variant="destructive"
-                @click="showDisableDialog = true"
-              >
-                <Icon name="lucide:shield-off" />
-                {{ $t('labels.twoFactor.disable') }}
-              </Button>
-            </div>
-          </div>
-
-          <div
-            v-else
-            class="space-y-4"
-          >
-            <Alert
-              color="destructive"
-              variant="modern"
-              icon="lucide:shield-off"
+              <Icon name="lucide:refresh-cw" />
+              {{ $t('labels.twoFactor.regenerateCodes') }}
+            </Button>
+            <Button
+              variant="destructive"
+              @click="showDisableDialog = true"
             >
-              <b>{{ $t('labels.twoFactor.disabled') }}</b>
-            </Alert>
-
-            <Button @click="setupDialogOpen = true">
-              <Icon name="lucide:shield-plus" />
-              {{ $t('labels.twoFactor.enable') }}
+              <Icon name="lucide:shield-off" />
+              {{ $t('labels.twoFactor.disable') }}
             </Button>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+
+        <div
+          v-else
+          class="space-y-4"
+        >
+          <Alert
+            color="destructive"
+            variant="modern"
+            icon="lucide:shield-off"
+          >
+            <b>{{ $t('labels.twoFactor.disabled') }}</b>
+          </Alert>
+
+          <Button @click="setupDialogOpen = true">
+            <Icon name="lucide:shield-plus" />
+            {{ $t('labels.twoFactor.enable') }}
+          </Button>
+        </div>
+      </SettingsSection>
     </div>
 
     <Dialog v-model:open="showDisableDialog">

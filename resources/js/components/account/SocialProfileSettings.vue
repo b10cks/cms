@@ -6,7 +6,7 @@ import GoogleIcon from '~/assets/icons/google.svg?component'
 import Icon from '~/components/Icon.vue'
 import { Alert } from '~/components/ui/alert'
 import { Button } from '~/components/ui/button'
-import { Card, CardContent, CardHeaderCombined } from '~/components/ui/card'
+import { SettingsSection } from '~/components/ui/settings-section'
 import { useAlertDialog } from '~/composables/useAlertDialog'
 
 const route = useRoute()
@@ -73,68 +73,65 @@ onMounted(() => {
 </script>
 
 <template>
-  <Card variant="none">
-    <CardHeaderCombined
-      :title="$t('labels.account.social.title')"
-      :description="$t('labels.account.social.description')"
-    />
-    <CardContent class="space-y-4">
-      <Alert
-        v-if="!isLoading && (!providers || providers.length === 0)"
-        color="warning"
-        variant="modern"
-        icon="lucide:ban"
-      >
-        {{ $t('labels.account.social.empty') }}
-      </Alert>
+  <SettingsSection
+    :title="$t('labels.account.social.title')"
+    :description="$t('labels.account.social.description')"
+  >
+    <Alert
+      v-if="!isLoading && (!providers || providers.length === 0)"
+      color="warning"
+      variant="modern"
+      icon="lucide:ban"
+    >
+      {{ $t('labels.account.social.empty') }}
+    </Alert>
 
-      <div
-        v-for="provider in providers"
-        :key="provider.provider"
-        class="flex flex-col gap-4 rounded-xl border border-border bg-card p-4 sm:flex-row sm:items-center sm:justify-between"
-      >
-        <div class="flex items-center gap-3">
-          <div class="flex size-10 items-center justify-center rounded-lg bg-input">
-            <component
-              :is="providerMeta[provider.provider]?.icon"
-              class="size-6 text-primary"
-            />
-          </div>
-          <div>
-            <p class="font-medium text-primary">
-              {{ providerLabel(provider.provider) }}
-            </p>
-            <p class="text-sm text-muted">
-              {{
-                provider.linked
-                  ? $t('labels.account.social.linked')
-                  : $t('labels.account.social.notLinked')
-              }}
-            </p>
-          </div>
+    <div
+      v-for="provider in providers"
+      :key="provider.provider"
+      class="flex flex-col gap-4 rounded-xl border border-border bg-card p-4 sm:flex-row sm:items-center sm:justify-between"
+    >
+      <div class="flex items-center gap-3">
+        <div class="flex size-10 items-center justify-center rounded-lg bg-input">
+          <component
+            :is="providerMeta[provider.provider]?.icon"
+            class="size-6 text-primary"
+          />
         </div>
-
-        <div class="flex items-center gap-2">
-          <Button
-            v-if="provider.linked"
-            variant="outline"
-            :disabled="isUnlinking"
-            @click="handleUnlink(provider.provider)"
-          >
-            <Icon name="lucide:unlink" />
-            {{ $t('labels.account.social.unlink') }}
-          </Button>
-          <Button
-            v-else
-            as="a"
-            variant="primary"
-            :href="linkUrl(provider.link_url)"
-          >
-            <Icon name="lucide:link" />
-            {{ $t('labels.account.social.link') }}
-          </Button>
+        <div>
+          <p class="font-medium text-primary">
+            {{ providerLabel(provider.provider) }}
+          </p>
+          <p class="text-sm text-muted">
+            {{
+              provider.linked
+                ? $t('labels.account.social.linked')
+                : $t('labels.account.social.notLinked')
+            }}
+          </p>
         </div>
       </div>
-    </CardContent>
-  </Card>
+
+      <div class="flex items-center gap-2">
+        <Button
+          v-if="provider.linked"
+          variant="outline"
+          :disabled="isUnlinking"
+          @click="handleUnlink(provider.provider)"
+        >
+          <Icon name="lucide:unlink" />
+          {{ $t('labels.account.social.unlink') }}
+        </Button>
+        <Button
+          v-else
+          as="a"
+          variant="primary"
+          :href="linkUrl(provider.link_url)"
+        >
+          <Icon name="lucide:link" />
+          {{ $t('labels.account.social.link') }}
+        </Button>
+      </div>
+    </div>
+  </SettingsSection>
 </template>

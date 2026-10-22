@@ -6,15 +6,8 @@ import Icon from '~/components/Icon.vue'
 import AiConfigFormDialog from '~/components/space-settings/AiConfigFormDialog.vue'
 import { Badge } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '~/components/ui/card'
 import { Progress } from '~/components/ui/progress'
+import { SettingsSection } from '~/components/ui/settings-section'
 import { Skeleton } from '~/components/ui/skeleton'
 import { Switch } from '~/components/ui/switch'
 import SimpleTooltip from '~/components/ui/tooltip/SimpleTooltip.vue'
@@ -191,108 +184,127 @@ const handleDeleteConfig = async (config: SpaceAiConfig) => {
 </script>
 
 <template>
-  <div class="pt-6 space-y-12 divide-y divide-border">
-    <Card variant="none">
-      <CardContent class="space-y-6">
-        <div class="space-y-2">
-          <div class="flex items-center justify-between">
-            <label
-              for="enable-ai"
-              class="text-sm font-medium"
-            >
-              {{ $t('labels.settings.ai.enableAIFeatures') }}
-            </label>
-            <Switch
-              id="enable-ai"
-              v-model="enableAI"
-              :disabled="!canManageAi"
-              :aria-label="$t('labels.settings.ai.enableAIFeatures')"
-            />
-          </div>
-          <p class="text-xs text-muted">
-            {{ $t('labels.settings.ai.featuresDescription') }}
-          </p>
+  <div class="divide-y divide-border pt-6">
+    <SettingsSection
+      :title="$t('labels.settings.ai.title')"
+      :description="$t('labels.settings.ai.featuresDescription')"
+    >
+      <div class="space-y-2">
+        <div class="flex items-center justify-between">
+          <label
+            for="enable-ai"
+            class="text-sm font-medium"
+          >
+            {{ $t('labels.settings.ai.enableAIFeatures') }}
+          </label>
+          <Switch
+            id="enable-ai"
+            v-model="enableAI"
+            :disabled="!canManageAi"
+            :aria-label="$t('labels.settings.ai.enableAIFeatures')"
+          />
         </div>
+      </div>
 
+      <div
+        v-if="enableAI"
+        class="space-y-4"
+      >
         <div
-          v-if="enableAI"
+          v-if="runtimeConfig.public.features.ai"
           class="space-y-4"
         >
-          <div
-            v-if="runtimeConfig.public.features.ai"
-            class="space-y-4"
-          >
-            <div class="flex items-start justify-between gap-4">
-              <div>
-                <h4 class="font-medium">{{ $t('labels.settings.ai.usage') }}</h4>
-                <p class="text-sm text-muted">{{ $t('labels.settings.ai.usageDescription') }}</p>
-              </div>
-              <SimpleTooltip
-                v-if="aiUsage?.available"
-                :tooltip="$t('actions.refresh')"
-              >
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  :disabled="isFetchingUsage"
-                  @click="refreshUsage"
-                >
-                  <Icon
-                    name="lucide:refresh-cw"
-                    class="h-4 w-4"
-                    :class="{ 'animate-spin': isFetchingUsage }"
-                  />
-                  <span class="sr-only">{{ $t('actions.refresh') }}</span>
-                </Button>
-              </SimpleTooltip>
+          <div class="flex items-start justify-between gap-4">
+            <div>
+              <h4 class="text-sm font-semibold text-primary">{{ $t('labels.settings.ai.usage') }}</h4>
+              <p class="text-sm text-muted">{{ $t('labels.settings.ai.usageDescription') }}</p>
             </div>
-
-            <div
-              v-if="isLoadingUsage"
-              class="space-y-2"
+            <SimpleTooltip
+              v-if="aiUsage?.available"
+              :tooltip="$t('actions.refresh')"
             >
-              <div class="flex items-center justify-between gap-2">
-                <Skeleton class="h-4 w-40" />
-                <Skeleton class="h-4 w-10" />
-              </div>
-              <Skeleton class="h-2 w-full rounded-full" />
-              <div class="flex items-center justify-between gap-2">
-                <Skeleton class="h-3 w-24" />
-                <Skeleton class="h-3 w-32" />
-              </div>
-            </div>
-
-            <div
-              v-else-if="isUsageError"
-              class="text-sm text-destructive"
-            >
-              {{ $t('labels.settings.ai.usageError') }}
               <Button
-                variant="link"
-                size="sm"
-                class="ml-2 h-auto p-0"
+                variant="ghost"
+                size="icon"
+                :disabled="isFetchingUsage"
                 @click="refreshUsage"
               >
-                {{ $t('actions.retry') }}
+                <Icon
+                  name="lucide:refresh-cw"
+                  class="h-4 w-4"
+                  :class="{ 'animate-spin': isFetchingUsage }"
+                />
+                <span class="sr-only">{{ $t('actions.refresh') }}</span>
               </Button>
-            </div>
+            </SimpleTooltip>
+          </div>
 
-            <div
-              v-else-if="aiUsage && !aiUsage.available"
-              class="text-muted-foreground text-sm"
-            >
-              {{ $t('labels.settings.ai.notAvailable') }}
+          <div
+            v-if="isLoadingUsage"
+            class="space-y-2"
+          >
+            <div class="flex items-center justify-between gap-2">
+              <Skeleton class="h-4 w-40" />
+              <Skeleton class="h-4 w-10" />
             </div>
+            <Skeleton class="h-2 w-full rounded-full" />
+            <div class="flex items-center justify-between gap-2">
+              <Skeleton class="h-3 w-24" />
+              <Skeleton class="h-3 w-32" />
+            </div>
+          </div>
 
-            <div
-              v-else-if="aiUsage && aiUsage.unlimited"
-              class="space-y-2"
+          <div
+            v-else-if="isUsageError"
+            class="text-sm text-destructive"
+          >
+            {{ $t('labels.settings.ai.usageError') }}
+            <Button
+              variant="link"
+              size="sm"
+              class="ml-2 h-auto p-0"
+              @click="refreshUsage"
             >
-              <div class="flex items-center gap-2">
-                <span class="text-sm">
-                  {{ formatAmount(aiUsage.used) }} {{ $t('labels.settings.ai.spent') }}
+              {{ $t('actions.retry') }}
+            </Button>
+          </div>
+
+          <div
+            v-else-if="aiUsage && !aiUsage.available"
+            class="text-muted-foreground text-sm"
+          >
+            {{ $t('labels.settings.ai.notAvailable') }}
+          </div>
+
+          <div
+            v-else-if="aiUsage && aiUsage.unlimited"
+            class="space-y-2"
+          >
+            <div class="flex items-center gap-2">
+              <span class="text-sm">
+                {{ formatAmount(aiUsage.used) }} {{ $t('labels.settings.ai.spent') }}
+              </span>
+              <Badge size="xs">{{ $t('labels.settings.ai.unlimited') }}</Badge>
+              <Badge
+                v-if="aiUsage.live"
+                size="xs"
+                variant="success"
+              >
+                {{ $t('labels.settings.ai.live') }}
+              </Badge>
+            </div>
+          </div>
+
+          <div
+            v-else-if="aiUsage"
+            class="space-y-2"
+          >
+            <div class="flex items-center justify-between gap-2">
+              <span class="flex items-center gap-2 text-sm">
+                <span>
+                  {{ formatAmount(aiUsage.used) }} {{ $t('labels.settings.ai.of') }}
+                  {{ formatAmount(aiUsage.limit) }} {{ $t('labels.settings.ai.spent') }}
                 </span>
-                <Badge size="xs">{{ $t('labels.settings.ai.unlimited') }}</Badge>
                 <Badge
                   v-if="aiUsage.live"
                   size="xs"
@@ -300,211 +312,184 @@ const handleDeleteConfig = async (config: SpaceAiConfig) => {
                 >
                   {{ $t('labels.settings.ai.live') }}
                 </Badge>
-              </div>
+              </span>
+              <span class="text-sm text-muted">{{ aiUsage.percentage }}%</span>
             </div>
-
-            <div
-              v-else-if="aiUsage"
-              class="space-y-2"
-            >
-              <div class="flex items-center justify-between gap-2">
-                <span class="flex items-center gap-2 text-sm">
-                  <span>
-                    {{ formatAmount(aiUsage.used) }} {{ $t('labels.settings.ai.of') }}
-                    {{ formatAmount(aiUsage.limit) }} {{ $t('labels.settings.ai.spent') }}
-                  </span>
-                  <Badge
-                    v-if="aiUsage.live"
-                    size="xs"
-                    variant="success"
-                  >
-                    {{ $t('labels.settings.ai.live') }}
-                  </Badge>
-                </span>
-                <span class="text-sm text-muted">{{ aiUsage.percentage }}%</span>
-              </div>
-              <Progress
-                :model-value="aiUsage.percentage"
-                class="h-2"
-              />
-              <div class="flex items-center justify-between gap-2">
-                <p
-                  v-if="aiUsage.remaining !== null"
-                  class="text-sm text-muted"
-                >
-                  {{ formatAmount(aiUsage.remaining) }} {{ $t('labels.settings.ai.remaining') }}
-                </p>
-                <p
-                  v-if="resetDate"
-                  class="text-sm text-muted"
-                >
-                  {{ $t('labels.settings.ai.resetInfo', { date: resetDate }) }}
-                </p>
-              </div>
-            </div>
-
-            <div
-              v-else
-              class="text-muted-foreground text-sm"
-            >
-              {{ $t('labels.settings.ai.noUsageData') }}
+            <Progress
+              :model-value="aiUsage.percentage"
+              class="h-2"
+            />
+            <div class="flex items-center justify-between gap-2">
+              <p
+                v-if="aiUsage.remaining !== null"
+                class="text-sm text-muted"
+              >
+                {{ formatAmount(aiUsage.remaining) }} {{ $t('labels.settings.ai.remaining') }}
+              </p>
+              <p
+                v-if="resetDate"
+                class="text-sm text-muted"
+              >
+                {{ $t('labels.settings.ai.resetInfo', { date: resetDate }) }}
+              </p>
             </div>
           </div>
+
+          <div
+            v-else
+            class="text-muted-foreground text-sm"
+          >
+            {{ $t('labels.settings.ai.noUsageData') }}
+          </div>
         </div>
-      </CardContent>
-      <CardFooter>
+      </div>
+      <template #footer>
         <Button
           v-if="canManageAi"
           variant="primary"
-          :disabled="isUpdating"
+          :loading="isUpdating"
           @click="saveSettings"
         >
           {{ isUpdating ? $t('actions.saving') : $t('actions.saveChanges') }}
         </Button>
-      </CardFooter>
-    </Card>
+      </template>
+    </SettingsSection>
 
-    <Card
+    <SettingsSection
       v-if="enableAI"
-      variant="none"
+      :title="$t('labels.settings.ai.configurations')"
+      :description="$t('labels.settings.ai.configurationsDescription')"
     >
-      <CardHeader>
-        <div class="flex items-center justify-between gap-6">
-          <div>
-            <CardTitle>{{ $t('labels.settings.ai.configurations') }}</CardTitle>
-            <CardDescription>{{
-              $t('labels.settings.ai.configurationsDescription')
-            }}</CardDescription>
-          </div>
-          <Button
-            v-if="canManageAi"
-            variant="primary"
-            size="sm"
-            @click="openCreateDialog"
-          >
-            <Icon
-              name="lucide:plus"
-              class="h-4 w-4"
-            />
-            {{ $t('labels.settings.ai.createConfig') }}
-          </Button>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <div
-          v-if="isLoadingConfigs"
-          class="space-y-3"
-        >
-          <div
-            v-for="i in 2"
-            :key="i"
-            class="flex items-center justify-between rounded-lg bg-surface p-4"
-          >
-            <div class="flex-1 space-y-2">
-              <Skeleton class="h-5 w-40" />
-              <div class="flex flex-wrap gap-3">
-                <Skeleton class="h-4 w-32" />
-                <Skeleton class="h-4 w-16" />
-                <Skeleton class="h-4 w-20" />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div
-          v-else-if="!aiConfigs || aiConfigs.length === 0"
-          class="flex flex-col items-center justify-center py-12 text-center text-muted-foreground"
+      <template
+        v-if="canManageAi"
+        #aside
+      >
+        <Button
+          variant="primary"
+          size="sm"
+          class="mt-2 w-fit"
+          @click="openCreateDialog"
         >
           <Icon
-            name="lucide:sparkles"
-            class="mb-4 h-12 w-12 opacity-20"
+            name="lucide:plus"
+            class="h-4 w-4"
           />
-          <p class="font-medium">{{ $t('labels.settings.ai.noConfigs') }}</p>
-          <p class="mt-1 text-sm">{{ $t('labels.settings.ai.noConfigsDescription') }}</p>
-        </div>
-
+          {{ $t('labels.settings.ai.createConfig') }}
+        </Button>
+      </template>
+      <div
+        v-if="isLoadingConfigs"
+        class="space-y-3"
+      >
         <div
-          v-else
-          class="space-y-3"
+          v-for="i in 2"
+          :key="i"
+          class="flex items-center justify-between rounded-lg bg-surface p-4"
         >
-          <div
-            v-for="config in aiConfigs"
-            :key="config.id"
-            class="flex items-center justify-between rounded-lg p-4 transition-colors bg-surface"
-            :class="config.is_default ? 'border border-border' : ''"
-          >
-            <div class="flex-1 space-y-2">
-              <div class="flex items-center gap-2">
-                <h4 class="font-semibold text-primary">{{ config.name }}</h4>
-                <Badge
-                  v-if="config.is_default"
-                  size="xs"
-                >
-                  {{ $t('labels.settings.ai.default') }}
-                </Badge>
-              </div>
-              <div class="flex flex-wrap gap-3 text-sm text-muted">
-                <span class="flex items-center gap-1">
-                  <Icon name="lucide:server" />
-                  {{ config.driver }}:{{ config.model }}
-                </span>
-                <span class="flex items-center gap-1">
-                  <Icon name="lucide:thermometer" />
-                  {{ config.temperature }}
-                </span>
-                <span class="flex items-center gap-1">
-                  <Icon name="lucide:hash" />
-                  {{ config.max_tokens.toLocaleString() }}
-                </span>
-              </div>
-              <p
-                v-if="config.system_prompt"
-                class="line-clamp-1 text-sm text-muted-foreground"
-              >
-                {{ config.system_prompt }}
-              </p>
-            </div>
-            <div class="flex gap-1">
-              <SimpleTooltip
-                v-if="canManageAi"
-                :tooltip="$t('actions.edit')"
-              >
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  @click="openEditDialog(config)"
-                >
-                  <Icon name="lucide:pencil" />
-                  <span class="sr-only">{{ $t('actions.edit') }}</span>
-                </Button>
-              </SimpleTooltip>
-
-              <SimpleTooltip
-                v-if="canManageAi"
-                :tooltip="
-                  aiConfigs && aiConfigs.length === 1
-                    ? $t('components.aiSettings.cannotDeleteLast')
-                    : $t('actions.delete')
-                "
-              >
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  :disabled="isDeleting || (aiConfigs && aiConfigs.length === 1)"
-                  @click="handleDeleteConfig(config)"
-                >
-                  <Icon
-                    name="lucide:trash-2"
-                    class="h-4 w-4"
-                  />
-                  <span class="sr-only">{{ $t('actions.delete') }}</span>
-                </Button>
-              </SimpleTooltip>
+          <div class="flex-1 space-y-2">
+            <Skeleton class="h-5 w-40" />
+            <div class="flex flex-wrap gap-3">
+              <Skeleton class="h-4 w-32" />
+              <Skeleton class="h-4 w-16" />
+              <Skeleton class="h-4 w-20" />
             </div>
           </div>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+
+      <div
+        v-else-if="!aiConfigs || aiConfigs.length === 0"
+        class="flex flex-col items-center justify-center py-12 text-center text-muted-foreground"
+      >
+        <Icon
+          name="lucide:sparkles"
+          class="mb-4 h-12 w-12 opacity-20"
+        />
+        <p class="font-medium">{{ $t('labels.settings.ai.noConfigs') }}</p>
+        <p class="mt-1 text-sm">{{ $t('labels.settings.ai.noConfigsDescription') }}</p>
+      </div>
+
+      <div
+        v-else
+        class="space-y-3"
+      >
+        <div
+          v-for="config in aiConfigs"
+          :key="config.id"
+          class="flex items-center justify-between rounded-lg p-4 transition-colors bg-surface"
+          :class="config.is_default ? 'border border-border' : ''"
+        >
+          <div class="flex-1 space-y-2">
+            <div class="flex items-center gap-2">
+              <h4 class="font-semibold text-primary">{{ config.name }}</h4>
+              <Badge
+                v-if="config.is_default"
+                size="xs"
+              >
+                {{ $t('labels.settings.ai.default') }}
+              </Badge>
+            </div>
+            <div class="flex flex-wrap gap-3 text-sm text-muted">
+              <span class="flex items-center gap-1">
+                <Icon name="lucide:server" />
+                {{ config.driver }}:{{ config.model }}
+              </span>
+              <span class="flex items-center gap-1">
+                <Icon name="lucide:thermometer" />
+                {{ config.temperature }}
+              </span>
+              <span class="flex items-center gap-1">
+                <Icon name="lucide:hash" />
+                {{ config.max_tokens.toLocaleString() }}
+              </span>
+            </div>
+            <p
+              v-if="config.system_prompt"
+              class="line-clamp-1 text-sm text-muted-foreground"
+            >
+              {{ config.system_prompt }}
+            </p>
+          </div>
+          <div class="flex gap-1">
+            <SimpleTooltip
+              v-if="canManageAi"
+              :tooltip="$t('actions.edit')"
+            >
+              <Button
+                variant="ghost"
+                size="icon"
+                @click="openEditDialog(config)"
+              >
+                <Icon name="lucide:pencil" />
+                <span class="sr-only">{{ $t('actions.edit') }}</span>
+              </Button>
+            </SimpleTooltip>
+
+            <SimpleTooltip
+              v-if="canManageAi"
+              :tooltip="
+                aiConfigs && aiConfigs.length === 1
+                  ? $t('components.aiSettings.cannotDeleteLast')
+                  : $t('actions.delete')
+              "
+            >
+              <Button
+                variant="ghost"
+                size="icon"
+                :disabled="isDeleting || (aiConfigs && aiConfigs.length === 1)"
+                @click="handleDeleteConfig(config)"
+              >
+                <Icon
+                  name="lucide:trash-2"
+                  class="h-4 w-4"
+                />
+                <span class="sr-only">{{ $t('actions.delete') }}</span>
+              </Button>
+            </SimpleTooltip>
+          </div>
+        </div>
+      </div>
+    </SettingsSection>
 
     <AiConfigFormDialog
       v-model:open="isDialogOpen"

@@ -21,9 +21,8 @@ useSeoMeta({
   <div class="content-grid">
     <ContentHeader
       :header="$t('labels.settings.configuration.title')"
-      :description="$t('labels.settings.configuration.description')"
     />
-    <div class="pt-6 space-y-12 divide-y divide-border">
+    <div class="divide-y divide-border pt-6">
       <EditorSettings
         v-if="space"
         :space="space"

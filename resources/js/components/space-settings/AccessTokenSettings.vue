@@ -5,8 +5,8 @@ import { toast } from 'vue-sonner'
 
 import Icon from '~/components/Icon.vue'
 import { Button } from '~/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '~/components/ui/card'
 import { CheckboxField, InputField } from '~/components/ui/form'
+import { SettingsSection } from '~/components/ui/settings-section'
 import {
   Table,
   TableBody,
@@ -57,108 +57,106 @@ const copyToken = (token: string) => {
 </script>
 
 <template>
-  <Card variant="none">
-    <CardHeader>
-      <CardTitle>{{ $t('labels.settings.accessTokens.title') }}</CardTitle>
-      <CardDescription>{{ $t('labels.settings.accessTokens.description') }}</CardDescription>
-    </CardHeader>
-    <CardContent class="grid gap-6">
-      <div class="flex items-end gap-4">
-        <div class="flex-1 space-y-2">
-          <InputField
-            v-model="newTokenName"
-            name="token-name"
-            :label="$t('labels.settings.accessTokens.tokenName')"
-            :placeholder="$t('labels.settings.accessTokens.tokenNamePlaceholder')"
-          />
-        </div>
-        <Button
-          :loading="isGenerating"
-          :disabled="!newTokenName"
-          @click="generateToken"
-        >
-          {{
-            isGenerating
-              ? $t('labels.settings.accessTokens.generating')
-              : $t('labels.settings.accessTokens.generateToken')
-          }}
-        </Button>
+  <SettingsSection
+    wide
+    :title="$t('labels.settings.accessTokens.title')"
+    :description="$t('labels.settings.accessTokens.description')"
+  >
+    <div class="flex items-end gap-4">
+      <div class="flex-1 space-y-2">
+        <InputField
+          v-model="newTokenName"
+          name="token-name"
+          :label="$t('labels.settings.accessTokens.tokenName')"
+          :placeholder="$t('labels.settings.accessTokens.tokenNamePlaceholder')"
+        />
       </div>
+      <Button
+        :loading="isGenerating"
+        :disabled="!newTokenName"
+        @click="generateToken"
+      >
+        {{
+          isGenerating
+            ? $t('labels.settings.accessTokens.generating')
+            : $t('labels.settings.accessTokens.generateToken')
+        }}
+      </Button>
+    </div>
 
-      <CheckboxField
-        v-model="newTokenPreview"
-        name="token-preview"
-        :label="$t('labels.settings.accessTokens.allowPreview')"
-        :description="$t('labels.settings.accessTokens.allowPreviewDescription')"
-      />
+    <CheckboxField
+      v-model="newTokenPreview"
+      name="token-preview"
+      :label="$t('labels.settings.accessTokens.allowPreview')"
+      :description="$t('labels.settings.accessTokens.allowPreviewDescription')"
+    />
 
-      <div class="space-y-2">
-        <h4 class="text-sm font-medium">{{ $t('labels.settings.accessTokens.existingTokens') }}</h4>
-        <div class="overflow-hidden rounded-md">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>{{ $t('labels.settings.accessTokens.name') }}</TableHead>
-                <TableHead>{{ $t('labels.settings.accessTokens.token') }}</TableHead>
-                <TableHead class="text-right">{{
-                  $t('labels.settings.accessTokens.executionCount')
-                }}</TableHead>
-                <TableHead>{{ $t('labels.settings.accessTokens.lastUsedAt') }}</TableHead>
-                <TableHead>{{ $t('labels.settings.accessTokens.createdAt') }}</TableHead>
-                <TableHead class="w-24" />
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              <TableLoadingRow
-                v-if="isLoadingTokens"
-                :colspan="6"
-                :rows="3"
-              />
-              <TableRow
-                v-for="token in tokens"
-                :key="token.id"
-              >
-                <TableCell>{{ token.name }}</TableCell>
-                <TableCell class="font-mono text-xs">
-                  {{ token.token.substring(0, 8) }}...{{
-                    token.token.substring(token.token.length - 4)
-                  }}
-                </TableCell>
-                <TableCell class="text-right">{{ formatNumber(token.execution_count) }}</TableCell>
-                <TableCell>{{
-                  token.last_used_at ? formatDateTime(token.last_used_at) : '–'
-                }}</TableCell>
-                <TableCell>{{ formatDateTime(token.created_at) }}</TableCell>
-                <TableCell>
-                  <div class="flex space-x-1">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      @click="copyToken(token.token)"
-                    >
-                      <Icon name="lucide:copy" />
-                      <span class="sr-only">{{ $t('actions.copy') }}</span>
-                    </Button>
-                    <Button
-                      variant="destructive"
-                      size="icon"
-                      @click="removeToken(token.id)"
-                    >
-                      <Icon name="lucide:trash-2" />
-                      <span class="sr-only">{{ $t('actions.delete') }}</span>
-                    </Button>
-                  </div>
-                </TableCell>
-              </TableRow>
-              <TableEmptyRow
-                v-if="!isLoadingTokens && tokens?.length === 0"
-                :colspan="6"
-                :label="$t('labels.settings.accessTokens.noTokens')"
-              />
-            </TableBody>
-          </Table>
-        </div>
+    <div class="space-y-2">
+      <h4 class="text-sm font-semibold text-primary">{{ $t('labels.settings.accessTokens.existingTokens') }}</h4>
+      <div class="overflow-hidden rounded-lg border border-border">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>{{ $t('labels.settings.accessTokens.name') }}</TableHead>
+              <TableHead>{{ $t('labels.settings.accessTokens.token') }}</TableHead>
+              <TableHead class="text-right">{{
+                $t('labels.settings.accessTokens.executionCount')
+              }}</TableHead>
+              <TableHead>{{ $t('labels.settings.accessTokens.lastUsedAt') }}</TableHead>
+              <TableHead>{{ $t('labels.settings.accessTokens.createdAt') }}</TableHead>
+              <TableHead class="w-24" />
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            <TableLoadingRow
+              v-if="isLoadingTokens"
+              :colspan="6"
+              :rows="3"
+            />
+            <TableRow
+              v-for="token in tokens"
+              :key="token.id"
+            >
+              <TableCell>{{ token.name }}</TableCell>
+              <TableCell class="font-mono text-sm">
+                {{ token.token.substring(0, 8) }}...{{
+                  token.token.substring(token.token.length - 4)
+                }}
+              </TableCell>
+              <TableCell class="text-right">{{ formatNumber(token.execution_count) }}</TableCell>
+              <TableCell>{{
+                token.last_used_at ? formatDateTime(token.last_used_at) : '–'
+              }}</TableCell>
+              <TableCell>{{ formatDateTime(token.created_at) }}</TableCell>
+              <TableCell>
+                <div class="flex space-x-1">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    @click="copyToken(token.token)"
+                  >
+                    <Icon name="lucide:copy" />
+                    <span class="sr-only">{{ $t('actions.copy') }}</span>
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    size="icon"
+                    @click="removeToken(token.id)"
+                  >
+                    <Icon name="lucide:trash-2" />
+                    <span class="sr-only">{{ $t('actions.delete') }}</span>
+                  </Button>
+                </div>
+              </TableCell>
+            </TableRow>
+            <TableEmptyRow
+              v-if="!isLoadingTokens && tokens?.length === 0"
+              :colspan="6"
+              :label="$t('labels.settings.accessTokens.noTokens')"
+            />
+          </TableBody>
+        </Table>
       </div>
-    </CardContent>
-  </Card>
+    </div>
+  </SettingsSection>
 </template>

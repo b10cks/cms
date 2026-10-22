@@ -2,16 +2,9 @@
 import { deepClone } from '@vue/devtools-shared'
 
 import { Button } from '~/components/ui/button'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '~/components/ui/card'
 import { FormField, SelectField } from '~/components/ui/form'
 import { Input } from '~/components/ui/input'
+import { SettingsSection } from '~/components/ui/settings-section'
 import SettingsTable, {
   type ColumnDefinition,
   type TableItem,
@@ -216,113 +209,107 @@ const saveSettings = async () => {
 </script>
 
 <template>
-  <Card variant="none">
-    <CardHeader>
-      <CardTitle>{{ $t('labels.settings.i18n.title') }}</CardTitle>
-      <CardDescription>{{ $t('labels.settings.i18n.description') }}</CardDescription>
-    </CardHeader>
-    <CardContent class="space-y-6">
-      <FormField
-        name="defaultLanguage"
-        :label="$t('labels.settings.i18n.defaultLanguage')"
-        :description="$t('labels.settings.i18n.defaultLanguageDescription')"
+  <SettingsSection
+    wide
+    :title="$t('labels.settings.i18n.title')"
+    :description="$t('labels.settings.i18n.description')"
+  >
+    <FormField
+      name="defaultLanguage"
+      :label="$t('labels.settings.i18n.defaultLanguage')"
+      :description="$t('labels.settings.i18n.defaultLanguageDescription')"
+    >
+      <Input
+        v-model="defaultLanguage"
+        :placeholder="$t('labels.settings.i18n.defaultLanguagePlaceholder')"
+      />
+      <p
+        v-if="getError('settings.default_language')"
+        class="mt-2 text-sm text-danger"
       >
-        <Input
-          v-model="defaultLanguage"
-          :placeholder="$t('labels.settings.i18n.defaultLanguagePlaceholder')"
-        />
-        <p
-          v-if="getError('settings.default_language')"
-          class="mt-2 text-sm text-danger"
-        >
-          {{ getError('settings.default_language') }}
-        </p>
-      </FormField>
-      <SelectField
-        v-model="i18nMode"
-        name="i18nMode"
-        :label="$t('labels.settings.i18n.mode.label')"
-        :description="$t('labels.settings.i18n.mode.description')"
-        :options="modeOptions"
+        {{ getError('settings.default_language') }}
+      </p>
+    </FormField>
+    <SelectField
+      v-model="i18nMode"
+      name="i18nMode"
+      :label="$t('labels.settings.i18n.mode.label')"
+      :description="$t('labels.settings.i18n.mode.description')"
+      :options="modeOptions"
+    />
+    <SelectField
+      v-model="slugStrategy"
+      name="slugStrategy"
+      :label="$t('labels.settings.i18n.slugStrategy.label')"
+      :placeholder="$t('labels.settings.i18n.slugStrategy.placeholder')"
+      :description="$t('labels.settings.i18n.slugStrategy.description')"
+      :options="slugStrategyOptions"
+    />
+    <FormField
+      name="languages"
+      :label="$t('labels.settings.i18n.languages')"
+      :description="$t('labels.settings.i18n.languagesDescription')"
+    >
+      <SettingsTable
+        v-model:items="languages"
+        :columns="columns"
+        :new-item-template="newItemTemplate"
+        @add="addLanguage"
+        @remove="removeLanguage"
+        @update:items="(items) => (languages = items as EditableSpaceLanguage[])"
       />
-      <SelectField
-        v-model="slugStrategy"
-        name="slugStrategy"
-        :label="$t('labels.settings.i18n.slugStrategy.label')"
-        :placeholder="$t('labels.settings.i18n.slugStrategy.placeholder')"
-        :description="$t('labels.settings.i18n.slugStrategy.description')"
-        :options="slugStrategyOptions"
-      />
-      <div class="space-y-4">
-        <div>
-          <h4 class="text-sm font-medium">{{ $t('labels.settings.i18n.languages') }}</h4>
-          <p class="text-xs text-muted">
-            {{ $t('labels.settings.i18n.languagesDescription') }}
-          </p>
-        </div>
-        <SettingsTable
-          v-model:items="languages"
-          :columns="columns"
-          :new-item-template="newItemTemplate"
-          @add="addLanguage"
-          @remove="removeLanguage"
-          @update:items="(items) => (languages = items as EditableSpaceLanguage[])"
-        />
-        <div
-          v-if="languageErrorEntries.length"
-          class="space-y-1"
-        >
-          <p
-            v-for="[path, messages] in languageErrorEntries"
-            :key="path"
-            class="text-sm text-danger"
-          >
-            {{ messages[0] }}
-          </p>
-        </div>
+      <div
+        v-if="languageErrorEntries.length"
+        class="space-y-1"
+      >
         <p
-          v-if="getError('settings.languages')"
+          v-for="[path, messages] in languageErrorEntries"
+          :key="path"
           class="text-sm text-danger"
         >
-          {{ getError('settings.languages') }}
+          {{ messages[0] }}
         </p>
       </div>
-      <div class="space-y-4">
-        <div>
-          <h4 class="text-sm font-medium">{{ $t('labels.settings.i18n.siteLocales.title') }}</h4>
-          <p class="text-xs text-muted">
-            {{ $t('labels.settings.i18n.siteLocales.description') }}
-          </p>
-        </div>
-        <SettingsTable
-          v-model:items="siteLocales"
-          :columns="siteLocaleColumns"
-          :new-item-template="newSiteLocaleTemplate"
-          @add="addSiteLocale"
-          @remove="removeSiteLocale"
-          @update:items="(items) => (siteLocales = items)"
-        />
-        <div
-          v-if="siteLocaleErrorEntries.length"
-          class="space-y-1"
-        >
-          <p
-            v-for="[path, messages] in siteLocaleErrorEntries"
-            :key="path"
-            class="text-sm text-danger"
-          >
-            {{ messages[0] }}
-          </p>
-        </div>
+      <p
+        v-if="getError('settings.languages')"
+        class="text-sm text-danger"
+      >
+        {{ getError('settings.languages') }}
+      </p>
+    </FormField>
+    <FormField
+      name="site-locales"
+      :label="$t('labels.settings.i18n.siteLocales.title')"
+      :description="$t('labels.settings.i18n.siteLocales.description')"
+    >
+      <SettingsTable
+        v-model:items="siteLocales"
+        :columns="siteLocaleColumns"
+        :new-item-template="newSiteLocaleTemplate"
+        @add="addSiteLocale"
+        @remove="removeSiteLocale"
+        @update:items="(items) => (siteLocales = items)"
+      />
+      <div
+        v-if="siteLocaleErrorEntries.length"
+        class="space-y-1"
+      >
         <p
-          v-if="getError('settings.site_locales')"
+          v-for="[path, messages] in siteLocaleErrorEntries"
+          :key="path"
           class="text-sm text-danger"
         >
-          {{ getError('settings.site_locales') }}
+          {{ messages[0] }}
         </p>
       </div>
-    </CardContent>
-    <CardFooter>
+      <p
+        v-if="getError('settings.site_locales')"
+        class="text-sm text-danger"
+      >
+        {{ getError('settings.site_locales') }}
+      </p>
+    </FormField>
+    <template #footer>
       <Button
         v-if="canUpdateSpace"
         variant="primary"
@@ -330,6 +317,6 @@ const saveSettings = async () => {
         @click="saveSettings"
         >{{ $t('actions.saveChanges') }}
       </Button>
-    </CardFooter>
-  </Card>
+    </template>
+  </SettingsSection>
 </template>

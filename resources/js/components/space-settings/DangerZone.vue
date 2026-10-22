@@ -3,7 +3,6 @@ import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
 import { Button } from '~/components/ui/button'
-import { Card, CardContent } from '~/components/ui/card'
 import {
   Dialog,
   DialogContent,
@@ -12,8 +11,7 @@ import {
   DialogTrigger,
 } from '~/components/ui/dialog'
 import { InputField } from '~/components/ui/form'
-
-import CardHeaderCombined from '../ui/card/CardHeaderCombined.vue'
+import { SettingsSection } from '~/components/ui/settings-section'
 
 const props = defineProps<{
   space: SpaceResource
@@ -44,16 +42,16 @@ const confirmDelete = async () => {
 </script>
 
 <template>
-  <Card variant="destructiveOutline">
-    <CardHeaderCombined
-      :title="$t('labels.settings.dangerZone.title')"
-      :description="$t('labels.settings.dangerZone.description')"
-      class="text-destructive"
-    />
-    <CardContent>
-      <p class="mb-4 text-sm">
-        {{ $t('labels.settings.dangerZone.warning') }}
-      </p>
+  <SettingsSection
+    :title="$t('labels.settings.dangerZone.title')"
+    :description="$t('labels.settings.dangerZone.description')"
+    destructive
+  >
+    <p class="text-sm">
+      {{ $t('labels.settings.dangerZone.warning') }}
+    </p>
+
+    <div>
 
       <Dialog v-model:open="isOpen">
         <DialogTrigger as-child>
@@ -92,6 +90,6 @@ const confirmDelete = async () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </CardContent>
-  </Card>
+    </div>
+  </SettingsSection>
 </template>

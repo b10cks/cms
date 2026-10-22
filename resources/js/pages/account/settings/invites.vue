@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import MyInvitesList from '~/components/invites/MyInvitesList.vue'
-import { Card, CardContent } from '~/components/ui/card'
 import ContentHeader from '~/components/ui/ContentHeader.vue'
 import type { InviteResource } from '~/types/invites'
 
@@ -65,24 +64,19 @@ const handleDecline = (invite: InviteResource) => {
   <div class="content-grid gap-6 pb-6">
     <ContentHeader
       :header="$t('labels.account.invites.title')"
-      :description="$t('labels.account.invites.description')"
     />
 
-    <Card variant="none">
-      <CardContent>
-        <MyInvitesList
-          :invites="invites"
-          :is-loading="isLoading"
-          :is-fetching="isFetching || isAccepting || isDeclining"
-          :meta="meta"
-          :sort-by="sortBy"
-          v-bind="paginationBindings"
-          :acting-invite-id="actingInviteId"
-          @update:sort-by="setSortBy"
-          @accept="handleAccept"
-          @decline="handleDecline"
-        />
-      </CardContent>
-    </Card>
+    <MyInvitesList
+      :invites="invites"
+      :is-loading="isLoading"
+      :is-fetching="isFetching || isAccepting || isDeclining"
+      :meta="meta"
+      :sort-by="sortBy"
+      v-bind="paginationBindings"
+      :acting-invite-id="actingInviteId"
+      @update:sort-by="setSortBy"
+      @accept="handleAccept"
+      @decline="handleDecline"
+    />
   </div>
 </template>

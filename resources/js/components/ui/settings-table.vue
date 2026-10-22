@@ -150,7 +150,7 @@ const getColumnOptions = (column: ColumnDefinition<TItem>, item: TItem) => {
 </script>
 
 <template>
-  <div class="overflow-hidden rounded-md">
+  <div class="overflow-hidden rounded-lg border border-border">
     <Table>
       <TableHeader>
         <TableRow>
@@ -241,7 +241,7 @@ const getColumnOptions = (column: ColumnDefinition<TItem>, item: TItem) => {
           </TableCell>
         </TableRow>
       </TableBody>
-      <TableFooter>
+      <TableFooter class="bg-surface/60 font-normal">
         <TableRow
           v-if="showAddRow && canAdd"
           :id="`${id}-new-row`"
