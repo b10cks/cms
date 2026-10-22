@@ -15,7 +15,12 @@ import { PulseDot } from '~/components/ui/pulse-dot'
 import { SimpleTooltip } from '~/components/ui/tooltip'
 import { findHiddenBlockIds } from '~/lib/blockTreeEdits'
 import { buildPreviewUrl, resolveLocaleSegments } from '~/lib/preview-url'
-import { collectAssetIds, toDeliveredContent } from '~/lib/previewDelivery'
+import {
+  collectAssetIds,
+  collectLinkIds,
+  toDeliveredContent,
+  type LinkTarget,
+} from '~/lib/previewDelivery'
 import { isSafeFrameUrl } from '~/lib/sanitize'
 import type { CommentResource } from '~/types/comments'
 import { ContentResource } from '~/types/contents'
@@ -49,6 +54,7 @@ const { data: currentSpace } = useSpaceQuery(props.spaceId) as { data: Ref<Space
 const { settings } = useSpaceSettings(props.spaceId)
 const { useBlocksQuery } = useBlocks(props.spaceId)
 const { fetchAsset } = useAssets(props.spaceId)
+const { fetchContent } = useContent(props.spaceId)
 const { data: blocksResponse } = useBlocksQuery({ per_page: 1000 })
 
 const emit = defineEmits<{
@@ -218,22 +224,49 @@ const loadAssets = async (values: unknown[]): Promise<Map<string, AssetResource>
   )
 }
 
-/** Pushes wait for their assets in turn, so a later edit never lands before an earlier one. */
+/** Contents `values` link to internally, by id. One that fails to load stays as stored. */
+const loadLinks = async (values: unknown[]): Promise<Map<string, LinkTarget>> => {
+  const ids = new Set<string>()
+  values.forEach((value) => collectLinkIds(value, ids))
+  const targets = await Promise.all(
+    [...ids].map((id) =>
+      fetchContent(id).then(
+        (target): [string, LinkTarget] => [id, target],
+        () => null
+      )
+    )
+  )
+
+  return new Map(targets.filter((entry) => entry !== null))
+}
+
+/** Pushes wait for their assets and links in turn, so a later edit never lands before an earlier one. */
 let pendingPush = Promise.resolve()
 
 /**
  * Push content changes in the shape the Data API delivers, so the preview
- * shows what the site will: the editor's tree stores assets as bare
- * references and still holds what delivery strips.
+ * shows what the site will: the editor's tree stores assets and internal
+ * links as bare references and still holds what delivery strips.
  */
 const pushDelivered = (contents: Record<string, unknown>[], patches: ContentPatchEvent[] = []) => {
   const filterHiddenBlocks = currentSpace.value?.settings.filter_hidden_blocks ?? false
   const entry = injectedContent.value
   const translationLanguage = entry?.i18n_parent_id ? entry.language_iso : null
+  // Same fallback as SpaceSettings::getDefaultLanguage().
+  const defaultLanguage = currentSpace.value?.settings.default_language ?? 'en'
+  const language = entry?.language_iso ?? defaultLanguage
 
   pendingPush = pendingPush.then(async () => {
-    const assets = await loadAssets([...contents, ...patches.map((patch) => patch.value)])
-    const options = { filterHiddenBlocks, assets, translationLanguage }
+    const values = [...contents, ...patches.map((patch) => patch.value)]
+    const [assets, links] = await Promise.all([loadAssets(values), loadLinks(values)])
+    const options = {
+      filterHiddenBlocks,
+      assets,
+      translationLanguage,
+      links,
+      language,
+      defaultLanguage,
+    }
     previewBridge.value?.pushChange(
       contents.map((content) => toDeliveredContent(content, options)),
       patches.map((patch) => ({ ...patch, value: toDeliveredContent(patch.value, options) }))

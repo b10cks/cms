@@ -1,9 +1,24 @@
 /**
  * Shapes the editor's content the way the Data API delivers it, so the live
  * preview renders what the site shows once the entry is saved. Every content
- * push to the preview runs through here. Mirrors `ContentResource::removeHiddenBlocks`
- * and `AssetHandler::replaceContentAssets` on the server; keep them in sync.
+ * push to the preview runs through here. Mirrors `ContentResource::removeHiddenBlocks`,
+ * `LinkHandler::replaceContentLinks` (draft scope) and `AssetHandler::replaceContentAssets`
+ * on the server; keep them in sync.
  */
+
+import type { ContentResource } from '~/types/contents'
+
+/** A link target as the management API returns it, with its i18n family. */
+export type LinkTarget = Pick<
+  ContentResource,
+  | 'id'
+  | 'name'
+  | 'full_slug'
+  | 'language_iso'
+  | 'i18n_parent'
+  | 'i18n_translations'
+  | 'i18n_siblings'
+>
 
 export type DeliveryOptions = {
   /** The space strips hidden blocks from Data API responses (`filter_hidden_blocks`). */
@@ -15,6 +30,12 @@ export type DeliveryOptions = {
    * Null for the canonical entry, which only gets `_default`.
    */
   translationLanguage: string | null
+  /** Link targets by content id. A link without one stays as stored. */
+  links: ReadonlyMap<string, LinkTarget>
+  /** Language the preview requests; links resolve to the target's row in it. */
+  language: string
+  /** The space's default language, the fallback when the target lacks `language`. */
+  defaultLanguage: string
 }
 
 /** The library metadata delivery exposes on an asset value. */
@@ -35,6 +56,16 @@ const isHiddenBlock = (value: unknown): boolean =>
 
 const isAssetValue = (value: Record<string, unknown>): value is { type: 'asset'; id: string } =>
   value.type === 'asset' && typeof value.id === 'string'
+
+const isInternalLink = (
+  value: Record<string, unknown>
+): value is { type: 'internal'; content: string } =>
+  value.type === 'internal' && typeof value.content === 'string'
+
+const isInternalLinkMark = (
+  value: Record<string, unknown>
+): value is { type: 'internalLink'; attrs: { content: string } } =>
+  value.type === 'internalLink' && isRecord(value.attrs) && typeof value.attrs.content === 'string'
 
 const recordAt = (record: Record<string, unknown>, key: string | null): Record<string, unknown> => {
   const value = key === null ? undefined : record[key]
@@ -76,6 +107,48 @@ function deliverAsset(
   }
 }
 
+type DeliveredLink = { url: string; title: string }
+
+/**
+ * Url and title of the target's row in `language`, else in the default
+ * language, else of the canonical row.
+ */
+function resolveLink(target: LinkTarget, language: string, defaultLanguage: string): DeliveredLink {
+  const family = [
+    target.i18n_parent,
+    target,
+    ...(target.i18n_translations ?? []),
+    ...(target.i18n_siblings ?? []),
+  ].filter((row) => row != null)
+  const row =
+    family.find((member) => member.language_iso === language) ??
+    family.find((member) => member.language_iso === defaultLanguage) ??
+    target.i18n_parent ??
+    target
+
+  return { url: row.full_slug, title: row.name }
+}
+
+/** Fills in `url` and `title` on internal links; keys the value already has win. */
+function deliverLink(
+  value: Record<string, unknown>,
+  options: DeliveryOptions
+): Record<string, unknown> {
+  const contentId = isInternalLink(value)
+    ? value.content
+    : isInternalLinkMark(value)
+      ? value.attrs.content
+      : null
+  const target = contentId === null ? undefined : options.links.get(contentId)
+  if (!target) return value
+
+  const link = resolveLink(target, options.language, options.defaultLanguage)
+
+  return isInternalLink(value)
+    ? { ...link, ...value }
+    : { ...value, attrs: { ...link, ...recordAt(value, 'attrs') } }
+}
+
 function deliver(value: unknown, options: DeliveryOptions): unknown {
   if (Array.isArray(value)) {
     const items = options.filterHiddenBlocks ? value.filter((item) => !isHiddenBlock(item)) : value
@@ -86,6 +159,7 @@ function deliver(value: unknown, options: DeliveryOptions): unknown {
   const copy = Object.fromEntries(
     Object.entries(value).map(([key, item]) => [key, deliver(item, options)])
   )
+  if (isInternalLink(value) || isInternalLinkMark(value)) return deliverLink(copy, options)
   const asset = isAssetValue(value) ? options.assets.get(value.id) : undefined
 
   return asset ? deliverAsset(copy, asset, options.translationLanguage) : copy
@@ -93,7 +167,8 @@ function deliver(value: unknown, options: DeliveryOptions): unknown {
 
 /**
  * A plain copy of `value` in delivered shape: hidden blocks dropped at any
- * depth when the space filters them, asset values resolved from the library.
+ * depth when the space filters them, internal links resolved to their
+ * target's url and title, asset values resolved from the library.
  * Never mutates `value`.
  */
 export function toDeliveredContent<T>(value: T, options: DeliveryOptions): T {
@@ -111,6 +186,18 @@ export function collectAssetIds(value: unknown, ids = new Set<string>()): Set<st
     } else {
       Object.values(value).forEach((item) => collectAssetIds(item, ids))
     }
+  }
+  return ids
+}
+
+/** Ids of the contents `value` links to internally, at any depth, added to `ids`. */
+export function collectLinkIds(value: unknown, ids = new Set<string>()): Set<string> {
+  if (Array.isArray(value)) {
+    value.forEach((item) => collectLinkIds(item, ids))
+  } else if (isRecord(value)) {
+    if (isInternalLink(value)) ids.add(value.content)
+    else if (isInternalLinkMark(value)) ids.add(value.attrs.content)
+    else Object.values(value).forEach((item) => collectLinkIds(item, ids))
   }
   return ids
 }

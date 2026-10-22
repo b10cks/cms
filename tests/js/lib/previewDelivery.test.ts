@@ -1,10 +1,19 @@
 import { describe, expect, it } from 'vitest'
 
-import { collectAssetIds, toDeliveredContent, type DeliveryOptions } from '~/lib/previewDelivery'
+import {
+  collectAssetIds,
+  collectLinkIds,
+  toDeliveredContent,
+  type DeliveryOptions,
+  type LinkTarget,
+} from '~/lib/previewDelivery'
 
 const noAssets: Omit<DeliveryOptions, 'filterHiddenBlocks'> = {
   assets: new Map(),
   translationLanguage: null,
+  links: new Map(),
+  language: 'en',
+  defaultLanguage: 'en',
 }
 
 const libraryAsset = (overrides: Partial<AssetResource> = {}): AssetResource => ({
@@ -81,8 +90,8 @@ describe('toDeliveredContent', () => {
     const deliver = <T>(value: T, overrides: Partial<DeliveryOptions> = {}) =>
       toDeliveredContent(value, {
         filterHiddenBlocks: false,
+        ...noAssets,
         assets: new Map([['asset-1', libraryAsset()]]),
-        translationLanguage: null,
         ...overrides,
       })
 
@@ -114,6 +123,80 @@ describe('toDeliveredContent', () => {
     it('leaves an asset the library did not return as stored', () => {
       expect(deliver([storedAsset()], { assets: new Map() })).toEqual([storedAsset()])
     })
+  })
+})
+
+describe('internal links', () => {
+  /** The canonical `about` page, with a German translation, as the management API returns it. */
+  const target: LinkTarget = {
+    id: 'about',
+    name: 'About',
+    full_slug: 'about',
+    language_iso: 'en',
+    i18n_translations: [
+      {
+        id: 'about-de',
+        name: 'Über uns',
+        full_slug: 'ueber-uns',
+        language_iso: 'de',
+        published_at: null,
+        drf: true,
+      },
+    ],
+  }
+  const deliver = <T>(value: T, language: string) =>
+    toDeliveredContent(value, {
+      ...noAssets,
+      filterHiddenBlocks: false,
+      links: new Map([['about', target]]),
+      language,
+    })
+
+  it("resolves a link field to the target's row in the requested language", () => {
+    expect(deliver({ type: 'internal', content: 'about', anchor: 'team' }, 'de')).toEqual({
+      url: 'ueber-uns',
+      title: 'Über uns',
+      type: 'internal',
+      content: 'about',
+      anchor: 'team',
+    })
+  })
+
+  it('falls back to the default language and keeps rich text attrs that are already set', () => {
+    const mark = { type: 'internalLink', attrs: { content: 'about', title: 'Ours', target: null } }
+
+    expect(deliver({ marks: [mark] }, 'fr')).toEqual({
+      marks: [
+        {
+          type: 'internalLink',
+          attrs: { url: 'about', title: 'Ours', content: 'about', target: null },
+        },
+      ],
+    })
+  })
+
+  it('leaves a link whose target did not load as stored', () => {
+    const link = { type: 'internal', content: 'gone' }
+
+    expect(deliver(link, 'de')).toEqual(link)
+  })
+})
+
+describe('collectLinkIds', () => {
+  it('finds link fields and rich text links at any depth, once each', () => {
+    const content = {
+      cta: { type: 'internal', content: 'about' },
+      external: { type: 'url', url: 'https://example.com' },
+      text: {
+        type: 'doc',
+        content: [
+          { type: 'text', marks: [{ type: 'internalLink', attrs: { content: 'contact' } }] },
+          { type: 'text', marks: [{ type: 'internalLink', attrs: { content: 'about' } }] },
+        ],
+      },
+    }
+
+    expect([...collectLinkIds(content)]).toEqual(['about', 'contact'])
   })
 })
 
