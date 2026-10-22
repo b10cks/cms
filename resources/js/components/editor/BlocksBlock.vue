@@ -1,36 +1,36 @@
 <script setup lang="ts">
 import { useSortable } from '@vueuse/integrations/useSortable'
 import {
-    AccordionContent,
-    AccordionHeader,
-    AccordionItem,
-    AccordionRoot,
-    AccordionTrigger,
+  AccordionContent,
+  AccordionHeader,
+  AccordionItem,
+  AccordionRoot,
+  AccordionTrigger,
 } from 'reka-ui'
 
 import AddDropdown from '~/components/editor/AddDropdown.vue'
-import BlockItemMenu from '~/components/editor/BlockItemMenu.vue'
 import BlockHeader from '~/components/editor/BlockHeader.vue'
+import BlockItemMenu from '~/components/editor/BlockItemMenu.vue'
 import Icon from '~/components/Icon.vue'
 import { AvatarList } from '~/components/ui/avatar'
 import { Button } from '~/components/ui/button'
 import { Checkbox } from '~/components/ui/checkbox'
 import Label from '~/components/ui/form/Label.vue'
 import type {
-    CollaborationPresenceUser,
-    ContentBlockOperationPayload,
-    ContentFieldFocusPayload,
-    ContentFieldUpdatePayload,
+  CollaborationPresenceUser,
+  ContentBlockOperationPayload,
+  ContentFieldFocusPayload,
+  ContentFieldUpdatePayload,
 } from '~/composables/useContentLiveCollaboration'
 import type { ContentTreeItem } from '~/composables/useContentTree'
-import { type BlockPickerRequest, isBlockAllowed } from '~/lib/blockTreeEdits'
 import {
-    createBlockItemWithDefaults,
-    createContentDefaultsBlockLookup,
-    hydrateContentWithSchema,
-    switchBlockItemType,
+  createBlockItemWithDefaults,
+  createContentDefaultsBlockLookup,
+  hydrateContentWithSchema,
+  switchBlockItemType,
 } from '~/composables/useSchemaDefaults'
 import { resolveItemBlock } from '~/lib/blockItemTitle'
+import { type BlockPickerRequest, isBlockAllowed } from '~/lib/blockTreeEdits'
 import { buildContentPath, buildPreviewUrl } from '~/lib/preview-url'
 import type { ContentResource } from '~/types/contents'
 
@@ -479,10 +479,7 @@ const toggleHidden = (index: number) => {
   updatedItems[index] = { ...item, hidden: !item.hidden }
 
   if (typeof item.id === 'string' && item.id) {
-    emitBlockOperation(
-      { type: 'visibility', itemId: item.id, hidden: !item.hidden },
-      previousItems
-    )
+    emitBlockOperation({ type: 'visibility', itemId: item.id, hidden: !item.hidden }, previousItems)
   } else {
     emitBlockOperation({ type: 'replace', items: updatedItems }, previousItems)
   }
@@ -611,9 +608,7 @@ const getItemRingStyle = (content: Record<string, unknown>, index: number) => {
       :required="item.required"
       class="relative z-10 mr-8"
     />
-    <div
-      class="min-w-0 rounded-2xl border border-border bg-surface px-2"
-    >
+    <div class="min-w-0 rounded-2xl border border-border bg-surface px-2">
       <div
         v-if="!props.readOnly && hasSelectedItems"
         class="flex items-center justify-between pt-2"
@@ -708,92 +703,92 @@ const getItemRingStyle = (content: Record<string, unknown>, index: number) => {
                 @update:model-value="(checked) => toggleSelected(i, checked)"
               />
             </div>
-            <AccordionTrigger
+            <div
               class="flex w-full items-center gap-2"
               @keydown.alt.up.prevent.stop="moveItem(i, -1)"
               @keydown.alt.down.prevent.stop="moveItem(i, 1)"
             >
-              <BlockHeader
-                :content="content"
-                :block="getBlockHeaderBlock(content)"
-              />
-              <div class="ml-auto flex items-center gap-2">
-                <div
-                  class="flex items-center gap-2 opacity-0 group-hover:opacity-100 has-[[data-state=open]]:opacity-100"
+              <AccordionTrigger class="flex min-w-0 grow items-center gap-2">
+                <BlockHeader
+                  :content="content"
+                  :block="getBlockHeaderBlock(content)"
+                />
+              </AccordionTrigger>
+              <div
+                class="flex items-center gap-2 opacity-0 group-hover:opacity-100 has-[[data-state=open]]:opacity-100"
+              >
+                <button
+                  v-if="!props.readOnly"
+                  type="button"
+                  :aria-label="
+                    content.hidden
+                      ? $t('actions.blocks.tooltips.show')
+                      : $t('actions.blocks.tooltips.hide')
+                  "
+                  :title="
+                    content.hidden
+                      ? $t('actions.blocks.tooltips.show')
+                      : $t('actions.blocks.tooltips.hide')
+                  "
+                  class="flex transform cursor-pointer items-center hover:text-primary"
+                  @click.stop="toggleHidden(i)"
                 >
-                  <button
-                    v-if="!props.readOnly"
-                    type="button"
-                    :aria-label="
-                      content.hidden
-                        ? $t('actions.blocks.tooltips.show')
-                        : $t('actions.blocks.tooltips.hide')
-                    "
-                    :title="
-                      content.hidden
-                        ? $t('actions.blocks.tooltips.show')
-                        : $t('actions.blocks.tooltips.hide')
-                    "
-                    class="flex transform cursor-pointer items-center hover:text-primary"
-                    @click.stop="toggleHidden(i)"
-                  >
-                    <Icon :name="content.hidden ? 'lucide:eye-off' : 'lucide:eye'" />
-                  </button>
-                  <button
-                    v-if="content.id"
-                    type="button"
-                    :aria-label="$t('actions.blocks.tooltips.editNested')"
-                    :title="$t('actions.blocks.tooltips.editNested')"
-                    class="flex transform cursor-pointer items-center hover:text-primary"
-                    @click.stop="navigateToItem(content.id as string)"
-                  >
-                    <Icon name="lucide:edit-3" />
-                  </button>
-                  <button
-                    v-if="!props.readOnly"
-                    type="button"
-                    :aria-label="$t('actions.blocks.tooltips.copy')"
-                    :title="$t('actions.blocks.tooltips.copy')"
-                    class="flex transform cursor-pointer items-center hover:text-primary"
-                    @click.stop="copyItems(i)"
-                  >
-                    <Icon name="lucide:copy" />
-                  </button>
-                  <button
-                    v-if="!props.readOnly"
-                    type="button"
-                    :aria-label="$t('actions.blocks.tooltips.cut')"
-                    :title="$t('actions.blocks.tooltips.cut')"
-                    class="flex transform cursor-pointer items-center hover:text-primary"
-                    @click.stop="cutItems(i)"
-                  >
-                    <Icon name="lucide:scissors" />
-                  </button>
-                  <button
-                    v-if="!props.readOnly"
-                    type="button"
-                    :aria-label="$t('actions.blocks.tooltips.delete')"
-                    :title="$t('actions.blocks.tooltips.delete')"
-                    class="flex transform cursor-pointer items-center hover:text-red-500"
-                    @click.stop="deleteItem(i)"
-                  >
-                    <Icon name="lucide:trash-2" />
-                  </button>
-                  <BlockItemMenu
-                    :space-id="spaceId"
-                    :item-id="content.id as string | undefined"
-                    :block="getBlockHeaderBlock(content)"
-                    :allowed-blocks="allowedBlocks"
-                    :page-url="pageLinks.url"
-                    :page-path="pageLinks.path"
-                    :can-manage-block="canManageBlocks"
-                    :read-only="props.readOnly"
-                    @switch-type="(slug: string) => switchItemType(i, slug)"
-                    @create-template="handleTemplateTrigger(content)"
-                  />
-                </div>
+                  <Icon :name="content.hidden ? 'lucide:eye-off' : 'lucide:eye'" />
+                </button>
+                <button
+                  v-if="content.id"
+                  type="button"
+                  :aria-label="$t('actions.blocks.tooltips.editNested')"
+                  :title="$t('actions.blocks.tooltips.editNested')"
+                  class="flex transform cursor-pointer items-center hover:text-primary"
+                  @click.stop="navigateToItem(content.id as string)"
+                >
+                  <Icon name="lucide:edit-3" />
+                </button>
+                <button
+                  v-if="!props.readOnly"
+                  type="button"
+                  :aria-label="$t('actions.blocks.tooltips.copy')"
+                  :title="$t('actions.blocks.tooltips.copy')"
+                  class="flex transform cursor-pointer items-center hover:text-primary"
+                  @click.stop="copyItems(i)"
+                >
+                  <Icon name="lucide:copy" />
+                </button>
+                <button
+                  v-if="!props.readOnly"
+                  type="button"
+                  :aria-label="$t('actions.blocks.tooltips.cut')"
+                  :title="$t('actions.blocks.tooltips.cut')"
+                  class="flex transform cursor-pointer items-center hover:text-primary"
+                  @click.stop="cutItems(i)"
+                >
+                  <Icon name="lucide:scissors" />
+                </button>
+                <button
+                  v-if="!props.readOnly"
+                  type="button"
+                  :aria-label="$t('actions.blocks.tooltips.delete')"
+                  :title="$t('actions.blocks.tooltips.delete')"
+                  class="flex transform cursor-pointer items-center hover:text-red-500"
+                  @click.stop="deleteItem(i)"
+                >
+                  <Icon name="lucide:trash-2" />
+                </button>
+                <BlockItemMenu
+                  :space-id="spaceId"
+                  :item-id="content.id as string | undefined"
+                  :block="getBlockHeaderBlock(content)"
+                  :allowed-blocks="allowedBlocks"
+                  :page-url="pageLinks.url"
+                  :page-path="pageLinks.path"
+                  :can-manage-block="canManageBlocks"
+                  :read-only="props.readOnly"
+                  @switch-type="(slug: string) => switchItemType(i, slug)"
+                  @create-template="handleTemplateTrigger(content)"
+                />
               </div>
-            </AccordionTrigger>
+            </div>
             <div
               v-if="!isItemOpen(content, i) && getItemSubtreePresence(content).length > 0"
               class="pointer-events-none absolute top-1/2 right-1 z-10 flex -translate-y-1/2 items-center transition-opacity group-hover:opacity-0"
