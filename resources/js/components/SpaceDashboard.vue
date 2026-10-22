@@ -1,469 +1,485 @@
 <script setup lang="ts">
+import { keepPreviousData, useQuery } from '@tanstack/vue-query'
+
 import { api } from '~/api'
-import StatsCard from '~/components/stats/StatsCard.vue'
+import type { ActivityCalendar } from '~/components/stats/StatsActivityHeatmap.vue'
+import StatTile from '~/components/stats/StatTile.vue'
+import { Panel } from '~/components/ui/panel'
 import { Skeleton } from '~/components/ui/skeleton'
 
-// Keep chart.js out of the landing route's chunk; the dashboard shell paints
+// Keep the chart code out of the landing route's chunk; the dashboard shell paints
 // immediately and the charts stream in.
-const StatsLineChart = defineAsyncComponent(
-  () => import('~/components/stats/StatsLineChart.vue')
+const TrendChart = defineAsyncComponent(() => import('~/components/stats/TrendChart.vue'))
+const DistributionList = defineAsyncComponent(
+  () => import('~/components/stats/DistributionList.vue')
 )
-const StatsMultiLineChart = defineAsyncComponent(
-  () => import('~/components/stats/StatsMultiLineChart.vue')
-)
-const StatsPieChart = defineAsyncComponent(() => import('~/components/stats/StatsPieChart.vue'))
 const StatsActivityHeatmap = defineAsyncComponent(
   () => import('~/components/stats/StatsActivityHeatmap.vue')
 )
 
-const { formatDuration, formatNumber, formatTrafficSize, formatFileSize, formatDate } = useFormat()
-const { t } = useI18n()
+/** The parts of `GET /spaces/{space}/stats` the dashboard reads. */
+interface SpaceStats {
+  content: {
+    count: {
+      total: number
+      new: number
+      published: number
+      draft: number
+      blocks: number
+      new_blocks: number
+    }
+    by_type: { name: string; color: string | null; count: number }[]
+    languages: Record<string, number>
+  }
+  assets: {
+    count: { total: number; by_type: { category: string; count: number }[] }
+    storage: { total_size: number; new_size: number }
+  }
+  redirects: { count: { total: number; new: number } }
+  data_sources: {
+    data_sources: { count: { total: number; new: number } }
+    data_entries: {
+      count: { total: number }
+      by_data_source: { data_source_name: string; count: number }[]
+    }
+  }
+  user_activity: {
+    total_users: number
+    new_users: number
+    role_distribution: Record<string, number>
+  }
+  activity?: ActivityCalendar
+  system: {
+    api: { total_requests: number; success_rate: number; avg_response_time_ms: number }
+    traffic: { total_bytes: number; cache_hit_rate: number }
+  }
+  trends: {
+    periods: string[]
+    content_creation: Record<string, number>
+    content_editing: Record<string, number>
+    content_publishing: Record<string, number>
+    asset_uploads: Record<string, { count: number; total_size: number }>
+    redirect_creation: Record<string, number>
+    block_creation: Record<string, number>
+    data_source_creation: Record<string, number>
+    data_entry_creation: Record<string, number>
+    api_usage: Record<string, number>
+    response_time: Record<string, number | null>
+    traffic_usage: Record<string, { total_bytes: number; request_count: number }>
+  }
+}
+
+type Change = { value: number; label: string; title?: string }
 
 const props = defineProps<{
   spaceId: string
-  period: string
+  period: 'daily' | 'weekly' | 'monthly'
   dateRange: string
 }>()
 
-const loading = ref(true)
-const error = ref<string | null>(null)
-const stats = ref<any>(null)
-let activeRequestId = 0
+const { formatDuration, formatNumber, formatFileSize, formatDateTime } = useFormat()
+const { t } = useI18n()
 
-const dateRangeValues = computed(() => {
+const startOf = (range: string): Date => {
   const now = new Date()
-  let startDate: Date
-  const endDate = new Date()
-
-  switch (props.dateRange) {
+  const daysAgo = (days: number) => new Date(now.getTime() - days * 86_400_000)
+  switch (range) {
     case 'last7':
-      startDate = new Date(now)
-      startDate.setDate(now.getDate() - 7)
-      break
-    case 'last30':
-      startDate = new Date(now)
-      startDate.setDate(now.getDate() - 30)
-      break
+      return daysAgo(7)
     case 'last90':
-      startDate = new Date(now)
-      startDate.setDate(now.getDate() - 90)
-      break
+      return daysAgo(90)
     case 'thisMonth':
-      startDate = new Date(now.getFullYear(), now.getMonth(), 1)
-      break
+      return new Date(now.getFullYear(), now.getMonth(), 1)
     case 'thisYear':
-      startDate = new Date(now.getFullYear(), 0, 1)
-      break
+      return new Date(now.getFullYear(), 0, 1)
     default:
-      startDate = new Date(now)
-      startDate.setDate(now.getDate() - 30)
+      return daysAgo(30)
   }
+}
 
-  return {
-    startDate: formatDateToISO(startDate),
-    endDate: formatDateToISO(endDate),
-  }
+const {
+  data: stats,
+  isLoading,
+  isFetching,
+  error,
+} = useQuery({
+  queryKey: computed(
+    () => ['spaces', props.spaceId, 'stats', props.period, props.dateRange] as const
+  ),
+  queryFn: () =>
+    api.client.get<SpaceStats>(`/mgmt/v1/spaces/${props.spaceId}/stats`, {
+      period: props.period,
+      start_date: startOf(props.dateRange).toISOString(),
+      end_date: new Date().toISOString(),
+    }),
+  placeholderData: keepPreviousData,
+  enabled: computed(() => !!props.spaceId),
 })
 
-const fetchDashboardStats = async () => {
-  const requestId = ++activeRequestId
-  loading.value = true
-  error.value = null
+const count = (value: number) => formatNumber(value)
+const percent = (value: number) => formatNumber(value, value < 100 ? 1 : 0)
 
-  if (!props.spaceId) {
-    stats.value = null
-    loading.value = false
-    return
-  }
+const periods = computed(() => stats.value?.trends.periods ?? [])
+const periodLabels = computed(() =>
+  periods.value.map((period) =>
+    formatDateTime(period, props.period === 'monthly' ? 'MMM YYYY' : 'D MMM')
+  )
+)
+const valuesOf = <T,>(values: Record<string, T> | undefined, pick: (value: T) => number) =>
+  periods.value.map((period) => {
+    const value = values?.[period]
+    return value === undefined ? 0 : pick(value)
+  })
+const counts = (values: Record<string, number> | undefined) =>
+  valuesOf(values, (value) => value)
+const sum = (values: number[]) => values.reduce((total, value) => total + value, 0)
 
-  try {
-    const { startDate, endDate } = dateRangeValues.value
-    const response = await api.client.get(`/mgmt/v1/spaces/${props.spaceId}/stats`, {
-      period: props.period,
-      start_date: startDate,
-      end_date: endDate,
-    })
+const changeOf = (value: number, format: (value: number) => string = count): Change => ({
+  value,
+  label: format(Math.abs(value)),
+  title: t('dashboard.tiles.new_in_range'),
+})
 
-    if (requestId !== activeRequestId) {
-      return
-    }
-
-    stats.value = response
-  } catch (err: any) {
-    if (requestId !== activeRequestId) {
-      return
-    }
-
-    stats.value = null
-    error.value = err.message
-  } finally {
-    if (requestId === activeRequestId) {
-      loading.value = false
-    }
-  }
+interface Tile {
+  key: string
+  label: string
+  value: string | null
+  detail?: string
+  change?: Change
+  series?: Array<number | null>
+  format?: (value: number) => string
+  relative?: boolean
 }
 
-const formatDateToISO = (date: Date): string => {
-  return date.toISOString()
+/** Builds a row of tiles; while loading every tile keeps its label and the grid holds still. */
+const tilesOf = (build: (data: SpaceStats) => Tile[], keys: string[]): Tile[] => {
+  const data = stats.value
+  if (data) return build(data)
+  return keys.map((key) => ({ key, label: t(`dashboard.tiles.${key}`), value: null }))
 }
 
-const formatRoleDistribution = (roleDistribution: Record<string, number>): string => {
-  return Object.entries(roleDistribution)
-    .map(([role, count]) => `${count} ${role}`)
-    .join(', ')
-}
+const contentTiles = computed(() =>
+  tilesOf(
+    ({ content, data_sources, redirects, trends }) => [
+      {
+        key: 'entries',
+        label: t('dashboard.tiles.entries'),
+        value: count(content.count.total),
+        detail: t(
+          'dashboard.tiles.drafts',
+          { count: count(content.count.draft) },
+          content.count.draft
+        ),
+        change: changeOf(content.count.new),
+        series: counts(trends.content_creation),
+        format: count,
+        relative: true,
+      },
+      {
+        key: 'blocks',
+        label: t('dashboard.tiles.blocks'),
+        value: count(content.count.blocks),
+        change: changeOf(content.count.new_blocks),
+        series: counts(trends.block_creation),
+        format: count,
+        relative: true,
+      },
+      {
+        key: 'data_sources',
+        label: t('dashboard.tiles.data_sources'),
+        value: count(data_sources.data_sources.count.total),
+        change: changeOf(data_sources.data_sources.count.new),
+        series: counts(trends.data_source_creation),
+        format: count,
+        relative: true,
+      },
+      {
+        key: 'data_entries',
+        label: t('dashboard.tiles.data_entries'),
+        value: count(data_sources.data_entries.count.total),
+        change: changeOf(sum(counts(trends.data_entry_creation))),
+        series: counts(trends.data_entry_creation),
+        format: count,
+        relative: true,
+      },
+      {
+        key: 'redirects',
+        label: t('dashboard.tiles.redirects'),
+        value: count(redirects.count.total),
+        change: changeOf(redirects.count.new),
+        series: counts(trends.redirect_creation),
+        format: count,
+        relative: true,
+      },
+      {
+        key: 'languages',
+        label: t('dashboard.tiles.languages'),
+        value: count(Object.keys(content.languages).length),
+      },
+    ],
+    ['entries', 'blocks', 'data_sources', 'data_entries', 'redirects', 'languages']
+  )
+)
 
-// Chart data transformers
-const assetsByTypeChartData = computed(() => {
-  if (!stats.value?.assets?.count?.by_type) return []
-  return stats.value.assets.count.by_type.map((item: any) => ({
+const deliveryTiles = computed(() =>
+  tilesOf(
+    ({ system, trends }) => [
+      {
+        key: 'traffic',
+        label: t('dashboard.tiles.traffic'),
+        value: formatFileSize(system.traffic.total_bytes),
+        detail: t('dashboard.tiles.cached', { rate: percent(system.traffic.cache_hit_rate) }),
+        series: valuesOf(trends.traffic_usage, (bucket) => bucket.total_bytes),
+        format: formatFileSize,
+      },
+      {
+        key: 'api',
+        label: t('dashboard.tiles.api'),
+        value: count(system.api.total_requests),
+        detail: t('dashboard.tiles.success', { rate: percent(system.api.success_rate) }),
+        series: counts(trends.api_usage),
+        format: count,
+      },
+      {
+        key: 'response_time',
+        label: t('dashboard.tiles.response_time'),
+        value: formatDuration(system.api.avg_response_time_ms),
+        detail: t('dashboard.tiles.response_detail'),
+        series: periods.value.map((period) => trends.response_time[period] ?? null),
+        format: (value: number) => formatDuration(value),
+      },
+    ],
+    ['traffic', 'api', 'response_time']
+  )
+)
+
+const assetTiles = computed(() =>
+  tilesOf(
+    ({ assets, trends }) => [
+      {
+        key: 'storage',
+        label: t('dashboard.tiles.storage'),
+        value: formatFileSize(assets.storage.total_size),
+        detail: t(
+          'dashboard.tiles.files',
+          { count: count(assets.count.total) },
+          assets.count.total
+        ),
+        change: changeOf(assets.storage.new_size, formatFileSize),
+        series: valuesOf(trends.asset_uploads, (bucket) => bucket.total_size),
+        format: formatFileSize,
+        relative: true,
+      },
+    ],
+    ['storage']
+  )
+)
+
+const teamTiles = computed(() =>
+  tilesOf(
+    ({ user_activity: users, activity }) => [
+      {
+        key: 'people',
+        label: t('dashboard.tiles.people'),
+        value: count(users.total_users),
+        detail: Object.entries(users.role_distribution)
+          .map(([role, amount]) => `${amount} ${role}`)
+          .join(', '),
+        change: changeOf(users.new_users),
+      },
+      {
+        key: 'events',
+        label: t('dashboard.tiles.events'),
+        value: count(activity?.total ?? 0),
+        detail: t(
+          'dashboard.tiles.active_days',
+          { count: count(activity?.active_days ?? 0) },
+          activity?.active_days ?? 0
+        ),
+      },
+    ],
+    ['people', 'events']
+  )
+)
+
+const activitySeries = computed(() => {
+  const trends = stats.value?.trends
+  return [
+    {
+      key: 'edited',
+      label: t('dashboard.charts.edited'),
+      color: 'var(--series-1)',
+      values: counts(trends?.content_editing),
+    },
+    {
+      key: 'published',
+      label: t('dashboard.charts.published'),
+      color: 'var(--series-3)',
+      values: counts(trends?.content_publishing),
+    },
+    {
+      key: 'created',
+      label: t('dashboard.charts.created'),
+      color: 'var(--series-2)',
+      values: counts(trends?.content_creation),
+    },
+  ]
+})
+
+const entriesBySource = computed(() =>
+  (stats.value?.data_sources.data_entries.by_data_source ?? []).map((item) => ({
+    name: item.data_source_name,
+    count: item.count,
+  }))
+)
+
+const assetTypes = computed(() =>
+  (stats.value?.assets.count.by_type ?? []).map((item) => ({
     name: item.category,
     count: item.count,
   }))
-})
-
-const contentByTypeChartData = computed(() => {
-  if (!stats.value?.content?.by_type) return []
-  return stats.value.content.by_type.map((item: any) => ({
-    name: item.name,
-    color: item.color,
-    count: item.count,
-  }))
-})
-
-const trafficUsageChartData = computed(() => {
-  if (!stats.value?.trends?.traffic_usage) return []
-  return Object.entries(stats.value.trends.traffic_usage).map(([date, data]: [string, any]) => ({
-    name: formatDate(date),
-    value: data.total_bytes / (1024 * 1024),
-  }))
-})
-
-const apiUsageChartData = computed(() => {
-  if (!stats.value?.trends?.api_usage) return []
-  return Object.entries(stats.value.trends.api_usage).map(([date, count]) => ({
-    name: formatDate(date),
-    value: count as number,
-  }))
-})
-
-const assetUploadTrendData = computed(() => {
-  if (!stats.value?.trends?.asset_uploads) return { labels: [], datasets: [] }
-
-  const entries = Object.entries(stats.value.trends.asset_uploads)
-  const labels = entries.map(([date]) => formatDate(date))
-
-  return {
-    labels,
-    datasets: [
-      {
-        label: t('dashboard.charts.upload_size_mb'),
-        data: entries.map(([, data]: [string, any]) => data.total_size / (1024 * 1024)),
-        color: 'rgba(236, 72, 153, 0.8)',
-      },
-    ],
-  }
-})
-
-const contentActivityData = computed(() => {
-  if (!stats.value?.trends?.content_creation) return { labels: [], datasets: [] }
-
-  const periods: string[] = stats.value.trends.periods || []
-  const labels = periods.map((period) => formatDate(period))
-  const creation = periods.map((period) => stats.value.trends.content_creation[period] || 0)
-  const editing = periods.map((period) => stats.value.trends.content_editing[period] || 0)
-  const publishing = periods.map(
-    (period: string) => stats.value.trends.content_publishing[period] || 0
-  )
-
-  return {
-    labels,
-    datasets: [
-      {
-        label: t('dashboard.charts.content_created'),
-        data: creation,
-        color: 'rgba(139, 92, 246, 0.8)',
-      },
-      {
-        label: t('dashboard.charts.content_edited'),
-        data: editing,
-        color: 'rgba(251, 146, 60, 0.8)',
-      },
-      {
-        label: t('dashboard.charts.content_published'),
-        data: publishing,
-        color: 'rgba(34, 197, 94, 0.8)',
-      },
-    ],
-  }
-})
-
-watch(
-  [() => props.spaceId, () => props.period, () => props.dateRange],
-  () => {
-    stats.value = null
-    fetchDashboardStats()
-  },
-  { immediate: true }
 )
 </script>
 
 <template>
-  <div class="space-y-6">
-    <div
-      v-if="loading"
-      aria-hidden="true"
-      class="space-y-6"
+  <div
+    class="grid gap-8 transition-opacity duration-100"
+    :class="isFetching && !isLoading && 'opacity-60'"
+  >
+    <p
+      v-if="error && !stats"
+      class="rounded-xl border border-destructive/30 bg-destructive/8 px-5 py-4 text-primary"
     >
-      <Skeleton class="h-7 w-48" />
-      <div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
-        <Skeleton
-          v-for="index in 5"
-          :key="index"
-          class="h-[138px] rounded-xl"
-        />
-      </div>
-      <Skeleton class="h-7 w-56" />
-      <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
-        <Skeleton
-          v-for="index in 2"
-          :key="index"
-          class="h-[384px] rounded-xl"
-        />
-      </div>
-      <Skeleton class="h-7 w-40" />
-      <div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
-        <Skeleton
-          v-for="index in 3"
-          :key="index"
-          class="h-[138px] rounded-xl"
-        />
-      </div>
-    </div>
+      {{ error.message }}
+    </p>
 
-    <div
-      v-else-if="error"
-      class="p-8 text-center"
-    >
-      <p class="text-destructive">{{ error }}</p>
-    </div>
-
-    <div
-      v-else-if="!stats"
-      class="p-8 text-center"
-    >
-      <p class="text-muted">{{ t('dashboard.no_data') }}</p>
-    </div>
-
-    <template v-else>
-      <h2 class="text-lg font-semibold text-primary">
-        {{ t('dashboard.sections.content_stats') }}
+    <section class="grid gap-4">
+      <h2 class="text-panel font-semibold text-primary select-none">
+        {{ t('dashboard.sections.content') }}
       </h2>
-      <div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
-        <StatsCard
-          icon="lucide:book-open"
-          :title="t('dashboard.cards.total_content')"
-          :delta="formatNumber(stats.content.count.new)"
-          :show-delta="stats.content.count.new > 0"
+      <dl class="grid grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-6">
+        <StatTile
+          v-for="tile in contentTiles"
+          v-bind="tile"
+          :key="tile.key"
+          :periods="periodLabels"
+        />
+      </dl>
+      <div class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <Panel
+          :title="t('dashboard.panels.content_activity')"
+          class="md:col-span-2"
         >
-          <template #value>
-            <div class="text-3xl font-bold text-primary leading-none">
-              {{ formatNumber(stats.content.count.total) }}
-            </div>
-          </template>
-          <p class="text-sm text-muted">
-            {{ formatNumber(stats.content.count.published) }} {{ t('dashboard.cards.published') }},
-            {{ formatNumber(stats.content.count.draft) }} {{ t('dashboard.cards.draft') }}
-          </p>
-        </StatsCard>
-
-        <StatsCard
-          icon="lucide:images"
-          :title="t('dashboard.cards.assets')"
-          :delta="formatFileSize(stats.assets.storage.new_size)"
-          :show-delta="stats.assets.storage.new_size > 0"
-        >
-          <template #value>
-            <div class="text-3xl font-bold text-primary leading-none">
-              {{ formatFileSize(stats.assets.storage.total_size) }}
-            </div>
-          </template>
-          <p class="text-sm text-muted">
-            {{ formatNumber(stats.assets.count.total) }} {{ t('dashboard.cards.assets_count') }}
-          </p>
-        </StatsCard>
-
-        <StatsCard
-          icon="lucide:blocks"
-          :title="t('dashboard.cards.blocks')"
-          :delta="formatNumber(stats.content.count.new_blocks)"
-          :show-delta="stats.content.count.new_blocks > 0"
-        >
-          <template #value>
-            <div class="text-3xl font-bold text-primary leading-none">
-              {{ formatNumber(stats.content.count.blocks) }}
-            </div>
-          </template>
-        </StatsCard>
-
-        <StatsCard
-          icon="lucide:database-zap"
-          :title="t('dashboard.cards.data_sources')"
-          :delta="formatNumber(stats.data_sources.data_sources.count.new)"
-          :show-delta="stats.data_sources.data_sources.count.new > 0"
-        >
-          <template #value>
-            <div class="text-3xl font-bold text-primary leading-none">
-              {{ formatNumber(stats.data_sources.data_sources.count.total) }}
-            </div>
-          </template>
-        </StatsCard>
-
-        <StatsCard
-          icon="lucide:split"
-          :title="t('dashboard.cards.redirects')"
-          :delta="formatNumber(stats.redirects.count.new)"
-          :show-delta="stats.redirects.count.new > 0"
-        >
-          <template #value>
-            <div class="text-3xl font-bold text-primary leading-none">
-              {{ formatNumber(stats.redirects.count.total) }}
-            </div>
-          </template>
-        </StatsCard>
+          <TrendChart
+            v-if="stats"
+            :periods="periodLabels"
+            :series="activitySeries"
+            :format="count"
+            :height="192"
+          />
+          <Skeleton
+            v-else
+            class="h-[252px] w-full"
+          />
+        </Panel>
+        <Panel :title="t('dashboard.panels.content_by_type')">
+          <DistributionList
+            v-if="stats"
+            :items="stats.content.by_type"
+            :format="count"
+          />
+          <Skeleton
+            v-else
+            class="h-[252px] w-full"
+          />
+        </Panel>
+        <Panel :title="t('dashboard.panels.entries_by_source')">
+          <DistributionList
+            v-if="stats"
+            :items="entriesBySource"
+            :format="count"
+          />
+          <Skeleton
+            v-else
+            class="h-[252px] w-full"
+          />
+        </Panel>
       </div>
+    </section>
 
-      <template v-if="stats.activity">
-        <h2 class="text-lg font-semibold text-primary">
-          {{ t('dashboard.sections.activity') }}
-        </h2>
+    <section class="grid gap-4">
+      <h2 class="text-panel font-semibold text-primary select-none">
+        {{ t('dashboard.sections.delivery') }}
+      </h2>
+      <dl class="grid grid-cols-2 gap-4 sm:grid-cols-3">
+        <StatTile
+          v-for="tile in deliveryTiles"
+          v-bind="tile"
+          :key="tile.key"
+          :periods="periodLabels"
+        />
+      </dl>
+    </section>
+
+    <section class="grid gap-4">
+      <h2 class="text-panel font-semibold text-primary select-none">
+        {{ t('dashboard.sections.assets') }}
+      </h2>
+      <div class="grid grid-cols-1 gap-4 lg:grid-cols-3">
+        <dl class="grid content-start gap-4">
+          <StatTile
+            v-for="tile in assetTiles"
+            v-bind="tile"
+            :key="tile.key"
+            :periods="periodLabels"
+          />
+        </dl>
+        <Panel
+          :title="t('dashboard.panels.assets_by_type')"
+          class="lg:col-span-2"
+        >
+          <DistributionList
+            v-if="stats"
+            :items="assetTypes"
+            :format="count"
+          />
+          <Skeleton
+            v-else
+            class="h-[120px] w-full"
+          />
+        </Panel>
+      </div>
+    </section>
+
+    <section class="grid gap-4">
+      <h2 class="text-panel font-semibold text-primary select-none">
+        {{ t('dashboard.sections.team') }}
+      </h2>
+      <dl class="grid grid-cols-2 gap-4">
+        <StatTile
+          v-for="tile in teamTiles"
+          v-bind="tile"
+          :key="tile.key"
+        />
+      </dl>
+      <Panel :title="t('dashboard.panels.activity')">
+        <template #actions>
+          <RouterLink
+            class="rounded-md px-2 py-1 text-sm text-muted transition-colors duration-100 hover:bg-muted-background hover:text-primary"
+            :to="{ name: 'space-audit-logs', params: { space: spaceId } }"
+          >
+            {{ t('dashboard.activity.view_log') }}
+          </RouterLink>
+        </template>
         <StatsActivityHeatmap
-          :title="t('dashboard.activity.title')"
+          v-if="stats?.activity"
           :activity="stats.activity"
         />
-      </template>
-
-      <h2 class="text-lg font-semibold text-primary">
-        {{ t('dashboard.sections.content_distribution') }}
-      </h2>
-      <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
-        <StatsPieChart
-          :title="t('dashboard.charts.content_by_type')"
-          :data="contentByTypeChartData"
-          :height="300"
+        <Skeleton
+          v-else
+          class="h-[220px] w-full"
         />
-        <StatsPieChart
-          :title="t('dashboard.charts.assets_by_type')"
-          :data="assetsByTypeChartData"
-          :height="300"
-        />
-      </div>
-
-      <h2 class="text-lg font-semibold text-primary">{{ t('dashboard.sections.usage_stats') }}</h2>
-      <div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
-        <StatsCard
-          icon="lucide:cloud-download"
-          :title="t('dashboard.cards.traffic_usage')"
-        >
-          <template #value>
-            <div class="text-3xl font-bold text-primary">
-              {{ formatTrafficSize(stats.system.traffic.total_bytes, 'MB') }}
-            </div>
-          </template>
-          <p class="text-sm text-muted">
-            {{ formatNumber(stats.system.traffic.cache_hit_rate, 2) }}%
-            {{ t('dashboard.cards.cache_hit_rate') }}
-          </p>
-        </StatsCard>
-
-        <StatsCard
-          icon="lucide:server"
-          :title="t('dashboard.cards.api_requests')"
-        >
-          <template #value>
-            <div class="text-3xl font-bold text-primary">
-              {{ formatNumber(stats.system.api.total_requests) }}
-            </div>
-          </template>
-          <p class="text-sm text-muted">
-            {{ formatNumber(stats.system.api.success_rate, 2) }}%
-            {{ t('dashboard.cards.success_rate') }}
-          </p>
-        </StatsCard>
-
-        <StatsCard
-          icon="lucide:zap"
-          :title="t('dashboard.cards.avg_response_time')"
-          :description="t('dashboard.cards.api_response_time')"
-        >
-          <template #value>
-            <div class="text-3xl font-bold text-primary">
-              {{ formatDuration(stats.system.api.avg_response_time_ms) }}
-            </div>
-          </template>
-        </StatsCard>
-      </div>
-
-      <h2 class="text-lg font-semibold text-primary">{{ t('dashboard.sections.trends') }}</h2>
-      <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
-        <StatsLineChart
-          :title="t('dashboard.charts.traffic_usage')"
-          :data="trafficUsageChartData"
-          :height="300"
-          :y-axis-label="t('dashboard.charts.mb')"
-          color="rgba(59, 130, 246, 1)"
-        />
-        <StatsLineChart
-          :title="t('dashboard.charts.api_usage')"
-          :data="apiUsageChartData"
-          :height="300"
-          :y-axis-label="t('dashboard.charts.requests')"
-          color="rgba(139, 92, 246, 1)"
-        />
-      </div>
-
-      <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
-        <StatsMultiLineChart
-          :title="t('dashboard.charts.asset_upload_trend')"
-          :labels="assetUploadTrendData.labels"
-          :datasets="assetUploadTrendData.datasets"
-          :height="300"
-        />
-        <StatsMultiLineChart
-          :title="t('dashboard.charts.content_activity')"
-          :labels="contentActivityData.labels"
-          :datasets="contentActivityData.datasets"
-          :height="300"
-        />
-      </div>
-
-      <h2 class="text-lg font-semibold text-primary">{{ t('dashboard.sections.space_stats') }}</h2>
-      <div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
-        <StatsCard
-          icon="lucide:users"
-          :title="t('dashboard.cards.total_users')"
-          :description="formatRoleDistribution(stats.user_activity.role_distribution)"
-          :delta="formatNumber(stats.user_activity.new_users)"
-          :show-delta="stats.user_activity.new_users > 0"
-        >
-          <template #value>
-            <div class="text-3xl font-bold text-primary leading-none">
-              {{ formatNumber(stats.user_activity.total_users) }}
-            </div>
-          </template>
-        </StatsCard>
-
-        <StatsCard
-          icon="lucide:globe"
-          :title="t('dashboard.cards.languages')"
-        >
-          <template #value>
-            <div class="text-3xl font-bold text-primary">
-              {{ formatNumber(Object.keys(stats.content.languages).length) }}
-            </div>
-          </template>
-        </StatsCard>
-      </div>
-    </template>
+      </Panel>
+    </section>
   </div>
 </template>

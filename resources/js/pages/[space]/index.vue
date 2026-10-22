@@ -11,7 +11,7 @@ const { t } = useI18n()
 const { data: space } = useCurrentSpaceQuery()
 const { formatDateTime } = useFormat()
 
-const period = ref('daily')
+const period = ref<'daily' | 'weekly' | 'monthly'>('daily')
 const dateRange = ref('thisMonth')
 
 useSeoMeta({
@@ -34,9 +34,13 @@ useSeoMeta({
               class="size-10 rounded-md object-cover"
             />
           </template>
-          <div class="flex items-center gap-2">
+          <div class="mt-1 flex items-center gap-2 text-sm text-muted tabular-nums">
             <span>
-              {{ formatDateTime(space.updated_at ?? space.content_updated_at) }}
+              {{
+                t('dashboard.updated', {
+                  date: formatDateTime(space.content_updated_at ?? space.updated_at),
+                })
+              }}
             </span>
             <SpaceBadge
               v-if="space.badge"

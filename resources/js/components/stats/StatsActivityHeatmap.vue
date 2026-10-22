@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card'
+import { useElementSize } from '@vueuse/core'
 
 export interface ActivityCalendar {
   start: string
@@ -13,14 +13,19 @@ export interface ActivityCalendar {
   top_contributors: { name: string; count: number }[]
 }
 
+/**
+ * The year of audit events as a calendar: one column per week, one row per weekday. The cell
+ * size is a whole pixel count derived from the panel width, so every gap is exactly 3px; the
+ * grid scrolls sideways only when a cell would drop below 10px. Pointing at a day shows its
+ * count in a tooltip above the cell; the line under the grid holds the streaks and the most
+ * active people.
+ */
 const props = defineProps<{
-  title: string
   activity: ActivityCalendar
 }>()
 
 const { t } = useI18n()
 const { formatNumber, formatDateTime } = useFormat()
-const route = useRoute()
 
 interface Cell {
   date: string | null
@@ -65,16 +70,27 @@ const weeks = computed<Cell[][]>(() => {
 })
 
 const monthOf = (date: string): number => Number(date.slice(5, 7))
+const firstDate = (week: Cell[] | undefined) => week?.find((cell) => cell.date)?.date
 
 const monthLabels = computed(() =>
   weeks.value.map((week, index) => {
-    const first = week.find((cell) => cell.date)
-    if (!first?.date) return null
+    const first = firstDate(week)
+    if (!first) return null
 
-    const previous = weeks.value[index - 1]?.find((cell) => cell.date)
-    if (previous?.date && monthOf(previous.date) === monthOf(first.date)) return null
+    const previous = firstDate(weeks.value[index - 1])
+    if (previous && monthOf(previous) === monthOf(first)) return null
 
-    return formatDateTime(first.date, 'MMM')
+    // A partial first month gets no label when the next month starts within three weeks,
+    // so the two names never overlap.
+    if (index === 0) {
+      const nextMonthAt = weeks.value.findIndex((entry) => {
+        const date = firstDate(entry)
+        return date && monthOf(date) !== monthOf(first)
+      })
+      if (nextMonthAt !== -1 && nextMonthAt < 3) return null
+    }
+
+    return formatDateTime(first, 'MMM')
   })
 )
 
@@ -84,128 +100,136 @@ const weekdayLabels = Array.from({ length: 7 }, (_, index) =>
   index % 2 === 0 ? formatDateTime(`2024-01-0${1 + index}`, 'ddd') : ''
 )
 
+const root = useTemplateRef<HTMLElement>('root')
 const hovered = ref<{ cell: Cell; x: number; y: number } | null>(null)
 
-const showTooltip = (cell: Cell, event: MouseEvent) => {
-  if (!cell.date) return
-  const target = event.currentTarget as HTMLElement
-  hovered.value = { cell, x: target.offsetLeft + target.offsetWidth / 2, y: target.offsetTop }
+/** Anchors the tooltip to the cell, relative to the component so the scroller cannot clip it. */
+const showTooltip = (cell: Cell, event: PointerEvent) => {
+  const box = root.value?.getBoundingClientRect()
+  if (!cell.date || !box) {
+    hovered.value = null
+    return
+  }
+  const target = (event.currentTarget as HTMLElement).getBoundingClientRect()
+  hovered.value = { cell, x: target.left - box.left + target.width / 2, y: target.top - box.top }
 }
 
+/** The footer line: both streaks, then the three most active people. */
+const facts = computed(() => [
+  {
+    label: t('dashboard.activity.current_streak'),
+    value: t('dashboard.activity.days', { count: formatNumber(props.activity.current_streak) }, props.activity.current_streak),
+  },
+  {
+    label: t('dashboard.activity.longest_streak'),
+    value: t('dashboard.activity.days', { count: formatNumber(props.activity.longest_streak) }, props.activity.longest_streak),
+  },
+  ...props.activity.top_contributors.slice(0, 3).map((contributor) => ({
+    label: contributor.name,
+    value: formatNumber(contributor.count),
+  })),
+])
+
+const LABEL_WIDTH = 40
+const GAP = 3
+const scroller = useTemplateRef<HTMLElement>('scroller')
+const { width } = useElementSize(scroller)
+const cellSize = computed(() => {
+  const columns = weeks.value.length || 1
+  return Math.max(10, Math.floor((width.value - LABEL_WIDTH - GAP * columns) / columns))
+})
 </script>
 
 <template>
-  <Card>
-    <CardHeader class="flex-row items-start justify-between gap-4 pb-1">
-      <div>
-        <CardTitle>{{ title }}</CardTitle>
-        <p class="mt-1 text-sm text-muted">
-          {{
-            t('dashboard.activity.summary', {
-              count: formatNumber(activity.total),
-              days: formatNumber(activity.active_days),
-            })
-          }}
-        </p>
-      </div>
-      <RouterLink
-        class="shrink-0 text-sm text-accent hover:underline"
-        :to="{ name: 'space-audit-logs', params: { space: route.params.space } }"
+  <div
+    ref="root"
+    class="relative select-none"
+  >
+    <div
+      ref="scroller"
+      class="overflow-x-auto"
+    >
+      <div
+        class="grid w-max"
+        :style="{
+          gap: `${GAP}px`,
+          gridTemplateColumns: `${LABEL_WIDTH}px repeat(${weeks.length}, ${cellSize}px)`,
+          gridTemplateRows: `1.5rem repeat(7, ${cellSize}px)`,
+        }"
+        @pointerleave="hovered = null"
       >
-        {{ t('dashboard.activity.view_log') }}
-      </RouterLink>
-    </CardHeader>
-
-    <CardContent>
-      <!-- pt-7 keeps the hover tooltip of the top row inside the scroll container -->
-      <div class="overflow-x-auto pt-7 pb-1">
-        <div class="relative inline-block min-w-max">
-          <div class="flex gap-[3px] pl-9">
-            <div
-              v-for="(label, index) in monthLabels"
-              :key="`month-${index}`"
-              class="relative h-4 w-[11px]"
-            >
-              <span
-                v-if="label"
-                class="absolute top-0 left-0 text-[11px] whitespace-nowrap text-muted"
-              >
-                {{ label }}
-              </span>
-            </div>
-          </div>
-
-          <div class="flex gap-[3px]">
-            <div class="flex w-9 flex-col gap-[3px] pr-2">
-              <span
-                v-for="(label, index) in weekdayLabels"
-                :key="`weekday-${index}`"
-                class="h-[11px] text-right text-[11px] leading-[11px] text-muted"
-              >
-                {{ label }}
-              </span>
-            </div>
-
-            <div
-              v-for="(week, weekIndex) in weeks"
-              :key="`week-${weekIndex}`"
-              class="flex flex-col gap-[3px]"
-            >
-              <div
-                v-for="(cell, dayIndex) in week"
-                :key="`day-${weekIndex}-${dayIndex}`"
-                class="size-[11px] rounded-[2px]"
-                :class="cell.date ? 'ring-1 ring-border/60' : 'opacity-0'"
-                :style="{ background: LEVEL_BACKGROUNDS[cell.level] }"
-                @mouseenter="showTooltip(cell, $event)"
-                @mouseleave="hovered = null"
-              />
-            </div>
-          </div>
-
-          <div
-            v-if="hovered"
-            class="pointer-events-none absolute z-10 -translate-x-1/2 -translate-y-full rounded-md border border-popover-border bg-popover px-2 py-1 text-xs whitespace-nowrap text-popover-foreground shadow-md"
-            :style="{ left: `${hovered.x}px`, top: `${hovered.y - 4}px` }"
+        <span />
+        <span
+          v-for="(label, index) in monthLabels"
+          :key="`month-${index}`"
+          class="relative"
+        >
+          <span
+            v-if="label"
+            class="absolute top-0 left-0 text-sm whitespace-nowrap text-muted"
           >
-            <span class="font-medium text-primary">
-              {{ t('dashboard.activity.events', { count: formatNumber(hovered.cell.count) }) }}
-            </span>
-            <span class="text-muted"> · {{ formatDateTime(hovered.cell.date!, 'LL') }}</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="mt-4 flex flex-wrap items-center justify-between gap-4">
-        <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted">
-          <span>
-            {{ t('dashboard.activity.current_streak') }}:
-            <span class="text-primary">{{ formatNumber(activity.current_streak) }}</span>
+            {{ label }}
           </span>
-          <span>
-            {{ t('dashboard.activity.longest_streak') }}:
-            <span class="text-primary">{{ formatNumber(activity.longest_streak) }}</span>
+        </span>
+
+        <template
+          v-for="day in 7"
+          :key="`row-${day}`"
+        >
+          <span class="self-center pr-2 text-right text-sm leading-none text-muted">
+            {{ weekdayLabels[day - 1] }}
           </span>
           <span
-            v-for="contributor in activity.top_contributors.slice(0, 3)"
-            :key="contributor.name"
-          >
-            {{ contributor.name }}:
-            <span class="text-primary">{{ formatNumber(contributor.count) }}</span>
-          </span>
-        </div>
-
-        <div class="flex items-center gap-1 text-[11px] text-muted">
-          <span class="mr-1">{{ t('dashboard.activity.less') }}</span>
-          <span
-            v-for="level in [0, 1, 2, 3, 4]"
-            :key="`legend-${level}`"
-            class="size-[11px] rounded-[2px] ring-1 ring-border/60"
-            :style="{ background: LEVEL_BACKGROUNDS[level] }"
+            v-for="(week, weekIndex) in weeks"
+            :key="`day-${weekIndex}-${day}`"
+            class="rounded-[3px] transition-shadow duration-100"
+            :class="[
+              week[day - 1].date ? 'ring-1 ring-border/60 ring-inset' : 'opacity-0',
+              hovered?.cell === week[day - 1] && 'ring-2 ring-primary/70',
+            ]"
+            :style="{ background: LEVEL_BACKGROUNDS[week[day - 1].level] }"
+            @pointerenter="showTooltip(week[day - 1], $event)"
           />
-          <span class="ml-1">{{ t('dashboard.activity.more') }}</span>
-        </div>
+        </template>
       </div>
-    </CardContent>
-  </Card>
+    </div>
+
+    <div
+      v-if="hovered"
+      class="pointer-events-none absolute z-10 flex -translate-x-1/2 -translate-y-full gap-1.5 rounded-md border border-popover-border bg-popover px-2 py-1 text-sm whitespace-nowrap text-popover-foreground shadow-soft-lg"
+      :style="{ left: `${hovered.x}px`, top: `${hovered.y - 6}px` }"
+    >
+      <span class="font-semibold text-primary tabular-nums">
+        {{ t('dashboard.activity.events', { count: formatNumber(hovered.cell.count) }, hovered.cell.count) }}
+      </span>
+      <span class="text-muted">{{ formatDateTime(hovered.cell.date!, 'LL') }}</span>
+    </div>
+
+    <div class="mt-4 flex flex-wrap items-center justify-between gap-x-6 gap-y-2 text-sm text-muted">
+      <dl class="flex flex-wrap items-center gap-x-5 gap-y-1">
+        <div
+          v-for="fact in facts"
+          :key="fact.label"
+          class="flex gap-1.5"
+        >
+          <dt>{{ fact.label }}</dt>
+          <dd class="font-semibold text-primary tabular-nums">{{ fact.value }}</dd>
+        </div>
+      </dl>
+
+      <span
+        class="flex shrink-0 items-center gap-1"
+        aria-hidden="true"
+      >
+        <span class="mr-1">{{ t('dashboard.activity.less') }}</span>
+        <span
+          v-for="level in [0, 1, 2, 3, 4]"
+          :key="`legend-${level}`"
+          class="size-3 rounded-[3px] ring-1 ring-border/60 ring-inset"
+          :style="{ background: LEVEL_BACKGROUNDS[level] }"
+        />
+        <span class="ml-1">{{ t('dashboard.activity.more') }}</span>
+      </span>
+    </div>
+  </div>
 </template>

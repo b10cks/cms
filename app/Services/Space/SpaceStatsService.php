@@ -557,17 +557,28 @@ class SpaceStatsService
         $bucket = fn (Builder $query, string $dateField, array $sums) => $this->bucketByPeriod($query, $dateField, $sums, $periods, $periodType, $endDate);
         $counts = fn (array $buckets) => array_map(fn (array $bucket) => $bucket['count'], $buckets);
 
+        $apiBuckets = $bucket(
+            SpaceApiHitHourly::where('space_id', $space->id),
+            'hour_timestamp',
+            ['count' => 'SUM(hit_count)', 'time_taken_sum' => 'SUM(time_taken_sum)'],
+        );
+
         return [
             'periods' => $periods,
             'content_creation' => $counts($bucket(Content::query(), 'created_at', $count)),
+            'block_creation' => $counts($bucket(Block::query(), 'created_at', $count)),
+            'data_source_creation' => $counts($bucket(DataSource::query(), 'created_at', $count)),
             'content_editing' => $counts($bucket(ContentVersion::query(), 'created_at', $count)),
             'content_publishing' => $counts($bucket(ContentVersion::query(), 'published_at', $count)),
             'asset_uploads' => $bucket(Asset::query(), 'created_at', ['count' => 'COUNT(*)', 'total_size' => 'SUM(size)']),
             'redirect_creation' => $counts($bucket(Redirect::query(), 'created_at', $count)),
             'data_entry_creation' => $counts($bucket(DataEntry::query(), 'created_at', $count)),
-            'api_usage' => $counts($bucket(
-                SpaceApiHitHourly::where('space_id', $space->id), 'hour_timestamp', ['count' => 'SUM(hit_count)'],
-            )),
+            'api_usage' => $counts($apiBuckets),
+            // Weighted by hits, so a quiet hour cannot skew a busy period; null where no request was served.
+            'response_time' => array_map(
+                fn (array $bucket) => $bucket['count'] > 0 ? (int) round($bucket['time_taken_sum'] / $bucket['count']) : null,
+                $apiBuckets,
+            ),
             'traffic_usage' => $bucket(
                 SpaceTrafficUsageHourly::where('space_id', $space->id),
                 'hour_timestamp',
