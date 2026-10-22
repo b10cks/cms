@@ -50,6 +50,10 @@
   --text-xs: 11px;
   --text-sm: 13px;
   --text-base: 15px;
+  /* Panel titles and KPI figures, the only sizes above body inside a page */
+  --text-panel: 17px;
+  --text-figure: 28px;
+  --text-figure--line-height: 36px;
 
   --checkerboard-light: var(--color-gray-100);
   --checkerboard-dark: var(--color-gray-200);
@@ -89,6 +93,9 @@
 
   --input: var(--color-white);
   --input-border: var(--color-gray-150);
+  /* Tags and chips inside a field: one step off the field fill in both modes */
+  --chip: var(--color-gray-100);
+  --chip-foreground: var(--color-gray-800);
 
   --border: var(--color-gray-125);
   --border-strong: var(--color-gray-200);
@@ -107,10 +114,11 @@
   --sidebar-border: var(--color-gray-150);
   --sidebar-ring: var(--color-blue-500);
 
-  --tree-hover: var(--color-gray-100);
-  --tree-selected: oklch(66.71% 0.161 245.54 / 0.18);
-  --tree-selected-border: oklch(66.71% 0.161 245.54 / 0.45);
-  --tree-selected-foreground: var(--color-gray-900);
+  /* Tree rows follow the asset tree: the selected row is the field fill with the
+     strongest ink, hover is a lighter step of the same fill. */
+  --tree-hover: color-mix(in oklch, var(--input) 55%, transparent);
+  --tree-selected: var(--input);
+  --tree-selected-foreground: var(--primary);
   --tree-drop: oklch(66.71% 0.161 245.54 / 0.15);
   --tree-guide: var(--color-gray-200);
 
@@ -133,6 +141,14 @@
   --ai: var(--color-purple-600);
   --ai-foreground: var(--color-purple-50);
   --ai-background: var(--color-purple-600);
+
+  /* Chart series in fixed order, validated for CVD separation in both modes */
+  --series-1: #2a86d1;
+  --series-2: #eb6834;
+  --series-3: #1baf7a;
+  --series-4: #eda100;
+  --series-other: var(--color-gray-300);
+  --series-grid: var(--color-gray-100);
 }
 
 .dark {
@@ -161,6 +177,8 @@
 
   --input: var(--color-gray-800);
   --input-border: var(--color-gray-750);
+  --chip: var(--color-gray-700);
+  --chip-foreground: var(--color-gray-50);
 
   --border: var(--color-gray-800);
   --border-strong: var(--color-gray-750);
@@ -180,10 +198,6 @@
   --sidebar-border: var(--color-gray-850);
   --sidebar-ring: var(--color-blue-500);
 
-  --tree-hover: var(--color-gray-850);
-  --tree-selected: oklch(66.71% 0.161 245.54 / 0.22);
-  --tree-selected-border: oklch(66.71% 0.161 245.54 / 0.5);
-  --tree-selected-foreground: var(--color-gray-50);
   --tree-drop: oklch(66.71% 0.161 245.54 / 0.18);
   --tree-guide: var(--color-gray-800);
 
@@ -206,6 +220,13 @@
   --ai: var(--color-purple-500);
   --ai-foreground: var(--color-purple-200);
   --ai-background: var(--color-purple-800);
+
+  --series-1: #3d98e6;
+  --series-2: #d95926;
+  --series-3: #199e70;
+  --series-4: #c98500;
+  --series-other: var(--color-gray-600);
+  --series-grid: var(--color-gray-800);
 }
 
 .inverse {
@@ -241,6 +262,8 @@
   --color-muted-background: var(--muted-background);
   --color-input: var(--input);
   --color-input-border: var(--input-border);
+  --color-chip: var(--chip);
+  --color-chip-foreground: var(--chip-foreground);
   --color-border: var(--border);
   --color-border-strong: var(--border-strong);
   --color-ring: var(--ring);
@@ -257,9 +280,15 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
 
+  --color-series-1: var(--series-1);
+  --color-series-2: var(--series-2);
+  --color-series-3: var(--series-3);
+  --color-series-4: var(--series-4);
+  --color-series-other: var(--series-other);
+  --color-series-grid: var(--series-grid);
+
   --color-tree-hover: var(--tree-hover);
   --color-tree-selected: var(--tree-selected);
-  --color-tree-selected-border: var(--tree-selected-border);
   --color-tree-selected-foreground: var(--tree-selected-foreground);
   --color-tree-drop: var(--tree-drop);
   --color-tree-guide: var(--tree-guide);
