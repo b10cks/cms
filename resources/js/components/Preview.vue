@@ -15,6 +15,12 @@ import { PulseDot } from '~/components/ui/pulse-dot'
 import { SimpleTooltip } from '~/components/ui/tooltip'
 import { findHiddenBlockIds } from '~/lib/blockTreeEdits'
 import { buildPreviewUrl, resolveLocaleSegments } from '~/lib/preview-url'
+import {
+  collectAssetIds,
+  collectLinkIds,
+  toDeliveredContent,
+  type LinkTarget,
+} from '~/lib/previewDelivery'
 import { isSafeFrameUrl } from '~/lib/sanitize'
 import type { CommentResource } from '~/types/comments'
 import { ContentResource } from '~/types/contents'
@@ -47,6 +53,8 @@ const { useSpaceQuery } = useSpaces()
 const { data: currentSpace } = useSpaceQuery(props.spaceId) as { data: Ref<SpaceResource | null> }
 const { settings } = useSpaceSettings(props.spaceId)
 const { useBlocksQuery } = useBlocks(props.spaceId)
+const { fetchAsset } = useAssets(props.spaceId)
+const { fetchContent } = useContent(props.spaceId)
 const { data: blocksResponse } = useBlocksQuery({ per_page: 1000 })
 
 const emit = defineEmits<{
@@ -200,12 +208,78 @@ watch(
   { flush: 'post' }
 )
 
+// Also strips Vue proxies, which postMessage cannot clone.
+const cloneJson = <T>(value: T): T => JSON.parse(JSON.stringify(value))
+
+/** Library assets `values` reference, by id. One that fails to load stays as stored. */
+const loadAssets = async (values: unknown[]): Promise<Map<string, AssetResource>> => {
+  const ids = new Set<string>()
+  values.forEach((value) => collectAssetIds(value, ids))
+  const assets = await Promise.all([...ids].map((id) => fetchAsset(id).catch(() => null)))
+
+  return new Map(
+    assets
+      .filter((asset) => asset !== null)
+      .map((asset): [string, AssetResource] => [asset.id, asset])
+  )
+}
+
+/** Contents `values` link to internally, by id. One that fails to load stays as stored. */
+const loadLinks = async (values: unknown[]): Promise<Map<string, LinkTarget>> => {
+  const ids = new Set<string>()
+  values.forEach((value) => collectLinkIds(value, ids))
+  const targets = await Promise.all(
+    [...ids].map((id) =>
+      fetchContent(id).then(
+        (target): [string, LinkTarget] => [id, target],
+        () => null
+      )
+    )
+  )
+
+  return new Map(targets.filter((entry) => entry !== null))
+}
+
+/** Pushes wait for their assets and links in turn, so a later edit never lands before an earlier one. */
+let pendingPush = Promise.resolve()
+
+/**
+ * Push content changes in the shape the Data API delivers, so the preview
+ * shows what the site will: the editor's tree stores assets and internal
+ * links as bare references and still holds what delivery strips.
+ */
+const pushDelivered = (contents: Record<string, unknown>[], patches: ContentPatchEvent[] = []) => {
+  const filterHiddenBlocks = currentSpace.value?.settings.filter_hidden_blocks ?? false
+  const entry = injectedContent.value
+  const translationLanguage = entry?.i18n_parent_id ? entry.language_iso : null
+  // Same fallback as SpaceSettings::getDefaultLanguage().
+  const defaultLanguage = currentSpace.value?.settings.default_language ?? 'en'
+  const language = entry?.language_iso ?? defaultLanguage
+
+  pendingPush = pendingPush.then(async () => {
+    const values = [...contents, ...patches.map((patch) => patch.value)]
+    const [assets, links] = await Promise.all([loadAssets(values), loadLinks(values)])
+    const options = {
+      filterHiddenBlocks,
+      assets,
+      translationLanguage,
+      links,
+      language,
+      defaultLanguage,
+    }
+    previewBridge.value?.pushChange(
+      contents.map((content) => toDeliveredContent(content, options)),
+      patches.map((patch) => ({ ...patch, value: toDeliveredContent(patch.value, options) }))
+    )
+  })
+}
+
 // The bridge buffers these until the preview announces it is ready and
 // replays them after every in-iframe navigation, so sending "too early" here
 // is safe.
 watchEffect(() => {
-  if (props.content) {
-    previewBridge.value?.updateContent(props.content)
+  if (props.content && previewBridge.value) {
+    pushDelivered([cloneJson(props.content)])
   }
 })
 
@@ -225,7 +299,10 @@ watchEffect(() => {
   }
 })
 
-/** Lets the preview dim hidden blocks. The bridge only sends when the set changed. */
+/**
+ * Lets the preview dim hidden blocks, in spaces whose Data API keeps them.
+ * The bridge only sends when the set changed.
+ */
 const syncHiddenBlocks = () => {
   const fields = injectedContent.value?.content
   if (fields) previewBridge.value?.updateHiddenBlocks(findHiddenBlockIds(fields))
@@ -279,15 +356,12 @@ const queueChange = () => {
     queueMicrotask(() => {
       const change = pendingChange
       pendingChange = null
-      if (change) previewBridge.value?.pushChange(change.contents, change.patches)
+      if (change) pushDelivered(change.contents, change.patches)
       syncHiddenBlocks()
     })
   }
   return pendingChange
 }
-
-// Also strips Vue proxies, which postMessage cannot clone.
-const cloneJson = <T>(value: T): T => JSON.parse(JSON.stringify(value))
 
 const updateItem = (item: Record<string, unknown>) => {
   queueChange().contents.push(cloneJson(item))

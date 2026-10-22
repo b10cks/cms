@@ -477,7 +477,7 @@ const updateConditionOperator = (index: number, value: unknown) => {
     <AccordionHeader class="group flex items-center gap-3">
       <div
         class="flex h-full cursor-ns-resize items-center"
-        draggable
+        data-field-handle
       >
         <Icon name="lucide:grip-vertical" />
       </div>

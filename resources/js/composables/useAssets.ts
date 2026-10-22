@@ -86,18 +86,27 @@ export function useAssets(spaceId: MaybeRef<string>) {
     queryClient.invalidateQueries({ queryKey: queryKeys.assetCollections(spaceId).lists() })
   }
 
+  const getAsset = async (id: string, signal?: AbortSignal): Promise<AssetResource> => {
+    // The show endpoint returns the asset without a `data` envelope;
+    // `response.data` would resolve to the asset's own `data` attribute.
+    const response = await spaceAPI.value.assets.get(id, {}, { signal })
+    return ('id' in response ? response : response.data) as AssetResource
+  }
+
   const useAssetQuery = (id: MaybeRef<string>, enabled: MaybeRef<boolean> = true) => {
     return useQuery({
       queryKey: computed(() => queryKeys.assets(spaceId).detail(id)),
-      queryFn: async ({ signal }) => {
-        // The show endpoint returns the asset without a `data` envelope;
-        // `response.data` would resolve to the asset's own `data` attribute.
-        const response = await spaceAPI.value.assets.get(toValue(id), {}, { signal })
-        return ('id' in response ? response : response.data) as AssetResource
-      },
+      queryFn: ({ signal }) => getAsset(toValue(id), signal),
       enabled: computed(() => Boolean(toValue(id)) && toValue(enabled)),
     })
   }
+
+  /** The asset from the cache `useAssetQuery` fills, fetched only when it holds none. */
+  const fetchAsset = (id: string): Promise<AssetResource> =>
+    queryClient.ensureQueryData({
+      queryKey: queryKeys.assets(spaceId).detail(id),
+      queryFn: ({ signal }) => getAsset(id, signal),
+    })
 
   const useAssetLinkedContentsQuery = (
     id: MaybeRef<string | null | undefined>,
@@ -421,6 +430,7 @@ export function useAssets(spaceId: MaybeRef<string>) {
     useAssetQuery,
     useAssetsQuery,
     useAssetLinkedContentsQuery,
+    fetchAsset,
 
     // Mutations
     useUpdateAssetMutation,

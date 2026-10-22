@@ -129,6 +129,11 @@ export function useContent(spaceId: MaybeRef<string>) {
     })
   }
 
+  const getContent = async (id: string, signal?: AbortSignal) => {
+    const response = await spaceAPI.value.contents.get(id, {}, { signal })
+    return response.data
+  }
+
   // Query to fetch a single content item
   const useContentQuery = (id: MaybeRef<string | null | undefined>) => {
     const resolvedId = computed(() => toValue(id) || '')
@@ -141,12 +146,18 @@ export function useContent(spaceId: MaybeRef<string>) {
           throw new Error('Content ID is required')
         }
 
-        const response = await spaceAPI.value.contents.get(contentId, {}, { signal })
-        return response.data
+        return getContent(contentId, signal)
       },
       enabled: computed(() => !!toValue(id)),
     })
   }
+
+  /** The content from the cache `useContentQuery` fills, fetched only when it holds none. */
+  const fetchContent = (id: string) =>
+    queryClient.ensureQueryData({
+      queryKey: queryKeys.contents(spaceId).detail(id),
+      queryFn: ({ signal }) => getContent(id, signal),
+    })
 
   // Query to fetch children of a specific content item.
   // Keyed by the params it actually sends, and caching the same envelope shape
@@ -763,6 +774,7 @@ export function useContent(spaceId: MaybeRef<string>) {
     // Queries
     useContentsQuery,
     useContentQuery,
+    fetchContent,
     useContentChildrenQuery,
     useSerialPreviewQuery,
 

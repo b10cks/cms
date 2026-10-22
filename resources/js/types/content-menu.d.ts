@@ -27,6 +27,7 @@ interface ContentMenuItem extends FlatContentMenuItem {
 interface ContentMenuTranslation {
   id: string
   name: string
+  full_slug: string
   language_iso: string
   published_at: string | null
   drf: boolean

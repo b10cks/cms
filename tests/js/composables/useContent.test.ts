@@ -208,6 +208,23 @@ describe('useContentQuery', () => {
   })
 })
 
+describe('fetchContent', () => {
+  it('answers from the content cache and fetches only what it lacks', async () => {
+    contents.get.mockResolvedValue({ data: content({ id: 'c2' }) })
+    const { result, queryClient } = withSetup(() => useContent(SPACE), {
+      seed: [[queryKeys.contents(SPACE).detail('c1'), content()]],
+    })
+
+    await expect(result.fetchContent('c1')).resolves.toEqual(content())
+    await expect(result.fetchContent('c2')).resolves.toMatchObject({ id: 'c2' })
+    expect(contents.get).toHaveBeenCalledTimes(1)
+    expect(queryClient.getQueryData(queryKeys.contents(SPACE).detail('c2'))).toMatchObject({
+      id: 'c2',
+    })
+    queryClient.clear()
+  })
+})
+
 describe('useContentChildrenQuery', () => {
   it('caches the same envelope shape as useContentsQuery', async () => {
     const response = { data: [content({ id: 'child' })], meta: { total: 1 } }
@@ -643,7 +660,9 @@ describe('publish, schedule and unpublish', () => {
 })
 
 describe('bulk publish and unpublish', () => {
-  const run = (overrides: Partial<ContentBulkPublishRun> = {}): { data: ContentBulkPublishRun } => ({
+  const run = (
+    overrides: Partial<ContentBulkPublishRun> = {}
+  ): { data: ContentBulkPublishRun } => ({
     data: {
       id: 'run-1',
       action: 'publish',
@@ -694,9 +713,7 @@ describe('bulk publish and unpublish', () => {
 
     expect(contents.bulkUnpublish).toHaveBeenCalledWith({ ids: ['c1', 'c2', 'c3'] })
     expect(success).not.toHaveBeenCalled()
-    expect(failure).toHaveBeenCalledWith(
-      '2 of 3 entries could not be unpublished. "About": locked'
-    )
+    expect(failure).toHaveBeenCalledWith('2 of 3 entries could not be unpublished. "About": locked')
   })
 
   it('follows the active run as another run and rejects the one that did not start', async () => {

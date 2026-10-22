@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useSortable } from '@vueuse/integrations/useSortable'
+import { useSortable, type UseSortableOptions } from '@vueuse/integrations/useSortable'
 
 import Icon from '~/components/Icon.vue'
 import { Button } from '~/components/ui/button'
@@ -33,13 +33,13 @@ const dataSourceOptions = computed(
 )
 
 if (!props.readonly) {
-  ;(useSortable as any)(list, props.value.options, {
-    handle: '[draggable]',
+  useSortable(list, props.value.options, {
+    handle: '[data-option-handle]',
     animation: 150,
     onEnd: () => {
       emit('update:item-value', 'options', [...props.value.options])
     },
-  })
+  } as UseSortableOptions)
 }
 
 // Schema keys transliterate for the space's language too, so a German space
@@ -192,7 +192,7 @@ watch(
               'shrink-0',
               readonly ? 'text-muted-foreground' : 'cursor-ns-resize hover:text-primary',
             ]"
-            draggable
+            data-option-handle
           />
           <Input
             v-model="option.name"

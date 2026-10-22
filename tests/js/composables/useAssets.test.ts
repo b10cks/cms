@@ -259,6 +259,23 @@ describe('useAssetQuery', () => {
   })
 })
 
+describe('fetchAsset', () => {
+  it('answers from the asset cache and fetches only what it lacks', async () => {
+    assets.get.mockResolvedValue({ id: 'a2', filename: 'a2.png' })
+    const { result, queryClient } = withSetup(() => useAssets(SPACE), {
+      seed: [[queryKeys.assets(SPACE).detail('a1'), asset()]],
+    })
+
+    await expect(result.fetchAsset('a1')).resolves.toEqual(asset())
+    await expect(result.fetchAsset('a2')).resolves.toMatchObject({ id: 'a2' })
+    expect(assets.get).toHaveBeenCalledTimes(1)
+    expect(queryClient.getQueryData(queryKeys.assets(SPACE).detail('a2'))).toMatchObject({
+      id: 'a2',
+    })
+    queryClient.clear()
+  })
+})
+
 describe('useAssetLinkedContentsQuery', () => {
   it('keys per page and defaults to ten per page', async () => {
     assets.getLinkedContents.mockResolvedValue({ data: [], meta: { total: 0 } })

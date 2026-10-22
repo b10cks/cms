@@ -299,9 +299,11 @@ const handlePlaceholderBlur = (row: Placeholder) => {
 
 // The sortablejs `Options` type doesn't resolve in this project, so the
 // Sortable-native options (handle, animation, onEnd) need an explicit cast.
+// Sortable leaves `draggable="false"` on a dropped item, so the handle must
+// not be the `draggable` attribute: it would turn the whole row into a handle.
 const sortableOptions = (commit: () => void): UseSortableOptions =>
   ({
-    handle: '[draggable]',
+    handle: '[data-sort-handle]',
     animation: 150,
     // useSortable reorders the array on the next tick; commit after it did.
     onEnd: () => nextTick(commit),
@@ -528,7 +530,7 @@ watch(
               <Icon
                 name="lucide:grip-vertical"
                 class="shrink-0 cursor-ns-resize hover:text-primary"
-                draggable
+                data-sort-handle
               />
               <Input
                 v-model="htmlClass.name"
@@ -617,7 +619,7 @@ watch(
             <Icon
               name="lucide:grip-vertical"
               class="shrink-0 cursor-ns-resize hover:text-primary"
-              draggable
+              data-sort-handle
             />
             <Input
               v-model="placeholder.label"
