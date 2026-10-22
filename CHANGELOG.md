@@ -3,6 +3,17 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.10.22-ea2caf65] — 2026-10-22
+
+- ⬆️ bump versions
+- ♿️ Keep block actions out of the accordion toggle button
+- 🐛 Move blocks past hidden neighbours from the preview
+- 🐛 Resolve internal links in live preview pushes
+- 🐛 Drag schema list rows by their grip only
+- 📝 Describe the delivered shape of live preview pushes
+- 🐛 Show asset edits in the live preview right away
+- 🐛 Keep hidden blocks out of the preview when the Data API drops them
+
 ## [v2026.10.21-a1134c00] — 2026-10-21
 
 - 🔧 regenerate auto-imports for the VersionGroup type
