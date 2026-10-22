@@ -166,7 +166,7 @@ function clearValue(): void {
     <PopoverTrigger as-child>
       <button
         type="button"
-        class="group flex h-9 cursor-pointer items-center gap-2 rounded-md border border-input-border bg-input px-3 text-sm font-semibold whitespace-nowrap text-primary shadow-sm transition-colors hover:bg-input/70 focus:ring-1 focus:ring-ring focus:outline-none data-[state=open]:ring-1 data-[state=open]:ring-ring"
+        class="group flex h-9 cursor-pointer items-center gap-2 rounded-md border border-input-border bg-input pr-2 pl-3 text-sm font-semibold whitespace-nowrap text-primary shadow-sm transition-colors hover:bg-input/70 focus:ring-1 focus:ring-ring focus:outline-none data-[state=open]:ring-1 data-[state=open]:ring-ring"
         :aria-label="$t('labels.dateRange.label')"
       >
         <Icon
@@ -189,6 +189,7 @@ function clearValue(): void {
         <Icon
           v-else
           name="lucide:chevron-down"
+          size="1rem"
           class="shrink-0 text-muted transition-transform group-data-[state=open]:rotate-180"
         />
       </button>

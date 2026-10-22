@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { SelectGroup, SelectTrigger } from 'reka-ui'
 
-import Icon from '~/components/Icon.vue'
 import BlockType from '~/components/ui/BlockType.vue'
 import { Select, SelectContent, SelectItem } from '~/components/ui/select'
 
@@ -14,9 +13,8 @@ const value = defineModel<string>()
 
 <template>
   <Select v-model="value">
-    <SelectTrigger class="flex items-center gap-2 rounded-md bg-input px-2">
+    <SelectTrigger class="flex items-center gap-2 rounded-md bg-input pl-2!">
       <BlockType :type="value" />
-      <Icon name="lucide:chevron-down" />
     </SelectTrigger>
     <SelectContent>
       <SelectGroup>

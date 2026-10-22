@@ -21,7 +21,7 @@ const forwardedProps = useForwardProps(delegatedProps)
     v-bind="forwardedProps"
     :class="
       cn(
-        'flex h-9 w-full cursor-pointer items-center justify-between rounded-md border border-input-border aria-invalid:border-destructive bg-input px-3 py-2 text-start text-sm font-semibold whitespace-nowrap shadow-sm ring-offset-background focus:ring-1 focus:ring-ring focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 data-[placeholder]:text-muted [&>span]:truncate',
+        'flex h-9 w-full cursor-pointer items-center justify-between gap-2 rounded-md border border-input-border aria-invalid:border-destructive bg-input py-2 pr-2 pl-3 text-start text-sm font-semibold whitespace-nowrap shadow-sm ring-offset-background focus:ring-1 focus:ring-ring focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 data-[placeholder]:text-muted [&>span]:truncate',
         props.class
       )
     "
@@ -30,7 +30,8 @@ const forwardedProps = useForwardProps(delegatedProps)
     <SelectIcon as-child>
       <Icon
         name="lucide:chevron-down"
-        class="shrink-0"
+        size="1rem"
+        class="shrink-0 text-muted"
       />
     </SelectIcon>
   </SelectTrigger>
