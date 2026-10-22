@@ -126,7 +126,7 @@ describe('rendering', () => {
       expect.arrayContaining(['flex-wrap', 'root-extra'])
     )
     expect(wrapper.find('[data-reka-collection-item]').classes()).toEqual(
-      expect.arrayContaining(['bg-secondary', 'item-extra'])
+      expect.arrayContaining(['bg-chip', 'item-extra'])
     )
     expect(wrapper.find('span').classes()).toEqual(expect.arrayContaining(['px-2', 'text-extra']))
     expect(wrapper.find('input').classes()).toEqual(
