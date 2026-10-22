@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card'
+import { Panel } from '~/components/ui/panel'
 import { Progress } from '~/components/ui/progress'
 import { Skeleton } from '~/components/ui/skeleton'
 
@@ -44,69 +44,59 @@ const rows = computed(() => {
 </script>
 
 <template>
-  <Card v-if="isLoading || rows.length">
-    <CardHeader>
-      <CardTitle class="text-base">{{ $t('labels.usage.live') }}</CardTitle>
-    </CardHeader>
-    <CardContent>
-      <div
-        v-if="isLoading"
-        class="grid gap-4 sm:grid-cols-2"
-        aria-hidden="true"
-      >
+  <Panel
+    v-if="isLoading || rows.length"
+    :title="$t('labels.usage.live')"
+    :meta="
+      usage?.period?.resets_at
+        ? $t('labels.usage.resets', { date: formatDate(usage.period.resets_at) })
+        : undefined
+    "
+  >
+    <div class="grid gap-x-8 gap-y-5 sm:grid-cols-3">
+      <template v-if="isLoading">
         <div
           v-for="i in 3"
           :key="i"
-          class="space-y-1"
+          class="grid gap-2"
+          aria-hidden="true"
         >
-          <div class="flex justify-between">
-            <Skeleton class="h-4 w-20" />
-            <Skeleton class="h-4 w-28" />
-          </div>
+          <Skeleton class="h-5 w-24" />
+          <Skeleton class="h-7 w-32" />
           <Skeleton class="h-2 w-full rounded-full" />
         </div>
-      </div>
+      </template>
       <div
+        v-for="row in rows"
         v-else
-        class="grid gap-4 sm:grid-cols-2"
+        :key="row.key"
+        class="grid gap-1.5"
       >
-        <div
-          v-for="row in rows"
-          :key="row.key"
-          class="space-y-1"
-        >
-          <div class="flex justify-between text-sm">
-            <span class="font-medium">{{ row.label }}</span>
-            <span :class="row.over ? 'font-medium text-destructive' : 'text-muted'">
-              {{ row.usedLabel
-              }}<template v-if="row.limitLabel">
-                / {{ row.limitLabel
-                }}<template v-if="row.perMonth"> {{ $t('labels.plans.perMonth') }}</template>
-              </template>
-            </span>
-          </div>
-          <Progress
-            :model-value="row.metric.unlimited ? 0 : row.metric.percentage"
-            :variant="row.variant"
-          />
-          <p
-            v-if="row.over"
-            class="text-xs font-medium text-destructive"
+        <span class="text-sm text-muted select-none">{{ row.label }}</span>
+        <span class="truncate tabular-nums">
+          <span
+            class="text-xl font-semibold"
+            :class="row.over ? 'text-destructive' : 'text-primary'"
+          >{{ row.usedLabel }}</span>
+          <span
+            v-if="row.limitLabel"
+            class="text-sm text-muted"
           >
-            {{ $t('labels.usage.overLimit', { percentage: row.metric.percentage }) }}
-          </p>
-        </div>
+            / {{ row.limitLabel
+            }}<template v-if="row.perMonth"> {{ $t('labels.plans.perMonth') }}</template>
+          </span>
+        </span>
+        <Progress
+          :model-value="row.metric.unlimited ? 0 : row.metric.percentage"
+          :variant="row.variant"
+        />
+        <span
+          v-if="row.over"
+          class="text-sm text-destructive"
+        >
+          {{ $t('labels.usage.overLimit', { percentage: row.metric.percentage }) }}
+        </span>
       </div>
-      <p
-        v-if="usage?.period?.resets_at"
-        class="mt-3 text-xs text-muted"
-      >
-        {{
-          $t('labels.plans.usageResets', {
-            date: formatDate(usage.period.resets_at),
-          })
-        }}
-      </p>
-    </CardContent>
-  </Card>
+    </div>
+  </Panel>
 </template>

@@ -63,7 +63,7 @@ function reasonVariant(period: SubscriptionPeriod) {
 </script>
 
 <template>
-  <div class="overflow-hidden rounded-md border border-border">
+  <div>
     <Table>
       <TableHeader>
         <TableRow>
@@ -104,10 +104,11 @@ function reasonVariant(period: SubscriptionPeriod) {
 
             <template v-if="period.is_open">
               <TableCell
-                :colspan="metricDefs.length"
-                class="text-xs text-muted"
+                v-for="def in metricDefs"
+                :key="def.key"
+                class="text-muted/50"
               >
-                {{ $t('labels.usage.history.currentHint') }}
+                –
               </TableCell>
             </template>
 
@@ -118,7 +119,7 @@ function reasonVariant(period: SubscriptionPeriod) {
               >
                 <div class="space-y-1 py-1">
                   <span
-                    class="text-xs whitespace-nowrap"
+                    class="text-sm whitespace-nowrap tabular-nums"
                     :class="
                       (period.usage[def.key].percentage ?? 0) >= 100
                         ? 'font-medium text-destructive'

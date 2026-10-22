@@ -40,7 +40,7 @@ function formatDate(value: string | null): string {
 </script>
 
 <template>
-  <div class="overflow-hidden rounded-md border border-border">
+  <div>
     <Table>
       <TableHeader>
         <TableRow>

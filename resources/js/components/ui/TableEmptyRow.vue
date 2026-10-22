@@ -31,7 +31,7 @@ const labelText = computed(() => {
   <TableRow>
     <TableCell
       :colspan="colspan"
-      class="bg-surface py-12 text-center select-none"
+      class="py-12 text-center select-none"
     >
       <div class="flex flex-col items-center justify-center gap-6">
         <Component

@@ -4,15 +4,15 @@ import InvoicesTable from '~/components/space-settings/usage/InvoicesTable.vue'
 import LiveUsageCard from '~/components/space-settings/usage/LiveUsageCard.vue'
 import PeriodHistoryTable from '~/components/space-settings/usage/PeriodHistoryTable.vue'
 import { Button } from '~/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card'
 import ContentHeader from '~/components/ui/ContentHeader.vue'
+import { Panel } from '~/components/ui/panel'
 import { Skeleton } from '~/components/ui/skeleton'
 
-const StatsLineChart = defineAsyncComponent(() => import('~/components/stats/StatsLineChart.vue'))
+const TrendChart = defineAsyncComponent(() => import('~/components/stats/TrendChart.vue'))
 
 const route = useRoute()
 const { t } = useI18n()
-const { formatDate } = useFormat()
+const { formatDateTime, formatFileSize } = useFormat()
 const spaceId = route.params.space as string
 
 const { useUsageHistoryQuery, useUsageTimeseriesQuery } = useUsageHistory(spaceId)
@@ -52,22 +52,21 @@ const selectedPeriod = computed(() =>
   (periods.value ?? []).find((p) => p.id === selectedPeriodId.value)
 )
 
-const chartData = computed(() =>
-  (timeseries.value?.points ?? []).map((point) => ({
-    name: formatDate(point.date),
-    value: +(point.value / (1024 * 1024)).toFixed(2),
-  }))
-)
-
-const chartLabel = computed(() => t('labels.usage.history.trafficMb'))
+const points = computed(() => timeseries.value?.points ?? [])
+const chartPeriods = computed(() => points.value.map((point) => formatDateTime(point.date, 'D MMM')))
+const chartSeries = computed(() => [
+  {
+    key: 'traffic',
+    label: t('labels.usage.history.traffic'),
+    color: 'var(--series-1)',
+    values: points.value.map((point) => point.value),
+  },
+])
 </script>
 
 <template>
-  <div class="content-grid">
-    <ContentHeader
-      :header="$t('labels.usage.history.title')"
-      :description="$t('labels.usage.history.description')"
-    >
+  <div class="content-grid gap-y-4 pb-8">
+    <ContentHeader :header="$t('labels.usage.history.title')">
       <template #actions>
         <Button
           v-if="current?.billing_portal_url"
@@ -82,71 +81,55 @@ const chartLabel = computed(() => t('labels.usage.history.trafficMb'))
       </template>
     </ContentHeader>
 
-    <!-- Live usage against the current plan quotas -->
     <LiveUsageCard
       :usage="liveUsage"
       :is-loading="liveUsageLoading"
-      class="mb-6"
     />
 
-    <!-- In-period trend chart -->
-    <Card v-if="periodsLoading || selectedPeriod">
-      <CardHeader>
-        <CardTitle
-          v-if="selectedPeriod"
-          class="text-base"
-        >
-          {{ selectedPeriod.plan_name }} ·
-          {{ $t('labels.usage.history.trend') }}
-        </CardTitle>
-        <Skeleton
-          v-else
-          class="h-5 w-48"
-        />
-      </CardHeader>
-      <CardContent>
-        <Skeleton
-          v-if="periodsLoading || timeseriesLoading"
-          class="h-[260px] w-full"
-        />
-        <StatsLineChart
-          v-else-if="chartData.length"
-          :title="chartLabel"
-          :y-axis-label="chartLabel"
-          :data="chartData"
-          :height="260"
-        />
-        <p
-          v-else
-          class="py-8 text-center text-sm text-muted"
-        >
-          {{ $t('labels.usage.history.noTrend') }}
-        </p>
-      </CardContent>
-    </Card>
+    <Panel
+      v-if="periodsLoading || selectedPeriod"
+      :title="$t('labels.usage.history.traffic')"
+      :meta="selectedPeriod?.plan_name"
+    >
+      <Skeleton
+        v-if="periodsLoading || timeseriesLoading"
+        class="h-[268px] w-full"
+      />
+      <TrendChart
+        v-else-if="points.length"
+        :periods="chartPeriods"
+        :series="chartSeries"
+        :format="formatFileSize"
+        :height="208"
+      />
+      <p
+        v-else
+        class="flex h-[268px] items-center justify-center text-muted"
+      >
+        {{ $t('labels.usage.history.noTrend') }}
+      </p>
+    </Panel>
 
-    <!-- Period history -->
-    <div class="mt-6 space-y-2">
-      <h3 class="text-sm font-semibold text-primary">
-        {{ $t('labels.usage.history.periods') }}
-      </h3>
+    <Panel
+      :title="$t('labels.usage.history.periods')"
+      flush
+    >
       <PeriodHistoryTable
         :periods="periods ?? []"
         :selected-id="selectedPeriodId"
         :loading="periodsLoading"
         @select="selectedPeriodId = $event"
       />
-    </div>
+    </Panel>
 
-    <!-- Invoices -->
-    <div class="mt-6 space-y-2">
-      <h3 class="text-sm font-semibold text-primary">
-        {{ $t('labels.invoices.title') }}
-      </h3>
+    <Panel
+      :title="$t('labels.invoices.title')"
+      flush
+    >
       <InvoicesTable
         :invoices="invoices ?? []"
         :loading="invoicesLoading"
       />
-    </div>
+    </Panel>
   </div>
 </template>
