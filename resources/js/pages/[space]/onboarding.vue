@@ -156,8 +156,8 @@ const spaceLink = (name: string) => ({ name, params: { space: spaceId.value } })
     <div class="content-grid pb-6">
       <ContentHeader
         :header="t('labels.onboarding.title')"
-        :description="t('labels.onboarding.subtitle')"
       >
+        <p class="text-muted">{{ t('labels.onboarding.subtitle') }}</p>
         <template #before-header>
           <div class="flex size-10 items-center justify-center rounded-md bg-accent/10 text-accent">
             <Icon

@@ -31,7 +31,6 @@ const handleCreate = (payload: CreateMigrationPayload) => {
   <div class="content-grid">
     <ContentHeader
       :header="$t('labels.migrations.title')"
-      :description="$t('labels.migrations.description')"
     >
       <template #actions>
         <Button

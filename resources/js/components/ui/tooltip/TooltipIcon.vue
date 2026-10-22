@@ -24,7 +24,7 @@ withDefaults(
     <Tooltip>
       <TooltipTrigger
         type="button"
-        class="flex items-center"
+        class="flex items-center text-muted transition-colors duration-100 hover:text-primary"
         :aria-label="$t('labels.moreInfo')"
       >
         <Icon

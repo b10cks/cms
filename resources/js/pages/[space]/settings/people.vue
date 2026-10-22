@@ -38,7 +38,6 @@ const inviteDialogOpen = ref(false)
   <div class="content-grid">
     <ContentHeader
       :header="$t('labels.settings.people.title')"
-      :description="$t('labels.settings.people.description')"
     >
       <template #actions>
         <Button

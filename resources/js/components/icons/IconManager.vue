@@ -76,7 +76,6 @@ onUnmounted(() => {
   <div class="flex h-full w-full flex-col gap-4">
     <ContentHeader
       :header="t('labels.icons.pageTitle')"
-      :description="t('labels.icons.pageDescription')"
     >
       <template #actions>
         <div class="ml-auto flex items-center gap-2">

@@ -226,7 +226,6 @@ const isStepValid = computed(() => {
       <div class="content-narrow grid gap-6">
         <ContentHeader
           :header="$t('labels.spaces.newPageTitle')"
-          :description="$t('labels.spaces.newPageDescription')"
         />
         <p
           v-if="selectedTeam && !canCreateSpace"

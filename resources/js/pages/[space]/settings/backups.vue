@@ -32,7 +32,6 @@ const handleCreateBackup = (payload: CreateBackupPayload) => {
   <div class="content-grid">
     <ContentHeader
       :header="$t('labels.backups.title')"
-      :description="$t('labels.backups.description')"
     >
       <template #actions>
         <Button

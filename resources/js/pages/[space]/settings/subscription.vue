@@ -286,7 +286,6 @@ const payProposal = () => {
   <div class="content-grid">
     <ContentHeader
       :header="$t('labels.settings.subscription.title')"
-      :description="$t('labels.settings.subscription.description')"
     >
       <template #actions>
         <div class="flex gap-2">

@@ -61,7 +61,6 @@ const handleDelete = async (dataSource: DataSourceResource) => {
     <div class="content-grid">
       <ContentHeader
         :header="$t('labels.datasets.title')"
-        :description="$t('labels.datasets.description')"
       >
         <template #actions>
           <Button

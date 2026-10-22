@@ -102,7 +102,6 @@ const hasActiveFilters = computed(() => Object.keys(filters.value).length > 0)
   <div class="flex flex-col gap-8">
     <ContentHeader
       :header="$t('labels.teams.pageTitle')"
-      :description="$t('labels.teams.pageDescription')"
     >
       <template #actions>
         <CreateTeamDialog

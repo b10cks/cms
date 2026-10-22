@@ -105,7 +105,6 @@ watch(showTagDialog, (isOpen) => {
     <div class="content-grid">
       <ContentHeader
         :header="$t('labels.blockTags.title')"
-        :description="$t('labels.blockTags.description')"
       >
         <template #actions>
           <Button

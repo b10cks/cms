@@ -22,7 +22,6 @@ useSeoMeta({
     <div class="content-grid">
       <ContentHeader
         :header="$t('labels.redirects.title')"
-        :description="$t('labels.redirects.description')"
       >
         <template #actions>
           <Button

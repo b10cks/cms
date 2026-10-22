@@ -16,7 +16,6 @@ useSeoMeta({
     <div class="content-grid">
       <ContentHeader
         :header="$t('labels.auditLog.title')"
-        :description="$t('labels.auditLog.description')"
       />
       <AuditLogsTable :space-id="spaceId" />
     </div>

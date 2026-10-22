@@ -193,7 +193,6 @@ const typeColor = (type: 'root' | 'nestable' | 'single' | 'universal') => {
     <div class="content-grid">
       <ContentHeader
         :header="$t('labels.blocks.title')"
-        :description="$t('labels.blocks.description')"
       >
         <template #actions>
           <Button

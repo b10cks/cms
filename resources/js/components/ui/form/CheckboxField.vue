@@ -57,10 +57,10 @@ const { fieldId: uniqueId, hasError, describedBy, invalid } = useFieldA11y(props
         >
           {{ label }}
         </label>
-        <TooltipIcon
-          v-if="tooltip"
-          size="1.2em"
-          >{{ tooltip }}
+        <TooltipIcon v-if="tooltip || description">
+          <span class="block max-w-xs whitespace-pre-line">{{
+            [tooltip, description].filter(Boolean).join('\n\n')
+          }}</span>
         </TooltipIcon>
       </div>
     </div>
@@ -68,6 +68,7 @@ const { fieldId: uniqueId, hasError, describedBy, invalid } = useFieldA11y(props
       :id="uniqueId"
       :error="error"
       :description="description"
+      :description-in-tooltip="!!label"
     />
   </div>
 </template>

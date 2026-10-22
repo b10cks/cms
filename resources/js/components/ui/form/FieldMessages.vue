@@ -3,6 +3,8 @@ defineProps<{
   id: string
   error?: string | null
   description?: string
+  /** The field shows the description as a tooltip by its label; keep it here for screen readers only. */
+  descriptionInTooltip?: boolean
 }>()
 </script>
 
@@ -17,7 +19,7 @@ defineProps<{
   <p
     v-if="description"
     :id="`${id}-description`"
-    class="text-sm text-text-muted"
+    :class="descriptionInTooltip ? 'sr-only' : 'text-sm text-muted'"
   >
     {{ description }}
   </p>

@@ -19,6 +19,10 @@ const props = defineProps<{
 }>()
 
 const { fieldId: uniqueId, hasError, describedBy, invalid } = useFieldA11y(props)
+
+/** Hints sit behind an info icon by the label, so a form reads as labels and fields. */
+const hint = computed(() => [props.tooltip, props.description].filter(Boolean).join('\n\n'))
+const descriptionInTooltip = computed(() => !!props.label && !props.hideLabel)
 </script>
 
 <template>
@@ -34,7 +38,9 @@ const { fieldId: uniqueId, hasError, describedBy, invalid } = useFieldA11y(props
         :for="uniqueId"
         :has-error="hasError"
       />
-      <TooltipIcon v-if="tooltip">{{ tooltip }}</TooltipIcon>
+      <TooltipIcon v-if="hint && !hideLabel">
+        <span class="block max-w-xs whitespace-pre-line">{{ hint }}</span>
+      </TooltipIcon>
     </div>
     <slot
       v-bind="{
@@ -49,6 +55,7 @@ const { fieldId: uniqueId, hasError, describedBy, invalid } = useFieldA11y(props
       :id="uniqueId"
       :error="error"
       :description="description"
+      :description-in-tooltip="descriptionInTooltip"
     />
   </div>
 </template>
