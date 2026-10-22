@@ -126,6 +126,30 @@ describe('planBlockAction', () => {
     expect(planBlockAction(tree(), 'item-a', 'move-up', rules(), newId)).toBeNull()
   })
 
+  it('moves past hidden siblings only when the space filters them', () => {
+    const root = tree()
+    const items = (root.body as ContentTreeItem[])[1].items as ContentTreeItem[]
+    items[1].hidden = true
+    const order = (plan: ReturnType<typeof planBlockAction>) =>
+      plan?.kind === 'edit' ? plan.edits[0].operation : plan
+
+    expect(
+      order(planBlockAction(root, 'item-a', 'move-down', rules(), newId, { skipHidden: true }))
+    ).toEqual({ type: 'reorder', order: ['item-b', 'item-c', 'item-a'] })
+    expect(
+      order(planBlockAction(root, 'item-c', 'move-up', rules(), newId, { skipHidden: true }))
+    ).toEqual({ type: 'reorder', order: ['item-c', 'item-a', 'item-b'] })
+    expect(order(planBlockAction(root, 'item-a', 'move-down', rules(), newId))).toEqual({
+      type: 'reorder',
+      order: ['item-b', 'item-a', 'item-c'],
+    })
+
+    items[2].hidden = true
+    expect(
+      planBlockAction(root, 'item-a', 'move-down', rules(), newId, { skipHidden: true })
+    ).toBeNull()
+  })
+
   it('duplicates with fresh ids for the block and its nested blocks, and selects the copy', () => {
     const plan = planBlockAction(tree(), 'list-1', 'duplicate', rules(), newId)
     if (plan?.kind !== 'edit') throw new Error('expected an edit')

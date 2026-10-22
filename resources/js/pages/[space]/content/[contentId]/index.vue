@@ -725,7 +725,9 @@ const runBlockAction = ({ itemId, action }: BlockActionEvent) => {
   if (!canManageContent.value) return
 
   applyBlockPlan(
-    planBlockAction(editorContentModel.value, itemId, action, blockListRules, newBlockId)
+    planBlockAction(editorContentModel.value, itemId, action, blockListRules, newBlockId, {
+      skipHidden: spaceData.value?.settings.filter_hidden_blocks ?? false,
+    })
   )
 }
 

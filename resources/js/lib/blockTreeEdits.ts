@@ -246,15 +246,35 @@ const reorder = (slot: BlockSlot, next: ContentTreeItem[]): BlockPlan => ({
 })
 
 /**
+ * Index a block at `index` moves to, one step in `direction`. With
+ * `skipHidden` it steps past hidden siblings, which a space that filters them
+ * leaves out of the preview, so the move is always visible there. Null past
+ * either end of the list.
+ */
+function moveTarget(
+  list: ContentTreeItem[],
+  index: number,
+  direction: -1 | 1,
+  skipHidden: boolean
+): number | null {
+  let target = index + direction
+  while (skipHidden && list[target]?.hidden === true) target += direction
+
+  return target < 0 || target >= list.length ? null : target
+}
+
+/**
  * Plan a BLOCK_ACTION. Returns null when it has nothing to do (unknown block,
  * moving past either end of the list, hiding a hidden or showing a visible block).
+ * `skipHidden` lets moves step past hidden siblings, for spaces that filter them.
  */
 export function planBlockAction(
   root: ContentTreeItem,
   itemId: string,
   action: BlockAction,
   rulesFor: BlockListRulesLookup,
-  newId: () => string
+  newId: () => string,
+  { skipHidden = false }: { skipHidden?: boolean } = {}
 ): BlockPlan | null {
   const slot = findBlockSlot(root, itemId)
   if (!slot) return null
@@ -265,8 +285,8 @@ export function planBlockAction(
   switch (action) {
     case 'move-up':
     case 'move-down': {
-      const target = slot.index + (action === 'move-up' ? -1 : 1)
-      if (target < 0 || target >= list.length) return null
+      const target = moveTarget(list, slot.index, action === 'move-up' ? -1 : 1, skipHidden)
+      if (target === null) return null
 
       const next = [...list]
       const [moved] = next.splice(slot.index, 1)
