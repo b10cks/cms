@@ -1,16 +1,16 @@
 <script setup lang="ts">
 import { deepClone } from '@vue/devtools-shared'
-import { useSortable } from '@vueuse/integrations/useSortable'
+import { useSortable, type UseSortableOptions } from '@vueuse/integrations/useSortable'
 import { AccordionRoot } from 'reka-ui'
 import type { ComponentPublicInstance, Ref } from 'vue'
 import { toast } from 'vue-sonner'
 
 import Add from '~/components/blocks/Add.vue'
-import { useFieldClipboard } from '~/composables/useFieldClipboard'
 import Block from '~/components/blocks/Block.vue'
 import Icon from '~/components/Icon.vue'
 import { Button } from '~/components/ui/button'
 import { Input } from '~/components/ui/input'
+import { useFieldClipboard } from '~/composables/useFieldClipboard'
 
 interface AddFieldPayload {
   type: string
@@ -261,9 +261,7 @@ const copyField = async (key: string) => {
   if (!field) return
 
   await copyFieldToClipboard(key, deepClone(field) as SchemaType)
-  toast.success(
-    $t('labels.blocks.fieldClipboard.copied', { name: field.name || key }) as string
-  )
+  toast.success($t('labels.blocks.fieldClipboard.copied', { name: field.name || key }) as string)
 }
 
 const pasteField = () => {
@@ -521,7 +519,7 @@ const setupTabsSortable = () => {
   nextTick(() => {
     if (!tabsContainer.value || props.readonly) return
 
-    ;(useSortable as any)(tabsContainer.value, localEditor.value, {
+    useSortable(tabsContainer.value, localEditor.value, {
       handle: '[tab-handle]',
       animation: 150,
       onEnd: (event: { oldIndex?: number | null; newIndex?: number | null }) => {
@@ -537,7 +535,7 @@ const setupTabsSortable = () => {
 
         emitEditorUpdate()
       },
-    })
+    } as UseSortableOptions)
   })
 }
 
@@ -548,14 +546,14 @@ const setupFieldSortable = (pageIndex: number, element: HTMLElement) => {
 
   const pageItems = toRef(page, 'items')
 
-  ;(useSortable as any)(element, pageItems, {
-    handle: '[draggable]',
+  useSortable(element, pageItems, {
+    handle: '[data-field-handle]',
     group: 'schema-fields',
     animation: 150,
     onEnd: () => {
       emitEditorUpdate()
     },
-  })
+  } as UseSortableOptions)
 }
 
 onMounted(() => {
@@ -697,7 +695,13 @@ watch(
             v-if="hasField && clipboardField"
             type="button"
             variant="outline"
-            :title="String($t('labels.blocks.fieldClipboard.paste', { name: clipboardField.field.name || clipboardField.key }))"
+            :title="
+              String(
+                $t('labels.blocks.fieldClipboard.paste', {
+                  name: clipboardField.field.name || clipboardField.key,
+                })
+              )
+            "
             @click="pasteField"
           >
             <Icon name="lucide:clipboard-paste" />

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useSortable } from '@vueuse/integrations/useSortable'
+import { useSortable, type UseSortableOptions } from '@vueuse/integrations/useSortable'
 
 import TableColumnOptions from '~/components/blocks/TableColumnOptions.vue'
 import Icon from '~/components/Icon.vue'
@@ -20,11 +20,11 @@ const emit = defineEmits<{
 const list = ref<HTMLDivElement | null>(null)
 
 if (!props.readonly) {
-  ;(useSortable as any)(list, props.value.columns, {
-    handle: '[draggable]',
+  useSortable(list, props.value.columns, {
+    handle: '[data-column-handle]',
     animation: 150,
     onEnd: () => commitColumns([...props.value.columns]),
-  })
+  } as UseSortableOptions)
 }
 
 const syncDefault = (
@@ -178,15 +178,12 @@ const removeColumn = (index: number) => {
           <div class="grid gap-3 md:grid-cols-[auto_1fr_1fr_110px_auto] md:items-start">
             <button
               type="button"
-              draggable
+              data-column-handle
               :disabled="readonly"
               :aria-label="$t('actions.dragToReorder')"
               class="h-full flex items-center cursor-ns-resize py-2 text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50"
             >
-              <Icon
-                name="lucide:grip-vertical"
-                draggable
-              />
+              <Icon name="lucide:grip-vertical" />
             </button>
 
             <InputField

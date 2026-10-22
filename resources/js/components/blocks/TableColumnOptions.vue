@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useSortable } from '@vueuse/integrations/useSortable'
+import { useSortable, type UseSortableOptions } from '@vueuse/integrations/useSortable'
 
 import Icon from '~/components/Icon.vue'
 import { Button } from '~/components/ui/button'
@@ -46,11 +46,11 @@ const emitColumn = (patch: Partial<Extract<TableColumn, { type: 'option' }>>) =>
 }
 
 if (!props.readonly) {
-  ;(useSortable as any)(list, props.column.options, {
-    handle: '[draggable]',
+  useSortable(list, props.column.options, {
+    handle: '[data-option-handle]',
     animation: 150,
     onEnd: () => emitColumn({ options: [...props.column.options] }),
-  })
+  } as UseSortableOptions)
 }
 
 // Schema keys transliterate for the space's language too, so a German space
@@ -201,7 +201,7 @@ watch(
           <Icon
             name="lucide:grip-vertical"
             :class="readonly ? 'text-muted-foreground' : 'cursor-ns-resize text-muted-foreground'"
-            draggable
+            data-option-handle
           />
           <Input
             v-model="option.name"
