@@ -85,12 +85,12 @@ class AssetFolder extends SpaceModel
 
     protected function name(): Attribute
     {
-        return $this->makePurifiedAttribute('removeAll');
+        return $this->makeWritePurifiedAttribute('removeAll');
     }
 
     protected function description(): Attribute
     {
-        return $this->makePurifiedAttribute('rte');
+        return $this->makeWritePurifiedAttribute('rte');
     }
 
     public function parent(): BelongsTo
