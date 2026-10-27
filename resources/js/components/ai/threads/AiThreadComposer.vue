@@ -272,7 +272,7 @@ defineExpose({ focus: () => editor.value?.focus(), restore })
 <template>
   <div class="grid gap-1.5">
     <div
-      class="relative rounded-2xl border bg-card shadow-soft-sm transition-colors [&_.tiptap-editor]:px-4 [&_.tiptap-editor]:pt-3.5 [&_.tiptap-editor]:pb-1.5"
+      class="relative rounded-2xl border bg-card shadow-soft-sm transition-colors [&_.tiptap]:min-h-6! [&_.tiptap]:p-0! [&_.tiptap-editor]:px-4 [&_.tiptap-editor]:py-2"
       :class="dragging ? 'border-ai' : 'border-border focus-within:border-border-strong'"
       @paste.capture="onPaste"
       @dragover="onDragOver"
@@ -281,7 +281,7 @@ defineExpose({ focus: () => editor.value?.focus(), restore })
     >
       <div
         v-if="showStrip"
-        class="flex flex-wrap items-center gap-1.5 px-3 pt-3 -mb-1"
+        class="flex flex-wrap items-center gap-1.5 px-2 pt-2"
         data-composer-strip
       >
         <span
@@ -383,7 +383,7 @@ defineExpose({ focus: () => editor.value?.focus(), restore })
         @command="(item) => pickSkill(item.id)"
       />
 
-      <div class="flex items-center gap-1 px-2.5 pt-1 pb-2.5">
+      <div class="flex items-center gap-1 px-2 pb-2">
         <AiThreadConfigPicker
           v-model="configId"
           :space-id="spaceId"
