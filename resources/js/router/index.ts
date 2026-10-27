@@ -106,6 +106,11 @@ const routes: RouteRecordRaw[] = [
         component: () => import('~/pages/teams/[team].vue'),
       },
       {
+        path: ':team/people',
+        name: 'team-people',
+        component: () => import('~/pages/teams/[team].vue'),
+      },
+      {
         path: ':team/roles',
         name: 'team-roles',
         component: () => import('~/pages/teams/[team].vue'),
@@ -118,6 +123,11 @@ const routes: RouteRecordRaw[] = [
       {
         path: ':team/settings',
         name: 'team-settings',
+        component: () => import('~/pages/teams/[team].vue'),
+      },
+      {
+        path: ':team/ai',
+        name: 'team-ai',
         component: () => import('~/pages/teams/[team].vue'),
       },
     ],
@@ -274,6 +284,12 @@ const routes: RouteRecordRaw[] = [
     meta: { layout: 'default' },
   },
   {
+    path: '/:space/inbox',
+    name: 'space-ai-inbox',
+    component: () => import('~/pages/[space]/inbox.vue'),
+    meta: { layout: 'default' },
+  },
+  {
     path: '/:space/audit-logs',
     name: 'space-audit-logs',
     component: () => import('~/pages/[space]/audit-logs.vue'),
@@ -341,6 +357,26 @@ const routes: RouteRecordRaw[] = [
         path: 'ai',
         name: 'space-settings-ai',
         component: () => import('~/pages/[space]/settings/ai.vue'),
+      },
+      {
+        path: 'ai-skills',
+        name: 'space-settings-ai-skills',
+        component: () => import('~/pages/[space]/settings/ai-skills.vue'),
+      },
+      {
+        path: 'ai-knowledge',
+        name: 'space-settings-ai-knowledge',
+        component: () => import('~/pages/[space]/settings/ai-knowledge.vue'),
+      },
+      {
+        path: 'ai-glossaries',
+        name: 'space-settings-ai-glossaries',
+        component: () => import('~/pages/[space]/settings/ai-glossaries.vue'),
+      },
+      {
+        path: 'ai-schedules',
+        name: 'space-settings-ai-schedules',
+        component: () => import('~/pages/[space]/settings/ai-schedules.vue'),
       },
       {
         path: 'people',

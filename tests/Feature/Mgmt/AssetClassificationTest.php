@@ -9,11 +9,9 @@ use App\Models\Management\Storage;
 use App\Models\Space\Asset;
 use App\Models\Space\AssetTag;
 use App\Models\User;
-use App\Services\Ai\AiStreamService;
+use App\Services\Ai\AiRunService;
 use App\Services\Ai\AssetClassificationService;
-use App\Services\Ai\Dto\AiModelDto;
 use App\Services\Ai\Exceptions\AiServiceException;
-use App\Services\Ai\ModelRegistry;
 use App\Services\Storage\StorageService;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -24,13 +22,18 @@ use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage as LaravelStorage;
 use Laravel\Sanctum\Sanctum;
 use PHPUnit\Framework\Attributes\Test;
+use Tests\Support\FakeAiDriver;
 use Tests\TestCase;
+use Tests\Traits\FakesAi;
 use Tests\Traits\SpaceTestingTrait;
 
 class AssetClassificationTest extends TestCase
 {
+    use FakesAi;
     use RefreshDatabase;
     use SpaceTestingTrait;
+
+    private FakeAiDriver $driver;
 
     protected User $user;
 
@@ -156,7 +159,7 @@ class AssetClassificationTest extends TestCase
     #[Test]
     public function rate_limited_jobs_have_time_to_finish_a_large_library(): void
     {
-        $job = new ClassifyAssetJob($this->space, 'asset-id', ['_default']);
+        $job = new ClassifyAssetJob($this->space, $this->user->id, 'asset-id', ['_default']);
 
         $this->assertSame(0, $job->tries);
         $this->assertSame(3, $job->maxExceptions);
@@ -183,13 +186,10 @@ class AssetClassificationTest extends TestCase
         $this->getJson("/mgmt/v1/ai/assets/classify/{$runId}?spaceId={$this->space->id}")
             ->assertOk()->assertJsonPath('data.pending', 1)->assertJsonPath('data.complete', false);
 
-        $this->partialMock(AiStreamService::class, function ($mock) {
-            $mock->shouldReceive('generateWithMessages')->twice()
-                ->andReturn(
-                    json_encode(['_default.alt' => 'A red square']),
-                    json_encode(['_default.alt' => 'A blue square']),
-                );
-        });
+        $this->driver->push(
+            FakeAiDriver::text(json_encode(['_default.alt' => 'A red square'])),
+            FakeAiDriver::text(json_encode(['_default.alt' => 'A blue square'])),
+        );
 
         $jobs = Queue::pushed(ClassifyAssetJob::class);
         $jobs[0]->handle();
@@ -242,16 +242,13 @@ class AssetClassificationTest extends TestCase
             'metadata' => ['width' => 100, 'height' => 100],
         ]);
         $this->storeImage($asset);
-        $this->partialMock(AiStreamService::class, function ($mock) {
-            $mock->shouldReceive('generateWithMessages')->once()
-                ->withArgs(fn (Space $space, array $messages): bool => str_contains($messages[0]['content'], 'decorative'))
-                ->andReturn(json_encode(['_default.alt' => 'Model ignored instruction']));
-        });
+        $this->driver->push(FakeAiDriver::text(json_encode(['_default.alt' => 'Model ignored instruction'])));
 
         $this->postJson("/mgmt/v1/ai/assets/classify?spaceId={$this->space->id}", [
             'scope' => 'selection', 'asset_ids' => [$asset->id], 'languages' => ['_default'], 'decorative' => true,
         ])->assertOk();
 
+        $this->assertStringContainsString('decorative', $this->driver->lastSystemPrompt());
         $fresh = $asset->fresh();
         $this->assertSame('', $fresh->data['fields']['_default']['alt']);
         $this->assertSame('Keep', $fresh->data['fields']['_default']['title']);
@@ -267,17 +264,14 @@ class AssetClassificationTest extends TestCase
             'metadata' => ['width' => 100, 'height' => 100],
         ]);
         $this->storeImage($asset);
-        $this->partialMock(AiStreamService::class, function ($mock) {
-            $mock->shouldReceive('generateWithMessages')->once()
-                ->withArgs(fn (Space $space, array $messages): bool => str_contains($messages[0]['content'], 'summer collection'))
-                ->andReturn(json_encode(['_default.alt' => 'Explore the summer collection']));
-        });
+        $this->driver->push(FakeAiDriver::text(json_encode(['_default.alt' => 'Explore the summer collection'])));
 
         $this->postJson("/mgmt/v1/ai/assets/classify?spaceId={$this->space->id}", [
             'scope' => 'selection', 'asset_ids' => [$asset->id], 'languages' => ['_default'],
             'alt_context' => 'Linked banner for the summer collection',
         ])->assertOk()->assertJsonPath('data.queued', 1);
 
+        $this->assertStringContainsString('summer collection', $this->driver->lastSystemPrompt());
         $fields = $asset->fresh()->data['fields']['_default'];
         $this->assertSame('Explore the summer collection', $fields['alt']);
         $this->assertSame('Keep', $fields['title']);
@@ -306,15 +300,13 @@ class AssetClassificationTest extends TestCase
         app(StorageService::class)->getStorage($this->storage)
             ->put($asset->path, UploadedFile::fake()->image('chart.jpg', 1500, 800)->getContent());
 
-        $this->partialMock(AiStreamService::class, function ($mock) {
-            $mock->shouldReceive('generateWithMessages')->once()
-                ->withArgs(fn (Space $space, array $messages): bool => $messages[1]['content'][1]['mime_type'] === 'image/jpeg'
-                    && getimagesizefromstring(base64_decode($messages[1]['content'][1]['data']))[0] === 1500)
-                ->andReturn(json_encode(['_default.alt' => 'A chart']));
-        });
+        $this->driver->push(FakeAiDriver::text(json_encode(['_default.alt' => 'A chart'])));
 
-        (new ClassifyAssetJob($this->space, $asset->id, ['_default'], null, false, null, null, false, true))->handle();
+        (new ClassifyAssetJob($this->space, $this->user->id, $asset->id, ['_default'], null, false, null, null, false, true))->handle();
 
+        $image = $this->imagePart();
+        $this->assertSame('image/jpeg', $image['mime_type']);
+        $this->assertSame(1500, getimagesizefromstring(base64_decode($image['data']))[0]);
         $this->assertSame('A chart', $asset->fresh()->data['fields']['_default']['alt']);
     }
 
@@ -399,34 +391,25 @@ class AssetClassificationTest extends TestCase
         ]);
         $this->storeImage($asset);
 
-        $this->partialMock(AiStreamService::class, function ($mock) {
-            $mock->shouldReceive('generateWithMessages')
-                ->once()
-                ->withArgs(function (Space $space, array $messages): bool {
-                    $userContent = $messages[1]['content'];
+        $this->driver->push(FakeAiDriver::text(json_encode([
+            '_default.title' => 'Overwrite attempt',
+            '_default.alt' => 'A red square',
+            '_default.description' => 'A plain red square on white.',
+            'de.title' => 'Rotes Quadrat',
+            'de.copyright_holder' => 'Not allowed',
+        ])));
 
-                    preg_match('/exact keys: (\[[^\n]*\])/', $userContent[0]['text'], $keys);
-                    $targetKeys = json_decode($keys[1] ?? '[]', true);
+        (new ClassifyAssetJob($this->space, $this->user->id, $asset->id, ['_default', 'de']))->handle();
 
-                    return $messages[0]['role'] === 'system'
-                        && str_contains($messages[0]['content'], 'de: write in German')
-                        && \in_array('_default.alt', $targetKeys, true)
-                        && ! \in_array('_default.title', $targetKeys, true)
-                        && ! str_contains($keys[1], 'copyright_holder')
-                        && str_contains($userContent[0]['text'], '"existing_values":{"_default.title":"Keep me"}')
-                        && $userContent[1]['type'] === 'image'
-                        && $userContent[1]['mime_type'] === 'image/jpeg';
-                })
-                ->andReturn(json_encode([
-                    '_default.title' => 'Overwrite attempt',
-                    '_default.alt' => 'A red square',
-                    '_default.description' => 'A plain red square on white.',
-                    'de.title' => 'Rotes Quadrat',
-                    'de.copyright_holder' => 'Not allowed',
-                ]));
-        });
-
-        (new ClassifyAssetJob($this->space, $asset->id, ['_default', 'de']))->handle();
+        $system = $this->driver->lastSystemPrompt();
+        preg_match('/exact keys: (\[[^\n]*\])/', $system, $keys);
+        $targetKeys = json_decode($keys[1] ?? '[]', true);
+        $this->assertStringContainsString('de: write in German', $system);
+        $this->assertContains('_default.alt', $targetKeys);
+        $this->assertNotContains('_default.title', $targetKeys);
+        $this->assertStringNotContainsString('copyright_holder', $keys[1]);
+        $this->assertStringContainsString('"existing_values":{"_default.title":"Keep me"}', $this->driver->lastUserText());
+        $this->assertSame('image/jpeg', $this->imagePart()['mime_type']);
 
         $fields = $asset->fresh()->data['fields'];
 
@@ -448,21 +431,15 @@ class AssetClassificationTest extends TestCase
         ]);
         $this->storeImage($asset);
 
-        $this->partialMock(AiStreamService::class, function ($mock) {
-            $mock->shouldReceive('generateWithMessages')
-                ->once()
-                ->withArgs(function (Space $space, array $messages): bool {
-                    $text = $messages[1]['content'][0]['text'];
+        $this->driver->push(FakeAiDriver::text(json_encode(['de.title' => 'Team-Offsite', '_default.alt' => 'Colleagues around a table'])));
 
-                    return str_contains($text, '"filename":"team offsite 2026"')
-                        && str_contains($text, '"_default.title":"Team offsite"')
-                        && preg_match('/<context-[A-Za-z0-9]{8}>/', $text) === 1
-                        && str_contains($messages[0]['content'], 'at most 125 characters');
-                })
-                ->andReturn(json_encode(['de.title' => 'Team-Offsite', '_default.alt' => 'Colleagues around a table']));
-        });
+        (new ClassifyAssetJob($this->space, $this->user->id, $asset->id, ['_default', 'de']))->handle();
 
-        (new ClassifyAssetJob($this->space, $asset->id, ['_default', 'de']))->handle();
+        $text = $this->driver->lastUserText();
+        $this->assertStringContainsString('"filename":"team offsite 2026"', $text);
+        $this->assertStringContainsString('"_default.title":"Team offsite"', $text);
+        $this->assertMatchesRegularExpression('/<context-[A-Za-z0-9]{8}>/', $text);
+        $this->assertStringContainsString('at most 125 characters', $this->driver->lastSystemPrompt());
 
         $provenance = $asset->fresh()->metadata['ai_classification'];
 
@@ -482,18 +459,16 @@ class AssetClassificationTest extends TestCase
         ]]);
         $this->storeImage($asset);
 
-        $this->partialMock(AiStreamService::class, function ($mock) use ($asset) {
-            $mock->shouldReceive('generateWithMessages')->once()->andReturnUsing(function () use ($asset): string {
-                $asset->update(['data' => ['fields' => ['_default' => ['title' => 'Editor title']]]]);
+        $this->driver->push(function () use ($asset) {
+            $asset->update(['data' => ['fields' => ['_default' => ['title' => 'Editor title']]]]);
 
-                return json_encode([
-                    '_default.title' => 'AI title',
-                    '_default.alt' => 'AI alt',
-                ]);
-            });
+            return FakeAiDriver::text(json_encode([
+                '_default.title' => 'AI title',
+                '_default.alt' => 'AI alt',
+            ]));
         });
 
-        (new ClassifyAssetJob($this->space, $asset->id, ['_default']))->handle();
+        (new ClassifyAssetJob($this->space, $this->user->id, $asset->id, ['_default']))->handle();
 
         $fresh = $asset->fresh();
         $this->assertSame('Editor title', $fresh->data['fields']['_default']['title']);
@@ -510,14 +485,14 @@ class AssetClassificationTest extends TestCase
         $asset = $this->createAsset(['metadata' => ['width' => 2000, 'height' => 2000]]);
         $this->storeImage($asset);
 
-        $this->partialMock(AiStreamService::class, function ($mock) {
-            $mock->shouldNotReceive('generateWithMessages');
-        });
-
         $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage('Source image exceeds the configured pixel limit.');
 
-        (new ClassifyAssetJob($this->space, $asset->id, ['_default']))->handle();
+        try {
+            (new ClassifyAssetJob($this->space, $this->user->id, $asset->id, ['_default']))->handle();
+        } finally {
+            $this->assertSame(0, $this->driver->calls);
+        }
     }
 
     #[Test]
@@ -527,15 +502,12 @@ class AssetClassificationTest extends TestCase
         $asset = $this->createAsset(['metadata' => ['width' => 2000, 'height' => 2000]]);
         $this->storeImage($asset);
 
-        $this->partialMock(AiStreamService::class, function ($mock) {
-            $mock->shouldReceive('generateWithMessages')
-                ->once()
-                ->withArgs(fn (Space $space, array $messages): bool => $messages[1]['content'][1]['mime_type'] === 'image/webp'
-                    && str_starts_with(base64_decode($messages[1]['content'][1]['data']), 'RIFF'))
-                ->andReturn(json_encode(['_default.alt' => 'A small image']));
-        });
+        $this->driver->push(FakeAiDriver::text(json_encode(['_default.alt' => 'A small image'])));
 
-        (new ClassifyAssetJob($this->space, $asset->id, ['_default']))->handle();
+        (new ClassifyAssetJob($this->space, $this->user->id, $asset->id, ['_default']))->handle();
+
+        $this->assertSame('image/webp', $this->imagePart()['mime_type']);
+        $this->assertStringStartsWith('RIFF', base64_decode($this->imagePart()['data']));
 
         $this->assertSame('A small image', $asset->fresh()->data['fields']['_default']['alt']);
     }
@@ -583,16 +555,13 @@ class AssetClassificationTest extends TestCase
         ]);
         $this->storeImage($asset);
 
-        $this->partialMock(AiStreamService::class, function ($mock) {
-            $mock->shouldReceive('generateWithMessages')
-                ->once()
-                ->withArgs(fn (Space $space, array $messages): bool => str_contains($messages[0]['content'], '"outdoor"')
-                    && str_contains($messages[1]['content'][0]['text'], 'Also return matching "tags".'))
-                ->andReturn(json_encode(['tags' => ['outdoor', 'Made up']]));
-        });
+        $this->driver->push(FakeAiDriver::text(json_encode(['tags' => ['outdoor', 'Made up']])));
 
         // Fields are full, but tags are requested with overwrite so the job still runs.
-        (new ClassifyAssetJob($this->space, $asset->id, ['_default', 'de'], null, true))->handle();
+        (new ClassifyAssetJob($this->space, $this->user->id, $asset->id, ['_default', 'de'], null, true))->handle();
+
+        $this->assertStringContainsString('"outdoor"', $this->driver->lastSystemPrompt());
+        $this->assertStringContainsString('Also return matching "tags".', $this->driver->lastSystemPrompt());
 
         $fresh = $asset->fresh();
 
@@ -608,13 +577,13 @@ class AssetClassificationTest extends TestCase
         $asset = $this->createAsset(['metadata' => ['width' => 100, 'height' => 100]]);
         $this->storeImage($asset);
 
-        $this->partialMock(AiStreamService::class, function ($mock) {
-            $mock->shouldReceive('generateWithMessages')->once()->andThrow(AiServiceException::planExcluded());
+        $this->partialMock(AiRunService::class, function ($mock) {
+            $mock->shouldReceive('runToCompletion')->once()->andThrow(AiServiceException::planExcluded());
         });
 
         Log::shouldReceive('warning')->once()->withArgs(fn (string $message) => str_contains($message, 'unavailable'));
 
-        (new ClassifyAssetJob($this->space, $asset->id, ['_default']))->handle();
+        (new ClassifyAssetJob($this->space, $this->user->id, $asset->id, ['_default']))->handle();
 
         $this->assertNull($asset->fresh()->data['fields'] ?? null);
     }
@@ -626,14 +595,14 @@ class AssetClassificationTest extends TestCase
         $asset = $this->createAsset(['metadata' => ['width' => 100, 'height' => 100]]);
         $this->storeImage($asset);
 
-        $this->partialMock(AiStreamService::class, function ($mock) {
-            $mock->shouldReceive('generateWithMessages')->once()->andThrow(AiServiceException::providerUnavailable());
+        $this->partialMock(AiRunService::class, function ($mock) {
+            $mock->shouldReceive('runToCompletion')->once()->andThrow(AiServiceException::providerUnavailable());
         });
 
         $this->expectException(AiServiceException::class);
         $this->expectExceptionMessage('currently unavailable');
 
-        (new ClassifyAssetJob($this->space, $asset->id, ['_default']))->handle();
+        (new ClassifyAssetJob($this->space, $this->user->id, $asset->id, ['_default']))->handle();
     }
 
     #[Test]
@@ -643,14 +612,12 @@ class AssetClassificationTest extends TestCase
         $asset = $this->createAsset(['metadata' => ['width' => 100, 'height' => 100]]);
         $this->storeImage($asset);
 
-        $this->partialMock(AiStreamService::class, function ($mock) {
-            $mock->shouldReceive('generateWithMessages')->once()->andReturn(null);
-        });
+        $this->driver->push(FakeAiDriver::text(''));
 
         $this->expectException(AiServiceException::class);
         $this->expectExceptionMessage('did not return a usable result');
 
-        (new ClassifyAssetJob($this->space, $asset->id, ['_default']))->handle();
+        (new ClassifyAssetJob($this->space, $this->user->id, $asset->id, ['_default']))->handle();
     }
 
     private function storeImage(Asset $asset): void
@@ -683,14 +650,14 @@ class AssetClassificationTest extends TestCase
 
     private function mockRegistry(bool $supportsVision): void
     {
-        $this->partialMock(ModelRegistry::class, function ($mock) use ($supportsVision) {
-            $mock->shouldReceive('findModelForConfig')->andReturn(new AiModelDto(
-                id: 'gpt-4o-mini',
-                name: 'GPT-4o Mini',
-                driver: 'openai',
-                capabilities: ['text', 'vision'],
-                supportsVision: $supportsVision,
-            ));
-        });
+        $this->driver = $this->fakeAi($supportsVision);
+    }
+
+    /**
+     * @return array{type: string, mime_type: string, data: string}
+     */
+    private function imagePart(): array
+    {
+        return collect(end($this->driver->transcripts))->firstWhere('role', 'user')['content'][1];
     }
 }

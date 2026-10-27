@@ -7,13 +7,15 @@ use App\Models\Management\Space;
 use App\Events\Space\DataSourceContentChanged;
 use App\Models\Space\DataEntry;
 use App\Models\Space\DataSource;
-use App\Services\Ai\AiStreamService;
+use App\Enums\AiRunState;
+use App\Models\Management\AiRun;
+use App\Services\Ai\AiRunService;
 use App\Services\Ai\Dto\StreamEvent;
 use App\Services\Ai\Exceptions\AiServiceException;
-use App\Services\Ai\Prompts\SystemPromptBuilder;
-use App\Services\Ai\Prompts\UserPromptBuilder;
+use App\Services\Ai\Run\StartRun;
+use App\Services\Ai\Skills\SkillResolver;
 use App\Services\Ai\Support\AiSseStream;
-use App\Services\Ai\Support\JsonExtractor;
+use Closure;
 use Generator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -30,7 +32,8 @@ class DataEntryTranslationStreamController extends Controller
         Request $request,
         Space $space,
         DataSource $dataSource,
-        AiStreamService $aiStreamService,
+        AiRunService $runs,
+        SkillResolver $skills,
     ): StreamedResponse {
         $this->authorize('bulkOperation', [DataEntry::class, $dataSource, $space]);
 
@@ -53,6 +56,8 @@ class DataEntryTranslationStreamController extends Controller
         }
 
         $candidates = $this->candidates($dataSource, $sourceLocale, $targetDimension);
+        $user = $request->user();
+        $skill = $skills->resolve($space)['translate-data-entries'] ?? null;
 
         return AiSseStream::response(
             fn () => $this->translate(
@@ -61,8 +66,14 @@ class DataEntryTranslationStreamController extends Controller
                 $targetDimension,
                 $sourceLocale,
                 $candidates,
-                $aiConfig,
-                $aiStreamService,
+                fn (array $entries) => $runs->runToCompletion(new StartRun(
+                    space: $space,
+                    actor: $user,
+                    surface: 'bulk:data_entries',
+                    skill: $skill,
+                    context: ['source' => $sourceLocale, 'target' => $targetDimension, 'entries' => $entries],
+                    config: $aiConfig,
+                )),
             ),
             ['endpoint' => 'data-entry-translation', 'space' => $space->id, 'data_source' => $dataSource->id],
         );
@@ -140,6 +151,7 @@ class DataEntryTranslationStreamController extends Controller
      * which the SSE transport surfaces as a coded error event.
      *
      * @param  Collection<int, DataEntry>  $candidates
+     * @param  Closure(array<string, string>): AiRun  $translateChunk
      * @return Generator<StreamEvent>
      */
     private function translate(
@@ -148,15 +160,12 @@ class DataEntryTranslationStreamController extends Controller
         string $targetDimension,
         string $sourceLocale,
         Collection $candidates,
-        $aiConfig,
-        AiStreamService $aiStreamService,
+        Closure $translateChunk,
     ): Generator {
         $total = $candidates->count();
         $translated = 0;
         $skipped = 0;
         $processed = 0;
-        $systemPrompt = (new SystemPromptBuilder($aiConfig))->forTranslation();
-
         yield StreamEvent::status('Preparing translations...');
         yield $this->progress('preparing', $processed, $translated, $skipped, $total, $targetDimension);
 
@@ -177,15 +186,8 @@ class DataEntryTranslationStreamController extends Controller
                 $fields[$entry->key] = trim((string) ($dimensions[$sourceLocale] ?? $entry->value ?? ''));
             }
 
-            $result = $aiStreamService->generate(
-                $space,
-                $systemPrompt,
-                UserPromptBuilder::translation($sourceLocale, $targetDimension, $fields),
-                [],
-                $aiConfig,
-            );
-
-            $decoded = JsonExtractor::decode($result, true);
+            $run = $translateChunk($fields);
+            $decoded = $run->state === AiRunState::Completed ? ($run->result['data'] ?? null) : null;
 
             if (! is_array($decoded)) {
                 throw AiServiceException::noResult();

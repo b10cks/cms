@@ -3,6 +3,14 @@
 namespace App\Services\Ai\Drivers;
 
 use App\Services\Ai\Dto\AiModelDto;
+use App\Services\Ai\Exceptions\ProviderCallFailed;
+use App\Services\Ai\Run\RunOptions;
+use App\Services\Ai\Run\TextDelta;
+use App\Services\Ai\Run\ToolCall;
+use App\Services\Ai\Run\ToolSet;
+use App\Services\Ai\Run\Transcript;
+use App\Services\Ai\Run\TurnResult;
+use App\Services\Ai\Run\TurnUsage;
 use Aws\BedrockRuntime\BedrockRuntimeClient;
 use Generator;
 
@@ -56,19 +64,10 @@ class BedrockDriver extends BaseAiDriver
         return $models;
     }
 
-    public function stream(
-        string $modelId,
-        array $messages,
-        array $tools = [],
-        array $options = []
-    ): Generator {
-        $client = $this->getClient();
-
-        $params = [
-            'modelId' => $modelId,
-            'contentType' => 'application/json',
-            'accept' => 'application/json',
-        ];
+    public function turn(Transcript $transcript, ToolSet $tools, RunOptions $options): Generator
+    {
+        $modelId = $options->model;
+        $messages = $transcript->messages();
 
         $this->ensureVisionSupportForMessages($modelId, $messages);
 
@@ -76,8 +75,9 @@ class BedrockDriver extends BaseAiDriver
 
         $body = [
             'anthropic_version' => 'bedrock-2023-05-31',
-            'max_tokens' => $this->clampMaxTokens((int) ($options['max_tokens'] ?? 4096), $this->findModelDto($modelId)),
+            'max_tokens' => $this->clampMaxTokens($options->maxTokens, $this->findModelDto($modelId)),
             'messages' => $converted,
+            'temperature' => $options->temperature,
         ];
 
         if ($systemPrompt !== '') {
@@ -94,108 +94,65 @@ class BedrockDriver extends BaseAiDriver
             ];
         }
 
-        if (isset($options['temperature'])) {
-            $body['temperature'] = $options['temperature'];
+        if (! $tools->isEmpty() && $this->supportsTools($modelId)) {
+            $body['tools'] = $this->convertTools($tools->definitions());
         }
 
-        if (! empty($tools) && $this->supportsTools($modelId)) {
-            $body['tools'] = $this->convertTools($tools);
-        }
-
-        $params['body'] = json_encode($body);
+        $text = '';
+        $calls = [];
+        $inputTokens = 0;
+        $outputTokens = 0;
 
         try {
-            $response = $client->invokeModelWithResponseStream($params);
-            $stream = $response->get('body');
+            $response = $this->getClient()->invokeModelWithResponseStream([
+                'modelId' => $modelId,
+                'contentType' => 'application/json',
+                'accept' => 'application/json',
+                'body' => json_encode($body),
+            ]);
 
-            $fullContent = '';
-            $toolCalls = [];
-            $currentToolCall = null;
-
-            foreach ($stream as $event) {
+            foreach ($response->get('body') as $event) {
                 $chunk = json_decode($event['chunk']['bytes'], true);
 
-                $type = $chunk['type'] ?? null;
-
-                match ($type) {
-                    'content_block_delta' => $delta = $chunk['delta'] ?? null,
-                    'content_block_start' => $start = $chunk['content_block'] ?? null,
-                    'content_block_stop' => $stop = true,
-                    'message_delta' => $messageDelta = $chunk['delta'] ?? null,
-                    default => null,
-                };
-
-                if (isset($delta) && $delta['type'] === 'text_delta') {
-                    $fullContent .= $delta['text'];
-                    yield $this->emitDelta($delta['text']);
-                }
-
-                if (isset($delta) && $delta['type'] === 'input_json_delta') {
-                    if ($currentToolCall !== null) {
-                        $toolCalls[$currentToolCall]['input'] .= $delta['partial_json'] ?? '';
-                    }
-                }
-
-                if (isset($start) && ($start['type'] ?? null) === 'tool_use') {
-                    $currentToolCall = $start['index'];
-                    $toolCalls[$currentToolCall] = [
-                        'id' => $start['id'],
-                        'name' => $start['name'],
-                        'input' => '',
-                    ];
-                }
-
-                if (isset($messageDelta) && ($messageDelta['stop_reason'] ?? null) === 'tool_use' && ! empty($toolCalls)) {
-                    foreach ($toolCalls as $toolCall) {
-                        $toolName = $toolCall['name'];
-                        $toolInput = json_decode($toolCall['input'], true) ?? [];
-
-                        yield $this->emitStatus($this->getHumanStatus($toolName));
-
-                        try {
-                            $toolResult = $this->callTool($toolName, $toolInput);
-
-                            $messages[] = [
-                                'role' => 'assistant',
-                                'content' => [
-                                    [
-                                        'type' => 'tool_use',
-                                        'id' => $toolCall['id'],
-                                        'name' => $toolName,
-                                        'input' => $toolInput,
-                                    ],
-                                ],
+                switch ($chunk['type'] ?? null) {
+                    case 'message_start':
+                        $inputTokens = (int) ($chunk['message']['usage']['input_tokens'] ?? 0);
+                        break;
+                    case 'content_block_start':
+                        if (($chunk['content_block']['type'] ?? null) === 'tool_use') {
+                            $calls[$chunk['index']] = [
+                                'id' => $chunk['content_block']['id'],
+                                'name' => $chunk['content_block']['name'],
+                                'input' => '',
                             ];
-
-                            $messages[] = [
-                                'role' => 'user',
-                                'content' => [
-                                    [
-                                        'type' => 'tool_result',
-                                        'tool_use_id' => $toolCall['id'],
-                                        'content' => json_encode($toolResult),
-                                    ],
-                                ],
-                            ];
-                        } catch (\Throwable $e) {
-                            yield $this->reportError($e, 'A tool call failed.', ['tool' => $toolName]);
-
-                            return;
                         }
-                    }
+                        break;
+                    case 'content_block_delta':
+                        $delta = $chunk['delta'] ?? [];
 
-                    yield from $this->stream($modelId, $messages, $tools, $options);
-
-                    return;
+                        if (($delta['type'] ?? null) === 'text_delta') {
+                            $text .= $delta['text'];
+                            yield new TextDelta($delta['text']);
+                        } elseif (($delta['type'] ?? null) === 'input_json_delta' && isset($calls[$chunk['index']])) {
+                            $calls[$chunk['index']]['input'] .= $delta['partial_json'] ?? '';
+                        }
+                        break;
+                    case 'message_delta':
+                        $outputTokens = (int) ($chunk['usage']['output_tokens'] ?? $outputTokens);
+                        break;
                 }
-
-                unset($delta, $start, $stop, $messageDelta);
             }
-
-            yield $this->emitDone($fullContent);
         } catch (\Throwable $e) {
-            yield $this->reportError($e, 'The AI provider returned an error.', ['model' => $modelId]);
+            throw new ProviderCallFailed("bedrock call failed: {$e->getMessage()}", previous: $e);
         }
+
+        ksort($calls);
+
+        return new TurnResult(
+            $text,
+            array_values(array_map(static fn (array $call) => ToolCall::fromJson($call['id'], $call['name'], $call['input']), $calls)),
+            new TurnUsage($inputTokens, $outputTokens),
+        );
     }
 
     /**
@@ -219,6 +176,39 @@ class BedrockDriver extends BaseAiDriver
             }
 
             if ($message['role'] === 'tool') {
+                // Anthropic carries tool results as user content blocks; results
+                // of one turn share a single user message.
+                $result = [
+                    'type' => 'tool_result',
+                    'tool_use_id' => $message['tool_call_id'] ?? '',
+                    'content' => (string) ($message['content'] ?? ''),
+                ];
+                $last = array_key_last($converted);
+
+                if ($last !== null && $converted[$last]['role'] === 'user' && \is_array($converted[$last]['content'])
+                    && ($converted[$last]['content'][0]['type'] ?? null) === 'tool_result') {
+                    $converted[$last]['content'][] = $result;
+                } else {
+                    $converted[] = ['role' => 'user', 'content' => [$result]];
+                }
+
+                continue;
+            }
+
+            if ($message['role'] === 'assistant' && ! empty($message['tool_calls'])) {
+                $blocks = ($message['content'] ?? '') !== '' ? [['type' => 'text', 'text' => $message['content']]] : [];
+
+                foreach ($message['tool_calls'] as $call) {
+                    $blocks[] = [
+                        'type' => 'tool_use',
+                        'id' => $call['id'],
+                        'name' => $call['name'],
+                        'input' => $call['arguments'] === [] ? new \stdClass : $call['arguments'],
+                    ];
+                }
+
+                $converted[] = ['role' => 'assistant', 'content' => $blocks];
+
                 continue;
             }
 
@@ -282,7 +272,6 @@ class BedrockDriver extends BaseAiDriver
                     'data' => (string) ($part['data'] ?? ''),
                 ],
             ],
-            'tool_use', 'tool_result' => $part,
             default => null,
         }, $content)));
     }

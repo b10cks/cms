@@ -31,7 +31,6 @@ import TableEmptyRow from '~/components/ui/TableEmptyRow.vue'
 import TablePaginationFooter from '~/components/ui/TablePaginationFooter.vue'
 import { Textarea } from '~/components/ui/textarea'
 import { useMassEdit } from '~/composables/useMassEdit'
-import { stripAiCodeFences } from '~/lib/aiJson'
 import type {
   MassEditDocument,
   MassEditRowsParams,
@@ -395,7 +394,8 @@ const handleSave = async (mode: 'draft' | 'publish' = 'draft') => {
 const { useAiConfigsQuery } = useAiConfigs(spaceId)
 const { data: aiConfigs } = useAiConfigsQuery()
 const defaultAiConfig = computed(() => aiConfigs.value?.find((config) => config.is_default) ?? null)
-const { streamTranslation, isStreaming: isTranslating } = useAiTranslation(spaceId)
+const translationRun = useAiRun(spaceId)
+const isTranslating = translationRun.isActive
 const translationProgress = ref<{ language: string; applied: number; total: number } | null>(null)
 
 const AI_KEY_SEPARATOR = '|'
@@ -512,33 +512,33 @@ const translateWithAI = async (configId: string | null = defaultAiConfig.value?.
           }
         }
 
-        await streamTranslation(
+        const outcome = await translationRun.start<Record<string, unknown>>(
           {
-            source: sourceLanguage.value,
-            target: language,
-            fields,
+            surface: 'translate',
+            skill: 'translate-fields',
+            context: { source: sourceLanguage.value, target: language, fields },
             config_id: configId,
           },
           {
-            onDelta: (chunk) => {
-              accumulated += chunk
+            onEvent: (event) => {
+              if (event.type !== 'text_delta') return
+              accumulated += event.text
               applyEntries(extractCompletedTranslations(accumulated))
-            },
-            onDone: (content) => {
-              try {
-                const parsed = JSON.parse(stripAiCodeFences(content || accumulated))
-                if (parsed && typeof parsed === 'object') {
-                  applyEntries(parsed as Record<string, string>)
-                }
-              } catch {
-                // partial regex extraction already applied everything it could
-              }
-            },
-            onError: (error) => {
-              toast.error(t('labels.massEdit.translateError', { error }))
             },
           }
         )
+
+        if (outcome.status === 'completed' && outcome.result?.data) {
+          applyEntries(
+            Object.fromEntries(
+              Object.entries(outcome.result.data).filter(
+                (entry): entry is [string, string] => typeof entry[1] === 'string'
+              )
+            )
+          )
+        } else if (outcome.status === 'failed') {
+          toast.error(t('labels.massEdit.translateError', { error: outcome.error?.message ?? '' }))
+        }
       }
 
       translatedTotal += applied.size

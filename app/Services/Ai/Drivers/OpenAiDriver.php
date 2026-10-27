@@ -3,13 +3,14 @@
 namespace App\Services\Ai\Drivers;
 
 use App\Services\Ai\Dto\AiModelDto;
-use Generator;
 use GuzzleHttp\Client as GuzzleClient;
 use OpenAI;
 use OpenAI\Client;
 
 class OpenAiDriver extends BaseAiDriver
 {
+    use StreamsOpenAiTurns;
+
     protected string $name = 'openai';
 
     protected ?Client $client = null;
@@ -189,90 +190,6 @@ class OpenAiDriver extends BaseAiDriver
         }
 
         return $models;
-    }
-
-    public function stream(
-        string $modelId,
-        array $messages,
-        array $tools = [],
-        array $options = []
-    ): Generator {
-        $client = $this->getClient();
-
-        $params = $this->buildChatParams($modelId, $messages, $tools, $options);
-
-        try {
-            $stream = $client->chat()->createStreamed($params);
-
-            $fullContent = '';
-            $toolCalls = [];
-
-            foreach ($stream as $response) {
-                $delta = $response->choices[0]->delta ?? null;
-
-                if ($delta?->content) {
-                    $fullContent .= $delta->content;
-                    yield $this->emitDelta($delta->content);
-                }
-
-                if ($delta?->toolCalls) {
-                    foreach ($delta->toolCalls as $toolCallDelta) {
-                        $index = $toolCallDelta->index;
-
-                        if (! isset($toolCalls[$index])) {
-                            $toolCalls[$index] = [
-                                'id' => $toolCallDelta->id,
-                                'type' => $toolCallDelta->type,
-                                'function' => [
-                                    'name' => $toolCallDelta->function?->name ?? '',
-                                    'arguments' => '',
-                                ],
-                            ];
-                        }
-
-                        if ($toolCallDelta->function?->arguments) {
-                            $toolCalls[$index]['function']['arguments'] .= $toolCallDelta->function->arguments;
-                        }
-                    }
-                }
-
-                if ($response->choices[0]->finishReason === 'tool_calls' && ! empty($toolCalls)) {
-                    foreach ($toolCalls as $toolCall) {
-                        $toolName = $toolCall['function']['name'];
-                        $toolInput = json_decode($toolCall['function']['arguments'], true) ?? [];
-
-                        yield $this->emitStatus($this->getHumanStatus($toolName));
-
-                        try {
-                            $toolResult = $this->callTool($toolName, $toolInput);
-                            $messages[] = [
-                                'role' => 'assistant',
-                                'tool_calls' => [$toolCall],
-                            ];
-                            $messages[] = [
-                                'role' => 'tool',
-                                'tool_call_id' => $toolCall['id'],
-                                'content' => json_encode($toolResult),
-                            ];
-                        } catch (\Throwable $e) {
-                            yield $this->reportError($e, 'A tool call failed.', ['tool' => $toolName]);
-
-                            return;
-                        }
-                    }
-
-                    $toolCalls = [];
-
-                    yield from $this->stream($modelId, $messages, $tools, $options);
-
-                    return;
-                }
-            }
-
-            yield $this->emitDone($fullContent);
-        } catch (\Throwable $e) {
-            yield $this->reportError($e, 'The AI provider returned an error.', ['model' => $modelId]);
-        }
     }
 
     protected function resetClient(): void

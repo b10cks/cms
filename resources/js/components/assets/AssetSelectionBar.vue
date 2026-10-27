@@ -17,6 +17,7 @@ const props = withDefaults(
     canRemoveFromCollection?: boolean
     canShare?: boolean
     canClassify?: boolean
+    canAskAi?: boolean
   }>(),
   {
     folderCount: 0,
@@ -30,6 +31,7 @@ const props = withDefaults(
     canRemoveFromCollection: false,
     canShare: false,
     canClassify: false,
+    canAskAi: false,
   }
 )
 
@@ -40,6 +42,7 @@ const emit = defineEmits<{
   removeFromCollection: []
   share: []
   classify: []
+  askAi: []
   download: []
   delete: []
   clear: []
@@ -139,6 +142,15 @@ const selectionCount = computed(() => props.assetCount + props.folderCount)
       >
         <Icon name="lucide:sparkles" />
         {{ $t('actions.assets.classify') }}
+      </Button>
+      <Button
+        v-if="canAskAi && assetCount > 0"
+        variant="ghost"
+        size="sm"
+        @click="emit('askAi')"
+      >
+        <Icon name="lucide:wand-sparkles" />
+        {{ $t('components.aiBulk.entry') }}
       </Button>
       <Button
         v-if="canDownload && assetCount > 0"

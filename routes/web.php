@@ -69,6 +69,11 @@ Route::get('/spaces/new', AppController::class)->name('spaces-new');
 // Teams
 Route::get('/teams', AppController::class)->name('teams');
 Route::get('/teams/{team}', AppController::class)->name('team');
+Route::get('/teams/{team}/people', AppController::class)->name('team-people');
+Route::get('/teams/{team}/roles', AppController::class)->name('team-roles');
+Route::get('/teams/{team}/saml', AppController::class)->name('team-saml');
+Route::get('/teams/{team}/settings', AppController::class)->name('team-settings');
+Route::get('/teams/{team}/ai', AppController::class)->name('team-ai');
 
 // Account settings
 Route::get('/account/settings', AppController::class)->name('account-settings');
@@ -102,9 +107,14 @@ Route::get('/{space}/automations/automations', AppController::class)->name('spac
 Route::get('/{space}/automations/executions', AppController::class)->name('space-automations-executions');
 Route::get('/{space}/redirects', AppController::class)->name('space-redirects');
 Route::get('/{space}/mass-edit', AppController::class)->name('space-mass-edit');
+Route::get('/{space}/inbox', AppController::class)->name('space-ai-inbox');
 Route::get('/{space}/settings', AppController::class)->name('space-settings');
 Route::get('/{space}/settings/configuration', AppController::class)->name('space-settings-configuration');
 Route::get('/{space}/settings/ai', AppController::class)->name('space-settings-ai');
+Route::get('/{space}/settings/ai-skills', AppController::class)->name('space-settings-ai-skills');
+Route::get('/{space}/settings/ai-knowledge', AppController::class)->name('space-settings-ai-knowledge');
+Route::get('/{space}/settings/ai-glossaries', AppController::class)->name('space-settings-ai-glossaries');
+Route::get('/{space}/settings/ai-schedules', AppController::class)->name('space-settings-ai-schedules');
 Route::get('/{space}/settings/people', AppController::class)->name('space-settings-people');
 Route::get('/{space}/settings/backups', AppController::class)->name('space-settings-backups');
 Route::get('/{space}/settings/migrations', AppController::class)->name('space-settings-migrations');

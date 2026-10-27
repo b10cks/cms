@@ -2,6 +2,8 @@
 
 namespace App\Services\Ai\Dto;
 
+use App\Services\Ai\Contracts\SseEvent;
+
 enum StreamEventType: string
 {
     case Status = 'status';
@@ -10,7 +12,7 @@ enum StreamEventType: string
     case Error = 'error';
 }
 
-readonly class StreamEvent
+readonly class StreamEvent implements SseEvent
 {
     public function __construct(
         public StreamEventType $type,
@@ -67,6 +69,11 @@ readonly class StreamEvent
         };
 
         return 'data: '.json_encode($payload, JSON_UNESCAPED_UNICODE);
+    }
+
+    public function isTerminal(): bool
+    {
+        return $this->type === StreamEventType::Done || $this->type === StreamEventType::Error;
     }
 
     public function toArray(): array

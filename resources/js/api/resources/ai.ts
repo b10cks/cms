@@ -1,21 +1,28 @@
+import type {
+  AiChangeset,
+  AiDecision,
+  AiDecisionResult,
+  AiInbox,
+  AiEntryScope,
+  AiPreflight,
+} from '~/lib/aiChangesets'
+import type { AiQuestionnaireAnswers, AiRunRecord, StartAiRunRequest } from '~/lib/aiRun'
+
 import type { ApiClient } from '../client'
 
-export interface ContentInteractionPayload {
-  prompt: string
-  content: object | null
-  content_id: string | null
-  files?: Array<{ name: string; url: string; type: string }>
-  config_id?: string | null
-  model?: string | null // Deprecated: kept for backward compatibility
-  mentions?: MentionItem[]
+export interface AiResolvedSkill {
+  name: string
+  description: string
+  surfaces: string[]
+  blocks: string[]
+  output: 'text' | 'richtext' | 'json'
+  source: AiScope | 'system'
+  owner_id: string | null
+  skill_id: string | null
+  shadows: Array<{ source: AiScope | 'system'; owner_id: string | null }>
 }
 
-export interface AiStreamEvent {
-  type: 'status' | 'delta' | 'done' | 'error'
-  message?: string
-  content?: string
-  data?: Record<string, unknown>
-}
+export type AiScope = 'space' | 'team'
 
 export interface MentionItem {
   type: 'content' | 'block' | 'draft-content'
@@ -52,6 +59,32 @@ export interface ClassifyAssetsProgress {
   complete: boolean
 }
 
+export type AiScheduleTargetType = AiEntryScope['type']
+
+export interface AiSchedulePayload {
+  name: string
+  skill: string
+  scope: { type: AiScheduleTargetType; filters: Record<string, string> }
+  cron: string
+  max_usd: number
+  enabled: boolean
+}
+
+export interface AiSchedule extends AiSchedulePayload {
+  id: string
+  paused_reason: 'access_revoked' | 'skill_unavailable' | null
+  creator: { id: string; name: string } | null
+  last_run_at: string | null
+  last_run: { id: string; state: AiRunRecord['state'] } | null
+  next_run_at: string | null
+}
+
+export interface AiSchedules {
+  data: AiSchedule[]
+  /** Skills each scope type can run on a schedule */
+  skills: Record<AiScheduleTargetType, Array<{ name: string; description: string }>>
+}
+
 export interface SpaceAiConfig {
   id: string
   name: string
@@ -74,10 +107,113 @@ export class Ai {
     this.spaceId = spaceId
   }
 
-  public getStreamUrl(): string {
-    const baseUrl = this.client.getBaseUrl()
-    const query = this.spaceId ? `?spaceId=${this.spaceId}` : ''
-    return `${baseUrl}/mgmt/v1/ai/content-interaction/stream${query}`
+  public async getSurfaceSkills(
+    surface: string,
+    block?: string | null
+  ): Promise<{ data: AiResolvedSkill[] }> {
+    return this.client.get<{ data: AiResolvedSkill[] }>(
+      `/mgmt/v1/spaces/${this.spaceId}/ai/context`,
+      { surface, block: block ?? undefined }
+    )
+  }
+
+  public async getRun(runId: string): Promise<{ data: AiRunRecord }> {
+    return this.client.get<{ data: AiRunRecord }>(`/mgmt/v1/spaces/${this.spaceId}/ai/runs/${runId}`)
+  }
+
+  public async getRunEvents(
+    runId: string,
+    after: number
+  ): Promise<{ data: unknown[]; run: AiRunRecord }> {
+    return this.client.get<{ data: unknown[]; run: AiRunRecord }>(
+      `/mgmt/v1/spaces/${this.spaceId}/ai/runs/${runId}/events`,
+      { after }
+    )
+  }
+
+  /** Start a background run; inline runs stream through useAiRun instead. */
+  public async startBackgroundRun(payload: StartAiRunRequest): Promise<{ data: AiRunRecord }> {
+    return this.client.post<{ data: AiRunRecord }>(`/mgmt/v1/spaces/${this.spaceId}/ai/runs`, {
+      idempotency_key: crypto.randomUUID(),
+      ...payload,
+      background: true,
+    })
+  }
+
+  /** Answer a background run's questionnaire; it continues on the queue. */
+  public async answerRun(runId: string, answers: AiQuestionnaireAnswers): Promise<{ data: AiRunRecord }> {
+    return this.client.post<{ data: AiRunRecord }>(
+      `/mgmt/v1/spaces/${this.spaceId}/ai/runs/${runId}/answers`,
+      { answers }
+    )
+  }
+
+  public async cancelRun(runId: string): Promise<{ data: AiRunRecord }> {
+    return this.client.post<{ data: AiRunRecord }>(
+      `/mgmt/v1/spaces/${this.spaceId}/ai/runs/${runId}/cancel`
+    )
+  }
+
+  public async preflight(payload: {
+    surface: string
+    scope: AiEntryScope
+    skill?: string | null
+    config_id?: string | null
+  }): Promise<{ data: AiPreflight }> {
+    return this.client.post<{ data: AiPreflight }>(`/mgmt/v1/spaces/${this.spaceId}/ai/preflight`, payload)
+  }
+
+  public async getInbox(): Promise<AiInbox> {
+    return this.client.get<AiInbox>(`/mgmt/v1/spaces/${this.spaceId}/ai/inbox`)
+  }
+
+  public async getChangeset(changesetId: string): Promise<{ data: AiChangeset }> {
+    return this.client.get<{ data: AiChangeset }>(
+      `/mgmt/v1/spaces/${this.spaceId}/ai/changesets/${changesetId}`
+    )
+  }
+
+  public async acceptChangeset(changesetId: string, decision: AiDecision = {}): Promise<AiDecisionResult> {
+    return this.client.post<AiDecisionResult>(
+      `/mgmt/v1/spaces/${this.spaceId}/ai/changesets/${changesetId}/accept`,
+      decision
+    )
+  }
+
+  public async rejectChangeset(changesetId: string, decision: AiDecision = {}): Promise<AiDecisionResult> {
+    return this.client.post<AiDecisionResult>(
+      `/mgmt/v1/spaces/${this.spaceId}/ai/changesets/${changesetId}/reject`,
+      decision
+    )
+  }
+
+  public async acceptSuggestion(suggestionId: string, glossaryId: string): Promise<void> {
+    await this.client.post(`/mgmt/v1/spaces/${this.spaceId}/ai/suggestions/${suggestionId}/accept`, {
+      glossary_id: glossaryId,
+    })
+  }
+
+  public async dismissSuggestion(suggestionId: string): Promise<void> {
+    await this.client.post(`/mgmt/v1/spaces/${this.spaceId}/ai/suggestions/${suggestionId}/dismiss`)
+  }
+
+  public async getSchedules(): Promise<AiSchedules> {
+    return this.client.get<AiSchedules>(`/mgmt/v1/spaces/${this.spaceId}/ai/schedules`)
+  }
+
+  public async createSchedule(payload: AiSchedulePayload): Promise<{ data: AiSchedule }> {
+    return this.client.post<{ data: AiSchedule }>(`/mgmt/v1/spaces/${this.spaceId}/ai/schedules`, payload)
+  }
+
+  public async updateSchedule(scheduleId: string, payload: Partial<AiSchedulePayload>): Promise<{ data: AiSchedule }> {
+    return this.client.patch<{ data: AiSchedule }>(
+      `/mgmt/v1/spaces/${this.spaceId}/ai/schedules/${scheduleId}`,
+      payload
+    )
+  }
+
+  public async deleteSchedule(scheduleId: string): Promise<void> {
+    return this.client.delete(`/mgmt/v1/spaces/${this.spaceId}/ai/schedules/${scheduleId}`)
   }
 
   public async getAiConfigs(): Promise<{ data: SpaceAiConfig[] }> {

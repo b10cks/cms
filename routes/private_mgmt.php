@@ -1,14 +1,19 @@
 <?php
 
+use App\Http\Controllers\Mgmt\Ai\AiChangesetController;
+use App\Http\Controllers\Mgmt\Ai\AiContextController;
+use App\Http\Controllers\Mgmt\Ai\AiGlossaryController;
+use App\Http\Controllers\Mgmt\Ai\AiGlossarySuggestionController;
+use App\Http\Controllers\Mgmt\Ai\AiScheduleController;
+use App\Http\Controllers\Mgmt\Ai\AiKnowledgeDocumentController;
 use App\Http\Controllers\Mgmt\Ai\AiModelsController;
+use App\Http\Controllers\Mgmt\Ai\AiPreflightController;
+use App\Http\Controllers\Mgmt\Ai\AiRunController;
+use App\Http\Controllers\Mgmt\Ai\AiSkillController;
 use App\Http\Controllers\Mgmt\Ai\AssetClassificationController;
 use App\Http\Controllers\Mgmt\Ai\AvailableModelsController;
-use App\Http\Controllers\Mgmt\Ai\ContentInteractionStreamController;
-use App\Http\Controllers\Mgmt\Ai\ContentTreeInteractionStreamController;
-use App\Http\Controllers\Mgmt\Ai\MetaTagsStreamController;
 use App\Http\Controllers\Mgmt\Ai\SpaceAiConfigController;
 use App\Http\Controllers\Mgmt\Ai\SpaceAiSettingsController;
-use App\Http\Controllers\Mgmt\Ai\TranslationStreamController;
 use App\Http\Controllers\Mgmt\AssetCollectionAssetController;
 use App\Http\Controllers\Mgmt\AssetCollectionController;
 use App\Http\Controllers\Mgmt\AssetController;
@@ -184,14 +189,6 @@ Route::group(['prefix' => 'ai'], function () {
         ->name('ai.available-models');
     Route::get('models', AiModelsController::class)
         ->name('ai.models');
-    Route::post('meta-tags/stream', MetaTagsStreamController::class)
-        ->name('ai.meta-tags.stream');
-    Route::post('translate/stream', TranslationStreamController::class)
-        ->name('ai.translate.stream');
-    Route::post('content-interaction/stream', ContentInteractionStreamController::class)
-        ->name('ai.content-interaction.stream');
-    Route::post('content-tree-interaction/stream', ContentTreeInteractionStreamController::class)
-        ->name('ai.content-tree-interaction.stream');
     Route::post('assets/classify', AssetClassificationController::class)
         ->name('ai.assets.classify');
     Route::get('assets/classify/{runId}', [AssetClassificationController::class, 'show'])
@@ -215,7 +212,40 @@ Route::match(['put', 'patch'], 'space-blueprints/{blueprint}', [SystemSpaceBluep
 Route::delete('space-blueprints/{blueprint}', [SystemSpaceBlueprintController::class, 'destroy'])
     ->name('space-blueprints.destroy');
 
-Route::group(['prefix' => 'teams/{team}'], function () {
+/**
+ * Skills, knowledge documents and glossaries, registered for spaces and teams.
+ */
+$aiKnowledgeRoutes = static function (string $name): void {
+    Route::get('ai/skills', [AiSkillController::class, 'index'])->name("{$name}.ai.skills.index");
+    Route::post('ai/skills', [AiSkillController::class, 'store'])->name("{$name}.ai.skills.store");
+    Route::get('ai/skills/{skill}', [AiSkillController::class, 'show'])->name("{$name}.ai.skills.show");
+    Route::patch('ai/skills/{skill}', [AiSkillController::class, 'update'])->name("{$name}.ai.skills.update");
+    Route::delete('ai/skills/{skill}', [AiSkillController::class, 'destroy'])->name("{$name}.ai.skills.destroy");
+    Route::post('ai/skills/{skill}/publish', [AiSkillController::class, 'publish'])->name("{$name}.ai.skills.publish");
+
+    Route::get('ai/knowledge', [AiKnowledgeDocumentController::class, 'index'])->name("{$name}.ai.knowledge.index");
+    Route::post('ai/knowledge', [AiKnowledgeDocumentController::class, 'store'])->name("{$name}.ai.knowledge.store");
+    Route::get('ai/knowledge/{document}', [AiKnowledgeDocumentController::class, 'show'])->name("{$name}.ai.knowledge.show");
+    Route::patch('ai/knowledge/{document}', [AiKnowledgeDocumentController::class, 'update'])->name("{$name}.ai.knowledge.update");
+    Route::delete('ai/knowledge/{document}', [AiKnowledgeDocumentController::class, 'destroy'])->name("{$name}.ai.knowledge.destroy");
+    Route::post('ai/knowledge/{document}/publish', [AiKnowledgeDocumentController::class, 'publish'])->name("{$name}.ai.knowledge.publish");
+    Route::post('ai/knowledge/{document}/source', [AiKnowledgeDocumentController::class, 'upload'])->name("{$name}.ai.knowledge.upload");
+
+    Route::get('ai/glossaries', [AiGlossaryController::class, 'index'])->name("{$name}.ai.glossaries.index");
+    Route::post('ai/glossaries', [AiGlossaryController::class, 'store'])->name("{$name}.ai.glossaries.store");
+    Route::patch('ai/glossaries/{glossary}', [AiGlossaryController::class, 'update'])->name("{$name}.ai.glossaries.update");
+    Route::delete('ai/glossaries/{glossary}', [AiGlossaryController::class, 'destroy'])->name("{$name}.ai.glossaries.destroy");
+    Route::get('ai/glossaries/{glossary}/terms', [AiGlossaryController::class, 'terms'])->name("{$name}.ai.glossaries.terms.index");
+    Route::post('ai/glossaries/{glossary}/terms', [AiGlossaryController::class, 'storeTerm'])->name("{$name}.ai.glossaries.terms.store");
+    Route::patch('ai/glossaries/{glossary}/terms/{term}', [AiGlossaryController::class, 'updateTerm'])->name("{$name}.ai.glossaries.terms.update");
+    Route::delete('ai/glossaries/{glossary}/terms/{term}', [AiGlossaryController::class, 'destroyTerm'])->name("{$name}.ai.glossaries.terms.destroy");
+    Route::post('ai/glossaries/{glossary}/import', [AiGlossaryController::class, 'import'])->name("{$name}.ai.glossaries.import");
+    Route::get('ai/glossaries/{glossary}/export', [AiGlossaryController::class, 'export'])->name("{$name}.ai.glossaries.export");
+};
+
+Route::group(['prefix' => 'teams/{team}'], function () use ($aiKnowledgeRoutes) {
+    $aiKnowledgeRoutes('teams');
+
     Route::post('avatar', [TeamAvatarController::class, 'store'])->name('teams.avatar.store');
     Route::delete('avatar', [TeamAvatarController::class, 'destroy'])->name('teams.avatar.destroy');
 
@@ -252,7 +282,26 @@ Route::group(['prefix' => 'teams/{team}'], function () {
 });
 
 Route::apiResource('spaces', SpaceController::class);
-Route::group(['prefix' => 'spaces/{space}', 'middleware' => 'space.member'], function () {
+Route::group(['prefix' => 'spaces/{space}', 'middleware' => 'space.member'], function () use ($aiKnowledgeRoutes) {
+    $aiKnowledgeRoutes('spaces');
+    Route::get('ai/context', AiContextController::class)->name('spaces.ai.context');
+    Route::post('ai/runs', [AiRunController::class, 'store'])->name('spaces.ai.runs.store');
+    Route::get('ai/runs/{run}', [AiRunController::class, 'show'])->name('spaces.ai.runs.show');
+    Route::get('ai/runs/{run}/events', [AiRunController::class, 'events'])->name('spaces.ai.runs.events');
+    Route::post('ai/runs/{run}/answers', [AiRunController::class, 'answer'])->name('spaces.ai.runs.answer');
+    Route::post('ai/runs/{run}/cancel', [AiRunController::class, 'cancel'])->name('spaces.ai.runs.cancel');
+    Route::post('ai/preflight', AiPreflightController::class)->name('spaces.ai.preflight');
+    Route::get('ai/inbox', [AiChangesetController::class, 'inbox'])->name('spaces.ai.inbox');
+    Route::get('ai/changesets/{changeset}', [AiChangesetController::class, 'show'])->name('spaces.ai.changesets.show');
+    Route::post('ai/changesets/{changeset}/accept', [AiChangesetController::class, 'accept'])->name('spaces.ai.changesets.accept');
+    Route::post('ai/changesets/{changeset}/reject', [AiChangesetController::class, 'reject'])->name('spaces.ai.changesets.reject');
+    Route::post('ai/suggestions/{suggestion}/accept', [AiGlossarySuggestionController::class, 'accept'])->name('spaces.ai.suggestions.accept');
+    Route::post('ai/suggestions/{suggestion}/dismiss', [AiGlossarySuggestionController::class, 'dismiss'])->name('spaces.ai.suggestions.dismiss');
+    Route::get('ai/schedules', [AiScheduleController::class, 'index'])->name('spaces.ai.schedules.index');
+    Route::post('ai/schedules', [AiScheduleController::class, 'store'])->name('spaces.ai.schedules.store');
+    Route::patch('ai/schedules/{schedule}', [AiScheduleController::class, 'update'])->name('spaces.ai.schedules.update');
+    Route::delete('ai/schedules/{schedule}', [AiScheduleController::class, 'destroy'])->name('spaces.ai.schedules.destroy');
+
     Route::post('icon', SpaceIconController::class)->name('spaces.icon');
     Route::post('archive', SpaceArchiveController::class)->name('spaces.archive');
     Route::patch('onboarding', [SpaceOnboardingController::class, 'update'])->name('spaces.onboarding.update');

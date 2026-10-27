@@ -11,7 +11,6 @@ import { DropdownMenuItem } from '~/components/ui/dropdown-menu'
 import { InputField, TextField } from '~/components/ui/form'
 import Label from '~/components/ui/form/Label.vue'
 import { useAiConfigs } from '~/composables/useAiModels'
-import { parseAiJson } from '~/lib/aiJson'
 import { normalizeLanguageIso } from '~/lib/content-i18n'
 import type { ContentResource } from '~/types/contents'
 
@@ -39,6 +38,13 @@ interface MetaValue {
   ogImage?: AssetValue
 }
 
+interface MetaTags {
+  title?: string
+  description?: string
+  ogTitle?: string
+  ogDescription?: string
+}
+
 const props = defineProps<{
   item: MetaSchema & { key: string }
   modelValue?: unknown
@@ -48,7 +54,7 @@ const props = defineProps<{
 
 const content = inject<Ref<ContentValue>>('content', ref({}))
 const { t } = useI18n()
-const { streamMetaTags } = useAiMetaTags(toRef(props, 'spaceId'))
+const metaRun = useAiRun(toRef(props, 'spaceId'))
 const { showAiError } = useAiErrorToast()
 const { useAiConfigsQuery } = useAiConfigs(toRef(props, 'spaceId'))
 const { data: aiConfigs } = useAiConfigsQuery()
@@ -260,47 +266,34 @@ const generateMetaWithAI = async (
     },
   }
 
-  let accumulated = ''
+  const outcome = await metaRun.start<MetaTags>({
+    surface: 'meta-tags',
+    skill: 'meta-tags',
+    context: { language: currentLanguage.value, page: requestData },
+    config_id: configId,
+  })
 
-  await streamMetaTags(
-    { context: requestData, config_id: configId, language: currentLanguage.value },
-    {
-      onDelta: (chunk) => {
-        accumulated += chunk
-      },
-      onDone: (streamContent) => {
-        const generatedMeta = parseAiJson<{
-          title?: string
-          description?: string
-          ogTitle?: string
-          ogDescription?: string
-        }>(streamContent || accumulated)
-
-        if (!generatedMeta) {
-          showAiError('no_result')
-          return
-        }
-
-        const newValue = {
-          ...localValue.value,
-          title: generatedMeta.title ?? localValue.value?.title ?? '',
-          description: generatedMeta.description ?? localValue.value?.description ?? '',
-          ...(props.item.has_og_tags && {
-            ogTitle: generatedMeta.ogTitle ?? localValue.value?.ogTitle ?? '',
-            ogDescription: generatedMeta.ogDescription ?? localValue.value?.ogDescription ?? '',
-          }),
-        }
-
-        localValue.value = newValue
-        emit('update:model-value', newValue)
-
-        toast.success(t('composables.aiMeta.success') as string)
-      },
-      onError: (message, reason) => {
-        showAiError(reason, message)
-      },
+  const generatedMeta = outcome.result?.data
+  if (outcome.status === 'failed') {
+    showAiError(outcome.error?.reason, outcome.error?.message)
+  } else if (outcome.status === 'completed' && !generatedMeta) {
+    showAiError('no_result')
+  } else if (generatedMeta) {
+    const newValue = {
+      ...localValue.value,
+      title: generatedMeta.title ?? localValue.value?.title ?? '',
+      description: generatedMeta.description ?? localValue.value?.description ?? '',
+      ...(props.item.has_og_tags && {
+        ogTitle: generatedMeta.ogTitle ?? localValue.value?.ogTitle ?? '',
+        ogDescription: generatedMeta.ogDescription ?? localValue.value?.ogDescription ?? '',
+      }),
     }
-  )
+
+    localValue.value = newValue
+    emit('update:model-value', newValue)
+
+    toast.success(t('composables.aiMeta.success') as string)
+  }
 
   isGenerating.value = false
 }

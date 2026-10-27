@@ -87,6 +87,26 @@ export const spaceSettingsNavigationItems: NavigationAccessItem[] = [
     routeName: 'space-settings-ai',
   },
   {
+    label: 'components.aiSettings.skills.title',
+    icon: 'lucide:wand-sparkles',
+    routeName: 'space-settings-ai-skills',
+  },
+  {
+    label: 'components.aiSettings.knowledge.title',
+    icon: 'lucide:book-open',
+    routeName: 'space-settings-ai-knowledge',
+  },
+  {
+    label: 'components.aiSettings.glossaries.title',
+    icon: 'lucide:book-a',
+    routeName: 'space-settings-ai-glossaries',
+  },
+  {
+    label: 'components.aiSettings.schedules.title',
+    icon: 'lucide:calendar-clock',
+    routeName: 'space-settings-ai-schedules',
+  },
+  {
     label: 'labels.settings.people.title',
     icon: 'lucide:users',
     routeName: 'space-settings-people',
@@ -134,6 +154,11 @@ export const teamNavigationItems: NavigationAccessItem[] = [
     icon: 'lucide:settings',
     routeName: 'team-settings',
   },
+  {
+    label: 'labels.teams.tabs.ai',
+    icon: 'lucide:sparkles',
+    routeName: 'team-ai',
+  },
 ]
 
 export const providerNavigationItems: NavigationAccessItem[] = [
@@ -176,6 +201,11 @@ export const spaceNavigationItems: NavigationAccessItem[] = [
     label: 'labels.navigation.massEdit',
     icon: 'lucide:table-properties',
     routeName: 'space-mass-edit',
+  },
+  {
+    label: 'labels.navigation.aiInbox',
+    icon: 'lucide:inbox',
+    routeName: 'space-ai-inbox',
   },
   {
     label: 'labels.navigation.blocks',
@@ -253,6 +283,7 @@ export const routeAccessRequirements: Record<AppRouteName, RouteAccessRequiremen
   'space-content-contentId-localization': { abilities: 'content.view' },
   'space-content-contentId-versions': { abilities: 'content.history.view' },
   'space-mass-edit': { abilities: 'content.view' },
+  'space-ai-inbox': { abilities: 'space.view' },
   'space-canvas': { abilities: { allOf: ['content.view', 'blocks.view'] } },
   'space-assets-index': { abilities: 'assets.view' },
   'space-icons-index': { abilities: 'icons.view' },
@@ -274,6 +305,10 @@ export const routeAccessRequirements: Record<AppRouteName, RouteAccessRequiremen
   'space-settings-usage': { abilities: 'space.billing.view' },
   'space-settings-configuration': { abilities: 'space.update' },
   'space-settings-ai': { abilities: 'ai.view' },
+  'space-settings-ai-skills': { abilities: 'ai.view' },
+  'space-settings-ai-knowledge': { abilities: 'ai.view' },
+  'space-settings-ai-glossaries': { abilities: 'ai.view' },
+  'space-settings-ai-schedules': { abilities: 'ai.manage' },
   'space-settings-people': {
     abilities: {
       anyOf: [
@@ -294,6 +329,7 @@ export const routeAccessRequirements: Record<AppRouteName, RouteAccessRequiremen
   'team-roles': { abilities: 'team.roles.manage' },
   'team-saml': { abilities: 'team.saml.manage' },
   'team-settings': { abilities: 'team.update' },
+  'team-ai': { abilities: 'team.ai.manage' },
   'spaces-new': actionAccessRequirements['team.spaces.create'],
 }
 

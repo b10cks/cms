@@ -70,6 +70,7 @@ class AssetClassificationController extends Controller
 
             $result = $service->queue(
                 $space,
+                $request->user(),
                 $query,
                 $languages,
                 $config->id,

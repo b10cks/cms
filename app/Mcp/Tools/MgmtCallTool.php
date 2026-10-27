@@ -8,6 +8,7 @@ use App\Mcp\Support\InternalRequestDispatcher;
 use App\Mcp\Support\OperationRegistry;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Illuminate\Http\Request as HttpRequest;
+use Illuminate\Http\UploadedFile;
 use Laravel\Mcp\Request;
 use Laravel\Mcp\Response;
 use Laravel\Mcp\Server\Tool;
@@ -79,7 +80,7 @@ class MgmtCallTool extends Tool
         $properties['params'] = $schema->object()
             ->description('Query parameters for list/search operations (e.g. page, per_page, filters).');
         $properties['payload'] = $schema->object()
-            ->description('JSON request body for create/update/action operations.');
+            ->description('JSON request body for create/update/action operations. File arguments are objects {filename, content_base64}.');
 
         return $properties;
     }
@@ -111,9 +112,17 @@ class MgmtCallTool extends Tool
         $query = in_array('params', $accepts, true) ? ($this->sanitize($arguments['params'] ?? null) ?? []) : [];
         $payload = in_array('payload', $accepts, true) ? $this->sanitize($arguments['payload'] ?? null) : null;
 
+        try {
+            $files = $this->files($operation['files'] ?? [], $payload);
+        } catch (\InvalidArgumentException $e) {
+            return Response::error($e->getMessage());
+        }
+
         [$bearerToken, $transient] = $this->resolveCredential($httpRequest, $operation, $arguments);
 
         if ($bearerToken === null) {
+            array_map(fn (UploadedFile $file) => @unlink($file->getPathname()), $files);
+
             return Response::error('This MCP request is not authenticated.');
         }
 
@@ -121,17 +130,73 @@ class MgmtCallTool extends Tool
             if ($operation['method'] === 'GET') {
                 $result = $this->dispatcher->dispatch('GET', $uri, $query, null, $bearerToken);
             } else {
-                $result = $this->dispatcher->dispatch($operation['method'], $uri, $query, $payload ?? [], $bearerToken);
+                $result = $this->dispatcher->dispatch($operation['method'], $uri, $query, $payload ?? [], $bearerToken, $files);
             }
         } finally {
             $transient?->delete();
+            array_map(fn (UploadedFile $file) => @unlink($file->getPathname()), $files);
         }
 
         if ($result['status'] >= 400) {
             return Response::error($this->formatError($result['status'], $result['body']));
         }
 
+        if ($operation['download'] ?? false) {
+            return Response::text((string) json_encode([
+                'filename' => $result['filename'],
+                'content_type' => $result['contentType'],
+                'content_base64' => base64_encode($result['body']),
+            ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+        }
+
         return Response::text($this->formatBody($result['body']));
+    }
+
+    /**
+     * Decode the operation's `{filename, content_base64}` payload arguments into
+     * temporary uploads and take them out of the payload. Oversize content is
+     * rejected from its encoded length, before decoding.
+     *
+     * @param  array<string, int>  $limits  payload key => limit in kilobytes
+     * @param  array<string, mixed>|null  $payload
+     * @return array<string, UploadedFile>
+     *
+     * @throws \InvalidArgumentException
+     */
+    private function files(array $limits, ?array &$payload): array
+    {
+        $files = [];
+
+        foreach ($limits as $key => $limitKb) {
+            $argument = $payload[$key] ?? null;
+            unset($payload[$key]);
+
+            if (! \is_array($argument) || ! \is_string($argument['filename'] ?? null) || ! \is_string($argument['content_base64'] ?? null)) {
+                throw new \InvalidArgumentException("Payload {$key} must be an object {filename, content_base64}.");
+            }
+
+            $maxBytes = $limitKb * 1024;
+            $tooLarge = "Payload {$key} exceeds the upload limit of {$limitKb} KB.";
+
+            if (\strlen($argument['content_base64']) > 4 * (int) ceil($maxBytes / 3)) {
+                throw new \InvalidArgumentException($tooLarge);
+            }
+
+            $content = base64_decode($argument['content_base64'], true);
+            if ($content === false) {
+                throw new \InvalidArgumentException("Payload {$key}.content_base64 is not valid base64.");
+            }
+            if (\strlen($content) > $maxBytes) {
+                throw new \InvalidArgumentException($tooLarge);
+            }
+
+            $path = (string) tempnam(sys_get_temp_dir(), 'mcp-upload-');
+            file_put_contents($path, $content);
+            // Test mode: the file was not uploaded through PHP, so is_uploaded_file() would reject it.
+            $files[$key] = new UploadedFile($path, mb_substr(basename($argument['filename']), 0, 255), null, null, true);
+        }
+
+        return $files;
     }
 
     /**

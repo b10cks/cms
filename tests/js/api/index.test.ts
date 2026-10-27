@@ -115,7 +115,6 @@ describe('management resources', () => {
     expect(sdk.spaces).toBe(sdk.spaces)
     expect(sdk.users).toBe(sdk.users)
     expect(sdk.plans).toBe(sdk.plans)
-    expect(sdk.ai).toBe(sdk.ai)
     expect(sdk.twoFactor).toBe(sdk.twoFactor)
     expect(sdk.authorization).toBe(sdk.authorization)
     expect(sdk.notifications).toBe(sdk.notifications)
@@ -126,13 +125,8 @@ describe('management resources', () => {
     expect(sdk.personalAccessTokens).toBe(sdk.personalAccessTokens)
   })
 
-  it('exposes only the space-less part of Ai on the top-level accessor', async () => {
-    // The instance has no space id, so anything that interpolates one would
-    // request /spaces/undefined/... — the type only admits getStreamUrl.
-    expect(sdk.ai.getStreamUrl()).toBe(`${BASE_URL}/mgmt/v1/ai/content-interaction/stream`)
-    expect(Object.keys(sdk.ai)).not.toContain('getAiConfigs')
-    // @ts-expect-error space-scoped calls are reachable only via forSpace(id).ai
-    expect(sdk.ai.getAiConfigs).toBeDefined()
+  it('reaches Ai only through a space', async () => {
+    expect('ai' in sdk).toBe(false)
 
     await sdk.forSpace('space-1').ai.getAiConfigs()
 
@@ -277,10 +271,10 @@ describe('forSpace', () => {
     expect(lastUrl()).toBe(`${BASE_URL}/mgmt/v1/spaces/space-1/${segment}`)
   })
 
-  it('scopes the space-scoped Ai resource properly', () => {
-    expect(sdk.forSpace('space-1').ai.getStreamUrl()).toBe(
-      `${BASE_URL}/mgmt/v1/ai/content-interaction/stream?spaceId=space-1`
-    )
+  it('scopes AI run requests to the space', async () => {
+    await sdk.forSpace('space-1').ai.getRunEvents('run-1', 4)
+
+    expect(lastUrl()).toBe(`${BASE_URL}/mgmt/v1/spaces/space-1/ai/runs/run-1/events?after=4`)
   })
 
   it('routes writes from a space resource through the shared CSRF priming', async () => {

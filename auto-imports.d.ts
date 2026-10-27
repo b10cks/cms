@@ -27,7 +27,6 @@ declare global {
   const effectScope: typeof import('vue').effectScope
   const ensureAuthorizationContext: typeof import('./resources/js/composables/useAuthorization').ensureAuthorizationContext
   const ensureSelectedTeamAccess: typeof import('./resources/js/composables/useAuthorization').ensureSelectedTeamAccess
-  const extractStreamingTreeOperations: typeof import('./resources/js/composables/useAiContentTree').extractStreamingTreeOperations
   const getCurrentInstance: typeof import('vue').getCurrentInstance
   const getCurrentScope: typeof import('vue').getCurrentScope
   const getCurrentWatcher: typeof import('vue').getCurrentWatcher
@@ -73,7 +72,6 @@ declare global {
   const onUnmounted: typeof import('vue').onUnmounted
   const onUpdated: typeof import('vue').onUpdated
   const onWatcherCleanup: typeof import('vue').onWatcherCleanup
-  const parseTreeOperations: typeof import('./resources/js/composables/useAiContentTree').parseTreeOperations
   const provide: typeof import('vue').provide
   const queryClient: typeof import('./resources/js/plugins/vue-query').queryClient
   const queryKeys: typeof import('./resources/js/composables/useQueryClient').queryKeys
@@ -96,15 +94,16 @@ declare global {
   const triggerRef: typeof import('vue').triggerRef
   const unref: typeof import('vue').unref
   const useAiConfigs: typeof import('./resources/js/composables/useAiModels').useAiConfigs
-  const useAiContent: typeof import('./resources/js/composables/useAiContent').useAiContent
-  const useAiContentTree: typeof import('./resources/js/composables/useAiContentTree').useAiContentTree
   const useAiErrorToast: typeof import('./resources/js/composables/useAiErrorToast').useAiErrorToast
+  const useAiInbox: typeof import('./resources/js/composables/useAiInbox').useAiInbox
+  const useAiKnowledge: typeof import('./resources/js/composables/useAiKnowledge').useAiKnowledge
   const useAiMentions: typeof import('./resources/js/composables/useAiMentions').useAiMentions
-  const useAiMetaTags: typeof import('./resources/js/composables/useAiMetaTags').useAiMetaTags
   const useAiModels: typeof import('./resources/js/composables/useAiModels').useAiModels
+  const useAiRun: typeof import('./resources/js/composables/useAiRun').useAiRun
+  const useAiSchedules: typeof import('./resources/js/composables/useAiSchedules').useAiSchedules
   const useAiSettings: typeof import('./resources/js/composables/useAiModels').useAiSettings
   const useAiStream: typeof import('./resources/js/composables/useAiStream').useAiStream
-  const useAiTranslation: typeof import('./resources/js/composables/useAiTranslation').useAiTranslation
+  const useAiSurfaceSkills: typeof import('./resources/js/composables/useAiSurfaceSkills').useAiSurfaceSkills
   const useAiUsage: typeof import('./resources/js/composables/useAiModels').useAiUsage
   const useAlertDialog: typeof import('./resources/js/composables/useAlertDialog').useAlertDialog
   const useApiClient: typeof import('./resources/js/composables/useApiClient').useApiClient
@@ -241,20 +240,11 @@ declare global {
   export type { Component, Slot, Slots, ComponentPublicInstance, ComputedRef, DirectiveBinding, ExtractDefaultPropTypes, ExtractPropTypes, ExtractPublicPropTypes, InjectionKey, PropType, Ref, ShallowRef, MaybeRef, MaybeRefOrGetter, VNode, WritableComputedRef } from 'vue'
   import('vue')
   // @ts-ignore
-  export type { StreamCallbacks } from './resources/js/composables/useAiContent'
-  import('./resources/js/composables/useAiContent')
-  // @ts-ignore
-  export type { AiContentTreeNode, CreateTreeOperation, MoveTreeOperation, UpdateTreeOperation, DeleteTreeOperation, RestoreTreeOperation, TreeOperation, ContentTreePayload, TreeOperationsResult } from './resources/js/composables/useAiContentTree'
-  import('./resources/js/composables/useAiContentTree')
-  // @ts-ignore
-  export type { MetaTagsPayload } from './resources/js/composables/useAiMetaTags'
-  import('./resources/js/composables/useAiMetaTags')
-  // @ts-ignore
   export type { AiModel, GroupedModels, SpaceAiSettings, SpaceAiUsage } from './resources/js/composables/useAiModels'
   import('./resources/js/composables/useAiModels')
   // @ts-ignore
-  export type { TranslationPayload } from './resources/js/composables/useAiTranslation'
-  import('./resources/js/composables/useAiTranslation')
+  export type { AiRunStatus, AiRunError, AiRunOutcome, AiRunOptions } from './resources/js/composables/useAiRun'
+  import('./resources/js/composables/useAiRun')
   // @ts-ignore
   export type { DialogAction, DialogOptions, MessageOptions, ConfirmOptions } from './resources/js/composables/useAlertDialog'
   import('./resources/js/composables/useAlertDialog')
@@ -365,7 +355,6 @@ declare module 'vue' {
     readonly effectScope: UnwrapRef<typeof import('vue')['effectScope']>
     readonly ensureAuthorizationContext: UnwrapRef<typeof import('./resources/js/composables/useAuthorization')['ensureAuthorizationContext']>
     readonly ensureSelectedTeamAccess: UnwrapRef<typeof import('./resources/js/composables/useAuthorization')['ensureSelectedTeamAccess']>
-    readonly extractStreamingTreeOperations: UnwrapRef<typeof import('./resources/js/composables/useAiContentTree')['extractStreamingTreeOperations']>
     readonly getCurrentInstance: UnwrapRef<typeof import('vue')['getCurrentInstance']>
     readonly getCurrentScope: UnwrapRef<typeof import('vue')['getCurrentScope']>
     readonly getCurrentWatcher: UnwrapRef<typeof import('vue')['getCurrentWatcher']>
@@ -411,7 +400,6 @@ declare module 'vue' {
     readonly onUnmounted: UnwrapRef<typeof import('vue')['onUnmounted']>
     readonly onUpdated: UnwrapRef<typeof import('vue')['onUpdated']>
     readonly onWatcherCleanup: UnwrapRef<typeof import('vue')['onWatcherCleanup']>
-    readonly parseTreeOperations: UnwrapRef<typeof import('./resources/js/composables/useAiContentTree')['parseTreeOperations']>
     readonly provide: UnwrapRef<typeof import('vue')['provide']>
     readonly queryClient: UnwrapRef<typeof import('./resources/js/plugins/vue-query')['queryClient']>
     readonly queryKeys: UnwrapRef<typeof import('./resources/js/composables/useQueryClient')['queryKeys']>
@@ -434,15 +422,16 @@ declare module 'vue' {
     readonly triggerRef: UnwrapRef<typeof import('vue')['triggerRef']>
     readonly unref: UnwrapRef<typeof import('vue')['unref']>
     readonly useAiConfigs: UnwrapRef<typeof import('./resources/js/composables/useAiModels')['useAiConfigs']>
-    readonly useAiContent: UnwrapRef<typeof import('./resources/js/composables/useAiContent')['useAiContent']>
-    readonly useAiContentTree: UnwrapRef<typeof import('./resources/js/composables/useAiContentTree')['useAiContentTree']>
     readonly useAiErrorToast: UnwrapRef<typeof import('./resources/js/composables/useAiErrorToast')['useAiErrorToast']>
+    readonly useAiInbox: UnwrapRef<typeof import('./resources/js/composables/useAiInbox')['useAiInbox']>
+    readonly useAiKnowledge: UnwrapRef<typeof import('./resources/js/composables/useAiKnowledge')['useAiKnowledge']>
     readonly useAiMentions: UnwrapRef<typeof import('./resources/js/composables/useAiMentions')['useAiMentions']>
-    readonly useAiMetaTags: UnwrapRef<typeof import('./resources/js/composables/useAiMetaTags')['useAiMetaTags']>
     readonly useAiModels: UnwrapRef<typeof import('./resources/js/composables/useAiModels')['useAiModels']>
+    readonly useAiRun: UnwrapRef<typeof import('./resources/js/composables/useAiRun')['useAiRun']>
+    readonly useAiSchedules: UnwrapRef<typeof import('./resources/js/composables/useAiSchedules')['useAiSchedules']>
     readonly useAiSettings: UnwrapRef<typeof import('./resources/js/composables/useAiModels')['useAiSettings']>
     readonly useAiStream: UnwrapRef<typeof import('./resources/js/composables/useAiStream')['useAiStream']>
-    readonly useAiTranslation: UnwrapRef<typeof import('./resources/js/composables/useAiTranslation')['useAiTranslation']>
+    readonly useAiSurfaceSkills: UnwrapRef<typeof import('./resources/js/composables/useAiSurfaceSkills')['useAiSurfaceSkills']>
     readonly useAiUsage: UnwrapRef<typeof import('./resources/js/composables/useAiModels')['useAiUsage']>
     readonly useAlertDialog: UnwrapRef<typeof import('./resources/js/composables/useAlertDialog')['useAlertDialog']>
     readonly useApiClient: UnwrapRef<typeof import('./resources/js/composables/useApiClient')['useApiClient']>

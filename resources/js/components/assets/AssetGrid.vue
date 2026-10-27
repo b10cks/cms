@@ -5,6 +5,7 @@ import { toast } from 'vue-sonner'
 import type { AssetsQueryParams } from '~/api/resources/assets'
 import AssetsIcon from '~/assets/images/assets.svg?component'
 import AddToCollectionDialog from '~/components/assets/AddToCollectionDialog.vue'
+import AiBulkDialog from '~/components/ai/AiBulkDialog.vue'
 import AssetAiClassifyDialog from '~/components/assets/AssetAiClassifyDialog.vue'
 import AssetFolder from '~/components/assets/AssetFolder.vue'
 import AssetItem from '~/components/assets/AssetItem.vue'
@@ -642,6 +643,15 @@ const openClassifyDialog = (assetsToClassify: AssetResource[]) => {
 
   classifyAssets.value = assetsToClassify
   classifyOpen.value = true
+}
+
+const aiBulkOpen = ref(false)
+const aiBulkIds = ref<string[]>([])
+const aiBulkMounted = useMountOnFirstOpen(() => aiBulkOpen.value)
+
+const openAiBulkDialog = () => {
+  aiBulkIds.value = Array.from(selectedAssets.value.keys())
+  aiBulkOpen.value = aiBulkIds.value.length > 0
 }
 
 const openAddToCollectionDialog = (assetsToAdd: AssetResource[]) => {
@@ -2047,6 +2057,8 @@ onUnmounted(() => {
       :can-remove-from-collection="canManageCollections && isManualCollectionView"
       :can-share="canShareAssets"
       :can-classify="canClassifyAssets"
+      :can-ask-ai="canManageAssets"
+      @ask-ai="openAiBulkDialog"
       @move="openMoveDialog(getSelectedDragItems())"
       @tag="openBulkTagDialog(Array.from(selectedAssets.values()))"
       @classify="openClassifyDialog(Array.from(selectedAssets.values()))"
@@ -2096,6 +2108,14 @@ onUnmounted(() => {
       v-model:open="bulkTagOpen"
       :space-id="spaceId"
       :assets="bulkTagAssets"
+    />
+
+    <AiBulkDialog
+      v-if="mode === 'manage' && canManageAssets && aiBulkMounted"
+      v-model:open="aiBulkOpen"
+      :space-id="spaceId"
+      surface="bulk:assets"
+      :scope="{ type: 'asset', ids: aiBulkIds }"
     />
 
     <AssetAiClassifyDialog

@@ -17,6 +17,7 @@ const modelValue = defineModel<string | null>()
 const props = defineProps<{
   spaceId: string
   error?: string | null
+  disabled?: boolean
 }>()
 
 const { useAiConfigsQuery } = useAiConfigs(toRef(props, 'spaceId'))
@@ -43,7 +44,10 @@ watch(
 </script>
 
 <template>
-  <Select v-model="modelValue">
+  <Select
+    v-model="modelValue"
+    :disabled="disabled"
+  >
     <SelectTrigger :class="{ 'border-warning': error }">
       <SelectValue>
         <div
@@ -54,7 +58,7 @@ watch(
         </div>
         <span
           v-else
-          class="text-muted-foreground"
+          class="text-muted"
         >
           {{ $t('components.aiConfigSelector.selectConfig') }}
         </span>
@@ -99,7 +103,7 @@ watch(
       </div>
       <div
         v-else
-        class="p-4 text-center text-sm text-muted-foreground"
+        class="p-4 text-center text-sm text-muted"
       >
         <p>{{ $t('components.aiConfigSelector.noConfigs') }}</p>
       </div>

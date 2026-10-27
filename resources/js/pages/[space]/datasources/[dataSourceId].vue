@@ -6,6 +6,7 @@ import { computed, nextTick, ref } from 'vue'
 import { toast } from 'vue-sonner'
 
 import DataEntriesIcon from '~/assets/images/data-entries.svg?component'
+import AiBulkDialog from '~/components/ai/AiBulkDialog.vue'
 import ExportDataEntriesDialog from '~/components/datasources/ExportDataEntriesDialog.vue'
 import ShapeValueFields from '~/components/datasources/ShapeValueFields.vue'
 import ImportDataEntriesDialog from '~/components/datasources/ImportDataEntriesDialog.vue'
@@ -38,6 +39,7 @@ import { useDataEntries } from '~/composables/useDataEntries'
 import { useDataEntryTranslation } from '~/composables/useDataEntryTranslation'
 import { useDataSources } from '~/composables/useDataSources'
 import { queryKeys } from '~/composables/useQueryClient'
+import { useMountOnFirstOpen } from '~/lib/mountOnFirstOpen'
 import type {
   CreateDataEntryPayload,
   DataEntryResource,
@@ -171,6 +173,12 @@ const showDimensionTabs = computed(() => (dataSource.value?.dimensions?.length ?
 const defaultDimensionLocale = computed(() => {
   return dataSource.value?.settings?.default_dimension_locale || 'default'
 })
+
+const { useAccessControl } = useAuthorization()
+const access = useAccessControl(computed(() => ({ space_id: spaceId.value })))
+const canAskAi = computed(() => access.hasAbility('data_entries.manage'))
+const aiBulkOpen = ref(false)
+const aiBulkMounted = useMountOnFirstOpen(() => aiBulkOpen.value)
 
 const canTranslateCurrentDimension = computed(() => {
   return Boolean(
@@ -634,6 +642,18 @@ const handleTranslateMissingDimensions = async () => {
             </Tabs>
             <div class="ml-auto flex items-center gap-2">
               <Button
+                v-if="canAskAi"
+                variant="outline"
+                size="sm"
+                @click="aiBulkOpen = true"
+              >
+                <Icon
+                  name="lucide:wand-sparkles"
+                  class="h-4 w-4"
+                />
+                {{ $t('components.aiBulk.entry') }}
+              </Button>
+              <Button
                 v-if="canTranslateCurrentDimension && !isTranslatingDimensions"
                 variant="outline"
                 size="sm"
@@ -986,6 +1006,13 @@ const handleTranslateMissingDimensions = async () => {
     :data-source-id="dataSourceId"
   />
 
+  <AiBulkDialog
+    v-if="canAskAi && aiBulkMounted"
+    v-model:open="aiBulkOpen"
+    :space-id="spaceId"
+    surface="bulk:data_entries"
+    :scope="{ type: 'data_entry', filters: { data_source: dataSourceId } }"
+  />
   <Teleport
     defer
     to="#appHeaderActions"

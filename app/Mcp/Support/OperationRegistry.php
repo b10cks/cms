@@ -11,16 +11,16 @@ class OperationRegistry
      */
     private const NO_ID_FALLBACK = ['spaceId', 'teamId', 'userId', 'token', 'provider', 'accessToken'];
 
-    /** @var array<string, array{description?: string, required?: list<string>, accepts?: list<string>, method: string, uri: string, authArg?: string}>|null */
+    /** @var array<string, array{description?: string, required?: list<string>, accepts?: list<string>, method: string, uri: string, authArg?: string, files?: array<string, int>, download?: bool}>|null */
     private static ?array $operations = null;
 
-    /** @return array<string, array{description?: string, required?: list<string>, accepts?: list<string>, method: string, uri: string, authArg?: string}> */
+    /** @return array<string, array{description?: string, required?: list<string>, accepts?: list<string>, method: string, uri: string, authArg?: string, files?: array<string, int>, download?: bool}> */
     public static function all(): array
     {
         return self::$operations ??= require __DIR__.'/operations.php';
     }
 
-    /** @return array{description?: string, required?: list<string>, accepts?: list<string>, method: string, uri: string, authArg?: string}|null */
+    /** @return array{description?: string, required?: list<string>, accepts?: list<string>, method: string, uri: string, authArg?: string, files?: array<string, int>, download?: bool}|null */
     public static function find(string $name): ?array
     {
         return self::all()[$name] ?? null;

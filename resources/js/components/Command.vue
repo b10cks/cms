@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import type { AiResolvedSkill } from '~/api/resources/ai'
+import AiCommandItems from '~/components/ai/AiCommandItems.vue'
+import AiTaskDialog from '~/components/ai/AiTaskDialog.vue'
 import Icon from '~/components/Icon.vue'
 import NuxtImg from '~/components/NuxtImg.vue'
 import SpaceBadge from '~/components/space/SpaceBadge.vue'
@@ -10,6 +13,7 @@ import {
   CommandItem,
   CommandList,
 } from '~/components/ui/command'
+import { DialogTitle } from '~/components/ui/dialog'
 import { getActionAccessRequirement } from '~/lib/access-control'
 
 const route = useRoute()
@@ -67,6 +71,16 @@ useShortcut({
   },
 })
 
+const canUseAi = computed(() => !!spaceId.value && access.hasAbility('content.manage'))
+const aiTask = ref<{ prompt: string; skill: AiResolvedSkill | null }>({ prompt: '', skill: null })
+const aiTaskOpen = ref(false)
+
+const startAiTask = (task: { prompt: string; skill: AiResolvedSkill | null }) => {
+  aiTask.value = task
+  open.value = false
+  aiTaskOpen.value = true
+}
+
 const jumpTo = (url: string) => {
   router.push(url)
   open.value = false
@@ -78,9 +92,15 @@ const jumpTo = (url: string) => {
     :open="open"
     @update:open="handleOpenChange"
   >
+    <DialogTitle class="sr-only">{{ $t('labels.command.title') }}</DialogTitle>
     <CommandInput :placeholder="$t('labels.command.input.placeholder')" />
     <CommandList>
-      <CommandEmpty>{{ $t('labels.command.empty') }}</CommandEmpty>
+      <CommandEmpty v-if="spacesOnly || !canUseAi">{{ $t('labels.command.empty') }}</CommandEmpty>
+      <AiCommandItems
+        v-if="!spacesOnly && canUseAi"
+        :space-id="spaceId"
+        @start="startAiTask"
+      />
       <CommandGroup
         v-if="!spacesOnly && canViewBlocks && blocks"
         heading="Blocks"
@@ -149,4 +169,11 @@ const jumpTo = (url: string) => {
       </CommandGroup>
     </CommandList>
   </CommandDialog>
+  <AiTaskDialog
+    v-if="canUseAi"
+    v-model:open="aiTaskOpen"
+    :space-id="spaceId"
+    :prompt="aiTask.prompt"
+    :skill="aiTask.skill"
+  />
 </template>

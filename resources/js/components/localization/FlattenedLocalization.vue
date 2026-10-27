@@ -13,14 +13,12 @@ import { DropdownMenuItem } from '~/components/ui/dropdown-menu'
 import { CheckboxField } from '~/components/ui/form'
 import { Input } from '~/components/ui/input'
 import { useAiConfigs } from '~/composables/useAiModels'
-import { useAiTranslation } from '~/composables/useAiTranslation'
 import type { CollaborationPresenceUser } from '~/composables/useContentLiveCollaboration'
 import {
   isFieldVisible,
   normalizeSchema,
   normalizeSchemaType,
 } from '~/composables/useContentSchemaState'
-import { stripAiCodeFences } from '~/lib/aiJson'
 import {
   getCollaborationFieldKey,
   getLocalizedFieldValue,
@@ -28,6 +26,7 @@ import {
   type LocalizedFieldFocusPayload,
   type LocalizedFieldUpdatePayload,
 } from '~/lib/localizationCollab'
+import { idFieldPath } from '~/lib/aiChangesets'
 import { ensureTableValue, getTableColumns } from '~/lib/tableField'
 import type { FieldUpdateEvent } from '~/utils/preview-bridge'
 
@@ -81,6 +80,8 @@ interface TranslationUnit {
   fieldIdentifier: string
   /** Absent for units outside the content payload, like the entry name. */
   field?: TranslatableField
+  /** Whole-text field the translation lands in, as a changeset path; null when it has none. */
+  changesetPath: string | null
   apply: (content: Record<string, unknown>, translation: string) => void
 }
 
@@ -126,6 +127,8 @@ const props = defineProps<{
   // (translation, canonical and nearest source id), used to route root-level
   // preview edits to top-level translatable fields.
   rootItemIds?: string[]
+  // The translation entry, when it exists: AI translations are recorded against it.
+  contentId?: string | null
 }>()
 const emit = defineEmits<{
   'update:translationContent': [value: Record<string, unknown>]
@@ -153,9 +156,8 @@ const { showAiError } = useAiErrorToast()
 const { useAiConfigsQuery } = useAiConfigs(computed(() => props.spaceId))
 const { data: aiConfigs, isLoading: isLoadingAiConfigs } = useAiConfigsQuery()
 const selectedConfigId = ref<string | null>(null)
-const { streamTranslation, isStreaming: isTranslating } = useAiTranslation(
-  computed(() => props.spaceId)
-)
+const translationRun = useAiRun(() => props.spaceId)
+const isTranslating = translationRun.isActive
 const translationProgress = ref<{ applied: number; total: number } | null>(null)
 
 function extractCompletedTranslations(partial: string): Record<string, string> {
@@ -1075,6 +1077,7 @@ const buildTranslationUnits = (): TranslationUnit[] => {
       id: nextUnitId(),
       source: props.sourceName,
       fieldIdentifier: '__content_name__',
+      changesetPath: null,
       apply: (_content, translation) => {
         emit('update:translationName', translation)
       },
@@ -1100,6 +1103,7 @@ const buildTranslationUnits = (): TranslationUnit[] => {
           source,
           fieldIdentifier,
           field,
+          changesetPath: idFieldPath([...field.path, key], field.blockStamps),
           apply: (content, translation) => {
             const nextMeta = normalizeMetaValue(getFieldValue(content, field))
             nextMeta[key] = translation
@@ -1130,6 +1134,7 @@ const buildTranslationUnits = (): TranslationUnit[] => {
           source: segment.text,
           fieldIdentifier,
           field,
+          changesetPath: null,
           apply: (content, translation) => {
             const nextDocument = buildRichTextTranslationBase(
               field.originalValue,
@@ -1156,6 +1161,7 @@ const buildTranslationUnits = (): TranslationUnit[] => {
       source: field.originalValue,
       fieldIdentifier,
       field,
+      changesetPath: field.tablePath ? null : idFieldPath(field.path, field.blockStamps),
       apply: (content, translation) => {
         applyTranslatedValue(content, field, translation)
       },
@@ -1251,6 +1257,9 @@ const translateWithAI = async (configId: string | null = selectedConfigId.value)
     translationUnits.map((unit) => [unit.id, unit.source] as const)
   )
   const translationUnitsById = new Map(translationUnits.map((unit) => [unit.id, unit] as const))
+  const changesetPaths = Object.fromEntries(
+    translationUnits.flatMap((unit) => (unit.changesetPath ? [[unit.id, unit.changesetPath]] : []))
+  )
   const fieldCount = translationUnits.length
 
   if (fieldCount === 0) {
@@ -1277,48 +1286,46 @@ const translateWithAI = async (configId: string | null = selectedConfigId.value)
     }
   }
 
-  await streamTranslation(
+  const outcome = await translationRun.start<Record<string, unknown>>(
     {
-      source: sourceLanguage.value,
-      target: props.targetLanguage,
-      fields: fieldsToTranslate,
+      surface: 'translate',
+      skill: 'translate-fields',
+      context: {
+        source: sourceLanguage.value,
+        target: props.targetLanguage,
+        fields: fieldsToTranslate,
+        ...(props.contentId ? { content_id: props.contentId, paths: changesetPaths } : {}),
+      },
       config_id: configId,
     },
     {
-      onDelta: (chunk) => {
-        accumulated += chunk
+      onEvent: (event) => {
+        if (event.type !== 'text_delta') return
+        accumulated += event.text
         applyNew(extractCompletedTranslations(accumulated))
-      },
-      onDone: (content) => {
-        try {
-          const raw = JSON.parse(stripAiCodeFences(content || accumulated))
-          const translations = findTranslationsObject(raw)
-          if (translations) {
-            applyNew(translations)
-          }
-          const count = appliedKeys.size
-          if (count > 0) {
-            toast.success(`Successfully translated ${count} item${count !== 1 ? 's' : ''}`)
-          } else {
-            toast.error(
-              t('composables.aiTranslation.error', { error: 'No fields could be matched' })
-            )
-          }
-        } catch {
-          if (appliedKeys.size > 0) {
-            toast.success(`Translated ${appliedKeys.size} item${appliedKeys.size !== 1 ? 's' : ''}`)
-          } else {
-            toast.error(t('composables.aiTranslation.error', { error: 'Invalid JSON response' }))
-          }
-        }
-        translationProgress.value = null
-      },
-      onError: (error, reason) => {
-        translationProgress.value = null
-        showAiError(reason, error)
       },
     }
   )
+
+  translationProgress.value = null
+
+  if (outcome.status === 'failed') {
+    showAiError(outcome.error?.reason, outcome.error?.message)
+    return
+  }
+  if (outcome.status !== 'completed') return
+
+  const translations = outcome.result?.data ? findTranslationsObject(outcome.result.data) : null
+  if (translations) {
+    applyNew(translations)
+  }
+
+  const count = appliedKeys.size
+  if (count > 0) {
+    toast.success(`Successfully translated ${count} item${count !== 1 ? 's' : ''}`)
+  } else {
+    toast.error(t('composables.aiTranslation.error', { error: 'No fields could be matched' }))
+  }
 }
 
 const translationStats = computed(() => {

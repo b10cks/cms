@@ -57,6 +57,7 @@
       "registrationClosed": "El registro está cerrado en esta instancia. Pide una invitación a un administrador."
     },
     "command": {
+      "title": "Command palette",
       "input": {
         "placeholder": "Buscar espacios, bloques, contenido..."
       },
@@ -1110,7 +1111,8 @@
         "pasteAfter": "Pegar después",
         "delete": "Eliminar",
         "more": "Más acciones",
-        "automations": "Acciones"
+        "automations": "Acciones",
+        "askAi": "Ask AI about {count} entry | Ask AI about {count} entries"
       },
       "confirmations": {
         "deleteTitle": "Eliminar contenido",
@@ -1182,7 +1184,9 @@
       "extendedSidebar": "Barra lateral ampliada",
       "icons": "Iconos",
       "onboarding": "Onboarding",
-      "massEdit": "Edición masiva"
+      "massEdit": "Edición masiva",
+      "aiInbox": "Inbox",
+      "aiInboxCount": "{count} items waiting for review"
     },
     "provider": {
       "title": "Proveedor",
@@ -2810,7 +2814,8 @@
         "invites": "Invitaciones",
         "roles": "Roles",
         "saml": "SAML",
-        "settings": "Configuración"
+        "settings": "Configuración",
+        "ai": "AI"
       },
       "settings": {
         "title": "Detalles del Equipo",
@@ -4568,7 +4573,126 @@
       "configDeleteError": "Error al eliminar la configuración de IA",
       "deleteDialogTitle": "¿Eliminar Configuración de IA?",
       "deleteDialogDescription": "Esto eliminará permanentemente la configuración \"{name}\". Esta acción no se puede deshacer.",
-      "cannotDeleteLast": "No se puede eliminar la última configuración"
+      "cannotDeleteLast": "No se puede eliminar la última configuración",
+      "publish": "Publish",
+      "columns": {
+        "name": "Name",
+        "title": "Title",
+        "type": "Type",
+        "status": "Status",
+        "enabled": "Enabled",
+        "actions": "Actions",
+        "source": "Source",
+        "surfaces": "Where it appears",
+        "shadows": "Overrides"
+      },
+      "status": {
+        "draft": "Draft",
+        "published": "Revision {revision}",
+        "changed": "Revision {revision}, changed"
+      },
+      "sources": {
+        "space": "Space",
+        "team": "Team",
+        "system": "Built-in"
+      },
+      "skills": {
+        "title": "Skills",
+        "description": "Instructions the AI uses for a task. A skill in this space replaces a team or built-in skill with the same name.",
+        "create": "New skill",
+        "edit": "Edit skill",
+        "format": "SKILL.md with a name and description in its frontmatter. Supporting files are read by the AI on demand.",
+        "filePath": "File path",
+        "fileContent": "Content",
+        "addFile": "Add file",
+        "empty": "No skills yet.",
+        "confirmDelete": "Delete the skill {name}?",
+        "resolvedTitle": "Available skills",
+        "resolvedDescription": "What the AI uses here after resolving space, team and built-in skills."
+      },
+      "knowledge": {
+        "title": "Knowledge",
+        "description": "Style guides are always followed. Reference documents are searched when a task needs them.",
+        "create": "New document",
+        "edit": "Edit document",
+        "editorHint": "Write markdown or upload a PDF or Word file. Runs use the published revision.",
+        "markdown": "Markdown",
+        "upload": "Upload PDF or DOCX",
+        "empty": "No documents yet.",
+        "confirmDelete": "Delete the document {title}?",
+        "types": {
+          "style": "Style guide",
+          "reference": "Reference"
+        },
+        "extraction": {
+          "pending": "Extracting text",
+          "done": "Text extracted",
+          "failed": "Extraction failed"
+        }
+      },
+      "glossaries": {
+        "title": "Glossaries",
+        "description": "Terms the AI must use, keep untranslated or avoid. Findings are flagged on the generated text.",
+        "create": "Add",
+        "newName": "New glossary",
+        "empty": "No glossaries yet.",
+        "emptyTerms": "No terms found.",
+        "confirmDelete": "Delete the glossary {name} and all its terms?",
+        "addTerm": "Add term",
+        "editTerm": "Edit term",
+        "term": "Term",
+        "sourceLocale": "Locale",
+        "translations": "Translations",
+        "translationsHint": "One per line, for example de: Kasse",
+        "forbidden": "Never use",
+        "forbiddenHint": "Comma-separated variants the AI must not write",
+        "note": "Note",
+        "doNotTranslate": "Keep untranslated",
+        "caseSensitive": "Case sensitive",
+        "rules": "Rules",
+        "neverUse": "Never: {terms}",
+        "import": "Import",
+        "export": "Export {format}",
+        "importErrors": "{count} rows could not be imported"
+      },
+      "schedules": {
+        "title": "Scheduled agents",
+        "description": "Run a skill over a saved scope on a schedule. Each run acts as the person who last saved the schedule, stops at its budget and puts its proposals in the inbox.",
+        "add": "Add schedule",
+        "edit": "Edit schedule",
+        "name": "Name",
+        "nameHint": "Also the title of the changesets it creates.",
+        "scope": "Scope",
+        "skill": "Skill",
+        "noSkills": "No skill can run on a schedule for this scope. Add a space or team skill with the {surface} surface that may propose updates.",
+        "cron": "Schedule",
+        "cronHint": "Cron expression in UTC: minute, hour, day of month, month, weekday. 0 6 * * 1 runs every Monday at 06:00.",
+        "budget": "Budget",
+        "budgetHint": "Maximum USD one run may spend. The run stops there and keeps what it proposed.",
+        "lastRun": "Last run",
+        "never": "Never",
+        "next": "Next: {time}",
+        "runsAs": "runs as {name}",
+        "paused": {
+          "access_revoked": "Paused: the person it runs as lost access. Save or enable it to run as you.",
+          "skill_unavailable": "Paused: the skill is gone or can no longer propose changes."
+        },
+        "filters": {
+          "block": "Block",
+          "language": "Language",
+          "missing_locale": "Missing translation",
+          "query": "Name contains",
+          "parent_id": "Folder",
+          "data_source": "Data source",
+          "missing_dimension": "Missing dimension",
+          "folder_id": "Asset folder",
+          "missing_field": "Missing field"
+        },
+        "empty": "No schedules yet.",
+        "confirmDelete": "Delete the schedule \"{name}\"?",
+        "saveFailed": "Could not save the schedule: {error}",
+        "deleteFailed": "Could not delete the schedule: {error}"
+      }
     },
     "aiConfigSelector": {
       "selectConfig": "Seleccionar configuración de IA",
@@ -4592,12 +4716,28 @@
       "previewTitle": "Vista previa de encabezado",
       "dialogDescription": "Edite el texto del encabezado y las filas del cuerpo en un espacio de trabajo de tabla dedicado."
     },
+    "messageScroller": {
+      "start": "Ir al inicio",
+      "end": "Ir al último mensaje",
+      "region": "Mensajes de IA"
+    },
+    "questionnaire": {
+      "submit": "Enviar respuestas",
+      "skip": "Omitir",
+      "requiredError": "Responde a esta pregunta.",
+      "optionalError": "Elige una respuesta u omite esta pregunta.",
+      "progress": "Pregunta {current} de {total}",
+      "progressLabel": "Progreso de las preguntas"
+    },
     "aiText": {
+      "inputLabel": "Mensaje de IA",
       "thinking": "Pensando...",
       "streamError": "Error de IA: {error}",
       "noConfigSelected": "Por favor, seleccione una configuración de IA para continuar",
       "placeholderSelectConfig": "Seleccione una configuración para comenzar...",
-      "placeholderDefault": "Pida a {name} que le ayude con su contenido..."
+      "placeholderDefault": "Pida a {name} que le ayude con su contenido...",
+      "working": "Looking things up...",
+      "background": "This takes a while, it continues in the background..."
     },
     "contentTreeAi": {
       "title": "Generar Árbol de Contenido con IA",
@@ -4619,6 +4759,147 @@
     },
     "fieldEditor": {
       "loadFailed": "No se pudo cargar este editor, probablemente tras una actualización. Recargue la página para editar este campo."
+    },
+    "aiActions": {
+      "trigger": "AI",
+      "label": "Ask AI to",
+      "accept": "Accept",
+      "discard": "Discard",
+      "editProposal": "Edit the proposal",
+      "skills": {
+        "content-interaction": "Edit this entry",
+        "content-tree": "Plan the content tree",
+        "meta-tags": "Write meta tags",
+        "translate-fields": "Translate fields",
+        "translate-data-entries": "Translate data entries",
+        "asset-classification": "Describe images",
+        "rewrite": "Rewrite",
+        "shorten": "Shorten",
+        "expand": "Expand",
+        "fix-grammar": "Fix grammar",
+        "apply-glossary": "Apply glossary",
+        "translate-selection": "Translate",
+        "extract-glossary-terms": "Extract glossary terms",
+        "find-untranslated": "Find untranslated entries"
+      },
+      "findings": {
+        "missing_term": "Use \"{expected}\" for \"{term}\".",
+        "translated_do_not_translate": "Keep \"{term}\" untranslated.",
+        "forbidden_variant": "\"{found}\" is not allowed, use \"{expected}\"."
+      }
+    },
+    "aiChangeset": {
+      "meta": "{pending} of {total} open",
+      "acceptAll": "Accept all",
+      "rejectAll": "Reject all",
+      "acceptEntry": "Accept entry",
+      "rejectEntry": "Reject entry",
+      "accept": "Accept",
+      "reject": "Reject",
+      "keepCurrent": "Keep current",
+      "useProposal": "Use AI version",
+      "newEntry": "New entry",
+      "partial": "The run stopped early ({reason}). These are the changes it proposed so far.",
+      "stoppedBy": {
+        "max_usd": "cost limit reached",
+        "max_steps": "step limit reached",
+        "max_tokens": "token limit reached",
+        "max_seconds": "time limit reached",
+        "other": "a limit was reached"
+      },
+      "targets": {
+        "content": "Content",
+        "data_entry": "Data entry",
+        "asset": "Asset",
+        "selection": "Selection"
+      },
+      "status": {
+        "pending": "Open",
+        "accepted": "Accepted",
+        "rejected": "Rejected",
+        "conflict": "Conflict"
+      },
+      "columns": {
+        "read": "When the AI read it",
+        "current": "Now",
+        "proposed": "AI proposal"
+      },
+      "acceptFailed": "Could not apply the changes: {error}",
+      "rejectFailed": "Could not reject the changes: {error}",
+      "edit": "Edit",
+      "discardEdit": "Discard edit",
+      "editLabel": "Edited proposal",
+      "editedBeforeAccepting": "Edited before accepting"
+    },
+    "aiInbox": {
+      "title": "Inbox",
+      "description": "Changes proposed by AI tasks wait here for review. Accepting saves a draft; nothing is published.",
+      "changesets": "Proposed changes",
+      "empty": "Nothing to review.",
+      "partial": "Stopped early",
+      "runs": "Background tasks",
+      "states": {
+        "running": "Running",
+        "awaiting_input": "Needs your answer",
+        "completed": "Done",
+        "failed": "Failed",
+        "cancelled": "Cancelled"
+      },
+      "surfaces": {
+        "bulk": "Bulk task",
+        "agent": "AI task"
+      },
+      "cancel": "Cancel",
+      "answerFailed": "Could not send your answers: {error}",
+      "cancelFailed": "Could not cancel the task: {error}",
+      "suggestions": {
+        "title": "Glossary suggestions",
+        "evidence": "AI wrote \"{ai}\", kept \"{final}\"",
+        "addTo": "Add to glossary",
+        "chooseGlossary": "Add to",
+        "createGlossary": "Create a glossary first",
+        "dismiss": "Dismiss",
+        "scopes": {
+          "space": "Space",
+          "team": "Team"
+        },
+        "acceptFailed": "Could not add the term: {error}",
+        "dismissFailed": "Could not dismiss the suggestion: {error}"
+      }
+    },
+    "aiCommand": {
+      "ask": "Ask AI: {prompt}",
+      "skills": "AI skills",
+      "title": "Ask AI",
+      "prompt": "Task",
+      "scope": {
+        "entry": "Works on the open entry.",
+        "dataSource": "Works on the open data source.",
+        "space": "Works on this space."
+      },
+      "background": "This takes a while. It continues in the background and its changes arrive in the inbox.",
+      "usingTool": "Using {tool}...",
+      "run": "Run",
+      "close": "Close"
+    },
+    "aiBulk": {
+      "entry": "Ask AI",
+      "title": "Ask AI about these entries",
+      "description": "Runs in the background. The changes arrive in the inbox for review; nothing is saved until you accept it.",
+      "skills": "Skills",
+      "task": "What should the AI do?",
+      "extraInstructions": "Extra instructions (optional)",
+      "entries": "Entries",
+      "estimate": "Estimated cost",
+      "cap": "The run stops at {cap}. Model: {model}.",
+      "nothing": "No entries match.",
+      "more": "and {count} more",
+      "preflightFailed": "Could not estimate this task.",
+      "cancel": "Cancel",
+      "confirm": "Start on {count} entries",
+      "started": "The AI task runs in the background.",
+      "openInbox": "Open inbox",
+      "failed": "Could not start the task: {error}"
     }
   },
   "alertDialog": {
@@ -5036,6 +5317,20 @@
       "saveSuccess": "Guardado {count} cambio | Guardados {count} cambios",
       "savePartial": "Guardados {saved} con {errors} error(es)",
       "saveError": "Error al guardar: {error}"
+    },
+    "aiRun": {
+      "failed": "The AI run did not finish."
+    },
+    "aiKnowledge": {
+      "saved": "Saved",
+      "saveError": "Could not save: {error}",
+      "published": "Published",
+      "publishError": "Could not publish: {error}",
+      "deleted": "Deleted",
+      "deleteError": "Could not delete: {error}",
+      "uploaded": "File uploaded, the text is being extracted",
+      "imported": "Glossary imported",
+      "importError": "Could not import: {error}"
     }
   },
   "content": {

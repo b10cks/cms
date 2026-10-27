@@ -66,6 +66,7 @@
       "registrationClosed": "Die Registrierung ist auf dieser Instanz geschlossen. Bitte einen Administrator um eine Einladung."
     },
     "command": {
+      "title": "Befehlspalette",
       "input": {
         "placeholder": "Spaces, Blocks, Content durchsuchen..."
       },
@@ -1119,7 +1120,8 @@
         "pasteAfter": "Einfügen nach",
         "delete": "Löschen",
         "more": "Weitere Aktionen",
-        "automations": "Aktionen"
+        "automations": "Aktionen",
+        "askAi": "KI zu {count} Eintrag fragen | KI zu {count} Einträgen fragen"
       },
       "confirmations": {
         "deleteTitle": "Inhalt löschen",
@@ -1191,7 +1193,9 @@
       "extendedSidebar": "Erweiterte Seitenleiste",
       "icons": "Icons",
       "onboarding": "Onboarding",
-      "massEdit": "Massenbearbeitung"
+      "massEdit": "Massenbearbeitung",
+      "aiInbox": "Posteingang",
+      "aiInboxCount": "{count} Einträge warten auf Prüfung"
     },
     "provider": {
       "title": "Provider",
@@ -2824,7 +2828,8 @@
         "invites": "Einladungen",
         "roles": "Rollen",
         "saml": "SAML",
-        "settings": "Einstellungen"
+        "settings": "Einstellungen",
+        "ai": "KI"
       },
       "settings": {
         "title": "Team-Details",
@@ -4578,12 +4583,28 @@
       "previewTitle": "Header-Vorschau",
       "dialogDescription": "Bearbeite Kopfzeile und Body-Zeilen gemeinsam in einem fokussierten Tabellen-Workspace."
     },
+    "messageScroller": {
+      "start": "Zum Anfang",
+      "end": "Zur neuesten Nachricht",
+      "region": "KI-Nachrichten"
+    },
+    "questionnaire": {
+      "submit": "Antworten senden",
+      "skip": "Überspringen",
+      "requiredError": "Bitte beantworte diese Frage.",
+      "optionalError": "Wähle eine Antwort oder überspringe diese Frage.",
+      "progress": "Frage {current} von {total}",
+      "progressLabel": "Fragenfortschritt"
+    },
     "aiText": {
+      "inputLabel": "KI-Nachricht",
       "streamError": "KI-Stream-Fehler: {error}",
       "thinking": "Denke nach...",
       "placeholderSelectConfig": "Select a configuration to start...",
       "placeholderDefault": "Ask {name} to help with your content...",
-      "noConfigSelected": "Please select an AI configuration to continue"
+      "noConfigSelected": "Please select an AI configuration to continue",
+      "working": "Schlage nach...",
+      "background": "Das dauert länger und läuft im Hintergrund weiter..."
     },
     "aiMention": {
       "content": "Inhalte",
@@ -4606,7 +4627,126 @@
       "deleteDialogTitle": "Delete AI Configuration?",
       "configDeleteSuccess": "AI configuration deleted successfully",
       "configDeleteError": "Failed to delete AI configuration",
-      "cannotDeleteLast": "Cannot delete the last configuration"
+      "cannotDeleteLast": "Cannot delete the last configuration",
+      "publish": "Veröffentlichen",
+      "columns": {
+        "name": "Name",
+        "title": "Titel",
+        "type": "Typ",
+        "status": "Status",
+        "enabled": "Aktiv",
+        "actions": "Aktionen",
+        "source": "Quelle",
+        "surfaces": "Wo sie erscheint",
+        "shadows": "Ersetzt"
+      },
+      "status": {
+        "draft": "Entwurf",
+        "published": "Revision {revision}",
+        "changed": "Revision {revision}, geändert"
+      },
+      "sources": {
+        "space": "Space",
+        "team": "Team",
+        "system": "Eingebaut"
+      },
+      "skills": {
+        "title": "Skills",
+        "description": "Anweisungen, die die KI für eine Aufgabe nutzt. Ein Skill in diesem Space ersetzt einen Team- oder eingebauten Skill gleichen Namens.",
+        "create": "Neuer Skill",
+        "edit": "Skill bearbeiten",
+        "format": "SKILL.md mit Name und Beschreibung im Frontmatter. Zusatzdateien liest die KI bei Bedarf.",
+        "filePath": "Dateipfad",
+        "fileContent": "Inhalt",
+        "addFile": "Datei hinzufügen",
+        "empty": "Noch keine Skills.",
+        "confirmDelete": "Skill {name} löschen?",
+        "resolvedTitle": "Verfügbare Skills",
+        "resolvedDescription": "Was die KI hier nach Auflösung von Space-, Team- und eingebauten Skills nutzt."
+      },
+      "knowledge": {
+        "title": "Wissen",
+        "description": "Styleguides gelten immer. Referenzdokumente werden durchsucht, wenn eine Aufgabe sie braucht.",
+        "create": "Neues Dokument",
+        "edit": "Dokument bearbeiten",
+        "editorHint": "Schreibe Markdown oder lade eine PDF- oder Word-Datei hoch. Läufe nutzen die veröffentlichte Revision.",
+        "markdown": "Markdown",
+        "upload": "PDF oder DOCX hochladen",
+        "empty": "Noch keine Dokumente.",
+        "confirmDelete": "Dokument {title} löschen?",
+        "types": {
+          "style": "Styleguide",
+          "reference": "Referenz"
+        },
+        "extraction": {
+          "pending": "Text wird extrahiert",
+          "done": "Text extrahiert",
+          "failed": "Extraktion fehlgeschlagen"
+        }
+      },
+      "glossaries": {
+        "title": "Glossare",
+        "description": "Begriffe, die die KI verwenden, unübersetzt lassen oder vermeiden muss. Abweichungen werden am Text markiert.",
+        "create": "Hinzufügen",
+        "newName": "Neues Glossar",
+        "empty": "Noch keine Glossare.",
+        "emptyTerms": "Keine Begriffe gefunden.",
+        "confirmDelete": "Glossar {name} mit allen Begriffen löschen?",
+        "addTerm": "Begriff hinzufügen",
+        "editTerm": "Begriff bearbeiten",
+        "term": "Begriff",
+        "sourceLocale": "Sprache",
+        "translations": "Übersetzungen",
+        "translationsHint": "Eine pro Zeile, zum Beispiel en: checkout",
+        "forbidden": "Nie verwenden",
+        "forbiddenHint": "Kommagetrennte Varianten, die die KI nicht schreiben darf",
+        "note": "Notiz",
+        "doNotTranslate": "Unübersetzt lassen",
+        "caseSensitive": "Groß-/Kleinschreibung beachten",
+        "rules": "Regeln",
+        "neverUse": "Nie: {terms}",
+        "import": "Importieren",
+        "export": "{format} exportieren",
+        "importErrors": "{count} Zeilen konnten nicht importiert werden"
+      },
+      "schedules": {
+        "title": "Geplante Agenten",
+        "description": "Führt einen Skill nach Zeitplan über einen gespeicherten Bereich aus. Jeder Lauf handelt als die Person, die den Zeitplan zuletzt gespeichert hat, stoppt an seinem Budget und legt seine Vorschläge in den Posteingang.",
+        "add": "Zeitplan hinzufügen",
+        "edit": "Zeitplan bearbeiten",
+        "name": "Name",
+        "nameHint": "Auch der Titel der Änderungssätze, die er erstellt.",
+        "scope": "Bereich",
+        "skill": "Skill",
+        "noSkills": "Für diesen Bereich kann kein Skill nach Zeitplan laufen. Lege einen Space- oder Team-Skill mit der Oberfläche {surface} an, der Änderungen vorschlagen darf.",
+        "cron": "Zeitplan",
+        "cronHint": "Cron-Ausdruck in UTC: Minute, Stunde, Tag, Monat, Wochentag. 0 6 * * 1 läuft jeden Montag um 06:00.",
+        "budget": "Budget",
+        "budgetHint": "Höchstbetrag in USD pro Lauf. Der Lauf stoppt dort und behält, was er vorgeschlagen hat.",
+        "lastRun": "Letzter Lauf",
+        "never": "Nie",
+        "next": "Nächster: {time}",
+        "runsAs": "läuft als {name}",
+        "paused": {
+          "access_revoked": "Pausiert: Die Person, als die er läuft, hat keinen Zugriff mehr. Speichern oder aktivieren, damit er als du läuft.",
+          "skill_unavailable": "Pausiert: Der Skill fehlt oder kann keine Änderungen mehr vorschlagen."
+        },
+        "filters": {
+          "block": "Block",
+          "language": "Sprache",
+          "missing_locale": "Fehlende Übersetzung",
+          "query": "Name enthält",
+          "parent_id": "Ordner",
+          "data_source": "Datenquelle",
+          "missing_dimension": "Fehlende Dimension",
+          "folder_id": "Asset-Ordner",
+          "missing_field": "Fehlendes Feld"
+        },
+        "empty": "Noch keine Zeitpläne.",
+        "confirmDelete": "Zeitplan „{name}“ löschen?",
+        "saveFailed": "Zeitplan konnte nicht gespeichert werden: {error}",
+        "deleteFailed": "Zeitplan konnte nicht gelöscht werden: {error}"
+      }
     },
     "contentTreeAi": {
       "title": "Inhaltsbaum mit KI generieren",
@@ -4635,6 +4775,147 @@
     },
     "fieldEditor": {
       "loadFailed": "Dieser Editor konnte nicht geladen werden, vermutlich nach einem Update. Lade die Seite neu, um das Feld zu bearbeiten."
+    },
+    "aiActions": {
+      "trigger": "KI",
+      "label": "KI soll",
+      "accept": "Übernehmen",
+      "discard": "Verwerfen",
+      "editProposal": "Vorschlag bearbeiten",
+      "skills": {
+        "content-interaction": "Eintrag bearbeiten",
+        "content-tree": "Inhaltsbaum planen",
+        "meta-tags": "Meta-Tags schreiben",
+        "translate-fields": "Felder übersetzen",
+        "translate-data-entries": "Dateneinträge übersetzen",
+        "asset-classification": "Bilder beschreiben",
+        "rewrite": "Umformulieren",
+        "shorten": "Kürzen",
+        "expand": "Ausbauen",
+        "fix-grammar": "Grammatik korrigieren",
+        "apply-glossary": "Glossar anwenden",
+        "translate-selection": "Übersetzen",
+        "extract-glossary-terms": "Glossarbegriffe extrahieren",
+        "find-untranslated": "Unübersetzte Einträge finden"
+      },
+      "findings": {
+        "missing_term": "Verwende „{expected}“ für „{term}“.",
+        "translated_do_not_translate": "Lass „{term}“ unübersetzt.",
+        "forbidden_variant": "„{found}“ ist nicht erlaubt, verwende „{expected}“."
+      }
+    },
+    "aiChangeset": {
+      "meta": "{pending} von {total} offen",
+      "acceptAll": "Alle übernehmen",
+      "rejectAll": "Alle ablehnen",
+      "acceptEntry": "Eintrag übernehmen",
+      "rejectEntry": "Eintrag ablehnen",
+      "accept": "Übernehmen",
+      "reject": "Ablehnen",
+      "keepCurrent": "Aktuellen Wert behalten",
+      "useProposal": "KI-Version verwenden",
+      "newEntry": "Neuer Eintrag",
+      "partial": "Der Lauf wurde vorzeitig beendet ({reason}). Das sind die bisher vorgeschlagenen Änderungen.",
+      "stoppedBy": {
+        "max_usd": "Kostenlimit erreicht",
+        "max_steps": "Schrittlimit erreicht",
+        "max_tokens": "Tokenlimit erreicht",
+        "max_seconds": "Zeitlimit erreicht",
+        "other": "ein Limit wurde erreicht"
+      },
+      "targets": {
+        "content": "Inhalt",
+        "data_entry": "Datensatz",
+        "asset": "Asset",
+        "selection": "Auswahl"
+      },
+      "status": {
+        "pending": "Offen",
+        "accepted": "Übernommen",
+        "rejected": "Abgelehnt",
+        "conflict": "Konflikt"
+      },
+      "columns": {
+        "read": "Beim Lesen durch die KI",
+        "current": "Jetzt",
+        "proposed": "KI-Vorschlag"
+      },
+      "acceptFailed": "Die Änderungen konnten nicht übernommen werden: {error}",
+      "rejectFailed": "Die Änderungen konnten nicht abgelehnt werden: {error}",
+      "edit": "Bearbeiten",
+      "discardEdit": "Bearbeitung verwerfen",
+      "editLabel": "Bearbeiteter Vorschlag",
+      "editedBeforeAccepting": "Vor dem Übernehmen bearbeitet"
+    },
+    "aiInbox": {
+      "title": "Posteingang",
+      "description": "Von KI-Aufgaben vorgeschlagene Änderungen warten hier auf Prüfung. Übernehmen speichert einen Entwurf, veröffentlicht wird nichts.",
+      "changesets": "Vorgeschlagene Änderungen",
+      "empty": "Nichts zu prüfen.",
+      "partial": "Vorzeitig beendet",
+      "runs": "Hintergrundaufgaben",
+      "states": {
+        "running": "Läuft",
+        "awaiting_input": "Wartet auf Antwort",
+        "completed": "Fertig",
+        "failed": "Fehlgeschlagen",
+        "cancelled": "Abgebrochen"
+      },
+      "surfaces": {
+        "bulk": "Sammelaufgabe",
+        "agent": "KI-Aufgabe"
+      },
+      "cancel": "Abbrechen",
+      "answerFailed": "Die Antworten konnten nicht gesendet werden: {error}",
+      "cancelFailed": "Die Aufgabe konnte nicht abgebrochen werden: {error}",
+      "suggestions": {
+        "title": "Glossarvorschläge",
+        "evidence": "KI schrieb „{ai}“, behalten wurde „{final}“",
+        "addTo": "Zum Glossar hinzufügen",
+        "chooseGlossary": "Hinzufügen zu",
+        "createGlossary": "Zuerst ein Glossar anlegen",
+        "dismiss": "Verwerfen",
+        "scopes": {
+          "space": "Space",
+          "team": "Team"
+        },
+        "acceptFailed": "Begriff konnte nicht hinzugefügt werden: {error}",
+        "dismissFailed": "Vorschlag konnte nicht verworfen werden: {error}"
+      }
+    },
+    "aiCommand": {
+      "ask": "KI fragen: {prompt}",
+      "skills": "KI-Skills",
+      "title": "KI fragen",
+      "prompt": "Aufgabe",
+      "scope": {
+        "entry": "Arbeitet am geöffneten Eintrag.",
+        "dataSource": "Arbeitet an der geöffneten Datenquelle.",
+        "space": "Arbeitet in diesem Space."
+      },
+      "background": "Das dauert etwas. Die Aufgabe läuft im Hintergrund weiter, ihre Änderungen landen im Posteingang.",
+      "usingTool": "Verwendet {tool}...",
+      "run": "Ausführen",
+      "close": "Schließen"
+    },
+    "aiBulk": {
+      "entry": "KI fragen",
+      "title": "KI zu diesen Einträgen fragen",
+      "description": "Läuft im Hintergrund. Die Änderungen landen zur Prüfung im Posteingang, gespeichert wird erst, was du übernimmst.",
+      "skills": "Skills",
+      "task": "Was soll die KI tun?",
+      "extraInstructions": "Zusätzliche Anweisungen (optional)",
+      "entries": "Einträge",
+      "estimate": "Geschätzte Kosten",
+      "cap": "Der Lauf stoppt bei {cap}. Modell: {model}.",
+      "nothing": "Keine passenden Einträge.",
+      "more": "und {count} weitere",
+      "preflightFailed": "Diese Aufgabe konnte nicht geschätzt werden.",
+      "cancel": "Abbrechen",
+      "confirm": "Für {count} Einträge starten",
+      "started": "Die KI-Aufgabe läuft im Hintergrund.",
+      "openInbox": "Posteingang öffnen",
+      "failed": "Die Aufgabe konnte nicht gestartet werden: {error}"
     }
   },
   "alertDialog": {
@@ -5052,6 +5333,20 @@
       "saveSuccess": "{count} Änderung gespeichert | {count} Änderungen gespeichert",
       "savePartial": "{saved} gespeichert, {errors} Fehler",
       "saveError": "Speichern fehlgeschlagen: {error}"
+    },
+    "aiRun": {
+      "failed": "Der KI-Lauf wurde nicht abgeschlossen."
+    },
+    "aiKnowledge": {
+      "saved": "Gespeichert",
+      "saveError": "Speichern fehlgeschlagen: {error}",
+      "published": "Veröffentlicht",
+      "publishError": "Veröffentlichen fehlgeschlagen: {error}",
+      "deleted": "Gelöscht",
+      "deleteError": "Löschen fehlgeschlagen: {error}",
+      "uploaded": "Datei hochgeladen, der Text wird extrahiert",
+      "imported": "Glossar importiert",
+      "importError": "Import fehlgeschlagen: {error}"
     }
   },
   "content": {
