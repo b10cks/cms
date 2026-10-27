@@ -18,6 +18,7 @@ useSeoMeta({
   <div class="content-grid">
     <ContentHeader
       :header="$t('labels.settings.ai.title')"
+      :description="$t('labels.settings.ai.description')"
     />
     <AiSettings
       v-if="space"

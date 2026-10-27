@@ -2498,7 +2498,10 @@
         "setAsDefault": "Establecer como configuración predeterminada",
         "default": "Predeterminada",
         "noConfigs": "Aún no hay configuraciones de IA",
-        "noConfigsDescription": "Cree su primera configuración para comenzar a usar las funciones de IA."
+        "noConfigsDescription": "Cree su primera configuración para comenzar a usar las funciones de IA.",
+        "navLabel": "AI",
+        "features": "Features",
+        "description": "Models, configurations and usage of the AI in this space."
       },
       "members": {
         "title": "Miembros",
@@ -4583,13 +4586,13 @@
         "enabled": "Enabled",
         "actions": "Actions",
         "source": "Source",
-        "surfaces": "Where it appears",
-        "shadows": "Overrides"
+        "surfaces": "Where it appears"
       },
       "status": {
         "draft": "Draft",
         "published": "Revision {revision}",
-        "changed": "Revision {revision}, changed"
+        "changed": "Revision {revision}, changed",
+        "unpublishedChanges": "Unpublished changes"
       },
       "sources": {
         "space": "Space",
@@ -4598,44 +4601,58 @@
       },
       "skills": {
         "title": "Skills",
-        "description": "Instructions the AI uses for a task. A skill in this space replaces a team or built-in skill with the same name.",
+        "description": "Instructions the AI uses for a task. Customize a built-in or team skill to change it for this space; your copy replaces the original once published.",
         "create": "New skill",
-        "edit": "Edit skill",
         "format": "SKILL.md with a name and description in its frontmatter. Supporting files are read by the AI on demand.",
         "filePath": "File path",
         "fileContent": "Content",
         "addFile": "Add file",
-        "empty": "No skills yet.",
+        "empty": "No skills available.",
         "confirmDelete": "Delete the skill {name}?",
-        "resolvedTitle": "Available skills",
-        "resolvedDescription": "What the AI uses here after resolving space, team and built-in skills."
+        "customize": "Customize",
+        "back": "Skills",
+        "delete": "Delete skill",
+        "details": "Skill",
+        "rawView": "Raw SKILL.md",
+        "nameHint": "The skill identifier: lowercase letters, digits and dashes. A skill with the name of a built-in or team skill replaces it.",
+        "descriptionLabel": "Description",
+        "descriptionHint": "What the skill does and when to use it. The AI reads this to pick a skill.",
+        "instructions": "Instructions",
+        "otherSurfaces": "Also appears on: {surfaces}. Edit these in the raw view.",
+        "removeFile": "Remove {path}",
+        "notFound": "This skill does not exist or was deleted."
       },
       "knowledge": {
         "title": "Knowledge",
-        "description": "Style guides are always followed. Reference documents are searched when a task needs them.",
-        "create": "New document",
-        "edit": "Edit document",
+        "description": "Style guides are always followed. Documents are searched when a task needs them. Glossaries set the terms the AI must use, keep untranslated or avoid.",
         "editorHint": "Write markdown or upload a PDF or Word file. Runs use the published revision.",
         "markdown": "Markdown",
         "upload": "Upload PDF or DOCX",
-        "empty": "No documents yet.",
+        "empty": "No knowledge yet.",
         "confirmDelete": "Delete the document {title}?",
         "types": {
           "style": "Style guide",
-          "reference": "Reference"
+          "reference": "Document",
+          "glossary": "Glossary"
         },
         "extraction": {
           "pending": "Extracting text",
           "done": "Text extracted",
           "failed": "Extraction failed"
-        }
+        },
+        "new": "New",
+        "newOfType": {
+          "style": "New style guide",
+          "reference": "New document"
+        },
+        "back": "Knowledge",
+        "delete": "Delete document",
+        "replaceSource": "Replace file",
+        "notFound": "This document does not exist or was deleted."
       },
       "glossaries": {
-        "title": "Glossaries",
         "description": "Terms the AI must use, keep untranslated or avoid. Findings are flagged on the generated text.",
-        "create": "Add",
-        "newName": "New glossary",
-        "empty": "No glossaries yet.",
+        "create": "New glossary",
         "emptyTerms": "No terms found.",
         "confirmDelete": "Delete the glossary {name} and all its terms?",
         "addTerm": "Add term",
@@ -4650,13 +4667,21 @@
         "doNotTranslate": "Keep untranslated",
         "caseSensitive": "Case sensitive",
         "rules": "Rules",
-        "neverUse": "Never: {terms}",
         "import": "Import",
-        "export": "Export {format}",
-        "importErrors": "{count} rows could not be imported"
+        "importErrors": "{count} rows could not be imported",
+        "termCount": "{count} term | {count} terms",
+        "avoid": "Avoid: {terms}",
+        "editTermNamed": "Edit {term}",
+        "deleteTermNamed": "Delete {term}",
+        "confirmDeleteTerm": "Delete the term {term}?",
+        "notFound": "Glossary not found",
+        "terms": "Terms",
+        "search": "Search terms",
+        "exportLabel": "Export",
+        "delete": "Delete glossary"
       },
       "schedules": {
-        "title": "Scheduled agents",
+        "title": "Schedules",
         "description": "Run a skill over a saved scope on a schedule. Each run acts as the person who last saved the schedule, stops at its budget and puts its proposals in the inbox.",
         "add": "Add schedule",
         "edit": "Edit schedule",
@@ -4692,6 +4717,26 @@
         "confirmDelete": "Delete the schedule \"{name}\"?",
         "saveFailed": "Could not save the schedule: {error}",
         "deleteFailed": "Could not delete the schedule: {error}"
+      },
+      "enabledFor": "Use {name}",
+      "saveDraft": "Save draft",
+      "markdown": {
+        "write": "Write",
+        "preview": "Preview",
+        "empty": "Nothing to preview yet."
+      },
+      "surfaces": {
+        "selection": "Text selection",
+        "cmdk": "Command palette",
+        "canvas": "Canvas",
+        "content_tree": "Content tree",
+        "meta_tags": "Meta tags",
+        "translate": "Translation",
+        "asset": "Assets",
+        "bulk_content": "Bulk actions on entries",
+        "bulk_data_entries": "Bulk actions on data entries",
+        "bulk_assets": "Bulk actions on assets",
+        "learning": "Learning from edits"
       }
     },
     "aiConfigSelector": {
@@ -4829,15 +4874,18 @@
       "edit": "Edit",
       "discardEdit": "Discard edit",
       "editLabel": "Edited proposal",
-      "editedBeforeAccepting": "Edited before accepting"
+      "editedBeforeAccepting": "Edited before accepting",
+      "cost": "cost {cost}",
+      "keyboardHint": "Accepting saves drafts; nothing is published. Use J and K or the arrow keys to move between entries.",
+      "backToInbox": "Inbox",
+      "discard": "Discard",
+      "glossaryFindings": "Glossary findings"
     },
     "aiInbox": {
       "title": "Inbox",
-      "description": "Changes proposed by AI tasks wait here for review. Accepting saves a draft; nothing is published.",
-      "changesets": "Proposed changes",
-      "empty": "Nothing to review.",
+      "description": "Everything the AI is waiting on you for: proposed changes, glossary suggestions and questions. Accepting saves a draft; nothing is published.",
+      "empty": "Nothing waiting.",
       "partial": "Stopped early",
-      "runs": "Background tasks",
       "states": {
         "running": "Running",
         "awaiting_input": "Needs your answer",
@@ -4853,8 +4901,6 @@
       "answerFailed": "Could not send your answers: {error}",
       "cancelFailed": "Could not cancel the task: {error}",
       "suggestions": {
-        "title": "Glossary suggestions",
-        "evidence": "AI wrote \"{ai}\", kept \"{final}\"",
         "addTo": "Add to glossary",
         "chooseGlossary": "Add to",
         "createGlossary": "Create a glossary first",
@@ -4864,8 +4910,28 @@
           "team": "Team"
         },
         "acceptFailed": "Could not add the term: {error}",
-        "dismissFailed": "Could not dismiss the suggestion: {error}"
-      }
+        "dismissFailed": "Could not dismiss the suggestion: {error}",
+        "addTermTo": "Add {term} to a glossary",
+        "dismissTerm": "Dismiss {term}"
+      },
+      "emptyLink": "Browse skills",
+      "filterLabel": "Filter by kind",
+      "filters": {
+        "all": "All",
+        "changes": "Changes",
+        "suggestions": "Suggestions",
+        "questions": "Needs answer",
+        "failed": "Failed"
+      },
+      "scope": {
+        "entries": "{count} entry | {count} entries",
+        "fields": "{count} field | {count} fields",
+        "entriesFields": "{entries}, {fields}"
+      },
+      "you": "You",
+      "toReview": "{count} to review",
+      "suggestion": "Glossary suggestion",
+      "answer": "Answer"
     },
     "aiCommand": {
       "ask": "Ask AI: {prompt}",

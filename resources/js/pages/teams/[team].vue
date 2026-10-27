@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import StopIcon from '~/assets/images/error.svg?component'
-import AiGlossariesSettings from '~/components/ai-settings/AiGlossariesSettings.vue'
-import AiKnowledgeSettings from '~/components/ai-settings/AiKnowledgeSettings.vue'
-import AiSkillsSettings from '~/components/ai-settings/AiSkillsSettings.vue'
+import AiKnowledgeList from '~/components/ai-settings/AiKnowledgeList.vue'
+import AiKnowledgeNewMenu from '~/components/ai-settings/AiKnowledgeNewMenu.vue'
+import AiSkillsList from '~/components/ai-settings/AiSkillsList.vue'
 import Icon from '~/components/Icon.vue'
 import CreateInviteDialog from '~/components/invites/CreateInviteDialog.vue'
 import PeopleManager from '~/components/people/PeopleManager.vue'
@@ -17,6 +17,7 @@ import { Button } from '~/components/ui/button'
 import { Card, CardContent } from '~/components/ui/card'
 import { Skeleton } from '~/components/ui/skeleton'
 import { Tabs, TabsList, TabsTrigger } from '~/components/ui/tabs'
+import { TooltipIcon } from '~/components/ui/tooltip'
 import { useAuthorization } from '~/composables/useAuthorization'
 import { teamNavigationItems } from '~/lib/access-control'
 import type { CreateTeamSpaceRolePayload, RoleCatalogEntry } from '~/types/authorization'
@@ -427,20 +428,42 @@ const navigateBack = () => {
           </template>
 
           <template v-else-if="activeView === 'ai' && canManageAi">
-            <div class="divide-y divide-border">
-              <AiSkillsSettings
-                :owner="aiOwner"
-                can-manage
-              />
-              <AiKnowledgeSettings
-                :owner="aiOwner"
-                can-manage
-              />
-              <AiGlossariesSettings
-                :owner="aiOwner"
-                can-manage
-              />
-            </div>
+            <AiSkillsList
+              :owner="aiOwner"
+              :title="$t('components.aiSettings.skills.title')"
+              can-manage
+            >
+              <template #actions>
+                <TooltipIcon>
+                  <span class="block max-w-sm">{{ $t('components.aiSettings.skills.description') }}</span>
+                </TooltipIcon>
+                <Button
+                  as-child
+                  size="sm"
+                  variant="outline"
+                >
+                  <RouterLink :to="{ name: 'team-ai-skill', params: { team: teamId, skillId: 'new' } }">
+                    <Icon name="lucide:plus" />
+                    {{ $t('components.aiSettings.skills.create') }}
+                  </RouterLink>
+                </Button>
+              </template>
+            </AiSkillsList>
+            <AiKnowledgeList
+              :owner="aiOwner"
+              :title="$t('components.aiSettings.knowledge.title')"
+              can-manage
+            >
+              <template #actions>
+                <TooltipIcon>
+                  <span class="block max-w-sm">{{ $t('components.aiSettings.knowledge.description') }}</span>
+                </TooltipIcon>
+                <AiKnowledgeNewMenu
+                  :owner="aiOwner"
+                  size="sm"
+                />
+              </template>
+            </AiKnowledgeList>
           </template>
 
           <template v-else-if="activeView === 'saml' && canManageSaml">

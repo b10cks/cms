@@ -65,6 +65,8 @@ export interface AiRunRecord {
   error: string | null
   event_seq: number
   usage: AiRunUsage
+  started_at?: string | null
+  finished_at?: string | null
 }
 
 /** A changeset item a run added; review loads the changeset. */

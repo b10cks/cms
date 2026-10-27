@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import AiKnowledgeSettings from '~/components/ai-settings/AiKnowledgeSettings.vue'
+import AiKnowledgeList from '~/components/ai-settings/AiKnowledgeList.vue'
+import AiKnowledgeNewMenu from '~/components/ai-settings/AiKnowledgeNewMenu.vue'
 import ContentHeader from '~/components/ui/ContentHeader.vue'
 
 const route = useRoute()
@@ -18,12 +19,20 @@ useSeoMeta({
 
 <template>
   <div class="content-grid">
-    <ContentHeader :header="$t('components.aiSettings.knowledge.title')" />
-    <div class="divide-y divide-border pt-6">
-      <AiKnowledgeSettings
-        :owner="owner"
-        :can-manage="canManage"
-      />
-    </div>
+    <ContentHeader
+      :header="$t('components.aiSettings.knowledge.title')"
+      :description="$t('components.aiSettings.knowledge.description')"
+    >
+      <template #actions>
+        <AiKnowledgeNewMenu
+          v-if="canManage"
+          :owner="owner"
+        />
+      </template>
+    </ContentHeader>
+    <AiKnowledgeList
+      :owner="owner"
+      :can-manage="canManage"
+    />
   </div>
 </template>

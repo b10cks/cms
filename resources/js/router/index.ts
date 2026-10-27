@@ -130,6 +130,21 @@ const routes: RouteRecordRaw[] = [
         name: 'team-ai',
         component: () => import('~/pages/teams/[team].vue'),
       },
+      {
+        path: ':team/ai/skills/:skillId',
+        name: 'team-ai-skill',
+        component: () => import('~/pages/teams/ai-skill.vue'),
+      },
+      {
+        path: ':team/ai/documents/:documentId',
+        name: 'team-ai-document',
+        component: () => import('~/pages/teams/ai-document.vue'),
+      },
+      {
+        path: ':team/ai/glossaries/:glossaryId',
+        name: 'team-ai-glossary',
+        component: () => import('~/pages/teams/ai-glossary.vue'),
+      },
     ],
   },
   {
@@ -290,6 +305,12 @@ const routes: RouteRecordRaw[] = [
     meta: { layout: 'default' },
   },
   {
+    path: '/:space/inbox/:changeset',
+    name: 'space-ai-inbox-changeset',
+    component: () => import('~/pages/[space]/inbox/[changeset].vue'),
+    meta: { layout: 'default' },
+  },
+  {
     path: '/:space/audit-logs',
     name: 'space-audit-logs',
     component: () => import('~/pages/[space]/audit-logs.vue'),
@@ -364,19 +385,43 @@ const routes: RouteRecordRaw[] = [
         component: () => import('~/pages/[space]/settings/ai-skills.vue'),
       },
       {
+        path: 'ai-skills/:skillId',
+        name: 'space-settings-ai-skill',
+        component: () => import('~/pages/[space]/settings/ai-skill.vue'),
+        meta: { settingsNav: 'space-settings-ai-skills' },
+      },
+      {
         path: 'ai-knowledge',
         name: 'space-settings-ai-knowledge',
         component: () => import('~/pages/[space]/settings/ai-knowledge.vue'),
       },
       {
+        path: 'ai-knowledge/documents/:documentId',
+        name: 'space-settings-ai-document',
+        component: () => import('~/pages/[space]/settings/ai-document.vue'),
+        meta: { settingsNav: 'space-settings-ai-knowledge' },
+      },
+      {
+        path: 'ai-knowledge/glossaries/:glossaryId',
+        name: 'space-settings-ai-glossary',
+        component: () => import('~/pages/[space]/settings/ai-glossary.vue'),
+        meta: { settingsNav: 'space-settings-ai-knowledge' },
+      },
+      {
         path: 'ai-glossaries',
         name: 'space-settings-ai-glossaries',
-        component: () => import('~/pages/[space]/settings/ai-glossaries.vue'),
+        redirect: (to) => ({
+          name: 'space-settings-ai-knowledge',
+          params: { space: to.params.space },
+        }),
       },
       {
         path: 'ai-schedules',
         name: 'space-settings-ai-schedules',
-        component: () => import('~/pages/[space]/settings/ai-schedules.vue'),
+        redirect: (to) => ({
+          name: 'space-settings-ai-skills',
+          params: { space: to.params.space },
+        }),
       },
       {
         path: 'people',

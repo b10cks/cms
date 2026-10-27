@@ -37,6 +37,8 @@ export interface AiChangeset {
   inline: boolean
   item_count: number
   pending_count: number
+  /** Distinct entries the items touch; inbox list only */
+  entry_count?: number
   run?: {
     id: string
     state: AiRunRecord['state']

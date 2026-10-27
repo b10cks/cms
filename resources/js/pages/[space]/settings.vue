@@ -13,8 +13,13 @@ const items = computed(() => access.filterVisibleItems(spaceSettingsNavigationIt
 const { preloadRoute, cancelPreload } = useRoutePreload()
 const linkTo = (routeName: string) => ({ name: routeName, params: { space: spaceId.value } })
 
+/** Detail pages (a skill, a glossary) name the nav entry they belong to in `meta.settingsNav`. */
+const activeNavItem = computed(() =>
+  typeof route.meta.settingsNav === 'string' ? route.meta.settingsNav : route.name
+)
+
 watch(
-  [items, () => route.name],
+  [items, activeNavItem],
   ([visibleItems, routeName]) => {
     if (visibleItems.length === 0 || typeof routeName !== 'string') {
       return
@@ -43,11 +48,12 @@ provide('spaceId', spaceId)
           v-for="item in items"
           :key="item.routeName"
           :to="linkTo(item.routeName)"
-          exact-active-class="bg-secondary text-primary"
+          :aria-current="item.routeName === activeNavItem ? 'page' : undefined"
           :class="[
             'flex items-center gap-2 rounded-md px-4 py-2',
             'transition-colors duration-200 hover:bg-secondary',
             'cursor-pointer font-semibold whitespace-nowrap',
+            item.routeName === activeNavItem && 'bg-secondary text-primary',
           ]"
           @mouseenter="preloadRoute(linkTo(item.routeName))"
           @focusin="preloadRoute(linkTo(item.routeName))"

@@ -1,42 +1,46 @@
 <script setup lang="ts">
-import AiChangesetReview from '~/components/ai/AiChangesetReview.vue'
+import AiInboxList from '~/components/ai/AiInboxList.vue'
 import AiQuestionnaireForm from '~/components/ai/AiQuestionnaireForm.vue'
-import AiSuggestionList from '~/components/ai/AiSuggestionList.vue'
-import { Badge } from '~/components/ui/badge'
-import { Button } from '~/components/ui/button'
 import ContentHeader from '~/components/ui/ContentHeader.vue'
-import { Panel } from '~/components/ui/panel'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '~/components/ui/dialog'
+import { aiInboxItems } from '~/lib/aiInbox'
+import type { AiQuestionnaireAnswers, AiRunRecord } from '~/lib/aiRun'
 import { aiSkillLabel } from '~/lib/aiSkills'
 
 const route = useRoute()
-const router = useRouter()
 const { t } = useI18n()
-const { formatRelativeTime } = useFormat()
 const spaceId = computed(() => route.params.space as string)
 
 const { useInboxQuery, answerMutation, cancelMutation, acceptSuggestionMutation, dismissSuggestionMutation } =
   useAiInbox(spaceId)
 const { data: inbox, isLoading } = useInboxQuery()
 
-const changesets = computed(() => inbox.value?.changesets ?? [])
-const runs = computed(() => inbox.value?.runs ?? [])
-const suggestions = computed(() => inbox.value?.suggestions ?? [])
-const suggestionsBusy = computed(
-  () => acceptSuggestionMutation.isPending.value || dismissSuggestionMutation.isPending.value
+const items = computed(() => aiInboxItems(inbox.value))
+const busy = computed(
+  () =>
+    acceptSuggestionMutation.isPending.value ||
+    dismissSuggestionMutation.isPending.value ||
+    cancelMutation.isPending.value
 )
 
-const selectedId = computed(() => {
-  const requested = route.query.changeset
-  if (typeof requested === 'string') return requested
-  return changesets.value[0]?.id ?? null
+const answering = ref<AiRunRecord | null>(null)
+const answerOpen = computed({
+  get: () => answering.value !== null,
+  set: (open) => {
+    if (!open) answering.value = null
+  },
 })
 
-const select = (id: string) => void router.replace({ query: { ...route.query, changeset: id } })
-
-const runLabel = (skill: string | null, surface: string) =>
-  skill
-    ? aiSkillLabel(skill, t)
-    : t(`components.aiInbox.surfaces.${surface.startsWith('bulk:') ? 'bulk' : 'agent'}`)
+const submitAnswers = (answers: AiQuestionnaireAnswers) => {
+  const run = answering.value
+  if (!run) return
+  answerMutation.mutate({ runId: run.id, answers }, { onSuccess: () => (answering.value = null) })
+}
 
 useSeoMeta({
   title: computed(() => t('components.aiInbox.title')),
@@ -49,115 +53,32 @@ useSeoMeta({
       :header="$t('components.aiInbox.title')"
       :description="$t('components.aiInbox.description')"
     />
-    <div class="grid gap-6 pt-6 lg:grid-cols-[22rem_minmax(0,1fr)]">
-      <div class="flex min-w-0 flex-col gap-6">
-        <Panel
-          :title="$t('components.aiInbox.changesets')"
-          :meta="changesets.length ? String(changesets.length) : undefined"
-          flush
-        >
-          <p
-            v-if="!isLoading && changesets.length === 0"
-            class="px-5 pb-5 text-sm text-muted"
-          >
-            {{ $t('components.aiInbox.empty') }}
-          </p>
-          <ul class="divide-y divide-border border-t border-border">
-            <li
-              v-for="changeset in changesets"
-              :key="changeset.id"
-            >
-              <button
-                type="button"
-                class="flex w-full flex-col items-start gap-1 px-5 py-3 text-left hover:bg-tree-hover"
-                :class="{ 'bg-tree-selected': changeset.id === selectedId }"
-                @click="select(changeset.id)"
-              >
-                <span class="w-full truncate font-medium">{{ changeset.title }}</span>
-                <span class="flex items-center gap-2 text-sm text-muted">
-                  {{ $t('components.aiChangeset.meta', { pending: changeset.pending_count, total: changeset.item_count }) }}
-                  <Badge
-                    v-if="changeset.run?.partial"
-                    variant="warning"
-                    size="sm"
-                  >
-                    {{ $t('components.aiInbox.partial') }}
-                  </Badge>
-                </span>
-                <span class="text-sm text-muted">
-                  {{ changeset.actor?.name }}, {{ formatRelativeTime(changeset.created_at) }}
-                </span>
-              </button>
-            </li>
-          </ul>
-        </Panel>
+    <AiInboxList
+      :space-id="spaceId"
+      :items="items"
+      :glossaries="inbox?.glossaries ?? []"
+      :loading="isLoading"
+      :busy="busy"
+      @accept-suggestion="(suggestionId, glossaryId) => acceptSuggestionMutation.mutate({ suggestionId, glossaryId })"
+      @dismiss-suggestion="(suggestionId) => dismissSuggestionMutation.mutate(suggestionId)"
+      @answer="(run) => (answering = run)"
+      @cancel="(runId) => cancelMutation.mutate(runId)"
+    />
 
-        <Panel
-          v-if="suggestions.length > 0"
-          :title="$t('components.aiInbox.suggestions.title')"
-          :meta="String(suggestions.length)"
-        >
-          <AiSuggestionList
-            :space-id="spaceId"
-            :suggestions="suggestions"
-            :glossaries="inbox?.glossaries ?? []"
-            :disabled="suggestionsBusy"
-            @accept="(suggestionId, glossaryId) => acceptSuggestionMutation.mutate({ suggestionId, glossaryId })"
-            @dismiss="(suggestionId) => dismissSuggestionMutation.mutate(suggestionId)"
-          />
-        </Panel>
-
-        <Panel
-          v-if="runs.length > 0"
-          :title="$t('components.aiInbox.runs')"
-        >
-          <ul class="space-y-4">
-            <li
-              v-for="run in runs"
-              :key="run.id"
-              class="space-y-2"
-            >
-              <div class="flex items-center gap-2">
-                <span class="min-w-0 flex-1 truncate font-medium">{{ runLabel(run.skill, run.surface) }}</span>
-                <Badge
-                  :variant="run.state === 'failed' ? 'destructive' : run.state === 'awaiting_input' ? 'warning' : 'info'"
-                  size="sm"
-                >
-                  {{ $t(`components.aiInbox.states.${run.state}`) }}
-                </Badge>
-              </div>
-              <p
-                v-if="run.state === 'failed' && run.error"
-                class="text-sm text-destructive"
-              >
-                {{ run.error }}
-              </p>
-              <AiQuestionnaireForm
-                v-if="run.state === 'awaiting_input' && run.questionnaire"
-                :questionnaire="run.questionnaire"
-                :disabled="answerMutation.isPending.value"
-                @submit="(answers) => answerMutation.mutate({ runId: run.id, answers })"
-              />
-              <Button
-                v-if="run.state === 'running' || run.state === 'awaiting_input'"
-                size="xs"
-                variant="ghost"
-                :disabled="cancelMutation.isPending.value"
-                @click="cancelMutation.mutate(run.id)"
-              >
-                {{ $t('components.aiInbox.cancel') }}
-              </Button>
-            </li>
-          </ul>
-        </Panel>
-      </div>
-
-      <AiChangesetReview
-        v-if="selectedId"
-        :key="selectedId"
-        :space-id="spaceId"
-        :changeset-id="selectedId"
-      />
-    </div>
+    <Dialog v-model:open="answerOpen">
+      <DialogContent class="max-w-xl">
+        <DialogHeader>
+          <DialogTitle>
+            {{ answering?.skill ? aiSkillLabel(answering.skill, t) : $t('components.aiInbox.surfaces.agent') }}
+          </DialogTitle>
+        </DialogHeader>
+        <AiQuestionnaireForm
+          v-if="answering?.questionnaire"
+          :questionnaire="answering.questionnaire"
+          :disabled="answerMutation.isPending.value"
+          @submit="submitAnswers"
+        />
+      </DialogContent>
+    </Dialog>
   </div>
 </template>

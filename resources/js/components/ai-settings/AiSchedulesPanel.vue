@@ -4,8 +4,9 @@ import AiScheduleDialog from '~/components/ai-settings/AiScheduleDialog.vue'
 import Icon from '~/components/Icon.vue'
 import { Badge } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
-import { SettingsSection } from '~/components/ui/settings-section'
+import { Panel } from '~/components/ui/panel'
 import { Switch } from '~/components/ui/switch'
+import { TooltipIcon } from '~/components/ui/tooltip'
 import {
   Table,
   TableBody,
@@ -65,23 +66,25 @@ const filterSummary = (schedule: AiSchedule) =>
 </script>
 
 <template>
-  <SettingsSection
-    id="schedules"
+  <Panel
+    id="ai-schedules"
     :title="$t('components.aiSettings.schedules.title')"
-    :description="$t('components.aiSettings.schedules.description')"
-    wide
+    flush
   >
-    <div class="flex justify-end">
+    <template #actions>
+      <TooltipIcon>
+        <span class="block max-w-sm">{{ $t('components.aiSettings.schedules.description') }}</span>
+      </TooltipIcon>
       <Button
         type="button"
         size="sm"
-        variant="primary"
+        variant="outline"
         @click="openDialog(null)"
       >
         <Icon name="lucide:plus" />
         {{ $t('components.aiSettings.schedules.add') }}
       </Button>
-    </div>
+    </template>
 
     <Table>
       <TableHeader>
@@ -189,5 +192,5 @@ const filterSummary = (schedule: AiSchedule) =>
       :saving="saveMutation.isPending.value"
       @save="onSave"
     />
-  </SettingsSection>
+  </Panel>
 </template>

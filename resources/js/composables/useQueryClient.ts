@@ -158,6 +158,7 @@ export const queryKeys = {
     return {
       all,
       skills: () => [...all(), 'skills'] as const,
+      skill: (id: string) => [...all(), 'skills', id] as const,
       documents: () => [...all(), 'knowledge'] as const,
       document: (id: string) => [...all(), 'knowledge', id] as const,
       glossaries: () => [...all(), 'glossaries'] as const,

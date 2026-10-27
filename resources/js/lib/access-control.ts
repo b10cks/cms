@@ -82,7 +82,7 @@ export const spaceSettingsNavigationItems: NavigationAccessItem[] = [
     routeName: 'space-settings-configuration',
   },
   {
-    label: 'labels.settings.ai.title',
+    label: 'labels.settings.ai.navLabel',
     icon: 'lucide:sparkles',
     routeName: 'space-settings-ai',
   },
@@ -95,16 +95,6 @@ export const spaceSettingsNavigationItems: NavigationAccessItem[] = [
     label: 'components.aiSettings.knowledge.title',
     icon: 'lucide:book-open',
     routeName: 'space-settings-ai-knowledge',
-  },
-  {
-    label: 'components.aiSettings.glossaries.title',
-    icon: 'lucide:book-a',
-    routeName: 'space-settings-ai-glossaries',
-  },
-  {
-    label: 'components.aiSettings.schedules.title',
-    icon: 'lucide:calendar-clock',
-    routeName: 'space-settings-ai-schedules',
   },
   {
     label: 'labels.settings.people.title',
@@ -284,6 +274,7 @@ export const routeAccessRequirements: Record<AppRouteName, RouteAccessRequiremen
   'space-content-contentId-versions': { abilities: 'content.history.view' },
   'space-mass-edit': { abilities: 'content.view' },
   'space-ai-inbox': { abilities: 'space.view' },
+  'space-ai-inbox-changeset': { abilities: 'space.view' },
   'space-canvas': { abilities: { allOf: ['content.view', 'blocks.view'] } },
   'space-assets-index': { abilities: 'assets.view' },
   'space-icons-index': { abilities: 'icons.view' },
@@ -307,8 +298,9 @@ export const routeAccessRequirements: Record<AppRouteName, RouteAccessRequiremen
   'space-settings-ai': { abilities: 'ai.view' },
   'space-settings-ai-skills': { abilities: 'ai.view' },
   'space-settings-ai-knowledge': { abilities: 'ai.view' },
-  'space-settings-ai-glossaries': { abilities: 'ai.view' },
-  'space-settings-ai-schedules': { abilities: 'ai.manage' },
+  'space-settings-ai-skill': { abilities: 'ai.view' },
+  'space-settings-ai-document': { abilities: 'ai.view' },
+  'space-settings-ai-glossary': { abilities: 'ai.view' },
   'space-settings-people': {
     abilities: {
       anyOf: [
@@ -330,6 +322,9 @@ export const routeAccessRequirements: Record<AppRouteName, RouteAccessRequiremen
   'team-saml': { abilities: 'team.saml.manage' },
   'team-settings': { abilities: 'team.update' },
   'team-ai': { abilities: 'team.ai.manage' },
+  'team-ai-skill': { abilities: 'team.ai.manage' },
+  'team-ai-document': { abilities: 'team.ai.manage' },
+  'team-ai-glossary': { abilities: 'team.ai.manage' },
   'spaces-new': actionAccessRequirements['team.spaces.create'],
 }
 
