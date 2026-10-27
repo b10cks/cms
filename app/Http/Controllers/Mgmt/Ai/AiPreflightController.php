@@ -44,7 +44,11 @@ class AiPreflightController extends Controller
             'ids' => array_column($entries, 'id'),
             'entries' => array_map(fn (array $entry) => ['id' => $entry['id'], 'name' => $entry['name']], \array_slice($entries, 0, 20)),
             'model' => $config ? "{$config->driver}:{$config->model}" : null,
-            ...PreflightEstimate::for($entries, $registry->findModelForConfig($config?->driver, $config?->model)),
+            ...PreflightEstimate::for(
+                $entries,
+                $registry->findModelForConfig($config?->driver, $config?->model),
+                PreflightEstimate::observedCostPerEntry($space->id, $request->input('skill')),
+            ),
             'max_usd' => (float) config('ai.runs.max_usd'),
             'background' => \count($entries) > $limit,
             'inline_entry_limit' => $limit,

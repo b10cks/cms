@@ -66,6 +66,7 @@
       "registrationClosed": "Die Registrierung ist auf dieser Instanz geschlossen. Bitte einen Administrator um eine Einladung."
     },
     "command": {
+      "title": "Befehlspalette",
       "input": {
         "placeholder": "Spaces, Blocks, Content durchsuchen..."
       },
@@ -4792,7 +4793,9 @@
         "expand": "Ausbauen",
         "fix-grammar": "Grammatik korrigieren",
         "apply-glossary": "Glossar anwenden",
-        "translate-selection": "Übersetzen"
+        "translate-selection": "Übersetzen",
+        "extract-glossary-terms": "Glossarbegriffe extrahieren",
+        "find-untranslated": "Unübersetzte Einträge finden"
       },
       "findings": {
         "missing_term": "Verwende „{expected}“ für „{term}“.",

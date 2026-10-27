@@ -100,11 +100,12 @@ class AiRunService
         $toolNames = $toolsAvailable ? RunToolFactory::namesFor($manifest?->tools) : [];
         $built = $this->context->build($start, $toolsAvailable && $toolNames !== []);
 
+        $output = $this->outputFor($manifest, $start);
         $options = new RunOptions(
             $model,
             (int) ($config?->max_tokens ?? config('ai.runs.max_output_tokens')),
             (float) ($config?->temperature ?? 0.3),
-            $manifest?->output === SkillManifest::OUTPUT_JSON,
+            $output === SkillManifest::OUTPUT_JSON,
         );
 
         $attributes = [
@@ -123,7 +124,7 @@ class AiRunService
                 'driver' => $driver->getName(),
                 'tools' => $toolNames,
                 'options' => $options->toArray(),
-                'output' => $manifest?->output ?? SkillManifest::OUTPUT_TEXT,
+                'output' => $output,
                 'schema' => $manifest?->schema,
                 'budget' => $this->budget($manifest, $start->targets, $start->maxUsd),
                 'corrections' => 0,
@@ -601,6 +602,19 @@ class AiRunService
         if ($run->mode === AiRun::MODE_BACKGROUND) {
             broadcast(new AiInboxChanged($run->space_id, runId: $run->id));
         }
+    }
+
+    /**
+     * A skill's JSON output format fits one answer. A run over selected
+     * entries or a Cmd+K task ends with a summary, its result is the changeset.
+     */
+    private function outputFor(?SkillManifest $manifest, StartRun $start): string
+    {
+        $output = $manifest?->output ?? SkillManifest::OUTPUT_TEXT;
+
+        return $output === SkillManifest::OUTPUT_JSON && ($start->targets !== null || $start->surface === 'cmdk')
+            ? SkillManifest::OUTPUT_TEXT
+            : $output;
     }
 
     /**

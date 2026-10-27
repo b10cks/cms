@@ -157,6 +157,7 @@ export class Ai {
   public async preflight(payload: {
     surface: string
     scope: AiEntryScope
+    skill?: string | null
     config_id?: string | null
   }): Promise<{ data: AiPreflight }> {
     return this.client.post<{ data: AiPreflight }>(`/mgmt/v1/spaces/${this.spaceId}/ai/preflight`, payload)

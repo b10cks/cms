@@ -8,6 +8,7 @@ use App\Enums\AiRunState;
 use App\Models\Management\AiChangeset;
 use App\Models\Management\AiChangesetItem;
 use App\Models\Management\AiRun;
+use App\Models\Management\AiSkill;
 use App\Models\Management\Space;
 use App\Models\Space\Block;
 use App\Models\Space\Content;
@@ -17,9 +18,9 @@ use App\Services\Ai\AiRunService;
 use App\Services\Ai\Changesets\EntryScope;
 use App\Services\Ai\Changesets\PreflightEstimate;
 use App\Services\Ai\Run\StartRun;
+use App\Services\Ai\Run\ToolCall;
 use App\Services\Ai\Run\TurnResult;
 use App\Services\Ai\Run\TurnUsage;
-use App\Services\Ai\Run\ToolCall;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
@@ -226,6 +227,62 @@ class AiChangesetTest extends TestCase
         $estimate = PreflightEstimate::for(app(EntryScope::class)->resolve('content', ['ids' => $touched]), null);
         $this->assertSame($estimate['input_tokens'], $preflight['input_tokens']);
         $this->assertSame($estimate['output_tokens'], $preflight['output_tokens']);
+    }
+
+    #[Test]
+    public function a_schedule_over_a_built_in_skill_produces_a_changeset_without_any_space_skill(): void
+    {
+        $page = $this->publishedPage(['title' => 'One', 'summary' => 'First']);
+        $this->driver->push($this->propose($page, ['summary' => 'Erste']));
+        $this->driver->push(FakeAiDriver::text('Done.'));
+
+        $this->postJson($this->url('ai/schedules'), [
+            'name' => 'Translate pages to German',
+            'skill' => 'translate-fields',
+            'scope' => ['type' => 'content', 'filters' => ['block' => 'page']],
+            'cron' => '* * * * *',
+            'max_usd' => 0.5,
+        ])->assertCreated();
+
+        $this->artisan('ai:run-schedules')->assertSuccessful();
+
+        $run = AiRun::query()->sole();
+        $this->assertSame('translate-fields', $run->skill);
+        $this->assertSame(AiRunState::Completed, $run->state);
+        $this->assertSame('Erste', AiChangesetItem::query()->sole()->after);
+        $this->assertSame(0, AiSkill::query()->count());
+    }
+
+    #[Test]
+    public function preflight_uses_the_run_average_once_five_runs_finished_and_the_formula_before(): void
+    {
+        $this->publishedPage(['title' => 'One', 'summary' => 'First']);
+        $this->publishedPage(['title' => 'Two', 'summary' => 'Second']);
+        $payload = ['surface' => 'bulk:content', 'skill' => 'translate-fields', 'scope' => ['type' => 'content', 'filters' => ['block' => 'page']]];
+
+        $formula = $this->postJson($this->url('ai/preflight'), $payload)->assertOk()->json('data.cost_usd');
+
+        foreach (range(1, 5) as $i) {
+            $run = AiRun::query()->forceCreate([
+                'space_id' => $this->space->id,
+                'actor_id' => $this->user->id,
+                'surface' => 'bulk:content',
+                'skill' => 'translate-fields',
+                'state' => AiRunState::Completed,
+                'setup' => '{}',
+                'transcript' => '[]',
+                'cost_usd' => 0.2,
+            ]);
+            $changeset = AiChangeset::query()->create(['space_id' => $this->space->id, 'run_id' => $run->id, 'actor_id' => $this->user->id, 'title' => 'Run']);
+            foreach (['a', 'b'] as $entry) {
+                AiChangesetItem::query()->create(['changeset_id' => $changeset->id, 'target_type' => 'content', 'target_id' => "{$entry}{$i}", 'path' => 'summary']);
+            }
+            if ($i === 4) {
+                $this->assertSame($formula, $this->postJson($this->url('ai/preflight'), $payload)->json('data.cost_usd'));
+            }
+        }
+
+        $this->postJson($this->url('ai/preflight'), $payload)->assertOk()->assertJsonPath('data.cost_usd', 0.2);
     }
 
     /**
