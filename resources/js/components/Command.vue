@@ -13,6 +13,7 @@ import {
   CommandItem,
   CommandList,
 } from '~/components/ui/command'
+import { DialogTitle } from '~/components/ui/dialog'
 import { getActionAccessRequirement } from '~/lib/access-control'
 
 const route = useRoute()
@@ -91,6 +92,7 @@ const jumpTo = (url: string) => {
     :open="open"
     @update:open="handleOpenChange"
   >
+    <DialogTitle class="sr-only">{{ $t('labels.command.title') }}</DialogTitle>
     <CommandInput :placeholder="$t('labels.command.input.placeholder')" />
     <CommandList>
       <CommandEmpty v-if="spacesOnly || !canUseAi">{{ $t('labels.command.empty') }}</CommandEmpty>

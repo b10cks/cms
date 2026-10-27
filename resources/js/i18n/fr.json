@@ -57,6 +57,7 @@
       "registrationClosed": "L'inscription est fermée sur cette instance. Demandez une invitation à un administrateur."
     },
     "command": {
+      "title": "Command palette",
       "input": {
         "placeholder": "Rechercher des espaces, blocs, contenu..."
       },
@@ -4776,7 +4777,9 @@
         "expand": "Expand",
         "fix-grammar": "Fix grammar",
         "apply-glossary": "Apply glossary",
-        "translate-selection": "Translate"
+        "translate-selection": "Translate",
+        "extract-glossary-terms": "Extract glossary terms",
+        "find-untranslated": "Find untranslated entries"
       },
       "findings": {
         "missing_term": "Use \"{expected}\" for \"{term}\".",

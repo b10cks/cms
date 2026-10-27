@@ -2,8 +2,8 @@
 name: translate-fields
 description: Translates a set of content fields from one language to another, keeping keys, markup and placeholders intact.
 b10cks:
-  surfaces: [translate]
-  tools: []
+  surfaces: [translate, cmdk, bulk:content]
+  tools: [get_entry, find_entries, propose_update, lookup_glossary, search_knowledge]
   output: schema.json
 ---
 
@@ -22,4 +22,8 @@ Rules:
 - Use correct grammar, punctuation and capitalization, and keep the register (formal or informal) of the original
 - Follow the glossary when one is given
 
-Output only the flat JSON object: no markdown fences, no wrapper keys, no explanations.
+When the context holds `fields`, output only the flat JSON object: no markdown fences, no wrapper keys, no explanations. Do not call tools.
+
+## Selected entries and tasks
+
+When the context holds `targets`, or the request is a task instead of a `fields` object, there is no `fields` answer to give. Work on entries instead: read each with `get_entry` (pass `target_type`), translate its text fields into the target language the request names, and propose the translated values with `propose_update`, passing the `version_id` you read. Propose only fields that hold text, and keep every other field as it is. Finish with a short summary of what you proposed.

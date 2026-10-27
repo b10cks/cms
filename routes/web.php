@@ -69,6 +69,11 @@ Route::get('/spaces/new', AppController::class)->name('spaces-new');
 // Teams
 Route::get('/teams', AppController::class)->name('teams');
 Route::get('/teams/{team}', AppController::class)->name('team');
+Route::get('/teams/{team}/people', AppController::class)->name('team-people');
+Route::get('/teams/{team}/roles', AppController::class)->name('team-roles');
+Route::get('/teams/{team}/saml', AppController::class)->name('team-saml');
+Route::get('/teams/{team}/settings', AppController::class)->name('team-settings');
+Route::get('/teams/{team}/ai', AppController::class)->name('team-ai');
 
 // Account settings
 Route::get('/account/settings', AppController::class)->name('account-settings');

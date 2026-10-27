@@ -57,6 +57,7 @@
       "registrationClosed": "El registro está cerrado en esta instancia. Pide una invitación a un administrador."
     },
     "command": {
+      "title": "Command palette",
       "input": {
         "placeholder": "Buscar espacios, bloques, contenido..."
       },
@@ -4776,7 +4777,9 @@
         "expand": "Expand",
         "fix-grammar": "Fix grammar",
         "apply-glossary": "Apply glossary",
-        "translate-selection": "Translate"
+        "translate-selection": "Translate",
+        "extract-glossary-terms": "Extract glossary terms",
+        "find-untranslated": "Find untranslated entries"
       },
       "findings": {
         "missing_term": "Use \"{expected}\" for \"{term}\".",

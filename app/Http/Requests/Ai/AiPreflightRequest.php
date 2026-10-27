@@ -19,6 +19,7 @@ class AiPreflightRequest extends FormRequest
     {
         return [
             'surface' => ['required', 'string', 'max:64', 'regex:/^[a-z0-9:_-]+$/'],
+            'skill' => ['sometimes', 'nullable', 'string', 'max:64'],
             'config_id' => ['sometimes', 'nullable', 'string'],
             'scope' => ['required', 'array'],
             'scope.type' => ['required', Rule::in(ChangeTargets::TYPES)],

@@ -44,9 +44,9 @@ watch(open, (isOpen) => {
 })
 
 const { data: preflight, isFetching, error } = useQuery({
-  queryKey: computed(() => [...queryKeys.ai(props.spaceId).all(), 'preflight', props.surface, props.scope]),
+  queryKey: computed(() => [...queryKeys.ai(props.spaceId).all(), 'preflight', props.surface, props.scope, skill.value?.name ?? null]),
   queryFn: async () =>
-    (await api.forSpace(props.spaceId).ai.preflight({ surface: props.surface, scope: props.scope })).data,
+    (await api.forSpace(props.spaceId).ai.preflight({ surface: props.surface, scope: props.scope, skill: skill.value?.name ?? null })).data,
   enabled: open,
   staleTime: 0,
   gcTime: 0,
