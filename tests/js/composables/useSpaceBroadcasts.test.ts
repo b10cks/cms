@@ -413,15 +413,15 @@ describe('data source events', () => {
   })
 })
 
-describe('ai inbox events', () => {
+describe('ai thread events', () => {
   beforeEach(() => setup())
 
-  it('refetches the inbox and the changed changeset', () => {
-    emit('spaces.space-1.ai', '.ai_inbox:changed', { changeset_id: 'cs-1', run_id: null })
+  it('refetches the thread lists and the changed thread', () => {
+    emit('spaces.space-1.ai', '.ai_thread:changed', { thread_id: 'thread-1' })
 
     expect(invalidated()).toEqual([
-      queryKeys.ai('space-1').inbox(),
-      queryKeys.ai('space-1').changeset('cs-1'),
+      queryKeys.ai('space-1').threadLists(),
+      queryKeys.ai('space-1').thread('thread-1'),
     ])
   })
 })

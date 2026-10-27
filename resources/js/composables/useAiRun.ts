@@ -53,6 +53,8 @@ export function useAiRun(spaceId: MaybeRefOrGetter<string>) {
   const { user } = useAuth()
 
   const runId = ref<string | null>(null)
+  /** The run's thread, known once the server started it */
+  const conversationId = ref<string | null>(null)
   const status = ref<AiRunStatus>('idle')
   const text = ref('')
   const activeTool = ref<string | null>(null)
@@ -92,6 +94,7 @@ export function useAiRun(spaceId: MaybeRefOrGetter<string>) {
     switch (event.type) {
       case 'run_started':
         status.value = 'running'
+        conversationId.value = event.conversation_id ?? conversationId.value
         break
       case 'text_delta':
         text.value += event.text
@@ -160,6 +163,7 @@ export function useAiRun(spaceId: MaybeRefOrGetter<string>) {
       const event = toAiRunEvent(raw)
       if (event) apply(event)
     }
+    conversationId.value = response.run.conversation_id ?? conversationId.value
     reconcile(response.run)
   }
 
@@ -212,6 +216,7 @@ export function useAiRun(spaceId: MaybeRefOrGetter<string>) {
       if (response.headers.get('Content-Type')?.includes('application/json')) {
         const { data } = (await response.json()) as { data: AiRunRecord }
         runId.value = data.id
+        conversationId.value = data.conversation_id ?? conversationId.value
         status.value = data.mode === 'background' ? 'background' : status.value
         follow()
         return
@@ -236,6 +241,7 @@ export function useAiRun(spaceId: MaybeRefOrGetter<string>) {
     stopFollowing?.()
     controller?.abort()
     runId.value = null
+    conversationId.value = null
     status.value = 'idle'
     text.value = ''
     activeTool.value = null
@@ -301,6 +307,7 @@ export function useAiRun(spaceId: MaybeRefOrGetter<string>) {
 
   return {
     runId: readonly(runId),
+    conversationId: readonly(conversationId),
     status: readonly(status),
     isActive,
     text: readonly(text),

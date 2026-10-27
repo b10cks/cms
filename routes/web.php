@@ -110,8 +110,9 @@ Route::get('/{space}/automations/automations', AppController::class)->name('spac
 Route::get('/{space}/automations/executions', AppController::class)->name('space-automations-executions');
 Route::get('/{space}/redirects', AppController::class)->name('space-redirects');
 Route::get('/{space}/mass-edit', AppController::class)->name('space-mass-edit');
-Route::get('/{space}/inbox', AppController::class)->name('space-ai-inbox');
-Route::get('/{space}/inbox/{changeset}', AppController::class)->name('space-ai-inbox-changeset');
+Route::get('/{space}/threads', AppController::class)->name('space-ai-threads');
+Route::get('/{space}/threads/{thread}', AppController::class)->name('space-ai-thread');
+Route::get('/{space}/inbox/{changeset?}', fn (string $space) => redirect("/{$space}/threads"))->name('space-ai-inbox');
 Route::get('/{space}/settings', AppController::class)->name('space-settings');
 Route::get('/{space}/settings/configuration', AppController::class)->name('space-settings-configuration');
 Route::get('/{space}/settings/ai', AppController::class)->name('space-settings-ai');

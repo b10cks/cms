@@ -1184,9 +1184,7 @@
       "extendedSidebar": "Расширенная боковая панель",
       "icons": "Значки",
       "onboarding": "Онбординг",
-      "massEdit": "Массовое редактирование",
-      "aiInbox": "Inbox",
-      "aiInboxCount": "{count} items waiting for review"
+      "massEdit": "Массовое редактирование"
     },
     "provider": {
       "title": "Провайдер",
@@ -4563,7 +4561,9 @@
       "blocks": "Блоки",
       "noResults": "Совпадений не найдено",
       "hint": "Введите {'@'}, чтобы упомянуть контент или блоки",
-      "suggestions": "Предложения для упоминания"
+      "suggestions": "Предложения для упоминания",
+      "assets": "Assets",
+      "documents": "Knowledge"
     },
     "aiSettings": {
       "saveSuccess": "Настройки ИИ успешно сохранены",
@@ -4834,11 +4834,8 @@
       }
     },
     "aiChangeset": {
-      "meta": "{pending} of {total} open",
       "acceptAll": "Accept all",
       "rejectAll": "Reject all",
-      "acceptEntry": "Accept entry",
-      "rejectEntry": "Reject entry",
       "accept": "Accept",
       "reject": "Reject",
       "keepCurrent": "Keep current",
@@ -4867,7 +4864,8 @@
       "columns": {
         "read": "When the AI read it",
         "current": "Now",
-        "proposed": "AI proposal"
+        "proposed": "AI proposal",
+        "currentIn": "Now ({language})"
       },
       "acceptFailed": "Could not apply the changes: {error}",
       "rejectFailed": "Could not reject the changes: {error}",
@@ -4875,17 +4873,51 @@
       "discardEdit": "Discard edit",
       "editLabel": "Edited proposal",
       "editedBeforeAccepting": "Edited before accepting",
-      "cost": "cost {cost}",
-      "keyboardHint": "Accepting saves drafts; nothing is published. Use J and K or the arrow keys to move between entries.",
-      "backToInbox": "Inbox",
-      "discard": "Discard",
       "glossaryFindings": "Glossary findings"
     },
-    "aiInbox": {
-      "title": "Inbox",
-      "description": "Everything the AI is waiting on you for: proposed changes, glossary suggestions and questions. Accepting saves a draft; nothing is published.",
-      "empty": "Nothing waiting.",
-      "partial": "Stopped early",
+    "aiCommand": {
+      "ask": "Ask AI: {prompt}",
+      "skills": "AI skills"
+    },
+    "aiBulk": {
+      "entry": "Ask AI",
+      "title": "Ask AI about these entries",
+      "description": "Runs in the background in a thread. The changes arrive there for review; nothing is saved until you accept it.",
+      "skills": "Skills",
+      "task": "What should the AI do?",
+      "extraInstructions": "Extra instructions (optional)",
+      "entries": "Entries",
+      "estimate": "Estimated cost",
+      "cap": "The run stops at {cap}. Model: {model}.",
+      "nothing": "No entries match.",
+      "more": "and {count} more",
+      "preflightFailed": "Could not estimate this task.",
+      "cancel": "Cancel",
+      "confirm": "Start on {count} entries",
+      "failed": "Could not start the task: {error}"
+    },
+    "aiThreads": {
+      "title": "AI threads",
+      "toggle": "AI threads",
+      "toggleWithCount": "AI threads, {count} need you",
+      "resize": "Resize the AI dock",
+      "new": "New thread",
+      "newThread": "New thread",
+      "search": "Search threads",
+      "showArchived": "Show archived",
+      "shared": "Shared",
+      "sharedWithSpace": "Shared with the space",
+      "empty": "No threads yet. Ask the AI something to start one.",
+      "noMatches": "No thread matches.",
+      "pickThread": "Pick a thread or start a new one.",
+      "toReview": "{count} entry to review | {count} entries to review",
+      "status": {
+        "needs_input": "Needs your answer",
+        "needs_review": "Needs your review",
+        "running": "Running",
+        "failed": "Failed",
+        "done": "Done"
+      },
       "states": {
         "running": "Running",
         "awaiting_input": "Needs your answer",
@@ -4893,13 +4925,48 @@
         "failed": "Failed",
         "cancelled": "Cancelled"
       },
-      "surfaces": {
-        "bulk": "Bulk task",
-        "agent": "AI task"
+      "toast": {
+        "needs_input": "{title} needs your answer",
+        "needs_review": "{title} has changes to review",
+        "failed": "{title} failed"
       },
+      "open": "Open",
+      "allThreads": "All threads",
+      "expand": "Open as page",
+      "close": "Close",
+      "menu": "Thread actions",
+      "rename": "Rename",
+      "titleLabel": "Thread title",
+      "share": "Share with the space",
+      "archive": "Archive",
+      "unarchive": "Restore from archive",
+      "archived": "Archived",
+      "updateFailed": "Could not update the thread: {error}",
+      "ownerOnly": "Only {name} can send follow-ups in this thread.",
+      "emptyThread": "Ask anything about this space, or pick a skill. Changes arrive here for review; nothing is saved until you accept it.",
+      "placeholder": "Ask the AI, {'@'} to mention, / for skills",
+      "extraInstructions": "Extra instructions (optional)",
+      "suggestedSkills": "Skills for this screen",
+      "removeSkill": "Remove skill",
+      "removeChip": "Remove {name}",
+      "attachChip": "Attach {name}",
+      "screen": {
+        "entry": "Open entry",
+        "dataSource": "Open data source"
+      },
+      "steps": "Steps",
+      "usingTool": "Using {tool}",
       "cancel": "Cancel",
+      "waitingForOwner": "Waiting for the owner's answer.",
       "answerFailed": "Could not send your answers: {error}",
       "cancelFailed": "Could not cancel the task: {error}",
+      "openFields": "{count} open field | {count} open fields",
+      "expandEntry": "Show the changes to {name}",
+      "collapseEntry": "Hide the changes to {name}",
+      "summary": {
+        "counts": "{entries} entries, {open} open, {accepted} accepted, {rejected} rejected",
+        "findings": "{count} glossary warning | {count} glossary warnings"
+      },
       "suggestions": {
         "addTo": "Add to glossary",
         "chooseGlossary": "Add to",
@@ -4912,60 +4979,10 @@
         "acceptFailed": "Could not add the term: {error}",
         "dismissFailed": "Could not dismiss the suggestion: {error}",
         "addTermTo": "Add {term} to a glossary",
-        "dismissTerm": "Dismiss {term}"
-      },
-      "emptyLink": "Browse skills",
-      "filterLabel": "Filter by kind",
-      "filters": {
-        "all": "All",
-        "changes": "Changes",
-        "suggestions": "Suggestions",
-        "questions": "Needs answer",
-        "failed": "Failed"
-      },
-      "scope": {
-        "entries": "{count} entry | {count} entries",
-        "fields": "{count} field | {count} fields",
-        "entriesFields": "{entries}, {fields}"
-      },
-      "you": "You",
-      "toReview": "{count} to review",
-      "suggestion": "Glossary suggestion",
-      "answer": "Answer"
-    },
-    "aiCommand": {
-      "ask": "Ask AI: {prompt}",
-      "skills": "AI skills",
-      "title": "Ask AI",
-      "prompt": "Task",
-      "scope": {
-        "entry": "Works on the open entry.",
-        "dataSource": "Works on the open data source.",
-        "space": "Works on this space."
-      },
-      "background": "This takes a while. It continues in the background and its changes arrive in the inbox.",
-      "usingTool": "Using {tool}...",
-      "run": "Run",
-      "close": "Close"
-    },
-    "aiBulk": {
-      "entry": "Ask AI",
-      "title": "Ask AI about these entries",
-      "description": "Runs in the background. The changes arrive in the inbox for review; nothing is saved until you accept it.",
-      "skills": "Skills",
-      "task": "What should the AI do?",
-      "extraInstructions": "Extra instructions (optional)",
-      "entries": "Entries",
-      "estimate": "Estimated cost",
-      "cap": "The run stops at {cap}. Model: {model}.",
-      "nothing": "No entries match.",
-      "more": "and {count} more",
-      "preflightFailed": "Could not estimate this task.",
-      "cancel": "Cancel",
-      "confirm": "Start on {count} entries",
-      "started": "The AI task runs in the background.",
-      "openInbox": "Open inbox",
-      "failed": "Could not start the task: {error}"
+        "dismissTerm": "Dismiss {term}",
+        "empty": "No glossary suggestions waiting.",
+        "evidence": "The AI wrote \"{ai}\", an editor changed it to \"{final}\"."
+      }
     }
   },
   "alertDialog": {
@@ -5489,7 +5506,8 @@
       "help": "Показать этот список горячих клавиш",
       "search": "Перейти к полю поиска",
       "toggleSidebar": "Показать или скрыть боковую панель",
-      "skipToContent": "Перейти к основному контенту"
+      "skipToContent": "Перейти к основному контенту",
+      "toggleAiDock": "Toggle the AI dock"
     },
     "editor": {
       "save": "Сохранить текущую запись или блок"

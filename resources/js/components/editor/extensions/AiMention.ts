@@ -13,7 +13,7 @@ export interface AiMentionOptions {
 export interface AiMentionItem {
   id: string
   label: string
-  type: 'content' | 'block' | 'draft-content'
+  type: 'content' | 'block' | 'draft-content' | 'asset' | 'document'
   color?: string | null
   icon?: string | null
 }

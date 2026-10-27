@@ -1193,9 +1193,7 @@
       "extendedSidebar": "Erweiterte Seitenleiste",
       "icons": "Icons",
       "onboarding": "Onboarding",
-      "massEdit": "Massenbearbeitung",
-      "aiInbox": "Posteingang",
-      "aiInboxCount": "{count} Einträge warten auf Prüfung"
+      "massEdit": "Massenbearbeitung"
     },
     "provider": {
       "title": "Provider",
@@ -4615,7 +4613,9 @@
       "blocks": "Blöcke",
       "noResults": "Keine Treffer gefunden",
       "hint": "Tippe {'@'} um Inhalte oder Blöcke zu erwähnen",
-      "suggestions": "Mention suggestions"
+      "suggestions": "Mention suggestions",
+      "assets": "Assets",
+      "documents": "Wissen"
     },
     "aiSettings": {
       "saveSuccess": "KI-Einstellungen erfolgreich gespeichert",
@@ -4850,11 +4850,8 @@
       }
     },
     "aiChangeset": {
-      "meta": "{pending} von {total} offen",
       "acceptAll": "Alle übernehmen",
       "rejectAll": "Alle ablehnen",
-      "acceptEntry": "Eintrag übernehmen",
-      "rejectEntry": "Eintrag ablehnen",
       "accept": "Übernehmen",
       "reject": "Ablehnen",
       "keepCurrent": "Aktuellen Wert behalten",
@@ -4883,7 +4880,8 @@
       "columns": {
         "read": "Beim Lesen durch die KI",
         "current": "Jetzt",
-        "proposed": "KI-Vorschlag"
+        "proposed": "KI-Vorschlag",
+        "currentIn": "Jetzt ({language})"
       },
       "acceptFailed": "Die Änderungen konnten nicht übernommen werden: {error}",
       "rejectFailed": "Die Änderungen konnten nicht abgelehnt werden: {error}",
@@ -4891,17 +4889,51 @@
       "discardEdit": "Bearbeitung verwerfen",
       "editLabel": "Bearbeiteter Vorschlag",
       "editedBeforeAccepting": "Vor dem Übernehmen bearbeitet",
-      "cost": "Kosten {cost}",
-      "keyboardHint": "Annehmen speichert Entwürfe; nichts wird veröffentlicht. Mit J und K oder den Pfeiltasten zwischen Einträgen wechseln.",
-      "backToInbox": "Posteingang",
-      "discard": "Verwerfen",
       "glossaryFindings": "Glossar-Hinweise"
     },
-    "aiInbox": {
-      "title": "Posteingang",
-      "description": "Alles, wofür die KI auf dich wartet: vorgeschlagene Änderungen, Glossarvorschläge und Rückfragen. Annehmen speichert einen Entwurf; nichts wird veröffentlicht.",
-      "empty": "Nichts zu tun.",
-      "partial": "Vorzeitig beendet",
+    "aiCommand": {
+      "ask": "KI fragen: {prompt}",
+      "skills": "KI-Skills"
+    },
+    "aiBulk": {
+      "entry": "KI fragen",
+      "title": "KI zu diesen Einträgen fragen",
+      "description": "Läuft im Hintergrund in einem Thread. Die Änderungen landen dort zur Prüfung, gespeichert wird erst, was du übernimmst.",
+      "skills": "Skills",
+      "task": "Was soll die KI tun?",
+      "extraInstructions": "Zusätzliche Anweisungen (optional)",
+      "entries": "Einträge",
+      "estimate": "Geschätzte Kosten",
+      "cap": "Der Lauf stoppt bei {cap}. Modell: {model}.",
+      "nothing": "Keine passenden Einträge.",
+      "more": "und {count} weitere",
+      "preflightFailed": "Diese Aufgabe konnte nicht geschätzt werden.",
+      "cancel": "Abbrechen",
+      "confirm": "Für {count} Einträge starten",
+      "failed": "Die Aufgabe konnte nicht gestartet werden: {error}"
+    },
+    "aiThreads": {
+      "title": "KI-Threads",
+      "toggle": "KI-Threads",
+      "toggleWithCount": "KI-Threads, {count} brauchen dich",
+      "resize": "Größe des KI-Docks ändern",
+      "new": "Neuer Thread",
+      "newThread": "Neuer Thread",
+      "search": "Threads durchsuchen",
+      "showArchived": "Archivierte anzeigen",
+      "shared": "Geteilt",
+      "sharedWithSpace": "Mit dem Space geteilt",
+      "empty": "Noch keine Threads. Frag die KI etwas, um einen zu starten.",
+      "noMatches": "Kein Thread passt.",
+      "pickThread": "Wähle einen Thread oder starte einen neuen.",
+      "toReview": "{count} Eintrag zu prüfen | {count} Einträge zu prüfen",
+      "status": {
+        "needs_input": "Wartet auf deine Antwort",
+        "needs_review": "Wartet auf deine Prüfung",
+        "running": "Läuft",
+        "failed": "Fehlgeschlagen",
+        "done": "Fertig"
+      },
       "states": {
         "running": "Läuft",
         "awaiting_input": "Wartet auf Antwort",
@@ -4909,13 +4941,48 @@
         "failed": "Fehlgeschlagen",
         "cancelled": "Abgebrochen"
       },
-      "surfaces": {
-        "bulk": "Sammelaufgabe",
-        "agent": "KI-Aufgabe"
+      "toast": {
+        "needs_input": "{title} wartet auf deine Antwort",
+        "needs_review": "{title} hat Änderungen zum Prüfen",
+        "failed": "{title} ist fehlgeschlagen"
       },
+      "open": "Öffnen",
+      "allThreads": "Alle Threads",
+      "expand": "Als Seite öffnen",
+      "close": "Schließen",
+      "menu": "Thread-Aktionen",
+      "rename": "Umbenennen",
+      "titleLabel": "Thread-Titel",
+      "share": "Mit dem Space teilen",
+      "archive": "Archivieren",
+      "unarchive": "Aus dem Archiv holen",
+      "archived": "Archiviert",
+      "updateFailed": "Thread konnte nicht geändert werden: {error}",
+      "ownerOnly": "Nur {name} kann in diesem Thread weiterschreiben.",
+      "emptyThread": "Frag alles zu diesem Space oder wähle einen Skill. Änderungen landen hier zur Prüfung, gespeichert wird erst, was du übernimmst.",
+      "placeholder": "Frag die KI, {'@'} zum Erwähnen, / für Skills",
+      "extraInstructions": "Zusätzliche Anweisungen (optional)",
+      "suggestedSkills": "Skills für diese Ansicht",
+      "removeSkill": "Skill entfernen",
+      "removeChip": "{name} entfernen",
+      "attachChip": "{name} anhängen",
+      "screen": {
+        "entry": "Geöffneter Eintrag",
+        "dataSource": "Geöffnete Datenquelle"
+      },
+      "steps": "Schritte",
+      "usingTool": "Nutzt {tool}",
       "cancel": "Abbrechen",
+      "waitingForOwner": "Wartet auf die Antwort der besitzenden Person.",
       "answerFailed": "Die Antworten konnten nicht gesendet werden: {error}",
       "cancelFailed": "Die Aufgabe konnte nicht abgebrochen werden: {error}",
+      "openFields": "{count} offenes Feld | {count} offene Felder",
+      "expandEntry": "Änderungen an {name} anzeigen",
+      "collapseEntry": "Änderungen an {name} ausblenden",
+      "summary": {
+        "counts": "{entries} Einträge, {open} offen, {accepted} übernommen, {rejected} abgelehnt",
+        "findings": "{count} Glossar-Warnung | {count} Glossar-Warnungen"
+      },
       "suggestions": {
         "addTo": "Zum Glossar hinzufügen",
         "chooseGlossary": "Hinzufügen zu",
@@ -4928,60 +4995,10 @@
         "acceptFailed": "Begriff konnte nicht hinzugefügt werden: {error}",
         "dismissFailed": "Vorschlag konnte nicht verworfen werden: {error}",
         "addTermTo": "{term} zu einem Glossar hinzufügen",
-        "dismissTerm": "{term} verwerfen"
-      },
-      "emptyLink": "Skills ansehen",
-      "filterLabel": "Nach Art filtern",
-      "filters": {
-        "all": "Alle",
-        "changes": "Änderungen",
-        "suggestions": "Vorschläge",
-        "questions": "Antwort nötig",
-        "failed": "Fehlgeschlagen"
-      },
-      "scope": {
-        "entries": "{count} Eintrag | {count} Einträge",
-        "fields": "{count} Feld | {count} Felder",
-        "entriesFields": "{entries}, {fields}"
-      },
-      "you": "Du",
-      "toReview": "{count} zu prüfen",
-      "suggestion": "Glossarvorschlag",
-      "answer": "Antworten"
-    },
-    "aiCommand": {
-      "ask": "KI fragen: {prompt}",
-      "skills": "KI-Skills",
-      "title": "KI fragen",
-      "prompt": "Aufgabe",
-      "scope": {
-        "entry": "Arbeitet am geöffneten Eintrag.",
-        "dataSource": "Arbeitet an der geöffneten Datenquelle.",
-        "space": "Arbeitet in diesem Space."
-      },
-      "background": "Das dauert etwas. Die Aufgabe läuft im Hintergrund weiter, ihre Änderungen landen im Posteingang.",
-      "usingTool": "Verwendet {tool}...",
-      "run": "Ausführen",
-      "close": "Schließen"
-    },
-    "aiBulk": {
-      "entry": "KI fragen",
-      "title": "KI zu diesen Einträgen fragen",
-      "description": "Läuft im Hintergrund. Die Änderungen landen zur Prüfung im Posteingang, gespeichert wird erst, was du übernimmst.",
-      "skills": "Skills",
-      "task": "Was soll die KI tun?",
-      "extraInstructions": "Zusätzliche Anweisungen (optional)",
-      "entries": "Einträge",
-      "estimate": "Geschätzte Kosten",
-      "cap": "Der Lauf stoppt bei {cap}. Modell: {model}.",
-      "nothing": "Keine passenden Einträge.",
-      "more": "und {count} weitere",
-      "preflightFailed": "Diese Aufgabe konnte nicht geschätzt werden.",
-      "cancel": "Abbrechen",
-      "confirm": "Für {count} Einträge starten",
-      "started": "Die KI-Aufgabe läuft im Hintergrund.",
-      "openInbox": "Posteingang öffnen",
-      "failed": "Die Aufgabe konnte nicht gestartet werden: {error}"
+        "dismissTerm": "{term} verwerfen",
+        "empty": "Keine Glossarvorschläge offen.",
+        "evidence": "Die KI schrieb „{ai}“, eine Person änderte es zu „{final}“."
+      }
     }
   },
   "alertDialog": {
@@ -5505,7 +5522,8 @@
       "help": "Diese Kürzelliste anzeigen",
       "search": "Suchfeld fokussieren",
       "toggleSidebar": "Seitenleiste ein- oder ausblenden",
-      "skipToContent": "Zum Hauptinhalt springen"
+      "skipToContent": "Zum Hauptinhalt springen",
+      "toggleAiDock": "KI-Dock ein- oder ausblenden"
     },
     "editor": {
       "save": "Aktuellen Eintrag oder Block speichern"

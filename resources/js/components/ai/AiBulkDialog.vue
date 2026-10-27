@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { useMutation, useQuery } from '@tanstack/vue-query'
-import { toast } from 'vue-sonner'
 
 import { api } from '~/api'
 import type { AiResolvedSkill } from '~/api/resources/ai'
@@ -17,6 +16,7 @@ import {
 import { TextField } from '~/components/ui/form'
 import { Spinner } from '~/components/ui/spinner'
 import type { AiEntryScope } from '~/lib/aiChangesets'
+import { openDock } from '~/lib/aiDock'
 import { aiSkillLabel } from '~/lib/aiSkills'
 import { toastError } from '~/lib/toast-error'
 
@@ -30,7 +30,6 @@ const props = defineProps<{
 }>()
 
 const { t } = useI18n()
-const router = useRouter()
 const { formatCurrency, formatNumber } = useFormat()
 const { data: skills } = useAiSurfaceSkills(() => props.spaceId, () => props.surface)
 
@@ -60,14 +59,9 @@ const startMutation = useMutation({
       prompt: prompt.value,
       targets: { type: props.scope.type, ids: preflight.value?.ids ?? [] },
     }),
-  onSuccess: () => {
+  onSuccess: ({ data }) => {
     open.value = false
-    toast.success(t('components.aiBulk.started'), {
-      action: {
-        label: t('components.aiBulk.openInbox'),
-        onClick: () => void router.push({ name: 'space-ai-inbox', params: { space: props.spaceId } }),
-      },
-    })
+    openDock(data.conversation_id ?? undefined)
   },
   onError: (caught: unknown) => toastError(t, 'components.aiBulk.failed', caught),
 })

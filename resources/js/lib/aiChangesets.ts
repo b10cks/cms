@@ -2,7 +2,6 @@
  * Types and helpers for AI changesets: field-level proposals pinned to the
  * version a run read, reviewed per field, entry or changeset.
  */
-import type { AiGlossaryResource } from '~/api/resources/ai-knowledge'
 import type { AiGlossaryFinding, AiRunRecord } from '~/lib/aiRun'
 
 export type AiTargetType = 'content' | 'data_entry' | 'asset'
@@ -28,6 +27,10 @@ export interface AiChangesetItem {
   status: AiChangesetItemStatus
   glossary_findings: AiGlossaryFinding[]
   decided_at: string | null
+  /** Cross-locale items: the locales and the source text the translation came from */
+  source_locale?: string | null
+  target_locale?: string | null
+  source?: unknown
 }
 
 export interface AiChangeset {
@@ -37,8 +40,6 @@ export interface AiChangeset {
   inline: boolean
   item_count: number
   pending_count: number
-  /** Distinct entries the items touch; inbox list only */
-  entry_count?: number
   run?: {
     id: string
     state: AiRunRecord['state']
@@ -62,16 +63,6 @@ export interface AiGlossarySuggestion {
   evidence: { ai: string; final: string; label: string | null } | null
   actor: { id: string; name: string } | null
   created_at: string
-}
-
-export interface AiInbox {
-  changesets: AiChangeset[]
-  runs: AiRunRecord[]
-  /** Only for users who manage the space's AI */
-  suggestions: AiGlossarySuggestion[]
-  /** Glossaries the user may accept suggestions into */
-  glossaries: AiGlossaryResource[]
-  count: number
 }
 
 export interface AiDecision {
