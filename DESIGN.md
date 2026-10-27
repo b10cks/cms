@@ -43,3 +43,13 @@ Settled 2026-10-22.
 - Line charts are `TrendChart`: every series has a fading area gradient, zero-based scale whose middle tick is a whole number, 13px axes, a crosshair with the readout above the plot, one tab stop with arrow keys. Shares of a whole (content by type, data entries by source, assets by type) are `DistributionList` (stacked bar plus rows, linked hover), never a pie.
 - The activity calendar stays GitHub-style. Cell size is a whole pixel count derived from the panel width, so every gap is exactly 3px; the hovered day's count shows in the line under the grid.
 - Chart series colors come from `--series-1` to `--series-4` in that order, validated for colorblind separation in both modes.
+
+## AI surfaces
+
+Settled 2026-10-27. Concept: "Threads" in `docs/concepts/native-ai-integration.md`.
+
+- Every AI conversation and run lives in a thread, shown in the threads dock on the right of every space page. There is no inbox and no AI task dialog. Don't add a second global AI surface; extend the dock or Cmd+K.
+- The dock pushes the page on wide screens (resizable, width remembered) and overlays as a sheet below 1280px. Cmd+J toggles it. The header button carries the count of threads that need you; the main sidebar has no AI entry.
+- Feature buttons stay inside features. They start threads but open the dock only when there is something to review or answer. Bulk starts are the exception and open the dock on the running thread.
+- Proposals are cards in the thread, one per entry. Per-field accept and reject are icon buttons. A field shows a status badge only once it is decided. Cross-locale changes show source and translation side by side, same-locale edits show the word diff. More than five entries collapse into one summary card with Accept all and Reject all.
+- AI settings (Skills, Knowledge, Schedules) have three nav entries. Each page has the title with the primary action top right; lists are one table with a type or source column. Glossary detail looks like a data source: one column per language, headed by the language name, not the locale code.
