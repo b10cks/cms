@@ -144,7 +144,7 @@ abstract class BaseAiDriver implements AiDriverInterface
                 'text' => [
                     'type' => 'text',
                     'text' => (string) ($part['text'] ?? ''),
-                ],
+                ] + (isset($part['cache_control']) ? ['cache_control' => $part['cache_control']] : []),
                 'image' => [
                     'type' => 'image_url',
                     'image_url' => [
@@ -210,11 +210,9 @@ abstract class BaseAiDriver implements AiDriverInterface
         $reasoning = $this->shouldShapeForReasoning($modelId, $model);
         $messages = $this->normalizeOpenAiMessages($modelId, $messages);
 
-        // Prompt caching on this (OpenAI-compatible) path is automatic: OpenAI
-        // caches identical prompt prefixes ≥1024 tokens, and OpenRouter applies
-        // provider caching for the models that support it. The static system
-        // prompt is sent first so it forms a stable, cacheable prefix — no
-        // explicit cache_control field is needed here (unlike Anthropic).
+        // OpenAI caches identical prompt prefixes automatically, so the stable
+        // system prompt goes first. Models that need explicit breakpoints
+        // (Anthropic, Gemini via OpenRouter) get `cache_control` parts instead.
         $params = [
             'model' => $modelId,
             'messages' => $reasoning ? $this->demoteSystemMessages($messages) : $messages,

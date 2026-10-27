@@ -100,7 +100,7 @@ Same JSON shape in `~/.codeium/windsurf/mcp_config.json`.
 
 ## Tools
 
-The server exposes eight tools and two resources:
+The server exposes nine tools and two resources:
 
 | Tool | Purpose |
 | --- | --- |
@@ -112,8 +112,9 @@ The server exposes eight tools and two resources:
 | `read_skill` | Loads one skill's full instructions and the names of its supporting files |
 | `search_knowledge` | Searches the space's published reference documents and returns short excerpts with their source |
 | `lookup_glossary` | Finds glossary terms in a text and returns the required wording for a target locale, terms to keep untranslated and forbidden variants |
+| `search_content` | Searches the space's published entries and returns short excerpts with entry ID, name and path |
 
-The four AI tools take a `spaceId` and run as the token's user, through the same skill and knowledge layers (space, owning team, ancestor teams, built-ins) that the in-app AI uses. They need the `space.view` ability on that space. The local stdio server has no user, so these tools only work over the HTTP endpoint.
+The five AI tools take a `spaceId` and run as the token's user, through the same skill and knowledge layers (space, owning team, ancestor teams, built-ins) that the in-app AI uses. They need the `space.view` ability on that space, and `search_content` also needs `content.view`. The local stdio server has no user, so these tools only work over the HTTP endpoint.
 
 The guides are also published as the MCP resources `b10cks://content-model-guide` and `b10cks://automations-guide`, so clients that surface resources can pin them into context. Assistants are instructed to read them before designing blocks or creating automations — they encode the same rules the API validates (slug format, translatable/indexable constraints, trigger/action config schemas) plus patterns from production projects, which turns "make me a hero block" or "add a cache-clear action to articles" from trial-and-error into a one-shot call.
 

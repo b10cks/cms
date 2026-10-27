@@ -25,7 +25,7 @@ trait StreamsOpenAiTurns
     {
         $params = $this->buildChatParams(
             $options->model,
-            $this->openAiMessages($transcript),
+            $this->openAiMessages($transcript, $this->usesCacheBreakpoints($options->model)),
             $tools->definitions(),
             $options->toArray(),
         );
@@ -33,15 +33,26 @@ trait StreamsOpenAiTurns
         return yield from $this->streamOpenAiTurn($this->getClient(), $params);
     }
 
+    /** Whether this model needs explicit `cache_control` breakpoints; the rest cache automatically or not at all. */
+    protected function usesCacheBreakpoints(string $model): bool
+    {
+        return false;
+    }
+
     /**
      * Convert the transcript into OpenAI-compatible chat messages, with
-     * provider-neutral content parts mapped to the vision shape.
+     * provider-neutral content parts mapped to the vision shape. With
+     * `$cacheBreakpoints`, a system message is split at its cache breaks into
+     * text parts, each break closing a part marked `cache_control`.
      *
      * @return array<int, array<string, mixed>>
      */
-    protected function openAiMessages(Transcript $transcript): array
+    protected function openAiMessages(Transcript $transcript, bool $cacheBreakpoints = false): array
     {
         return array_map(static fn (array $message): array => match ($message['role']) {
+            'system' => ['role' => 'system', 'content' => $cacheBreakpoints && ! empty($message['cache_breaks'])
+                ? self::cachedParts((string) $message['content'], $message['cache_breaks'])
+                : $message['content'] ?? ''],
             'assistant' => [
                 'role' => 'assistant',
                 'content' => ($message['content'] ?? '') === '' ? null : $message['content'],
@@ -63,6 +74,29 @@ trait StreamsOpenAiTurns
     }
 
     /**
+     * @param  list<int>  $breaks
+     * @return list<array<string, mixed>>
+     */
+    private static function cachedParts(string $content, array $breaks): array
+    {
+        $parts = [];
+        $from = 0;
+
+        foreach ([...$breaks, \strlen($content)] as $end) {
+            $text = substr($content, $from, $end - $from);
+            if (trim($text) !== '') {
+                $parts[] = ['type' => 'text', 'text' => $text];
+            }
+            $from = $end;
+            if ($parts !== [] && $end < \strlen($content)) {
+                $parts[array_key_last($parts)]['cache_control'] = ['type' => 'ephemeral'];
+            }
+        }
+
+        return $parts;
+    }
+
+    /**
      * Run one streamed OpenAI-compatible chat completion and collect its text,
      * tool calls and usage. Reasoning deltas are dropped: they are never shown
      * to users.
@@ -75,9 +109,11 @@ trait StreamsOpenAiTurns
         $text = '';
         $calls = [];
         $usage = null;
+        $generationId = null;
 
         try {
             foreach ($client->chat()->createStreamed($params) as $response) {
+                $generationId ??= $response->id;
                 if ($response->usage !== null) {
                     $usage = $response->usage;
                 }
@@ -116,7 +152,12 @@ trait StreamsOpenAiTurns
                 static fn (array $call) => ToolCall::fromJson($call['id'] !== '' ? $call['id'] : 'call_'.uniqid(), $call['name'], $call['arguments']),
                 $calls,
             )),
-            new TurnUsage((int) ($usage?->promptTokens ?? 0), (int) ($usage?->completionTokens ?? 0)),
+            new TurnUsage(
+                (int) ($usage?->promptTokens ?? 0),
+                (int) ($usage?->completionTokens ?? 0),
+                cachedTokens: (int) ($usage?->promptTokensDetails?->cachedTokens ?? 0),
+                generationId: $generationId,
+            ),
         );
     }
 }
