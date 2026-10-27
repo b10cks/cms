@@ -192,32 +192,35 @@ class DataEntryTranslationStreamController extends Controller
             }
 
             // Mute the per-entry broadcasts; one content-changed event after
-            // the run stands in for the whole batch.
-            DataEntry::withoutBroadcasts(fn () => DB::transaction(function () use ($chunk, $decoded, $targetDimension, &$translated, &$skipped, &$processed): void {
-                foreach ($chunk as $entry) {
-                    $processed++;
-                    $value = $decoded[$entry->key] ?? null;
+            // the run stands in for the whole batch. Both closures capture the
+            // counters by reference: an arrow function would capture by value.
+            DataEntry::withoutBroadcasts(function () use ($chunk, $decoded, $targetDimension, &$translated, &$skipped, &$processed): void {
+                DB::transaction(function () use ($chunk, $decoded, $targetDimension, &$translated, &$skipped, &$processed): void {
+                    foreach ($chunk as $entry) {
+                        $processed++;
+                        $value = $decoded[$entry->key] ?? null;
 
-                    if (! is_string($value) || trim($value) === '') {
-                        $skipped++;
+                        if (! is_string($value) || trim($value) === '') {
+                            $skipped++;
 
-                        continue;
+                            continue;
+                        }
+
+                        $dimensions = is_array($entry->dimensions) ? $entry->dimensions : [];
+
+                        if (trim((string) ($dimensions[$targetDimension] ?? '')) !== '') {
+                            $skipped++;
+
+                            continue;
+                        }
+
+                        $dimensions[$targetDimension] = $value;
+                        $entry->dimensions = $dimensions;
+                        $entry->save();
+                        $translated++;
                     }
-
-                    $dimensions = is_array($entry->dimensions) ? $entry->dimensions : [];
-
-                    if (trim((string) ($dimensions[$targetDimension] ?? '')) !== '') {
-                        $skipped++;
-
-                        continue;
-                    }
-
-                    $dimensions[$targetDimension] = $value;
-                    $entry->dimensions = $dimensions;
-                    $entry->save();
-                    $translated++;
-                }
-            }));
+                });
+            });
 
             Cache::forget("data_source:{$dataSource->id}:entries");
 
