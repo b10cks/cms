@@ -19,11 +19,13 @@ const props = withDefaults(
 function handleInputGroupAddonClick(e: MouseEvent) {
   const currentTarget = e.currentTarget as HTMLElement | null
   const target = e.target as HTMLElement | null
-  if (target && target.closest('button')) {
+  if (target && target.closest('button, a, input, select, [role=combobox]')) {
     return
   }
   if (currentTarget && currentTarget?.parentElement) {
-    currentTarget.parentElement?.querySelector('input')?.focus()
+    currentTarget.parentElement
+      ?.querySelector<HTMLElement>('input, textarea, [contenteditable=true]')
+      ?.focus()
   }
 }
 </script>

@@ -9,11 +9,20 @@ import {
   InputGroupButton,
   InputGroupTipTap,
 } from '~/components/ui/input-group'
+import { Message, MessageContent } from '~/components/ui/message'
+import {
+  MessageScrollerProvider,
+  MessageScroller,
+  MessageScrollerViewport,
+  MessageScrollerContent,
+  MessageScrollerItem,
+  MessageScrollerButton,
+} from '~/components/ui/message-scroller'
 import type { StreamCallbacks } from '~/composables/useAiContent'
 import { useAiContent } from '~/composables/useAiContent'
-import { stripAiCodeFences } from '~/lib/aiJson'
 import { useAiMentions } from '~/composables/useAiMentions'
 import { useAiConfigs } from '~/composables/useAiModels'
+import { stripAiCodeFences } from '~/lib/aiJson'
 
 export type AttachedFile = never
 
@@ -85,6 +94,7 @@ const canSend = computed(
   () =>
     (modelValue.value?.trim()?.length ?? 0) > 0 &&
     !isStreaming.value &&
+    !isThinking.value &&
     !props.loading &&
     !!selectedConfigId.value
 )
@@ -144,15 +154,6 @@ const clear = () => {
 const handleSend = async () => {
   if (!canSend.value) return
 
-  if (isStreaming.value) {
-    cancelStream()
-    statusMessage.value = null
-    previewContent.value = null
-    isThinking.value = false
-    emit('streamEnd')
-    return
-  }
-
   const prompt = (tiptapRef.value?.getTextWithMentions() ?? modelValue.value ?? '').trim()
   if (!prompt) return
 
@@ -170,12 +171,12 @@ const handleSend = async () => {
     return
   }
 
+  previewContent.value = null
   isThinking.value = true
   statusMessage.value = t('components.aiText.thinking') as string
 
   const callbacks: StreamCallbacks = {
     onStatus: (message) => {
-      isThinking.value = false
       statusMessage.value = message
     },
     onDelta: (content) => {
@@ -184,7 +185,7 @@ const handleSend = async () => {
     },
     onDone: (content) => {
       statusMessage.value = null
-      previewContent.value = null
+      previewContent.value = content
       isThinking.value = false
       emit(
         'send',
@@ -203,7 +204,6 @@ const handleSend = async () => {
     onError: (message, reason) => {
       showAiError(reason, message)
       statusMessage.value = null
-      previewContent.value = null
       isThinking.value = false
       emit('streamEnd')
     },
@@ -211,23 +211,33 @@ const handleSend = async () => {
 
   emit('streamStart')
 
-  await streamContentInteraction(
-    {
-      prompt,
-      content: props.content,
-      content_id: props.contentId ?? null,
-      files: [],
-      config_id: selectedConfigId.value,
-      mentions: editorMentions.map((m) => ({
-        type: m.type,
-        id: m.id,
-        content: null,
-        label: m.label,
-      })),
-    },
-    callbacks
-  )
+  try {
+    await streamContentInteraction(
+      {
+        prompt,
+        content: props.content,
+        content_id: props.contentId ?? null,
+        files: [],
+        config_id: selectedConfigId.value,
+        mentions: editorMentions.map((m) => ({
+          type: m.type,
+          id: m.id,
+          content: null,
+          label: m.label,
+        })),
+      },
+      callbacks
+    )
+  } finally {
+    if (isThinking.value) {
+      isThinking.value = false
+      statusMessage.value = null
+      emit('streamEnd')
+    }
+  }
 }
+
+onBeforeUnmount(cancelStream)
 
 const handleCancel = () => {
   if (props.directEmit) {
@@ -266,9 +276,10 @@ defineExpose({
       leave-to-class="opacity-0 -translate-y-1"
     >
       <div
-        v-if="statusMessage || isThinking"
+        v-if="statusMessage || (isThinking && !previewContent)"
         :key="statusMessage || 'thinking'"
         class="py-2 text-sm"
+        role="status"
       >
         <div class="ai-animate-text">
           {{ statusMessage || $t('components.aiText.thinking') }}
@@ -276,15 +287,28 @@ defineExpose({
       </div>
     </Transition>
 
-    <div
+    <MessageScrollerProvider
       v-if="previewContent"
-      class="max-h-40 overflow-y-auto rounded-lg border border-ai/20 bg-popover/60 px-3 py-2 font-mono text-xs text-muted whitespace-pre-wrap"
+      auto-scroll
     >
-      {{ previewContent }}
-    </div>
+      <MessageScroller class="h-40 rounded-lg border border-border bg-popover">
+        <MessageScrollerViewport>
+          <MessageScrollerContent class="gap-2 p-3">
+            <MessageScrollerItem message-id="response">
+              <Message>
+                <MessageContent class="whitespace-pre-wrap text-sm text-foreground">
+                  {{ previewContent }}
+                </MessageContent>
+              </Message>
+            </MessageScrollerItem>
+          </MessageScrollerContent>
+        </MessageScrollerViewport>
+        <MessageScrollerButton />
+      </MessageScroller>
+    </MessageScrollerProvider>
 
     <InputGroup
-      class="relative rounded-2xl! bg-popover/80 backdrop-blur transition-all"
+      class="relative rounded-xl bg-popover transition-colors"
       :class="[
         isStreaming || isThinking
           ? 'ring-1 ring-ai/30'
@@ -295,7 +319,7 @@ defineExpose({
         ref="tiptapRef"
         v-model="editorValue"
         :placeholder="dynamicPlaceholder"
-        :disabled="loading || isStreaming"
+        :disabled="loading || isStreaming || isThinking"
         :mention-items="mergedMentionItems"
         @submit="handleSend"
       />
@@ -306,10 +330,12 @@ defineExpose({
           v-model="selectedConfigId"
           :space-id="spaceId"
           :error="configError"
+          :disabled="loading || isStreaming || isThinking"
         />
 
         <InputGroupButton
-          v-if="!isStreaming && !loading"
+          type="button"
+          v-if="!isStreaming && !isThinking && !loading"
           variant="ai"
           size="round"
           :disabled="!canSend"
@@ -320,7 +346,8 @@ defineExpose({
         </InputGroupButton>
 
         <InputGroupButton
-          v-if="isStreaming || loading"
+          type="button"
+          v-if="isStreaming || isThinking || loading"
           variant="ghost"
           size="round"
           @click="handleCancel"

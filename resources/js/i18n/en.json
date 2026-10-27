@@ -4592,7 +4592,21 @@
       "previewTitle": "Header preview",
       "dialogDescription": "Edit header text and body rows in one focused table workspace."
     },
+    "messageScroller": {
+      "start": "Jump to start",
+      "end": "Jump to latest message",
+      "region": "AI messages"
+    },
+    "questionnaire": {
+      "submit": "Send answers",
+      "skip": "Skip",
+      "requiredError": "Please answer this question.",
+      "optionalError": "Choose an answer or skip this question.",
+      "progress": "Question {current} of {total}",
+      "progressLabel": "Question progress"
+    },
     "aiText": {
+      "inputLabel": "AI message",
       "thinking": "Thinking...",
       "streamError": "AI error: {error}",
       "noConfigSelected": "Please select an AI configuration to continue",

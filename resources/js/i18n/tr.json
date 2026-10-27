@@ -4592,7 +4592,21 @@
       "previewTitle": "Başlık önizlemesi",
       "dialogDescription": "Başlık metnini ve gövde satırlarını tek bir odaklanılmış tablo çalışma alanında düzenleyin."
     },
+    "messageScroller": {
+      "start": "Başa git",
+      "end": "Son mesaja git",
+      "region": "Yapay zekâ mesajları"
+    },
+    "questionnaire": {
+      "submit": "Yanıtları gönder",
+      "skip": "Atla",
+      "requiredError": "Lütfen bu soruyu yanıtlayın.",
+      "optionalError": "Bir yanıt seçin veya bu soruyu atlayın.",
+      "progress": "Soru {current} / {total}",
+      "progressLabel": "Soru ilerlemesi"
+    },
     "aiText": {
+      "inputLabel": "Yapay zekâ mesajı",
       "thinking": "Düşünüyor…",
       "streamError": "Yapay zeka hatası: {error}",
       "noConfigSelected": "Devam etmek için lütfen bir yapay zeka yapılandırması seçin",

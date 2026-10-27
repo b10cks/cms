@@ -4592,7 +4592,21 @@
       "previewTitle": "Aperçu de l'en-tête",
       "dialogDescription": "Modifiez le texte d'en-tête et les lignes du corps dans un espace de travail de tableau dédié."
     },
+    "messageScroller": {
+      "start": "Aller au début",
+      "end": "Aller au dernier message",
+      "region": "Messages IA"
+    },
+    "questionnaire": {
+      "submit": "Envoyer les réponses",
+      "skip": "Passer",
+      "requiredError": "Répondez à cette question.",
+      "optionalError": "Choisissez une réponse ou passez cette question.",
+      "progress": "Question {current} sur {total}",
+      "progressLabel": "Progression des questions"
+    },
     "aiText": {
+      "inputLabel": "Message IA",
       "thinking": "Réflexion…",
       "streamError": "Erreur IA : {error}",
       "noConfigSelected": "Veuillez sélectionner une configuration IA pour continuer",

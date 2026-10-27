@@ -1,9 +1,12 @@
 <script setup lang="ts">
+import type { JSONContent } from '@tiptap/core'
 import Placeholder from '@tiptap/extension-placeholder'
 import { PluginKey } from '@tiptap/pm/state'
 import { StarterKit } from '@tiptap/starter-kit'
+import { exitSuggestion } from '@tiptap/suggestion'
 import type { SuggestionProps } from '@tiptap/suggestion'
 import { EditorContent, useEditor } from '@tiptap/vue-3'
+import { useEventListener } from '@vueuse/core'
 
 import { AiMention, type AiMentionItem } from '~/components/editor/extensions/AiMention'
 
@@ -25,6 +28,34 @@ const props = withDefaults(
 const emit = defineEmits<{
   (e: 'submit'): void
 }>()
+
+const mentionPluginKey = new PluginKey('aiMention')
+const listboxId = useId()
+const suggestionPosition = ref({ left: '0px', top: '0px', maxHeight: '256px', transform: '' })
+
+const updateSuggestionPosition = () => {
+  const rect = suggestionProps.value?.clientRect?.()
+  if (!rect) return
+  const above = rect.top >= 272
+  const availableHeight = above ? rect.top - 16 : window.innerHeight - rect.bottom - 16
+  suggestionPosition.value = {
+    left: `${Math.max(8, Math.min(rect.left, window.innerWidth - 232))}px`,
+    top: `${above ? rect.top - 8 : rect.bottom + 8}px`,
+    maxHeight: `${Math.max(0, Math.min(256, availableHeight))}px`,
+    transform: above ? 'translateY(-100%)' : '',
+  }
+}
+
+useEventListener(window, 'resize', updateSuggestionPosition)
+useEventListener(window, 'scroll', updateSuggestionPosition, true)
+
+const plainTextDocument = (text: string): JSONContent => ({
+  type: 'doc',
+  content: text.split('\n').map((line) => ({
+    type: 'paragraph',
+    content: line ? [{ type: 'text', text: line }] : [],
+  })),
+})
 
 const suggestionProps = ref<SuggestionProps<AiMentionItem> | null>(null)
 const suggestionOpen = ref(false)
@@ -59,11 +90,13 @@ const selectItem = (index: number) => {
 }
 
 const upHandler = () => {
+  if (!filteredItems.value.length) return
   selectedIndex.value =
     (selectedIndex.value + filteredItems.value.length - 1) % filteredItems.value.length
 }
 
 const downHandler = () => {
+  if (!filteredItems.value.length) return
   selectedIndex.value = (selectedIndex.value + 1) % filteredItems.value.length
 }
 
@@ -72,7 +105,8 @@ const enterHandler = () => {
 }
 
 const editor = useEditor({
-  content: modelValue.value,
+  content: plainTextDocument(modelValue.value),
+  editable: !props.disabled,
   extensions: [
     StarterKit.configure(),
     Placeholder.configure({
@@ -85,19 +119,21 @@ const editor = useEditor({
     AiMention.configure({
       suggestion: {
         char: '@',
-        pluginKey: new PluginKey('aiMention'),
+        pluginKey: mentionPluginKey,
         items: () => [],
         render: () => {
           return {
             onStart: (p: SuggestionProps<AiMentionItem>) => {
               suggestionProps.value = p
               suggestionOpen.value = true
+              updateSuggestionPosition()
             },
             onUpdate: (p: SuggestionProps<AiMentionItem>) => {
               suggestionProps.value = p
+              updateSuggestionPosition()
             },
             onKeyDown: ({ event }) => {
-              if (!suggestionOpen.value) return false
+              if (!suggestionOpen.value || event.isComposing || event.keyCode === 229) return false
 
               if (event.key === 'ArrowUp') {
                 upHandler()
@@ -107,12 +143,12 @@ const editor = useEditor({
                 downHandler()
                 return true
               }
-              if (event.key === 'Enter') {
+              if (event.key === 'Enter' && filteredItems.value.length) {
                 enterHandler()
                 return true
               }
               if (event.key === 'Escape') {
-                suggestionOpen.value = false
+                exitSuggestion(editor.value!.view, mentionPluginKey)
                 return true
               }
               return false
@@ -132,11 +168,14 @@ const editor = useEditor({
   editorProps: {
     attributes: {
       class: 'tiptap prose max-w-none focus:outline-none',
+      'aria-label': props.placeholder || useI18n().t('components.aiText.inputLabel'),
       'aria-placeholder': props.placeholder,
       role: 'textbox',
       'aria-multiline': 'true',
     },
     handleKeyDown: (view, event) => {
+      if (event.isComposing || view.composing || event.keyCode === 229 || props.disabled)
+        return false
       if (event.key === 'Enter' && !event.shiftKey && !suggestionOpen.value) {
         emit('submit')
         return true
@@ -150,7 +189,7 @@ watch(
   () => modelValue.value,
   (newValue) => {
     if (editor.value && editor.value.getText() !== newValue) {
-      editor.value.commands.setContent(newValue)
+      editor.value.commands.setContent(plainTextDocument(newValue), { emitUpdate: false })
     }
   }
 )
@@ -159,6 +198,15 @@ watch(
   () => props.placeholder,
   (newPlaceholder) => {
     if (editor.value) {
+      editor.value.setOptions({
+        editorProps: {
+          attributes: {
+            ...editor.value.options.editorProps.attributes,
+            'aria-label': newPlaceholder || useI18n().t('components.aiText.inputLabel'),
+            'aria-placeholder': newPlaceholder,
+          },
+        },
+      })
       const placeholderExt = editor.value.extensionManager.extensions.find(
         (ext) => ext.name === 'placeholder'
       )
@@ -175,13 +223,25 @@ watch(
   (disabled) => {
     if (editor.value) {
       editor.value.setEditable(!disabled)
+      if (disabled) exitSuggestion(editor.value.view, mentionPluginKey)
     }
   },
   { immediate: true }
 )
 
-onBeforeUnmount(() => {
-  editor.value?.destroy()
+watch([suggestionOpen, selectedIndex, filteredItems], () => {
+  if (!editor.value) return
+  const open = suggestionOpen.value && filteredItems.value.length > 0
+  editor.value.setOptions({
+    editorProps: {
+      attributes: {
+        ...editor.value.options.editorProps.attributes,
+        'aria-expanded': String(open),
+        'aria-controls': open ? listboxId : '',
+        'aria-activedescendant': open ? `${listboxId}-${selectedIndex.value}` : '',
+      },
+    },
+  })
 })
 
 const clear = () => {
@@ -242,18 +302,18 @@ defineExpose({
   <EditorContent
     data-slot="input-group-control"
     :editor="editor"
-    class="tiptap-editor w-full rounded-md p-2 max-h-96 overflow-auto"
+    class="tiptap-editor w-full rounded-md p-3 max-h-64 overflow-auto [&_.tiptap]:min-h-10 [&_.tiptap]:outline-none"
   />
 
   <Teleport to="body">
     <div
       v-if="suggestionOpen && filteredItems.length > 0 && suggestionProps"
       :style="{
-        position: 'absolute',
-        left: suggestionProps.clientRect?.()?.left + 'px',
-        bottom: suggestionProps.clientRect?.()?.height + 'px',
+        position: 'fixed',
+        ...suggestionPosition,
       }"
       class="z-[100] max-h-64 w-56 overflow-auto rounded-md border border-popover-border bg-popover p-1 shadow-md"
+      :id="listboxId"
       role="listbox"
       :aria-label="$t('components.aiMention.suggestions')"
     >
@@ -262,13 +322,14 @@ defineExpose({
         class="mb-1"
       >
         <div
-          class="flex items-center gap-1 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
+          class="flex items-center gap-1 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-muted"
         >
           {{ $t('components.aiMention.content') }}
         </div>
         <button
           v-for="item in contentItems"
           :key="`content-${item.id}`"
+          :id="`${listboxId}-${getGlobalIndex(item)}`"
           type="button"
           role="option"
           :aria-selected="selectedIndex === getGlobalIndex(item)"
@@ -278,6 +339,7 @@ defineExpose({
               ? 'bg-accent text-accent-foreground'
               : 'hover:bg-accent/50',
           ]"
+          @mousedown.prevent
           @click="selectItem(getGlobalIndex(item))"
           @mouseenter="selectedIndex = getGlobalIndex(item)"
         >
@@ -290,13 +352,14 @@ defineExpose({
         class="mb-1"
       >
         <div
-          class="flex items-center gap-1 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
+          class="flex items-center gap-1 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-muted"
         >
           {{ $t('components.aiMention.draftContent') }}
         </div>
         <button
           v-for="item in draftContentItems"
           :key="`draft-content-${item.id}`"
+          :id="`${listboxId}-${getGlobalIndex(item)}`"
           type="button"
           role="option"
           :aria-selected="selectedIndex === getGlobalIndex(item)"
@@ -306,6 +369,7 @@ defineExpose({
               ? 'bg-accent text-accent-foreground'
               : 'hover:bg-accent/50',
           ]"
+          @mousedown.prevent
           @click="selectItem(getGlobalIndex(item))"
           @mouseenter="selectedIndex = getGlobalIndex(item)"
         >
@@ -315,13 +379,14 @@ defineExpose({
 
       <div v-if="blockItems.length > 0">
         <div
-          class="flex items-center gap-1 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
+          class="flex items-center gap-1 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-muted"
         >
           {{ $t('components.aiMention.blocks') }}
         </div>
         <button
           v-for="item in blockItems"
           :key="`block-${item.id}`"
+          :id="`${listboxId}-${getGlobalIndex(item)}`"
           type="button"
           role="option"
           :aria-selected="selectedIndex === getGlobalIndex(item)"
@@ -331,6 +396,7 @@ defineExpose({
               ? 'bg-accent text-accent-foreground'
               : 'hover:bg-accent/50',
           ]"
+          @mousedown.prevent
           @click="selectItem(getGlobalIndex(item))"
           @mouseenter="selectedIndex = getGlobalIndex(item)"
         >
@@ -342,21 +408,21 @@ defineExpose({
 </template>
 
 <style scoped>
-:deep(.tiptap-editor .tiptap) {
+:deep(.tiptap) {
   min-height: 2.5rem;
 }
 
-:deep(.tiptap-editor .tiptap .is-editor-empty:first-child::before) {
+:deep(.tiptap .is-editor-empty:first-child::before) {
   content: attr(data-placeholder);
   display: block;
   width: 100%;
   float: left;
-  color: hsl(var(--muted-foreground));
+  color: var(--muted);
   pointer-events: none;
   height: 0;
 }
 
-:deep(.tiptap-editor .tiptap:focus) {
+:deep(.tiptap:focus) {
   outline: none;
 }
 </style>

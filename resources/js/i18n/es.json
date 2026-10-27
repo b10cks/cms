@@ -4592,7 +4592,21 @@
       "previewTitle": "Vista previa de encabezado",
       "dialogDescription": "Edite el texto del encabezado y las filas del cuerpo en un espacio de trabajo de tabla dedicado."
     },
+    "messageScroller": {
+      "start": "Ir al inicio",
+      "end": "Ir al último mensaje",
+      "region": "Mensajes de IA"
+    },
+    "questionnaire": {
+      "submit": "Enviar respuestas",
+      "skip": "Omitir",
+      "requiredError": "Responde a esta pregunta.",
+      "optionalError": "Elige una respuesta u omite esta pregunta.",
+      "progress": "Pregunta {current} de {total}",
+      "progressLabel": "Progreso de las preguntas"
+    },
     "aiText": {
+      "inputLabel": "Mensaje de IA",
       "thinking": "Pensando...",
       "streamError": "Error de IA: {error}",
       "noConfigSelected": "Por favor, seleccione una configuración de IA para continuar",

@@ -4578,7 +4578,21 @@
       "previewTitle": "Header-Vorschau",
       "dialogDescription": "Bearbeite Kopfzeile und Body-Zeilen gemeinsam in einem fokussierten Tabellen-Workspace."
     },
+    "messageScroller": {
+      "start": "Zum Anfang",
+      "end": "Zur neuesten Nachricht",
+      "region": "KI-Nachrichten"
+    },
+    "questionnaire": {
+      "submit": "Antworten senden",
+      "skip": "Überspringen",
+      "requiredError": "Bitte beantworte diese Frage.",
+      "optionalError": "Wähle eine Antwort oder überspringe diese Frage.",
+      "progress": "Frage {current} von {total}",
+      "progressLabel": "Fragenfortschritt"
+    },
     "aiText": {
+      "inputLabel": "KI-Nachricht",
       "streamError": "KI-Stream-Fehler: {error}",
       "thinking": "Denke nach...",
       "placeholderSelectConfig": "Select a configuration to start...",
