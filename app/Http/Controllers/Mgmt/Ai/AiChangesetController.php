@@ -25,7 +25,7 @@ class AiChangesetController extends Controller
     {
         $model = $this->findChangeset($space, $changeset);
         $visible = array_filter(
-            ChangeTargets::TYPES,
+            ChangeTargets::PROPOSAL_TYPES,
             fn (string $type) => $auth->canInSpace($request->user(), $space, $targets->for($type)->viewAbility()),
         );
 

@@ -9,6 +9,7 @@ use App\Models\Management\AiChangesetItem;
 use App\Models\Management\Space;
 use App\Models\Space\Content;
 use App\Models\User;
+use App\Services\Ai\Changesets\BlockTarget;
 use App\Services\Ai\Changesets\CanonicalJson;
 use App\Services\Ai\Changesets\ChangeTargets;
 use App\Services\Ai\Changesets\FieldPath;
@@ -161,6 +162,20 @@ class AcceptAiChangesetItems
      */
     private function create(AiChangesetItem $item, Space $space, User $user): array
     {
+        if ($item->target_type === AiChangesetItem::TARGET_BLOCK) {
+            $target = $this->targets->for(AiChangesetItem::TARGET_BLOCK);
+            \assert($target instanceof BlockTarget);
+
+            try {
+                // Another block may have taken the slug since.
+                $item->target_id = $target->create($target->validateNew((array) $item->after))->id;
+            } catch (ToolError $e) {
+                throw ValidationException::withMessages(['items' => [$e->getMessage()]]);
+            }
+
+            return [collect([$item]), collect()];
+        }
+
         $content = new Content;
         $this->createContent->execute((array) $item->after, $content, $space, $user);
         $item->target_id = $content->id;

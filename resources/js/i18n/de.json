@@ -4862,6 +4862,10 @@
       "keepCurrent": "Aktuellen Wert behalten",
       "useProposal": "KI-Version verwenden",
       "newEntry": "Neuer Eintrag",
+      "newBlock": "Neuer Block",
+      "blockField": "Feld {key}",
+      "blockFields": "Felder des neuen Blocks",
+      "noBlockFields": "Keine Felder",
       "partial": "Der Lauf wurde vorzeitig beendet ({reason}). Das sind die bisher vorgeschlagenen Änderungen.",
       "stoppedBy": {
         "max_usd": "Kostenlimit erreicht",
@@ -4874,6 +4878,7 @@
         "content": "Inhalt",
         "data_entry": "Datensatz",
         "asset": "Asset",
+        "block": "Block",
         "selection": "Auswahl"
       },
       "status": {

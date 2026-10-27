@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import type { AiChangesetItem } from '~/lib/aiChangesets'
-import { blockListChanges, groupChangesetItems } from '~/lib/aiChangesets'
+import { blockListChanges, createdBlockFields, entryLink, groupChangesetItems } from '~/lib/aiChangesets'
 
 const item = (overrides: Partial<AiChangesetItem>): AiChangesetItem => ({
   id: 'item',
@@ -59,6 +59,26 @@ describe('blockListChanges', () => {
     ])
     expect(changes[1].children).toEqual([
       { type: 'changed', path: 'heading', oldValue: 'Two', newValue: 'Two, better' },
+    ])
+  })
+})
+
+describe('block proposals', () => {
+  it('links blocks to the Block library and lists the fields of a new block', () => {
+    expect(entryLink('space-1', { targetType: 'block', targetId: 'block-1' })).toBe('/space-1/blocks/block-1')
+    expect(entryLink('space-1', { targetType: 'block', targetId: null })).toBeNull()
+
+    const created = item({
+      operation: 'create',
+      target_type: 'block',
+      target_id: null,
+      path: null,
+      before: null,
+      after: { name: 'Teaser', schema: { heading: { type: 'text', name: 'Heading' }, image: { type: 'asset' } } },
+    })
+    expect(createdBlockFields(created)).toEqual([
+      { key: 'heading', name: 'Heading', type: 'text' },
+      { key: 'image', name: 'image', type: 'asset' },
     ])
   })
 })

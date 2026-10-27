@@ -5,6 +5,7 @@ namespace App\Services\Ai\Tools;
 use App\Models\Management\AiChangesetItem;
 use App\Models\Space\Block;
 use App\Models\Space\Content;
+use App\Services\Ai\Changesets\BlockTarget;
 use App\Services\Ai\Changesets\ChangeTargets;
 use App\Services\Ai\Changesets\ContentTarget;
 use App\Services\Ai\Changesets\FieldPath;
@@ -34,6 +35,8 @@ class ProposeUpdateTool extends ProposalTool
         return 'Proposes changes to fields of one entry. Nothing is saved: an editor reviews and accepts each change. '
             .'Content paths are field keys of the block schema; a field in a nested block is <field>.<block id>.<field>, using the block IDs from get_entry, never array positions. '
             .'Data entry paths are `value` or `dimensions.<key>`; asset paths are `fields.<locale>.<field>`. Each change replaces the whole field value. '
+            .'Block definitions (target_type block, id = block ID or slug): paths `name`, `description`, `icon`, `color` and `schema.<field key>`, whose value is the whole field definition (type, name and settings). A new key adds a field, an existing key edits its settings. '
+            .'Removing a field, renaming a field key, changing a field\'s type and changing the block\'s slug or type are refused: content is not migrated, so leave those to a person in the block editor. '
             .'Content only: to add a block to a block list, pass {path: <block list field>, insert: {block: <slug>, values: {<field>: <value>}}, after: <block id> or "start"} (without after it goes last); '
             .'to remove one, pass {path: <block list field>, remove: <block id>}. Find slugs and their fields with get_block_list and get_block_schemas. '
             .'Pass the version_id get_entry returned so edits made after you read the entry are detected. Invalid changes come back as errors to fix.';
@@ -44,8 +47,8 @@ class ProposeUpdateTool extends ProposalTool
         return [
             'type' => 'object',
             'properties' => [
-                'target_type' => ['type' => 'string', 'enum' => ChangeTargets::TYPES],
-                'id' => ['type' => 'string', 'description' => 'ID of the entry.'],
+                'target_type' => ['type' => 'string', 'enum' => ChangeTargets::PROPOSAL_TYPES],
+                'id' => ['type' => 'string', 'description' => 'ID of the entry; a block also by slug.'],
                 'version_id' => ['type' => 'string', 'description' => 'Content only: the version_id you read the entry at.'],
                 'changes' => [
                     'type' => 'array',
@@ -86,14 +89,18 @@ class ProposeUpdateTool extends ProposalTool
         }
 
         $target = $this->target($type);
-        $this->ensureInScope($type, $id);
-
         $snapshot = $target->find($id, $type === AiChangesetItem::TARGET_CONTENT ? $versionId : null)
             ?? throw new ToolError($versionId
                 ? 'No entry with this ID and version. Call get_entry with the ID and pass the version_id it returns.'
                 : 'No entry with this ID.');
+        // A block may be named by its slug.
+        $id = (string) $snapshot->model->getKey();
+        $this->ensureInScope($type, $id);
 
         [$patches, $inserted] = $this->patches($type, $snapshot, $changes);
+        if ($target instanceof BlockTarget) {
+            $patches = $target->normalize($patches);
+        }
 
         $types = $target->validate($this->space, $snapshot, $patches);
 

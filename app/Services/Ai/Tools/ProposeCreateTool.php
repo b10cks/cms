@@ -5,6 +5,7 @@ namespace App\Services\Ai\Tools;
 use App\Models\Management\AiChangesetItem;
 use App\Models\Space\Block;
 use App\Models\Space\Content;
+use App\Services\Ai\Changesets\BlockTarget;
 use App\Services\Ai\Run\ToolError;
 use App\Services\Content\ContentHierarchyValidator;
 use App\Services\Content\ContentI18nValidator;
@@ -12,7 +13,7 @@ use App\Services\Content\Schema\ContentSchemaValidator;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
-/** Proposes a new content entry; validated like a create, stored for review. */
+/** Proposes a new content entry or block; validated like a create, stored for review. */
 class ProposeCreateTool extends ProposalTool
 {
     public const NAME = 'propose_create';
@@ -24,8 +25,10 @@ class ProposeCreateTool extends ProposalTool
 
     public function description(): string
     {
-        return 'Proposes a new content entry. Nothing is created until an editor accepts it. '
-            .'Use a block slug from get_block_list and the field keys of its schema; nested blocks need an `id` (any unique string) and a `block` slug.';
+        return 'Proposes a new content entry, or with target_type block a new block definition. Nothing is created until an editor accepts it. '
+            .'Content: use a block slug from get_block_list and the field keys of its schema; nested blocks need an `id` (any unique string) and a `block` slug. '
+            .'Block: name, slug (starts with a lowercase letter, letters and numbers only, unique), type (root, nestable, single or universal), optional description, icon, color (#rrggbb) and schema, '
+            .'an object of field definitions by field key, each with at least `type` and `name`. Read an existing block with get_entry to see the format.';
     }
 
     public function inputSchema(): array
@@ -33,17 +36,60 @@ class ProposeCreateTool extends ProposalTool
         return [
             'type' => 'object',
             'properties' => [
-                'block' => ['type' => 'string', 'description' => 'Block slug of the new entry.'],
+                'target_type' => ['type' => 'string', 'enum' => [AiChangesetItem::TARGET_CONTENT, AiChangesetItem::TARGET_BLOCK], 'description' => 'Defaults to content.'],
+                'block' => ['type' => 'string', 'description' => 'Content: block slug of the new entry.'],
                 'name' => ['type' => 'string'],
-                'slug' => ['type' => 'string', 'description' => 'Optional; derived from the name when omitted.'],
-                'parent_id' => ['type' => 'string', 'description' => 'Optional folder or parent entry ID.'],
-                'content' => ['type' => 'object', 'description' => 'Field values keyed by field key.'],
+                'slug' => ['type' => 'string', 'description' => 'Content: optional, derived from the name when omitted. Block: required.'],
+                'parent_id' => ['type' => 'string', 'description' => 'Content: optional folder or parent entry ID.'],
+                'content' => ['type' => 'object', 'description' => 'Content: field values keyed by field key.'],
+                'type' => ['type' => 'string', 'enum' => ['root', 'nestable', 'single', 'universal'], 'description' => 'Block: where the block can be used.'],
+                'description' => ['type' => 'string', 'description' => 'Block: optional.'],
+                'icon' => ['type' => 'string', 'description' => 'Block: optional icon name.'],
+                'color' => ['type' => 'string', 'description' => 'Block: optional #rrggbb color.'],
+                'schema' => ['type' => 'object', 'description' => 'Block: field definitions keyed by field key.'],
             ],
-            'required' => ['block', 'name', 'content'],
+            'required' => ['name'],
         ];
     }
 
     public function execute(array $input): mixed
+    {
+        $type = (string) ($input['target_type'] ?? AiChangesetItem::TARGET_CONTENT);
+
+        return match ($type) {
+            AiChangesetItem::TARGET_CONTENT => $this->content($input),
+            AiChangesetItem::TARGET_BLOCK => $this->block($input),
+            default => throw new ToolError('target_type must be content or block.'),
+        };
+    }
+
+    /** @param  array<string, mixed>  $input */
+    private function block(array $input): mixed
+    {
+        $target = $this->target(AiChangesetItem::TARGET_BLOCK);
+        \assert($target instanceof BlockTarget);
+        if (! $this->canEdit($target)) {
+            throw new ToolError('You may not create blocks in this space.');
+        }
+        $this->ensureInScope(AiChangesetItem::TARGET_BLOCK, null);
+
+        $data = $target->validateNew([
+            ...array_map(fn ($value) => \is_string($value) ? trim($value) : $value, array_intersect_key($input, array_flip(['name', 'slug', 'type', 'description', 'icon', 'color']))),
+            'schema' => \is_array($input['schema'] ?? null) ? $input['schema'] : [],
+        ]);
+
+        [$item] = $this->record([[
+            'operation' => AiChangesetItem::OPERATION_CREATE,
+            'target_type' => AiChangesetItem::TARGET_BLOCK,
+            'target_label' => (string) $data['name'],
+            'after' => $data,
+        ]]);
+
+        return ['proposed' => 1, 'item_ids' => [$item->id]];
+    }
+
+    /** @param  array<string, mixed>  $input */
+    private function content(array $input): mixed
     {
         $this->target(AiChangesetItem::TARGET_CONTENT);
         $this->ensureInScope(AiChangesetItem::TARGET_CONTENT, null);

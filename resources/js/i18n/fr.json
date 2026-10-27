@@ -4846,6 +4846,10 @@
       "keepCurrent": "Keep current",
       "useProposal": "Use AI version",
       "newEntry": "New entry",
+      "newBlock": "New block",
+      "blockField": "Field {key}",
+      "blockFields": "Fields of the new block",
+      "noBlockFields": "No fields",
       "partial": "The run stopped early ({reason}). These are the changes it proposed so far.",
       "stoppedBy": {
         "max_usd": "cost limit reached",
@@ -4858,6 +4862,7 @@
         "content": "Content",
         "data_entry": "Data entry",
         "asset": "Asset",
+        "block": "Block",
         "selection": "Selection"
       },
       "status": {

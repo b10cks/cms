@@ -111,7 +111,7 @@ class AiThreadController extends Controller
         $runs = AiRun::query()->where('conversation_id', $thread->id)->orderBy('started_at')->orderBy('id')->get();
         $messages = AiMessage::query()->where('conversation_id', $thread->id)->whereIn('run_id', $runs->modelKeys())->get()->groupBy('run_id');
         $attachments = AiAttachment::query()->whereIn('message_id', $messages->flatten(1)->pluck('id'))->orderBy('id')->get()->groupBy('message_id');
-        $visible = array_filter(ChangeTargets::TYPES, fn (string $type) => $auth->canInSpace($user, $space, $targets->for($type)->viewAbility()));
+        $visible = array_filter(ChangeTargets::PROPOSAL_TYPES, fn (string $type) => $auth->canInSpace($user, $space, $targets->for($type)->viewAbility()));
         $changesets = AiChangeset::query()
             ->whereIn('run_id', $runs->modelKeys())
             ->with(['actor', 'items' => fn ($query) => $query

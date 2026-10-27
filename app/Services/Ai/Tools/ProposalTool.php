@@ -52,6 +52,11 @@ abstract class ProposalTool implements AiToolInterface, ProposesChanges
         return $target;
     }
 
+    protected function canEdit(ChangeTarget $target): bool
+    {
+        return $this->auth->canInSpace($this->actor, $this->space, $target->editAbility());
+    }
+
     /** @throws ToolError when the entry is outside what this run may touch */
     protected function ensureInScope(string $type, ?string $id): void
     {
