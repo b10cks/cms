@@ -2,7 +2,7 @@
 import AiChangesetItem from '~/components/ai/AiChangesetItem.vue'
 import Icon from '~/components/Icon.vue'
 import type { AiChangesetEntry, AiChangesetItem as Item } from '~/lib/aiChangesets'
-import { isOpenItem } from '~/lib/aiChangesets'
+import { entryLink, isOpenItem } from '~/lib/aiChangesets'
 
 /**
  * One entry of a changeset with its proposed fields. As a `card` it stands
@@ -27,11 +27,7 @@ const emit = defineEmits<{
 
 const expanded = ref(props.variant === 'card')
 const openCount = computed(() => props.entry.items.filter(isOpenItem).length)
-const link = computed(() =>
-  props.entry.targetType === 'content' && props.entry.targetId
-    ? `/${props.spaceId}/content/${props.entry.targetId}`
-    : null
-)
+const link = computed(() => entryLink(props.spaceId, props.entry))
 </script>
 
 <template>

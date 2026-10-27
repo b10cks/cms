@@ -5,6 +5,7 @@ namespace App\Models\Management;
 use App\Enums\AiChangesetItemStatus;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 
 /**
  * One proposed change. `update` items patch one field (`path`, block IDs never
@@ -28,8 +29,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property AiChangesetItemStatus $status
  * @property list<array<string, string>>|null $glossary_findings
  * @property string|null $decided_by_id
- * @property \Illuminate\Support\Carbon|null $decided_at
- * @property \Illuminate\Support\Carbon|null $learned_at
+ * @property Carbon|null $decided_at
+ * @property Carbon|null $learned_at
  */
 class AiChangesetItem extends GlobalModel
 {
@@ -44,6 +45,9 @@ class AiChangesetItem extends GlobalModel
     public const TARGET_DATA_ENTRY = 'data_entry';
 
     public const TARGET_ASSET = 'asset';
+
+    /** A block definition. A proposal target only: no bulk scopes, schedules or preflight. */
+    public const TARGET_BLOCK = 'block';
 
     /** A rich text selection, applied in the open editor that owns the working copy. */
     public const TARGET_SELECTION = 'selection';

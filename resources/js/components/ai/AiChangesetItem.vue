@@ -7,7 +7,7 @@ import { Badge } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
 import { Textarea } from '~/components/ui/textarea'
 import type { AiChangesetItem } from '~/lib/aiChangesets'
-import { blockListChanges, diffFieldType, isOpenItem } from '~/lib/aiChangesets'
+import { blockListChanges, createdBlockFields, diffFieldType, isOpenItem } from '~/lib/aiChangesets'
 
 /**
  * One proposed field change: its diff on the history renderers, accept and
@@ -54,6 +54,9 @@ const startEdit = () => {
 }
 
 const path = computed(() => {
+  const field = props.item.target_type === 'block' ? /^schema\.(.+)$/.exec(props.item.path ?? '') : null
+  if (field) return t('components.aiChangeset.blockField', { key: field[1] })
+
   const segments = (props.item.path ?? '').split('.')
   // Content paths alternate field keys and block IDs; the IDs mean nothing to a reader.
   const shown = props.item.target_type === 'content' ? segments.filter((_, index) => index % 2 === 0) : segments
@@ -71,6 +74,8 @@ const diff = computed(() =>
     fieldType: diffFieldType(props.item),
   })
 )
+
+const blockFields = computed(() => createdBlockFields(props.item))
 
 const createdContent = computed(() => {
   const after = props.item.after
@@ -99,7 +104,11 @@ const STATUS_VARIANTS = {
   >
     <div class="flex min-h-7 items-center gap-2">
       <span class="min-w-0 truncate text-sm font-medium">
-        {{ item.operation === 'create' ? $t('components.aiChangeset.newEntry') : path }}
+        {{
+          item.operation === 'create'
+            ? $t(item.target_type === 'block' ? 'components.aiChangeset.newBlock' : 'components.aiChangeset.newEntry')
+            : path
+        }}
       </span>
       <Badge
         v-if="item.status !== 'pending'"
@@ -196,6 +205,33 @@ const STATUS_VARIANTS = {
         <ValueRenderer :value="item.final ?? item.after" />
       </div>
     </div>
+    <ul
+      v-else-if="item.operation === 'create' && item.target_type === 'block'"
+      class="grid gap-1 text-sm"
+      :aria-label="$t('components.aiChangeset.blockFields')"
+    >
+      <li
+        v-for="field in blockFields"
+        :key="field.key"
+        class="flex items-baseline gap-2"
+      >
+        <span class="font-medium">{{ field.name }}</span>
+        <span class="text-muted">{{ field.key }}</span>
+        <Badge
+          variant="secondary"
+          size="sm"
+          class="ml-auto"
+        >
+          {{ field.type }}
+        </Badge>
+      </li>
+      <li
+        v-if="blockFields.length === 0"
+        class="text-muted"
+      >
+        {{ $t('components.aiChangeset.noBlockFields') }}
+      </li>
+    </ul>
     <div
       v-else-if="item.operation === 'create'"
       class="text-sm"

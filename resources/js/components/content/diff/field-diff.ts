@@ -41,6 +41,8 @@ export function resolveDiffComponent(change: DiffChange): Component | undefined 
     case 'geo':
     case 'price':
     case 'meta':
+    // A block's field definition, proposed by the AI.
+    case 'block_field':
       return KeyValueDiff
     case 'block':
       return BlockItemDiff

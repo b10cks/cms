@@ -5,7 +5,11 @@
 import type { DiffChange } from '~/components/content/diff/field-diff'
 import type { AiGlossaryFinding, AiRunRecord } from '~/lib/aiRun'
 
+/** Kinds that bulk scopes, schedules and preflight work on. */
 export type AiTargetType = 'content' | 'data_entry' | 'asset'
+
+/** Kinds the AI can propose changes to; block definitions are reviewed only. */
+export type AiProposalTargetType = AiTargetType | 'block'
 
 export type AiChangesetStatus = 'open' | 'partially_applied' | 'applied' | 'discarded'
 
@@ -14,7 +18,7 @@ export type AiChangesetItemStatus = 'pending' | 'accepted' | 'rejected' | 'confl
 export interface AiChangesetItem {
   id: string
   operation: 'update' | 'create'
-  target_type: AiTargetType | 'selection'
+  target_type: AiProposalTargetType | 'selection'
   target_id: string | null
   target_label: string | null
   base_version_id: string | null
@@ -130,6 +134,30 @@ export function groupChangesetItems(items: readonly AiChangesetItem[]): AiChange
 
 export const isOpenItem = (item: AiChangesetItem) =>
   item.status === 'pending' || item.status === 'conflict'
+
+/** Link to the reviewed entry in its editor, when it has one. */
+export function entryLink(spaceId: string, entry: Pick<AiChangesetEntry, 'targetType' | 'targetId'>): string | null {
+  if (!entry.targetId) return null
+  if (entry.targetType === 'content') return `/${spaceId}/content/${entry.targetId}`
+  if (entry.targetType === 'block') return `/${spaceId}/blocks/${entry.targetId}`
+  return null
+}
+
+/** The field definitions of a proposed new block, in schema order. */
+export function createdBlockFields(item: AiChangesetItem): Array<{ key: string; name: string; type: string }> {
+  if (item.target_type !== 'block' || item.operation !== 'create') return []
+  const schema = typeof item.after === 'object' && item.after !== null && 'schema' in item.after ? item.after.schema : null
+  if (typeof schema !== 'object' || schema === null) return []
+
+  return Object.entries(schema).map(([key, field]: [string, unknown]) => {
+    const definition = typeof field === 'object' && field !== null ? (field as Record<string, unknown>) : {}
+    return {
+      key,
+      name: typeof definition.name === 'string' ? definition.name : key,
+      type: typeof definition.type === 'string' ? definition.type : '',
+    }
+  })
+}
 
 /** Field type for the history diff renderers, which name the blocks type `block`. */
 export const diffFieldType = (item: AiChangesetItem): string | null =>

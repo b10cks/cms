@@ -53,9 +53,8 @@ export function useAiThreads(spaceId: MaybeRefOrGetter<string>) {
    */
   const refreshTargets = (items: readonly AiChangesetItem[], decision: AiDecision = {}) => {
     const id = toValue(spaceId)
-    const accepted = items.filter(
-      (item) => item.target_id && (!decision.item_ids || decision.item_ids.includes(item.id))
-    )
+    const decided = items.filter((item) => !decision.item_ids || decision.item_ids.includes(item.id))
+    const accepted = decided.filter((item) => item.target_id)
     const invalidate = (queryKey: readonly unknown[]) => queryClient.invalidateQueries({ queryKey })
 
     for (const item of accepted) {
@@ -68,6 +67,8 @@ export function useAiThreads(spaceId: MaybeRefOrGetter<string>) {
     }
     if (accepted.some((item) => item.target_type === 'data_entry')) void invalidate(queryKeys.dataSources(id).all())
     if (accepted.some((item) => item.target_type === 'asset')) void invalidate(queryKeys.assets(id).lists())
+    // A created block has no ID until it is accepted.
+    if (decided.some((item) => item.target_type === 'block')) void invalidate(queryKeys.blocks(id).all())
   }
 
   const acceptMutation = useMutation({
