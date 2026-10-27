@@ -8,11 +8,17 @@ import { cn } from '@/lib/utils'
 
 import { useCommand, useCommandGroup } from '.'
 
-const props = defineProps<ListboxItemProps & { class?: HTMLAttributes['class'] }>()
+const props = defineProps<
+  ListboxItemProps & {
+    class?: HTMLAttributes['class']
+    /** Shown for every search and left out of the filter, e.g. an action built from the search text. */
+    alwaysVisible?: boolean
+  }
+>()
 const emits = defineEmits<ListboxItemEmits>()
 
 const delegatedProps = computed(() => {
-  const { class: _, ...delegated } = props
+  const { class: _, alwaysVisible: __, ...delegated } = props
 
   return delegated
 })
@@ -21,10 +27,10 @@ const forwarded = useForwardPropsEmits(delegatedProps, emits)
 
 const id = useId()
 const { filterState, allItems, allGroups } = useCommand()
-const groupContext = useCommandGroup()
+const groupContext = useCommandGroup(null)
 
 const isRender = computed(() => {
-  if (!filterState.search) {
+  if (props.alwaysVisible || !filterState.search) {
     return true
   }
 
@@ -39,7 +45,7 @@ const isRender = computed(() => {
 const itemRef = ref()
 const currentElement = useCurrentElement(itemRef)
 onMounted(() => {
-  if (!(currentElement.value instanceof HTMLElement)) return
+  if (props.alwaysVisible || !(currentElement.value instanceof HTMLElement)) return
 
   allItems.value.set(id, currentElement.value.textContent ?? String(props.value ?? ''))
 

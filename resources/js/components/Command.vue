@@ -93,7 +93,7 @@ const jumpTo = (url: string) => {
   >
     <CommandInput :placeholder="$t('labels.command.input.placeholder')" />
     <CommandList>
-      <CommandEmpty>{{ $t('labels.command.empty') }}</CommandEmpty>
+      <CommandEmpty v-if="spacesOnly || !canUseAi">{{ $t('labels.command.empty') }}</CommandEmpty>
       <AiCommandItems
         v-if="!spacesOnly && canUseAi"
         :space-id="spaceId"

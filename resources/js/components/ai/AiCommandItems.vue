@@ -22,8 +22,8 @@ const search = computed(() => filterState.search.trim())
 <template>
   <CommandItem
     v-if="search"
-    :key="`ask:${search}`"
     value="ai:ask"
+    always-visible
     class="flex items-center gap-2"
     @select="emit('start', { prompt: search, skill: null })"
   >
