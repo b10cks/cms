@@ -12,7 +12,7 @@ One milestone in four waves. Each wave ships on its own and leaves `feat/ai-v2` 
 | W4 MCP exposure, content as knowledge | W1 | W2 |
 | W5 Cost, caching, operations, spec | W3 | none |
 
-Status (2026-10-28): all five waves merged into `feat/ai-v2`. W1 and W2 UI walked through in the browser; W3 and W5 UI not yet. `../sdk/packages/mcp-server/src/operations.ts` is changed but uncommitted on the SDK branch.
+Status (2026-10-28): W1 to W6 merged into `main`. UI walked through in the browser; one real OpenRouter run verified the loop, proposal and cost reconciliation. SDK changes in `../sdk` are uncommitted on the SDK branch.
 
 ## Rules for every wave
 
