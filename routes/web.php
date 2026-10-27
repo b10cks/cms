@@ -109,6 +109,7 @@ Route::get('/{space}/settings/ai', AppController::class)->name('space-settings-a
 Route::get('/{space}/settings/ai-skills', AppController::class)->name('space-settings-ai-skills');
 Route::get('/{space}/settings/ai-knowledge', AppController::class)->name('space-settings-ai-knowledge');
 Route::get('/{space}/settings/ai-glossaries', AppController::class)->name('space-settings-ai-glossaries');
+Route::get('/{space}/settings/ai-schedules', AppController::class)->name('space-settings-ai-schedules');
 Route::get('/{space}/settings/people', AppController::class)->name('space-settings-people');
 Route::get('/{space}/settings/backups', AppController::class)->name('space-settings-backups');
 Route::get('/{space}/settings/migrations', AppController::class)->name('space-settings-migrations');

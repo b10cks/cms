@@ -22,7 +22,7 @@ final class SkillParser
 
     public const OUTPUTS = [SkillManifest::OUTPUT_TEXT, SkillManifest::OUTPUT_RICHTEXT, SkillManifest::OUTPUT_JSON];
 
-    private const SURFACE_PATTERN = '/^(canvas|content-tree|selection|cmdk|meta-tags|translate|asset|field:[a-z_-]+|bulk:[a-z_-]+)$/';
+    private const SURFACE_PATTERN = '/^(canvas|content-tree|selection|cmdk|meta-tags|translate|asset|learning|field:[a-z_-]+|bulk:[a-z_-]+)$/';
 
     private const BUDGET_KEYS = ['max_steps', 'max_tokens', 'max_usd'];
 

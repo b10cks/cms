@@ -9,7 +9,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 /**
  * One proposed change. `update` items patch one field (`path`, block IDs never
  * indexes) of an existing target; `create` items carry a whole new entry in
- * `after`. `current` holds the value found when an accept hit a conflict.
+ * `after`. `current` holds the value found when an accept hit a conflict,
+ * `final` the value a reviewer accepted after editing the proposal.
  *
  * @property string $id
  * @property string $changeset_id
@@ -22,11 +23,13 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string|null $field_type
  * @property mixed $before
  * @property mixed $after
+ * @property mixed $final
  * @property mixed $current
  * @property AiChangesetItemStatus $status
  * @property list<array<string, string>>|null $glossary_findings
  * @property string|null $decided_by_id
  * @property \Illuminate\Support\Carbon|null $decided_at
+ * @property \Illuminate\Support\Carbon|null $learned_at
  */
 class AiChangesetItem extends GlobalModel
 {
@@ -56,20 +59,24 @@ class AiChangesetItem extends GlobalModel
         'field_type',
         'before',
         'after',
+        'final',
         'current',
         'status',
         'glossary_findings',
         'decided_by_id',
         'decided_at',
+        'learned_at',
     ];
 
     protected $casts = [
         'before' => 'json',
         'after' => 'json',
+        'final' => 'json',
         'current' => 'json',
         'status' => AiChangesetItemStatus::class,
         'glossary_findings' => 'array',
         'decided_at' => 'datetime',
+        'learned_at' => 'datetime',
     ];
 
     public function changeset(): BelongsTo

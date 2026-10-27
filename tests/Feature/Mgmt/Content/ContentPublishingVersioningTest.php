@@ -630,7 +630,7 @@ class ContentPublishingVersioningTest extends TestCase
     }
 
     #[Test]
-    public function publishing_a_draft_runs_seventeen_queries_and_broadcasts_once(): void
+    public function publishing_a_draft_runs_eighteen_queries_and_broadcasts_once(): void
     {
         $content = Content::query()->findOrFail($this->createVersionedContent(
             publishedContent: ['summary' => 'Published summary'],
@@ -647,7 +647,8 @@ class ContentPublishingVersioningTest extends TestCase
 
         // Was 26 with two broadcasts: a clean save, repeated version loads, the space
         // settings write and two automation lookups for a space without automations.
-        $this->assertCount(17, DB::getQueryLog());
+        // 18 since the AI learning loop looks for accepted AI items of the entry.
+        $this->assertCount(18, DB::getQueryLog());
         $this->assertSame(1, $broadcasts);
     }
 

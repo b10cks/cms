@@ -3,6 +3,8 @@
 use App\Http\Controllers\Mgmt\Ai\AiChangesetController;
 use App\Http\Controllers\Mgmt\Ai\AiContextController;
 use App\Http\Controllers\Mgmt\Ai\AiGlossaryController;
+use App\Http\Controllers\Mgmt\Ai\AiGlossarySuggestionController;
+use App\Http\Controllers\Mgmt\Ai\AiScheduleController;
 use App\Http\Controllers\Mgmt\Ai\AiKnowledgeDocumentController;
 use App\Http\Controllers\Mgmt\Ai\AiModelsController;
 use App\Http\Controllers\Mgmt\Ai\AiPreflightController;
@@ -293,6 +295,12 @@ Route::group(['prefix' => 'spaces/{space}', 'middleware' => 'space.member'], fun
     Route::get('ai/changesets/{changeset}', [AiChangesetController::class, 'show'])->name('spaces.ai.changesets.show');
     Route::post('ai/changesets/{changeset}/accept', [AiChangesetController::class, 'accept'])->name('spaces.ai.changesets.accept');
     Route::post('ai/changesets/{changeset}/reject', [AiChangesetController::class, 'reject'])->name('spaces.ai.changesets.reject');
+    Route::post('ai/suggestions/{suggestion}/accept', [AiGlossarySuggestionController::class, 'accept'])->name('spaces.ai.suggestions.accept');
+    Route::post('ai/suggestions/{suggestion}/dismiss', [AiGlossarySuggestionController::class, 'dismiss'])->name('spaces.ai.suggestions.dismiss');
+    Route::get('ai/schedules', [AiScheduleController::class, 'index'])->name('spaces.ai.schedules.index');
+    Route::post('ai/schedules', [AiScheduleController::class, 'store'])->name('spaces.ai.schedules.store');
+    Route::patch('ai/schedules/{schedule}', [AiScheduleController::class, 'update'])->name('spaces.ai.schedules.update');
+    Route::delete('ai/schedules/{schedule}', [AiScheduleController::class, 'destroy'])->name('spaces.ai.schedules.destroy');
 
     Route::post('icon', SpaceIconController::class)->name('spaces.icon');
     Route::post('archive', SpaceArchiveController::class)->name('spaces.archive');

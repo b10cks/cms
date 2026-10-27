@@ -39,6 +39,12 @@ class Kernel extends ConsoleKernel
             ->withoutOverlapping()
             ->runInBackground();
 
+        $schedule->command('ai:run-schedules')
+            ->everyMinute()
+            ->onOneServer()
+            ->withoutOverlapping()
+            ->runInBackground();
+
         // Recompute asset rights_status (unrestricted/restricted/expired) from
         // license_expires_at across all spaces.
         $schedule->command('assets:sync-rights-status')
