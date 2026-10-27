@@ -1,21 +1,20 @@
+import type { AiRunRecord } from '~/lib/aiRun'
+
 import type { ApiClient } from '../client'
 
-export interface ContentInteractionPayload {
-  prompt: string
-  content: object | null
-  content_id: string | null
-  files?: Array<{ name: string; url: string; type: string }>
-  config_id?: string | null
-  model?: string | null // Deprecated: kept for backward compatibility
-  mentions?: MentionItem[]
+export interface AiResolvedSkill {
+  name: string
+  description: string
+  surfaces: string[]
+  blocks: string[]
+  output: 'text' | 'richtext' | 'json'
+  source: AiScope | 'system'
+  owner_id: string | null
+  skill_id: string | null
+  shadows: Array<{ source: AiScope | 'system'; owner_id: string | null }>
 }
 
-export interface AiStreamEvent {
-  type: 'status' | 'delta' | 'done' | 'error'
-  message?: string
-  content?: string
-  data?: Record<string, unknown>
-}
+export type AiScope = 'space' | 'team'
 
 export interface MentionItem {
   type: 'content' | 'block' | 'draft-content'
@@ -74,10 +73,34 @@ export class Ai {
     this.spaceId = spaceId
   }
 
-  public getStreamUrl(): string {
-    const baseUrl = this.client.getBaseUrl()
-    const query = this.spaceId ? `?spaceId=${this.spaceId}` : ''
-    return `${baseUrl}/mgmt/v1/ai/content-interaction/stream${query}`
+  public async getSurfaceSkills(
+    surface: string,
+    block?: string | null
+  ): Promise<{ data: AiResolvedSkill[] }> {
+    return this.client.get<{ data: AiResolvedSkill[] }>(
+      `/mgmt/v1/spaces/${this.spaceId}/ai/context`,
+      { surface, block: block ?? undefined }
+    )
+  }
+
+  public async getRun(runId: string): Promise<{ data: AiRunRecord }> {
+    return this.client.get<{ data: AiRunRecord }>(`/mgmt/v1/spaces/${this.spaceId}/ai/runs/${runId}`)
+  }
+
+  public async getRunEvents(
+    runId: string,
+    after: number
+  ): Promise<{ data: unknown[]; run: AiRunRecord }> {
+    return this.client.get<{ data: unknown[]; run: AiRunRecord }>(
+      `/mgmt/v1/spaces/${this.spaceId}/ai/runs/${runId}/events`,
+      { after }
+    )
+  }
+
+  public async cancelRun(runId: string): Promise<{ data: AiRunRecord }> {
+    return this.client.post<{ data: AiRunRecord }>(
+      `/mgmt/v1/spaces/${this.spaceId}/ai/runs/${runId}/cancel`
+    )
   }
 
   public async getAiConfigs(): Promise<{ data: SpaceAiConfig[] }> {

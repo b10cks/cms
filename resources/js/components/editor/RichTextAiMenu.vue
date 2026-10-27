@@ -1,0 +1,153 @@
+<script setup lang="ts">
+import type { Editor } from '@tiptap/core'
+import { BubbleMenu } from '@tiptap/vue-3/menus'
+
+import type { AiResolvedSkill } from '~/api/resources/ai'
+import AiActions from '~/components/ai/AiActions.vue'
+import AiQuestionnaireForm from '~/components/ai/AiQuestionnaireForm.vue'
+import Icon from '~/components/Icon.vue'
+import { Button } from '~/components/ui/button'
+import { aiSkillLabel } from '~/lib/aiSkills'
+
+const props = defineProps<{
+  editor: Editor
+  spaceId: string
+}>()
+
+const { t } = useI18n()
+const { showAiError } = useAiErrorToast()
+const { data: skills } = useAiSurfaceSkills(() => props.spaceId, 'selection')
+const run = useAiRun(() => props.spaceId)
+
+interface Proposal {
+  skill: AiResolvedSkill
+  from: number
+  to: number
+  before: string
+}
+
+const proposal = shallowRef<Proposal | null>(null)
+const suggestion = computed(() => (run.result.value?.text ?? run.text.value).trim())
+
+const SURROUNDING_CHARS = 600
+
+const shouldShow = ({ editor }: { editor: Editor }) =>
+  proposal.value !== null || (!editor.state.selection.empty && editor.isEditable)
+
+const runSkill = async (skill: AiResolvedSkill) => {
+  const { from, to } = props.editor.state.selection
+  const doc = props.editor.state.doc
+  const before = doc.textBetween(from, to, '\n')
+  proposal.value = { skill, from, to, before }
+
+  const outcome = await run.start({
+    surface: 'selection',
+    skill: skill.name,
+    context: {
+      selection: before,
+      surrounding: doc.textBetween(
+        Math.max(0, from - SURROUNDING_CHARS),
+        Math.min(doc.content.size, to + SURROUNDING_CHARS),
+        '\n'
+      ),
+    },
+  })
+
+  if (outcome.status === 'failed') {
+    showAiError(outcome.error?.reason, outcome.error?.message)
+    proposal.value = null
+  }
+}
+
+const accept = () => {
+  const current = proposal.value
+  if (!current || !suggestion.value) return
+
+  props.editor
+    .chain()
+    .focus()
+    .insertContentAt({ from: current.from, to: current.to }, suggestion.value)
+    .run()
+  proposal.value = null
+}
+
+const discard = () => {
+  void run.cancel()
+  proposal.value = null
+  props.editor.commands.focus()
+}
+</script>
+
+<template>
+  <BubbleMenu
+    :editor="editor"
+    :should-show="shouldShow"
+    :options="{ placement: 'bottom-start' }"
+  >
+    <div
+      v-if="!proposal"
+      class="rounded-lg border border-border bg-popover p-1 shadow-soft-sm"
+    >
+      <AiActions
+        :skills="skills ?? []"
+        @select="runSkill"
+      />
+    </div>
+    <div
+      v-else
+      class="w-96 space-y-2 rounded-lg border border-border bg-popover p-3 shadow-soft-sm"
+      role="dialog"
+      :aria-label="aiSkillLabel(proposal.skill.name, t)"
+    >
+      <div class="flex items-center gap-2 text-sm font-medium text-ai">
+        <Icon name="lucide:sparkles" />
+        {{ aiSkillLabel(proposal.skill.name, t) }}
+      </div>
+      <AiQuestionnaireForm
+        v-if="run.questionnaire.value"
+        :questionnaire="run.questionnaire.value"
+        @submit="run.answer"
+      />
+      <template v-else>
+        <p class="text-sm text-muted-foreground line-through">{{ proposal.before }}</p>
+        <p
+          class="whitespace-pre-wrap text-sm text-foreground"
+          role="status"
+        >
+          {{ suggestion || $t('components.aiText.thinking') }}
+        </p>
+        <ul
+          v-if="run.findings.value.length > 0"
+          class="space-y-1 text-sm text-warning"
+        >
+          <li
+            v-for="finding in run.findings.value"
+            :key="`${finding.type}:${finding.term}:${finding.found ?? ''}`"
+          >
+            {{ $t(`components.aiActions.findings.${finding.type}`, { term: finding.term, expected: finding.expected ?? '', found: finding.found ?? '' }) }}
+          </li>
+        </ul>
+      </template>
+      <div class="flex justify-end gap-2">
+        <Button
+          type="button"
+          size="sm"
+          variant="ghost"
+          @click="discard"
+        >
+          {{ $t('components.aiActions.discard') }}
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          variant="ai"
+          :disabled="run.status.value !== 'completed' || !suggestion"
+          :loading="run.isActive.value"
+          @click="accept"
+        >
+          {{ $t('components.aiActions.accept') }}
+        </Button>
+      </div>
+    </div>
+  </BubbleMenu>
+</template>

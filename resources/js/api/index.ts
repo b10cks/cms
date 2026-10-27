@@ -1,4 +1,5 @@
 import { Ai } from '~/api/resources/ai'
+import { AiKnowledge, type AiOwner } from '~/api/resources/ai-knowledge'
 import { AuditLogs } from '~/api/resources/audit-logs'
 import { AutomationActions } from '~/api/resources/automation-actions'
 import { AutomationExecutions } from '~/api/resources/automation-executions'
@@ -50,7 +51,6 @@ import { Teams } from './resources/teams'
 
 export class API {
   public client: ApiClient
-  private readonly _ai: Ai
   private readonly _authorization: Authorization
   private readonly _plans: Plans
   private readonly _provider: Provider
@@ -70,7 +70,6 @@ export class API {
     } = {}
   ) {
     this.client = new ApiClient(options)
-    this._ai = new Ai(this.client)
     this._authorization = new Authorization(this.client)
     this._plans = new Plans(this.client)
     this._provider = new Provider(this.client)
@@ -90,12 +89,6 @@ export class API {
 
   public setAuthHandler(handler: any): void {
     this.client.setAuthHandler(handler)
-  }
-
-  // Space-less: every other Ai method interpolates the space id into its path,
-  // so those are only reachable through `forSpace(id).ai`.
-  public get ai(): Pick<Ai, 'getStreamUrl'> {
-    return this._ai
   }
 
   public get authorization(): Authorization {
@@ -140,6 +133,11 @@ export class API {
 
   public get personalAccessTokens(): PersonalAccessTokens {
     return this._personalAccessTokens
+  }
+
+  /** Skills, knowledge and glossaries of a space or a team. */
+  public aiKnowledge(owner: AiOwner): AiKnowledge {
+    return new AiKnowledge(this.client, owner)
   }
 
   public forSpace(spaceId: string) {

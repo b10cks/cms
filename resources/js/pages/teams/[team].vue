@@ -1,5 +1,8 @@
 <script setup lang="ts">
 import StopIcon from '~/assets/images/error.svg?component'
+import AiGlossariesSettings from '~/components/ai-settings/AiGlossariesSettings.vue'
+import AiKnowledgeSettings from '~/components/ai-settings/AiKnowledgeSettings.vue'
+import AiSkillsSettings from '~/components/ai-settings/AiSkillsSettings.vue'
 import Icon from '~/components/Icon.vue'
 import CreateInviteDialog from '~/components/invites/CreateInviteDialog.vue'
 import PeopleManager from '~/components/people/PeopleManager.vue'
@@ -57,6 +60,7 @@ const activeView = computed(() => {
   if (routeName === 'team-roles') return 'roles'
   if (routeName === 'team-saml') return 'saml'
   if (routeName === 'team-settings') return 'settings'
+  if (routeName === 'team-ai') return 'ai'
 
   return 'people'
 })
@@ -70,6 +74,8 @@ const canManageInvites = computed(() => access.hasAbility('team.invites.manage')
 const canManageRoles = computed(() => access.canAccessRoute('team-roles'))
 const canManageSaml = computed(() => access.canAccessRoute('team-saml'))
 const canManageSettings = computed(() => access.canAccessRoute('team-settings'))
+const canManageAi = computed(() => access.canAccessRoute('team-ai'))
+const aiOwner = computed(() => ({ kind: 'team' as const, id: teamId.value }))
 const canViewPeople = computed(() => access.canAccessRoute('team'))
 const isRoot = computed(() => access.authorization.value?.is_root ?? false)
 
@@ -115,7 +121,9 @@ watch(
           ? 'team-saml'
           : activeView.value === 'settings'
             ? 'team-settings'
-            : 'team'
+            : activeView.value === 'ai'
+              ? 'team-ai'
+              : 'team'
 
     if (!views.includes(currentView)) {
       router.replace({
@@ -219,6 +227,15 @@ const viewTabs = computed(() => {
       route: 'team-settings',
       icon: 'lucide:settings',
       label: t('labels.teams.tabs.settings'),
+    })
+  }
+
+  if (canManageAi.value) {
+    tabs.push({
+      value: 'ai',
+      route: 'team-ai',
+      icon: 'lucide:sparkles',
+      label: t('labels.teams.tabs.ai'),
     })
   }
 
@@ -407,6 +424,23 @@ const navigateBack = () => {
               :hierarchy="hierarchy"
               :is-root="isRoot"
             />
+          </template>
+
+          <template v-else-if="activeView === 'ai' && canManageAi">
+            <div class="divide-y divide-border">
+              <AiSkillsSettings
+                :owner="aiOwner"
+                can-manage
+              />
+              <AiKnowledgeSettings
+                :owner="aiOwner"
+                can-manage
+              />
+              <AiGlossariesSettings
+                :owner="aiOwner"
+                can-manage
+              />
+            </div>
           </template>
 
           <template v-else-if="activeView === 'saml' && canManageSaml">

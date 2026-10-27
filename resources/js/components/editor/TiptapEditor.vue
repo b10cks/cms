@@ -8,6 +8,7 @@ import {
 import { EditorContent, useEditor } from '@tiptap/vue-3'
 
 import LinkDialog from '~/components/editor/LinkDialog.vue'
+import RichTextAiMenu from '~/components/editor/RichTextAiMenu.vue'
 import type { LinkApplyPayload, LinkInitial } from '~/components/editor/linkTypes'
 import Icon from '~/components/Icon.vue'
 import { Button } from '~/components/ui/button'
@@ -777,6 +778,12 @@ onBeforeUnmount(() => {
       :tabindex="props.disabled ? -1 : undefined"
       class="rounded border border-input-border bg-input shadow-sm"
       data-validation-target="true"
+    />
+
+    <RichTextAiMenu
+      v-if="editor && spaceId && !props.disabled"
+      :editor="editor"
+      :space-id="spaceId"
     />
 
     <LinkDialog

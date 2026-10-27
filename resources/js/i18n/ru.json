@@ -2810,7 +2810,8 @@
         "invites": "Приглашения",
         "roles": "Роли",
         "saml": "SAML",
-        "settings": "Настройки"
+        "settings": "Настройки",
+        "ai": "AI"
       },
       "settings": {
         "title": "Данные команды",
@@ -4568,7 +4569,88 @@
       "configDeleteError": "Не удалось удалить конфигурацию ИИ",
       "deleteDialogTitle": "Удалить конфигурацию ИИ?",
       "deleteDialogDescription": "Это навсегда удалит конфигурацию «{name}». Это действие нельзя отменить.",
-      "cannotDeleteLast": "Нельзя удалить последнюю конфигурацию"
+      "cannotDeleteLast": "Нельзя удалить последнюю конфигурацию",
+      "publish": "Publish",
+      "columns": {
+        "name": "Name",
+        "title": "Title",
+        "type": "Type",
+        "status": "Status",
+        "enabled": "Enabled",
+        "actions": "Actions",
+        "source": "Source",
+        "surfaces": "Where it appears",
+        "shadows": "Overrides"
+      },
+      "status": {
+        "draft": "Draft",
+        "published": "Revision {revision}",
+        "changed": "Revision {revision}, changed"
+      },
+      "sources": {
+        "space": "Space",
+        "team": "Team",
+        "system": "Built-in"
+      },
+      "skills": {
+        "title": "Skills",
+        "description": "Instructions the AI uses for a task. A skill in this space replaces a team or built-in skill with the same name.",
+        "create": "New skill",
+        "edit": "Edit skill",
+        "format": "SKILL.md with a name and description in its frontmatter. Supporting files are read by the AI on demand.",
+        "filePath": "File path",
+        "fileContent": "Content",
+        "addFile": "Add file",
+        "empty": "No skills yet.",
+        "confirmDelete": "Delete the skill {name}?",
+        "resolvedTitle": "Available skills",
+        "resolvedDescription": "What the AI uses here after resolving space, team and built-in skills."
+      },
+      "knowledge": {
+        "title": "Knowledge",
+        "description": "Style guides are always followed. Reference documents are searched when a task needs them.",
+        "create": "New document",
+        "edit": "Edit document",
+        "editorHint": "Write markdown or upload a PDF or Word file. Runs use the published revision.",
+        "markdown": "Markdown",
+        "upload": "Upload PDF or DOCX",
+        "empty": "No documents yet.",
+        "confirmDelete": "Delete the document {title}?",
+        "types": {
+          "style": "Style guide",
+          "reference": "Reference"
+        },
+        "extraction": {
+          "pending": "Extracting text",
+          "done": "Text extracted",
+          "failed": "Extraction failed"
+        }
+      },
+      "glossaries": {
+        "title": "Glossaries",
+        "description": "Terms the AI must use, keep untranslated or avoid. Findings are flagged on the generated text.",
+        "create": "Add",
+        "newName": "New glossary",
+        "empty": "No glossaries yet.",
+        "emptyTerms": "No terms found.",
+        "confirmDelete": "Delete the glossary {name} and all its terms?",
+        "addTerm": "Add term",
+        "editTerm": "Edit term",
+        "term": "Term",
+        "sourceLocale": "Locale",
+        "translations": "Translations",
+        "translationsHint": "One per line, for example de: Kasse",
+        "forbidden": "Never use",
+        "forbiddenHint": "Comma-separated variants the AI must not write",
+        "note": "Note",
+        "doNotTranslate": "Keep untranslated",
+        "caseSensitive": "Case sensitive",
+        "rules": "Rules",
+        "neverUse": "Never: {terms}",
+        "import": "Import",
+        "export": "Export {format}",
+        "importErrors": "{count} rows could not be imported"
+      }
     },
     "aiConfigSelector": {
       "selectConfig": "Выберите конфигурацию ИИ",
@@ -4611,7 +4693,9 @@
       "streamError": "Ошибка ИИ: {error}",
       "noConfigSelected": "Пожалуйста, выберите конфигурацию ИИ, чтобы продолжить",
       "placeholderSelectConfig": "Выберите конфигурацию, чтобы начать...",
-      "placeholderDefault": "Попросите {name} помочь с вашим контентом..."
+      "placeholderDefault": "Попросите {name} помочь с вашим контентом...",
+      "working": "Looking things up...",
+      "background": "This takes a while, it continues in the background..."
     },
     "contentTreeAi": {
       "title": "Создать дерево контента с помощью ИИ",
@@ -4633,6 +4717,31 @@
     },
     "fieldEditor": {
       "loadFailed": "Не удалось загрузить этот редактор, возможно, после обновления. Перезагрузите страницу, чтобы редактировать это поле."
+    },
+    "aiActions": {
+      "trigger": "AI",
+      "label": "Ask AI to",
+      "accept": "Accept",
+      "discard": "Discard",
+      "skills": {
+        "content-interaction": "Edit this entry",
+        "content-tree": "Plan the content tree",
+        "meta-tags": "Write meta tags",
+        "translate-fields": "Translate fields",
+        "translate-data-entries": "Translate data entries",
+        "asset-classification": "Describe images",
+        "rewrite": "Rewrite",
+        "shorten": "Shorten",
+        "expand": "Expand",
+        "fix-grammar": "Fix grammar",
+        "apply-glossary": "Apply glossary",
+        "translate-selection": "Translate"
+      },
+      "findings": {
+        "missing_term": "Use \"{expected}\" for \"{term}\".",
+        "translated_do_not_translate": "Keep \"{term}\" untranslated.",
+        "forbidden_variant": "\"{found}\" is not allowed, use \"{expected}\"."
+      }
     }
   },
   "alertDialog": {
@@ -5050,6 +5159,20 @@
       "saveSuccess": "Сохранено {count} изменение | Сохранено {count} изменения | Сохранено {count} изменений",
       "savePartial": "Сохранено {saved}, ошибок: {errors}",
       "saveError": "Не удалось сохранить: {error}"
+    },
+    "aiRun": {
+      "failed": "The AI run did not finish."
+    },
+    "aiKnowledge": {
+      "saved": "Saved",
+      "saveError": "Could not save: {error}",
+      "published": "Published",
+      "publishError": "Could not publish: {error}",
+      "deleted": "Deleted",
+      "deleteError": "Could not delete: {error}",
+      "uploaded": "File uploaded, the text is being extracted",
+      "imported": "Glossary imported",
+      "importError": "Could not import: {error}"
     }
   },
   "content": {

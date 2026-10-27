@@ -2824,7 +2824,8 @@
         "invites": "Einladungen",
         "roles": "Rollen",
         "saml": "SAML",
-        "settings": "Einstellungen"
+        "settings": "Einstellungen",
+        "ai": "KI"
       },
       "settings": {
         "title": "Team-Details",
@@ -4597,7 +4598,9 @@
       "thinking": "Denke nach...",
       "placeholderSelectConfig": "Select a configuration to start...",
       "placeholderDefault": "Ask {name} to help with your content...",
-      "noConfigSelected": "Please select an AI configuration to continue"
+      "noConfigSelected": "Please select an AI configuration to continue",
+      "working": "Schlage nach...",
+      "background": "Das dauert länger und läuft im Hintergrund weiter..."
     },
     "aiMention": {
       "content": "Inhalte",
@@ -4620,7 +4623,88 @@
       "deleteDialogTitle": "Delete AI Configuration?",
       "configDeleteSuccess": "AI configuration deleted successfully",
       "configDeleteError": "Failed to delete AI configuration",
-      "cannotDeleteLast": "Cannot delete the last configuration"
+      "cannotDeleteLast": "Cannot delete the last configuration",
+      "publish": "Veröffentlichen",
+      "columns": {
+        "name": "Name",
+        "title": "Titel",
+        "type": "Typ",
+        "status": "Status",
+        "enabled": "Aktiv",
+        "actions": "Aktionen",
+        "source": "Quelle",
+        "surfaces": "Wo sie erscheint",
+        "shadows": "Ersetzt"
+      },
+      "status": {
+        "draft": "Entwurf",
+        "published": "Revision {revision}",
+        "changed": "Revision {revision}, geändert"
+      },
+      "sources": {
+        "space": "Space",
+        "team": "Team",
+        "system": "Eingebaut"
+      },
+      "skills": {
+        "title": "Skills",
+        "description": "Anweisungen, die die KI für eine Aufgabe nutzt. Ein Skill in diesem Space ersetzt einen Team- oder eingebauten Skill gleichen Namens.",
+        "create": "Neuer Skill",
+        "edit": "Skill bearbeiten",
+        "format": "SKILL.md mit Name und Beschreibung im Frontmatter. Zusatzdateien liest die KI bei Bedarf.",
+        "filePath": "Dateipfad",
+        "fileContent": "Inhalt",
+        "addFile": "Datei hinzufügen",
+        "empty": "Noch keine Skills.",
+        "confirmDelete": "Skill {name} löschen?",
+        "resolvedTitle": "Verfügbare Skills",
+        "resolvedDescription": "Was die KI hier nach Auflösung von Space-, Team- und eingebauten Skills nutzt."
+      },
+      "knowledge": {
+        "title": "Wissen",
+        "description": "Styleguides gelten immer. Referenzdokumente werden durchsucht, wenn eine Aufgabe sie braucht.",
+        "create": "Neues Dokument",
+        "edit": "Dokument bearbeiten",
+        "editorHint": "Schreibe Markdown oder lade eine PDF- oder Word-Datei hoch. Läufe nutzen die veröffentlichte Revision.",
+        "markdown": "Markdown",
+        "upload": "PDF oder DOCX hochladen",
+        "empty": "Noch keine Dokumente.",
+        "confirmDelete": "Dokument {title} löschen?",
+        "types": {
+          "style": "Styleguide",
+          "reference": "Referenz"
+        },
+        "extraction": {
+          "pending": "Text wird extrahiert",
+          "done": "Text extrahiert",
+          "failed": "Extraktion fehlgeschlagen"
+        }
+      },
+      "glossaries": {
+        "title": "Glossare",
+        "description": "Begriffe, die die KI verwenden, unübersetzt lassen oder vermeiden muss. Abweichungen werden am Text markiert.",
+        "create": "Hinzufügen",
+        "newName": "Neues Glossar",
+        "empty": "Noch keine Glossare.",
+        "emptyTerms": "Keine Begriffe gefunden.",
+        "confirmDelete": "Glossar {name} mit allen Begriffen löschen?",
+        "addTerm": "Begriff hinzufügen",
+        "editTerm": "Begriff bearbeiten",
+        "term": "Begriff",
+        "sourceLocale": "Sprache",
+        "translations": "Übersetzungen",
+        "translationsHint": "Eine pro Zeile, zum Beispiel en: checkout",
+        "forbidden": "Nie verwenden",
+        "forbiddenHint": "Kommagetrennte Varianten, die die KI nicht schreiben darf",
+        "note": "Notiz",
+        "doNotTranslate": "Unübersetzt lassen",
+        "caseSensitive": "Groß-/Kleinschreibung beachten",
+        "rules": "Regeln",
+        "neverUse": "Nie: {terms}",
+        "import": "Importieren",
+        "export": "{format} exportieren",
+        "importErrors": "{count} Zeilen konnten nicht importiert werden"
+      }
     },
     "contentTreeAi": {
       "title": "Inhaltsbaum mit KI generieren",
@@ -4649,6 +4733,31 @@
     },
     "fieldEditor": {
       "loadFailed": "Dieser Editor konnte nicht geladen werden, vermutlich nach einem Update. Lade die Seite neu, um das Feld zu bearbeiten."
+    },
+    "aiActions": {
+      "trigger": "KI",
+      "label": "KI soll",
+      "accept": "Übernehmen",
+      "discard": "Verwerfen",
+      "skills": {
+        "content-interaction": "Eintrag bearbeiten",
+        "content-tree": "Inhaltsbaum planen",
+        "meta-tags": "Meta-Tags schreiben",
+        "translate-fields": "Felder übersetzen",
+        "translate-data-entries": "Dateneinträge übersetzen",
+        "asset-classification": "Bilder beschreiben",
+        "rewrite": "Umformulieren",
+        "shorten": "Kürzen",
+        "expand": "Ausbauen",
+        "fix-grammar": "Grammatik korrigieren",
+        "apply-glossary": "Glossar anwenden",
+        "translate-selection": "Übersetzen"
+      },
+      "findings": {
+        "missing_term": "Verwende „{expected}“ für „{term}“.",
+        "translated_do_not_translate": "Lass „{term}“ unübersetzt.",
+        "forbidden_variant": "„{found}“ ist nicht erlaubt, verwende „{expected}“."
+      }
     }
   },
   "alertDialog": {
@@ -5066,6 +5175,20 @@
       "saveSuccess": "{count} Änderung gespeichert | {count} Änderungen gespeichert",
       "savePartial": "{saved} gespeichert, {errors} Fehler",
       "saveError": "Speichern fehlgeschlagen: {error}"
+    },
+    "aiRun": {
+      "failed": "Der KI-Lauf wurde nicht abgeschlossen."
+    },
+    "aiKnowledge": {
+      "saved": "Gespeichert",
+      "saveError": "Speichern fehlgeschlagen: {error}",
+      "published": "Veröffentlicht",
+      "publishError": "Veröffentlichen fehlgeschlagen: {error}",
+      "deleted": "Gelöscht",
+      "deleteError": "Löschen fehlgeschlagen: {error}",
+      "uploaded": "Datei hochgeladen, der Text wird extrahiert",
+      "imported": "Glossar importiert",
+      "importError": "Import fehlgeschlagen: {error}"
     }
   },
   "content": {

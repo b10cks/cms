@@ -87,6 +87,21 @@ export const spaceSettingsNavigationItems: NavigationAccessItem[] = [
     routeName: 'space-settings-ai',
   },
   {
+    label: 'components.aiSettings.skills.title',
+    icon: 'lucide:wand-sparkles',
+    routeName: 'space-settings-ai-skills',
+  },
+  {
+    label: 'components.aiSettings.knowledge.title',
+    icon: 'lucide:book-open',
+    routeName: 'space-settings-ai-knowledge',
+  },
+  {
+    label: 'components.aiSettings.glossaries.title',
+    icon: 'lucide:book-a',
+    routeName: 'space-settings-ai-glossaries',
+  },
+  {
     label: 'labels.settings.people.title',
     icon: 'lucide:users',
     routeName: 'space-settings-people',
@@ -133,6 +148,11 @@ export const teamNavigationItems: NavigationAccessItem[] = [
     label: 'labels.teams.tabs.settings',
     icon: 'lucide:settings',
     routeName: 'team-settings',
+  },
+  {
+    label: 'labels.teams.tabs.ai',
+    icon: 'lucide:sparkles',
+    routeName: 'team-ai',
   },
 ]
 
@@ -274,6 +294,9 @@ export const routeAccessRequirements: Record<AppRouteName, RouteAccessRequiremen
   'space-settings-usage': { abilities: 'space.billing.view' },
   'space-settings-configuration': { abilities: 'space.update' },
   'space-settings-ai': { abilities: 'ai.view' },
+  'space-settings-ai-skills': { abilities: 'ai.view' },
+  'space-settings-ai-knowledge': { abilities: 'ai.view' },
+  'space-settings-ai-glossaries': { abilities: 'ai.view' },
   'space-settings-people': {
     abilities: {
       anyOf: [
@@ -294,6 +317,7 @@ export const routeAccessRequirements: Record<AppRouteName, RouteAccessRequiremen
   'team-roles': { abilities: 'team.roles.manage' },
   'team-saml': { abilities: 'team.saml.manage' },
   'team-settings': { abilities: 'team.update' },
+  'team-ai': { abilities: 'team.ai.manage' },
   'spaces-new': actionAccessRequirements['team.spaces.create'],
 }
 

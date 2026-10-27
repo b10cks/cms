@@ -105,7 +105,8 @@ class ContextBuilder
             $content = Content::query()->with(['block', 'current_version'])->find($contentId);
 
             if ($content) {
-                $context['content'] ??= $content->current_version?->content ?? [];
+                // The saved draft wins over what the client sent, as before.
+                $context['content'] = $content->current_version?->content ?? $context['content'] ?? [];
                 $context['root_block'] = $content->block ? [
                     'slug' => $content->block->slug,
                     'name' => $content->block->name,

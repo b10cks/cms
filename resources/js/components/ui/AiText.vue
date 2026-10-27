@@ -18,10 +18,10 @@ import {
   MessageScrollerItem,
   MessageScrollerButton,
 } from '~/components/ui/message-scroller'
-import type { StreamCallbacks } from '~/composables/useAiContent'
-import { useAiContent } from '~/composables/useAiContent'
+import AiQuestionnaireForm from '~/components/ai/AiQuestionnaireForm.vue'
 import { useAiMentions } from '~/composables/useAiMentions'
 import { useAiConfigs } from '~/composables/useAiModels'
+import { useAiRun } from '~/composables/useAiRun'
 import { stripAiCodeFences } from '~/lib/aiJson'
 
 export type AttachedFile = never
@@ -67,9 +67,8 @@ const props = withDefaults(
 
 const { t } = useI18n()
 const { showAiError } = useAiErrorToast()
-const { streamContentInteraction, cancelStream, isStreaming } = useAiContent(
-  toRef(props, 'spaceId')
-)
+const run = useAiRun(toRef(props, 'spaceId'))
+const { isActive: isStreaming, questionnaire, answer } = run
 const { useAiConfigsQuery } = useAiConfigs(toRef(props, 'spaceId'))
 const { useMentionItemsQuery } = useAiMentions(toRef(props, 'spaceId'))
 
@@ -175,80 +174,71 @@ const handleSend = async () => {
   isThinking.value = true
   statusMessage.value = t('components.aiText.thinking') as string
 
-  const callbacks: StreamCallbacks = {
-    onStatus: (message) => {
-      statusMessage.value = message
-    },
-    onDelta: (content) => {
-      statusMessage.value = null
-      previewContent.value = (previewContent.value ?? '') + content
-    },
-    onDone: (content) => {
-      statusMessage.value = null
-      previewContent.value = content
-      isThinking.value = false
-      emit(
-        'send',
-        stripAiCodeFences(content),
-        [],
-        selectedConfigId.value,
-        editorMentions.map((m) => ({
-          type: m.type,
-          id: m.id,
-          content: null,
-          label: m.label,
-        }))
-      )
-      emit('streamEnd')
-    },
-    onError: (message, reason) => {
-      showAiError(reason, message)
-      statusMessage.value = null
-      isThinking.value = false
-      emit('streamEnd')
-    },
-  }
+  const mentions = editorMentions.map((m) => ({
+    type: m.type,
+    id: m.id,
+    content: null,
+    label: m.label,
+  }))
 
   emit('streamStart')
 
-  try {
-    await streamContentInteraction(
-      {
-        prompt,
-        content: props.content,
+  const outcome = await run.start(
+    {
+      surface: 'canvas',
+      skill: 'content-interaction',
+      prompt,
+      context: {
         content_id: props.contentId ?? null,
+        content: props.content,
+        mentions,
         files: [],
-        config_id: selectedConfigId.value,
-        mentions: editorMentions.map((m) => ({
-          type: m.type,
-          id: m.id,
-          content: null,
-          label: m.label,
-        })),
       },
-      callbacks
-    )
-  } finally {
-    if (isThinking.value) {
-      isThinking.value = false
-      statusMessage.value = null
-      emit('streamEnd')
+      config_id: selectedConfigId.value,
+    },
+    {
+      onEvent: (event) => {
+        if (event.type === 'text_delta') {
+          statusMessage.value = null
+          previewContent.value = (previewContent.value ?? '') + event.text
+        } else if (event.type === 'tool_started') {
+          statusMessage.value = t('components.aiText.working') as string
+        } else if (event.type === 'moved_to_background') {
+          statusMessage.value = t('components.aiText.background') as string
+        } else if (event.type === 'questionnaire') {
+          statusMessage.value = null
+        }
+      },
     }
-  }
-}
+  )
 
-onBeforeUnmount(cancelStream)
+  statusMessage.value = null
+  isThinking.value = false
+
+  if (outcome.status === 'completed' && outcome.result) {
+    const { data, text } = outcome.result
+    emit(
+      'send',
+      data !== null ? JSON.stringify(data) : stripAiCodeFences(text),
+      [],
+      selectedConfigId.value,
+      mentions
+    )
+  } else if (outcome.status === 'failed') {
+    showAiError(outcome.error?.reason, outcome.error?.message)
+  }
+
+  emit('streamEnd')
+}
 
 const handleCancel = () => {
   if (props.directEmit) {
     emit('cancel')
     return
   }
-  cancelStream()
+  void run.cancel()
   statusMessage.value = null
   previewContent.value = null
-  isThinking.value = false
-  emit('streamEnd')
 }
 
 const configError = computed(() => {
@@ -306,6 +296,12 @@ defineExpose({
         <MessageScrollerButton />
       </MessageScroller>
     </MessageScrollerProvider>
+
+    <AiQuestionnaireForm
+      v-if="questionnaire"
+      :questionnaire="questionnaire"
+      @submit="answer"
+    />
 
     <InputGroup
       class="relative rounded-xl bg-popover transition-colors"

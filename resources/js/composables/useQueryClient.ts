@@ -1,5 +1,7 @@
 import type { MaybeRef } from 'vue'
 
+import type { AiOwner } from '~/api/resources/ai-knowledge'
+
 import {
   entityKeys,
   listKeys,
@@ -143,6 +145,21 @@ export const queryKeys = {
       usage: () => [...all(), 'usage'] as const,
       configs: () => [...all(), 'configs'] as const,
       config: (configId: MaybeRef<string>) => [...all(), 'configs', configId] as const,
+      surfaceSkills: (surface: string, block: string | null) =>
+        [...all(), 'context', surface, block] as const,
+    }
+  },
+  /** Skills, knowledge and glossaries of a space or team. */
+  aiKnowledge: (owner: AiOwner) => {
+    const all = () => [`${owner.kind}s`, owner.id, 'ai'] as const
+    return {
+      all,
+      skills: () => [...all(), 'skills'] as const,
+      documents: () => [...all(), 'knowledge'] as const,
+      document: (id: string) => [...all(), 'knowledge', id] as const,
+      glossaries: () => [...all(), 'glossaries'] as const,
+      terms: (glossaryId: string, search: string) =>
+        [...all(), 'glossaries', glossaryId, 'terms', search] as const,
     }
   },
   migrations: spaceEntityKeys('migrations'),

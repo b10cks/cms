@@ -1,7 +1,9 @@
 import { balancedSpans, parseAiJson, stripAiCodeFences } from '~/lib/aiJson'
-import type { SseCallbacks } from '~/lib/sse'
 
-import { useAiStream } from './useAiStream'
+/**
+ * Tree operations the content-tree skill returns, plus the tolerant parsers
+ * the canvas uses for its streaming preview and the final answer.
+ */
 
 export interface AiContentTreeNode {
   id: string
@@ -59,17 +61,6 @@ export type TreeOperation =
   | DeleteTreeOperation
   | RestoreTreeOperation
 
-export interface ContentTreePayload {
-  prompt: string
-  tree: AiContentTreeNode[]
-  config_id: string | null
-  mentions: Array<{
-    type: string
-    id: string
-    label: string
-  }>
-}
-
 export interface TreeOperationsResult {
   operations: TreeOperation[]
 }
@@ -105,30 +96,6 @@ function isTreeOperation(value: unknown): value is TreeOperation {
   }
 
   return true
-}
-
-export function useAiContentTree(spaceId: MaybeRef<string>) {
-  const { t } = useI18n()
-  const { stream, cancelStream, isStreaming } = useAiStream()
-
-  const streamTreeInteraction = async (
-    payload: ContentTreePayload,
-    callbacks: SseCallbacks
-  ): Promise<void> => {
-    const id = toValue(spaceId)
-    if (!id) {
-      callbacks.onError?.(t('composables.ai.errors.noSpace') as string)
-      return
-    }
-
-    await stream(`/mgmt/v1/ai/content-tree-interaction/stream?spaceId=${id}`, payload, callbacks)
-  }
-
-  return {
-    streamTreeInteraction,
-    cancelStream,
-    isStreaming,
-  }
 }
 
 export function parseTreeOperations(jsonString: string): TreeOperationsResult | null {

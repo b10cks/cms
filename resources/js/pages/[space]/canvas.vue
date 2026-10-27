@@ -14,12 +14,6 @@ import { Badge } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
 import { Spinner } from '~/components/ui/spinner'
 import {
-  extractStreamingTreeOperations,
-  parseTreeOperations,
-  useAiContentTree,
-  type TreeOperation,
-} from '~/composables/useAiContentTree'
-import {
   useContentCanvasCommands,
   type ContentCanvasHistoryEntry,
 } from '~/composables/useContentCanvasCommands'
@@ -32,6 +26,11 @@ import {
   hydrateContentWithSchema,
 } from '~/composables/useSchemaDefaults'
 import { aiErrorMessage } from '~/lib/aiErrors'
+import {
+  extractStreamingTreeOperations,
+  parseTreeOperations,
+  type TreeOperation,
+} from '~/lib/aiTreeOperations'
 import { resolvePreferredCreateContentBlock } from '~/lib/content-children'
 import {
   CONTENT_WIZARD_ROOT_ID,
@@ -88,11 +87,8 @@ const { apply, applyError, invalidateContentQueries, isApplying } = useContentWi
   spaceId,
   treeApi
 )
-const {
-  streamTreeInteraction,
-  cancelStream,
-  isStreaming: isAiStreaming,
-} = useAiContentTree(spaceId)
+const aiRun = useAiRun(spaceId)
+const cancelStream = () => void aiRun.cancel()
 const collaboration = useContentWizardCollaboration(spaceId)
 
 const canvasRef = useTemplateRef<InstanceType<typeof ContentWizardCanvas>>('canvas')
@@ -127,7 +123,7 @@ const bounds = computed(() => treeApi.bounds.value)
 const validationCount = computed(() => treeApi.validations.value.length)
 const hasUnsavedChanges = computed(() => treeApi.hasUnsavedChanges.value)
 const zoomPercent = computed(() => canvasRef.value?.zoomPercent ?? 100)
-const isAiBusy = computed(() => isAiStreaming.value)
+const isAiBusy = computed(() => aiRun.isActive.value)
 const draftMentionItems = computed<AiMentionItem[]>(() =>
   treeApi.orderedNodes.value
     .filter((node) => !node.isRootVirtual)
@@ -1911,54 +1907,65 @@ const handleAiSubmit = async ({
     tone: 'info',
   }
 
-  await streamTreeInteraction(
+  let streamed = ''
+  const outcome = await aiRun.start(
     {
+      surface: 'content-tree',
+      skill: 'content-tree',
       prompt,
-      tree: treeApi.exportForAi(),
+      context: { tree: treeApi.exportForAi(), mentions },
       config_id: configId,
-      mentions,
     },
     {
-      onStatus: (message) => {
-        aiStatus.value = { message, tone: 'info' }
-      },
-      onDelta: (chunk) => {
-        aiResponseBuffer.value += chunk
-        const nextPartial = extractStreamingTreeOperations(aiResponseBuffer.value)
+      onEvent: (event) => {
+        if (event.type === 'tool_started') {
+          aiStatus.value = { message: t('components.aiText.working') as string, tone: 'info' }
+        }
+        if (event.type !== 'text_delta') return
+
+        streamed += event.text
+        aiResponseBuffer.value = streamed
+        const nextPartial = extractStreamingTreeOperations(streamed)
         if (nextPartial.length > 0) {
           updateAiPreview(nextPartial)
         }
       },
-      onDone: (content) => {
-        const parsed = parseTreeOperations(content)
-        if (!parsed) {
-          restoreAiSnapshot()
-          aiStatus.value = {
-            message: t('labels.contents.canvas.aiParseError') as string,
-            tone: 'error',
-          }
-          clearAiStreamState()
-          return
-        }
-
-        const beforeSnapshot = aiPreviewSnapshot.value
-        updateAiPreview(parsed.operations, true)
-        if (beforeSnapshot) {
-          const afterSnapshot = treeApi.createSnapshot()
-          broadcastOperations(buildHistoryOperations(beforeSnapshot, afterSnapshot))
-        }
-        clearAiStreamState()
-      },
-      onError: (message, reason) => {
-        restoreAiSnapshot()
-        aiStatus.value = { message: aiErrorMessage(t, reason, message), tone: 'error' }
-        clearAiStreamState()
-        if (reason === 'plan_excluded') {
-          showAiError(reason, message)
-        }
-      },
     }
   )
+
+  if (outcome.status === 'cancelled') return
+
+  if (outcome.status === 'failed') {
+    const { message = '', reason } = outcome.error ?? {}
+    restoreAiSnapshot()
+    aiStatus.value = { message: aiErrorMessage(t, reason, message), tone: 'error' }
+    clearAiStreamState()
+    if (reason === 'plan_excluded') {
+      showAiError(reason, message)
+    }
+    return
+  }
+
+  const parsed = outcome.result?.data
+    ? parseTreeOperations(JSON.stringify(outcome.result.data))
+    : parseTreeOperations(outcome.result?.text ?? '')
+  if (!parsed) {
+    restoreAiSnapshot()
+    aiStatus.value = {
+      message: t('labels.contents.canvas.aiParseError') as string,
+      tone: 'error',
+    }
+    clearAiStreamState()
+    return
+  }
+
+  const beforeSnapshot = aiPreviewSnapshot.value
+  updateAiPreview(parsed.operations, true)
+  if (beforeSnapshot) {
+    const afterSnapshot = treeApi.createSnapshot()
+    broadcastOperations(buildHistoryOperations(beforeSnapshot, afterSnapshot))
+  }
+  clearAiStreamState()
 }
 
 const handleAiCancel = () => {

@@ -2,16 +2,19 @@ import { flushPromises, mount } from '@vue/test-utils'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import AiText from '~/components/ui/AiText.vue'
-import type { StreamCallbacks } from '~/composables/useAiContent'
+import type { AiRunOptions, AiRunOutcome } from '~/composables/useAiRun'
 
-const transport = vi.hoisted(() => ({ stream: vi.fn(), cancel: vi.fn() }))
-vi.mock('~/composables/useAiContent', async () => {
-  const { ref } = await import('vue')
+const transport = vi.hoisted(() => ({ start: vi.fn(), cancel: vi.fn() }))
+vi.mock('~/composables/useAiRun', async () => {
+  const { computed, ref, shallowRef } = await import('vue')
   return {
-    useAiContent: () => ({
-      streamContentInteraction: transport.stream,
-      cancelStream: transport.cancel,
-      isStreaming: ref(false),
+    useAiRun: () => ({
+      start: transport.start,
+      cancel: transport.cancel,
+      answer: vi.fn(),
+      isActive: computed(() => false),
+      questionnaire: shallowRef(null),
+      text: ref(''),
     }),
   }
 })
@@ -57,11 +60,11 @@ const mountComposer = async (directEmit = false) => {
 
 describe('AI text interaction', () => {
   it('locks the composer before the stream starts and retains the completed response', async () => {
-    let callbacks: StreamCallbacks | undefined
-    let complete: (() => void) | undefined
-    transport.stream.mockImplementation((_payload, value: StreamCallbacks) => {
-      callbacks = value
-      return new Promise<void>((resolve) => {
+    let options: AiRunOptions | undefined
+    let complete: ((outcome: AiRunOutcome) => void) | undefined
+    transport.start.mockImplementation((_request, value: AiRunOptions) => {
+      options = value
+      return new Promise<AiRunOutcome>((resolve) => {
         complete = resolve
       })
     })
@@ -69,11 +72,15 @@ describe('AI text interaction', () => {
     await wrapper.find('button').trigger('click')
     expect(wrapper.find('.ProseMirror').attributes('contenteditable')).toBe('false')
     expect(wrapper.text()).toContain('Cancel')
-    callbacks?.onDelta?.('Suggested intro')
+    options?.onEvent?.({ type: 'text_delta', run_id: 'run', seq: 2, text: 'Suggested intro' })
     await flushPromises()
     expect(wrapper.find('[data-slot=message-content]').text()).toBe('Suggested intro')
-    callbacks?.onDone?.('Suggested intro')
-    complete?.()
+    complete?.({
+      status: 'completed',
+      result: { text: 'Suggested intro', data: null, glossary_findings: [] },
+      partial: false,
+      error: null,
+    })
     await flushPromises()
     expect(wrapper.emitted('send')?.[0]?.[0]).toBe('Suggested intro')
     expect(wrapper.emitted('streamEnd')).toHaveLength(1)
@@ -84,7 +91,7 @@ describe('AI text interaction', () => {
     const wrapper = await mountComposer(true)
     await wrapper.find('button').trigger('click')
     expect(wrapper.emitted('send')?.[0]).toEqual(['Write an intro', [], 'default', []])
-    expect(transport.stream).not.toHaveBeenCalled()
+    expect(transport.start).not.toHaveBeenCalled()
     expect(wrapper.find('.ProseMirror').text()).toBe('')
   })
 })

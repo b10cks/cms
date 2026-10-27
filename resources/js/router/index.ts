@@ -120,6 +120,11 @@ const routes: RouteRecordRaw[] = [
         name: 'team-settings',
         component: () => import('~/pages/teams/[team].vue'),
       },
+      {
+        path: ':team/ai',
+        name: 'team-ai',
+        component: () => import('~/pages/teams/[team].vue'),
+      },
     ],
   },
   {
@@ -341,6 +346,21 @@ const routes: RouteRecordRaw[] = [
         path: 'ai',
         name: 'space-settings-ai',
         component: () => import('~/pages/[space]/settings/ai.vue'),
+      },
+      {
+        path: 'ai-skills',
+        name: 'space-settings-ai-skills',
+        component: () => import('~/pages/[space]/settings/ai-skills.vue'),
+      },
+      {
+        path: 'ai-knowledge',
+        name: 'space-settings-ai-knowledge',
+        component: () => import('~/pages/[space]/settings/ai-knowledge.vue'),
+      },
+      {
+        path: 'ai-glossaries',
+        name: 'space-settings-ai-glossaries',
+        component: () => import('~/pages/[space]/settings/ai-glossaries.vue'),
       },
       {
         path: 'people',
