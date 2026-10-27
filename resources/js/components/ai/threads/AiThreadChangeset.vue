@@ -58,6 +58,7 @@ const accept = (decision: AiDecision) => {
     {
       changesetId: props.changeset.id,
       decision: Object.keys(values).length > 0 ? { ...decision, values } : decision,
+      items: props.changeset.items ?? [],
     },
     {
       onSuccess: () => {

@@ -66,7 +66,9 @@ class ProposeUpdateTool extends ProposalTool
         $this->ensureInScope($type, $id);
 
         $snapshot = $target->find($id, $type === AiChangesetItem::TARGET_CONTENT ? $versionId : null)
-            ?? throw new ToolError('No entry with this ID'.($versionId ? ' and version' : '').'.');
+            ?? throw new ToolError($versionId
+                ? 'No entry with this ID and version. Call get_entry with the ID and pass the version_id it returns.'
+                : 'No entry with this ID.');
 
         $patches = [];
         foreach ($changes as $change) {

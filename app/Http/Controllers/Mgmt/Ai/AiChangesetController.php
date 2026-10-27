@@ -39,6 +39,11 @@ class AiChangesetController extends Controller
     public function accept(DecideAiChangesetRequest $request, Space $space, string $changeset, AcceptAiChangesetItems $action): JsonResponse
     {
         $model = $this->findChangeset($space, $changeset);
+        // The accepted values are not an edit of the requesting tab: its open
+        // editor must receive the `content:updated` broadcast like everyone else.
+        // `toOthers()` reads the socket from the container's request, not from
+        // this form request copy.
+        request()->headers->remove('X-Socket-ID');
         $result = $action->handle($model, $space, $request->user(), $request->itemIds(), $request->boolean('overwrite'), $request->editedValues());
 
         return response()->json(['data' => new AiChangesetResource($model->refresh()), ...$result]);

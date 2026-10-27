@@ -5,6 +5,7 @@ namespace Tests\Feature\Ai;
 use App\Actions\Content\UpdateContent;
 use App\Enums\AiChangesetItemStatus;
 use App\Enums\AiRunState;
+use App\Events\Space\ContentUpdated;
 use App\Models\Management\AiChangeset;
 use App\Models\Management\AiChangesetItem;
 use App\Models\Management\AiRun;
@@ -23,6 +24,7 @@ use App\Services\Ai\Run\TurnResult;
 use App\Services\Ai\Run\TurnUsage;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Str;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\Support\FakeAiDriver;
@@ -95,11 +97,14 @@ class AiChangesetTest extends TestCase
         $this->runToEnd();
 
         $changeset = AiChangeset::query()->sole();
-        $this->postJson($this->url("ai/changesets/{$changeset->id}/accept"))
+        Event::fake([ContentUpdated::class]);
+        $this->postJson($this->url("ai/changesets/{$changeset->id}/accept"), [], ['X-Socket-ID' => '1234.5678'])
             ->assertOk()
             ->assertJsonPath('accepted', 1)
             ->assertJsonPath('data.status', 'applied');
 
+        // The tab that accepted has the entry open, so the broadcast includes it.
+        Event::assertDispatched(ContentUpdated::class, fn (ContentUpdated $event) => $event->socket === null);
         $content->refresh()->load('current_version');
         $this->assertSame(['title' => 'Hello there', 'summary' => 'World'], $content->current_version->content);
         $this->assertNotSame($publishedVersionId, $content->current_version_id);

@@ -1,7 +1,7 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
 
 import { api } from '~/api'
-import type { AiDecision } from '~/lib/aiChangesets'
+import type { AiChangesetItem, AiDecision } from '~/lib/aiChangesets'
 import type { AiQuestionnaireAnswers } from '~/lib/aiRun'
 import type { AiThreadListParams, AiThreadPatch } from '~/lib/aiThreads'
 import { toastError } from '~/lib/toast-error'
@@ -46,10 +46,44 @@ export function useAiThreads(spaceId: MaybeRefOrGetter<string>) {
     onError: (error: unknown) => toastError(t, 'components.aiThreads.updateFailed', error),
   })
 
+  /**
+   * Accepting writes drafts on the server; refetch what it touched so an open
+   * editor, list or grid shows the change without waiting for a broadcast.
+   * The editor keeps unsaved local edits and replaces a clean document.
+   */
+  const refreshTargets = (items: readonly AiChangesetItem[], decision: AiDecision = {}) => {
+    const id = toValue(spaceId)
+    const accepted = items.filter(
+      (item) => item.target_id && (!decision.item_ids || decision.item_ids.includes(item.id))
+    )
+    const invalidate = (queryKey: readonly unknown[]) => queryClient.invalidateQueries({ queryKey })
+
+    for (const item of accepted) {
+      if (item.target_type === 'content') void invalidate(queryKeys.contents(id).detail(item.target_id ?? ''))
+      if (item.target_type === 'asset') void invalidate(queryKeys.assets(id).detail(item.target_id ?? ''))
+    }
+    if (accepted.some((item) => item.target_type === 'content')) {
+      void invalidate(queryKeys.contentMenu(id).all())
+      void invalidate(queryKeys.massEdit(id).all())
+    }
+    if (accepted.some((item) => item.target_type === 'data_entry')) void invalidate(queryKeys.dataSources(id).all())
+    if (accepted.some((item) => item.target_type === 'asset')) void invalidate(queryKeys.assets(id).lists())
+  }
+
   const acceptMutation = useMutation({
-    mutationFn: ({ changesetId, decision }: { changesetId: string; decision?: AiDecision }) =>
-      resource().acceptChangeset(changesetId, decision),
-    onSuccess: refresh,
+    mutationFn: ({
+      changesetId,
+      decision,
+    }: {
+      changesetId: string
+      decision?: AiDecision
+      /** The changeset's items as shown, to refetch the entries they target */
+      items?: readonly AiChangesetItem[]
+    }) => resource().acceptChangeset(changesetId, decision),
+    onSuccess: (_result, { decision, items = [] }) => {
+      refreshTargets(items, decision)
+      return refresh()
+    },
     onError: (error: unknown) => {
       void refresh()
       toastError(t, 'components.aiChangeset.acceptFailed', error)

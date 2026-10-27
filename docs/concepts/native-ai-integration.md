@@ -338,3 +338,4 @@ Settled with Mike: copy T3 Code's thread list and composer as closely as the CMS
 11. Preflight estimates calibrate themselves: average reconciled cost per entry per space and skill, token formula until 5 runs exist.
 12. File arguments over MCP are base64 (`{filename, content_base64}`), capped at the app's upload limit.
 13. Editor translations apply in place like selection proposals and are recorded as single-entry changeset items, so edits feed the learning loop.
+14. Accepting changes updates an open editor without a reload. Reverb is the main path: the accept endpoint drops the requesting tab's `X-Socket-ID`, so the `content:updated` broadcast (normally `toOthers()`) reaches that tab too. The fallback when Reverb is down: the client refetches the accepted entries, the content menu and the mass-edit grid after the request. A clean editor takes the new draft; unsaved local edits are kept.
