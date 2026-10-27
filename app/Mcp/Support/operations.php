@@ -2,9 +2,14 @@
 
 declare(strict_types=1);
 
+use App\Http\Requests\Ai\ImportAiGlossaryRequest;
+use App\Http\Requests\Ai\UploadAiKnowledgeSourceRequest;
+
 // Generated from @b10cks/mcp-server operations.ts + @b10cks/mgmt-client.
 // Placeholders in `uri` are MCP argument names; {blockId}-style placeholders
-// fall back to the generic {id} argument at dispatch time.
+// fall back to the generic {id} argument at dispatch time. `files` names the
+// payload keys that carry {filename, content_base64} and their limit in KB;
+// `download` returns the response file as {filename, content_type, content_base64}.
 
 return [
     // ─── System ─────────────────────────────────────────────────────────────────
@@ -1066,6 +1071,14 @@ return [
         'method' => 'POST',
         'uri' => '/mgmt/v1/spaces/{spaceId}/ai/knowledge/{id}/publish',
     ],
+    'ai.knowledge.upload' => [
+        'description' => 'Upload a PDF, DOCX, Markdown or text file as the source of a knowledge document; its text is extracted into the draft. Payload: file as {filename, content_base64}, at most 20 MB.',
+        'required' => ['spaceId', 'id', 'payload'],
+        'accepts' => ['spaceId', 'id', 'payload'],
+        'method' => 'POST',
+        'uri' => '/mgmt/v1/spaces/{spaceId}/ai/knowledge/{id}/source',
+        'files' => ['file' => UploadAiKnowledgeSourceRequest::MAX_KB],
+    ],
     'ai.glossaries.list' => [
         'description' => 'List glossaries of a space.',
         'required' => ['spaceId'],
@@ -1121,6 +1134,22 @@ return [
         'accepts' => ['spaceId', 'id', 'entryId'],
         'method' => 'DELETE',
         'uri' => '/mgmt/v1/spaces/{spaceId}/ai/glossaries/{id}/terms/{entryId}',
+    ],
+    'ai.glossaries.import' => [
+        'description' => 'Import terms into a glossary of a space from a CSV, XLSX or TBX file. Use id for the glossary. Payload: file as {filename, content_base64}, at most 10 MB.',
+        'required' => ['spaceId', 'id', 'payload'],
+        'accepts' => ['spaceId', 'id', 'payload'],
+        'method' => 'POST',
+        'uri' => '/mgmt/v1/spaces/{spaceId}/ai/glossaries/{id}/import',
+        'files' => ['file' => ImportAiGlossaryRequest::MAX_KB],
+    ],
+    'ai.glossaries.export' => [
+        'description' => 'Export the terms of a glossary of a space as {filename, content_type, content_base64}. Use id for the glossary. Params: format (csv, xlsx or tbx).',
+        'required' => ['spaceId', 'id'],
+        'accepts' => ['spaceId', 'id', 'params'],
+        'method' => 'GET',
+        'uri' => '/mgmt/v1/spaces/{spaceId}/ai/glossaries/{id}/export',
+        'download' => true,
     ],
     'ai.teamSkills.list' => [
         'description' => 'List AI skills of a team.',

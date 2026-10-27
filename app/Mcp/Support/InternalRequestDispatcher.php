@@ -6,6 +6,7 @@ namespace App\Mcp\Support;
 
 use Illuminate\Foundation\Application;
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Facade;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -22,9 +23,10 @@ class InternalRequestDispatcher
     /**
      * @param  array<string, mixed>  $query
      * @param  array<string, mixed>|null  $payload
-     * @return array{status: int, body: string}
+     * @param  array<string, UploadedFile>  $files  sent as multipart form data along with the payload
+     * @return array{status: int, body: string, contentType: string|null, filename: string|null}
      */
-    public function dispatch(string $method, string $uri, array $query = [], ?array $payload = null, ?string $bearerToken = null): array
+    public function dispatch(string $method, string $uri, array $query = [], ?array $payload = null, ?string $bearerToken = null, array $files = []): array
     {
         $server = ['HTTP_ACCEPT' => 'application/json'];
 
@@ -32,7 +34,7 @@ class InternalRequestDispatcher
             $server['HTTP_AUTHORIZATION'] = 'Bearer '.$bearerToken;
         }
 
-        $content = $payload !== null ? json_encode($payload, JSON_THROW_ON_ERROR) : null;
+        $content = $payload !== null && $files === [] ? json_encode($payload, JSON_THROW_ON_ERROR) : null;
 
         if ($content !== null) {
             $server['CONTENT_TYPE'] = 'application/json';
@@ -40,7 +42,10 @@ class InternalRequestDispatcher
 
         // Build on APP_URL, not the bare path: Request::create() would default
         // the host to localhost, which TrustHosts rejects outside local/testing.
-        $request = Request::create(rtrim(config('app.url'), '/').$uri, $method, $query, [], [], $server, $content);
+        $url = rtrim(config('app.url'), '/').$uri;
+        $request = $files === []
+            ? Request::create($url, $method, $query, [], [], $server, $content)
+            : Request::create($url.($query !== [] ? '?'.http_build_query($query) : ''), $method, $payload ?? [], [], $files, $server);
         // The outer /mcp/v1 request is already throttled; exempt the sub-request
         // so one tool call doesn't consume two mgmt rate-limit hits.
         $request->attributes->set('mcp-internal', true);
@@ -69,6 +74,13 @@ class InternalRequestDispatcher
             $body = (string) $response->getContent();
         }
 
-        return ['status' => $response->getStatusCode(), 'body' => $body];
+        $disposition = (string) $response->headers->get('Content-Disposition', '');
+
+        return [
+            'status' => $response->getStatusCode(),
+            'body' => $body,
+            'contentType' => $response->headers->get('Content-Type'),
+            'filename' => preg_match('/filename="?([^";]+)"?/', $disposition, $match) === 1 ? $match[1] : null,
+        ];
     }
 }
