@@ -89,8 +89,13 @@ export function useAiThreads(spaceId: MaybeRefOrGetter<string>) {
     onError: (error: unknown) => toastError(t, 'components.aiThreads.suggestions.dismissFailed', error),
   })
 
+  /** Upload a file for the next message; the composer tracks progress itself. */
+  const uploadAttachment = (file: File, options: { onProgress?: (progress: number) => void; signal?: AbortSignal }) =>
+    resource().uploadAttachment(file, options)
+
   return {
     useThreadsQuery,
+    uploadAttachment,
     useThreadQuery,
     refresh,
     updateMutation,

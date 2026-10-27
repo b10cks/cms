@@ -4920,18 +4920,16 @@
       "new": "Neuer Thread",
       "newThread": "Neuer Thread",
       "search": "Threads durchsuchen",
-      "showArchived": "Archivierte anzeigen",
       "shared": "Geteilt",
       "sharedWithSpace": "Mit dem Space geteilt",
       "empty": "Noch keine Threads. Frag die KI etwas, um einen zu starten.",
       "noMatches": "Kein Thread passt.",
-      "pickThread": "Wähle einen Thread oder starte einen neuen.",
       "toReview": "{count} Eintrag zu prüfen | {count} Einträge zu prüfen",
       "status": {
-        "needs_input": "Wartet auf deine Antwort",
-        "needs_review": "Wartet auf deine Prüfung",
+        "needs_input": "Antwort",
+        "needs_review": "Prüfen",
         "running": "Läuft",
-        "failed": "Fehlgeschlagen",
+        "failed": "Fehler",
         "done": "Fertig"
       },
       "states": {
@@ -4954,15 +4952,11 @@
       "rename": "Umbenennen",
       "titleLabel": "Thread-Titel",
       "share": "Mit dem Space teilen",
-      "archive": "Archivieren",
-      "unarchive": "Aus dem Archiv holen",
-      "archived": "Archiviert",
       "updateFailed": "Thread konnte nicht geändert werden: {error}",
       "ownerOnly": "Nur {name} kann in diesem Thread weiterschreiben.",
-      "emptyThread": "Frag alles zu diesem Space oder wähle einen Skill. Änderungen landen hier zur Prüfung, gespeichert wird erst, was du übernimmst.",
+      "emptyThread": "Frag alles zu diesem Space. Mit / wählst du einen Skill, mit {'@'} erwähnst du einen Eintrag. Änderungen landen hier zur Prüfung, gespeichert wird erst, was du übernimmst.",
       "placeholder": "Frag die KI, {'@'} zum Erwähnen, / für Skills",
       "extraInstructions": "Zusätzliche Anweisungen (optional)",
-      "suggestedSkills": "Skills für diese Ansicht",
       "removeSkill": "Skill entfernen",
       "removeChip": "{name} entfernen",
       "attachChip": "{name} anhängen",
@@ -4998,6 +4992,29 @@
         "dismissTerm": "{term} verwerfen",
         "empty": "Keine Glossarvorschläge offen.",
         "evidence": "Die KI schrieb „{ai}“, eine Person änderte es zu „{final}“."
+      },
+      "searchPlaceholder": "Suchen",
+      "clearSearch": "Suche leeren",
+      "settled": "Erledigt",
+      "settle": "Erledigen",
+      "unsettle": "Wieder öffnen",
+      "settleThread": "{title} erledigen",
+      "unsettleThread": "{title} wieder öffnen",
+      "sharedBy": "Geteilt von {name}",
+      "context": {
+        "schedule": "Zeitplan",
+        "suggestions": "Glossarvorschläge"
+      },
+      "config": {
+        "label": "KI-Konfiguration",
+        "none": "Konfiguration wählen"
+      },
+      "files": {
+        "attach": "Dateien anhängen",
+        "unsupported": "{name} kann nicht angehängt werden. Erlaubt sind Bilder (PNG, JPEG, WebP, GIF) sowie PDF-, DOCX-, Markdown-, Text- und CSV-Dateien.",
+        "tooLarge": "{name} ist zu groß. Erlaubt sind höchstens {max}.",
+        "tooMany": "Höchstens {max} Dateien pro Nachricht.",
+        "uploadFailed": "{name} konnte nicht hochgeladen werden: {error}"
       }
     }
   },

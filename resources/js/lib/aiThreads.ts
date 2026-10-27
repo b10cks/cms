@@ -3,6 +3,7 @@
  * listed in the dock and on the threads page. Status is derived on the server.
  */
 import type { AiGlossaryResource } from '~/api/resources/ai-knowledge'
+import type { AiAttachment } from '~/lib/aiAttachments'
 import type { AiChangeset, AiChangesetItem, AiGlossarySuggestion } from '~/lib/aiChangesets'
 import type { AiRunRecord } from '~/lib/aiRun'
 
@@ -30,6 +31,10 @@ export interface AiThread {
   is_owner: boolean
   /** Entries with pending items */
   entry_count: number
+  /** The chips the thread started with, the row's context line */
+  context?: AiThreadChip[] | null
+  /** The skill of the first run */
+  skill?: string | null
 }
 
 /** A tool call of the live run, shown while it streams. */
@@ -45,6 +50,7 @@ export interface AiThreadTurn {
   prompt: string | null
   answer: string | null
   changeset: AiChangeset | null
+  attachments: AiAttachment[]
 }
 
 export interface AiThreadDetail extends AiThread {
@@ -58,7 +64,8 @@ export interface AiThreadDetail extends AiThread {
 
 export interface AiThreadList {
   data: AiThread[]
-  meta: { attention: number }
+  /** `settled` counts the user's visible settled threads */
+  meta: { attention: number; settled: number }
 }
 
 export interface AiThreadListParams {
@@ -80,13 +87,23 @@ const TOAST_STATUSES: ReadonlySet<AiThreadStatus> = new Set(['needs_input', 'nee
 /** A turn touching more entries than this renders one summary card. */
 export const SUMMARY_ENTRY_LIMIT = 5
 
-export const STATUS_DOT_CLASSES = {
-  needs_input: 'bg-warning',
-  needs_review: 'bg-info',
-  running: 'bg-ai animate-pulse',
-  failed: 'bg-destructive',
-  done: 'bg-border-strong',
-} as const satisfies Record<AiThreadStatus, string>
+/** Icon and text color of a status, as the list row and thread header show it. */
+export const THREAD_STATUS_STYLES = {
+  needs_input: { icon: 'lucide:message-circle-question', class: 'text-ai' },
+  needs_review: { icon: 'lucide:shield-question', class: 'text-warning' },
+  running: { icon: 'lucide:circle-dashed', class: 'text-info' },
+  failed: { icon: 'lucide:circle-alert', class: 'text-destructive' },
+  done: { icon: 'lucide:circle-check', class: 'text-success' },
+} as const satisfies Record<AiThreadStatus, { icon: string; class: string }>
+
+/** A running thread's elapsed time, short: `45s`, `12m`, `2h`. */
+export function formatElapsed(milliseconds: number): string {
+  const seconds = Math.max(0, Math.floor(milliseconds / 1000))
+  if (seconds < 60) return `${seconds}s`
+  const minutes = Math.floor(seconds / 60)
+  if (minutes < 60) return `${minutes}m`
+  return `${Math.floor(minutes / 60)}h`
+}
 
 /** The user's own and unowned threads, and the ones others shared. */
 export function groupThreads(threads: readonly AiThread[]) {

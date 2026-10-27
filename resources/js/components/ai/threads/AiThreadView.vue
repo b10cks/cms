@@ -35,7 +35,7 @@ import {
 } from '~/lib/aiDock'
 import type { AiQuestionnaireAnswers } from '~/lib/aiRun'
 import type { AiThreadChip } from '~/lib/aiThreads'
-import { chipsToRunContext, sameChip, STATUS_DOT_CLASSES } from '~/lib/aiThreads'
+import { chipsToRunContext, sameChip, THREAD_STATUS_STYLES } from '~/lib/aiThreads'
 
 /**
  * A thread, or a new one when `threadId` is null: header with the thread
@@ -106,7 +106,7 @@ watch(
 const send = async (message: AiThreadMessage) => {
   if (run.isActive.value) return
   const threadId = props.threadId
-  beginLiveTurn({ threadId, prompt: message.prompt, skill: message.skill })
+  beginLiveTurn({ threadId, prompt: message.prompt, attachments: message.attachments, skill: message.skill })
 
   const outcome = await run.start(
     {
@@ -116,6 +116,7 @@ const send = async (message: AiThreadMessage) => {
       context: { ...chipsToRunContext(chips.value), mentions: message.mentions },
       config_id: message.configId,
       conversation_id: threadId,
+      attachments: message.attachments.map((attachment) => attachment.id),
     },
     {
       onEvent: (event) => {
@@ -149,7 +150,7 @@ watch(
     chips.value = [...(draft.context ?? screenChips.value)]
     skill.value = draft.skill
     prompt.value = draft.prompt
-    if (draft.send) void send({ prompt: draft.prompt, skill: draft.skill, configId: null, mentions: [] })
+    if (draft.send) void send({ prompt: draft.prompt, skill: draft.skill, configId: null, mentions: [], attachments: [] })
   },
   { immediate: true }
 )
@@ -211,10 +212,11 @@ const suggestionsBusy = computed(
       >
         <Icon name="lucide:chevron-left" />
       </Button>
-      <span
-        v-if="thread"
-        :class="['size-2 shrink-0 rounded-full', STATUS_DOT_CLASSES[thread.status]]"
-        :title="$t(`components.aiThreads.status.${thread.status}`)"
+      <Icon
+        v-if="thread && !thread.archived"
+        :name="THREAD_STATUS_STYLES[thread.status].icon"
+        :class="['size-4 shrink-0', THREAD_STATUS_STYLES[thread.status].class]"
+        :aria-label="$t(`components.aiThreads.status.${thread.status}`)"
       />
       <Input
         v-if="renaming"
@@ -237,7 +239,7 @@ const suggestionsBusy = computed(
         variant="surface"
         size="sm"
       >
-        {{ $t('components.aiThreads.archived') }}
+        {{ $t('components.aiThreads.settled') }}
       </Badge>
 
       <DropdownMenu v-if="thread && canEdit">
@@ -264,8 +266,8 @@ const suggestionsBusy = computed(
           </DropdownMenuCheckboxItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem @select="patch({ archived: !thread.archived })">
-            <Icon :name="thread.archived ? 'lucide:archive-restore' : 'lucide:archive'" />
-            {{ thread.archived ? $t('components.aiThreads.unarchive') : $t('components.aiThreads.archive') }}
+            <Icon :name="thread.archived ? 'lucide:undo-2' : 'lucide:check'" />
+            {{ thread.archived ? $t('components.aiThreads.unsettle') : $t('components.aiThreads.settle') }}
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
@@ -297,7 +299,10 @@ const suggestionsBusy = computed(
     >
       <MessageScroller class="min-h-0 flex-1">
         <MessageScrollerViewport>
-          <MessageScrollerContent class="gap-6 p-4">
+          <MessageScrollerContent
+            class="gap-6 p-4"
+            :class="layout === 'page' && 'mx-auto w-full max-w-3xl'"
+          >
             <template v-if="isLoading">
               <Skeleton class="ml-auto h-9 w-2/3 rounded-xl" />
               <Skeleton class="h-4 w-full" />
@@ -348,6 +353,7 @@ const suggestionsBusy = computed(
                 <AiThreadTurn
                   :space-id="spaceId"
                   :prompt="turn.prompt"
+                  :attachments="turn.attachments"
                   :skill="turn.run.skill"
                   :state="turn.run.state"
                   :answer="turn.answer ?? turn.run.result?.text ?? null"
@@ -367,6 +373,7 @@ const suggestionsBusy = computed(
                 <AiThreadTurn
                   :space-id="spaceId"
                   :prompt="live.prompt"
+                  :attachments="live.attachments"
                   :skill="live.skill"
                   :state="run.status.value === 'awaiting_input' ? 'awaiting_input' : run.isActive.value ? 'running' : 'completed'"
                   :answer="run.text.value || null"
@@ -394,7 +401,8 @@ const suggestionsBusy = computed(
 
     <div
       v-if="showComposer"
-      class="shrink-0 border-t border-border p-3"
+      class="shrink-0 px-3 pb-3"
+      :class="layout === 'page' && 'mx-auto w-full max-w-3xl'"
     >
       <AiThreadComposer
         v-model:chips="chips"
@@ -403,7 +411,6 @@ const suggestionsBusy = computed(
         :space-id="spaceId"
         :skills="skills ?? []"
         :ghost-chips="ghostChips"
-        :show-skill-chips="isNew && !live"
         :running="run.isActive.value"
         @send="send"
         @cancel="run.cancel()"
