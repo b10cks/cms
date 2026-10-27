@@ -115,6 +115,17 @@ class AiConversation extends GlobalModel
     }
 
     /** Pinned first (waiting for answers, then for review), then by last activity. */
+    /** The skill of the thread's first run that used one, as `skill`; the list shows it as the row's context. */
+    public function scopeWithFirstSkill(Builder $query): void
+    {
+        $query->addSelect(['skill' => AiRun::query()
+            ->select('skill')
+            ->whereColumn('conversation_id', $query->getModel()->qualifyColumn('id'))
+            ->whereNotNull('skill')
+            ->oldest('created_at')
+            ->limit(1)]);
+    }
+
     public function scopeNeedsYouFirst(Builder $query): void
     {
         $query->orderByDesc('needs_input')->orderByDesc('needs_review')->orderByDesc('last_activity_at')->orderByDesc('id');

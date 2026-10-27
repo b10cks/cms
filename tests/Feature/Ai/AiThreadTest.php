@@ -65,6 +65,10 @@ class AiThreadTest extends TestCase
         $this->assertSame([['type' => 'content', 'id' => 'c1', 'label' => 'Home']], $second->context);
         $this->assertTrue($second->quiet);
         $this->assertSame(['user', 'assistant'], $first->messages()->pluck('role')->all());
+
+        $row = collect($this->getJson($this->url('ai/threads'))->json('data'))->firstWhere('id', $second->id);
+        $this->assertSame([['type' => 'content', 'id' => 'c1', 'label' => 'Home']], $row['context']);
+        $this->assertNull($row['skill']);
     }
 
     #[Test]

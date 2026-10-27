@@ -51,6 +51,7 @@ class AiThreadController extends Controller
 
         $threads = $visible()
             ->withStatus()
+            ->withFirstSkill()
             ->with('owner')
             ->when((bool) ($filters['archived'] ?? false), fn ($query) => $query->whereNotNull('archived_at'), fn ($query) => $query->whereNull('archived_at'))
             ->when($search !== '', fn ($query) => $query->where('title', 'like', "%{$search}%"))

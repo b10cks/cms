@@ -32,6 +32,8 @@ class AiThreadResource extends JsonResource
             ] : null,
             'is_owner' => $this->user_id !== null && $this->user_id === $request->user()?->id,
             'entry_count' => (int) $this->getAttribute('entry_count'),
+            'context' => $this->context,
+            'skill' => $this->resource->getAttributes()['skill'] ?? null,
         ];
     }
 }
