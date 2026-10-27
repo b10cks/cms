@@ -251,7 +251,22 @@ const showStrip = computed(
 const controlClass =
   'inline-flex h-7 shrink-0 cursor-pointer items-center justify-center gap-1 rounded-md px-2 text-sm text-muted transition-colors outline-none hover:bg-muted-background hover:text-foreground focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50'
 
-defineExpose({ focus: () => editor.value?.focus() })
+/** Put already uploaded files back, for a message the server refused. */
+const restore = (attachments: readonly AiAttachment[]) => {
+  files.value = [
+    ...files.value,
+    ...attachments.map((attachment) => ({
+      key: attachment.id,
+      name: attachment.name,
+      kind: attachment.kind,
+      progress: 100,
+      attachment,
+      controller: new AbortController(),
+    })),
+  ]
+}
+
+defineExpose({ focus: () => editor.value?.focus(), restore })
 </script>
 
 <template>

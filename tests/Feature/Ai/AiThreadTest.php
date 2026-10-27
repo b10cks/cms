@@ -151,6 +151,7 @@ class AiThreadTest extends TestCase
         $this->message($runs[1], 'assistant', 'Second answer');
         AiChangesetItem::query()->update(['status' => AiChangesetItemStatus::Accepted->value, 'final' => json_encode('Kept')]);
         config(['ai.threads.history_tokens' => 100]);
+        $thread->forceFill(['archived_at' => now()])->save();
         $this->driver->push(FakeAiDriver::text('Third answer'));
 
         $this->postJson($this->url('ai/runs'), ['surface' => 'cmdk', 'prompt' => 'Third question', 'conversation_id' => $thread->id])->streamedContent();
@@ -160,6 +161,7 @@ class AiThreadTest extends TestCase
         $this->assertSame(['Second question', 'Second answer'], [$messages[1]['content'], $messages[2]['content']]);
         $this->assertMatchesRegularExpression('/<proposals-(\w{8})>\n\{"entry":"Home","field":"title","status":"accepted_edited"\}\n<\/proposals-\1>/', $messages[3]['content']);
         $this->assertStringStartsWith('Third question', $messages[3]['content']);
+        $this->assertNull($thread->refresh()->archived_at, 'A new turn unsettles the thread.');
     }
 
     #[Test]

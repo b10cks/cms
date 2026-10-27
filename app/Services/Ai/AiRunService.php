@@ -9,6 +9,7 @@ use App\Jobs\ReconcileAiRunCostJob;
 use App\Jobs\RunAgentJob;
 use App\Models\Management\AiAttachment;
 use App\Models\Management\AiChangesetItem;
+use App\Models\Management\AiConversation;
 use App\Models\Management\AiMessage;
 use App\Models\Management\AiRun;
 use App\Models\Management\AiRunEvent;
@@ -165,6 +166,11 @@ class AiRunService
                 ->whereIn('id', array_column($start->attachments, 'id'))
                 ->whereNull('message_id')
                 ->update(['message_id' => $message->id]);
+        }
+
+        // A new turn brings a settled thread back into the list.
+        if ($conversationId !== null) {
+            AiConversation::query()->whereKey($conversationId)->whereNotNull('archived_at')->update(['archived_at' => null]);
         }
 
         $this->threads->changed($run->space_id, $conversationId);

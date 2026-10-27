@@ -90,6 +90,7 @@ const live = computed(() => {
 const liveRunId = computed(() => (live.value ? run.runId.value : null))
 const turns = computed(() => (thread.value?.turns ?? []).filter((turn) => turn.run.id !== liveRunId.value))
 
+const composer = useTemplateRef<InstanceType<typeof AiThreadComposer>>('composer')
 const chips = ref<AiThreadChip[]>([])
 const skill = ref<string | null>(null)
 const prompt = ref<string | null>(null)
@@ -136,6 +137,7 @@ const send = async (message: AiThreadMessage) => {
     showAiError(outcome.error?.reason, outcome.error?.message)
     // A refused run has no turn to show the prompt in; give it back to the composer.
     if (!prompt.value) prompt.value = message.prompt
+    composer.value?.restore(message.attachments)
   }
   await refresh()
   endLiveTurn()
@@ -193,7 +195,7 @@ const patch = (change: { shared?: boolean; archived?: boolean }) => {
   if (props.threadId) updateMutation.mutate({ threadId: props.threadId, patch: change })
 }
 
-const showComposer = computed(() => isNew.value || (isChat.value && isOwner.value && !thread.value?.archived))
+const showComposer = computed(() => isNew.value || (isChat.value && isOwner.value))
 const suggestionsBusy = computed(
   () => acceptSuggestionMutation.isPending.value || dismissSuggestionMutation.isPending.value
 )
@@ -405,6 +407,7 @@ const suggestionsBusy = computed(
       :class="layout === 'page' && 'mx-auto w-full max-w-3xl'"
     >
       <AiThreadComposer
+        ref="composer"
         v-model:chips="chips"
         v-model:skill="skill"
         v-model:prompt="prompt"
