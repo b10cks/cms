@@ -14,6 +14,7 @@ class AiGlossaryResource extends JsonResource
         return [
             'id' => $this->id,
             'scope' => $this->scope->value,
+            'owner_id' => $this->space_id ?? $this->team_id,
             'name' => $this->name,
             'enabled' => $this->enabled,
             'terms_count' => $this->whenCounted('terms'),

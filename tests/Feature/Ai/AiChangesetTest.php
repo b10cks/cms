@@ -186,6 +186,7 @@ class AiChangesetTest extends TestCase
             ->assertOk()
             ->assertJsonPath('count', 1)
             ->assertJsonPath('changesets.0.item_count', 2)
+            ->assertJsonPath('changesets.0.entry_count', 2)
             ->assertJsonPath('changesets.0.run.partial', true)
             ->assertJsonPath('changesets.0.run.stopped_by', 'max_usd');
     }

@@ -12,6 +12,7 @@ use App\Jobs\ExtractAiKnowledgeTextJob;
 use App\Models\Management\AiKnowledgeDocument;
 use App\Models\Management\Space;
 use App\Models\Management\Team;
+use App\Services\Ai\Knowledge\AiLayers;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -24,15 +25,19 @@ class AiKnowledgeDocumentController extends Controller
 {
     use ResolvesAiOwner;
 
-    public function index(Request $request): AnonymousResourceCollection
+    /** `?inherited=1` adds the documents of the owning and ancestor teams, read-only for this owner. */
+    public function index(Request $request, AiLayers $layers): AnonymousResourceCollection
     {
         $owner = $this->aiOwner($request);
         $this->authorize('viewAny', [AiKnowledgeDocument::class, $owner]);
 
         $columns = array_diff((new AiKnowledgeDocument)->getFillable(), ['draft']);
+        $query = $request->boolean('inherited')
+            ? AiKnowledgeDocument::query()->inLayers($owner instanceof Space ? $owner->id : null, $layers->teamIds($owner))
+            : AiKnowledgeDocument::query()->ownedBy($owner);
 
         return AiKnowledgeDocumentResource::collection(
-            AiKnowledgeDocument::query()->ownedBy($owner)->with('publishedRevision:id,document_id,revision,created_at')
+            $query->with('publishedRevision:id,document_id,revision,created_at')
                 ->orderBy('title')->get(['id', 'updated_at', ...$columns]),
         );
     }

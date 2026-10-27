@@ -218,6 +218,7 @@ Route::delete('space-blueprints/{blueprint}', [SystemSpaceBlueprintController::c
 $aiKnowledgeRoutes = static function (string $name): void {
     Route::get('ai/skills', [AiSkillController::class, 'index'])->name("{$name}.ai.skills.index");
     Route::post('ai/skills', [AiSkillController::class, 'store'])->name("{$name}.ai.skills.store");
+    Route::post('ai/skills/customize', [AiSkillController::class, 'customize'])->name("{$name}.ai.skills.customize");
     Route::get('ai/skills/{skill}', [AiSkillController::class, 'show'])->name("{$name}.ai.skills.show");
     Route::patch('ai/skills/{skill}', [AiSkillController::class, 'update'])->name("{$name}.ai.skills.update");
     Route::delete('ai/skills/{skill}', [AiSkillController::class, 'destroy'])->name("{$name}.ai.skills.destroy");

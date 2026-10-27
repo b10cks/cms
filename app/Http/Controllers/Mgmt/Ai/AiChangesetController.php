@@ -22,6 +22,7 @@ use App\Services\Ai\Changesets\ChangeTargets;
 use App\Services\Auth\AuthorizationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 /**
  * The space's AI inbox and changeset review. Background changesets are
@@ -58,7 +59,9 @@ class AiChangesetController extends Controller
             : collect();
 
         return response()->json([
-            'changesets' => AiChangesetResource::collection((clone $changesets)->with(['run', 'actor'])->latest()->limit(100)->get()),
+            'changesets' => AiChangesetResource::collection((clone $changesets)->with(['run', 'actor'])
+                ->withCount(['items as entry_count' => fn ($query) => $query->select(DB::raw('count(distinct coalesce(target_id, id))'))])
+                ->latest()->limit(100)->get()),
             'runs' => AiRunResource::collection($runs),
             'suggestions' => AiGlossarySuggestionResource::collection($pending),
             'glossaries' => AiGlossaryResource::collection($pending->isNotEmpty() ? $suggestions->glossariesFor($space, $request->user()) : collect()),
