@@ -206,7 +206,8 @@ export default defineConfig({
   base: '/docs/',
   outDir: '../public/docs',
   cacheDir: './.vitepress/cache',
-  srcExclude: ['README.md'],
+  // Internal design briefings and milestone plans stay out of the public site.
+  srcExclude: ['README.md', 'concepts/native-ai-integration.md', 'milestones/**'],
   cleanUrls: true,
   lastUpdated: true,
   metaChunk: true,
