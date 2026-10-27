@@ -10,6 +10,9 @@ One milestone in four waves. Each wave ships on its own and leaves `feat/ai-v2` 
 | W2 Changesets, inbox, Cmd+K, background runs | W1 | W4 |
 | W3 Translation memory, learning loop, schedules | W2 | none |
 | W4 MCP exposure, content as knowledge | W1 | W2 |
+| W5 Cost, caching, operations, spec | W3 | none |
+
+Status (2026-10-28): W1, W2 and W4 merged into `feat/ai-v2`. W1 and W2 UI walkthrough in the browser before W3 starts.
 
 ## Rules for every wave
 
@@ -100,3 +103,26 @@ Acceptance:
 
 - An MCP token sees the same resolved skills and knowledge as its user in the app.
 - `search_content` never returns entries the actor cannot read.
+
+## W5 Cost, caching, operations, spec
+
+Scope:
+
+1. Queued job that reconciles `ai_runs.cost` from OpenRouter's generation lookup after a run finishes. Live caps keep the token estimate.
+2. `cache_control` breakpoints after the style guides and after the skill catalog for Anthropic and Gemini models via OpenRouter. Check OpenRouter's docs first; confirm cached tokens show up in reported usage.
+3. `app/Mcp/Support/operations.php` and `../sdk/packages/mcp-server/src/operations.ts`: remove the dropped stream operations, add the AI management endpoints (skills, knowledge, glossaries, runs, changesets). The SDK edit stays uncommitted on the SDK's current branch.
+4. `search_content` as an MCP tool.
+5. Regenerate `docs/public/specs/*.json` once, inspect, commit on its own.
+
+Acceptance:
+
+- A finished run's cost is replaced by the provider figure; a failed lookup keeps the estimate.
+- A request for a cache-capable model carries the breakpoints; other models don't.
+- Every operation in `operations.php` exists in `operations.ts` and the reverse.
+- `search_content` over MCP never returns entries the token's user cannot read.
+
+## Release steps
+
+- After deploying W1: `authorization:sync-roles` (new `ai.manage` and `team.ai.manage` abilities).
+- W1 and W2 add management migrations; they run with the deploy.
+- After tagging W3: `spaces:repair-databases` (translation memory table).

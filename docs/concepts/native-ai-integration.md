@@ -271,8 +271,15 @@ Inline edits on one entry are single-entry changesets reviewed in place. Backgro
 - MySQL reorders JSON keys: compare JSON with `canonicalJson` in tests and diffs.
 - The local management DB holds production RDS hosts in `space_connections`: scratch scripts use an explicit local connection.
 
-## Open decisions
+## Decisions settled during delivery
 
-1. PDF text extraction: `smalot/pdfparser` (pure PHP) or `pdftotext` (poppler in the image). Recommendation: `smalot/pdfparser`, no image change.
-2. Provider cost reporting: OpenRouter reports cost when usage is requested; Bedrock and OpenAI streaming usage need checking against the installed client. Fallback: tokens times `ModelRegistry` pricing.
-3. Prompt caching pass-through on OpenRouter for every listed model.
+1. PDF text extraction uses `smalot/pdfparser`. No image change.
+2. Run cost: live budget caps use tokens times `ModelRegistry` pricing, because the OpenAI client drops OpenRouter's cost field. A queued job reconciles `ai_runs.cost` afterwards from OpenRouter's generation lookup (W5).
+3. Prompt caching: `cache_control` breakpoints after the style guides and after the skill catalog for Anthropic and Gemini models via OpenRouter, verified against reported cached tokens (W5).
+4. Glossaries have no revisions. A run freezes a snapshot of the terms it matched.
+5. `search_content` covers published entries only. Drafts stay reachable through `get_entry` and mentions.
+6. Read access for `search_content` is the space-wide `content.view` ability.
+7. Rich text selection proposals apply in the open editor and are recorded as single-entry changeset items. A server-side apply would race unsaved edits and live collaborators.
+8. Cmd+K extends the existing palette (`components/Command.vue`) instead of adding a second one.
+9. Data entries and assets have no drafts; accepting their items saves directly through `UpdateDataEntry` and the asset update action.
+10. MCP AI tools need a user, so they work over the HTTP transport only.
