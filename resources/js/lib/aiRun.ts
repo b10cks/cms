@@ -67,6 +67,15 @@ export interface AiRunRecord {
   usage: AiRunUsage
 }
 
+/** A changeset item a run added; review loads the changeset. */
+export interface AiProposal {
+  changeset_id: string
+  item_id: string
+  target_type: string
+  target_id: string | null
+  path: string | null
+}
+
 export interface StartAiRunRequest {
   surface: string
   skill?: string | null
@@ -76,6 +85,8 @@ export interface StartAiRunRequest {
   conversation_id?: string | null
   idempotency_key?: string
   background?: boolean
+  /** A confirmed preflight selection; the run may touch only these entries. */
+  targets?: { type: string; ids: string[] }
 }
 
 interface EventBase {
@@ -89,7 +100,7 @@ export type AiRunEvent =
   | (EventBase & { type: 'tool_started'; id: string; name: string })
   | (EventBase & { type: 'tool_finished'; id: string; name: string; ok: boolean })
   | (EventBase & { type: 'source'; source: AiSource })
-  | (EventBase & { type: 'proposal'; proposal: Record<string, unknown> })
+  | (EventBase & { type: 'proposal'; proposal: AiProposal })
   | (EventBase & { type: 'questionnaire'; questionnaire: AiQuestionnaire })
   | (EventBase & { type: 'glossary_findings'; findings: AiGlossaryFinding[] })
   | (EventBase & { type: 'usage' } & AiRunUsage)

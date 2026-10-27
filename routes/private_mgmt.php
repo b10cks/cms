@@ -1,9 +1,11 @@
 <?php
 
+use App\Http\Controllers\Mgmt\Ai\AiChangesetController;
 use App\Http\Controllers\Mgmt\Ai\AiContextController;
 use App\Http\Controllers\Mgmt\Ai\AiGlossaryController;
 use App\Http\Controllers\Mgmt\Ai\AiKnowledgeDocumentController;
 use App\Http\Controllers\Mgmt\Ai\AiModelsController;
+use App\Http\Controllers\Mgmt\Ai\AiPreflightController;
 use App\Http\Controllers\Mgmt\Ai\AiRunController;
 use App\Http\Controllers\Mgmt\Ai\AiSkillController;
 use App\Http\Controllers\Mgmt\Ai\AssetClassificationController;
@@ -286,6 +288,11 @@ Route::group(['prefix' => 'spaces/{space}', 'middleware' => 'space.member'], fun
     Route::get('ai/runs/{run}/events', [AiRunController::class, 'events'])->name('spaces.ai.runs.events');
     Route::post('ai/runs/{run}/answers', [AiRunController::class, 'answer'])->name('spaces.ai.runs.answer');
     Route::post('ai/runs/{run}/cancel', [AiRunController::class, 'cancel'])->name('spaces.ai.runs.cancel');
+    Route::post('ai/preflight', AiPreflightController::class)->name('spaces.ai.preflight');
+    Route::get('ai/inbox', [AiChangesetController::class, 'inbox'])->name('spaces.ai.inbox');
+    Route::get('ai/changesets/{changeset}', [AiChangesetController::class, 'show'])->name('spaces.ai.changesets.show');
+    Route::post('ai/changesets/{changeset}/accept', [AiChangesetController::class, 'accept'])->name('spaces.ai.changesets.accept');
+    Route::post('ai/changesets/{changeset}/reject', [AiChangesetController::class, 'reject'])->name('spaces.ai.changesets.reject');
 
     Route::post('icon', SpaceIconController::class)->name('spaces.icon');
     Route::post('archive', SpaceArchiveController::class)->name('spaces.archive');

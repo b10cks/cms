@@ -1,4 +1,12 @@
-import type { AiRunRecord } from '~/lib/aiRun'
+import type {
+  AiChangeset,
+  AiDecision,
+  AiDecisionResult,
+  AiInbox,
+  AiEntryScope,
+  AiPreflight,
+} from '~/lib/aiChangesets'
+import type { AiQuestionnaireAnswers, AiRunRecord, StartAiRunRequest } from '~/lib/aiRun'
 
 import type { ApiClient } from '../client'
 
@@ -97,9 +105,58 @@ export class Ai {
     )
   }
 
+  /** Start a background run; inline runs stream through useAiRun instead. */
+  public async startBackgroundRun(payload: StartAiRunRequest): Promise<{ data: AiRunRecord }> {
+    return this.client.post<{ data: AiRunRecord }>(`/mgmt/v1/spaces/${this.spaceId}/ai/runs`, {
+      idempotency_key: crypto.randomUUID(),
+      ...payload,
+      background: true,
+    })
+  }
+
+  /** Answer a background run's questionnaire; it continues on the queue. */
+  public async answerRun(runId: string, answers: AiQuestionnaireAnswers): Promise<{ data: AiRunRecord }> {
+    return this.client.post<{ data: AiRunRecord }>(
+      `/mgmt/v1/spaces/${this.spaceId}/ai/runs/${runId}/answers`,
+      { answers }
+    )
+  }
+
   public async cancelRun(runId: string): Promise<{ data: AiRunRecord }> {
     return this.client.post<{ data: AiRunRecord }>(
       `/mgmt/v1/spaces/${this.spaceId}/ai/runs/${runId}/cancel`
+    )
+  }
+
+  public async preflight(payload: {
+    surface: string
+    scope: AiEntryScope
+    config_id?: string | null
+  }): Promise<{ data: AiPreflight }> {
+    return this.client.post<{ data: AiPreflight }>(`/mgmt/v1/spaces/${this.spaceId}/ai/preflight`, payload)
+  }
+
+  public async getInbox(): Promise<AiInbox> {
+    return this.client.get<AiInbox>(`/mgmt/v1/spaces/${this.spaceId}/ai/inbox`)
+  }
+
+  public async getChangeset(changesetId: string): Promise<{ data: AiChangeset }> {
+    return this.client.get<{ data: AiChangeset }>(
+      `/mgmt/v1/spaces/${this.spaceId}/ai/changesets/${changesetId}`
+    )
+  }
+
+  public async acceptChangeset(changesetId: string, decision: AiDecision = {}): Promise<AiDecisionResult> {
+    return this.client.post<AiDecisionResult>(
+      `/mgmt/v1/spaces/${this.spaceId}/ai/changesets/${changesetId}/accept`,
+      decision
+    )
+  }
+
+  public async rejectChangeset(changesetId: string, decision: AiDecision = {}): Promise<AiDecisionResult> {
+    return this.client.post<AiDecisionResult>(
+      `/mgmt/v1/spaces/${this.spaceId}/ai/changesets/${changesetId}/reject`,
+      decision
     )
   }
 

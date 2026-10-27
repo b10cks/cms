@@ -1119,7 +1119,8 @@
         "pasteAfter": "Einfügen nach",
         "delete": "Löschen",
         "more": "Weitere Aktionen",
-        "automations": "Aktionen"
+        "automations": "Aktionen",
+        "askAi": "KI zu {count} Eintrag fragen | KI zu {count} Einträgen fragen"
       },
       "confirmations": {
         "deleteTitle": "Inhalt löschen",
@@ -1191,7 +1192,9 @@
       "extendedSidebar": "Erweiterte Seitenleiste",
       "icons": "Icons",
       "onboarding": "Onboarding",
-      "massEdit": "Massenbearbeitung"
+      "massEdit": "Massenbearbeitung",
+      "aiInbox": "Posteingang",
+      "aiInboxCount": "{count} Einträge warten auf Prüfung"
     },
     "provider": {
       "title": "Provider",
@@ -4758,6 +4761,101 @@
         "translated_do_not_translate": "Lass „{term}“ unübersetzt.",
         "forbidden_variant": "„{found}“ ist nicht erlaubt, verwende „{expected}“."
       }
+    },
+    "aiChangeset": {
+      "meta": "{pending} von {total} offen",
+      "acceptAll": "Alle übernehmen",
+      "rejectAll": "Alle ablehnen",
+      "acceptEntry": "Eintrag übernehmen",
+      "rejectEntry": "Eintrag ablehnen",
+      "accept": "Übernehmen",
+      "reject": "Ablehnen",
+      "keepCurrent": "Aktuellen Wert behalten",
+      "useProposal": "KI-Version verwenden",
+      "newEntry": "Neuer Eintrag",
+      "partial": "Der Lauf wurde vorzeitig beendet ({reason}). Das sind die bisher vorgeschlagenen Änderungen.",
+      "stoppedBy": {
+        "max_usd": "Kostenlimit erreicht",
+        "max_steps": "Schrittlimit erreicht",
+        "max_tokens": "Tokenlimit erreicht",
+        "max_seconds": "Zeitlimit erreicht",
+        "other": "ein Limit wurde erreicht"
+      },
+      "targets": {
+        "content": "Inhalt",
+        "data_entry": "Datensatz",
+        "asset": "Asset",
+        "selection": "Auswahl"
+      },
+      "status": {
+        "pending": "Offen",
+        "accepted": "Übernommen",
+        "rejected": "Abgelehnt",
+        "conflict": "Konflikt"
+      },
+      "columns": {
+        "read": "Beim Lesen durch die KI",
+        "current": "Jetzt",
+        "proposed": "KI-Vorschlag"
+      },
+      "acceptFailed": "Die Änderungen konnten nicht übernommen werden: {error}",
+      "rejectFailed": "Die Änderungen konnten nicht abgelehnt werden: {error}"
+    },
+    "aiInbox": {
+      "title": "Posteingang",
+      "description": "Von KI-Aufgaben vorgeschlagene Änderungen warten hier auf Prüfung. Übernehmen speichert einen Entwurf, veröffentlicht wird nichts.",
+      "changesets": "Vorgeschlagene Änderungen",
+      "empty": "Nichts zu prüfen.",
+      "partial": "Vorzeitig beendet",
+      "runs": "Hintergrundaufgaben",
+      "states": {
+        "running": "Läuft",
+        "awaiting_input": "Wartet auf Antwort",
+        "completed": "Fertig",
+        "failed": "Fehlgeschlagen",
+        "cancelled": "Abgebrochen"
+      },
+      "surfaces": {
+        "bulk": "Sammelaufgabe",
+        "agent": "KI-Aufgabe"
+      },
+      "cancel": "Abbrechen",
+      "answerFailed": "Die Antworten konnten nicht gesendet werden: {error}",
+      "cancelFailed": "Die Aufgabe konnte nicht abgebrochen werden: {error}"
+    },
+    "aiCommand": {
+      "ask": "KI fragen: {prompt}",
+      "skills": "KI-Skills",
+      "title": "KI fragen",
+      "prompt": "Aufgabe",
+      "scope": {
+        "entry": "Arbeitet am geöffneten Eintrag.",
+        "dataSource": "Arbeitet an der geöffneten Datenquelle.",
+        "space": "Arbeitet in diesem Space."
+      },
+      "background": "Das dauert etwas. Die Aufgabe läuft im Hintergrund weiter, ihre Änderungen landen im Posteingang.",
+      "usingTool": "Verwendet {tool}...",
+      "run": "Ausführen",
+      "close": "Schließen"
+    },
+    "aiBulk": {
+      "entry": "KI fragen",
+      "title": "KI zu diesen Einträgen fragen",
+      "description": "Läuft im Hintergrund. Die Änderungen landen zur Prüfung im Posteingang, gespeichert wird erst, was du übernimmst.",
+      "skills": "Skills",
+      "task": "Was soll die KI tun?",
+      "extraInstructions": "Zusätzliche Anweisungen (optional)",
+      "entries": "Einträge",
+      "estimate": "Geschätzte Kosten",
+      "cap": "Der Lauf stoppt bei {cap}. Modell: {model}.",
+      "nothing": "Keine passenden Einträge.",
+      "more": "und {count} weitere",
+      "preflightFailed": "Diese Aufgabe konnte nicht geschätzt werden.",
+      "cancel": "Abbrechen",
+      "confirm": "Für {count} Einträge starten",
+      "started": "Die KI-Aufgabe läuft im Hintergrund.",
+      "openInbox": "Posteingang öffnen",
+      "failed": "Die Aufgabe konnte nicht gestartet werden: {error}"
     }
   },
   "alertDialog": {

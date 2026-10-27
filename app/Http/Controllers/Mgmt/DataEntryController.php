@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Mgmt;
 
+use App\Actions\DataEntry\UpdateDataEntry;
 use App\Http\Controllers\Controller;
 use App\Http\Filters\Mgmt\DataEntryFilter;
 use App\Http\Requests\Space\CreateDataEntryRequest;
@@ -10,7 +11,6 @@ use App\Http\Resources\Management\DataEntryResource;
 use App\Models\Management\Space;
 use App\Models\Space\DataEntry;
 use App\Models\Space\DataSource;
-use App\Services\Space\ShapeValue;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\ResourceCollection;
@@ -52,7 +52,7 @@ class DataEntryController extends Controller
         $this->authorize('create', [DataEntry::class, $dataSource, $space]);
         $this->validateDimensions($dataSource, $request->input('dimensions', []));
 
-        $entry = new DataEntry($this->encodeShapedValues($dataSource, $request->validated()));
+        $entry = new DataEntry(UpdateDataEntry::encode($dataSource, $request->validated()));
         $entry->dataSource()->associate($dataSource);
         $entry->save();
 
@@ -85,17 +85,14 @@ class DataEntryController extends Controller
      * @param DataEntry $entry
      * @return DataEntryResource
      */
-    public function update(UpdateDataEntryRequest $request, Space $space, DataSource $dataSource, DataEntry $entry): DataEntryResource
+    public function update(UpdateDataEntryRequest $request, Space $space, DataSource $dataSource, DataEntry $entry, UpdateDataEntry $action): DataEntryResource
     {
         $this->authorize('update', [$entry, $dataSource, $space]);
         if ($request->has('dimensions')) {
             $this->validateDimensions($dataSource, $request->input('dimensions', []));
         }
 
-        $entry->fill($this->encodeShapedValues($dataSource, $request->validated()));
-        $entry->save();
-
-        $this->clearEntryCache($dataSource);
+        $action->execute($entry, $dataSource, $request->validated());
 
         return new DataEntryResource($entry->setRelation('dataSource', $dataSource));
     }
@@ -138,33 +135,6 @@ class DataEntryController extends Controller
                 abort(422, "Dimension '{$dimension}' does not exist in data source '{$dataSource->name}'");
             }
         }
-    }
-
-    /**
-     * JSON-encode structured value and dimension overrides for shaped sources.
-     * A cleared (null) value is stored as an empty string — the column is
-     * not nullable — and decoded back to null on output.
-     */
-    protected function encodeShapedValues(DataSource $dataSource, array $data): array
-    {
-        if ($dataSource->hasShape()) {
-            if (array_key_exists('value', $data)) {
-                $data['value'] = ShapeValue::encode($data['value'], $dataSource->shape);
-            }
-
-            if (!empty($data['dimensions'])) {
-                $data['dimensions'] = array_map(
-                    fn ($value) => ShapeValue::encode($value, $dataSource->shape),
-                    $data['dimensions']
-                );
-            }
-        }
-
-        if (array_key_exists('value', $data)) {
-            $data['value'] ??= '';
-        }
-
-        return $data;
     }
 
     protected function clearEntryCache(DataSource $dataSource): void

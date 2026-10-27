@@ -352,6 +352,14 @@ export function useSpaceBroadcasts(spaceId: MaybeRef<string | null>) {
         invalidate(queryKeys.dataEntries(id, payload.id).all(), queryKeys.dataSources(id).lists())
       })
 
+      // AI inbox: changesets and background runs, IDs only.
+      echo.private(`spaces.${id}.ai`).listen('.ai_inbox:changed', (payload: { changeset_id?: string | null }) => {
+        invalidate(
+          queryKeys.ai(id).inbox(),
+          ...(payload?.changeset_id ? [queryKeys.ai(id).changeset(payload.changeset_id)] : [])
+        )
+      })
+
       getConnection()?.bind('state_change', onConnectionStateChange)
     } catch {
       /** */
@@ -366,7 +374,7 @@ export function useSpaceBroadcasts(spaceId: MaybeRef<string | null>) {
     try {
       const echo = useEcho()
       if (!echo) return
-      for (const channel of ['blocks', 'assets', 'icons', 'redirects', 'data_sources']) {
+      for (const channel of ['blocks', 'assets', 'icons', 'redirects', 'data_sources', 'ai']) {
         echo.leave(`spaces.${idToLeave}.${channel}`)
       }
 

@@ -21,6 +21,10 @@ foreach (['blocks', 'assets', 'icons', 'redirects', 'data_sources'] as $resource
     });
 }
 
+Broadcast::channel('spaces.{space}.ai', function (User $user, Space $space) use ($canView) {
+    return $canView($user, $space, 'space.view');
+});
+
 Broadcast::channel('presence-spaces.{spaceId}', function (User $user, string $spaceId) use ($canView) {
     $space = Space::find($spaceId);
 

@@ -103,6 +103,7 @@ describe('subscribing', () => {
       'spaces.space-1.icons',
       'spaces.space-1.redirects',
       'spaces.space-1.data_sources',
+      'spaces.space-1.ai',
     ])
 
     // Every space channel is joined via echo.private() — resource payloads
@@ -355,6 +356,7 @@ describe('teardown', () => {
       'spaces.space-1.icons',
       'spaces.space-1.redirects',
       'spaces.space-1.data_sources',
+      'spaces.space-1.ai',
     ])
   })
 
@@ -408,6 +410,19 @@ describe('data source events', () => {
     emit('spaces.space-1.data_sources', '.data_entry:updated', { id: 'entry-1' })
 
     expect(invalidated()).toEqual([queryKeys.dataSources('space-1').all()])
+  })
+})
+
+describe('ai inbox events', () => {
+  beforeEach(() => setup())
+
+  it('refetches the inbox and the changed changeset', () => {
+    emit('spaces.space-1.ai', '.ai_inbox:changed', { changeset_id: 'cs-1', run_id: null })
+
+    expect(invalidated()).toEqual([
+      queryKeys.ai('space-1').inbox(),
+      queryKeys.ai('space-1').changeset('cs-1'),
+    ])
   })
 })
 
@@ -688,13 +703,15 @@ describe('switching space', () => {
       'spaces.space-1.icons',
       'spaces.space-1.redirects',
       'spaces.space-1.data_sources',
+      'spaces.space-1.ai',
     ])
-    expect(channelNames().slice(5)).toEqual([
+    expect(channelNames().slice(6)).toEqual([
       'spaces.space-2.blocks',
       'spaces.space-2.assets',
       'spaces.space-2.icons',
       'spaces.space-2.redirects',
       'spaces.space-2.data_sources',
+      'spaces.space-2.ai',
     ])
   })
 
@@ -718,8 +735,8 @@ describe('switching space', () => {
     spaceId.value = null
     await nextTick()
 
-    expect(fake.left).toHaveLength(5)
-    expect(channelNames()).toHaveLength(5)
+    expect(fake.left).toHaveLength(6)
+    expect(channelNames()).toHaveLength(6)
   })
 
   it('subscribes when a space id arrives after mounting without one', async () => {
@@ -729,7 +746,7 @@ describe('switching space', () => {
     spaceId.value = 'space-1'
     await nextTick()
 
-    expect(channelNames()).toHaveLength(5)
+    expect(channelNames()).toHaveLength(6)
     expect(fake.left).toEqual([])
   })
 })

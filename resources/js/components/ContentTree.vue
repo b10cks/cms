@@ -14,6 +14,7 @@ import { toast } from 'vue-sonner'
 
 import { api } from '~/api'
 import CreateContentDialog from '~/components/content/CreateContentDialog.vue'
+import AiBulkDialog from '~/components/ai/AiBulkDialog.vue'
 import PublishDialog from '~/components/content/PublishDialog.vue'
 import Icon from '~/components/Icon.vue'
 import NuxtImg from '~/components/NuxtImg.vue'
@@ -39,6 +40,7 @@ import { useHoverPrefetch } from '~/composables/useHoverPrefetch'
 import { queryKeys } from '~/composables/useQueryClient'
 import { normalizeLanguageIso } from '~/lib/content-i18n'
 import { fuzzyMatch, prepareFuzzyQuery, prepareFuzzyTarget } from '~/lib/fuzzy-match'
+import { useMountOnFirstOpen } from '~/lib/mountOnFirstOpen'
 import { buildPreviewUrl } from '~/lib/preview-url'
 import { isEditableTarget } from '~/lib/shortcuts'
 import { useStickyTreeRows } from '~/lib/sticky-tree'
@@ -1224,6 +1226,27 @@ const buildPublishActions = (item: FlatContentMenuItem): ContentTreeMenuAction[]
   return actions
 }
 
+const aiBulkOpen = ref(false)
+const aiBulkIds = ref<string[]>([])
+const aiBulkMounted = useMountOnFirstOpen(() => aiBulkOpen.value)
+
+/** Starts a background AI run on the selection, after a preflight estimate. */
+const buildAiAction = (item: FlatContentMenuItem): ContentTreeMenuAction => {
+  const ids = toIds(resolvePublishTargets(item.id))
+
+  return {
+    id: 'ai',
+    label: t('labels.contentTree.actions.askAi', { count: ids.length }, ids.length) as string,
+    icon: 'sparkles',
+    separatorBefore: true,
+    disabled: !canManageContent.value,
+    onSelect: () => {
+      aiBulkIds.value = ids
+      aiBulkOpen.value = true
+    },
+  }
+}
+
 const buildItemAutomationActions = (item: FlatContentMenuItem): ContentTreeMenuAction[] => {
   if (!canTriggerAutomations.value) {
     return []
@@ -1283,6 +1306,7 @@ const buildItemMenuActions = (item: FlatContentMenuItem): ContentTreeMenuAction[
       onSelect: () => openEdit(item.id),
     },
     ...buildPublishActions(item),
+    buildAiAction(item),
     ...buildItemAutomationActions(item),
     {
       id: 'rename',
@@ -3124,6 +3148,13 @@ onBeforeUnmount(() => {
       @update:open="publishDialogOpen = $event"
       @publish="handlePublishDialog"
       @schedule="handleScheduleDialog"
+    />
+    <AiBulkDialog
+      v-if="canManageContent && aiBulkMounted"
+      v-model:open="aiBulkOpen"
+      :space-id="spaceId"
+      surface="bulk:content"
+      :scope="{ type: 'content', ids: aiBulkIds }"
     />
   </aside>
 </template>

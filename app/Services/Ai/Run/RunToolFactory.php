@@ -7,6 +7,9 @@ use App\Models\Management\AiKnowledgeDocument;
 use App\Models\Management\AiRun;
 use App\Models\Management\Space;
 use App\Models\User;
+use App\Services\Ai\Changesets\ChangesetRecorder;
+use App\Services\Ai\Changesets\ChangeTargets;
+use App\Services\Ai\Changesets\EntryScope;
 use App\Services\Ai\Contracts\AiToolInterface;
 use App\Services\Ai\Knowledge\KnowledgeResolver;
 use App\Services\Ai\Knowledge\KnowledgeSearch;
@@ -14,11 +17,14 @@ use App\Services\Ai\Skills\ResolvedSkill;
 use App\Services\Ai\Skills\SkillResolver;
 use App\Services\Ai\Tools\AskQuestionsTool;
 use App\Services\Ai\Tools\AuthorizedTool;
+use App\Services\Ai\Tools\FindEntriesTool;
 use App\Services\Ai\Tools\GetBlockListTool;
 use App\Services\Ai\Tools\GetBlockSchemasTool;
 use App\Services\Ai\Tools\GetEntryTool;
 use App\Services\Ai\Tools\GetMentionedContentTool;
 use App\Services\Ai\Tools\LookupGlossaryTool;
+use App\Services\Ai\Tools\ProposeCreateTool;
+use App\Services\Ai\Tools\ProposeUpdateTool;
 use App\Services\Ai\Tools\ReadKnowledgeTool;
 use App\Services\Ai\Tools\ReadSkillFileTool;
 use App\Services\Ai\Tools\ReadSkillTool;
@@ -47,6 +53,9 @@ class RunToolFactory
         'read_knowledge',
         'lookup_glossary',
         AskQuestionsTool::NAME,
+        'find_entries',
+        ProposeUpdateTool::NAME,
+        ProposeCreateTool::NAME,
     ];
 
     public function __construct(
@@ -55,6 +64,9 @@ class RunToolFactory
         private readonly KnowledgeResolver $knowledge,
         private readonly KnowledgeSearch $search,
         private readonly SearchService $contentSearch,
+        private readonly ChangeTargets $targets,
+        private readonly ChangesetRecorder $recorder,
+        private readonly EntryScope $scope,
     ) {}
 
     /**
@@ -105,7 +117,7 @@ class RunToolFactory
             'get_block_schemas' => new AuthorizedTool((new GetBlockSchemasTool)->setSpace($space), $can('content.view')),
             'search_assets' => new AuthorizedTool((new SearchAssetsTool)->setSpace($space), $can('assets.view')),
             'get_mentioned_content' => new AuthorizedTool((new GetMentionedContentTool)->setSpace($space), $can('content.view')),
-            'get_entry' => new AuthorizedTool(new GetEntryTool, $can('content.view')),
+            'get_entry' => new GetEntryTool($this->targets, $this->auth, $space, $actor),
             'search_content' => new AuthorizedTool(new SearchContentTool($this->contentSearch, $space), $can('content.view')),
             'read_skill' => new ReadSkillTool($loadSkill),
             'read_skill_file' => new ReadSkillFileTool($loadSkill),
@@ -113,6 +125,9 @@ class RunToolFactory
             'read_knowledge' => new ReadKnowledgeTool($knowledge),
             'lookup_glossary' => new LookupGlossaryTool(fn () => $this->knowledge->glossaryTerms($space)),
             AskQuestionsTool::NAME => new AskQuestionsTool,
+            'find_entries' => new FindEntriesTool($this->scope, $this->targets, $this->auth, $space, $actor),
+            ProposeUpdateTool::NAME => new ProposeUpdateTool($run, $space, $actor, $this->targets, $this->recorder, $this->auth),
+            ProposeCreateTool::NAME => new ProposeCreateTool($run, $space, $actor, $this->targets, $this->recorder, $this->auth),
         }, array_values(array_intersect($setup['tools'] ?? [], self::ALL)));
 
         return new ToolSet($tools);

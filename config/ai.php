@@ -30,7 +30,13 @@ return [
         'max_output_tokens' => (int) env('AI_RUN_MAX_OUTPUT_TOKENS', 16384),
         // Corrections asked for when a final answer misses the skill's output schema.
         'max_output_corrections' => 2,
+        // Background runs one space may have going at once; more are refused.
+        'max_concurrent_background' => (int) env('AI_RUN_MAX_CONCURRENT_BACKGROUND', 2),
     ],
+
+    // Entries one request may change before it must run in the background
+    // after a preflight estimate and confirmation.
+    'inline_entry_limit' => (int) env('AI_INLINE_ENTRY_LIMIT', 5),
 
     'drivers' => [
         'openai' => [

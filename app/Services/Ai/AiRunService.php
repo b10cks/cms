@@ -3,16 +3,20 @@
 namespace App\Services\Ai;
 
 use App\Enums\AiRunState;
+use App\Events\Ai\AiInboxChanged;
 use App\Events\Ai\AiRunEventsAvailable;
 use App\Jobs\RunAgentJob;
+use App\Models\Management\AiChangesetItem;
 use App\Models\Management\AiConversation;
 use App\Models\Management\AiRun;
 use App\Models\Management\AiRunEvent;
 use App\Models\Management\Space;
 use App\Models\Management\SpaceAiConfig;
 use App\Models\User;
+use App\Services\Ai\Changesets\ChangesetRecorder;
 use App\Services\Ai\Concerns\InteractsWithAiDriver;
 use App\Services\Ai\Contracts\AiDriverInterface;
+use App\Services\Ai\Contracts\ProposesChanges;
 use App\Services\Ai\Contracts\ProvidesSources;
 use App\Services\Ai\Exceptions\AiServiceException;
 use App\Services\Ai\Exceptions\ProviderCallFailed;
@@ -66,6 +70,8 @@ class AiRunService
 
     private const BACKGROUND_TEXT_FLUSH = 1000;
 
+    private const SELECTION_SURFACE = 'selection';
+
     public function __construct(
         protected ModelRegistry $registry,
         private readonly ContextBuilder $context,
@@ -118,11 +124,10 @@ class AiRunService
                 'options' => $options->toArray(),
                 'output' => $manifest?->output ?? SkillManifest::OUTPUT_TEXT,
                 'schema' => $manifest?->schema,
-                'budget' => array_merge(
-                    array_intersect_key(config('ai.runs'), array_flip(['max_steps', 'max_tokens', 'max_usd', 'max_seconds'])),
-                    $manifest?->budget ?? [],
-                ),
+                'budget' => $this->budget($manifest, $start->targets),
                 'corrections' => 0,
+                'title' => Str::limit(trim((string) strtok($start->prompt, "\n")), 120, ''),
+                'targets' => $start->targets,
             ],
             'input' => $built['input'],
             'transcript' => $built['transcript']->toArray(),
@@ -386,6 +391,7 @@ class AiRunService
                 $run->questionnaire = ['tool_call_id' => $call->id, ...$questionnaire];
                 $run->state = AiRunState::AwaitingInput;
                 $this->checkpoint($run, $transcript);
+                $this->announce($run);
                 yield $this->emit($run, RunEventType::Questionnaire, ['questionnaire' => $questionnaire]);
                 $run->save();
 
@@ -401,6 +407,11 @@ class AiRunService
             if ($tool instanceof ProvidesSources) {
                 foreach ($tool->takeSources() as $source) {
                     yield $this->emit($run, RunEventType::Source, ['source' => $source]);
+                }
+            }
+            if ($tool instanceof ProposesChanges) {
+                foreach ($tool->takeProposals() as $proposal) {
+                    yield $this->emit($run, RunEventType::Proposal, ['proposal' => $proposal]);
                 }
             }
 
@@ -449,6 +460,10 @@ class AiRunService
         $findings = $this->glossaryFindings($run, $text, $data);
         if ($findings !== []) {
             yield $this->emit($run, RunEventType::GlossaryFindings, ['findings' => $findings]);
+        }
+
+        if ($run->surface === self::SELECTION_SURFACE && trim($text) !== '') {
+            yield $this->emit($run, RunEventType::Proposal, ['proposal' => $this->proposeSelection($run, $text)]);
         }
 
         $run->result = ['text' => $text, 'data' => $data, 'glossary_findings' => $findings];
@@ -566,6 +581,64 @@ class AiRunService
     {
         $run->state = $state;
         $run->finished_at = now();
+        $this->announce($run);
+    }
+
+    /** Background runs show in the inbox; tell its clients to refetch. */
+    private function announce(AiRun $run): void
+    {
+        if ($run->mode === AiRun::MODE_BACKGROUND) {
+            broadcast(new AiInboxChanged($run->space_id, runId: $run->id));
+        }
+    }
+
+    /**
+     * Budgets from config and the skill. A confirmed bulk selection gets
+     * enough steps to read and propose for each entry; the USD cap still holds.
+     *
+     * @param  array{type: string, ids: list<string>}|null  $targets
+     * @return array<string, int|float>
+     */
+    private function budget(?SkillManifest $manifest, ?array $targets): array
+    {
+        $budget = array_merge(
+            array_intersect_key(config('ai.runs'), array_flip(['max_steps', 'max_tokens', 'max_usd', 'max_seconds'])),
+            $manifest?->budget ?? [],
+        );
+
+        if ($targets !== null) {
+            $budget['max_steps'] = max((int) $budget['max_steps'], 2 * \count($targets['ids']) + 4);
+        }
+
+        return $budget;
+    }
+
+    /**
+     * A rich text selection proposal is a single-entry changeset reviewed in
+     * place. The open editor owns the working copy, so accepting applies there
+     * and records the decision here.
+     *
+     * @return array<string, string|null>
+     */
+    private function proposeSelection(AiRun $run, string $text): array
+    {
+        $context = $run->input ?? [];
+        $item = app(ChangesetRecorder::class)->record($run, [[
+            'operation' => AiChangesetItem::OPERATION_UPDATE,
+            'target_type' => AiChangesetItem::TARGET_SELECTION,
+            'target_id' => \is_string($context['content_id'] ?? null) ? $context['content_id'] : null,
+            'field_type' => 'text',
+            'before' => (string) ($context['selection'] ?? ''),
+            'after' => trim($text),
+        ]], inline: true)[0];
+
+        return [
+            'changeset_id' => $item->changeset_id,
+            'item_id' => $item->id,
+            'target_type' => $item->target_type,
+            'target_id' => $item->target_id,
+            'path' => null,
+        ];
     }
 
     private function checkpoint(AiRun $run, Transcript $transcript): void
