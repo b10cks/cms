@@ -157,7 +157,7 @@ class AiChangesetTest extends TestCase
     }
 
     #[Test]
-    public function a_background_run_hitting_its_usd_cap_stops_with_a_partial_changeset_in_the_inbox(): void
+    public function a_background_run_hitting_its_usd_cap_stops_with_a_partial_changeset_in_its_thread(): void
     {
         config(['ai.runs.max_usd' => 0.05]);
         $pages = [
@@ -182,13 +182,15 @@ class AiChangesetTest extends TestCase
         $this->assertSame('max_usd', $run->setup['stopped_by']);
         $this->assertSame(2, $this->driver->calls);
 
-        $this->getJson($this->url('ai/inbox'))
+        $this->getJson($this->url('ai/threads'))
             ->assertOk()
-            ->assertJsonPath('count', 1)
-            ->assertJsonPath('changesets.0.item_count', 2)
-            ->assertJsonPath('changesets.0.entry_count', 2)
-            ->assertJsonPath('changesets.0.run.partial', true)
-            ->assertJsonPath('changesets.0.run.stopped_by', 'max_usd');
+            ->assertJsonPath('meta.attention', 1)
+            ->assertJsonPath('data.0.status', 'needs_review')
+            ->assertJsonPath('data.0.entry_count', 2);
+        $this->getJson($this->url("ai/threads/{$run->conversation_id}"))
+            ->assertJsonPath('data.turns.0.changeset.item_count', 2)
+            ->assertJsonPath('data.turns.0.changeset.run.partial', true)
+            ->assertJsonPath('data.turns.0.changeset.run.stopped_by', 'max_usd');
     }
 
     #[Test]

@@ -4,12 +4,11 @@ namespace App\Services\Ai;
 
 use App\Enums\AiChangesetItemStatus;
 use App\Enums\AiRunState;
-use App\Events\Ai\AiInboxChanged;
 use App\Events\Ai\AiRunEventsAvailable;
 use App\Jobs\ReconcileAiRunCostJob;
 use App\Jobs\RunAgentJob;
 use App\Models\Management\AiChangesetItem;
-use App\Models\Management\AiConversation;
+use App\Models\Management\AiMessage;
 use App\Models\Management\AiRun;
 use App\Models\Management\AiRunEvent;
 use App\Models\Management\Space;
@@ -41,6 +40,7 @@ use App\Services\Ai\Run\Transcript;
 use App\Services\Ai\Run\TurnResult;
 use App\Services\Ai\Skills\SkillManifest;
 use App\Services\Ai\Support\JsonExtractor;
+use App\Services\Ai\Threads\AiThreads;
 use App\Services\Ai\Tools\AskQuestionsTool;
 use App\Services\Auth\AuthorizationService;
 use Generator;
@@ -82,6 +82,7 @@ class AiRunService
         private readonly RunToolFactory $tools,
         private readonly AuthorizationService $auth,
         private readonly GlossaryChecker $checker,
+        private readonly AiThreads $threads,
     ) {}
 
     /**
@@ -111,10 +112,13 @@ class AiRunService
             $output === SkillManifest::OUTPUT_JSON,
         );
 
+        $thread = $start->opensThread && $start->conversationId === null ? $this->threads->open($start) : null;
+        $conversationId = $thread->id ?? $start->conversationId;
+
         $attributes = [
             'space_id' => $start->space->id,
             'actor_id' => $start->actor->id,
-            'conversation_id' => $start->conversationId,
+            'conversation_id' => $conversationId,
             'idempotency_key' => $start->idempotencyKey,
             'surface' => $start->surface,
             'skill' => $manifest?->name,
@@ -142,16 +146,22 @@ class AiRunService
         try {
             $run = AiRun::create($attributes);
         } catch (UniqueConstraintViolationException $e) {
+            // A concurrent start with the same key won; its run has its thread.
+            $thread?->delete();
+
             return $this->findByKey($start) ?? throw $e;
         }
 
-        if ($start->conversationId !== null && trim($start->prompt) !== '') {
-            AiConversation::query()->find($start->conversationId)?->messages()->create([
+        if ($conversationId !== null && trim($start->prompt) !== '') {
+            AiMessage::create([
+                'conversation_id' => $conversationId,
                 'run_id' => $run->id,
                 'role' => 'user',
                 'content' => $start->prompt,
             ]);
         }
+
+        $this->threads->changed($run->space_id, $conversationId);
 
         return $run;
     }
@@ -185,7 +195,7 @@ class AiRunService
             $tools = $this->tools->make($run, $space, $actor);
 
             if ($run->steps === 0 && $run->event_seq === 0) {
-                yield $this->emit($run, RunEventType::RunStarted, ['skill' => $run->skill, 'surface' => $run->surface]);
+                yield $this->emit($run, RunEventType::RunStarted, ['skill' => $run->skill, 'surface' => $run->surface, 'conversation_id' => $run->conversation_id]);
             }
 
             while (true) {
@@ -396,7 +406,7 @@ class AiRunService
                 $run->questionnaire = ['tool_call_id' => $call->id, ...$questionnaire];
                 $run->state = AiRunState::AwaitingInput;
                 $this->checkpoint($run, $transcript);
-                $this->announce($run);
+                $this->threads->changed($run->space_id, $run->conversation_id, activity: false);
                 yield $this->emit($run, RunEventType::Questionnaire, ['questionnaire' => $questionnaire]);
                 $run->save();
 
@@ -487,7 +497,8 @@ class AiRunService
         $this->checkpoint($run, $transcript);
 
         if ($run->conversation_id !== null) {
-            AiConversation::query()->find($run->conversation_id)?->messages()->create([
+            AiMessage::create([
+                'conversation_id' => $run->conversation_id,
                 'run_id' => $run->id,
                 'role' => 'assistant',
                 'content' => $text,
@@ -596,18 +607,10 @@ class AiRunService
     {
         $run->state = $state;
         $run->finished_at = now();
-        $this->announce($run);
+        $this->threads->changed($run->space_id, $run->conversation_id);
 
         if (($run->setup['driver'] ?? null) === 'openrouter' && ! empty($run->setup['generations'])) {
             ReconcileAiRunCostJob::dispatch($run->id)->delay(now()->addSeconds(30));
-        }
-    }
-
-    /** Background runs show in the inbox; tell its clients to refetch. */
-    private function announce(AiRun $run): void
-    {
-        if ($run->mode === AiRun::MODE_BACKGROUND) {
-            broadcast(new AiInboxChanged($run->space_id, runId: $run->id));
         }
     }
 

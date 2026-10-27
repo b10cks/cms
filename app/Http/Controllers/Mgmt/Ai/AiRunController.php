@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Mgmt\Ai;
 
 use App\Enums\AiRunState;
-use App\Events\Ai\AiInboxChanged;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Ai\AnswerAiRunRequest;
 use App\Http\Requests\Ai\StartAiRunRequest;
@@ -44,6 +43,7 @@ class AiRunController extends Controller
             $skill = $skills->resolve($space)[$name] ?? throw ValidationException::withMessages(['skill' => ['This skill is not available in the space.']]);
         }
 
+        // Only the owner sends follow-ups, also in a shared thread.
         $conversationId = $request->input('conversation_id');
         if ($conversationId !== null) {
             abort_unless(AiConversation::query()
@@ -71,6 +71,7 @@ class AiRunController extends Controller
             conversationId: $conversationId,
             instructions: $targets !== null ? StartRun::TARGET_INSTRUCTIONS : '',
             targets: $targets['frozen'] ?? null,
+            opensThread: $conversationId === null,
         );
 
         // More entries than an inline request may touch always run in the background.
@@ -115,7 +116,6 @@ class AiRunController extends Controller
 
             if ($run->wasRecentlyCreated) {
                 $run->forceFill(['mode' => AiRun::MODE_BACKGROUND])->save();
-                broadcast(new AiInboxChanged($space->id, runId: $run->id));
                 RunAgentJob::dispatch($run->id);
             }
 

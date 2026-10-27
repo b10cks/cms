@@ -20,6 +20,7 @@ final readonly class StartRun
      * @param  list<array<string, mixed>>  $parts  extra user content parts (images), server-side only
      * @param  array{type: string, ids: list<string>}|null  $targets  confirmed bulk selection; write tools may touch only these
      * @param  float|null  $maxUsd  USD cap for this run, replacing the configured one (schedules)
+     * @param  bool  $opensThread  a user-started run without `conversationId` opens a new chat thread
      */
     public function __construct(
         public Space $space,
@@ -35,5 +36,6 @@ final readonly class StartRun
         public array $parts = [],
         public ?array $targets = null,
         public ?float $maxUsd = null,
+        public bool $opensThread = false,
     ) {}
 }

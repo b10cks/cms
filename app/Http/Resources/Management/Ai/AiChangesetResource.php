@@ -18,8 +18,6 @@ class AiChangesetResource extends JsonResource
             'inline' => $this->inline,
             'item_count' => $this->item_count,
             'pending_count' => $this->pending_count,
-            // Distinct entries the items touch; only the inbox list counts them.
-            'entry_count' => $this->whenCounted('entry_count'),
             'run' => $this->whenLoaded('run', fn () => $this->run ? [
                 'id' => $this->run->id,
                 'state' => $this->run->state->value,

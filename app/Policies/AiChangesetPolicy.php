@@ -8,7 +8,7 @@ use App\Models\User;
 use App\Policies\Concerns\AuthorizesWithAbilities;
 
 /**
- * Background changesets are the space's inbox; inline ones belong to the
+ * Background changesets are open to the space's members; inline ones belong to the
  * editor who ran them. Deciding on items is checked per target.
  */
 class AiChangesetPolicy

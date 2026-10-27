@@ -13,7 +13,8 @@ use Illuminate\Support\Facades\Log;
 
 /**
  * Runs the term extraction skill over editor corrections of AI output and
- * stores the candidates as inbox suggestions. Holds IDs and plain text only.
+ * stores the candidates in the space's suggestions thread. Holds IDs and
+ * plain text only.
  *
  * @phpstan-import-type Edit from EditLearning
  */

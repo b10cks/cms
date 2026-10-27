@@ -3,11 +3,11 @@
 namespace App\Actions\Ai;
 
 use App\Enums\AiChangesetItemStatus;
-use App\Events\Ai\AiInboxChanged;
 use App\Models\Management\AiChangeset;
 use App\Models\Management\Space;
 use App\Models\User;
 use App\Services\Ai\Changesets\ChangeTargets;
+use App\Services\Ai\Threads\AiThreads;
 use App\Services\Auth\AuthorizationService;
 
 /** Rejects open changeset items; nothing is written to the targets. */
@@ -16,6 +16,7 @@ class RejectAiChangesetItems
     public function __construct(
         private readonly ChangeTargets $targets,
         private readonly AuthorizationService $auth,
+        private readonly AiThreads $threads,
     ) {}
 
     /**
@@ -33,9 +34,7 @@ class RejectAiChangesetItems
         ]);
 
         $changeset->refreshCounts();
-        if (! $changeset->inline) {
-            broadcast(new AiInboxChanged($space->id, changesetId: $changeset->id));
-        }
+        $this->threads->changedByRun($changeset->run_id);
 
         return $rejected;
     }
