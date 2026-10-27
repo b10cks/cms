@@ -155,12 +155,13 @@ const customize = async (name: string) => {
               {{ row.surfaces.map((surface) => aiSurfaceLabel(surface, t)).join(', ') }}
             </TableCell>
             <TableCell>
-              <Badge :variant="row.skill ? 'secondary' : 'surface'">{{ $t(`components.aiSettings.sources.${row.source}`) }}</Badge>
+              <Badge class="whitespace-nowrap" :variant="row.skill ? 'secondary' : 'surface'">{{ $t(`components.aiSettings.sources.${row.source}`) }}</Badge>
             </TableCell>
             <TableCell>
               <Switch
+                v-if="row.skill"
                 :model-value="row.enabled"
-                :disabled="!canManage || !row.skill"
+                :disabled="!canManage"
                 :aria-label="$t('components.aiSettings.enabledFor', { name: aiSkillLabel(row.name, t) })"
                 @update:model-value="(enabled: boolean) => row.skill && updateSkill({ id: row.skill.id, payload: { enabled } })"
               />

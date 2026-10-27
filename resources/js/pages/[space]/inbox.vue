@@ -48,7 +48,7 @@ useSeoMeta({
 </script>
 
 <template>
-  <div class="content-grid">
+  <div class="content-grid content-start">
     <ContentHeader
       :header="$t('components.aiInbox.title')"
       :description="$t('components.aiInbox.description')"

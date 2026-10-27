@@ -30,7 +30,7 @@ useSeoMeta({
 </script>
 
 <template>
-  <div class="content-grid">
+  <div class="content-grid content-start">
     <AiChangesetReview
       :key="changesetId"
       :space-id="spaceId"
