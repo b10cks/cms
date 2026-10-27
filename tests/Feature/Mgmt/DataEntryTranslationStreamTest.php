@@ -4,19 +4,20 @@ namespace Tests\Feature\Mgmt;
 
 use App\Events\Space\DataSourceContentChanged;
 use App\Models\Management\Space;
-use App\Models\Management\SpaceAiConfig;
 use App\Models\Space\DataEntry;
 use App\Models\Space\DataSource;
 use App\Models\User;
-use App\Services\Ai\AiStreamService;
 use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
 use Illuminate\Support\Facades\Event;
 use PHPUnit\Framework\Attributes\Test;
+use Tests\Support\FakeAiDriver;
 use Tests\TestCase;
+use Tests\Traits\FakesAi;
 use Tests\Traits\SpaceTestingTrait;
 
 class DataEntryTranslationStreamTest extends TestCase
 {
+    use FakesAi;
     use LazilyRefreshDatabase;
     use SpaceTestingTrait;
 
@@ -30,12 +31,8 @@ class DataEntryTranslationStreamTest extends TestCase
         $this->assignSpaceRole($space, $owner, 'owner');
         $this->setUpSpaceTesting($space);
 
-        $space->aiConfigs()->create([
-            'name' => 'Default',
-            'driver' => 'openai',
-            'model' => 'gpt-test',
-            'is_default' => true,
-        ]);
+        $this->fakeAi()->push(FakeAiDriver::text('{"hello":"Hallo","bye":"Tschüss"}'));
+        $this->giveSpaceAiConfig($space);
 
         $dataSource = DataSource::factory()->create([
             'dimensions' => [['key' => 'en', 'label' => 'English'], ['key' => 'de', 'label' => 'German']],
@@ -43,10 +40,6 @@ class DataEntryTranslationStreamTest extends TestCase
         ]);
         DataEntry::factory()->create(['data_source_id' => $dataSource->id, 'key' => 'hello', 'value' => 'Hello', 'dimensions' => []]);
         DataEntry::factory()->create(['data_source_id' => $dataSource->id, 'key' => 'bye', 'value' => 'Bye', 'dimensions' => []]);
-
-        $this->partialMock(AiStreamService::class, function ($mock) {
-            $mock->shouldReceive('generate')->once()->andReturn('{"hello":"Hallo","bye":"Tschüss"}');
-        });
 
         $response = $this->actingAs($owner)->postJson(
             route('mgmt.data-sources.entries.translate-missing-dimensions.stream', [
