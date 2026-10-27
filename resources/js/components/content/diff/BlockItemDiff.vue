@@ -53,9 +53,9 @@ const fallbackSegments = (child: DiffChange): DiffSegment[] =>
     <div class="flex items-center gap-1.5">
       <Icon
         name="lucide:box"
-        class="text-muted-foreground h-3.5 w-3.5 shrink-0"
+        class="size-3.5 shrink-0 text-muted"
       />
-      <span class="bg-muted rounded px-1.5 py-0.5 font-mono text-xs">
+      <span class="rounded bg-chip px-1.5 py-0.5 text-sm text-chip-foreground">
         <DiffSegments :segments="slugSegments" />
       </span>
     </div>
@@ -64,7 +64,7 @@ const fallbackSegments = (child: DiffChange): DiffSegment[] =>
       :key="`${row.child.type}:${row.child.path}`"
       class="flex items-baseline gap-2"
     >
-      <span class="text-muted-foreground w-24 shrink-0 truncate font-mono text-xs">{{
+      <span class="w-24 shrink-0 truncate text-sm text-muted">{{
         formatPath(row.child.path)
       }}</span>
       <div class="min-w-0 flex-1">

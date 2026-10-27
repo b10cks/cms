@@ -4834,6 +4834,11 @@
       }
     },
     "aiChangeset": {
+      "blockChange": {
+        "added": "Added block",
+        "removed": "Removed block",
+        "changed": "Changed block"
+      },
       "acceptAll": "Accept all",
       "rejectAll": "Reject all",
       "accept": "Accept",

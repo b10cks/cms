@@ -296,6 +296,86 @@ class AiChangesetTest extends TestCase
     /**
      * @param  array<string, mixed>  $changes
      */
+    #[Test]
+    public function inserting_a_block_and_editing_another_in_the_same_list_become_one_item_that_applies(): void
+    {
+        $page = $this->pageWithBlocks();
+        $content = $this->publishedPage(['title' => 'Home', 'body' => [
+            ['id' => 'b1', 'block' => 'hero', 'heading' => 'One'],
+            ['id' => 'b2', 'block' => 'hero', 'heading' => 'Two'],
+        ]], $page);
+        $this->driver->push($this->proposeChanges($content, [
+            ['path' => 'body.b2.heading', 'value' => 'Two, better'],
+            ['path' => 'body', 'insert' => ['block' => 'hero', 'values' => ['heading' => 'New']], 'after' => 'b1'],
+        ]), FakeAiDriver::text('Done.'));
+
+        $run = $this->runToEnd();
+
+        $item = AiChangesetItem::query()->sole();
+        $this->assertSame(['body', 'blocks'], [$item->path, $item->field_type]);
+        $result = json_decode((string) collect($run->transcript)->firstWhere('role', 'tool')['content'], true);
+        $newId = $result['inserted_blocks'][0]['id'];
+
+        $this->postJson($this->url("ai/changesets/{$item->changeset_id}/accept"))->assertOk()->assertJsonPath('accepted', 1);
+
+        $body = $content->refresh()->load('current_version')->current_version->content['body'];
+        $this->assertSame(['b1', $newId, 'b2'], array_column($body, 'id'));
+        $this->assertSame(['One', 'New', 'Two, better'], array_column($body, 'heading'));
+    }
+
+    #[Test]
+    public function a_block_outside_the_whitelist_is_refused_and_a_removal_drops_the_block(): void
+    {
+        $page = $this->pageWithBlocks();
+        $content = $this->publishedPage(['title' => 'Home', 'body' => [
+            ['id' => 'b1', 'block' => 'hero', 'heading' => 'One'],
+            ['id' => 'b2', 'block' => 'hero', 'heading' => 'Two'],
+        ]], $page);
+        $this->driver->push(
+            $this->proposeChanges($content, [['path' => 'body', 'insert' => ['block' => 'quote', 'values' => ['text' => 'Hi']]]]),
+            $this->proposeChanges($content, [['path' => 'body', 'remove' => 'b1']]),
+            FakeAiDriver::text('Done.'),
+        );
+
+        $run = $this->runToEnd();
+
+        $refusal = json_decode((string) collect($run->transcript)->where('role', 'tool')->first()['content'], true)['error'];
+        $this->assertStringContainsString('"quote" is not allowed here. Allowed: hero.', $refusal);
+        $this->assertSame(['b2'], array_column(AiChangesetItem::query()->sole()->after, 'id'));
+    }
+
+    /**
+     * @param  list<array<string, mixed>>  $changes
+     */
+    private function proposeChanges(Content $content, array $changes): TurnResult
+    {
+        return new TurnResult('', [new ToolCall('call_'.Str::random(6), 'propose_update', [
+            'target_type' => 'content',
+            'id' => $content->id,
+            'version_id' => $content->current_version_id,
+            'changes' => $changes,
+        ])], new TurnUsage(10, 5));
+    }
+
+    /** A page whose `body` block list allows only heroes; quotes exist but are not allowed there. */
+    private function pageWithBlocks(): Block
+    {
+        foreach (['hero' => ['heading' => ['type' => 'text', 'name' => 'Heading']], 'quote' => ['text' => ['type' => 'text', 'name' => 'Text']]] as $slug => $schema) {
+            Block::query()->create(['external_id' => (string) Str::uuid(), 'name' => ucfirst($slug), 'slug' => $slug, 'type' => 'nestable', 'schema' => $schema]);
+        }
+
+        return Block::query()->create([
+            'external_id' => (string) Str::uuid(),
+            'name' => 'Landing',
+            'slug' => 'landing',
+            'type' => 'root',
+            'schema' => [
+                'title' => ['type' => 'text', 'name' => 'Title'],
+                'body' => ['type' => 'blocks', 'name' => 'Body', 'restrict_blocks' => true, 'block_whitelist' => ['hero']],
+            ],
+        ]);
+    }
+
     private function propose(Content $content, array $changes, ?string $versionId = null, ?float $cost = null): TurnResult
     {
         return new TurnResult('', [new ToolCall('call_'.Str::random(6), 'propose_update', [

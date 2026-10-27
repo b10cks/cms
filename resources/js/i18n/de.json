@@ -4850,6 +4850,11 @@
       }
     },
     "aiChangeset": {
+      "blockChange": {
+        "added": "Block hinzugefügt",
+        "removed": "Block entfernt",
+        "changed": "Block geändert"
+      },
       "acceptAll": "Alle übernehmen",
       "rejectAll": "Alle ablehnen",
       "accept": "Übernehmen",

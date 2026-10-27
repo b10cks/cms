@@ -62,8 +62,13 @@ class ContentTarget implements ChangeTarget
         $document = $snapshot->document;
         $types = [];
 
+        $problems = [];
         foreach ($patches as $path => $value) {
-            $types[$path] = $this->fieldType($block, $document, (string) $path);
+            $field = $this->fieldAt($block, $document, (string) $path);
+            $types[$path] = $field['type'];
+            if ($field['type'] === 'blocks') {
+                $problems = [...$problems, ...$this->blockListProblems((string) $path, $field['field'], $value)];
+            }
             $document = FieldPath::set($document, (string) $path, $value);
         }
 
@@ -77,7 +82,6 @@ class ContentTarget implements ChangeTarget
             'save',
         );
 
-        $problems = [];
         foreach ($patches as $path => $value) {
             $indexPath = 'content.'.FieldPath::toIndexPath($document, (string) $path);
             foreach ($result->errors as $key => $messages) {
@@ -120,10 +124,13 @@ class ContentTarget implements ChangeTarget
     }
 
     /**
-     * Type of the field a path ends at. A path alternates field keys and
-     * block item IDs and must end at a field: whole field values are patched.
+     * The field a path ends at, with its canonical type. A path alternates
+     * field keys and block item IDs and must end at a field: whole field
+     * values are patched.
+     *
+     * @return array{type: string, field: array<string, mixed>}
      */
-    private function fieldType(Block $root, array $document, string $path): string
+    public function fieldAt(Block $root, array $document, string $path): array
     {
         $schema = $root->schema?->toArray() ?? [];
         $node = $document;
@@ -140,7 +147,7 @@ class ContentTarget implements ChangeTarget
 
             $type = SchemaField::canonicalizeType($field['type'] ?? null);
             if ($i === $last) {
-                return $type;
+                return ['type' => $type, 'field' => $field];
             }
 
             if ($type !== 'blocks' || $i + 1 === $last) {
@@ -159,6 +166,39 @@ class ContentTarget implements ChangeTarget
             $node = $item;
         }
 
-        return 'unknown';
+        return ['type' => 'unknown', 'field' => []];
+    }
+
+    /**
+     * Every item of a block list needs an ID, a block that exists, and one
+     * the field allows. Save validation skips unknown blocks silently, and
+     * the field's whitelist is otherwise only enforced by the editor.
+     *
+     * @param  array<string, mixed>  $field
+     * @return list<string>
+     */
+    private function blockListProblems(string $path, array $field, mixed $items): array
+    {
+        if (! \is_array($items)) {
+            return [];
+        }
+
+        $allowed = ! empty($field['restrict_blocks']) ? array_values((array) ($field['block_whitelist'] ?? [])) : null;
+        $slugs = array_values(array_unique(array_filter(array_map(fn ($item) => \is_array($item) ? ($item['block'] ?? null) : null, $items), 'is_string')));
+        $known = Block::query()->whereIn('slug', $slugs)->pluck('slug')->all();
+
+        $problems = [];
+        foreach ($items as $item) {
+            $slug = \is_array($item) ? ($item['block'] ?? null) : null;
+            if (! \is_array($item) || ! \is_string($item['id'] ?? null) || $item['id'] === '' || ! \is_string($slug)) {
+                $problems[] = "{$path}: every block needs an id and a block slug.";
+            } elseif (! \in_array($slug, $known, true)) {
+                $problems[] = "{$path}: there is no block \"{$slug}\". Use get_block_list to find the slugs.";
+            } elseif ($allowed !== null && ! \in_array($slug, $allowed, true)) {
+                $problems[] = "{$path}: \"{$slug}\" is not allowed here. Allowed: ".implode(', ', $allowed).'.';
+            }
+        }
+
+        return array_values(array_unique($problems));
     }
 }

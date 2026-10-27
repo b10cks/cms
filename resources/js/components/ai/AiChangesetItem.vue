@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import BlockItemDiff from '~/components/content/diff/BlockItemDiff.vue'
 import { resolveDiffComponent } from '~/components/content/diff/field-diff'
 import ValueRenderer from '~/components/content/ValueRenderer.vue'
 import Icon from '~/components/Icon.vue'
@@ -6,7 +7,7 @@ import { Badge } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
 import { Textarea } from '~/components/ui/textarea'
 import type { AiChangesetItem } from '~/lib/aiChangesets'
-import { diffFieldType, isOpenItem } from '~/lib/aiChangesets'
+import { blockListChanges, diffFieldType, isOpenItem } from '~/lib/aiChangesets'
 
 /**
  * One proposed field change: its diff on the history renderers, accept and
@@ -30,6 +31,15 @@ const emit = defineEmits<{
 }>()
 
 const { t } = useI18n()
+
+/** A block list proposal shows one row per added, removed or changed block. */
+const blockChanges = computed(() =>
+  props.item.field_type === 'blocks' && props.item.operation === 'update' && Array.isArray(props.item.after)
+    ? blockListChanges(props.item.before, props.item.final ?? props.item.after)
+    : null
+)
+
+const BLOCK_CHANGE_VARIANTS = { added: 'success', removed: 'destructive', changed: 'secondary' } as const
 
 const isEditable = computed(
   () =>
@@ -192,6 +202,30 @@ const STATUS_VARIANTS = {
     >
       <ValueRenderer :value="createdContent" />
     </div>
+    <ul
+      v-else-if="blockChanges"
+      class="grid gap-3"
+    >
+      <li
+        v-for="change in blockChanges"
+        :key="change.id"
+        class="grid gap-1.5"
+        :class="change.type === 'removed' && 'opacity-70'"
+      >
+        <Badge
+          :variant="BLOCK_CHANGE_VARIANTS[change.type]"
+          size="sm"
+          class="w-fit"
+        >
+          {{ $t(`components.aiChangeset.blockChange.${change.type}`) }}
+        </Badge>
+        <BlockItemDiff
+          :old-value="change.oldValue"
+          :new-value="change.newValue"
+          :children="change.children"
+        />
+      </li>
+    </ul>
     <component
       :is="diff"
       v-else-if="diff"
