@@ -35,6 +35,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property int $steps
  * @property int $input_tokens
  * @property int $output_tokens
+ * @property int $cached_tokens
  * @property float $cost_usd
  * @property int $event_seq
  * @property \Illuminate\Support\Carbon|null $started_at
@@ -70,6 +71,7 @@ class AiRun extends GlobalModel
         'steps',
         'input_tokens',
         'output_tokens',
+        'cached_tokens',
         'cost_usd',
         'event_seq',
         'started_at',
@@ -88,6 +90,7 @@ class AiRun extends GlobalModel
         'steps' => 'integer',
         'input_tokens' => 'integer',
         'output_tokens' => 'integer',
+        'cached_tokens' => 'integer',
         'cost_usd' => 'float',
         'event_seq' => 'integer',
         'started_at' => 'datetime',

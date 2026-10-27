@@ -13,6 +13,7 @@ use App\Mcp\Tools\LookupGlossaryTool;
 use App\Mcp\Tools\MgmtCallTool;
 use App\Mcp\Tools\MgmtOperationsTool;
 use App\Mcp\Tools\ReadSkillTool;
+use App\Mcp\Tools\SearchContentTool;
 use App\Mcp\Tools\SearchKnowledgeTool;
 use Laravel\Mcp\Server;
 
@@ -28,8 +29,9 @@ class ManagementServer extends Server
         Before designing or creating blocks, read b10cks_content_model_guide.
         Before creating automation actions or automations (webhooks, emails,
         content actions like cache purges), read b10cks_automations_guide.
-        list_skills, read_skill, search_knowledge and lookup_glossary give the
-        space's AI skills, reference documents and glossary, for the token's user.
+        list_skills, read_skill, search_knowledge, lookup_glossary and search_content
+        give the space's AI skills, reference documents, glossary and published
+        entries, for the token's user.
     MARKDOWN;
 
     protected array $tools = [
@@ -41,6 +43,7 @@ class ManagementServer extends Server
         ReadSkillTool::class,
         SearchKnowledgeTool::class,
         LookupGlossaryTool::class,
+        SearchContentTool::class,
     ];
 
     protected array $resources = [

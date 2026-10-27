@@ -64,6 +64,31 @@ class OpenRouterDriver extends BaseAiDriver
         return max(1, $requested);
     }
 
+    /** Anthropic and Gemini need explicit `cache_control` breakpoints via OpenRouter. */
+    protected function usesCacheBreakpoints(string $model): bool
+    {
+        return str_starts_with($model, 'anthropic/') || str_starts_with($model, 'google/gemini');
+    }
+
+    /**
+     * The provider-reported cost in USD of one finished generation, or null
+     * when the lookup fails (data can lag behind the request).
+     */
+    public function generationCost(string $generationId): ?float
+    {
+        try {
+            $response = Http::withHeaders($this->getHeaders())
+                ->timeout(15)
+                ->get("{$this->baseUrl}/generation", ['id' => $generationId]);
+        } catch (\Throwable) {
+            return null;
+        }
+
+        $cost = $response->ok() ? $response->json('data.total_cost') : null;
+
+        return is_numeric($cost) ? (float) $cost : null;
+    }
+
     protected function fetchModels(): array
     {
         try {
@@ -138,5 +163,4 @@ class OpenRouterDriver extends BaseAiDriver
             'X-Title' => $this->config['site_name'] ?? config('app.name'),
         ];
     }
-
 }

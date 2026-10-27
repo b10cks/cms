@@ -18,7 +18,8 @@ use Illuminate\Support\Str;
 /**
  * Assembles a run's first messages in a fixed order, stable parts first so
  * provider prompt caching hits: base instructions, trust guard, style guides
- * and the space prompt, skill catalog and task instructions, matched glossary
+ * and the space prompt, skill catalog and task instructions (cache breaks sit after
+ * the style guides and after the catalog), matched glossary
  * terms, translation memory examples. Screen context and untrusted data go to
  * the user message, fenced.
  *
@@ -70,18 +71,30 @@ class ContextBuilder
             SORT_REGULAR,
         )), 0, self::MAX_FROZEN_TERMS);
 
-        $system = implode("\n\n", array_filter([
-            $this->base($start, $toolsAvailable),
-            $prompts->untrustedDataGuard(),
-            $this->styleSection($styles->all()),
-            $prompts->customPromptSection(),
-            $this->catalogSection($catalog, $toolsAvailable),
-            $this->taskSection($start),
-            $this->glossarySection($matched, $sourceLocale, $targetLocale),
-            $this->memorySection($examples, $sourceLocale, $targetLocale),
-        ]));
+        // Stable prefixes end in a cache break: the style guides, then the skill catalog.
+        $system = '';
+        $breaks = [];
+        $groups = [
+            [$this->base($start, $toolsAvailable), $prompts->untrustedDataGuard(), $this->styleSection($styles->all()), $prompts->customPromptSection()],
+            [$this->catalogSection($catalog, $toolsAvailable)],
+            [
+                $this->taskSection($start),
+                $this->glossarySection($matched, $sourceLocale, $targetLocale),
+                $this->memorySection($examples, $sourceLocale, $targetLocale),
+            ],
+        ];
+        foreach ($groups as $index => $group) {
+            $text = implode("\n\n", array_filter($group));
+            if ($text === '') {
+                continue;
+            }
+            $system .= ($system === '' ? '' : "\n\n").$text;
+            if ($index < \count($groups) - 1) {
+                $breaks[] = \strlen($system);
+            }
+        }
 
-        $transcript = (new Transcript)->appendSystem($system)->appendUser($this->userContent($start, $context));
+        $transcript = (new Transcript)->appendSystem($system, $breaks)->appendUser($this->userContent($start, $context));
 
         if ($exact !== null && $exact !== [] && $context[TranslationMemory::SKILL_FIELDS[$start->skill->manifest->name]] === []) {
             $transcript->appendAssistant(json_encode($exact, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_FORCE_OBJECT) ?: '{}');

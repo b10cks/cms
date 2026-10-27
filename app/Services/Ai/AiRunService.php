@@ -5,6 +5,7 @@ namespace App\Services\Ai;
 use App\Enums\AiRunState;
 use App\Events\Ai\AiInboxChanged;
 use App\Events\Ai\AiRunEventsAvailable;
+use App\Jobs\ReconcileAiRunCostJob;
 use App\Jobs\RunAgentJob;
 use App\Models\Management\AiChangesetItem;
 use App\Models\Management\AiConversation;
@@ -588,6 +589,10 @@ class AiRunService
         $run->state = $state;
         $run->finished_at = now();
         $this->announce($run);
+
+        if (($run->setup['driver'] ?? null) === 'openrouter' && ! empty($run->setup['generations'])) {
+            ReconcileAiRunCostJob::dispatch($run->id)->delay(now()->addSeconds(30));
+        }
     }
 
     /** Background runs show in the inbox; tell its clients to refetch. */
@@ -682,6 +687,11 @@ class AiRunService
         $usage = $turn->usage;
         $run->input_tokens += $usage->inputTokens;
         $run->output_tokens += $usage->outputTokens;
+        $run->cached_tokens += $usage->cachedTokens;
+
+        if ($usage->generationId !== null) {
+            $run->setup = [...$run->setup, 'generations' => [...($run->setup['generations'] ?? []), $usage->generationId]];
+        }
 
         $cost = $usage->costUsd;
         if ($cost === null && $run->model !== null) {

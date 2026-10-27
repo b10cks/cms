@@ -7,11 +7,12 @@ namespace App\Services\Ai\Run;
  * format; the run service appends to it and checkpoints it after every step.
  *
  * Message shapes:
- * - `system` / `user`: `content` is a string or a list of parts (`text`, `image`)
+ * - `system` / `user`: `content` is a string or a list of parts (`text`, `image`);
+ *   a `system` string may carry `cache_breaks`, offsets where a cache breakpoint fits
  * - `assistant`: `content` string plus optional `tool_calls`
  * - `tool`: `tool_call_id`, `name` and string `content`
  *
- * @phpstan-type Message array{role: string, content?: mixed, tool_calls?: list<array{id: string, name: string, arguments: array<string, mixed>}>, tool_call_id?: string, name?: string}
+ * @phpstan-type Message array{role: string, content?: mixed, cache_breaks?: list<int>, tool_calls?: list<array{id: string, name: string, arguments: array<string, mixed>}>, tool_call_id?: string, name?: string}
  */
 final class Transcript
 {
@@ -44,9 +45,12 @@ final class Transcript
         return $this->messages;
     }
 
-    public function appendSystem(string $content): self
+    /**
+     * @param  list<int>  $cacheBreaks  Byte offsets in `$content` after which a provider may place a prompt cache breakpoint
+     */
+    public function appendSystem(string $content, array $cacheBreaks = []): self
     {
-        $this->messages[] = ['role' => 'system', 'content' => $content];
+        $this->messages[] = ['role' => 'system', 'content' => $content] + ($cacheBreaks !== [] ? ['cache_breaks' => $cacheBreaks] : []);
 
         return $this;
     }

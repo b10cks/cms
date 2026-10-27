@@ -9,6 +9,7 @@ use App\Mcp\Servers\ManagementServer;
 use App\Mcp\Tools\ListSkillsTool;
 use App\Mcp\Tools\LookupGlossaryTool;
 use App\Mcp\Tools\ReadSkillTool;
+use App\Mcp\Tools\SearchContentTool;
 use App\Mcp\Tools\SearchKnowledgeTool;
 use App\Models\Management\AiGlossary;
 use App\Models\Management\AiGlossaryTerm;
@@ -17,8 +18,6 @@ use App\Models\Management\AiSkill;
 use App\Models\Management\Space;
 use App\Models\Space\Content;
 use App\Models\User;
-use App\Services\Ai\Run\RunToolFactory;
-use App\Services\Ai\Run\ToolCall;
 use App\Services\Ai\Skills\SkillResolver;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
@@ -102,16 +101,14 @@ class AiMcpToolsTest extends TestCase
             'published_at' => now(), 'searchable_content' => 'Launch notes for the comet release',
         ]);
 
-        $search = fn (User $actor) => json_decode(
-            app(RunToolFactory::class)->forSpace($this->space, $actor, ['search_content'])
-                ->execute(new ToolCall('t', 'search_content', ['query' => 'comet'])),
-            true,
-        );
+        $args = ['spaceId' => $this->space->id, 'query' => 'comet'];
 
-        $this->assertSame(['Launch notes'], array_column($search($this->user)['results'], 'name'));
+        ManagementServer::actingAs($this->user)->tool(SearchContentTool::class, $args)
+            ->assertOk()->assertSee('Launch notes');
 
         $billing = User::factory()->create();
         $this->assignSpaceRole($this->space, $billing, 'billing');
-        $this->assertArrayHasKey('error', $search($billing));
+        ManagementServer::actingAs($billing)->tool(SearchContentTool::class, $args)
+            ->assertDontSee('Launch notes');
     }
 }

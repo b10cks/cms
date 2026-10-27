@@ -27,6 +27,8 @@ class AiRunResource extends JsonResource
                 'steps' => $this->steps,
                 'input_tokens' => $this->input_tokens,
                 'output_tokens' => $this->output_tokens,
+                'cached_tokens' => $this->cached_tokens,
+                'cached_tokens' => $this->cached_tokens,
                 'cost_usd' => $this->cost_usd,
             ],
             'started_at' => $this->started_at?->toIso8601String(),
