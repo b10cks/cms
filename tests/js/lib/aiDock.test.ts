@@ -30,7 +30,7 @@ describe('aiDock', () => {
 
   it('follows a new thread to the ID the server gave it', () => {
     startThread()
-    beginLiveTurn({ threadId: null, prompt: 'Translate', skill: null })
+    beginLiveTurn({ threadId: null, prompt: 'Translate', attachments: [], skill: null })
     threadCreated('thread-1')
 
     expect(aiDock.state).toMatchObject({ threadId: 'thread-1', composing: false })
@@ -39,7 +39,7 @@ describe('aiDock', () => {
 
   it('stays on the thread the user moved to while a new one started', () => {
     startThread()
-    beginLiveTurn({ threadId: null, prompt: 'Translate', skill: null })
+    beginLiveTurn({ threadId: null, prompt: 'Translate', attachments: [], skill: null })
     selectThread('thread-other')
     threadCreated('thread-1')
 

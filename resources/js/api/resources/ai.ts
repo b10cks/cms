@@ -1,6 +1,8 @@
+import type { AiAttachment } from '~/lib/aiAttachments'
 import type { AiDecision, AiDecisionResult, AiEntryScope, AiPreflight } from '~/lib/aiChangesets'
 import type { AiQuestionnaireAnswers, AiRunRecord, StartAiRunRequest } from '~/lib/aiRun'
 import type { AiThread, AiThreadDetail, AiThreadList, AiThreadListParams, AiThreadPatch } from '~/lib/aiThreads'
+import { xhrUpload } from '~/lib/xhr-upload'
 
 import type { ApiClient } from '../client'
 
@@ -155,6 +157,21 @@ export class Ai {
     config_id?: string | null
   }): Promise<{ data: AiPreflight }> {
     return this.client.post<{ data: AiPreflight }>(`/mgmt/v1/spaces/${this.spaceId}/ai/preflight`, payload)
+  }
+
+  /** Upload a file for the next message; progress is 0 to 100. */
+  public async uploadAttachment(
+    file: File,
+    options: { onProgress?: (progress: number) => void; signal?: AbortSignal } = {}
+  ): Promise<AiAttachment> {
+    const formData = new FormData()
+    formData.append('file', file)
+    const response = await xhrUpload<{ data: AiAttachment }>(
+      `/mgmt/v1/spaces/${this.spaceId}/ai/attachments`,
+      formData,
+      options
+    )
+    return response.data
   }
 
   public async getThreads(params: AiThreadListParams): Promise<AiThreadList> {

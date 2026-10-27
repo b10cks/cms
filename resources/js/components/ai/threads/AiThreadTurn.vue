@@ -5,19 +5,21 @@ import Icon from '~/components/Icon.vue'
 import Markdown from '~/components/Markdown.vue'
 import { Button } from '~/components/ui/button'
 import { Message, MessageContent } from '~/components/ui/message'
+import type { AiAttachment } from '~/lib/aiAttachments'
 import type { AiChangeset } from '~/lib/aiChangesets'
 import type { AiQuestionnaire, AiQuestionnaireAnswers, AiRunState } from '~/lib/aiRun'
 import { aiSkillLabel } from '~/lib/aiSkills'
 import type { AiThreadStep } from '~/lib/aiThreads'
 
 /**
- * One turn of a thread: the prompt, the steps while it runs, the answer, a
+ * One turn of a thread: the prompt with its attachments, the steps while it runs, the answer, a
  * questionnaire when it paused and its changeset as cards. The live run and
  * stored turns render through the same props.
  */
 const props = defineProps<{
   spaceId: string
   prompt: string | null
+  attachments: readonly AiAttachment[]
   skill: string | null
   state: AiRunState
   answer: string | null
@@ -43,17 +45,59 @@ const promptText = computed(() => {
   return label ?? props.prompt ?? ''
 })
 
+const images = computed(() => props.attachments.filter((attachment) => attachment.kind === 'image'))
+const documents = computed(() => props.attachments.filter((attachment) => attachment.kind === 'document'))
+
 const hasItems = computed(() => (props.changeset?.items?.length ?? 0) > 0)
 </script>
 
 <template>
   <div class="grid gap-3">
     <Message
-      v-if="promptText"
+      v-if="promptText || attachments.length > 0"
       align="end"
     >
-      <MessageContent>
-        <p class="max-w-[85%] rounded-xl bg-input px-3 py-2 text-sm whitespace-pre-wrap">{{ promptText }}</p>
+      <MessageContent class="flex flex-col items-end gap-1.5">
+        <div
+          v-if="images.length > 0"
+          class="flex max-w-[80%] flex-wrap justify-end gap-1.5"
+        >
+          <a
+            v-for="image in images"
+            :key="image.id"
+            :href="image.url"
+            target="_blank"
+            rel="noopener"
+            class="block size-16 overflow-hidden rounded-lg border border-border bg-card"
+            :title="image.name"
+          >
+            <img
+              :src="image.url"
+              :alt="image.name"
+              class="size-full object-cover"
+            />
+          </a>
+        </div>
+        <div
+          v-if="documents.length > 0"
+          class="flex max-w-[80%] flex-wrap justify-end gap-1.5"
+        >
+          <a
+            v-for="document in documents"
+            :key="document.id"
+            :href="document.url"
+            target="_blank"
+            rel="noopener"
+            class="inline-flex h-7 max-w-full items-center gap-1 rounded-md bg-chip px-2 text-sm text-chip-foreground hover:bg-chip/80"
+          >
+            <Icon name="lucide:file-text" />
+            <span class="truncate">{{ document.name }}</span>
+          </a>
+        </div>
+        <p
+          v-if="promptText"
+          class="max-w-[80%] rounded-2xl bg-chip px-3.5 py-2 text-sm text-chip-foreground whitespace-pre-wrap"
+        >{{ promptText }}</p>
       </MessageContent>
     </Message>
 

@@ -7,6 +7,7 @@ import { useLocalStorage } from '@vueuse/core'
 import { computed, reactive, readonly, type InjectionKey } from 'vue'
 
 import type { useAiRun } from '~/composables/useAiRun'
+import type { AiAttachment } from '~/lib/aiAttachments'
 import type { AiThreadChip, AiThreadStep } from '~/lib/aiThreads'
 
 export const DOCK_MIN_WIDTH = 360
@@ -26,6 +27,7 @@ export interface AiDockDraft {
 export interface AiLiveTurn {
   threadId: string | null
   prompt: string
+  attachments: AiAttachment[]
   skill: string | null
   steps: AiThreadStep[]
 }

@@ -4904,17 +4904,15 @@
       "new": "New thread",
       "newThread": "New thread",
       "search": "Search threads",
-      "showArchived": "Show archived",
       "shared": "Shared",
       "sharedWithSpace": "Shared with the space",
       "empty": "No threads yet. Ask the AI something to start one.",
       "noMatches": "No thread matches.",
-      "pickThread": "Pick a thread or start a new one.",
       "toReview": "{count} entry to review | {count} entries to review",
       "status": {
-        "needs_input": "Needs your answer",
-        "needs_review": "Needs your review",
-        "running": "Running",
+        "needs_input": "Input",
+        "needs_review": "Review",
+        "running": "Working",
         "failed": "Failed",
         "done": "Done"
       },
@@ -4938,15 +4936,11 @@
       "rename": "Rename",
       "titleLabel": "Thread title",
       "share": "Share with the space",
-      "archive": "Archive",
-      "unarchive": "Restore from archive",
-      "archived": "Archived",
       "updateFailed": "Could not update the thread: {error}",
       "ownerOnly": "Only {name} can send follow-ups in this thread.",
-      "emptyThread": "Ask anything about this space, or pick a skill. Changes arrive here for review; nothing is saved until you accept it.",
+      "emptyThread": "Ask anything about this space. Type / for a skill, {'@'} to mention an entry. Changes arrive here for review; nothing is saved until you accept it.",
       "placeholder": "Ask the AI, {'@'} to mention, / for skills",
       "extraInstructions": "Extra instructions (optional)",
-      "suggestedSkills": "Skills for this screen",
       "removeSkill": "Remove skill",
       "removeChip": "Remove {name}",
       "attachChip": "Attach {name}",
@@ -4982,6 +4976,29 @@
         "dismissTerm": "Dismiss {term}",
         "empty": "No glossary suggestions waiting.",
         "evidence": "The AI wrote \"{ai}\", an editor changed it to \"{final}\"."
+      },
+      "searchPlaceholder": "Search",
+      "clearSearch": "Clear search",
+      "settled": "Settled",
+      "settle": "Settle",
+      "unsettle": "Unsettle",
+      "settleThread": "Settle {title}",
+      "unsettleThread": "Unsettle {title}",
+      "sharedBy": "Shared by {name}",
+      "context": {
+        "schedule": "Schedule",
+        "suggestions": "Glossary suggestions"
+      },
+      "config": {
+        "label": "AI config",
+        "none": "Pick a config"
+      },
+      "files": {
+        "attach": "Attach files",
+        "unsupported": "{name} can't be attached. Use an image (PNG, JPEG, WebP, GIF) or a PDF, DOCX, Markdown, text or CSV file.",
+        "tooLarge": "{name} is too large. The limit is {max}.",
+        "tooMany": "Up to {max} files per message.",
+        "uploadFailed": "Could not upload {name}: {error}"
       }
     }
   },

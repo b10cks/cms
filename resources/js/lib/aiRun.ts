@@ -91,6 +91,8 @@ export interface StartAiRunRequest {
   background?: boolean
   /** A confirmed preflight selection; the run may touch only these entries. */
   targets?: { type: string; ids: string[] }
+  /** Uploaded, unsent attachment IDs for the user message */
+  attachments?: string[]
 }
 
 interface EventBase {
