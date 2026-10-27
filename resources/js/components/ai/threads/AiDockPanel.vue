@@ -32,7 +32,7 @@ const showsThread = computed(() => aiDock.state.threadId !== null || aiDock.stat
     v-else
     class="flex h-full min-h-0 flex-col"
   >
-    <header class="flex h-14 shrink-0 items-center gap-2 border-b border-border pr-3 pl-4">
+    <header class="flex h-14 shrink-0 items-center gap-2 border-b border-border bg-sidebar pr-3 pl-4 text-sidebar-foreground">
       <h2 class="min-w-0 flex-1 truncate font-semibold text-primary">{{ $t('components.aiThreads.title') }}</h2>
       <Button
         size="toolbar"

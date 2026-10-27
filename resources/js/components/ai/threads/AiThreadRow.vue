@@ -54,6 +54,10 @@ const meta = computed(() =>
     .join(', ')
 )
 
+/** Hidden until the row is hovered or the button focused; it then sits over the status, which turns invisible. */
+const settleClass =
+  'invisible absolute inset-y-0 right-0 -mr-1 inline-flex cursor-pointer items-center gap-1 rounded-md pr-1.5 pl-2 text-muted outline-none hover:text-foreground focus-visible:visible focus-visible:ring-1 focus-visible:ring-ring group-hover/row:visible'
+
 const onKeydown = (event: KeyboardEvent) => {
   if (event.target !== event.currentTarget || (event.key !== 'Enter' && event.key !== ' ')) return
   event.preventDefault()
@@ -62,26 +66,36 @@ const onKeydown = (event: KeyboardEvent) => {
 </script>
 
 <template>
-  <li class="py-0.5">
+  <li class="py-px">
     <div
       role="button"
       tabindex="0"
-      class="group/row relative w-full cursor-pointer rounded-lg px-3 py-2 text-left outline-none select-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-inset"
-      :class="active ? 'bg-tree-selected' : 'hover:bg-tree-hover'"
+      class="group/row relative w-full cursor-pointer rounded-md border border-transparent px-2.5 text-left outline-none transition-colors duration-150 select-none focus-visible:ring-1 focus-visible:ring-ring"
+      :class="[
+        settled ? 'flex h-8 items-center gap-2' : 'py-2',
+        active ? 'bg-tree-selected text-tree-selected-foreground' : 'hover:bg-tree-hover',
+      ]"
       :aria-current="active ? 'true' : undefined"
       :data-thread="thread.id"
       @click="emit('select')"
       @keydown="onKeydown"
     >
-      <div class="flex h-5 min-w-0 items-center gap-1.5 text-sm">
+      <span
+        v-if="settled"
+        class="min-w-0 flex-1 truncate text-sm"
+        :class="active ? 'font-semibold' : 'text-muted group-hover/row:text-foreground'"
+      >
+        {{ thread.title }}
+      </span>
+      <div
+        v-else
+        class="flex h-5 min-w-0 items-center gap-1.5 text-sm"
+      >
         <span class="min-w-0 flex-1 truncate text-muted">{{ context }}</span>
-        <span class="relative flex h-5 min-w-8 shrink-0 items-stretch justify-end">
+        <span class="relative flex h-5 shrink-0 items-center justify-end">
           <span
-            class="flex items-center self-center text-muted tabular-nums"
-            :class="
-              canSettle &&
-              'group-hover/row:absolute group-hover/row:right-0 group-hover/row:opacity-0 group-has-[button:focus-visible]/row:absolute group-has-[button:focus-visible]/row:right-0 group-has-[button:focus-visible]/row:opacity-0'
-            "
+            class="flex items-center tabular-nums"
+            :class="canSettle && 'group-hover/row:invisible group-has-[button:focus-visible]/row:invisible'"
             data-status
           >
             <span
@@ -102,44 +116,69 @@ const onKeydown = (event: KeyboardEvent) => {
                 {{ elapsed }}
               </span>
             </span>
-            <template v-else-if="thread.last_activity_at">
+            <span
+              v-else-if="thread.last_activity_at"
+              class="text-muted"
+            >
               {{ formatRelativeTime(thread.last_activity_at) }}
-            </template>
+            </span>
           </span>
           <button
             v-if="canSettle"
             type="button"
-            class="pointer-events-none absolute inset-y-0 right-0 -mr-1 inline-flex cursor-pointer items-center gap-1 rounded-md px-1.5 text-muted opacity-0 outline-none hover:text-foreground focus-visible:pointer-events-auto focus-visible:static focus-visible:opacity-100 focus-visible:ring-1 focus-visible:ring-ring group-hover/row:pointer-events-auto group-hover/row:static group-hover/row:opacity-100"
-            :aria-label="settled ? $t('components.aiThreads.unsettleThread', { title: thread.title }) : $t('components.aiThreads.settleThread', { title: thread.title })"
+            :class="[settleClass, active ? 'bg-tree-selected' : 'bg-tree-hover']"
+            :aria-label="$t('components.aiThreads.settleThread', { title: thread.title })"
             data-settle
             @click.stop="emit('settle')"
           >
             <Icon
-              :name="settled ? 'lucide:undo-2' : 'lucide:check'"
+              name="lucide:check"
               class="size-3.5"
             />
-            {{ settled ? $t('components.aiThreads.unsettle') : $t('components.aiThreads.settle') }}
+            {{ $t('components.aiThreads.settle') }}
           </button>
         </span>
       </div>
-      <div
-        class="mt-1 truncate text-base"
-        :class="
-          settled
-            ? 'font-normal text-foreground/75 group-hover/row:text-foreground'
-            : active
-              ? 'font-medium text-primary'
-              : 'font-medium text-foreground'
-        "
+      <span
+        v-if="settled"
+        class="relative flex h-5 shrink-0 items-center justify-end text-sm"
       >
-        {{ thread.title }}
-      </div>
-      <div
-        v-if="meta"
-        class="mt-0.5 truncate text-sm text-muted"
-      >
-        {{ meta }}
-      </div>
+        <span
+          class="text-muted tabular-nums"
+          :class="canSettle && 'group-hover/row:invisible group-has-[button:focus-visible]/row:invisible'"
+          data-status
+        >
+          {{ thread.last_activity_at ? formatRelativeTime(thread.last_activity_at) : '' }}
+        </span>
+        <button
+          v-if="canSettle"
+          type="button"
+          :class="[settleClass, active ? 'bg-tree-selected' : 'bg-tree-hover']"
+          :aria-label="$t('components.aiThreads.unsettleThread', { title: thread.title })"
+          data-settle
+          @click.stop="emit('settle')"
+        >
+          <Icon
+            name="lucide:undo-2"
+            class="size-3.5"
+          />
+          {{ $t('components.aiThreads.unsettle') }}
+        </button>
+      </span>
+      <template v-if="!settled">
+        <div
+          class="mt-1 truncate text-base font-medium"
+          :class="active ? 'text-tree-selected-foreground' : 'text-foreground'"
+        >
+          {{ thread.title }}
+        </div>
+        <div
+          v-if="meta"
+          class="mt-0.5 truncate text-sm text-muted"
+        >
+          {{ meta }}
+        </div>
+      </template>
     </div>
   </li>
 </template>

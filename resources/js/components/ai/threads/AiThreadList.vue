@@ -79,7 +79,7 @@ const clearSearch = () => {
 </script>
 
 <template>
-  <div class="flex h-full min-h-0 flex-col">
+  <div class="flex h-full min-h-0 flex-col bg-sidebar text-sidebar-foreground">
     <div class="flex shrink-0 items-center gap-1 px-2 pt-2 pb-1">
       <label
         class="flex h-8 min-w-0 flex-1 cursor-text items-center gap-2 rounded-md px-2 text-sm text-muted hover:bg-tree-hover hover:text-foreground focus-within:bg-tree-hover focus-within:text-foreground focus-within:ring-1 focus-within:ring-ring focus-within:ring-inset"
@@ -178,55 +178,58 @@ const clearSearch = () => {
           />
         </ul>
       </section>
-
-      <section
-        v-if="settledCount > 0 || settledOpen"
-        class="mt-2"
-        data-settled-shelf
-      >
-        <button
-          type="button"
-          class="flex h-8 w-full cursor-pointer items-center gap-2 rounded-md px-2 text-left text-sm font-medium text-muted focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none focus-visible:ring-inset"
-          :aria-expanded="settledOpen"
-          data-settled-toggle
-          @click="settledOpen = !settledOpen"
-        >
-          <span class="shrink-0">{{ $t('components.aiThreads.settled') }}</span>
-          <span class="flex-1" />
-          <span class="tabular-nums">{{ settledCount }}</span>
-          <Icon
-            name="lucide:chevron-down"
-            class="size-3.5 shrink-0 transition-transform"
-            :class="!settledOpen && '-rotate-90'"
-          />
-        </button>
-        <template v-if="settledOpen">
-          <div
-            v-if="settledLoading"
-            class="grid gap-3 p-2"
-            aria-hidden="true"
-          >
-            <Skeleton
-              v-for="index in Math.min(3, Math.max(1, settledCount))"
-              :key="index"
-              class="h-14 w-full"
-            />
-          </div>
-          <ul v-else>
-            <AiThreadRow
-              v-for="thread in settledThreads"
-              :key="thread.id"
-              :thread="thread"
-              :active="thread.id === activeId"
-              settled
-              :can-settle="canSettle(thread)"
-              :now="thread.status === 'running' ? now : 0"
-              @select="emit('select', thread.id)"
-              @settle="settle(thread, false)"
-            />
-          </ul>
-        </template>
-      </section>
     </div>
+
+    <section
+      v-if="settledCount > 0 || settledOpen"
+      class="flex max-h-[45%] shrink-0 flex-col border-t border-border px-2 py-1"
+      data-settled-shelf
+    >
+      <button
+        type="button"
+        class="flex h-8 w-full shrink-0 cursor-pointer items-center gap-2 rounded-md px-2.5 text-left text-sm font-medium text-muted transition-colors duration-150 hover:bg-tree-hover hover:text-foreground focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none focus-visible:ring-inset"
+        :aria-expanded="settledOpen"
+        data-settled-toggle
+        @click="settledOpen = !settledOpen"
+      >
+        <span class="shrink-0">{{ $t('components.aiThreads.settled') }}</span>
+        <span class="flex-1" />
+        <span class="tabular-nums">{{ settledCount }}</span>
+        <Icon
+          name="lucide:chevron-down"
+          class="size-3.5 shrink-0 transition-transform"
+          :class="!settledOpen && '-rotate-90'"
+        />
+      </button>
+      <div
+        v-if="settledOpen"
+        class="min-h-0 overflow-y-auto pb-1"
+      >
+        <div
+          v-if="settledLoading"
+          class="grid gap-3 p-2"
+          aria-hidden="true"
+        >
+          <Skeleton
+            v-for="index in Math.min(3, Math.max(1, settledCount))"
+            :key="index"
+            class="h-7 w-full"
+          />
+        </div>
+        <ul v-else>
+          <AiThreadRow
+            v-for="thread in settledThreads"
+            :key="thread.id"
+            :thread="thread"
+            :active="thread.id === activeId"
+            settled
+            :can-settle="canSettle(thread)"
+            :now="thread.status === 'running' ? now : 0"
+            @select="emit('select', thread.id)"
+            @settle="settle(thread, false)"
+          />
+        </ul>
+      </div>
+    </section>
   </div>
 </template>

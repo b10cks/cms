@@ -272,7 +272,7 @@ defineExpose({ focus: () => editor.value?.focus(), restore })
 <template>
   <div class="grid gap-1.5">
     <div
-      class="relative rounded-2xl border bg-card shadow-soft-sm transition-colors"
+      class="relative rounded-2xl border bg-card shadow-soft-sm transition-colors [&_.tiptap-editor]:px-4 [&_.tiptap-editor]:pt-3.5 [&_.tiptap-editor]:pb-1.5"
       :class="dragging ? 'border-ai' : 'border-border focus-within:border-border-strong'"
       @paste.capture="onPaste"
       @dragover="onDragOver"
@@ -281,7 +281,7 @@ defineExpose({ focus: () => editor.value?.focus(), restore })
     >
       <div
         v-if="showStrip"
-        class="flex flex-wrap items-center gap-1.5 px-3 pt-3"
+        class="flex flex-wrap items-center gap-1.5 px-3 pt-3 -mb-1"
         data-composer-strip
       >
         <span
@@ -383,7 +383,13 @@ defineExpose({ focus: () => editor.value?.focus(), restore })
         @command="(item) => pickSkill(item.id)"
       />
 
-      <div class="flex items-center gap-1 px-2 pb-2">
+      <div class="flex items-center gap-1 px-2.5 pt-1 pb-2.5">
+        <AiThreadConfigPicker
+          v-model="configId"
+          :space-id="spaceId"
+          :disabled="running"
+        />
+        <span class="flex-1" />
         <button
           type="button"
           :class="controlClass"
@@ -407,17 +413,12 @@ defineExpose({ focus: () => editor.value?.focus(), restore })
           data-file-input
           @change="onPickFiles"
         />
-        <AiThreadConfigPicker
-          v-model="configId"
-          :space-id="spaceId"
-          :disabled="running"
-        />
         <Button
           v-if="running"
           type="button"
           variant="primary"
           size="icon"
-          class="ml-auto size-8! rounded-full!"
+          class="size-8! rounded-full!"
           :aria-label="$t('actions.cancel')"
           @click="emit('cancel')"
         >
@@ -428,7 +429,7 @@ defineExpose({ focus: () => editor.value?.focus(), restore })
           type="button"
           variant="primary"
           size="icon"
-          class="ml-auto size-8! rounded-full! disabled:bg-foreground/10! disabled:text-muted! disabled:opacity-100!"
+          class="size-8! rounded-full! disabled:bg-foreground/10! disabled:text-muted! disabled:opacity-100!"
           :disabled="!canSend"
           :aria-label="$t('actions.send')"
           data-send

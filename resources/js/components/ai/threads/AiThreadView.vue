@@ -202,8 +202,8 @@ const suggestionsBusy = computed(
 </script>
 
 <template>
-  <div class="flex h-full min-h-0 flex-col">
-    <header class="flex h-14 shrink-0 items-center gap-2 border-b border-border px-3">
+  <div class="flex h-full min-h-0 flex-col bg-background">
+    <header class="flex h-14 shrink-0 items-center gap-2 border-b border-border bg-sidebar px-3 text-sidebar-foreground">
       <Button
         v-if="layout === 'dock'"
         size="toolbar"
