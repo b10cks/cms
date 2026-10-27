@@ -68,14 +68,16 @@ class AiThreadTest extends TestCase
     }
 
     #[Test]
-    public function a_private_thread_is_hidden_until_shared_and_only_its_owner_sends_follow_ups(): void
+    public function a_private_thread_and_its_changeset_are_hidden_until_shared_and_only_its_owner_sends_follow_ups(): void
     {
-        $thread = $this->thread([AiRunState::Completed]);
+        $thread = $this->thread([AiRunState::Completed], openChangeset: true);
+        $changeset = AiChangeset::query()->sole();
         $editor = User::factory()->create();
         $this->assignSpaceRole($this->space, $editor, 'editor');
 
         $this->actingAs($editor)->getJson($this->url('ai/threads'))->assertOk()->assertJsonCount(0, 'data');
         $this->getJson($this->url("ai/threads/{$thread->id}"))->assertNotFound();
+        $this->getJson($this->url("ai/changesets/{$changeset->id}"))->assertForbidden();
 
         $this->actingAs($this->user)->patchJson($this->url("ai/threads/{$thread->id}"), ['shared' => true])->assertOk()->assertJsonPath('data.shared', true);
 
@@ -83,6 +85,7 @@ class AiThreadTest extends TestCase
             ->assertJsonPath('data.0.id', $thread->id)
             ->assertJsonPath('data.0.is_owner', false);
         $this->getJson($this->url("ai/threads/{$thread->id}"))->assertOk()->assertJsonCount(1, 'data.turns');
+        $this->getJson($this->url("ai/changesets/{$changeset->id}"))->assertOk();
         $this->patchJson($this->url("ai/threads/{$thread->id}"), ['title' => 'Mine now'])->assertForbidden();
         $this->postJson($this->url('ai/runs'), ['surface' => 'cmdk', 'prompt' => 'And now?', 'conversation_id' => $thread->id])->assertNotFound();
         $this->assertSame(0, $this->driver->calls);

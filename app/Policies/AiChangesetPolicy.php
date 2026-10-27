@@ -8,8 +8,9 @@ use App\Models\User;
 use App\Policies\Concerns\AuthorizesWithAbilities;
 
 /**
- * Background changesets are open to the space's members; inline ones belong to the
- * editor who ran them. Deciding on items is checked per target.
+ * Inline changesets belong to the editor who ran them. Others follow their
+ * thread's visibility; changesets from before threads stay open to the space's
+ * members. Deciding on items is checked per target.
  */
 class AiChangesetPolicy
 {
@@ -17,8 +18,16 @@ class AiChangesetPolicy
 
     public function view(User $user, AiChangeset $changeset, Space $space): bool
     {
-        return $changeset->space_id === $space->id
-            && ($changeset->actor_id === $user->id || ! $changeset->inline)
-            && $this->canInSpace($user, $space, 'space.view');
+        if ($changeset->space_id !== $space->id || ! $this->canInSpace($user, $space, 'space.view')) {
+            return false;
+        }
+
+        if ($changeset->inline) {
+            return $changeset->actor_id === $user->id;
+        }
+
+        $thread = $changeset->run?->conversation;
+
+        return $thread === null || app(AiConversationPolicy::class)->view($user, $thread, $space);
     }
 }

@@ -8,6 +8,7 @@ use App\Services\Ai\Run\Transcript;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Carbon;
 
 /**
  * One agent run and its audit: actor, surface, skill and frozen revisions,
@@ -38,8 +39,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property int $cached_tokens
  * @property float $cost_usd
  * @property int $event_seq
- * @property \Illuminate\Support\Carbon|null $started_at
- * @property \Illuminate\Support\Carbon|null $finished_at
+ * @property Carbon|null $started_at
+ * @property Carbon|null $finished_at
  */
 class AiRun extends GlobalModel
 {
@@ -105,6 +106,11 @@ class AiRun extends GlobalModel
     public function actor(): BelongsTo
     {
         return $this->belongsTo(User::class, 'actor_id');
+    }
+
+    public function conversation(): BelongsTo
+    {
+        return $this->belongsTo(AiConversation::class, 'conversation_id');
     }
 
     public function events(): HasMany

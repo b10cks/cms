@@ -1375,12 +1375,26 @@ return [
         'method' => 'POST',
         'uri' => '/mgmt/v1/spaces/{spaceId}/ai/changesets/{id}/reject',
     ],
-    'ai.inbox' => [
-        'description' => 'List the AI inbox of a space: finished background runs and open proposals.',
+    'ai.threads.list' => [
+        'description' => 'List the AI threads of a space the user can see, those needing review or input first.',
         'required' => ['spaceId'],
         'accepts' => ['spaceId', 'params'],
         'method' => 'GET',
-        'uri' => '/mgmt/v1/spaces/{spaceId}/ai/inbox',
+        'uri' => '/mgmt/v1/spaces/{spaceId}/ai/threads',
+    ],
+    'ai.threads.get' => [
+        'description' => 'Get an AI thread with its turns: prompts, answers, runs and proposed changes.',
+        'required' => ['spaceId', 'id'],
+        'accepts' => ['spaceId', 'id'],
+        'method' => 'GET',
+        'uri' => '/mgmt/v1/spaces/{spaceId}/ai/threads/{id}',
+    ],
+    'ai.threads.update' => [
+        'description' => 'Rename, share or archive an AI thread.',
+        'required' => ['spaceId', 'id', 'payload'],
+        'accepts' => ['spaceId', 'id', 'payload'],
+        'method' => 'PATCH',
+        'uri' => '/mgmt/v1/spaces/{spaceId}/ai/threads/{id}',
     ],
     'ai.preflight' => [
         'description' => 'Estimate the cost and scope of an AI task before running it.',
