@@ -64,6 +64,19 @@ class AiSkillResolutionTest extends TestCase
         $this->assertNotContains('meta-tags', $names);
     }
 
+    #[Test]
+    public function space_ai_settings_endpoints_resolve_the_space_from_the_route(): void
+    {
+        $user = User::factory()->create();
+        $space = Space::factory()->create();
+        $this->assignSpaceRole($space, $user, 'admin');
+        Sanctum::actingAs($user);
+
+        $this->assertContains('rewrite', $this->getJson("/mgmt/v1/spaces/{$space->id}/ai/skills")->assertOk()->json('resolved.*.name'));
+        $this->getJson("/mgmt/v1/spaces/{$space->id}/ai/knowledge")->assertOk();
+        $this->getJson("/mgmt/v1/spaces/{$space->id}/ai/glossaries")->assertOk();
+    }
+
     private function skill(Space|Team $owner, User $user, string $body, string $name = 'rewrite', string $surface = 'selection'): AiSkill
     {
         $skill = AiSkill::create([

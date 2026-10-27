@@ -102,9 +102,13 @@ Route::get('/{space}/automations/automations', AppController::class)->name('spac
 Route::get('/{space}/automations/executions', AppController::class)->name('space-automations-executions');
 Route::get('/{space}/redirects', AppController::class)->name('space-redirects');
 Route::get('/{space}/mass-edit', AppController::class)->name('space-mass-edit');
+Route::get('/{space}/inbox', AppController::class)->name('space-ai-inbox');
 Route::get('/{space}/settings', AppController::class)->name('space-settings');
 Route::get('/{space}/settings/configuration', AppController::class)->name('space-settings-configuration');
 Route::get('/{space}/settings/ai', AppController::class)->name('space-settings-ai');
+Route::get('/{space}/settings/ai-skills', AppController::class)->name('space-settings-ai-skills');
+Route::get('/{space}/settings/ai-knowledge', AppController::class)->name('space-settings-ai-knowledge');
+Route::get('/{space}/settings/ai-glossaries', AppController::class)->name('space-settings-ai-glossaries');
 Route::get('/{space}/settings/people', AppController::class)->name('space-settings-people');
 Route::get('/{space}/settings/backups', AppController::class)->name('space-settings-backups');
 Route::get('/{space}/settings/migrations', AppController::class)->name('space-settings-migrations');

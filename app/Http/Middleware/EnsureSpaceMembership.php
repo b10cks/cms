@@ -27,6 +27,12 @@ class EnsureSpaceMembership
     {
         $space = $request->route('space');
 
+        // Controllers shared with `teams/{team}` routes cannot type-hint Space, so implicit binding skips them.
+        if (is_string($space)) {
+            $space = Space::query()->find($space);
+            $request->route()->setParameter('space', $space);
+        }
+
         if (! $space instanceof Space) {
             abort(404);
         }
