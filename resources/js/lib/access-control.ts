@@ -102,6 +102,11 @@ export const spaceSettingsNavigationItems: NavigationAccessItem[] = [
     routeName: 'space-settings-ai-glossaries',
   },
   {
+    label: 'components.aiSettings.schedules.title',
+    icon: 'lucide:calendar-clock',
+    routeName: 'space-settings-ai-schedules',
+  },
+  {
     label: 'labels.settings.people.title',
     icon: 'lucide:users',
     routeName: 'space-settings-people',
@@ -303,6 +308,7 @@ export const routeAccessRequirements: Record<AppRouteName, RouteAccessRequiremen
   'space-settings-ai-skills': { abilities: 'ai.view' },
   'space-settings-ai-knowledge': { abilities: 'ai.view' },
   'space-settings-ai-glossaries': { abilities: 'ai.view' },
+  'space-settings-ai-schedules': { abilities: 'ai.manage' },
   'space-settings-people': {
     abilities: {
       anyOf: [

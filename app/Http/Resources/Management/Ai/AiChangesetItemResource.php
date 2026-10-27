@@ -22,6 +22,7 @@ class AiChangesetItemResource extends JsonResource
             'field_type' => $this->field_type,
             'before' => $this->before,
             'after' => $this->after,
+            'final' => $this->final,
             'current' => $this->current,
             'status' => $this->status->value,
             'glossary_findings' => $this->glossary_findings ?? [],

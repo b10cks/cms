@@ -6,6 +6,7 @@ import { Badge } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
 import { Panel } from '~/components/ui/panel'
 import { Spinner } from '~/components/ui/spinner'
+import { Textarea } from '~/components/ui/textarea'
 import type { AiChangesetItem, AiDecision } from '~/lib/aiChangesets'
 import { diffFieldType, groupChangesetItems, isOpenItem } from '~/lib/aiChangesets'
 
@@ -29,8 +30,31 @@ const meta = computed(() => {
 
 const openIds = (items: readonly AiChangesetItem[]) => items.filter(isOpenItem).map((item) => item.id)
 
-const accept = (decision: AiDecision) =>
-  acceptMutation.mutate({ changesetId: props.changesetId, decision })
+/** Reviewer edits of text proposals; accepting applies them instead of the proposal. */
+const edits = ref<Record<string, string>>({})
+
+const isEditable = (item: AiChangesetItem) =>
+  item.status === 'pending' && item.operation === 'update' && item.target_type !== 'selection' && typeof item.after === 'string'
+
+const startEdit = (item: AiChangesetItem) => {
+  if (typeof item.after === 'string') edits.value = { ...edits.value, [item.id]: item.after }
+}
+
+const dropEdits = (ids?: readonly string[]) => {
+  edits.value = ids ? Object.fromEntries(Object.entries(edits.value).filter(([id]) => !ids.includes(id))) : {}
+}
+
+const accept = (decision: AiDecision) => {
+  const ids = decision.item_ids
+  const values = Object.fromEntries(Object.entries(edits.value).filter(([id]) => !ids || ids.includes(id)))
+  acceptMutation.mutate(
+    {
+      changesetId: props.changesetId,
+      decision: Object.keys(values).length > 0 ? { ...decision, values } : decision,
+    },
+    { onSuccess: () => dropEdits(ids) }
+  )
+}
 const reject = (decision: AiDecision) =>
   rejectMutation.mutate({ changesetId: props.changesetId, decision })
 
@@ -46,7 +70,7 @@ const diffFor = (item: AiChangesetItem) =>
     type: item.before === null || item.before === undefined ? 'added' : 'changed',
     path: item.path ?? '',
     oldValue: item.before,
-    newValue: item.after,
+    newValue: item.final ?? item.after,
     fieldType: diffFieldType(item),
   })
 
@@ -164,6 +188,25 @@ const STATUS_VARIANTS = {
                 class="ml-auto flex gap-2"
               >
                 <Button
+                  v-if="isEditable(item) && edits[item.id] === undefined"
+                  size="xs"
+                  variant="ghost"
+                  :disabled="busy"
+                  @click="startEdit(item)"
+                >
+                  <Icon name="lucide:pencil" />
+                  {{ $t('components.aiChangeset.edit') }}
+                </Button>
+                <Button
+                  v-else-if="edits[item.id] !== undefined"
+                  size="xs"
+                  variant="ghost"
+                  :disabled="busy"
+                  @click="dropEdits([item.id])"
+                >
+                  {{ $t('components.aiChangeset.discardEdit') }}
+                </Button>
+                <Button
                   size="xs"
                   variant="ghost"
                   :disabled="busy"
@@ -182,8 +225,15 @@ const STATUS_VARIANTS = {
               </div>
             </div>
 
+            <Textarea
+              v-if="edits[item.id] !== undefined"
+              v-model="edits[item.id]"
+              :aria-label="$t('components.aiChangeset.editLabel')"
+              auto-size
+              class="text-sm"
+            />
             <div
-              v-if="item.status === 'conflict'"
+              v-else-if="item.status === 'conflict'"
               class="grid gap-3 text-sm md:grid-cols-3"
             >
               <div>
@@ -209,7 +259,7 @@ const STATUS_VARIANTS = {
               :is="diffFor(item)"
               v-else-if="diffFor(item)"
               :old-value="item.before"
-              :new-value="item.after"
+              :new-value="item.final ?? item.after"
             />
             <div
               v-else
@@ -219,8 +269,14 @@ const STATUS_VARIANTS = {
                 :value="item.before"
                 class="text-muted"
               />
-              <ValueRenderer :value="item.after" />
+              <ValueRenderer :value="item.final ?? item.after" />
             </div>
+            <p
+              v-if="item.final !== null && item.final !== undefined"
+              class="mt-2 text-sm text-muted"
+            >
+              {{ $t('components.aiChangeset.editedBeforeAccepting') }}
+            </p>
 
             <ul
               v-if="item.glossary_findings.length > 0"

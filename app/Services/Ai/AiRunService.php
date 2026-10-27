@@ -124,7 +124,7 @@ class AiRunService
                 'options' => $options->toArray(),
                 'output' => $manifest?->output ?? SkillManifest::OUTPUT_TEXT,
                 'schema' => $manifest?->schema,
-                'budget' => $this->budget($manifest, $start->targets),
+                'budget' => $this->budget($manifest, $start->targets, $start->maxUsd),
                 'corrections' => 0,
                 'title' => Str::limit(trim((string) strtok($start->prompt, "\n")), 120, ''),
                 'targets' => $start->targets,
@@ -457,6 +457,12 @@ class AiRunService
             }
         }
 
+        // Fields the translation memory filled never went to the model.
+        $remembered = $setup['translation_memory']['exact'] ?? [];
+        if ($remembered !== [] && \is_array($data)) {
+            $data = array_replace($remembered, $data);
+        }
+
         $findings = $this->glossaryFindings($run, $text, $data);
         if ($findings !== []) {
             yield $this->emit($run, RunEventType::GlossaryFindings, ['findings' => $findings]);
@@ -599,7 +605,7 @@ class AiRunService
      * @param  array{type: string, ids: list<string>}|null  $targets
      * @return array<string, int|float>
      */
-    private function budget(?SkillManifest $manifest, ?array $targets): array
+    private function budget(?SkillManifest $manifest, ?array $targets, ?float $maxUsd): array
     {
         $budget = array_merge(
             array_intersect_key(config('ai.runs'), array_flip(['max_steps', 'max_tokens', 'max_usd', 'max_seconds'])),
@@ -608,6 +614,10 @@ class AiRunService
 
         if ($targets !== null) {
             $budget['max_steps'] = max((int) $budget['max_steps'], 2 * \count($targets['ids']) + 4);
+        }
+
+        if ($maxUsd !== null) {
+            $budget['max_usd'] = $maxUsd;
         }
 
         return $budget;

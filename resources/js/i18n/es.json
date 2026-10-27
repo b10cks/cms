@@ -4653,6 +4653,44 @@
         "import": "Import",
         "export": "Export {format}",
         "importErrors": "{count} rows could not be imported"
+      },
+      "schedules": {
+        "title": "Scheduled agents",
+        "description": "Run a skill over a saved scope on a schedule. Each run acts as the person who last saved the schedule, stops at its budget and puts its proposals in the inbox.",
+        "add": "Add schedule",
+        "edit": "Edit schedule",
+        "name": "Name",
+        "nameHint": "Also the title of the changesets it creates.",
+        "scope": "Scope",
+        "skill": "Skill",
+        "noSkills": "No skill can run on a schedule for this scope. Add a space or team skill with the {surface} surface that may propose updates.",
+        "cron": "Schedule",
+        "cronHint": "Cron expression in UTC: minute, hour, day of month, month, weekday. 0 6 * * 1 runs every Monday at 06:00.",
+        "budget": "Budget",
+        "budgetHint": "Maximum USD one run may spend. The run stops there and keeps what it proposed.",
+        "lastRun": "Last run",
+        "never": "Never",
+        "next": "Next: {time}",
+        "runsAs": "runs as {name}",
+        "paused": {
+          "access_revoked": "Paused: the person it runs as lost access. Save or enable it to run as you.",
+          "skill_unavailable": "Paused: the skill is gone or can no longer propose changes."
+        },
+        "filters": {
+          "block": "Block",
+          "language": "Language",
+          "missing_locale": "Missing translation",
+          "query": "Name contains",
+          "parent_id": "Folder",
+          "data_source": "Data source",
+          "missing_dimension": "Missing dimension",
+          "folder_id": "Asset folder",
+          "missing_field": "Missing field"
+        },
+        "empty": "No schedules yet.",
+        "confirmDelete": "Delete the schedule \"{name}\"?",
+        "saveFailed": "Could not save the schedule: {error}",
+        "deleteFailed": "Could not delete the schedule: {error}"
       }
     },
     "aiConfigSelector": {
@@ -4783,7 +4821,11 @@
         "proposed": "AI proposal"
       },
       "acceptFailed": "Could not apply the changes: {error}",
-      "rejectFailed": "Could not reject the changes: {error}"
+      "rejectFailed": "Could not reject the changes: {error}",
+      "edit": "Edit",
+      "discardEdit": "Discard edit",
+      "editLabel": "Edited proposal",
+      "editedBeforeAccepting": "Edited before accepting"
     },
     "aiInbox": {
       "title": "Inbox",
@@ -4805,7 +4847,21 @@
       },
       "cancel": "Cancel",
       "answerFailed": "Could not send your answers: {error}",
-      "cancelFailed": "Could not cancel the task: {error}"
+      "cancelFailed": "Could not cancel the task: {error}",
+      "suggestions": {
+        "title": "Glossary suggestions",
+        "evidence": "AI wrote \"{ai}\", kept \"{final}\"",
+        "addTo": "Add to glossary",
+        "chooseGlossary": "Add to",
+        "createGlossary": "Create a glossary first",
+        "dismiss": "Dismiss",
+        "scopes": {
+          "space": "Space",
+          "team": "Team"
+        },
+        "acceptFailed": "Could not add the term: {error}",
+        "dismissFailed": "Could not dismiss the suggestion: {error}"
+      }
     },
     "aiCommand": {
       "ask": "Ask AI: {prompt}",

@@ -2,6 +2,7 @@
 
 namespace App\Actions\Content;
 
+use App\Listeners\Ai\LearnFromPublishedContent;
 use App\Models\Management\Space;
 use App\Models\Space\Content;
 use App\Models\Space\ContentVersion;
@@ -125,6 +126,19 @@ abstract class BasePublishAction
             'content' => $contentData,
             'created_by_id' => $owner?->id,
         ], $content);
+    }
+
+    /**
+     * Hand the published entry to the AI listener once the publish commits,
+     * so a family publish sees every member's new version.
+     */
+    public static function afterPublish(Content $content, Space $space, Authenticatable|User|null $owner): void
+    {
+        $content->getConnection()->afterCommit(static fn () => app(LearnFromPublishedContent::class)->handle(
+            $content,
+            $space,
+            $owner instanceof User ? $owner : null,
+        ));
     }
 
     protected function loadPublishedVersion(Content $content): void

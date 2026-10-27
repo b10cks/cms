@@ -37,9 +37,6 @@ use Symfony\Component\HttpFoundation\Response;
  */
 class AiRunController extends Controller
 {
-    private const TARGET_INSTRUCTIONS = 'The user selected the entries listed in the context under `targets`. Work through each of them: read it with get_entry '
-        .'(pass target_type), then propose your changes with propose_update. Touch no other entries. Finish with a short summary of what you proposed.';
-
     public function store(StartAiRunRequest $request, Space $space, AiRunService $runs, SkillResolver $skills, EntryScope $scope): Response
     {
         $skill = null;
@@ -72,7 +69,7 @@ class AiRunController extends Controller
             config: $request->filled('config_id') ? $space->aiConfigs()->find($request->input('config_id')) : null,
             idempotencyKey: $request->input('idempotency_key'),
             conversationId: $conversationId,
-            instructions: $targets !== null ? self::TARGET_INSTRUCTIONS : '',
+            instructions: $targets !== null ? StartRun::TARGET_INSTRUCTIONS : '',
             targets: $targets['frozen'] ?? null,
         );
 

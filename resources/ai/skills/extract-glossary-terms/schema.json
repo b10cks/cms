@@ -1,0 +1,20 @@
+{
+  "type": "object",
+  "required": ["terms"],
+  "properties": {
+    "terms": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["term", "source_locale"],
+        "properties": {
+          "term": {"type": "string"},
+          "source_locale": {"type": "string"},
+          "translations": {"type": "object", "additionalProperties": {"type": "string"}},
+          "forbidden": {"type": "array", "items": {"type": "string"}},
+          "note": {"type": "string"}
+        }
+      }
+    }
+  }
+}

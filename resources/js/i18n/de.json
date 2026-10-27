@@ -4707,6 +4707,44 @@
         "import": "Importieren",
         "export": "{format} exportieren",
         "importErrors": "{count} Zeilen konnten nicht importiert werden"
+      },
+      "schedules": {
+        "title": "Geplante Agenten",
+        "description": "Führt einen Skill nach Zeitplan über einen gespeicherten Bereich aus. Jeder Lauf handelt als die Person, die den Zeitplan zuletzt gespeichert hat, stoppt an seinem Budget und legt seine Vorschläge in den Posteingang.",
+        "add": "Zeitplan hinzufügen",
+        "edit": "Zeitplan bearbeiten",
+        "name": "Name",
+        "nameHint": "Auch der Titel der Änderungssätze, die er erstellt.",
+        "scope": "Bereich",
+        "skill": "Skill",
+        "noSkills": "Für diesen Bereich kann kein Skill nach Zeitplan laufen. Lege einen Space- oder Team-Skill mit der Oberfläche {surface} an, der Änderungen vorschlagen darf.",
+        "cron": "Zeitplan",
+        "cronHint": "Cron-Ausdruck in UTC: Minute, Stunde, Tag, Monat, Wochentag. 0 6 * * 1 läuft jeden Montag um 06:00.",
+        "budget": "Budget",
+        "budgetHint": "Höchstbetrag in USD pro Lauf. Der Lauf stoppt dort und behält, was er vorgeschlagen hat.",
+        "lastRun": "Letzter Lauf",
+        "never": "Nie",
+        "next": "Nächster: {time}",
+        "runsAs": "läuft als {name}",
+        "paused": {
+          "access_revoked": "Pausiert: Die Person, als die er läuft, hat keinen Zugriff mehr. Speichern oder aktivieren, damit er als du läuft.",
+          "skill_unavailable": "Pausiert: Der Skill fehlt oder kann keine Änderungen mehr vorschlagen."
+        },
+        "filters": {
+          "block": "Block",
+          "language": "Sprache",
+          "missing_locale": "Fehlende Übersetzung",
+          "query": "Name enthält",
+          "parent_id": "Ordner",
+          "data_source": "Datenquelle",
+          "missing_dimension": "Fehlende Dimension",
+          "folder_id": "Asset-Ordner",
+          "missing_field": "Fehlendes Feld"
+        },
+        "empty": "Noch keine Zeitpläne.",
+        "confirmDelete": "Zeitplan „{name}“ löschen?",
+        "saveFailed": "Zeitplan konnte nicht gespeichert werden: {error}",
+        "deleteFailed": "Zeitplan konnte nicht gelöscht werden: {error}"
       }
     },
     "contentTreeAi": {
@@ -4799,7 +4837,11 @@
         "proposed": "KI-Vorschlag"
       },
       "acceptFailed": "Die Änderungen konnten nicht übernommen werden: {error}",
-      "rejectFailed": "Die Änderungen konnten nicht abgelehnt werden: {error}"
+      "rejectFailed": "Die Änderungen konnten nicht abgelehnt werden: {error}",
+      "edit": "Bearbeiten",
+      "discardEdit": "Bearbeitung verwerfen",
+      "editLabel": "Bearbeiteter Vorschlag",
+      "editedBeforeAccepting": "Vor dem Übernehmen bearbeitet"
     },
     "aiInbox": {
       "title": "Posteingang",
@@ -4821,7 +4863,21 @@
       },
       "cancel": "Abbrechen",
       "answerFailed": "Die Antworten konnten nicht gesendet werden: {error}",
-      "cancelFailed": "Die Aufgabe konnte nicht abgebrochen werden: {error}"
+      "cancelFailed": "Die Aufgabe konnte nicht abgebrochen werden: {error}",
+      "suggestions": {
+        "title": "Glossarvorschläge",
+        "evidence": "KI schrieb „{ai}“, behalten wurde „{final}“",
+        "addTo": "Zum Glossar hinzufügen",
+        "chooseGlossary": "Hinzufügen zu",
+        "createGlossary": "Zuerst ein Glossar anlegen",
+        "dismiss": "Verwerfen",
+        "scopes": {
+          "space": "Space",
+          "team": "Team"
+        },
+        "acceptFailed": "Begriff konnte nicht hinzugefügt werden: {error}",
+        "dismissFailed": "Vorschlag konnte nicht verworfen werden: {error}"
+      }
     },
     "aiCommand": {
       "ask": "KI fragen: {prompt}",

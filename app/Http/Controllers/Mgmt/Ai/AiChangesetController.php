@@ -3,15 +3,19 @@
 namespace App\Http\Controllers\Mgmt\Ai;
 
 use App\Actions\Ai\AcceptAiChangesetItems;
+use App\Actions\Ai\AcceptAiGlossarySuggestion;
 use App\Actions\Ai\RejectAiChangesetItems;
 use App\Enums\AiChangesetStatus;
 use App\Enums\AiRunState;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Ai\DecideAiChangesetRequest;
 use App\Http\Resources\Management\Ai\AiChangesetResource;
+use App\Http\Resources\Management\Ai\AiGlossaryResource;
+use App\Http\Resources\Management\Ai\AiGlossarySuggestionResource;
 use App\Http\Resources\Management\Ai\AiRunResource;
 use App\Models\Management\AiChangeset;
 use App\Models\Management\AiChangesetItem;
+use App\Models\Management\AiGlossarySuggestion;
 use App\Models\Management\AiRun;
 use App\Models\Management\Space;
 use App\Services\Ai\Changesets\ChangeTargets;
@@ -21,15 +25,17 @@ use Illuminate\Http\Request;
 
 /**
  * The space's AI inbox and changeset review. Background changesets are
- * listed for the space; runs only for their actor.
+ * listed for the space; runs only for their actor; glossary suggestions for
+ * those who may manage the space's AI.
  */
 class AiChangesetController extends Controller
 {
     private const OPEN = [AiChangesetStatus::Open, AiChangesetStatus::PartiallyApplied];
 
-    public function inbox(Request $request, Space $space): JsonResponse
+    public function inbox(Request $request, Space $space, AuthorizationService $auth, AcceptAiGlossarySuggestion $suggestions): JsonResponse
     {
         $this->authorizeSpace($space, 'space.view');
+        $managesAi = $auth->canInSpace($request->user(), $space, 'ai.manage');
 
         $changesets = AiChangeset::query()
             ->where('space_id', $space->id)
@@ -47,10 +53,16 @@ class AiChangesetController extends Controller
             ->limit(50)
             ->get();
 
+        $pending = $managesAi
+            ? AiGlossarySuggestion::query()->where('space_id', $space->id)->where('status', AiGlossarySuggestion::STATUS_PENDING)->with('actor')->latest()->limit(100)->get()
+            : collect();
+
         return response()->json([
             'changesets' => AiChangesetResource::collection((clone $changesets)->with(['run', 'actor'])->latest()->limit(100)->get()),
             'runs' => AiRunResource::collection($runs),
-            'count' => $changesets->count() + $runs->where('state', AiRunState::AwaitingInput)->count(),
+            'suggestions' => AiGlossarySuggestionResource::collection($pending),
+            'glossaries' => AiGlossaryResource::collection($pending->isNotEmpty() ? $suggestions->glossariesFor($space, $request->user()) : collect()),
+            'count' => $changesets->count() + $runs->where('state', AiRunState::AwaitingInput)->count() + $pending->count(),
         ]);
     }
 
@@ -72,7 +84,7 @@ class AiChangesetController extends Controller
     public function accept(DecideAiChangesetRequest $request, Space $space, string $changeset, AcceptAiChangesetItems $action): JsonResponse
     {
         $model = $this->findChangeset($space, $changeset);
-        $result = $action->handle($model, $space, $request->user(), $request->itemIds(), $request->boolean('overwrite'));
+        $result = $action->handle($model, $space, $request->user(), $request->itemIds(), $request->boolean('overwrite'), $request->editedValues());
 
         return response()->json(['data' => new AiChangesetResource($model->refresh()), ...$result]);
     }

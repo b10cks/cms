@@ -59,6 +59,32 @@ export interface ClassifyAssetsProgress {
   complete: boolean
 }
 
+export type AiScheduleTargetType = AiEntryScope['type']
+
+export interface AiSchedulePayload {
+  name: string
+  skill: string
+  scope: { type: AiScheduleTargetType; filters: Record<string, string> }
+  cron: string
+  max_usd: number
+  enabled: boolean
+}
+
+export interface AiSchedule extends AiSchedulePayload {
+  id: string
+  paused_reason: 'access_revoked' | 'skill_unavailable' | null
+  creator: { id: string; name: string } | null
+  last_run_at: string | null
+  last_run: { id: string; state: AiRunRecord['state'] } | null
+  next_run_at: string | null
+}
+
+export interface AiSchedules {
+  data: AiSchedule[]
+  /** Skills each scope type can run on a schedule */
+  skills: Record<AiScheduleTargetType, Array<{ name: string; description: string }>>
+}
+
 export interface SpaceAiConfig {
   id: string
   name: string
@@ -158,6 +184,35 @@ export class Ai {
       `/mgmt/v1/spaces/${this.spaceId}/ai/changesets/${changesetId}/reject`,
       decision
     )
+  }
+
+  public async acceptSuggestion(suggestionId: string, glossaryId: string): Promise<void> {
+    await this.client.post(`/mgmt/v1/spaces/${this.spaceId}/ai/suggestions/${suggestionId}/accept`, {
+      glossary_id: glossaryId,
+    })
+  }
+
+  public async dismissSuggestion(suggestionId: string): Promise<void> {
+    await this.client.post(`/mgmt/v1/spaces/${this.spaceId}/ai/suggestions/${suggestionId}/dismiss`)
+  }
+
+  public async getSchedules(): Promise<AiSchedules> {
+    return this.client.get<AiSchedules>(`/mgmt/v1/spaces/${this.spaceId}/ai/schedules`)
+  }
+
+  public async createSchedule(payload: AiSchedulePayload): Promise<{ data: AiSchedule }> {
+    return this.client.post<{ data: AiSchedule }>(`/mgmt/v1/spaces/${this.spaceId}/ai/schedules`, payload)
+  }
+
+  public async updateSchedule(scheduleId: string, payload: Partial<AiSchedulePayload>): Promise<{ data: AiSchedule }> {
+    return this.client.patch<{ data: AiSchedule }>(
+      `/mgmt/v1/spaces/${this.spaceId}/ai/schedules/${scheduleId}`,
+      payload
+    )
+  }
+
+  public async deleteSchedule(scheduleId: string): Promise<void> {
+    return this.client.delete(`/mgmt/v1/spaces/${this.spaceId}/ai/schedules/${scheduleId}`)
   }
 
   public async getAiConfigs(): Promise<{ data: SpaceAiConfig[] }> {

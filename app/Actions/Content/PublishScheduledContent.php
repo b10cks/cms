@@ -50,6 +50,7 @@ class PublishScheduledContent
         });
 
         if ($success) {
+            BasePublishAction::afterPublish($content, $space, $owner);
             $this->searchService->indexContent($content, $space);
         }
     }

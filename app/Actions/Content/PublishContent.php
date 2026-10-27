@@ -75,6 +75,7 @@ class PublishContent extends BasePublishAction
 
         if ($success) {
             $this->loadPublishedVersion($content);
+            self::afterPublish($content, $space, $owner);
         }
     }
 
