@@ -100,6 +100,7 @@ declare global {
   const useAiMentions: typeof import('./resources/js/composables/useAiMentions').useAiMentions
   const useAiModels: typeof import('./resources/js/composables/useAiModels').useAiModels
   const useAiRun: typeof import('./resources/js/composables/useAiRun').useAiRun
+  const useAiSchedules: typeof import('./resources/js/composables/useAiSchedules').useAiSchedules
   const useAiSettings: typeof import('./resources/js/composables/useAiModels').useAiSettings
   const useAiStream: typeof import('./resources/js/composables/useAiStream').useAiStream
   const useAiSurfaceSkills: typeof import('./resources/js/composables/useAiSurfaceSkills').useAiSurfaceSkills
@@ -427,6 +428,7 @@ declare module 'vue' {
     readonly useAiMentions: UnwrapRef<typeof import('./resources/js/composables/useAiMentions')['useAiMentions']>
     readonly useAiModels: UnwrapRef<typeof import('./resources/js/composables/useAiModels')['useAiModels']>
     readonly useAiRun: UnwrapRef<typeof import('./resources/js/composables/useAiRun')['useAiRun']>
+    readonly useAiSchedules: UnwrapRef<typeof import('./resources/js/composables/useAiSchedules')['useAiSchedules']>
     readonly useAiSettings: UnwrapRef<typeof import('./resources/js/composables/useAiModels')['useAiSettings']>
     readonly useAiStream: UnwrapRef<typeof import('./resources/js/composables/useAiStream')['useAiStream']>
     readonly useAiSurfaceSkills: UnwrapRef<typeof import('./resources/js/composables/useAiSurfaceSkills')['useAiSurfaceSkills']>

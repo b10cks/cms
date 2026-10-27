@@ -369,6 +369,11 @@ const routes: RouteRecordRaw[] = [
         component: () => import('~/pages/[space]/settings/ai-glossaries.vue'),
       },
       {
+        path: 'ai-schedules',
+        name: 'space-settings-ai-schedules',
+        component: () => import('~/pages/[space]/settings/ai-schedules.vue'),
+      },
+      {
         path: 'people',
         name: 'space-settings-people',
         component: () => import('~/pages/[space]/settings/people.vue'),

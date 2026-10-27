@@ -6,8 +6,8 @@ import type { AiQuestionnaireAnswers } from '~/lib/aiRun'
 import { toastError } from '~/lib/toast-error'
 
 /**
- * The space's AI inbox (open changesets, background runs) and changeset
- * review. Live updates arrive over the space's `ai` channel, which
+ * The space's AI inbox (open changesets, background runs, glossary
+ * suggestions) and changeset review. Live updates arrive over the space's `ai` channel, which
  * useSpaceBroadcasts subscribes to.
  */
 export function useAiInbox(spaceId: MaybeRefOrGetter<string>) {
@@ -68,6 +68,19 @@ export function useAiInbox(spaceId: MaybeRefOrGetter<string>) {
     onError: (error: unknown) => toastError(t, 'components.aiInbox.cancelFailed', error),
   })
 
+  const acceptSuggestionMutation = useMutation({
+    mutationFn: ({ suggestionId, glossaryId }: { suggestionId: string; glossaryId: string }) =>
+      resource().acceptSuggestion(suggestionId, glossaryId),
+    onSuccess: refreshInbox,
+    onError: (error: unknown) => toastError(t, 'components.aiInbox.suggestions.acceptFailed', error),
+  })
+
+  const dismissSuggestionMutation = useMutation({
+    mutationFn: (suggestionId: string) => resource().dismissSuggestion(suggestionId),
+    onSuccess: refreshInbox,
+    onError: (error: unknown) => toastError(t, 'components.aiInbox.suggestions.dismissFailed', error),
+  })
+
   return {
     useInboxQuery,
     useChangesetQuery,
@@ -75,5 +88,7 @@ export function useAiInbox(spaceId: MaybeRefOrGetter<string>) {
     rejectMutation,
     answerMutation,
     cancelMutation,
+    acceptSuggestionMutation,
+    dismissSuggestionMutation,
   }
 }

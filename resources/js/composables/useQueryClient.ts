@@ -149,6 +149,7 @@ export const queryKeys = {
         [...all(), 'context', surface, block] as const,
       inbox: () => [...all(), 'inbox'] as const,
       changeset: (changesetId: string) => [...all(), 'changesets', changesetId] as const,
+      schedules: () => [...all(), 'schedules'] as const,
     }
   },
   /** Skills, knowledge and glossaries of a space or team. */

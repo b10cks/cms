@@ -14,6 +14,7 @@ const item = (overrides: Partial<AiChangesetItem>): AiChangesetItem => ({
   field_type: 'text',
   before: 'Hello',
   after: 'Hello there',
+  final: null,
   current: null,
   status: 'pending',
   glossary_findings: [],

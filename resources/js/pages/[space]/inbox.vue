@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import AiChangesetReview from '~/components/ai/AiChangesetReview.vue'
 import AiQuestionnaireForm from '~/components/ai/AiQuestionnaireForm.vue'
+import AiSuggestionList from '~/components/ai/AiSuggestionList.vue'
 import { Badge } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
 import ContentHeader from '~/components/ui/ContentHeader.vue'
@@ -13,11 +14,16 @@ const { t } = useI18n()
 const { formatRelativeTime } = useFormat()
 const spaceId = computed(() => route.params.space as string)
 
-const { useInboxQuery, answerMutation, cancelMutation } = useAiInbox(spaceId)
+const { useInboxQuery, answerMutation, cancelMutation, acceptSuggestionMutation, dismissSuggestionMutation } =
+  useAiInbox(spaceId)
 const { data: inbox, isLoading } = useInboxQuery()
 
 const changesets = computed(() => inbox.value?.changesets ?? [])
 const runs = computed(() => inbox.value?.runs ?? [])
+const suggestions = computed(() => inbox.value?.suggestions ?? [])
+const suggestionsBusy = computed(
+  () => acceptSuggestionMutation.isPending.value || dismissSuggestionMutation.isPending.value
+)
 
 const selectedId = computed(() => {
   const requested = route.query.changeset
@@ -84,6 +90,21 @@ useSeoMeta({
               </button>
             </li>
           </ul>
+        </Panel>
+
+        <Panel
+          v-if="suggestions.length > 0"
+          :title="$t('components.aiInbox.suggestions.title')"
+          :meta="String(suggestions.length)"
+        >
+          <AiSuggestionList
+            :space-id="spaceId"
+            :suggestions="suggestions"
+            :glossaries="inbox?.glossaries ?? []"
+            :disabled="suggestionsBusy"
+            @accept="(suggestionId, glossaryId) => acceptSuggestionMutation.mutate({ suggestionId, glossaryId })"
+            @dismiss="(suggestionId) => dismissSuggestionMutation.mutate(suggestionId)"
+          />
         </Panel>
 
         <Panel

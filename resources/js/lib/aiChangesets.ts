@@ -2,6 +2,7 @@
  * Types and helpers for AI changesets: field-level proposals pinned to the
  * version a run read, reviewed per field, entry or changeset.
  */
+import type { AiGlossaryResource } from '~/api/resources/ai-knowledge'
 import type { AiGlossaryFinding, AiRunRecord } from '~/lib/aiRun'
 
 export type AiTargetType = 'content' | 'data_entry' | 'asset'
@@ -21,6 +22,8 @@ export interface AiChangesetItem {
   field_type: string | null
   before: unknown
   after: unknown
+  /** What the reviewer accepted when they edited the proposal first */
+  final: unknown
   current: unknown
   status: AiChangesetItemStatus
   glossary_findings: AiGlossaryFinding[]
@@ -46,15 +49,34 @@ export interface AiChangeset {
   created_at: string
 }
 
+/** A glossary term the learning loop drew from an editor's correction of AI output. */
+export interface AiGlossarySuggestion {
+  id: string
+  source_locale: string
+  term: string
+  translations: Record<string, string>
+  forbidden: string[]
+  note: string | null
+  evidence: { ai: string; final: string; label: string | null } | null
+  actor: { id: string; name: string } | null
+  created_at: string
+}
+
 export interface AiInbox {
   changesets: AiChangeset[]
   runs: AiRunRecord[]
+  /** Only for users who manage the space's AI */
+  suggestions: AiGlossarySuggestion[]
+  /** Glossaries the user may accept suggestions into */
+  glossaries: AiGlossaryResource[]
   count: number
 }
 
 export interface AiDecision {
   item_ids?: string[]
   overwrite?: boolean
+  /** Reviewer edits of text proposals, item ID => text to apply instead */
+  values?: Record<string, string>
 }
 
 export interface AiDecisionResult {
