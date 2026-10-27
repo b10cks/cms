@@ -2,6 +2,7 @@
 
 namespace App\Services\Ai;
 
+use App\Enums\AiChangesetItemStatus;
 use App\Enums\AiRunState;
 use App\Events\Ai\AiInboxChanged;
 use App\Events\Ai\AiRunEventsAvailable;
@@ -72,6 +73,8 @@ class AiRunService
     private const BACKGROUND_TEXT_FLUSH = 1000;
 
     private const SELECTION_SURFACE = 'selection';
+
+    private const TRANSLATE_SURFACE = 'translate';
 
     public function __construct(
         protected ModelRegistry $registry,
@@ -474,6 +477,10 @@ class AiRunService
             yield $this->emit($run, RunEventType::Proposal, ['proposal' => $this->proposeSelection($run, $text)]);
         }
 
+        if ($run->surface === self::TRANSLATE_SURFACE && \is_array($data)) {
+            $this->recordTranslations($run, $data);
+        }
+
         $run->result = ['text' => $text, 'data' => $data, 'glossary_findings' => $findings];
         $run->partial = $partial;
         $this->finish($run, AiRunState::Completed);
@@ -668,6 +675,61 @@ class AiRunService
             'target_id' => $item->target_id,
             'path' => null,
         ];
+    }
+
+    /**
+     * Editor translations apply in the open editor as they stream, so they are
+     * recorded as already accepted items of a single-entry changeset. A field
+     * edited before publish then feeds the learning loop. The editor sends the
+     * entry and the field path of each unit it can address by block IDs.
+     *
+     * @param  array<array-key, mixed>  $data
+     */
+    private function recordTranslations(AiRun $run, array $data): void
+    {
+        $context = $run->input ?? [];
+        $contentId = $context['content_id'] ?? null;
+        $paths = $context['paths'] ?? null;
+
+        if (! \is_string($contentId) || ! \is_array($paths)) {
+            return;
+        }
+
+        $items = [];
+        foreach ($paths as $unit => $path) {
+            $value = $data[$unit] ?? null;
+            if (! \is_string($path) || $path === '' || ! \is_string($value) || trim($value) === '') {
+                continue;
+            }
+
+            $items[] = [
+                'operation' => AiChangesetItem::OPERATION_UPDATE,
+                'target_type' => AiChangesetItem::TARGET_CONTENT,
+                'target_id' => $contentId,
+                'path' => $path,
+                'field_type' => 'text',
+                'before' => null,
+                'after' => $value,
+                'status' => AiChangesetItemStatus::Accepted,
+                'decided_by_id' => $run->actor_id,
+                'decided_at' => now(),
+            ];
+        }
+
+        if ($items === []) {
+            return;
+        }
+
+        // A newer translation of the same field supersedes what an earlier one would teach.
+        AiChangesetItem::query()
+            ->where('target_type', AiChangesetItem::TARGET_CONTENT)
+            ->where('target_id', $contentId)
+            ->whereIn('path', array_column($items, 'path'))
+            ->where('status', AiChangesetItemStatus::Accepted->value)
+            ->whereNull('learned_at')
+            ->update(['learned_at' => now()]);
+
+        app(ChangesetRecorder::class)->record($run, $items, inline: true);
     }
 
     private function checkpoint(AiRun $run, Transcript $transcript): void

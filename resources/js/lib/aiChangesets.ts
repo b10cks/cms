@@ -140,3 +140,27 @@ export const isOpenItem = (item: AiChangesetItem) =>
 /** Field type for the history diff renderers, which name the blocks type `block`. */
 export const diffFieldType = (item: AiChangesetItem): string | null =>
   item.field_type === 'blocks' ? 'block' : item.field_type
+
+/**
+ * A field path in the server's changeset form, with list items addressed by
+ * their `id` instead of their index. `stamps` name the item ID at each index
+ * position. Null when an index has no ID.
+ */
+export function idFieldPath(
+  path: ReadonlyArray<string | number>,
+  stamps: ReadonlyArray<{ pathIndex: number; id: string }> = []
+): string | null {
+  const segments: string[] = []
+
+  for (const [index, segment] of path.entries()) {
+    if (typeof segment === 'string') {
+      segments.push(segment)
+      continue
+    }
+    const id = stamps.find((stamp) => stamp.pathIndex === index)?.id
+    if (!id) return null
+    segments.push(id)
+  }
+
+  return segments.length > 0 ? segments.join('.') : null
+}

@@ -54,12 +54,12 @@ class AiKnowledgeDocumentController extends Controller
         return new AiKnowledgeDocumentResource($document->load('publishedRevision'));
     }
 
-    public function show(Request $request, string $document): AiKnowledgeDocumentResource
+    public function show(Request $request, Space|Team|string $owner, string $document): AiKnowledgeDocumentResource
     {
         return new AiKnowledgeDocumentResource($this->findDocument($request, $document, 'viewAny')->load('publishedRevision'));
     }
 
-    public function update(SaveAiKnowledgeDocumentRequest $request, string $document): AiKnowledgeDocumentResource
+    public function update(SaveAiKnowledgeDocumentRequest $request, Space|Team|string $owner, string $document): AiKnowledgeDocumentResource
     {
         $model = $this->findDocument($request, $document, 'manage');
 
@@ -77,7 +77,7 @@ class AiKnowledgeDocumentController extends Controller
         return new AiKnowledgeDocumentResource($model->load('publishedRevision'));
     }
 
-    public function publish(Request $request, string $document, PublishAiKnowledgeDocument $publish): AiKnowledgeDocumentResource
+    public function publish(Request $request, Space|Team|string $owner, string $document, PublishAiKnowledgeDocument $publish): AiKnowledgeDocumentResource
     {
         $model = $this->findDocument($request, $document, 'manage');
         $publish->handle($model, $request->user());
@@ -86,7 +86,7 @@ class AiKnowledgeDocumentController extends Controller
     }
 
     /** Store a PDF or DOCX privately and extract its text into the draft on the queue. */
-    public function upload(UploadAiKnowledgeSourceRequest $request, string $document): AiKnowledgeDocumentResource
+    public function upload(UploadAiKnowledgeSourceRequest $request, Space|Team|string $owner, string $document): AiKnowledgeDocumentResource
     {
         $model = $this->findDocument($request, $document, 'manage');
         $file = $request->file('file');
@@ -108,7 +108,7 @@ class AiKnowledgeDocumentController extends Controller
         return new AiKnowledgeDocumentResource($model->refresh()->load('publishedRevision'));
     }
 
-    public function destroy(Request $request, string $document): JsonResponse
+    public function destroy(Request $request, Space|Team|string $owner, string $document): JsonResponse
     {
         $model = $this->findDocument($request, $document, 'manage');
 

@@ -21,7 +21,7 @@ class ChangesetRecorder
      * Store items, replacing a still pending proposal for the same field so
      * the model can correct itself.
      *
-     * @param  list<array<string, mixed>>  $items  item attributes without changeset and status
+     * @param  list<array<string, mixed>>  $items  item attributes without changeset; status defaults to pending
      * @return list<AiChangesetItem>
      */
     public function record(AiRun $run, array $items, bool $inline = false): array
@@ -45,8 +45,8 @@ class ChangesetRecorder
             }
 
             $created[] = $changeset->items()->create([
-                ...$attributes,
                 'status' => AiChangesetItemStatus::Pending,
+                ...$attributes,
                 'glossary_findings' => $this->findings($run, $attributes['before'] ?? null, $attributes['after'] ?? null) ?: null,
             ]);
         }

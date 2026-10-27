@@ -26,6 +26,7 @@ import {
   type LocalizedFieldFocusPayload,
   type LocalizedFieldUpdatePayload,
 } from '~/lib/localizationCollab'
+import { idFieldPath } from '~/lib/aiChangesets'
 import { ensureTableValue, getTableColumns } from '~/lib/tableField'
 import type { FieldUpdateEvent } from '~/utils/preview-bridge'
 
@@ -79,6 +80,8 @@ interface TranslationUnit {
   fieldIdentifier: string
   /** Absent for units outside the content payload, like the entry name. */
   field?: TranslatableField
+  /** Whole-text field the translation lands in, as a changeset path; null when it has none. */
+  changesetPath: string | null
   apply: (content: Record<string, unknown>, translation: string) => void
 }
 
@@ -124,6 +127,8 @@ const props = defineProps<{
   // (translation, canonical and nearest source id), used to route root-level
   // preview edits to top-level translatable fields.
   rootItemIds?: string[]
+  // The translation entry, when it exists: AI translations are recorded against it.
+  contentId?: string | null
 }>()
 const emit = defineEmits<{
   'update:translationContent': [value: Record<string, unknown>]
@@ -1072,6 +1077,7 @@ const buildTranslationUnits = (): TranslationUnit[] => {
       id: nextUnitId(),
       source: props.sourceName,
       fieldIdentifier: '__content_name__',
+      changesetPath: null,
       apply: (_content, translation) => {
         emit('update:translationName', translation)
       },
@@ -1097,6 +1103,7 @@ const buildTranslationUnits = (): TranslationUnit[] => {
           source,
           fieldIdentifier,
           field,
+          changesetPath: idFieldPath([...field.path, key], field.blockStamps),
           apply: (content, translation) => {
             const nextMeta = normalizeMetaValue(getFieldValue(content, field))
             nextMeta[key] = translation
@@ -1127,6 +1134,7 @@ const buildTranslationUnits = (): TranslationUnit[] => {
           source: segment.text,
           fieldIdentifier,
           field,
+          changesetPath: null,
           apply: (content, translation) => {
             const nextDocument = buildRichTextTranslationBase(
               field.originalValue,
@@ -1153,6 +1161,7 @@ const buildTranslationUnits = (): TranslationUnit[] => {
       source: field.originalValue,
       fieldIdentifier,
       field,
+      changesetPath: field.tablePath ? null : idFieldPath(field.path, field.blockStamps),
       apply: (content, translation) => {
         applyTranslatedValue(content, field, translation)
       },
@@ -1248,6 +1257,9 @@ const translateWithAI = async (configId: string | null = selectedConfigId.value)
     translationUnits.map((unit) => [unit.id, unit.source] as const)
   )
   const translationUnitsById = new Map(translationUnits.map((unit) => [unit.id, unit] as const))
+  const changesetPaths = Object.fromEntries(
+    translationUnits.flatMap((unit) => (unit.changesetPath ? [[unit.id, unit.changesetPath]] : []))
+  )
   const fieldCount = translationUnits.length
 
   if (fieldCount === 0) {
@@ -1278,7 +1290,12 @@ const translateWithAI = async (configId: string | null = selectedConfigId.value)
     {
       surface: 'translate',
       skill: 'translate-fields',
-      context: { source: sourceLanguage.value, target: props.targetLanguage, fields: fieldsToTranslate },
+      context: {
+        source: sourceLanguage.value,
+        target: props.targetLanguage,
+        fields: fieldsToTranslate,
+        ...(props.contentId ? { content_id: props.contentId, paths: changesetPaths } : {}),
+      },
       config_id: configId,
     },
     {

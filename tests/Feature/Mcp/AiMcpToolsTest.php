@@ -8,6 +8,7 @@ use App\Enums\AiKnowledgeType;
 use App\Mcp\Servers\ManagementServer;
 use App\Mcp\Tools\ListSkillsTool;
 use App\Mcp\Tools\LookupGlossaryTool;
+use App\Mcp\Tools\MgmtCallTool;
 use App\Mcp\Tools\ReadSkillTool;
 use App\Mcp\Tools\SearchContentTool;
 use App\Mcp\Tools\SearchKnowledgeTool;
@@ -110,5 +111,26 @@ class AiMcpToolsTest extends TestCase
         $this->assignSpaceRole($this->space, $billing, 'billing');
         ManagementServer::actingAs($billing)->tool(SearchContentTool::class, $args)
             ->assertDontSee('Launch notes');
+    }
+
+    #[Test]
+    public function a_base64_glossary_upload_imports_its_terms_and_an_oversize_one_is_rejected(): void
+    {
+        $this->assignSpaceRole($this->space, $this->user, 'owner');
+        $glossary = AiGlossary::create([...AiGlossary::ownerAttributes($this->space), 'name' => 'Shop', 'enabled' => true]);
+        $args = ['operation' => 'ai.glossaries.import', 'spaceId' => $this->space->id, 'id' => $glossary->id];
+        $csv = "source_locale,term,case_sensitive,do_not_translate,forbidden,note\nen,Checkout,0,0,cart,\nen,b10cks,1,1,,Brand\n";
+
+        ManagementServer::actingAs($this->user)->tool(MgmtCallTool::class, [
+            ...$args,
+            'payload' => ['file' => ['filename' => 'terms.csv', 'content_base64' => base64_encode($csv)]],
+        ])->assertOk();
+
+        $this->assertEqualsCanonicalizing(['Checkout', 'b10cks'], $glossary->terms()->pluck('term')->all());
+
+        ManagementServer::actingAs($this->user)->tool(MgmtCallTool::class, [
+            ...$args,
+            'payload' => ['file' => ['filename' => 'big.csv', 'content_base64' => str_repeat('A', 14_000_000)]],
+        ])->assertHasErrors(['exceeds the upload limit of 10240 KB']);
     }
 }

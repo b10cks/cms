@@ -4765,6 +4765,7 @@
       "label": "Ask AI to",
       "accept": "Accept",
       "discard": "Discard",
+      "editProposal": "Edit the proposal",
       "skills": {
         "content-interaction": "Edit this entry",
         "content-tree": "Plan the content tree",

@@ -7,6 +7,7 @@ import AiActions from '~/components/ai/AiActions.vue'
 import AiQuestionnaireForm from '~/components/ai/AiQuestionnaireForm.vue'
 import Icon from '~/components/Icon.vue'
 import { Button } from '~/components/ui/button'
+import { Textarea } from '~/components/ui/textarea'
 import { aiSkillLabel } from '~/lib/aiSkills'
 
 const props = defineProps<{
@@ -31,6 +32,12 @@ const proposal = shallowRef<Proposal | null>(null)
 const suggestion = computed(() => (run.result.value?.text ?? run.text.value).trim())
 // The run records its suggestion as a single-entry changeset; the decision is stored there.
 const item = computed(() => run.proposals.value.at(-1) ?? null)
+// The reviewer may edit the finished suggestion; the edit is what gets applied.
+const edited = ref('')
+const isFinished = computed(() => run.status.value === 'completed' && suggestion.value !== '')
+watch(isFinished, (finished) => {
+  if (finished) edited.value = suggestion.value
+})
 
 const SURROUNDING_CHARS = 600
 
@@ -62,26 +69,28 @@ const runSkill = async (skill: AiResolvedSkill) => {
   }
 }
 
-const decide = (accepted: boolean) => {
+const decide = (accepted: boolean, value?: string) => {
   const proposed = item.value
   if (!proposed) return
 
   const mutation = accepted ? acceptMutation : rejectMutation
-  mutation.mutate({ changesetId: proposed.changeset_id, decision: { item_ids: [proposed.item_id] } })
+  const values = value !== undefined ? { [proposed.item_id]: value } : undefined
+  mutation.mutate({ changesetId: proposed.changeset_id, decision: { item_ids: [proposed.item_id], values } })
 }
 
 // The open editor owns the working copy, so an accepted selection is applied
 // here and saved with the entry; the changeset records the decision.
 const accept = () => {
   const current = proposal.value
-  if (!current || !suggestion.value) return
+  const value = edited.value.trim()
+  if (!current || !isFinished.value || !value) return
 
   props.editor
     .chain()
     .focus()
-    .insertContentAt({ from: current.from, to: current.to }, suggestion.value)
+    .insertContentAt({ from: current.from, to: current.to }, value)
     .run()
-  decide(true)
+  decide(true, value === suggestion.value ? undefined : value)
   proposal.value = null
 }
 
@@ -125,7 +134,15 @@ const discard = () => {
       />
       <template v-else>
         <p class="text-sm text-muted-foreground line-through">{{ proposal.before }}</p>
+        <Textarea
+          v-if="isFinished"
+          v-model="edited"
+          :auto-size="240"
+          class="text-sm"
+          :aria-label="$t('components.aiActions.editProposal')"
+        />
         <p
+          v-else
           class="whitespace-pre-wrap text-sm text-foreground"
           role="status"
         >
@@ -156,7 +173,7 @@ const discard = () => {
           type="button"
           size="sm"
           variant="ai"
-          :disabled="run.status.value !== 'completed' || !suggestion"
+          :disabled="!isFinished || !edited.trim()"
           :loading="run.isActive.value"
           @click="accept"
         >

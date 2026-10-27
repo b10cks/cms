@@ -4781,6 +4781,7 @@
       "label": "KI soll",
       "accept": "Übernehmen",
       "discard": "Verwerfen",
+      "editProposal": "Vorschlag bearbeiten",
       "skills": {
         "content-interaction": "Eintrag bearbeiten",
         "content-tree": "Inhaltsbaum planen",

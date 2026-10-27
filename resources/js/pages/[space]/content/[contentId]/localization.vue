@@ -938,6 +938,7 @@ useSeoMeta({
                 :get-field-collaborators="getLocalizedFieldCollaborators"
                 :get-field-draft-owners="getLocalizedFieldDraftOwners"
                 :root-item-ids="previewRootItemIds"
+                :content-id="translatableContent?.id"
                 @update:translation-content="updateTranslationContent"
                 @field-update="handleLocalizedFieldUpdate"
                 @field-focus="handleLocalizedFieldFocus"

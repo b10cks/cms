@@ -6,10 +6,13 @@ use Illuminate\Foundation\Http\FormRequest;
 
 class ImportAiGlossaryRequest extends FormRequest
 {
+    /** Upload limit in kilobytes, shared with the MCP file arguments. */
+    public const MAX_KB = 10240;
+
     public function rules(): array
     {
         return [
-            'file' => ['required', 'file', 'max:10240', 'extensions:csv,xlsx,tbx,xml'],
+            'file' => ['required', 'file', 'max:'.self::MAX_KB, 'extensions:csv,xlsx,tbx,xml'],
         ];
     }
 }

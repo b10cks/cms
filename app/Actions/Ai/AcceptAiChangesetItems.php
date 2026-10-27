@@ -59,7 +59,7 @@ class AcceptAiChangesetItems
             $first = $group->first();
 
             [$applied, $conflicted] = match (true) {
-                $first->target_type === AiChangesetItem::TARGET_SELECTION => [$group, collect()],
+                $first->target_type === AiChangesetItem::TARGET_SELECTION => [$this->selection($group, $values), collect()],
                 $first->operation === AiChangesetItem::OPERATION_CREATE => $this->create($first, $space, $user),
                 default => $this->update($group, $space, $user, $message, $overwrite, $values),
             };
@@ -140,6 +140,21 @@ class AcceptAiChangesetItems
         }
 
         return [$applied, $conflicted];
+    }
+
+    /**
+     * The open editor applies selection proposals; only the reviewer's edit is recorded here.
+     *
+     * @param  Collection<int, AiChangesetItem>  $items
+     * @param  array<string, string>  $values
+     * @return Collection<int, AiChangesetItem>
+     */
+    private function selection(Collection $items, array $values): Collection
+    {
+        return $items->each(function (AiChangesetItem $item) use ($values) {
+            $edit = $values[$item->id] ?? null;
+            $item->final = \is_string($item->after) && $edit !== null && $edit !== $item->after ? $edit : null;
+        });
     }
 
     /**

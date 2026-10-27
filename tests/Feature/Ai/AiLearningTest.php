@@ -17,6 +17,7 @@ use App\Services\Ai\Run\StartRun;
 use App\Services\Ai\Run\ToolCall;
 use App\Services\Ai\Run\TurnResult;
 use App\Services\Ai\Run\TurnUsage;
+use App\Services\Ai\Skills\SkillResolver;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
 use PHPUnit\Framework\Attributes\Test;
@@ -78,6 +79,85 @@ class AiLearningTest extends TestCase
         $this->getJson("/mgmt/v1/spaces/{$space->id}/ai/inbox")
             ->assertJsonPath('suggestions.0.term', 'basket')
             ->assertJsonPath('glossaries.0.id', $glossary->id);
+    }
+
+    #[Test]
+    public function editing_an_ai_translated_field_before_publish_yields_a_suggestion(): void
+    {
+        [$space, $driver] = $this->setUpLearning();
+        $content = $this->publishedPage($space);
+
+        $driver->push(
+            FakeAiDriver::text(json_encode(['f1' => 'Go to the cart checkout', 'f2' => 'Unaddressed'])),
+            FakeAiDriver::text(json_encode(['terms' => [['term' => 'basket', 'source_locale' => 'en', 'forbidden' => ['cart']]]])),
+        );
+
+        $runs = app(AiRunService::class);
+        $run = $runs->start(new StartRun(
+            $space,
+            $this->user,
+            'translate',
+            skill: app(SkillResolver::class)->resolve($space)['translate-fields'],
+            context: ['source' => 'de', 'target' => 'en', 'fields' => ['f1' => 'Zur Kasse', 'f2' => 'Rich text'], 'content_id' => $content->id, 'paths' => ['f1' => 'title']],
+        ));
+        iterator_to_array($runs->advance($run), false);
+
+        $item = AiChangeset::query()->sole()->items()->sole();
+        $this->assertSame(['title', 'Go to the cart checkout', 'accepted'], [$item->path, $item->after, $item->status->value]);
+
+        app(PublishContent::class)->execute(['content' => ['title' => 'Go to the basket checkout']], $content->fresh(), $space, $this->user);
+
+        $this->assertStringContainsString('Go to the basket checkout', $driver->lastUserText());
+        $this->assertSame('basket', AiGlossarySuggestion::query()->sole()->term);
+    }
+
+    #[Test]
+    public function an_edited_selection_proposal_is_accepted_with_the_edited_value(): void
+    {
+        [$space, $driver] = $this->setUpLearning();
+
+        $driver->push(
+            FakeAiDriver::text('Go to the cart'),
+            FakeAiDriver::text(json_encode(['terms' => [['term' => 'basket', 'source_locale' => 'en']]])),
+        );
+
+        $runs = app(AiRunService::class);
+        $run = $runs->start(new StartRun(
+            $space,
+            $this->user,
+            'selection',
+            skill: app(SkillResolver::class)->resolve($space)['rewrite'],
+            context: ['selection' => 'Go to checkout'],
+        ));
+        iterator_to_array($runs->advance($run), false);
+        $changeset = AiChangeset::query()->sole();
+        $item = $changeset->items()->sole();
+
+        $this->postJson("/mgmt/v1/spaces/{$space->id}/ai/changesets/{$changeset->id}/accept", [
+            'item_ids' => [$item->id],
+            'values' => [$item->id => 'Go to the basket'],
+        ])->assertOk();
+
+        $this->assertSame(['accepted', 'Go to the basket'], [$item->fresh()->status->value, $item->fresh()->final]);
+        $this->assertStringContainsString('Go to the basket', $driver->lastUserText());
+        $this->assertSame('basket', AiGlossarySuggestion::query()->sole()->term);
+    }
+
+    /**
+     * @return array{0: Space, 1: FakeAiDriver}
+     */
+    private function setUpLearning(): array
+    {
+        $this->user = User::factory()->create();
+        $space = Space::factory()->create();
+        $this->assignSpaceRole($space, $this->user, 'owner');
+        $this->setUpSpaceTesting($space);
+        app()->instance('currentSpace', $space);
+        $this->giveSpaceAiConfig($space);
+        $driver = $this->fakeAi();
+        $this->actingAs($this->user);
+
+        return [$space, $driver];
     }
 
     private function publishedPage(Space $space): Content
