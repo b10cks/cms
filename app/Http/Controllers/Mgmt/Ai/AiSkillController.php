@@ -9,6 +9,8 @@ use App\Http\Requests\Ai\SaveAiSkillRequest;
 use App\Http\Resources\Management\Ai\AiSkillResource;
 use App\Http\Resources\Management\Ai\ResolvedSkillResource;
 use App\Models\Management\AiSkill;
+use App\Models\Management\Space;
+use App\Models\Management\Team;
 use App\Services\Ai\Skills\SkillParser;
 use App\Services\Ai\Skills\SkillResolver;
 use Illuminate\Http\JsonResponse;
@@ -51,12 +53,12 @@ class AiSkillController extends Controller
         return new AiSkillResource($skill->load('publishedRevision'));
     }
 
-    public function show(Request $request, string $skill): AiSkillResource
+    public function show(Request $request, Space|Team|string $owner, string $skill): AiSkillResource
     {
         return new AiSkillResource($this->findSkill($request, $skill, 'viewAny')->load('publishedRevision'));
     }
 
-    public function update(SaveAiSkillRequest $request, string $skill, SkillParser $parser): AiSkillResource
+    public function update(SaveAiSkillRequest $request, Space|Team|string $owner, string $skill, SkillParser $parser): AiSkillResource
     {
         $model = $this->findSkill($request, $skill, 'manage');
 
@@ -76,7 +78,7 @@ class AiSkillController extends Controller
         return new AiSkillResource($model->load('publishedRevision'));
     }
 
-    public function publish(Request $request, string $skill, PublishAiSkill $publish): AiSkillResource
+    public function publish(Request $request, Space|Team|string $owner, string $skill, PublishAiSkill $publish): AiSkillResource
     {
         $model = $this->findSkill($request, $skill, 'manage');
         $publish->handle($model, $request->user());
@@ -84,7 +86,7 @@ class AiSkillController extends Controller
         return new AiSkillResource($model->refresh()->load('publishedRevision'));
     }
 
-    public function destroy(Request $request, string $skill): JsonResponse
+    public function destroy(Request $request, Space|Team|string $owner, string $skill): JsonResponse
     {
         $this->findSkill($request, $skill, 'manage')->delete();
 

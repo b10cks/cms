@@ -9,6 +9,9 @@ use Illuminate\Http\Request;
 /**
  * AI settings controllers serve both `spaces/{space}/ai/…` and
  * `teams/{team}/ai/…`; the owner is whichever the route carries.
+ *
+ * Laravel passes route parameters by position, so actions with an ID take
+ * the owner parameter (`$owner`) before it; aiOwner() resolves it by name.
  */
 trait ResolvesAiOwner
 {

@@ -10,6 +10,8 @@ use App\Http\Requests\Ai\SaveAiGlossaryTermRequest;
 use App\Http\Resources\Management\Ai\AiGlossaryResource;
 use App\Http\Resources\Management\Ai\AiGlossaryTermResource;
 use App\Models\Management\AiGlossary;
+use App\Models\Management\Space;
+use App\Models\Management\Team;
 use App\Services\Ai\Knowledge\GlossaryTransfer;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -45,7 +47,7 @@ class AiGlossaryController extends Controller
         return new AiGlossaryResource($glossary->loadCount('terms'));
     }
 
-    public function update(SaveAiGlossaryRequest $request, string $glossary): AiGlossaryResource
+    public function update(SaveAiGlossaryRequest $request, Space|Team|string $owner, string $glossary): AiGlossaryResource
     {
         $model = $this->findGlossary($request, $glossary, 'manage');
         $model->fill($request->validated())->save();
@@ -53,14 +55,14 @@ class AiGlossaryController extends Controller
         return new AiGlossaryResource($model->loadCount('terms'));
     }
 
-    public function destroy(Request $request, string $glossary): JsonResponse
+    public function destroy(Request $request, Space|Team|string $owner, string $glossary): JsonResponse
     {
         $this->findGlossary($request, $glossary, 'manage')->delete();
 
         return response()->json(null, 204);
     }
 
-    public function terms(Request $request, string $glossary): AnonymousResourceCollection
+    public function terms(Request $request, Space|Team|string $owner, string $glossary): AnonymousResourceCollection
     {
         $model = $this->findGlossary($request, $glossary, 'viewAny');
         $search = trim((string) $request->query('search', ''));
@@ -73,14 +75,14 @@ class AiGlossaryController extends Controller
         );
     }
 
-    public function storeTerm(SaveAiGlossaryTermRequest $request, string $glossary): AiGlossaryTermResource
+    public function storeTerm(SaveAiGlossaryTermRequest $request, Space|Team|string $owner, string $glossary): AiGlossaryTermResource
     {
         $model = $this->findGlossary($request, $glossary, 'manage');
 
         return new AiGlossaryTermResource($model->terms()->create($this->termAttributes($request)));
     }
 
-    public function updateTerm(SaveAiGlossaryTermRequest $request, string $glossary, string $term): AiGlossaryTermResource
+    public function updateTerm(SaveAiGlossaryTermRequest $request, Space|Team|string $owner, string $glossary, string $term): AiGlossaryTermResource
     {
         $termModel = $this->findGlossary($request, $glossary, 'manage')->terms()->findOrFail($term);
         $termModel->fill($this->termAttributes($request))->save();
@@ -88,21 +90,21 @@ class AiGlossaryController extends Controller
         return new AiGlossaryTermResource($termModel);
     }
 
-    public function destroyTerm(Request $request, string $glossary, string $term): JsonResponse
+    public function destroyTerm(Request $request, Space|Team|string $owner, string $glossary, string $term): JsonResponse
     {
         $this->findGlossary($request, $glossary, 'manage')->terms()->findOrFail($term)->delete();
 
         return response()->json(null, 204);
     }
 
-    public function import(ImportAiGlossaryRequest $request, string $glossary, GlossaryTransfer $transfer): JsonResponse
+    public function import(ImportAiGlossaryRequest $request, Space|Team|string $owner, string $glossary, GlossaryTransfer $transfer): JsonResponse
     {
         $model = $this->findGlossary($request, $glossary, 'manage');
 
         return response()->json(['data' => $transfer->import($model, $request->file('file'))->toArray()]);
     }
 
-    public function export(Request $request, string $glossary, GlossaryTransfer $transfer): Response
+    public function export(Request $request, Space|Team|string $owner, string $glossary, GlossaryTransfer $transfer): Response
     {
         $model = $this->findGlossary($request, $glossary, 'viewAny');
         $format = $request->validate(['format' => ['sometimes', Rule::in(GlossaryTransfer::FORMATS)]])['format'] ?? 'csv';
