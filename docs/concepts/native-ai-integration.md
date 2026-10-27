@@ -283,3 +283,6 @@ Inline edits on one entry are single-entry changesets reviewed in place. Backgro
 8. Cmd+K extends the existing palette (`components/Command.vue`) instead of adding a second one.
 9. Data entries and assets have no drafts; accepting their items saves directly through `UpdateDataEntry` and the asset update action.
 10. MCP AI tools need a user, so they work over the HTTP transport only.
+11. Preflight estimates calibrate themselves: average reconciled cost per entry per space and skill, token formula until 5 runs exist.
+12. File arguments over MCP are base64 (`{filename, content_base64}`), capped at the app's upload limit.
+13. Editor translations apply in place like selection proposals and are recorded as single-entry changeset items, so edits feed the learning loop.

@@ -126,3 +126,28 @@ Acceptance:
 - After deploying W1: `authorization:sync-roles` (new `ai.manage` and `team.ai.manage` abilities).
 - W1 and W2 add management migrations; they run with the deploy.
 - After tagging W3: `spaces:repair-databases` (translation memory table).
+
+## W6 Built-in bulk skills and finishing follow-ups
+
+Two agents in parallel.
+
+**A (skills, small fixes, calibration):**
+
+1. Built-in skills usable from Cmd+K, bulk selections and schedules: `translate-fields` and the SEO meta skill gain `cmdk` and `bulk:content` surfaces and `propose_update`; a new `find-untranslated` skill finds entries missing a locale and proposes translations.
+2. `extract-glossary-terms` gets a translated label. The Cmd+K dialog gets a `DialogTitle`. Team tab deep links (`/teams/{team}/people|roles|saml|settings|ai`) get server routes.
+3. Preflight estimate: average reconciled cost per entry from finished runs, per space and skill; token formula until 5 runs exist.
+
+**B (learning loop, MCP uploads, SDK):**
+
+1. Editor translations through `translate-fields` still land in the open editor but are recorded as single-entry changeset items, so edits before publish feed the learning loop.
+2. Selection proposals can be edited before accepting.
+3. `mgmt_call` accepts `{filename, content_base64}` file arguments, capped at the app's upload limit; glossary import/export and knowledge upload become operations in `operations.php` and `operations.ts`.
+4. SDK: `AiResource` in `mgmt-client` (dead stream methods removed); mcp-server handlers use it; `rawCall` removed. Uncommitted on the SDK's current branch.
+
+Acceptance:
+
+- A schedule using a built-in skill produces a changeset without any space skill.
+- Preflight uses the run average once 5 reconciled runs exist and the formula before.
+- Editing an AI-translated field before publish yields a learning suggestion.
+- A base64 glossary upload over MCP imports its terms; an oversize upload is rejected.
+- The SDK typecheck, lint and tests pass, and `OperationsMirrorTest` stays green.
