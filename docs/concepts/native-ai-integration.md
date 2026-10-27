@@ -233,7 +233,7 @@ Settled with Mike on 2026-10-27. Every AI conversation and run lives in a thread
 - Each schedule has one standing thread (`kind = schedule`); each run appends a turn. Learning suggestions live in one standing thread per space (`kind = suggestions`). Both are visible to members with `ai.manage`.
 - Chat threads are private to their owner. The owner can share one with the space; then every member who can view the space sees it under "Shared", anyone with edit rights on an entry can accept or reject its cards, and only the owner sends follow-ups.
 - A turn is one run: the prompt, the streamed steps, the answer, a questionnaire if it paused, and its changeset as cards. One card per entry with per-field accept and reject as icon buttons; a field shows a status badge only once decided. Cross-locale changes show source and translation side by side; same-locale edits keep the word diff. A turn touching more than five entries renders one summary card (counts, glossary warnings, Accept all, Reject all) with the entries as collapsed rows.
-- Composer: a new thread attaches the current screen (open entry, data source, selection) as a removable chip. In an existing thread, a screen that isn't attached shows as a ghost chip to click. `@` mentions entries, assets and knowledge documents, `/` picks a skill, the model picker stays. An empty thread offers the resolved skills of the current surface as chips.
+- Composer: a new thread attaches the current screen (open entry, data source, selection) as a removable chip. In an existing thread, a screen that isn't attached shows as a ghost chip to click. `@` mentions entries, assets and knowledge documents, `/` picks a skill, the model picker stays. Skills are not offered as chips (see the UI section below).
 - Cmd+K stays the command palette. Free text offers "Ask AI: …", and skill items start a thread in the dock with the current screen attached. Feature buttons start threads; the dock opens for them only when there is something to review or answer, except bulk starts, which open the dock on the running thread.
 - Status, derived and never stored, in priority order: `needs_input` (a run awaits answers), `needs_review` (an open non-inline changeset, or pending suggestions), `running`, `failed` (latest run failed), `done`. The list pins `needs_input` and `needs_review` on top, then sorts by last activity. Threads are archived by hand; archived ones sit behind a "Show archived" toggle. Search matches the title.
 - A background thread reaching `needs_input`, `needs_review` or `failed` while it is not the open thread raises a toast with "Open".
@@ -257,6 +257,27 @@ All under `spaces/{space}`, behind `space.member`.
 - `POST ai/runs` returns or streams the run with its `conversation_id`, including when the server created the thread.
 - Removed: `GET ai/inbox`. Changeset accept and reject and suggestion accept stay as they are.
 - Broadcast: `AiInboxChanged` becomes `AiThreadChanged` (`ai_thread:changed` on `spaces.{id}.ai`, payload `thread_id` only). Clients refetch through the authorised endpoints.
+
+### UI modelled on T3 Code (V2.1 polish, 2026-10-27)
+
+Settled with Mike: copy T3 Code's thread list and composer as closely as the CMS allows, minimal and quiet. Reference source: `pingdotgg/t3code`, `apps/web/src/components/sidebar/SidebarThreadRow.tsx`, `SidebarListMarkers.tsx`, `SidebarThreadHeader.tsx`, `chat/ComposerSurface.tsx`, `chat/ComposerControl.tsx`, `chat/ModelListRow.tsx`, `chat/ComposerPrimaryActions.tsx`.
+
+- List header: a ghost search row (search icon and "Search" placeholder, looks like a row until focused) and a small pencil (square-pen) icon button that starts a new thread. No "New thread" button, no "Show archived" switch.
+- Rows are inbox cards: line one is the context (the attached entry or data source, "Schedule", "Glossary suggestions", or the skill) in muted 13px, with the status on the right: icon plus label in the status color (`Input`, `Review`, `Working`, `Failed`, `Done`), or the relative time when there is nothing to report. Line two is the title, 15px, medium weight. Line three, only when there is something, is muted meta ("7 entries to review", "Shared by Anna"). Active row gets the selected fill; no borders, no dots.
+- Settle replaces archive. Hovering a row swaps the status for a "Settle" button (check icon); a settled thread leaves the list and joins the "Settled" shelf at the bottom: a collapsible section header with a muted count, collapsed by default, expanded state remembered. Settled rows recede (muted, normal weight) and offer "Unsettle" on hover. Settling is manual. The API keeps the field name `archived`.
+- Composer: one rounded-2xl surface with a hairline outline and a soft shadow, the editor on top, a footer row with small ghost controls: attach (paperclip), the config picker, and on the right the round send button (stop while running). Chips of attached context and files sit in a strip above the editor.
+- Config picker: a ghost trigger with the config name and a small chevron, no border, 13px, muted until hovered. The list shows each config as a row: name, the model in muted 13px below, a check on the selected one.
+- Skills stay hidden at first: no skill chips in the empty state. `/` in the composer opens them.
+- Attachments: images (png, jpeg, webp, gif) go to the model as image parts; documents (pdf, docx, md, txt, csv) as extracted text inside the untrusted-data fence. Up to 10 files per message, images up to 5 MB, documents up to 20 MB. Added by the paperclip, paste or drop; shown as chips (thumbnail for images) above the editor and on the sent message.
+
+### Attachments API
+
+- `POST ai/attachments` (multipart `file`) stores the file privately on the `transfers` disk under `ai-attachments/{space}/` and returns `{ id, name, mime_type, size, kind: image|document, url }` with 201. Unsupported types and oversize files fail validation.
+- `GET ai/attachments/{attachment}` streams the file to its uploader or to anyone who can view the thread it belongs to.
+- `POST ai/runs` accepts `attachments` (up to 10 IDs). They must be the actor's, in the space and not yet sent; the run links them to its user message. Unknown or used IDs fail validation.
+- Thread turns carry `attachments` (same shape as above).
+- `GET ai/threads` adds `meta.settled`, the count of the user's visible settled threads.
+- Unsent attachments older than a day are pruned by the scheduler.
 
 ## Translation memory and learning (W3)
 
