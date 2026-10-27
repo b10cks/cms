@@ -1,7 +1,5 @@
 import type { SseCallbacks } from '~/lib/sse'
 
-import { useAiStream } from './useAiStream'
-
 export function useDataEntryTranslation(spaceId: MaybeRef<string>, dataSourceId: MaybeRef<string>) {
   const { t } = useI18n()
   const { stream, cancelStream, isStreaming } = useAiStream()
