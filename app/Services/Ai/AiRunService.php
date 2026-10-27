@@ -7,6 +7,7 @@ use App\Enums\AiRunState;
 use App\Events\Ai\AiRunEventsAvailable;
 use App\Jobs\ReconcileAiRunCostJob;
 use App\Jobs\RunAgentJob;
+use App\Models\Management\AiAttachment;
 use App\Models\Management\AiChangesetItem;
 use App\Models\Management\AiMessage;
 use App\Models\Management\AiRun;
@@ -152,13 +153,18 @@ class AiRunService
             return $this->findByKey($start) ?? throw $e;
         }
 
-        if ($conversationId !== null && trim($start->prompt) !== '') {
-            AiMessage::create([
+        if ($conversationId !== null && (trim($start->prompt) !== '' || $start->attachments !== [])) {
+            $message = AiMessage::create([
                 'conversation_id' => $conversationId,
                 'run_id' => $run->id,
                 'role' => 'user',
                 'content' => $start->prompt,
             ]);
+
+            AiAttachment::query()
+                ->whereIn('id', array_column($start->attachments, 'id'))
+                ->whereNull('message_id')
+                ->update(['message_id' => $message->id]);
         }
 
         $this->threads->changed($run->space_id, $conversationId);

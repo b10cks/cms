@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Mgmt\Ai\AiAttachmentController;
 use App\Http\Controllers\Mgmt\Ai\AiChangesetController;
 use App\Http\Controllers\Mgmt\Ai\AiContextController;
 use App\Http\Controllers\Mgmt\Ai\AiGlossaryController;
@@ -292,6 +293,8 @@ Route::group(['prefix' => 'spaces/{space}', 'middleware' => 'space.member'], fun
     Route::get('ai/runs/{run}/events', [AiRunController::class, 'events'])->name('spaces.ai.runs.events');
     Route::post('ai/runs/{run}/answers', [AiRunController::class, 'answer'])->name('spaces.ai.runs.answer');
     Route::post('ai/runs/{run}/cancel', [AiRunController::class, 'cancel'])->name('spaces.ai.runs.cancel');
+    Route::post('ai/attachments', [AiAttachmentController::class, 'store'])->name('spaces.ai.attachments.store');
+    Route::get('ai/attachments/{attachment}', [AiAttachmentController::class, 'show'])->name('spaces.ai.attachments.show');
     Route::post('ai/preflight', AiPreflightController::class)->name('spaces.ai.preflight');
     Route::get('ai/threads', [AiThreadController::class, 'index'])->name('spaces.ai.threads.index');
     Route::get('ai/threads/{thread}', [AiThreadController::class, 'show'])->name('spaces.ai.threads.show');

@@ -3,6 +3,7 @@
 namespace App\Services\Ai\Threads;
 
 use App\Enums\AiChangesetItemStatus;
+use App\Models\Management\AiAttachment;
 use App\Models\Management\AiChangesetItem;
 use App\Models\Management\AiMessage;
 use App\Models\Management\AiRun;
@@ -55,8 +56,16 @@ class ThreadHistory
             ->where('conversation_id', $conversationId)
             ->whereNotNull('run_id')
             ->orderBy('created_at')->orderBy('id')
-            ->get(['run_id', 'role', 'content'])
+            ->get(['id', 'run_id', 'role', 'content'])
             ->groupBy('run_id');
+
+        // Only the file names are remembered, never their contents.
+        $names = AiAttachment::query()
+            ->whereIn('message_id', $byRun->flatten(1)->where('role', 'user')->pluck('id'))
+            ->orderBy('id')
+            ->get(['message_id', 'name'])
+            ->groupBy('message_id')
+            ->map(fn ($rows) => '[attached: '.$rows->pluck('name')->implode(', ').']');
 
         $turns = [];
         foreach ($byRun as $runId => $messages) {
@@ -66,8 +75,10 @@ class ThreadHistory
             }
 
             $skill = $skills[$runId] ?? null;
+            $question = $messages->firstWhere('role', 'user');
+            $user = trim(implode("\n", array_filter([$question?->content, $names[$question?->id] ?? null])));
             $turns[] = [
-                'user' => (string) ($messages->firstWhere('role', 'user')?->content ?? ($skill ? "Run the {$skill} skill." : 'Continue.')),
+                'user' => $user !== '' ? $user : ($skill ? "Run the {$skill} skill." : 'Continue.'),
                 'assistant' => $answer,
             ];
         }

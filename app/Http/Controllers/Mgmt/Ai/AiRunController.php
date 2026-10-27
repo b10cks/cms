@@ -13,6 +13,7 @@ use App\Models\Management\AiConversation;
 use App\Models\Management\AiRun;
 use App\Models\Management\Space;
 use App\Services\Ai\AiRunService;
+use App\Services\Ai\Attachments\AiAttachments;
 use App\Services\Ai\Changesets\ChangeTargets;
 use App\Services\Ai\Changesets\EntryScope;
 use App\Services\Ai\Run\RunBusy;
@@ -36,7 +37,7 @@ use Symfony\Component\HttpFoundation\Response;
  */
 class AiRunController extends Controller
 {
-    public function store(StartAiRunRequest $request, Space $space, AiRunService $runs, SkillResolver $skills, EntryScope $scope): Response
+    public function store(StartAiRunRequest $request, Space $space, AiRunService $runs, SkillResolver $skills, EntryScope $scope, AiAttachments $attachments): Response
     {
         $skill = null;
         if ($name = $request->input('skill')) {
@@ -59,6 +60,8 @@ class AiRunController extends Controller
             $context['targets'] = $targets['context'];
         }
 
+        $files = $attachments->claimable((array) $request->input('attachments', []), $space, $request->user());
+
         $start = new StartRun(
             space: $space,
             actor: $request->user(),
@@ -69,6 +72,7 @@ class AiRunController extends Controller
             config: $request->filled('config_id') ? $space->aiConfigs()->find($request->input('config_id')) : null,
             idempotencyKey: $request->input('idempotency_key'),
             conversationId: $conversationId,
+            attachments: $files->all(),
             instructions: $targets !== null ? StartRun::TARGET_INSTRUCTIONS : '',
             targets: $targets['frozen'] ?? null,
             opensThread: $conversationId === null,
