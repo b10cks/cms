@@ -272,7 +272,7 @@ defineExpose({ focus: () => editor.value?.focus(), restore })
 <template>
   <div class="grid gap-1.5">
     <div
-      class="relative rounded-2xl border bg-card shadow-soft-sm transition-colors [&_.tiptap]:min-h-6! [&_.tiptap]:p-0! [&_.tiptap-editor]:px-4 [&_.tiptap-editor]:py-2"
+      class="relative rounded-2xl border bg-card shadow-soft-sm transition-colors [&_.tiptap]:min-h-6! [&_.tiptap]:p-0! [&_.is-editor-empty]:after:hidden! [&_.tiptap-editor]:px-4 [&_.tiptap-editor]:py-2"
       :class="dragging ? 'border-ai' : 'border-border focus-within:border-border-strong'"
       @paste.capture="onPaste"
       @dragover="onDragOver"
