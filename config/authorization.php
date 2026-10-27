@@ -18,6 +18,7 @@ return [
         'team.spaces.create',
         'team.children.view',
         'team.children.manage',
+        'team.ai.manage',
     ],
 
     'space_abilities' => [
@@ -105,6 +106,7 @@ return [
                     'team.spaces.create',
                     'team.children.view',
                     'team.children.manage',
+                    'team.ai.manage',
                 ],
             ],
             'admin' => [
@@ -121,6 +123,7 @@ return [
                     'team.spaces.create',
                     'team.children.view',
                     'team.children.manage',
+                    'team.ai.manage',
                 ],
             ],
             'member' => [

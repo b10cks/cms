@@ -76,7 +76,7 @@ class AssetController extends Controller
                 $asset->save();
             }
 
-            $classification->queueUpload($space, $asset);
+            $classification->queueUpload($space, $request->user(), $asset);
 
             return new AssetResource($asset->load('folder'));
         } catch (DuplicateAssetException $e) {

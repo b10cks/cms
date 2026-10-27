@@ -6,6 +6,7 @@ use App\Jobs\QueuedJob;
 use App\Models\Management\AssetClassificationRun;
 use App\Models\Management\Space;
 use App\Models\Space\Asset;
+use App\Models\User;
 use App\Services\Ai\AssetClassificationService;
 use App\Services\Ai\Exceptions\AiServiceException;
 use App\Support\SpaceContext;
@@ -38,6 +39,7 @@ class ClassifyAssetJob extends QueuedJob
      */
     public function __construct(
         public Space $space,
+        public string $actorId,
         public string $assetId,
         public array $languages,
         public ?string $configId = null,
@@ -64,8 +66,9 @@ class ClassifyAssetJob extends QueuedJob
 
         try {
             $asset = Asset::query()->with('folder')->find($this->assetId);
+            $actor = User::query()->find($this->actorId);
 
-            if (! $asset) {
+            if (! $asset || ! $actor) {
                 $this->record('skipped');
 
                 return;
@@ -75,7 +78,7 @@ class ClassifyAssetJob extends QueuedJob
 
             try {
                 $config = $service->resolveVisionConfig($this->space, $this->configId);
-                $outcome = $service->classify($this->space, $asset, $this->languages, $config, $this->overwrite, $this->altContext, $this->decorative, $this->highDetail);
+                $outcome = $service->classify($this->space, $actor, $asset, $this->languages, $config, $this->overwrite, $this->altContext, $this->decorative, $this->highDetail);
                 $this->record($outcome);
             } catch (AiServiceException $e) {
                 if (! \in_array($e->reason, [

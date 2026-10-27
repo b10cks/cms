@@ -981,20 +981,6 @@ return [
         'method' => 'GET',
         'uri' => '/mgmt/v1/ai/available-models',
     ],
-    'ai.metaTags' => [
-        'description' => 'Generate AI meta tags.',
-        'required' => ['payload'],
-        'accepts' => ['payload'],
-        'method' => 'POST',
-        'uri' => '/mgmt/v1/ai/meta-tags/stream',
-    ],
-    'ai.translate' => [
-        'description' => 'Translate content with AI.',
-        'required' => ['payload'],
-        'accepts' => ['payload'],
-        'method' => 'POST',
-        'uri' => '/mgmt/v1/ai/translate/stream',
-    ],
 
     // ─── Provider ────────────────────────────────────────────────────────────────
     'provider.getStats' => [
@@ -1835,20 +1821,6 @@ return [
         'description' => 'List the AI models configured for the caller.',
         'method' => 'GET',
         'uri' => '/mgmt/v1/ai/models',
-    ],
-    'ai.contentInteraction' => [
-        'description' => 'Run an AI interaction against a content entry. Returns the raw server-sent event stream as text.',
-        'required' => ['payload'],
-        'accepts' => ['payload'],
-        'method' => 'POST',
-        'uri' => '/mgmt/v1/ai/content-interaction/stream',
-    ],
-    'ai.contentTreeInteraction' => [
-        'description' => 'Run an AI interaction against a content tree. Returns the raw server-sent event stream as text.',
-        'required' => ['payload'],
-        'accepts' => ['payload'],
-        'method' => 'POST',
-        'uri' => '/mgmt/v1/ai/content-tree-interaction/stream',
     ],
 
     // ─── Teams ────────────────────────────────────────────────────────────────────

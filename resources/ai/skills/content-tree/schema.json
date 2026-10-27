@@ -1,0 +1,16 @@
+{
+  "type": "object",
+  "required": ["operations"],
+  "properties": {
+    "operations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["type"],
+        "properties": {
+          "type": {"type": "string", "enum": ["create", "move", "update", "rename", "delete", "remove", "restore"]}
+        }
+      }
+    }
+  }
+}

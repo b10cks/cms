@@ -14,6 +14,24 @@ return [
     // the provider's request limits.
     'asset_classification_per_minute' => (int) env('AI_ASSET_CLASSIFICATION_PER_MINUTE', 30),
 
+    // Agent run budgets. Skills may override max_steps, max_tokens and max_usd;
+    // a hit completes the run as partial. The aiCredit quota stays the outer limit.
+    'runs' => [
+        'max_steps' => (int) env('AI_RUN_MAX_STEPS', 12),
+        'max_tokens' => (int) env('AI_RUN_MAX_TOKENS', 400000),
+        'max_usd' => (float) env('AI_RUN_MAX_USD', 2.0),
+        // Total wall time of a run, inline and background together.
+        'max_seconds' => (int) env('AI_RUN_MAX_SECONDS', 1800),
+        // FrankenPHP kills requests at 59s, so inline runs hand over to the
+        // queue before that.
+        'inline_seconds' => (int) env('AI_RUN_INLINE_SECONDS', 45),
+        // One RunAgentJob advances at most this long, then re-dispatches.
+        'background_slice_seconds' => (int) env('AI_RUN_BACKGROUND_SLICE_SECONDS', 300),
+        'max_output_tokens' => (int) env('AI_RUN_MAX_OUTPUT_TOKENS', 16384),
+        // Corrections asked for when a final answer misses the skill's output schema.
+        'max_output_corrections' => 2,
+    ],
+
     'drivers' => [
         'openai' => [
             'enabled' => env('OPENAI_ENABLED', false),

@@ -3,6 +3,11 @@
 namespace App\Services\Ai\Contracts;
 
 use App\Services\Ai\Dto\AiModelDto;
+use App\Services\Ai\Run\RunOptions;
+use App\Services\Ai\Run\TextDelta;
+use App\Services\Ai\Run\ToolSet;
+use App\Services\Ai\Run\Transcript;
+use App\Services\Ai\Run\TurnResult;
 use Generator;
 
 interface AiDriverInterface
@@ -17,27 +22,13 @@ interface AiDriverInterface
 
     public function getDefaultModel(): ?AiModelDto;
 
-    public function registerTool(AiToolInterface $tool): self;
-
-    public function registerTools(array $tools): self;
-
     /**
-     * Message content may be a plain string or an array of provider-neutral
-     * parts (`text`, `image` with base64 data); drivers translate the parts
-     * into their provider's wire format.
+     * One provider call. Never executes tools; the run service owns the loop.
+     * Provider failures throw {@see \App\Services\Ai\Exceptions\ProviderCallFailed}.
      *
-     * @param  array<int, array<string, mixed>>  $messages
+     * @return Generator<int, TextDelta, mixed, TurnResult>
      */
-    public function stream(
-        string $modelId,
-        array $messages,
-        array $tools = [],
-        array $options = []
-    ): Generator;
-
-    public function callTool(string $toolName, array $input): mixed;
-
-    public function getToolDefinitions(): array;
+    public function turn(Transcript $transcript, ToolSet $tools, RunOptions $options): Generator;
 
     /**
      * Whether a request for this model will actually carry tool definitions.

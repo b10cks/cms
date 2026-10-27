@@ -2,8 +2,8 @@
 
 namespace App\Services\Ai\Support;
 
+use App\Services\Ai\Contracts\SseEvent;
 use App\Services\Ai\Dto\StreamEvent;
-use App\Services\Ai\Dto\StreamEventType;
 use App\Services\Ai\Exceptions\AiServiceException;
 use App\Support\ExecutionTime;
 use Closure;
@@ -30,7 +30,7 @@ class AiSseStream
     public const MAX_SECONDS = 1800;
 
     /**
-     * @param  Closure(): Generator<StreamEvent>  $events  Factory that yields the AI stream events.
+     * @param  Closure(): Generator<SseEvent>  $events  Factory that yields the AI stream events.
      * @param  array<string, mixed>  $logContext  Extra context attached to error logs.
      * @param  bool  $stopOnDisconnect  Stop consuming once the browser goes away. Off for
      *                                  work that must not stop half-applied, like imports.
@@ -50,7 +50,7 @@ class AiSseStream
     }
 
     /**
-     * @param  Closure(): Generator<StreamEvent>  $events
+     * @param  Closure(): Generator<SseEvent>  $events
      * @param  array<string, mixed>  $logContext
      */
     private static function send(Closure $events, array $logContext, bool $stopOnDisconnect): void
@@ -92,7 +92,7 @@ class AiSseStream
                     break;
                 }
 
-                if ($event->type === StreamEventType::Done || $event->type === StreamEventType::Error) {
+                if ($event->isTerminal()) {
                     break;
                 }
             }
