@@ -45,6 +45,13 @@ class Kernel extends ConsoleKernel
             ->withoutOverlapping()
             ->runInBackground();
 
+        // Drop AI attachments that were uploaded but never sent with a message.
+        $schedule->command('ai:prune-attachments')
+            ->dailyAt('04:45')
+            ->onOneServer()
+            ->withoutOverlapping()
+            ->runInBackground();
+
         // Recompute asset rights_status (unrestricted/restricted/expired) from
         // license_expires_at across all spaces.
         $schedule->command('assets:sync-rights-status')

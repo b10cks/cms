@@ -6,11 +6,13 @@ use App\Actions\Ai\AcceptAiGlossarySuggestion;
 use App\Enums\AiThreadKind;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Ai\UpdateAiThreadRequest;
+use App\Http\Resources\Management\Ai\AiAttachmentResource;
 use App\Http\Resources\Management\Ai\AiChangesetResource;
 use App\Http\Resources\Management\Ai\AiGlossaryResource;
 use App\Http\Resources\Management\Ai\AiGlossarySuggestionResource;
 use App\Http\Resources\Management\Ai\AiRunResource;
 use App\Http\Resources\Management\Ai\AiThreadResource;
+use App\Models\Management\AiAttachment;
 use App\Models\Management\AiChangeset;
 use App\Models\Management\AiChangesetItem;
 use App\Models\Management\AiConversation;
@@ -58,7 +60,9 @@ class AiThreadController extends Controller
 
         $attention = $visible()->whereNull('archived_at')->where('quiet', false)->needingYou()->count();
 
-        return AiThreadResource::collection($threads)->additional(['meta' => ['attention' => $attention]]);
+        $settled = $visible()->whereNotNull('archived_at')->count();
+
+        return AiThreadResource::collection($threads)->additional(['meta' => ['attention' => $attention, 'settled' => $settled]]);
     }
 
     public function show(Request $request, Space $space, string $thread, ChangeTargets $targets, AuthorizationService $auth, AcceptAiGlossarySuggestion $suggestions): JsonResponse
@@ -105,6 +109,7 @@ class AiThreadController extends Controller
     {
         $runs = AiRun::query()->where('conversation_id', $thread->id)->orderBy('started_at')->orderBy('id')->get();
         $messages = AiMessage::query()->where('conversation_id', $thread->id)->whereIn('run_id', $runs->modelKeys())->get()->groupBy('run_id');
+        $attachments = AiAttachment::query()->whereIn('message_id', $messages->flatten(1)->pluck('id'))->orderBy('id')->get()->groupBy('message_id');
         $visible = array_filter(ChangeTargets::TYPES, fn (string $type) => $auth->canInSpace($user, $space, $targets->for($type)->viewAbility()));
         $changesets = AiChangeset::query()
             ->whereIn('run_id', $runs->modelKeys())
@@ -114,12 +119,14 @@ class AiThreadController extends Controller
             ->get()
             ->keyBy('run_id');
 
-        return $runs->map(function (AiRun $run) use ($messages, $changesets) {
+        return $runs->map(function (AiRun $run) use ($messages, $changesets, $attachments) {
+            $question = $messages->get($run->id)?->firstWhere('role', 'user');
             $changeset = $changesets->get($run->id)?->setRelation('run', $run);
 
             return [
                 'run' => new AiRunResource($run),
-                'prompt' => $messages->get($run->id)?->firstWhere('role', 'user')?->content,
+                'prompt' => $question?->content,
+                'attachments' => AiAttachmentResource::collection($attachments->get($question?->id, collect())),
                 'answer' => $messages->get($run->id)?->firstWhere('role', 'assistant')?->content,
                 'changeset' => $changeset ? new AiChangesetResource($changeset) : null,
             ];

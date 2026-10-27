@@ -6,7 +6,7 @@ use RuntimeException;
 use Smalot\PdfParser\Parser as PdfParser;
 use ZipArchive;
 
-/** Plain text from uploaded PDF and DOCX files, as a markdown draft. */
+/** Plain text from uploaded PDF, DOCX, markdown, text and CSV files, as a markdown draft. */
 class DocumentTextExtractor
 {
     public const MAX_CHARS = 500_000;
@@ -16,7 +16,7 @@ class DocumentTextExtractor
         $text = match (strtolower($extension)) {
             'pdf' => $this->pdf($path),
             'docx' => $this->docx($path),
-            'md', 'markdown', 'txt' => (string) file_get_contents($path),
+            'md', 'markdown', 'txt', 'csv' => (string) file_get_contents($path),
             default => throw new RuntimeException("Unsupported file type: .{$extension}"),
         };
 

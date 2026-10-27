@@ -26,6 +26,8 @@ class StartAiRunRequest extends FormRequest
             'conversation_id' => ['sometimes', 'nullable', 'string'],
             'idempotency_key' => ['sometimes', 'nullable', 'string', 'max:100'],
             'background' => ['sometimes', 'boolean'],
+            'attachments' => ['sometimes', 'array', 'max:'.(int) config('ai.attachments.max_files')],
+            'attachments.*' => ['string', 'distinct', 'max:40'],
             'targets' => ['sometimes', 'nullable', 'array'],
             'targets.type' => ['required_with:targets', Rule::in(ChangeTargets::TYPES)],
             'targets.ids' => ['required_with:targets', 'array', 'min:1', 'max:'.EntryScope::MAX_ENTRIES],

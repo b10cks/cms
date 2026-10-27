@@ -24,6 +24,13 @@ class AiRunPolicy
         return $this->canInSpace($user, $space, self::SURFACE_ABILITIES[$surface] ?? 'content.manage');
     }
 
+    /** Attaching files needs the right to start a run on any surface. */
+    public function attach(User $user, Space $space): bool
+    {
+        return collect(['content.manage', 'assets.manage', 'data_entries.manage'])
+            ->contains(fn (string $ability) => $this->canInSpace($user, $space, $ability));
+    }
+
     public function view(User $user, AiRun $run, Space $space): bool
     {
         return $run->space_id === $space->id
