@@ -1521,86 +1521,6 @@
                 ]
             }
         },
-        "/mgmt/v1/ai/meta-tags/stream": {
-            "post": {
-                "summary": "Create stream",
-                "description": "",
-                "tags": [
-                    "Ai"
-                ],
-                "operationId": "post_ai_meta_tags_stream",
-                "responses": {
-                    "200": {
-                        "description": "Successful response"
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            }
-        },
-        "/mgmt/v1/ai/translate/stream": {
-            "post": {
-                "summary": "Create stream",
-                "description": "",
-                "tags": [
-                    "Ai"
-                ],
-                "operationId": "post_ai_translate_stream",
-                "responses": {
-                    "200": {
-                        "description": "Successful response"
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            }
-        },
-        "/mgmt/v1/ai/content-interaction/stream": {
-            "post": {
-                "summary": "Create stream",
-                "description": "",
-                "tags": [
-                    "Ai"
-                ],
-                "operationId": "post_ai_content_interaction_stream",
-                "responses": {
-                    "200": {
-                        "description": "Successful response"
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            }
-        },
-        "/mgmt/v1/ai/content-tree-interaction/stream": {
-            "post": {
-                "summary": "Create stream",
-                "description": "",
-                "tags": [
-                    "Ai"
-                ],
-                "operationId": "post_ai_content_tree_interaction_stream",
-                "responses": {
-                    "200": {
-                        "description": "Successful response"
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            }
-        },
         "/mgmt/v1/ai/assets/classify": {
             "post": {
                 "summary": "Queue AI classification for a selection of assets or the whole library",
@@ -2560,6 +2480,1296 @@
                 "responses": {
                     "204": {
                         "description": "Resource deleted successfully"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/mgmt/v1/teams/{team}/ai/skills": {
+            "get": {
+                "summary": "List skills",
+                "description": "",
+                "tags": [
+                    "Ai"
+                ],
+                "operationId": "get_teams_by_team_ai_skills",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "summary": "Create skills",
+                "description": "",
+                "tags": [
+                    "Ai"
+                ],
+                "operationId": "post_teams_by_team_ai_skills",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "enabled": {
+                                        "type": "boolean"
+                                    },
+                                    "files": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "object",
+                                            "properties": {
+                                                "path": {
+                                                    "type": "string"
+                                                },
+                                                "content": {
+                                                    "type": "string",
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "required": [
+                                                "path"
+                                            ]
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AiSkillResource"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/mgmt/v1/teams/{team}/ai/skills/{skill}": {
+            "get": {
+                "summary": "Get a single skill",
+                "description": "",
+                "tags": [
+                    "Ai"
+                ],
+                "operationId": "get_teams_by_team_ai_skills_by_skill",
+                "parameters": [
+                    {
+                        "name": "skill",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "The skill identifier"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AiSkillResource"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "patch": {
+                "summary": "Update skill",
+                "description": "",
+                "tags": [
+                    "Ai"
+                ],
+                "operationId": "patch_teams_by_team_ai_skills_by_skill",
+                "parameters": [
+                    {
+                        "name": "skill",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "The skill identifier"
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "enabled": {
+                                        "type": "boolean"
+                                    },
+                                    "files": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "object",
+                                            "properties": {
+                                                "path": {
+                                                    "type": "string"
+                                                },
+                                                "content": {
+                                                    "type": "string",
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "required": [
+                                                "path"
+                                            ]
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AiSkillResource"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "summary": "Delete skill",
+                "description": "",
+                "tags": [
+                    "Ai"
+                ],
+                "operationId": "delete_teams_by_team_ai_skills_by_skill",
+                "parameters": [
+                    {
+                        "name": "skill",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "The skill identifier"
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Resource deleted successfully"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/mgmt/v1/teams/{team}/ai/skills/{skill}/publish": {
+            "post": {
+                "summary": "Create publish",
+                "description": "",
+                "tags": [
+                    "Ai"
+                ],
+                "operationId": "post_teams_by_team_ai_skills_by_skill_publish",
+                "parameters": [
+                    {
+                        "name": "skill",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "The skill identifier"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AiSkillResource"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/mgmt/v1/teams/{team}/ai/knowledge": {
+            "get": {
+                "summary": "List knowledge",
+                "description": "",
+                "tags": [
+                    "Ai"
+                ],
+                "operationId": "get_teams_by_team_ai_knowledge",
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "description": "Paginated resource collection",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "description": "Collection of resources",
+                                            "items": {
+                                                "$ref": "#/components/schemas/AiKnowledgeDocumentResource"
+                                            }
+                                        },
+                                        "links": {
+                                            "type": "object",
+                                            "description": "Pagination links",
+                                            "properties": {
+                                                "first": {
+                                                    "type": "string",
+                                                    "format": "uri",
+                                                    "description": "URL to the first page"
+                                                },
+                                                "last": {
+                                                    "type": "string",
+                                                    "format": "uri",
+                                                    "description": "URL to the last page"
+                                                },
+                                                "prev": {
+                                                    "type": "string",
+                                                    "format": "uri",
+                                                    "nullable": true,
+                                                    "description": "URL to the previous page"
+                                                },
+                                                "next": {
+                                                    "type": "string",
+                                                    "format": "uri",
+                                                    "nullable": true,
+                                                    "description": "URL to the next page"
+                                                }
+                                            }
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "description": "Pagination metadata",
+                                            "properties": {
+                                                "current_page": {
+                                                    "type": "integer",
+                                                    "description": "Current page number"
+                                                },
+                                                "from": {
+                                                    "type": "integer",
+                                                    "nullable": true,
+                                                    "description": "Index of first item on current page"
+                                                },
+                                                "last_page": {
+                                                    "type": "integer",
+                                                    "description": "Total number of pages"
+                                                },
+                                                "per_page": {
+                                                    "type": "integer",
+                                                    "description": "Number of items per page"
+                                                },
+                                                "to": {
+                                                    "type": "integer",
+                                                    "nullable": true,
+                                                    "description": "Index of last item on current page"
+                                                },
+                                                "total": {
+                                                    "type": "integer",
+                                                    "description": "Total number of items"
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "links",
+                                        "meta"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "summary": "Create knowledge",
+                "description": "",
+                "tags": [
+                    "Ai"
+                ],
+                "operationId": "post_teams_by_team_ai_knowledge",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "title": {
+                                        "type": "string",
+                                        "maxLength": 255
+                                    },
+                                    "slug": {
+                                        "type": "string",
+                                        "maxLength": 120,
+                                        "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
+                                    },
+                                    "type": {
+                                        "type": "string",
+                                        "enum": [
+                                            "style",
+                                            "reference"
+                                        ]
+                                    },
+                                    "enabled": {
+                                        "type": "boolean"
+                                    },
+                                    "draft": {
+                                        "type": "string",
+                                        "maxLength": 500000,
+                                        "nullable": true
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AiKnowledgeDocumentResource"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/mgmt/v1/teams/{team}/ai/knowledge/{document}": {
+            "get": {
+                "summary": "Get a single knowledge",
+                "description": "",
+                "tags": [
+                    "Ai"
+                ],
+                "operationId": "get_teams_by_team_ai_knowledge_by_document",
+                "parameters": [
+                    {
+                        "name": "document",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "The document identifier"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AiKnowledgeDocumentResource"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "patch": {
+                "summary": "Update knowledge",
+                "description": "",
+                "tags": [
+                    "Ai"
+                ],
+                "operationId": "patch_teams_by_team_ai_knowledge_by_document",
+                "parameters": [
+                    {
+                        "name": "document",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "The document identifier"
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "title": {
+                                        "type": "string",
+                                        "maxLength": 255
+                                    },
+                                    "slug": {
+                                        "type": "string",
+                                        "maxLength": 120,
+                                        "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
+                                    },
+                                    "type": {
+                                        "type": "string",
+                                        "enum": [
+                                            "style",
+                                            "reference"
+                                        ]
+                                    },
+                                    "enabled": {
+                                        "type": "boolean"
+                                    },
+                                    "draft": {
+                                        "type": "string",
+                                        "maxLength": 500000,
+                                        "nullable": true
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AiKnowledgeDocumentResource"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "summary": "Delete knowledge",
+                "description": "",
+                "tags": [
+                    "Ai"
+                ],
+                "operationId": "delete_teams_by_team_ai_knowledge_by_document",
+                "parameters": [
+                    {
+                        "name": "document",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "The document identifier"
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Resource deleted successfully"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/mgmt/v1/teams/{team}/ai/knowledge/{document}/publish": {
+            "post": {
+                "summary": "Create publish",
+                "description": "",
+                "tags": [
+                    "Ai"
+                ],
+                "operationId": "post_teams_by_team_ai_knowledge_by_document_publish",
+                "parameters": [
+                    {
+                        "name": "document",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "The document identifier"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AiKnowledgeDocumentResource"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/mgmt/v1/teams/{team}/ai/knowledge/{document}/source": {
+            "post": {
+                "summary": "Store a PDF or DOCX privately and extract its text into the draft on the queue",
+                "description": "Store a PDF or DOCX privately and extract its text into the draft on the queue.",
+                "tags": [
+                    "Ai"
+                ],
+                "operationId": "post_teams_by_team_ai_knowledge_by_document_source",
+                "parameters": [
+                    {
+                        "name": "document",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "The document identifier"
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "file": {
+                                        "type": "string",
+                                        "format": "binary",
+                                        "maxLength": 20480
+                                    }
+                                },
+                                "required": [
+                                    "file"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AiKnowledgeDocumentResource"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/mgmt/v1/teams/{team}/ai/glossaries": {
+            "get": {
+                "summary": "List glossaries",
+                "description": "",
+                "tags": [
+                    "Ai"
+                ],
+                "operationId": "get_teams_by_team_ai_glossaries",
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "description": "Paginated resource collection",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "description": "Collection of resources",
+                                            "items": {
+                                                "$ref": "#/components/schemas/AiGlossaryResource"
+                                            }
+                                        },
+                                        "links": {
+                                            "type": "object",
+                                            "description": "Pagination links",
+                                            "properties": {
+                                                "first": {
+                                                    "type": "string",
+                                                    "format": "uri",
+                                                    "description": "URL to the first page"
+                                                },
+                                                "last": {
+                                                    "type": "string",
+                                                    "format": "uri",
+                                                    "description": "URL to the last page"
+                                                },
+                                                "prev": {
+                                                    "type": "string",
+                                                    "format": "uri",
+                                                    "nullable": true,
+                                                    "description": "URL to the previous page"
+                                                },
+                                                "next": {
+                                                    "type": "string",
+                                                    "format": "uri",
+                                                    "nullable": true,
+                                                    "description": "URL to the next page"
+                                                }
+                                            }
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "description": "Pagination metadata",
+                                            "properties": {
+                                                "current_page": {
+                                                    "type": "integer",
+                                                    "description": "Current page number"
+                                                },
+                                                "from": {
+                                                    "type": "integer",
+                                                    "nullable": true,
+                                                    "description": "Index of first item on current page"
+                                                },
+                                                "last_page": {
+                                                    "type": "integer",
+                                                    "description": "Total number of pages"
+                                                },
+                                                "per_page": {
+                                                    "type": "integer",
+                                                    "description": "Number of items per page"
+                                                },
+                                                "to": {
+                                                    "type": "integer",
+                                                    "nullable": true,
+                                                    "description": "Index of last item on current page"
+                                                },
+                                                "total": {
+                                                    "type": "integer",
+                                                    "description": "Total number of items"
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "links",
+                                        "meta"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "summary": "Create glossaries",
+                "description": "",
+                "tags": [
+                    "Ai"
+                ],
+                "operationId": "post_teams_by_team_ai_glossaries",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "maxLength": 255
+                                    },
+                                    "enabled": {
+                                        "type": "boolean"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AiGlossaryResource"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/mgmt/v1/teams/{team}/ai/glossaries/{glossary}": {
+            "patch": {
+                "summary": "Update glossary",
+                "description": "",
+                "tags": [
+                    "Ai"
+                ],
+                "operationId": "patch_teams_by_team_ai_glossaries_by_glossary",
+                "parameters": [
+                    {
+                        "name": "glossary",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "The glossary identifier"
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "maxLength": 255
+                                    },
+                                    "enabled": {
+                                        "type": "boolean"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AiGlossaryResource"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "summary": "Delete glossary",
+                "description": "",
+                "tags": [
+                    "Ai"
+                ],
+                "operationId": "delete_teams_by_team_ai_glossaries_by_glossary",
+                "parameters": [
+                    {
+                        "name": "glossary",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "The glossary identifier"
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Resource deleted successfully"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/mgmt/v1/teams/{team}/ai/glossaries/{glossary}/terms": {
+            "get": {
+                "summary": "List terms",
+                "description": "",
+                "tags": [
+                    "Ai"
+                ],
+                "operationId": "get_teams_by_team_ai_glossaries_by_glossary_terms",
+                "parameters": [
+                    {
+                        "name": "glossary",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "The glossary identifier"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "description": "Paginated resource collection",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "description": "Collection of resources",
+                                            "items": {
+                                                "$ref": "#/components/schemas/AiGlossaryTermResource"
+                                            }
+                                        },
+                                        "links": {
+                                            "type": "object",
+                                            "description": "Pagination links",
+                                            "properties": {
+                                                "first": {
+                                                    "type": "string",
+                                                    "format": "uri",
+                                                    "description": "URL to the first page"
+                                                },
+                                                "last": {
+                                                    "type": "string",
+                                                    "format": "uri",
+                                                    "description": "URL to the last page"
+                                                },
+                                                "prev": {
+                                                    "type": "string",
+                                                    "format": "uri",
+                                                    "nullable": true,
+                                                    "description": "URL to the previous page"
+                                                },
+                                                "next": {
+                                                    "type": "string",
+                                                    "format": "uri",
+                                                    "nullable": true,
+                                                    "description": "URL to the next page"
+                                                }
+                                            }
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "description": "Pagination metadata",
+                                            "properties": {
+                                                "current_page": {
+                                                    "type": "integer",
+                                                    "description": "Current page number"
+                                                },
+                                                "from": {
+                                                    "type": "integer",
+                                                    "nullable": true,
+                                                    "description": "Index of first item on current page"
+                                                },
+                                                "last_page": {
+                                                    "type": "integer",
+                                                    "description": "Total number of pages"
+                                                },
+                                                "per_page": {
+                                                    "type": "integer",
+                                                    "description": "Number of items per page"
+                                                },
+                                                "to": {
+                                                    "type": "integer",
+                                                    "nullable": true,
+                                                    "description": "Index of last item on current page"
+                                                },
+                                                "total": {
+                                                    "type": "integer",
+                                                    "description": "Total number of items"
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "links",
+                                        "meta"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "summary": "Create terms",
+                "description": "",
+                "tags": [
+                    "Ai"
+                ],
+                "operationId": "post_teams_by_team_ai_glossaries_by_glossary_terms",
+                "parameters": [
+                    {
+                        "name": "glossary",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "The glossary identifier"
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "source_locale": {
+                                        "type": "string",
+                                        "maxLength": 20
+                                    },
+                                    "term": {
+                                        "type": "string",
+                                        "maxLength": 255
+                                    },
+                                    "translations": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string",
+                                            "maxLength": 255,
+                                            "nullable": true
+                                        }
+                                    },
+                                    "case_sensitive": {
+                                        "type": "boolean"
+                                    },
+                                    "do_not_translate": {
+                                        "type": "boolean"
+                                    },
+                                    "forbidden": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string",
+                                            "maxLength": 255
+                                        }
+                                    },
+                                    "note": {
+                                        "type": "string",
+                                        "maxLength": 2000,
+                                        "nullable": true
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AiGlossaryTermResource"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/mgmt/v1/teams/{team}/ai/glossaries/{glossary}/terms/{term}": {
+            "patch": {
+                "summary": "Update term",
+                "description": "",
+                "tags": [
+                    "Ai"
+                ],
+                "operationId": "patch_teams_by_team_ai_glossaries_by_glossary_terms_by_term",
+                "parameters": [
+                    {
+                        "name": "glossary",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "The glossary identifier"
+                    },
+                    {
+                        "name": "term",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "The term identifier"
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "source_locale": {
+                                        "type": "string",
+                                        "maxLength": 20
+                                    },
+                                    "term": {
+                                        "type": "string",
+                                        "maxLength": 255
+                                    },
+                                    "translations": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string",
+                                            "maxLength": 255,
+                                            "nullable": true
+                                        }
+                                    },
+                                    "case_sensitive": {
+                                        "type": "boolean"
+                                    },
+                                    "do_not_translate": {
+                                        "type": "boolean"
+                                    },
+                                    "forbidden": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string",
+                                            "maxLength": 255
+                                        }
+                                    },
+                                    "note": {
+                                        "type": "string",
+                                        "maxLength": 2000,
+                                        "nullable": true
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AiGlossaryTermResource"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "summary": "Delete term",
+                "description": "",
+                "tags": [
+                    "Ai"
+                ],
+                "operationId": "delete_teams_by_team_ai_glossaries_by_glossary_terms_by_term",
+                "parameters": [
+                    {
+                        "name": "glossary",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "The glossary identifier"
+                    },
+                    {
+                        "name": "term",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "The term identifier"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/mgmt/v1/teams/{team}/ai/glossaries/{glossary}/import": {
+            "post": {
+                "summary": "Create import",
+                "description": "",
+                "tags": [
+                    "Ai"
+                ],
+                "operationId": "post_teams_by_team_ai_glossaries_by_glossary_import",
+                "parameters": [
+                    {
+                        "name": "glossary",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "The glossary identifier"
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "file": {
+                                        "type": "string",
+                                        "format": "binary",
+                                        "maxLength": 10240
+                                    }
+                                },
+                                "required": [
+                                    "file"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/mgmt/v1/teams/{team}/ai/glossaries/{glossary}/export": {
+            "get": {
+                "summary": "List export",
+                "description": "",
+                "tags": [
+                    "Ai"
+                ],
+                "operationId": "get_teams_by_team_ai_glossaries_by_glossary_export",
+                "parameters": [
+                    {
+                        "name": "glossary",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "The glossary identifier"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
                     }
                 },
                 "security": [
@@ -5313,6 +6523,2382 @@
                             "format": "uuid"
                         },
                         "description": "The space identifier"
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Resource deleted successfully"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/mgmt/v1/spaces/{space}/ai/skills": {
+            "get": {
+                "summary": "List skills",
+                "description": "",
+                "tags": [
+                    "Ai"
+                ],
+                "operationId": "get_spaces_by_space_ai_skills",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "summary": "Create skills",
+                "description": "",
+                "tags": [
+                    "Ai"
+                ],
+                "operationId": "post_spaces_by_space_ai_skills",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "enabled": {
+                                        "type": "boolean"
+                                    },
+                                    "files": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "object",
+                                            "properties": {
+                                                "path": {
+                                                    "type": "string"
+                                                },
+                                                "content": {
+                                                    "type": "string",
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "required": [
+                                                "path"
+                                            ]
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AiSkillResource"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/mgmt/v1/spaces/{space}/ai/skills/{skill}": {
+            "get": {
+                "summary": "Get a single skill",
+                "description": "",
+                "tags": [
+                    "Ai"
+                ],
+                "operationId": "get_spaces_by_space_ai_skills_by_skill",
+                "parameters": [
+                    {
+                        "name": "skill",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "The skill identifier"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AiSkillResource"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "patch": {
+                "summary": "Update skill",
+                "description": "",
+                "tags": [
+                    "Ai"
+                ],
+                "operationId": "patch_spaces_by_space_ai_skills_by_skill",
+                "parameters": [
+                    {
+                        "name": "skill",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "The skill identifier"
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "enabled": {
+                                        "type": "boolean"
+                                    },
+                                    "files": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "object",
+                                            "properties": {
+                                                "path": {
+                                                    "type": "string"
+                                                },
+                                                "content": {
+                                                    "type": "string",
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "required": [
+                                                "path"
+                                            ]
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AiSkillResource"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "summary": "Delete skill",
+                "description": "",
+                "tags": [
+                    "Ai"
+                ],
+                "operationId": "delete_spaces_by_space_ai_skills_by_skill",
+                "parameters": [
+                    {
+                        "name": "skill",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "The skill identifier"
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Resource deleted successfully"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/mgmt/v1/spaces/{space}/ai/skills/{skill}/publish": {
+            "post": {
+                "summary": "Create publish",
+                "description": "",
+                "tags": [
+                    "Ai"
+                ],
+                "operationId": "post_spaces_by_space_ai_skills_by_skill_publish",
+                "parameters": [
+                    {
+                        "name": "skill",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "The skill identifier"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AiSkillResource"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/mgmt/v1/spaces/{space}/ai/knowledge": {
+            "get": {
+                "summary": "List knowledge",
+                "description": "",
+                "tags": [
+                    "Ai"
+                ],
+                "operationId": "get_spaces_by_space_ai_knowledge",
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "description": "Paginated resource collection",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "description": "Collection of resources",
+                                            "items": {
+                                                "$ref": "#/components/schemas/AiKnowledgeDocumentResource"
+                                            }
+                                        },
+                                        "links": {
+                                            "type": "object",
+                                            "description": "Pagination links",
+                                            "properties": {
+                                                "first": {
+                                                    "type": "string",
+                                                    "format": "uri",
+                                                    "description": "URL to the first page"
+                                                },
+                                                "last": {
+                                                    "type": "string",
+                                                    "format": "uri",
+                                                    "description": "URL to the last page"
+                                                },
+                                                "prev": {
+                                                    "type": "string",
+                                                    "format": "uri",
+                                                    "nullable": true,
+                                                    "description": "URL to the previous page"
+                                                },
+                                                "next": {
+                                                    "type": "string",
+                                                    "format": "uri",
+                                                    "nullable": true,
+                                                    "description": "URL to the next page"
+                                                }
+                                            }
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "description": "Pagination metadata",
+                                            "properties": {
+                                                "current_page": {
+                                                    "type": "integer",
+                                                    "description": "Current page number"
+                                                },
+                                                "from": {
+                                                    "type": "integer",
+                                                    "nullable": true,
+                                                    "description": "Index of first item on current page"
+                                                },
+                                                "last_page": {
+                                                    "type": "integer",
+                                                    "description": "Total number of pages"
+                                                },
+                                                "per_page": {
+                                                    "type": "integer",
+                                                    "description": "Number of items per page"
+                                                },
+                                                "to": {
+                                                    "type": "integer",
+                                                    "nullable": true,
+                                                    "description": "Index of last item on current page"
+                                                },
+                                                "total": {
+                                                    "type": "integer",
+                                                    "description": "Total number of items"
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "links",
+                                        "meta"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "summary": "Create knowledge",
+                "description": "",
+                "tags": [
+                    "Ai"
+                ],
+                "operationId": "post_spaces_by_space_ai_knowledge",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "title": {
+                                        "type": "string",
+                                        "maxLength": 255
+                                    },
+                                    "slug": {
+                                        "type": "string",
+                                        "maxLength": 120,
+                                        "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
+                                    },
+                                    "type": {
+                                        "type": "string",
+                                        "enum": [
+                                            "style",
+                                            "reference"
+                                        ]
+                                    },
+                                    "enabled": {
+                                        "type": "boolean"
+                                    },
+                                    "draft": {
+                                        "type": "string",
+                                        "maxLength": 500000,
+                                        "nullable": true
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AiKnowledgeDocumentResource"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/mgmt/v1/spaces/{space}/ai/knowledge/{document}": {
+            "get": {
+                "summary": "Get a single knowledge",
+                "description": "",
+                "tags": [
+                    "Ai"
+                ],
+                "operationId": "get_spaces_by_space_ai_knowledge_by_document",
+                "parameters": [
+                    {
+                        "name": "document",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "The document identifier"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AiKnowledgeDocumentResource"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "patch": {
+                "summary": "Update knowledge",
+                "description": "",
+                "tags": [
+                    "Ai"
+                ],
+                "operationId": "patch_spaces_by_space_ai_knowledge_by_document",
+                "parameters": [
+                    {
+                        "name": "document",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "The document identifier"
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "title": {
+                                        "type": "string",
+                                        "maxLength": 255
+                                    },
+                                    "slug": {
+                                        "type": "string",
+                                        "maxLength": 120,
+                                        "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
+                                    },
+                                    "type": {
+                                        "type": "string",
+                                        "enum": [
+                                            "style",
+                                            "reference"
+                                        ]
+                                    },
+                                    "enabled": {
+                                        "type": "boolean"
+                                    },
+                                    "draft": {
+                                        "type": "string",
+                                        "maxLength": 500000,
+                                        "nullable": true
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AiKnowledgeDocumentResource"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "summary": "Delete knowledge",
+                "description": "",
+                "tags": [
+                    "Ai"
+                ],
+                "operationId": "delete_spaces_by_space_ai_knowledge_by_document",
+                "parameters": [
+                    {
+                        "name": "document",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "The document identifier"
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Resource deleted successfully"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/mgmt/v1/spaces/{space}/ai/knowledge/{document}/publish": {
+            "post": {
+                "summary": "Create publish",
+                "description": "",
+                "tags": [
+                    "Ai"
+                ],
+                "operationId": "post_spaces_by_space_ai_knowledge_by_document_publish",
+                "parameters": [
+                    {
+                        "name": "document",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "The document identifier"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AiKnowledgeDocumentResource"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/mgmt/v1/spaces/{space}/ai/knowledge/{document}/source": {
+            "post": {
+                "summary": "Store a PDF or DOCX privately and extract its text into the draft on the queue",
+                "description": "Store a PDF or DOCX privately and extract its text into the draft on the queue.",
+                "tags": [
+                    "Ai"
+                ],
+                "operationId": "post_spaces_by_space_ai_knowledge_by_document_source",
+                "parameters": [
+                    {
+                        "name": "document",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "The document identifier"
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "file": {
+                                        "type": "string",
+                                        "format": "binary",
+                                        "maxLength": 20480
+                                    }
+                                },
+                                "required": [
+                                    "file"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AiKnowledgeDocumentResource"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/mgmt/v1/spaces/{space}/ai/glossaries": {
+            "get": {
+                "summary": "List glossaries",
+                "description": "",
+                "tags": [
+                    "Ai"
+                ],
+                "operationId": "get_spaces_by_space_ai_glossaries",
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "description": "Paginated resource collection",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "description": "Collection of resources",
+                                            "items": {
+                                                "$ref": "#/components/schemas/AiGlossaryResource"
+                                            }
+                                        },
+                                        "links": {
+                                            "type": "object",
+                                            "description": "Pagination links",
+                                            "properties": {
+                                                "first": {
+                                                    "type": "string",
+                                                    "format": "uri",
+                                                    "description": "URL to the first page"
+                                                },
+                                                "last": {
+                                                    "type": "string",
+                                                    "format": "uri",
+                                                    "description": "URL to the last page"
+                                                },
+                                                "prev": {
+                                                    "type": "string",
+                                                    "format": "uri",
+                                                    "nullable": true,
+                                                    "description": "URL to the previous page"
+                                                },
+                                                "next": {
+                                                    "type": "string",
+                                                    "format": "uri",
+                                                    "nullable": true,
+                                                    "description": "URL to the next page"
+                                                }
+                                            }
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "description": "Pagination metadata",
+                                            "properties": {
+                                                "current_page": {
+                                                    "type": "integer",
+                                                    "description": "Current page number"
+                                                },
+                                                "from": {
+                                                    "type": "integer",
+                                                    "nullable": true,
+                                                    "description": "Index of first item on current page"
+                                                },
+                                                "last_page": {
+                                                    "type": "integer",
+                                                    "description": "Total number of pages"
+                                                },
+                                                "per_page": {
+                                                    "type": "integer",
+                                                    "description": "Number of items per page"
+                                                },
+                                                "to": {
+                                                    "type": "integer",
+                                                    "nullable": true,
+                                                    "description": "Index of last item on current page"
+                                                },
+                                                "total": {
+                                                    "type": "integer",
+                                                    "description": "Total number of items"
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "links",
+                                        "meta"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "summary": "Create glossaries",
+                "description": "",
+                "tags": [
+                    "Ai"
+                ],
+                "operationId": "post_spaces_by_space_ai_glossaries",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "maxLength": 255
+                                    },
+                                    "enabled": {
+                                        "type": "boolean"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AiGlossaryResource"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/mgmt/v1/spaces/{space}/ai/glossaries/{glossary}": {
+            "patch": {
+                "summary": "Update glossary",
+                "description": "",
+                "tags": [
+                    "Ai"
+                ],
+                "operationId": "patch_spaces_by_space_ai_glossaries_by_glossary",
+                "parameters": [
+                    {
+                        "name": "glossary",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "The glossary identifier"
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "maxLength": 255
+                                    },
+                                    "enabled": {
+                                        "type": "boolean"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AiGlossaryResource"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "summary": "Delete glossary",
+                "description": "",
+                "tags": [
+                    "Ai"
+                ],
+                "operationId": "delete_spaces_by_space_ai_glossaries_by_glossary",
+                "parameters": [
+                    {
+                        "name": "glossary",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "The glossary identifier"
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Resource deleted successfully"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/mgmt/v1/spaces/{space}/ai/glossaries/{glossary}/terms": {
+            "get": {
+                "summary": "List terms",
+                "description": "",
+                "tags": [
+                    "Ai"
+                ],
+                "operationId": "get_spaces_by_space_ai_glossaries_by_glossary_terms",
+                "parameters": [
+                    {
+                        "name": "glossary",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "The glossary identifier"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "description": "Paginated resource collection",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "description": "Collection of resources",
+                                            "items": {
+                                                "$ref": "#/components/schemas/AiGlossaryTermResource"
+                                            }
+                                        },
+                                        "links": {
+                                            "type": "object",
+                                            "description": "Pagination links",
+                                            "properties": {
+                                                "first": {
+                                                    "type": "string",
+                                                    "format": "uri",
+                                                    "description": "URL to the first page"
+                                                },
+                                                "last": {
+                                                    "type": "string",
+                                                    "format": "uri",
+                                                    "description": "URL to the last page"
+                                                },
+                                                "prev": {
+                                                    "type": "string",
+                                                    "format": "uri",
+                                                    "nullable": true,
+                                                    "description": "URL to the previous page"
+                                                },
+                                                "next": {
+                                                    "type": "string",
+                                                    "format": "uri",
+                                                    "nullable": true,
+                                                    "description": "URL to the next page"
+                                                }
+                                            }
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "description": "Pagination metadata",
+                                            "properties": {
+                                                "current_page": {
+                                                    "type": "integer",
+                                                    "description": "Current page number"
+                                                },
+                                                "from": {
+                                                    "type": "integer",
+                                                    "nullable": true,
+                                                    "description": "Index of first item on current page"
+                                                },
+                                                "last_page": {
+                                                    "type": "integer",
+                                                    "description": "Total number of pages"
+                                                },
+                                                "per_page": {
+                                                    "type": "integer",
+                                                    "description": "Number of items per page"
+                                                },
+                                                "to": {
+                                                    "type": "integer",
+                                                    "nullable": true,
+                                                    "description": "Index of last item on current page"
+                                                },
+                                                "total": {
+                                                    "type": "integer",
+                                                    "description": "Total number of items"
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "links",
+                                        "meta"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "summary": "Create terms",
+                "description": "",
+                "tags": [
+                    "Ai"
+                ],
+                "operationId": "post_spaces_by_space_ai_glossaries_by_glossary_terms",
+                "parameters": [
+                    {
+                        "name": "glossary",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "The glossary identifier"
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "source_locale": {
+                                        "type": "string",
+                                        "maxLength": 20
+                                    },
+                                    "term": {
+                                        "type": "string",
+                                        "maxLength": 255
+                                    },
+                                    "translations": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string",
+                                            "maxLength": 255,
+                                            "nullable": true
+                                        }
+                                    },
+                                    "case_sensitive": {
+                                        "type": "boolean"
+                                    },
+                                    "do_not_translate": {
+                                        "type": "boolean"
+                                    },
+                                    "forbidden": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string",
+                                            "maxLength": 255
+                                        }
+                                    },
+                                    "note": {
+                                        "type": "string",
+                                        "maxLength": 2000,
+                                        "nullable": true
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AiGlossaryTermResource"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/mgmt/v1/spaces/{space}/ai/glossaries/{glossary}/terms/{term}": {
+            "patch": {
+                "summary": "Update term",
+                "description": "",
+                "tags": [
+                    "Ai"
+                ],
+                "operationId": "patch_spaces_by_space_ai_glossaries_by_glossary_terms_by_term",
+                "parameters": [
+                    {
+                        "name": "glossary",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "The glossary identifier"
+                    },
+                    {
+                        "name": "term",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "The term identifier"
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "source_locale": {
+                                        "type": "string",
+                                        "maxLength": 20
+                                    },
+                                    "term": {
+                                        "type": "string",
+                                        "maxLength": 255
+                                    },
+                                    "translations": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string",
+                                            "maxLength": 255,
+                                            "nullable": true
+                                        }
+                                    },
+                                    "case_sensitive": {
+                                        "type": "boolean"
+                                    },
+                                    "do_not_translate": {
+                                        "type": "boolean"
+                                    },
+                                    "forbidden": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string",
+                                            "maxLength": 255
+                                        }
+                                    },
+                                    "note": {
+                                        "type": "string",
+                                        "maxLength": 2000,
+                                        "nullable": true
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AiGlossaryTermResource"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "summary": "Delete term",
+                "description": "",
+                "tags": [
+                    "Ai"
+                ],
+                "operationId": "delete_spaces_by_space_ai_glossaries_by_glossary_terms_by_term",
+                "parameters": [
+                    {
+                        "name": "glossary",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "The glossary identifier"
+                    },
+                    {
+                        "name": "term",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "The term identifier"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/mgmt/v1/spaces/{space}/ai/glossaries/{glossary}/import": {
+            "post": {
+                "summary": "Create import",
+                "description": "",
+                "tags": [
+                    "Ai"
+                ],
+                "operationId": "post_spaces_by_space_ai_glossaries_by_glossary_import",
+                "parameters": [
+                    {
+                        "name": "glossary",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "The glossary identifier"
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "file": {
+                                        "type": "string",
+                                        "format": "binary",
+                                        "maxLength": 10240
+                                    }
+                                },
+                                "required": [
+                                    "file"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/mgmt/v1/spaces/{space}/ai/glossaries/{glossary}/export": {
+            "get": {
+                "summary": "List export",
+                "description": "",
+                "tags": [
+                    "Ai"
+                ],
+                "operationId": "get_spaces_by_space_ai_glossaries_by_glossary_export",
+                "parameters": [
+                    {
+                        "name": "glossary",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "The glossary identifier"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/mgmt/v1/spaces/{space}/ai/context": {
+            "get": {
+                "summary": "The skills a surface offers, so feature screens render them without hardcoding",
+                "description": "The skills a surface offers, so feature screens render them without hardcoding.",
+                "tags": [
+                    "Ai"
+                ],
+                "operationId": "get_spaces_by_space_ai_context",
+                "parameters": [
+                    {
+                        "name": "space",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "The space identifier"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "description": "Paginated resource collection",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "description": "Collection of resources",
+                                            "items": {
+                                                "$ref": "#/components/schemas/ResolvedSkillResource"
+                                            }
+                                        },
+                                        "links": {
+                                            "type": "object",
+                                            "description": "Pagination links",
+                                            "properties": {
+                                                "first": {
+                                                    "type": "string",
+                                                    "format": "uri",
+                                                    "description": "URL to the first page"
+                                                },
+                                                "last": {
+                                                    "type": "string",
+                                                    "format": "uri",
+                                                    "description": "URL to the last page"
+                                                },
+                                                "prev": {
+                                                    "type": "string",
+                                                    "format": "uri",
+                                                    "nullable": true,
+                                                    "description": "URL to the previous page"
+                                                },
+                                                "next": {
+                                                    "type": "string",
+                                                    "format": "uri",
+                                                    "nullable": true,
+                                                    "description": "URL to the next page"
+                                                }
+                                            }
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "description": "Pagination metadata",
+                                            "properties": {
+                                                "current_page": {
+                                                    "type": "integer",
+                                                    "description": "Current page number"
+                                                },
+                                                "from": {
+                                                    "type": "integer",
+                                                    "nullable": true,
+                                                    "description": "Index of first item on current page"
+                                                },
+                                                "last_page": {
+                                                    "type": "integer",
+                                                    "description": "Total number of pages"
+                                                },
+                                                "per_page": {
+                                                    "type": "integer",
+                                                    "description": "Number of items per page"
+                                                },
+                                                "to": {
+                                                    "type": "integer",
+                                                    "nullable": true,
+                                                    "description": "Index of last item on current page"
+                                                },
+                                                "total": {
+                                                    "type": "integer",
+                                                    "description": "Total number of items"
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "links",
+                                        "meta"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/mgmt/v1/spaces/{space}/ai/runs": {
+            "post": {
+                "summary": "Create runs",
+                "description": "",
+                "tags": [
+                    "Ai"
+                ],
+                "operationId": "post_spaces_by_space_ai_runs",
+                "parameters": [
+                    {
+                        "name": "space",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "The space identifier"
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "surface": {
+                                        "type": "string",
+                                        "maxLength": 64,
+                                        "pattern": "^[a-z0-9:_-]+$"
+                                    },
+                                    "skill": {
+                                        "type": "string",
+                                        "maxLength": 64,
+                                        "nullable": true
+                                    },
+                                    "prompt": {
+                                        "type": "string",
+                                        "maxLength": 20000,
+                                        "nullable": true
+                                    },
+                                    "context": {
+                                        "type": "array"
+                                    },
+                                    "config_id": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "conversation_id": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "idempotency_key": {
+                                        "type": "string",
+                                        "maxLength": 100,
+                                        "nullable": true
+                                    },
+                                    "background": {
+                                        "type": "boolean"
+                                    },
+                                    "targets": {
+                                        "type": "object",
+                                        "properties": {
+                                            "type": {
+                                                "type": "string",
+                                                "enum": [
+                                                    "content",
+                                                    "data_entry",
+                                                    "asset"
+                                                ]
+                                            },
+                                            "ids": {
+                                                "type": "array",
+                                                "items": {
+                                                    "type": "string",
+                                                    "maxLength": 40
+                                                }
+                                            }
+                                        }
+                                    }
+                                },
+                                "required": [
+                                    "surface"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/mgmt/v1/spaces/{space}/ai/runs/{run}": {
+            "get": {
+                "summary": "Get a single run",
+                "description": "",
+                "tags": [
+                    "Ai"
+                ],
+                "operationId": "get_spaces_by_space_ai_runs_by_run",
+                "parameters": [
+                    {
+                        "name": "space",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "The space identifier"
+                    },
+                    {
+                        "name": "run",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "The run identifier"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AiRunResource"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/mgmt/v1/spaces/{space}/ai/runs/{run}/events": {
+            "get": {
+                "summary": "List events",
+                "description": "",
+                "tags": [
+                    "Ai"
+                ],
+                "operationId": "get_spaces_by_space_ai_runs_by_run_events",
+                "parameters": [
+                    {
+                        "name": "space",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "The space identifier"
+                    },
+                    {
+                        "name": "run",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "The run identifier"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/mgmt/v1/spaces/{space}/ai/runs/{run}/answers": {
+            "post": {
+                "summary": "Create answers",
+                "description": "",
+                "tags": [
+                    "Ai"
+                ],
+                "operationId": "post_spaces_by_space_ai_runs_by_run_answers",
+                "parameters": [
+                    {
+                        "name": "space",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "The space identifier"
+                    },
+                    {
+                        "name": "run",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "The run identifier"
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "answers": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string",
+                                            "maxLength": 2000,
+                                            "nullable": true
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/mgmt/v1/spaces/{space}/ai/runs/{run}/cancel": {
+            "post": {
+                "summary": "Create cancel",
+                "description": "",
+                "tags": [
+                    "Ai"
+                ],
+                "operationId": "post_spaces_by_space_ai_runs_by_run_cancel",
+                "parameters": [
+                    {
+                        "name": "space",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "The space identifier"
+                    },
+                    {
+                        "name": "run",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "The run identifier"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AiRunResource"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/mgmt/v1/spaces/{space}/ai/preflight": {
+            "post": {
+                "summary": "Read-only pass before a bulk run: resolves the entries and estimates the",
+                "description": "Read-only pass before a bulk run: resolves the entries and estimates the\ncost. The client starts the run with exactly these IDs.",
+                "tags": [
+                    "Ai"
+                ],
+                "operationId": "post_spaces_by_space_ai_preflight",
+                "parameters": [
+                    {
+                        "name": "space",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "The space identifier"
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "surface": {
+                                        "type": "string",
+                                        "maxLength": 64,
+                                        "pattern": "^[a-z0-9:_-]+$"
+                                    },
+                                    "config_id": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "scope": {
+                                        "type": "object",
+                                        "properties": {
+                                            "type": {
+                                                "type": "string",
+                                                "enum": [
+                                                    "content",
+                                                    "data_entry",
+                                                    "asset"
+                                                ]
+                                            },
+                                            "ids": {
+                                                "type": "array",
+                                                "items": {
+                                                    "type": "string",
+                                                    "maxLength": 40
+                                                }
+                                            },
+                                            "filters": {
+                                                "type": "array"
+                                            }
+                                        },
+                                        "required": [
+                                            "type"
+                                        ]
+                                    }
+                                },
+                                "required": [
+                                    "surface",
+                                    "scope"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/mgmt/v1/spaces/{space}/ai/inbox": {
+            "get": {
+                "summary": "List inbox",
+                "description": "",
+                "tags": [
+                    "Ai"
+                ],
+                "operationId": "get_spaces_by_space_ai_inbox",
+                "parameters": [
+                    {
+                        "name": "space",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "The space identifier"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/mgmt/v1/spaces/{space}/ai/changesets/{changeset}": {
+            "get": {
+                "summary": "Get a single changeset",
+                "description": "",
+                "tags": [
+                    "Ai"
+                ],
+                "operationId": "get_spaces_by_space_ai_changesets_by_changeset",
+                "parameters": [
+                    {
+                        "name": "space",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "The space identifier"
+                    },
+                    {
+                        "name": "changeset",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "The changeset identifier"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AiChangesetResource"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/mgmt/v1/spaces/{space}/ai/changesets/{changeset}/accept": {
+            "post": {
+                "summary": "Create accept",
+                "description": "",
+                "tags": [
+                    "Ai"
+                ],
+                "operationId": "post_spaces_by_space_ai_changesets_by_changeset_accept",
+                "parameters": [
+                    {
+                        "name": "space",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "The space identifier"
+                    },
+                    {
+                        "name": "changeset",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "The changeset identifier"
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "item_ids": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string",
+                                            "maxLength": 40
+                                        }
+                                    },
+                                    "overwrite": {
+                                        "type": "boolean"
+                                    },
+                                    "values": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string",
+                                            "maxLength": 65535
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/mgmt/v1/spaces/{space}/ai/changesets/{changeset}/reject": {
+            "post": {
+                "summary": "Create reject",
+                "description": "",
+                "tags": [
+                    "Ai"
+                ],
+                "operationId": "post_spaces_by_space_ai_changesets_by_changeset_reject",
+                "parameters": [
+                    {
+                        "name": "space",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "The space identifier"
+                    },
+                    {
+                        "name": "changeset",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "The changeset identifier"
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "item_ids": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string",
+                                            "maxLength": 40
+                                        }
+                                    },
+                                    "overwrite": {
+                                        "type": "boolean"
+                                    },
+                                    "values": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string",
+                                            "maxLength": 65535
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/mgmt/v1/spaces/{space}/ai/suggestions/{suggestion}/accept": {
+            "post": {
+                "summary": "Create accept",
+                "description": "",
+                "tags": [
+                    "Ai"
+                ],
+                "operationId": "post_spaces_by_space_ai_suggestions_by_suggestion_accept",
+                "parameters": [
+                    {
+                        "name": "space",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "The space identifier"
+                    },
+                    {
+                        "name": "suggestion",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "The suggestion identifier"
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "glossary_id": {
+                                        "type": "string",
+                                        "maxLength": 40
+                                    }
+                                },
+                                "required": [
+                                    "glossary_id"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AiGlossaryTermResource"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/mgmt/v1/spaces/{space}/ai/suggestions/{suggestion}/dismiss": {
+            "post": {
+                "summary": "Create dismiss",
+                "description": "",
+                "tags": [
+                    "Ai"
+                ],
+                "operationId": "post_spaces_by_space_ai_suggestions_by_suggestion_dismiss",
+                "parameters": [
+                    {
+                        "name": "space",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "The space identifier"
+                    },
+                    {
+                        "name": "suggestion",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "The suggestion identifier"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/mgmt/v1/spaces/{space}/ai/schedules": {
+            "get": {
+                "summary": "List schedules",
+                "description": "",
+                "tags": [
+                    "Ai"
+                ],
+                "operationId": "get_spaces_by_space_ai_schedules",
+                "parameters": [
+                    {
+                        "name": "space",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "The space identifier"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "summary": "Create schedules",
+                "description": "",
+                "tags": [
+                    "Ai"
+                ],
+                "operationId": "post_spaces_by_space_ai_schedules",
+                "parameters": [
+                    {
+                        "name": "space",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "The space identifier"
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "maxLength": 120
+                                    },
+                                    "skill": {
+                                        "type": "string",
+                                        "maxLength": 64
+                                    },
+                                    "scope": {
+                                        "type": "object",
+                                        "properties": {
+                                            "type": {
+                                                "type": "string",
+                                                "enum": [
+                                                    "content",
+                                                    "data_entry",
+                                                    "asset"
+                                                ]
+                                            },
+                                            "filters": {
+                                                "type": "array",
+                                                "items": {
+                                                    "type": "string",
+                                                    "maxLength": 255,
+                                                    "nullable": true
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "cron": {
+                                        "type": "string",
+                                        "maxLength": 100
+                                    },
+                                    "max_usd": {
+                                        "type": "number",
+                                        "minimum": 0,
+                                        "maximum": 100
+                                    },
+                                    "enabled": {
+                                        "type": "boolean"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AiScheduleResource"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/mgmt/v1/spaces/{space}/ai/schedules/{schedule}": {
+            "patch": {
+                "summary": "Update schedule",
+                "description": "",
+                "tags": [
+                    "Ai"
+                ],
+                "operationId": "patch_spaces_by_space_ai_schedules_by_schedule",
+                "parameters": [
+                    {
+                        "name": "space",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "The space identifier"
+                    },
+                    {
+                        "name": "schedule",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "The schedule identifier"
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "maxLength": 120
+                                    },
+                                    "skill": {
+                                        "type": "string",
+                                        "maxLength": 64
+                                    },
+                                    "scope": {
+                                        "type": "object",
+                                        "properties": {
+                                            "type": {
+                                                "type": "string",
+                                                "enum": [
+                                                    "content",
+                                                    "data_entry",
+                                                    "asset"
+                                                ]
+                                            },
+                                            "filters": {
+                                                "type": "array",
+                                                "items": {
+                                                    "type": "string",
+                                                    "maxLength": 255,
+                                                    "nullable": true
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "cron": {
+                                        "type": "string",
+                                        "maxLength": 100
+                                    },
+                                    "max_usd": {
+                                        "type": "number",
+                                        "minimum": 0,
+                                        "maximum": 100
+                                    },
+                                    "enabled": {
+                                        "type": "boolean"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AiScheduleResource"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "summary": "Delete schedule",
+                "description": "",
+                "tags": [
+                    "Ai"
+                ],
+                "operationId": "delete_spaces_by_space_ai_schedules_by_schedule",
+                "parameters": [
+                    {
+                        "name": "space",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "The space identifier"
+                    },
+                    {
+                        "name": "schedule",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "The schedule identifier"
                     }
                 ],
                 "responses": {
@@ -20911,6 +24497,134 @@
                     }
                 }
             },
+            "AiSkillResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "scope": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "nullable": true
+                    },
+                    "enabled": {
+                        "type": "string"
+                    },
+                    "files": {
+                        "type": "string"
+                    },
+                    "published_revision": {
+                        "type": "object",
+                        "nullable": true
+                    },
+                    "has_unpublished_changes": {
+                        "type": "object",
+                        "nullable": true
+                    },
+                    "updated_at": {
+                        "nullable": true
+                    }
+                }
+            },
+            "AiKnowledgeDocumentResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "scope": {
+                        "type": "string"
+                    },
+                    "slug": {
+                        "type": "string"
+                    },
+                    "title": {
+                        "type": "string"
+                    },
+                    "type": {
+                        "type": "string"
+                    },
+                    "enabled": {
+                        "type": "string"
+                    },
+                    "draft": {
+                        "type": "string"
+                    },
+                    "source_name": {
+                        "type": "string"
+                    },
+                    "extraction_status": {
+                        "type": "string"
+                    },
+                    "published_revision": {
+                        "type": "object",
+                        "nullable": true
+                    },
+                    "has_unpublished_changes": {
+                        "type": "string"
+                    },
+                    "updated_at": {
+                        "nullable": true
+                    }
+                }
+            },
+            "AiGlossaryResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "scope": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "enabled": {
+                        "type": "string"
+                    },
+                    "terms_count": {
+                        "type": "integer"
+                    },
+                    "updated_at": {
+                        "nullable": true
+                    }
+                }
+            },
+            "AiGlossaryTermResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "source_locale": {
+                        "type": "string"
+                    },
+                    "term": {
+                        "type": "string"
+                    },
+                    "translations": {
+                        "nullable": true
+                    },
+                    "case_sensitive": {
+                        "type": "string"
+                    },
+                    "do_not_translate": {
+                        "type": "string"
+                    },
+                    "forbidden": {
+                        "nullable": true
+                    },
+                    "note": {
+                        "type": "string"
+                    }
+                }
+            },
             "PersonResource": {
                 "type": "object",
                 "properties": {
@@ -21136,6 +24850,190 @@
                         "nullable": true
                     },
                     "updated_at": {
+                        "nullable": true
+                    }
+                }
+            },
+            "ResolvedSkillResource": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "surfaces": {
+                        "type": "string"
+                    },
+                    "blocks": {
+                        "type": "string"
+                    },
+                    "output": {
+                        "type": "string"
+                    },
+                    "source": {
+                        "type": "string"
+                    },
+                    "owner_id": {
+                        "type": "string"
+                    },
+                    "skill_id": {
+                        "type": "string"
+                    },
+                    "shadows": {
+                        "type": "string"
+                    }
+                }
+            },
+            "AiRunResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "surface": {
+                        "type": "string"
+                    },
+                    "skill": {
+                        "type": "string"
+                    },
+                    "model": {
+                        "type": "string"
+                    },
+                    "state": {
+                        "type": "string"
+                    },
+                    "mode": {
+                        "type": "string"
+                    },
+                    "partial": {
+                        "type": "string"
+                    },
+                    "questionnaire": {
+                        "type": "string"
+                    },
+                    "result": {
+                        "type": "string"
+                    },
+                    "error": {
+                        "type": "string"
+                    },
+                    "event_seq": {
+                        "type": "string"
+                    },
+                    "usage": {
+                        "type": "object",
+                        "properties": {
+                            "steps": {
+                                "type": "string"
+                            },
+                            "input_tokens": {
+                                "type": "string"
+                            },
+                            "output_tokens": {
+                                "type": "string"
+                            },
+                            "cached_tokens": {
+                                "type": "string"
+                            },
+                            "cost_usd": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "started_at": {
+                        "nullable": true
+                    },
+                    "finished_at": {
+                        "nullable": true
+                    }
+                }
+            },
+            "AiChangesetResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "title": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "type": "string"
+                    },
+                    "inline": {
+                        "type": "string"
+                    },
+                    "item_count": {
+                        "type": "string"
+                    },
+                    "pending_count": {
+                        "type": "string"
+                    },
+                    "run": {
+                        "type": "object",
+                        "nullable": true
+                    },
+                    "actor": {
+                        "type": "object",
+                        "nullable": true
+                    },
+                    "items": {
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "nullable": true
+                    }
+                }
+            },
+            "AiScheduleResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "skill": {
+                        "type": "string"
+                    },
+                    "scope": {
+                        "type": "object",
+                        "properties": {
+                            "type": {
+                                "nullable": true
+                            },
+                            "filters": {
+                                "nullable": true
+                            }
+                        }
+                    },
+                    "cron": {
+                        "type": "string"
+                    },
+                    "max_usd": {
+                        "type": "string"
+                    },
+                    "enabled": {
+                        "type": "string"
+                    },
+                    "paused_reason": {
+                        "type": "string"
+                    },
+                    "creator": {
+                        "type": "object",
+                        "nullable": true
+                    },
+                    "last_run_at": {
+                        "nullable": true
+                    },
+                    "last_run": {
+                        "type": "object",
+                        "nullable": true
+                    },
+                    "next_run_at": {
                         "nullable": true
                     }
                 }
