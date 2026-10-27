@@ -4,7 +4,6 @@ namespace App\Actions\Ai;
 
 use App\Actions\Content\CreateContent;
 use App\Enums\AiChangesetItemStatus;
-use App\Events\Ai\AiInboxChanged;
 use App\Models\Management\AiChangeset;
 use App\Models\Management\AiChangesetItem;
 use App\Models\Management\Space;
@@ -15,6 +14,7 @@ use App\Services\Ai\Changesets\ChangeTargets;
 use App\Services\Ai\Changesets\FieldPath;
 use App\Services\Ai\Learning\EditLearning;
 use App\Services\Ai\Run\ToolError;
+use App\Services\Ai\Threads\AiThreads;
 use App\Services\Auth\AuthorizationService;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Collection;
@@ -34,6 +34,7 @@ class AcceptAiChangesetItems
         private readonly AuthorizationService $auth,
         private readonly CreateContent $createContent,
         private readonly EditLearning $learning,
+        private readonly AiThreads $threads,
     ) {}
 
     /**
@@ -79,9 +80,7 @@ class AcceptAiChangesetItems
         }
 
         $changeset->refreshCounts();
-        if (! $changeset->inline) {
-            broadcast(new AiInboxChanged($space->id, changesetId: $changeset->id));
-        }
+        $this->threads->changedByRun($changeset->run_id);
 
         return ['accepted' => $accepted, 'conflicts' => $conflicts];
     }

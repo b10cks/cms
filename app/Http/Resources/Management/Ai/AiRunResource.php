@@ -13,6 +13,7 @@ class AiRunResource extends JsonResource
     {
         return [
             'id' => $this->id,
+            'conversation_id' => $this->conversation_id,
             'surface' => $this->surface,
             'skill' => $this->skill,
             'model' => $this->model,

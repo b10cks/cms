@@ -11,7 +11,7 @@ use App\Models\Management\Space;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
-/** Learning suggestions from the inbox: accept into a glossary or dismiss. */
+/** Learning suggestions from the suggestions thread: accept into a glossary or dismiss. */
 class AiGlossarySuggestionController extends Controller
 {
     public function accept(AcceptAiGlossarySuggestionRequest $request, Space $space, string $suggestion, AcceptAiGlossarySuggestion $action): AiGlossaryTermResource

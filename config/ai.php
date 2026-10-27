@@ -34,6 +34,12 @@ return [
         'max_concurrent_background' => (int) env('AI_RUN_MAX_CONCURRENT_BACKGROUND', 2),
     ],
 
+    // Earlier turns and proposals a follow-up run in a thread sees, estimated
+    // at four characters per token. The oldest turns drop first.
+    'threads' => [
+        'history_tokens' => (int) env('AI_THREAD_HISTORY_TOKENS', 6000),
+    ],
+
     // Entries one request may change before it must run in the background
     // after a preflight estimate and confirmation.
     'inline_entry_limit' => (int) env('AI_INLINE_ENTRY_LIMIT', 5),

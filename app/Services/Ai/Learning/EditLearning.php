@@ -3,23 +3,24 @@
 namespace App\Services\Ai\Learning;
 
 use App\Enums\AiChangesetItemStatus;
-use App\Events\Ai\AiInboxChanged;
 use App\Jobs\ExtractGlossarySuggestionsJob;
-use App\Models\Management\AiGlossarySuggestion;
 use App\Models\Management\AiChangesetItem;
+use App\Models\Management\AiGlossarySuggestion;
 use App\Models\Management\Space;
 use App\Models\Space\Content;
 use App\Models\User;
 use App\Services\Ai\Changesets\FieldPath;
 use App\Services\Ai\Knowledge\GlossaryMatcher;
 use App\Services\Ai\Knowledge\KnowledgeResolver;
+use App\Services\Ai\Threads\AiThreads;
 use Illuminate\Support\Collection;
 
 /**
  * The learning loop. When an editor changes AI output, before accepting it or
  * after accepting and before publishing, the AI text and the kept text go to
  * a small model call that extracts candidate glossary terms. Candidates the
- * space's glossaries already know are dropped; the rest wait in the inbox.
+ * space's glossaries already know are dropped; the rest wait in the space's
+ * suggestions thread.
  *
  * @phpstan-type Edit array{ai: string, final: string, locale: string, source?: string, source_locale?: string, target_type: string, target_id: string|null, label: string|null}
  */
@@ -31,7 +32,10 @@ class EditLearning
 
     private const MAX_TEXT = 4000;
 
-    public function __construct(private readonly KnowledgeResolver $knowledge) {}
+    public function __construct(
+        private readonly KnowledgeResolver $knowledge,
+        private readonly AiThreads $threads,
+    ) {}
 
     /**
      * Items a reviewer edited before accepting them (`final` set).
@@ -137,7 +141,7 @@ class EditLearning
         }
 
         if ($created > 0) {
-            broadcast(new AiInboxChanged($space->id));
+            $this->threads->changed($space->id, $this->threads->suggestions($space)->id);
         }
 
         return $created;
