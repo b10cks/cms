@@ -56,13 +56,13 @@ class AiThreadTest extends TestCase
         $this->driver->push(FakeAiDriver::text('Fresh coffee, daily.'), FakeAiDriver::text('Better text'));
 
         $chat = $this->sseEvents($this->postJson($this->url('ai/runs'), ['surface' => 'cmdk', 'prompt' => "Write a tagline for the shop\nKeep it short."])->streamedContent());
-        $this->postJson($this->url('ai/runs'), ['surface' => 'selection', 'prompt' => 'Improve this.', 'context' => ['selection' => 'Old text']])->streamedContent();
+        $this->postJson($this->url('ai/runs'), ['surface' => 'selection', 'prompt' => 'Improve this.', 'context' => ['selection' => 'Old text', 'chips' => [['type' => 'content', 'id' => 'c1', 'label' => 'Home', 'body' => 'dropped'], ['type' => 'nope', 'id' => 'x']]]])->streamedContent();
 
         [$first, $second] = AiConversation::query()->orderBy('created_at')->orderBy('id')->get();
         $this->assertSame($first->id, $chat[0]['conversation_id']);
         $this->assertSame(['run_started', $first->id], [$chat[0]['type'], AiRun::query()->where('surface', 'cmdk')->value('conversation_id')]);
         $this->assertSame([$this->user->id, AiThreadKind::Chat, 'Write a tagline for the shop', false], [$first->user_id, $first->kind, $first->title, $first->quiet]);
-        $this->assertSame(['selection' => 'Old text'], $second->context);
+        $this->assertSame([['type' => 'content', 'id' => 'c1', 'label' => 'Home']], $second->context);
         $this->assertTrue($second->quiet);
         $this->assertSame(['user', 'assistant'], $first->messages()->pluck('role')->all());
     }

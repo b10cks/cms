@@ -25,7 +25,7 @@ class AiThreads
 
     private const TITLE_LENGTH = 60;
 
-    private const MAX_CONTEXT_STRING = 500;
+    private const CHIP_TYPES = ['content', 'data_source', 'asset', 'document'];
 
     public static function isQuiet(string $surface): bool
     {
@@ -122,21 +122,20 @@ class AiThreads
     }
 
     /**
-     * What the thread started on, small enough to show as chips: short scalar
-     * values and the selected targets, not the payloads the screen sent.
+     * The chips the composer attached (`context.chips`): type, ID and label
+     * only, never the payloads the screen sent.
      *
      * @param  array<string, mixed>  $context
-     * @return array<string, mixed>|null
+     * @return list<array{type: string, id: string, label: string}>|null
      */
     private function chips(array $context): ?array
     {
-        $chips = array_filter(
-            $context,
-            fn (mixed $value, string|int $key) => $key === 'targets'
-                || \is_int($value) || \is_bool($value)
-                || (\is_string($value) && mb_strlen($value) <= self::MAX_CONTEXT_STRING),
-            ARRAY_FILTER_USE_BOTH,
-        );
+        $chips = [];
+        foreach ((array) ($context['chips'] ?? []) as $chip) {
+            if (\is_array($chip) && \in_array($chip['type'] ?? null, self::CHIP_TYPES, true) && \is_string($chip['id'] ?? null)) {
+                $chips[] = ['type' => $chip['type'], 'id' => $chip['id'], 'label' => Str::limit((string) ($chip['label'] ?? ''), self::TITLE_LENGTH, '')];
+            }
+        }
 
         return $chips === [] ? null : $chips;
     }

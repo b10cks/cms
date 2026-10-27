@@ -32,7 +32,7 @@ use Illuminate\Support\Facades\DB;
  * @property bool $quiet
  * @property Carbon|null $archived_at
  * @property Carbon|null $last_activity_at
- * @property array<string, mixed>|null $context
+ * @property list<array{type: string, id: string, label: string}>|null $context
  */
 class AiConversation extends GlobalModel
 {
