@@ -5226,6 +5226,7 @@
         "not_provisioned": "Su acceso a la IA aún se está configurando. Por favor, inténtelo en un momento.",
         "plan_excluded": "Su plan actual no incluye funciones de IA. Mejore su plan para usarlas.",
         "no_result": "El servicio de IA no devolvió un resultado utilizable. Por favor, inténtelo de nuevo.",
+        "model_no_vision": "The selected model can't read images. Pick a configuration with a vision model, or remove the images.",
         "csrf": "Su sesión ha expirado. Por favor, actualice la página e inténtelo de nuevo.",
         "csrfUnavailable": "Token de seguridad no disponible. Por favor, actualice la página e inténtelo de nuevo.",
         "noSpace": "No hay espacio seleccionado. Por favor, recargue la página e inténtelo de nuevo.",

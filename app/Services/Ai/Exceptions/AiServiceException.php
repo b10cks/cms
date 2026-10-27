@@ -26,6 +26,8 @@ class AiServiceException extends RuntimeException
 
     public const REASON_NO_RESULT = 'no_result';
 
+    public const REASON_MODEL_NO_VISION = 'model_no_vision';
+
     public function __construct(
         public readonly string $reason,
         string $message,
@@ -75,6 +77,15 @@ class AiServiceException extends RuntimeException
         return new self(
             self::REASON_NO_RESULT,
             'The AI service did not return a usable result. Please try again.',
+            422,
+        );
+    }
+
+    public static function modelNoVision(): self
+    {
+        return new self(
+            self::REASON_MODEL_NO_VISION,
+            'The selected model cannot read images. Pick a configuration with a vision model, or remove the images.',
             422,
         );
     }

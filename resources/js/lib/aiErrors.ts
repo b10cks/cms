@@ -13,6 +13,7 @@ export const AI_ERROR_REASONS = [
   'not_provisioned',
   'plan_excluded',
   'no_result',
+  'model_no_vision',
   'csrf',
   'csrfUnavailable',
   'noSpace',

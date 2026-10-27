@@ -5226,6 +5226,7 @@
         "not_provisioned": "Votre accès IA est toujours en cours de configuration. Veuillez réessayer dans un instant.",
         "plan_excluded": "Votre forfait actuel n'inclut pas les fonctionnalités IA. Mettez à niveau votre forfait pour les utiliser.",
         "no_result": "Le service IA n'a pas renvoyé de résultat exploitable. Veuillez réessayer.",
+        "model_no_vision": "The selected model can't read images. Pick a configuration with a vision model, or remove the images.",
         "csrf": "Votre session a expiré. Veuillez actualiser la page et réessayer.",
         "csrfUnavailable": "Jeton de sécurité indisponible. Veuillez actualiser la page et réessayer.",
         "noSpace": "Aucun espace sélectionné. Veuillez recharger la page et réessayer.",

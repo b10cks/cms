@@ -5226,6 +5226,7 @@
         "not_provisioned": "Yapay zeka erişiminiz hala kuruluyor. Lütfen bir süre sonra tekrar deneyin.",
         "plan_excluded": "Mevcut planınız yapay zeka özelliklerini içermiyor. Kullanmak için planınızı yükseltin.",
         "no_result": "Yapay zeka hizmeti kullanılabilir bir sonuç döndürmedi. Lütfen tekrar deneyin.",
+        "model_no_vision": "The selected model can't read images. Pick a configuration with a vision model, or remove the images.",
         "csrf": "Oturumunuzun süresi doldu. Lütfen sayfayı yenileyin ve tekrar deneyin.",
         "csrfUnavailable": "Güvenlik belirteci kullanılamıyor. Lütfen sayfayı yenileyin ve tekrar deneyin.",
         "noSpace": "Çalışma alanı seçilmedi. Lütfen sayfayı yeniden yükleyin ve tekrar deneyin.",

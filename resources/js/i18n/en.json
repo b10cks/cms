@@ -5226,6 +5226,7 @@
         "not_provisioned": "Your AI access is still being set up. Please try again in a moment.",
         "plan_excluded": "Your current plan doesn't include AI features. Upgrade your plan to use them.",
         "no_result": "The AI service didn't return a usable result. Please try again.",
+        "model_no_vision": "The selected model can't read images. Pick a configuration with a vision model, or remove the images.",
         "csrf": "Your session has expired. Please refresh the page and try again.",
         "csrfUnavailable": "Security token unavailable. Please refresh the page and try again.",
         "noSpace": "No space selected. Please reload the page and try again.",

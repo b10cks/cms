@@ -52,4 +52,10 @@ Settled 2026-10-27. Concept: "Threads" in `docs/concepts/native-ai-integration.m
 - The dock pushes the page on wide screens (resizable, width remembered) and overlays as a sheet below 1280px. Cmd+J toggles it. The header button carries the count of threads that need you; the main sidebar has no AI entry.
 - Feature buttons stay inside features. They start threads but open the dock only when there is something to review or answer. Bulk starts are the exception and open the dock on the running thread.
 - Proposals are cards in the thread, one per entry. Per-field accept and reject are icon buttons. A field shows a status badge only once it is decided. Cross-locale changes show source and translation side by side, same-locale edits show the word diff. More than five entries collapse into one summary card with Accept all and Reject all.
+- The dock copies T3 Code's thread list and composer: quiet, minimal, no borders between rows. Settled 2026-10-27, reference in the concept doc ("UI modelled on T3 Code").
+  - List header: ghost search row and a small square-pen icon button for a new thread. No text buttons, no archive switch.
+  - Rows are inbox cards: context line with the status (icon and label in the status color) or the relative time on the right, the title, an optional muted meta line.
+  - Done work is settled by hand ("Settle" on hover) and moves to the collapsible "Settled" shelf at the bottom with a muted count. Settled rows recede.
+  - Composer: one rounded-2xl surface with a hairline outline and soft shadow; small ghost footer controls (attach, config picker) and a round send button. The config picker trigger is a ghost label with a small chevron; its list shows name, model in muted text below, and a check.
+  - Skills are not shown up front; `/` opens them.
 - AI settings (Skills, Knowledge, Schedules) have three nav entries. Each page has the title with the primary action top right; lists are one table with a type or source column. Glossary detail looks like a data source: one column per language, headed by the language name, not the locale code.

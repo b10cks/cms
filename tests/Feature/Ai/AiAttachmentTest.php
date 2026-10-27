@@ -72,6 +72,19 @@ class AiAttachmentTest extends TestCase
     }
 
     #[Test]
+    public function an_image_for_a_model_without_vision_is_refused_before_the_run_starts(): void
+    {
+        $this->driver = $this->fakeAi(vision: false);
+        $image = $this->postJson($this->url('ai/attachments'), ['file' => UploadedFile::fake()->image('logo.png', 40, 40)])->json('data.id');
+
+        $this->postJson($this->url('ai/runs'), ['surface' => 'cmdk', 'prompt' => 'Describe it.', 'attachments' => [$image]])
+            ->assertUnprocessable()
+            ->assertJsonPath('reason', 'model_no_vision');
+        $this->assertSame(0, $this->driver->calls);
+        $this->assertNull(AiAttachment::query()->findOrFail($image)->message_id);
+    }
+
+    #[Test]
     public function a_follow_up_remembers_file_names_but_not_contents(): void
     {
         $id = $this->postJson($this->url('ai/attachments'), ['file' => UploadedFile::fake()->createWithContent('brief.txt', 'secret plan')])->json('data.id');

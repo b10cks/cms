@@ -102,6 +102,12 @@ class AiRunService
         [$driver, $model] = $this->resolveSpaceDriver($start->space, $config);
         $manifest = $start->skill?->manifest;
 
+        $sendsImages = collect($start->parts)->contains('type', 'image')
+            || collect($start->attachments)->contains(fn (AiAttachment $file) => $file->kind === AiAttachment::KIND_IMAGE);
+        if ($sendsImages && ! (app(ModelRegistry::class)->findModelForConfig($driver->getName(), $model)?->supportsVision ?? false)) {
+            throw AiServiceException::modelNoVision();
+        }
+
         $toolsAvailable = $driver->supportsToolCalls($model);
         $toolNames = $toolsAvailable ? RunToolFactory::namesFor($manifest?->tools) : [];
         $built = $this->context->build($start, $toolsAvailable && $toolNames !== []);
