@@ -74,4 +74,23 @@ describe('useAiRun', () => {
     expect(aiRun.text.value).toBe('Hello world')
     expect(outcome).toMatchObject({ status: 'completed', result })
   })
+
+  it('collects the proposals a run records into its changeset', async () => {
+    const proposal = { changeset_id: 'cs-1', item_id: 'item-1', target_type: 'selection', target_id: null, path: null }
+    const result = { text: 'Shorter.', data: null, glossary_findings: [] }
+    fetchMock.mockResolvedValue(
+      sse([
+        { type: 'run_started', run_id: 'run-1', seq: 1, skill: 'shorten', surface: 'selection' },
+        { type: 'proposal', run_id: 'run-1', seq: 2, proposal },
+        { type: 'completed', run_id: 'run-1', seq: 3, result, partial: false, usage: {} },
+      ])
+    )
+
+    const scope = effectScope()
+    const aiRun = scope.run(() => useAiRun(ref('space-1')))!
+    await aiRun.start({ surface: 'selection', skill: 'shorten' })
+    scope.stop()
+
+    expect(aiRun.proposals.value).toEqual([proposal])
+  })
 })

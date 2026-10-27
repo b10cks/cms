@@ -147,6 +147,8 @@ export const queryKeys = {
       config: (configId: MaybeRef<string>) => [...all(), 'configs', configId] as const,
       surfaceSkills: (surface: string, block: string | null) =>
         [...all(), 'context', surface, block] as const,
+      inbox: () => [...all(), 'inbox'] as const,
+      changeset: (changesetId: string) => [...all(), 'changesets', changesetId] as const,
     }
   },
   /** Skills, knowledge and glossaries of a space or team. */

@@ -279,6 +279,12 @@ const routes: RouteRecordRaw[] = [
     meta: { layout: 'default' },
   },
   {
+    path: '/:space/inbox',
+    name: 'space-ai-inbox',
+    component: () => import('~/pages/[space]/inbox.vue'),
+    meta: { layout: 'default' },
+  },
+  {
     path: '/:space/audit-logs',
     name: 'space-audit-logs',
     component: () => import('~/pages/[space]/audit-logs.vue'),

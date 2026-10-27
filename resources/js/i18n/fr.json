@@ -1110,7 +1110,8 @@
         "pasteAfter": "Coller après",
         "delete": "Supprimer",
         "more": "Plus d'actions",
-        "automations": "Actions"
+        "automations": "Actions",
+        "askAi": "Ask AI about {count} entry | Ask AI about {count} entries"
       },
       "confirmations": {
         "deleteTitle": "Supprimer le contenu",
@@ -1182,7 +1183,9 @@
       "extendedSidebar": "Barre latérale étendue",
       "icons": "Icônes",
       "onboarding": "Onboarding",
-      "massEdit": "Modification en masse"
+      "massEdit": "Modification en masse",
+      "aiInbox": "Inbox",
+      "aiInboxCount": "{count} items waiting for review"
     },
     "provider": {
       "title": "Fournisseur",
@@ -4742,6 +4745,101 @@
         "translated_do_not_translate": "Keep \"{term}\" untranslated.",
         "forbidden_variant": "\"{found}\" is not allowed, use \"{expected}\"."
       }
+    },
+    "aiChangeset": {
+      "meta": "{pending} of {total} open",
+      "acceptAll": "Accept all",
+      "rejectAll": "Reject all",
+      "acceptEntry": "Accept entry",
+      "rejectEntry": "Reject entry",
+      "accept": "Accept",
+      "reject": "Reject",
+      "keepCurrent": "Keep current",
+      "useProposal": "Use AI version",
+      "newEntry": "New entry",
+      "partial": "The run stopped early ({reason}). These are the changes it proposed so far.",
+      "stoppedBy": {
+        "max_usd": "cost limit reached",
+        "max_steps": "step limit reached",
+        "max_tokens": "token limit reached",
+        "max_seconds": "time limit reached",
+        "other": "a limit was reached"
+      },
+      "targets": {
+        "content": "Content",
+        "data_entry": "Data entry",
+        "asset": "Asset",
+        "selection": "Selection"
+      },
+      "status": {
+        "pending": "Open",
+        "accepted": "Accepted",
+        "rejected": "Rejected",
+        "conflict": "Conflict"
+      },
+      "columns": {
+        "read": "When the AI read it",
+        "current": "Now",
+        "proposed": "AI proposal"
+      },
+      "acceptFailed": "Could not apply the changes: {error}",
+      "rejectFailed": "Could not reject the changes: {error}"
+    },
+    "aiInbox": {
+      "title": "Inbox",
+      "description": "Changes proposed by AI tasks wait here for review. Accepting saves a draft; nothing is published.",
+      "changesets": "Proposed changes",
+      "empty": "Nothing to review.",
+      "partial": "Stopped early",
+      "runs": "Background tasks",
+      "states": {
+        "running": "Running",
+        "awaiting_input": "Needs your answer",
+        "completed": "Done",
+        "failed": "Failed",
+        "cancelled": "Cancelled"
+      },
+      "surfaces": {
+        "bulk": "Bulk task",
+        "agent": "AI task"
+      },
+      "cancel": "Cancel",
+      "answerFailed": "Could not send your answers: {error}",
+      "cancelFailed": "Could not cancel the task: {error}"
+    },
+    "aiCommand": {
+      "ask": "Ask AI: {prompt}",
+      "skills": "AI skills",
+      "title": "Ask AI",
+      "prompt": "Task",
+      "scope": {
+        "entry": "Works on the open entry.",
+        "dataSource": "Works on the open data source.",
+        "space": "Works on this space."
+      },
+      "background": "This takes a while. It continues in the background and its changes arrive in the inbox.",
+      "usingTool": "Using {tool}...",
+      "run": "Run",
+      "close": "Close"
+    },
+    "aiBulk": {
+      "entry": "Ask AI",
+      "title": "Ask AI about these entries",
+      "description": "Runs in the background. The changes arrive in the inbox for review; nothing is saved until you accept it.",
+      "skills": "Skills",
+      "task": "What should the AI do?",
+      "extraInstructions": "Extra instructions (optional)",
+      "entries": "Entries",
+      "estimate": "Estimated cost",
+      "cap": "The run stops at {cap}. Model: {model}.",
+      "nothing": "No entries match.",
+      "more": "and {count} more",
+      "preflightFailed": "Could not estimate this task.",
+      "cancel": "Cancel",
+      "confirm": "Start on {count} entries",
+      "started": "The AI task runs in the background.",
+      "openInbox": "Open inbox",
+      "failed": "Could not start the task: {error}"
     }
   },
   "alertDialog": {

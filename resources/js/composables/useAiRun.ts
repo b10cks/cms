@@ -5,6 +5,7 @@ import type {
   AiQuestionnaireAnswers,
   AiRunEvent,
   AiRunRecord,
+  AiProposal,
   AiRunResult,
   AiSource,
   StartAiRunRequest,
@@ -60,6 +61,7 @@ export function useAiRun(spaceId: MaybeRefOrGetter<string>) {
   const partial = ref(false)
   const findings = shallowRef<AiGlossaryFinding[]>([])
   const sources = shallowRef<AiSource[]>([])
+  const proposals = shallowRef<AiProposal[]>([])
   const error = shallowRef<AiRunError | null>(null)
 
   let lastSeq = 0
@@ -105,6 +107,9 @@ export function useAiRun(spaceId: MaybeRefOrGetter<string>) {
         break
       case 'glossary_findings':
         findings.value = event.findings
+        break
+      case 'proposal':
+        proposals.value = [...proposals.value, event.proposal]
         break
       case 'questionnaire':
         questionnaire.value = event.questionnaire
@@ -239,6 +244,7 @@ export function useAiRun(spaceId: MaybeRefOrGetter<string>) {
     partial.value = false
     findings.value = []
     sources.value = []
+    proposals.value = []
     error.value = null
     lastSeq = 0
   }
@@ -304,6 +310,7 @@ export function useAiRun(spaceId: MaybeRefOrGetter<string>) {
     partial: readonly(partial),
     findings,
     sources,
+    proposals,
     error,
     start,
     answer,

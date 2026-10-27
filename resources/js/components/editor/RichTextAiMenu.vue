@@ -18,6 +18,7 @@ const { t } = useI18n()
 const { showAiError } = useAiErrorToast()
 const { data: skills } = useAiSurfaceSkills(() => props.spaceId, 'selection')
 const run = useAiRun(() => props.spaceId)
+const { acceptMutation, rejectMutation } = useAiInbox(() => props.spaceId)
 
 interface Proposal {
   skill: AiResolvedSkill
@@ -28,6 +29,8 @@ interface Proposal {
 
 const proposal = shallowRef<Proposal | null>(null)
 const suggestion = computed(() => (run.result.value?.text ?? run.text.value).trim())
+// The run records its suggestion as a single-entry changeset; the decision is stored there.
+const item = computed(() => run.proposals.value.at(-1) ?? null)
 
 const SURROUNDING_CHARS = 600
 
@@ -59,6 +62,16 @@ const runSkill = async (skill: AiResolvedSkill) => {
   }
 }
 
+const decide = (accepted: boolean) => {
+  const proposed = item.value
+  if (!proposed) return
+
+  const mutation = accepted ? acceptMutation : rejectMutation
+  mutation.mutate({ changesetId: proposed.changeset_id, decision: { item_ids: [proposed.item_id] } })
+}
+
+// The open editor owns the working copy, so an accepted selection is applied
+// here and saved with the entry; the changeset records the decision.
 const accept = () => {
   const current = proposal.value
   if (!current || !suggestion.value) return
@@ -68,11 +81,13 @@ const accept = () => {
     .focus()
     .insertContentAt({ from: current.from, to: current.to }, suggestion.value)
     .run()
+  decide(true)
   proposal.value = null
 }
 
 const discard = () => {
-  void run.cancel()
+  if (run.isActive.value) void run.cancel()
+  decide(false)
   proposal.value = null
   props.editor.commands.focus()
 }
