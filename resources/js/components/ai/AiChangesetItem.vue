@@ -10,12 +10,15 @@ import { diffFieldType, isOpenItem } from '~/lib/aiChangesets'
 
 /**
  * One proposed field change: its diff on the history renderers, accept and
- * reject, an optional reviewer edit, conflicts side by side and glossary
- * findings as warnings on the field.
+ * reject as icon buttons, an optional reviewer edit, conflicts and
+ * cross-locale changes side by side and glossary findings as warnings on the
+ * field. The status shows once the field is decided.
  */
 const props = defineProps<{
   item: AiChangesetItem
   busy: boolean
+  /** Language names of a cross-locale change; source and translation show side by side */
+  locales?: { source: string; target: string } | null
 }>()
 
 /** The reviewer's edit of a text proposal; undefined while not editing. */
@@ -25,6 +28,8 @@ const emit = defineEmits<{
   accept: [overwrite: boolean]
   reject: []
 }>()
+
+const { t } = useI18n()
 
 const isEditable = computed(
   () =>
@@ -60,6 +65,13 @@ const createdContent = computed(() => {
   return typeof after === 'object' && after !== null && 'content' in after ? (after as { content: unknown }).content : after
 })
 
+/** The source text when the item carries it, else what the field held before. */
+const sourceColumn = computed(() =>
+  props.item.source !== undefined && props.item.source !== null
+    ? { label: props.locales?.source ?? '', value: props.item.source }
+    : { label: t('components.aiChangeset.columns.currentIn', { language: props.locales?.target ?? '' }), value: props.item.before }
+)
+
 const STATUS_VARIANTS = {
   pending: 'secondary',
   accepted: 'success',
@@ -73,51 +85,64 @@ const STATUS_VARIANTS = {
     class="grid gap-2"
     :class="item.status === 'conflict' && 'border-l-2 border-warning pl-3'"
   >
-    <div class="flex flex-wrap items-center gap-2">
+    <div class="flex min-h-7 items-center gap-2">
       <span class="min-w-0 truncate text-sm font-medium">
         {{ item.operation === 'create' ? $t('components.aiChangeset.newEntry') : path }}
       </span>
-      <Badge :variant="STATUS_VARIANTS[item.status]">
+      <Badge
+        v-if="item.status !== 'pending'"
+        :variant="STATUS_VARIANTS[item.status]"
+        size="sm"
+      >
         {{ $t(`components.aiChangeset.status.${item.status}`) }}
       </Badge>
       <div
         v-if="isOpenItem(item)"
-        class="ml-auto flex gap-2"
+        class="ml-auto flex shrink-0 gap-1"
       >
         <Button
           v-if="isEditable && edit === undefined"
-          size="sm"
+          size="toolbar"
           variant="ghost"
           :disabled="busy"
+          :title="$t('components.aiChangeset.edit')"
+          :aria-label="$t('components.aiChangeset.edit')"
           @click="startEdit"
         >
           <Icon name="lucide:pencil" />
-          {{ $t('components.aiChangeset.edit') }}
         </Button>
         <Button
           v-else-if="edit !== undefined"
-          size="sm"
+          size="toolbar"
           variant="ghost"
           :disabled="busy"
+          :title="$t('components.aiChangeset.discardEdit')"
+          :aria-label="$t('components.aiChangeset.discardEdit')"
           @click="edit = undefined"
         >
-          {{ $t('components.aiChangeset.discardEdit') }}
+          <Icon name="lucide:pencil-off" />
         </Button>
         <Button
-          size="sm"
+          size="toolbar"
           variant="ghost"
           :disabled="busy"
+          :title="item.status === 'conflict' ? $t('components.aiChangeset.keepCurrent') : $t('components.aiChangeset.reject')"
+          :aria-label="item.status === 'conflict' ? $t('components.aiChangeset.keepCurrent') : $t('components.aiChangeset.reject')"
+          data-action="reject"
           @click="emit('reject')"
         >
-          {{ item.status === 'conflict' ? $t('components.aiChangeset.keepCurrent') : $t('components.aiChangeset.reject') }}
+          <Icon name="lucide:x" />
         </Button>
         <Button
-          size="sm"
-          variant="outline"
+          size="toolbar"
+          variant="ai"
           :disabled="busy"
+          :title="item.status === 'conflict' ? $t('components.aiChangeset.useProposal') : $t('components.aiChangeset.accept')"
+          :aria-label="item.status === 'conflict' ? $t('components.aiChangeset.useProposal') : $t('components.aiChangeset.accept')"
+          data-action="accept"
           @click="emit('accept', item.status === 'conflict')"
         >
-          {{ item.status === 'conflict' ? $t('components.aiChangeset.useProposal') : $t('components.aiChangeset.accept') }}
+          <Icon name="lucide:check" />
         </Button>
       </div>
     </div>
@@ -144,6 +169,19 @@ const STATUS_VARIANTS = {
       <div>
         <div class="mb-1 text-muted">{{ $t('components.aiChangeset.columns.proposed') }}</div>
         <ValueRenderer :value="item.after" />
+      </div>
+    </div>
+    <div
+      v-else-if="locales && item.operation === 'update'"
+      class="grid gap-3 text-sm @md:grid-cols-2"
+    >
+      <div>
+        <div class="mb-1 text-muted">{{ sourceColumn.label }}</div>
+        <ValueRenderer :value="sourceColumn.value" />
+      </div>
+      <div>
+        <div class="mb-1 text-muted">{{ locales.target }}</div>
+        <ValueRenderer :value="item.final ?? item.after" />
       </div>
     </div>
     <div

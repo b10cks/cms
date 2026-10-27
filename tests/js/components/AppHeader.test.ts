@@ -59,7 +59,7 @@ const openMenu = async () => {
     global: {
       plugins: [router],
       provide: { commandOpen: ref(false) },
-      stubs: { Icon: { template: '<i :data-name="name" />', props: ['name'] } },
+      stubs: { Icon: { template: '<i :data-name="name" />', props: ['name'] }, AiDockButton: true },
     },
   })
 

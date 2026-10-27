@@ -135,7 +135,7 @@ const filterSummary = (schedule: AiSchedule) =>
                 size="sm"
                 :variant="schedule.last_run.state === 'failed' ? 'destructive' : 'secondary'"
               >
-                {{ $t(`components.aiInbox.states.${schedule.last_run.state}`) }}
+                {{ $t(`components.aiThreads.states.${schedule.last_run.state}`) }}
               </Badge>
             </template>
             <span

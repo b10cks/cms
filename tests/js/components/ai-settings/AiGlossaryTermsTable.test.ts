@@ -17,10 +17,11 @@ const term = (overrides: Partial<AiGlossaryTermResource>): AiGlossaryTermResourc
 })
 
 describe('AiGlossaryTermsTable', () => {
-  it('renders one column per space language and the rule badges', () => {
+  it('renders one column per space language, named, and the rule badges', () => {
     const wrapper = mount(AiGlossaryTermsTable, {
       props: {
         languages: ['de', 'fr'],
+        spaceLanguages: [{ code: 'de', name: 'Deutsch (Schweiz)' }],
         canManage: false,
         terms: [
           term({ id: 'checkout', translations: { de: 'Kasse' }, forbidden: ['Bezahlseite'] }),
@@ -29,7 +30,7 @@ describe('AiGlossaryTermsTable', () => {
       },
     })
 
-    expect(wrapper.findAll('th').map((th) => th.text())).toEqual(['Term', 'de', 'fr', 'Rules'])
+    expect(wrapper.findAll('th').map((th) => th.text())).toEqual(['Term', 'Deutsch (Schweiz)', 'French', 'Rules'])
 
     const rows = wrapper.findAll('tbody tr').map((row) => row.findAll('td').map((cell) => cell.text()))
     expect(rows).toEqual([

@@ -13,11 +13,14 @@ import {
   TableRow,
 } from '~/components/ui/table'
 import TableLoadingRow from '~/components/ui/TableLoadingRow.vue'
+import { languageName } from '~/lib/languageNames'
 
 /** Glossary terms with one column per language; edit and delete show on row hover or focus. */
 const props = defineProps<{
   terms: readonly AiGlossaryTermResource[]
   languages: readonly string[]
+  /** The space's language names for the column headers; others use the browser's names */
+  spaceLanguages?: readonly SpaceLanguage[]
   canManage: boolean
   loading?: boolean
 }>()
@@ -28,6 +31,9 @@ const emit = defineEmits<{
 }>()
 
 const columnCount = computed(() => props.languages.length + (props.canManage ? 3 : 2))
+
+const { locale } = useI18n()
+const columnName = (code: string) => languageName(code, props.spaceLanguages, locale.value)
 </script>
 
 <template>
@@ -38,9 +44,9 @@ const columnCount = computed(() => props.languages.length + (props.canManage ? 3
         <TableHead
           v-for="language in languages"
           :key="language"
-          class="uppercase"
+          :title="language"
         >
-          {{ language }}
+          {{ columnName(language) }}
         </TableHead>
         <TableHead>{{ $t('components.aiSettings.glossaries.rules') }}</TableHead>
         <TableHead

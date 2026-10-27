@@ -55,6 +55,9 @@ const { mutate: deleteTerm } = knowledge.useDeleteTermMutation()
 const { mutateAsync: importTerms } = knowledge.useImportTermsMutation()
 const { mutateAsync: deleteGlossary } = knowledge.useDeleteGlossaryMutation()
 
+const { useSpaceQuery } = useSpaces()
+const { data: space } = useSpaceQuery(() => (props.owner.kind === 'space' ? props.owner.id : null))
+
 const columns = computed(() => {
   if (props.languages) return props.languages
   const locales = new Set((terms.value ?? []).flatMap((term) => Object.keys(term.translations)))
@@ -215,6 +218,7 @@ const exportFormats: AiGlossaryExportFormat[] = ['csv', 'xlsx', 'tbx']
       <AiGlossaryTermsTable
         :terms="terms ?? []"
         :languages="columns"
+        :space-languages="space?.settings?.languages"
         :can-manage="canManage"
         :loading="isLoadingGlossary || isLoadingTerms"
         @edit="openTerm"

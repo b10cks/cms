@@ -19,7 +19,7 @@ const { t } = useI18n()
 const { showAiError } = useAiErrorToast()
 const { data: skills } = useAiSurfaceSkills(() => props.spaceId, 'selection')
 const run = useAiRun(() => props.spaceId)
-const { acceptMutation, rejectMutation } = useAiInbox(() => props.spaceId)
+const { acceptMutation, rejectMutation } = useAiThreads(() => props.spaceId)
 
 interface Proposal {
   skill: AiResolvedSkill

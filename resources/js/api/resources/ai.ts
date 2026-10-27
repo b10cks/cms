@@ -1,12 +1,6 @@
-import type {
-  AiChangeset,
-  AiDecision,
-  AiDecisionResult,
-  AiInbox,
-  AiEntryScope,
-  AiPreflight,
-} from '~/lib/aiChangesets'
+import type { AiDecision, AiDecisionResult, AiEntryScope, AiPreflight } from '~/lib/aiChangesets'
 import type { AiQuestionnaireAnswers, AiRunRecord, StartAiRunRequest } from '~/lib/aiRun'
+import type { AiThread, AiThreadDetail, AiThreadList, AiThreadListParams, AiThreadPatch } from '~/lib/aiThreads'
 
 import type { ApiClient } from '../client'
 
@@ -25,7 +19,7 @@ export interface AiResolvedSkill {
 export type AiScope = 'space' | 'team'
 
 export interface MentionItem {
-  type: 'content' | 'block' | 'draft-content'
+  type: 'content' | 'block' | 'draft-content' | 'asset' | 'document'
   id: string
   content: Record<string, unknown> | null
   label: string
@@ -163,13 +157,21 @@ export class Ai {
     return this.client.post<{ data: AiPreflight }>(`/mgmt/v1/spaces/${this.spaceId}/ai/preflight`, payload)
   }
 
-  public async getInbox(): Promise<AiInbox> {
-    return this.client.get<AiInbox>(`/mgmt/v1/spaces/${this.spaceId}/ai/inbox`)
+  public async getThreads(params: AiThreadListParams): Promise<AiThreadList> {
+    return this.client.get<AiThreadList>(`/mgmt/v1/spaces/${this.spaceId}/ai/threads`, {
+      archived: params.archived ? 1 : 0,
+      search: params.search || undefined,
+    })
   }
 
-  public async getChangeset(changesetId: string): Promise<{ data: AiChangeset }> {
-    return this.client.get<{ data: AiChangeset }>(
-      `/mgmt/v1/spaces/${this.spaceId}/ai/changesets/${changesetId}`
+  public async getThread(threadId: string): Promise<{ data: AiThreadDetail }> {
+    return this.client.get<{ data: AiThreadDetail }>(`/mgmt/v1/spaces/${this.spaceId}/ai/threads/${threadId}`)
+  }
+
+  public async updateThread(threadId: string, patch: AiThreadPatch): Promise<{ data: AiThread }> {
+    return this.client.patch<{ data: AiThread }>(
+      `/mgmt/v1/spaces/${this.spaceId}/ai/threads/${threadId}`,
+      patch
     )
   }
 

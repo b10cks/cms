@@ -1,0 +1,156 @@
+/**
+ * Types and helpers for AI threads: every conversation and run lives in one,
+ * listed in the dock and on the threads page. Status is derived on the server.
+ */
+import type { AiGlossaryResource } from '~/api/resources/ai-knowledge'
+import type { AiChangeset, AiChangesetItem, AiGlossarySuggestion } from '~/lib/aiChangesets'
+import type { AiRunRecord } from '~/lib/aiRun'
+
+export type AiThreadKind = 'chat' | 'schedule' | 'suggestions'
+
+export type AiThreadStatus = 'needs_input' | 'needs_review' | 'running' | 'failed' | 'done'
+
+/** Something a thread works on: the screen it started from or a mention. */
+export interface AiThreadChip {
+  type: 'content' | 'data_source' | 'asset' | 'document'
+  id: string
+  label: string
+}
+
+export interface AiThread {
+  id: string
+  kind: AiThreadKind
+  title: string
+  status: AiThreadStatus
+  shared: boolean
+  quiet: boolean
+  archived: boolean
+  last_activity_at: string | null
+  owner: { id: string; name: string } | null
+  is_owner: boolean
+  /** Entries with pending items */
+  entry_count: number
+}
+
+/** A tool call of the live run, shown while it streams. */
+export interface AiThreadStep {
+  id: string
+  name: string
+  done: boolean
+  ok: boolean
+}
+
+export interface AiThreadTurn {
+  run: AiRunRecord
+  prompt: string | null
+  answer: string | null
+  changeset: AiChangeset | null
+}
+
+export interface AiThreadDetail extends AiThread {
+  context: AiThreadChip[] | null
+  turns: AiThreadTurn[]
+  /** Suggestions thread only */
+  suggestions?: AiGlossarySuggestion[]
+  /** Glossaries the user may accept suggestions into; suggestions thread only */
+  glossaries?: AiGlossaryResource[]
+}
+
+export interface AiThreadList {
+  data: AiThread[]
+  meta: { attention: number }
+}
+
+export interface AiThreadListParams {
+  archived: boolean
+  search: string
+}
+
+export interface AiThreadPatch {
+  title?: string
+  shared?: boolean
+  archived?: boolean
+}
+
+/** States that put a thread on top of the list and raise a toast. */
+export const ATTENTION_STATUSES: ReadonlySet<AiThreadStatus> = new Set(['needs_input', 'needs_review'])
+
+const TOAST_STATUSES: ReadonlySet<AiThreadStatus> = new Set(['needs_input', 'needs_review', 'failed'])
+
+/** A turn touching more entries than this renders one summary card. */
+export const SUMMARY_ENTRY_LIMIT = 5
+
+export const STATUS_DOT_CLASSES = {
+  needs_input: 'bg-warning',
+  needs_review: 'bg-info',
+  running: 'bg-ai animate-pulse',
+  failed: 'bg-destructive',
+  done: 'bg-border-strong',
+} as const satisfies Record<AiThreadStatus, string>
+
+/** The user's own and unowned threads, and the ones others shared. */
+export function groupThreads(threads: readonly AiThread[]) {
+  return {
+    mine: threads.filter((thread) => thread.is_owner || thread.kind !== 'chat'),
+    shared: threads.filter((thread) => !thread.is_owner && thread.kind === 'chat'),
+  }
+}
+
+/**
+ * Threads that moved into a toast-worthy status since `previous` was taken.
+ * Threads first seen after the baseline count; quiet threads and the open one don't.
+ */
+export function attentionTransitions(
+  previous: ReadonlyMap<string, AiThreadStatus>,
+  threads: readonly AiThread[],
+  openThreadId: string | null
+): AiThread[] {
+  return threads.filter(
+    (thread) =>
+      !thread.quiet &&
+      !thread.archived &&
+      thread.id !== openThreadId &&
+      TOAST_STATUSES.has(thread.status) &&
+      previous.get(thread.id) !== thread.status
+  )
+}
+
+/** The run context for the chips a thread works on. */
+export function chipsToRunContext(chips: readonly AiThreadChip[]): Record<string, unknown> {
+  const content = chips.find((chip) => chip.type === 'content')
+  const dataSource = chips.find((chip) => chip.type === 'data_source')
+
+  return {
+    ...(content ? { content_id: content.id } : {}),
+    ...(dataSource ? { data_source_id: dataSource.id } : {}),
+    chips,
+  }
+}
+
+export const sameChip = (a: AiThreadChip, b: AiThreadChip) => a.type === b.type && a.id === b.id
+
+export interface AiItemLocales {
+  source: string
+  target: string
+}
+
+/**
+ * The locales of a cross-locale item. Items that name their locales win;
+ * otherwise the path tells: asset fields are `fields.<locale>.<field>`, data
+ * entry translations `dimensions.<locale>`. Null when the item stays in the
+ * source locale.
+ */
+export function itemLocales(item: AiChangesetItem, defaultLocale: string): AiItemLocales | null {
+  const segments = (item.path ?? '').split('.')
+  const source = item.source_locale ?? defaultLocale
+  const target =
+    item.target_locale ??
+    (item.target_type === 'asset' && segments[0] === 'fields'
+      ? segments[1]
+      : item.target_type === 'data_entry' && segments[0] === 'dimensions'
+        ? segments[1]
+        : undefined)
+
+  if (!target || target.toLowerCase() === source.toLowerCase()) return null
+  return { source, target }
+}

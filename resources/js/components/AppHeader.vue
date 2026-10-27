@@ -3,6 +3,7 @@ import type { Ref } from 'vue'
 import { RouterLink } from 'vue-router'
 
 import Logo from '~/assets/logo.svg'
+import AiDockButton from '~/components/ai/threads/AiDockButton.vue'
 import Icon from '~/components/Icon.vue'
 import NuxtImg from '~/components/NuxtImg.vue'
 import SpaceBadge from '~/components/space/SpaceBadge.vue'
@@ -19,6 +20,7 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from '~/components/ui/dropdown-menu'
+import { runtimeConfig } from '~/lib/runtime-config'
 
 const { useSpacesQuery, prefetchSpace } = useSpaces()
 const { data: spaces } = useSpacesQuery({ per_page: 1000 })
@@ -33,6 +35,7 @@ const route = useRoute()
 const commandOpen = inject<Ref<boolean>>('commandOpen')
 
 const selectedSpaceId = computed(() => route.params?.space as string | undefined)
+const aiEnabled = runtimeConfig.public.features.ai
 
 const selectedSpace = computed(() => {
   return spaces.value?.find((space) => space.id === selectedSpaceId.value) ?? null
@@ -204,6 +207,10 @@ const logout = () => {
       <div id="appHeaderActions">
         <slot name="headerActions" />
       </div>
+      <AiDockButton
+        v-if="selectedSpaceId && aiEnabled"
+        :space-id="selectedSpaceId"
+      />
     </div>
   </div>
 </template>

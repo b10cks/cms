@@ -33,21 +33,21 @@ const emit = defineEmits<{
           size="sm"
           variant="outline"
           :disabled="disabled"
-          :aria-label="$t('components.aiInbox.suggestions.addTermTo', { term })"
+          :aria-label="$t('components.aiThreads.suggestions.addTermTo', { term })"
         >
           <Icon name="lucide:book-a" />
-          {{ $t('components.aiInbox.suggestions.addTo') }}
+          {{ $t('components.aiThreads.suggestions.addTo') }}
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuLabel>{{ $t('components.aiInbox.suggestions.chooseGlossary') }}</DropdownMenuLabel>
+        <DropdownMenuLabel>{{ $t('components.aiThreads.suggestions.chooseGlossary') }}</DropdownMenuLabel>
         <DropdownMenuItem
           v-for="glossary in glossaries"
           :key="glossary.id"
           @select="emit('accept', glossary.id)"
         >
           {{ glossary.name }}
-          <span class="ml-auto pl-4 text-sm text-muted">{{ $t(`components.aiInbox.suggestions.scopes.${glossary.scope}`) }}</span>
+          <span class="ml-auto pl-4 text-sm text-muted">{{ $t(`components.aiThreads.suggestions.scopes.${glossary.scope}`) }}</span>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
@@ -56,17 +56,17 @@ const emit = defineEmits<{
       :to="{ name: 'space-settings-ai-knowledge', params: { space: spaceId } }"
       class="text-sm font-medium text-primary underline-offset-4 hover:underline"
     >
-      {{ $t('components.aiInbox.suggestions.createGlossary') }}
+      {{ $t('components.aiThreads.suggestions.createGlossary') }}
     </RouterLink>
     <Button
       type="button"
       size="sm"
       variant="ghost"
       :disabled="disabled"
-      :aria-label="$t('components.aiInbox.suggestions.dismissTerm', { term })"
+      :aria-label="$t('components.aiThreads.suggestions.dismissTerm', { term })"
       @click="emit('dismiss')"
     >
-      {{ $t('components.aiInbox.suggestions.dismiss') }}
+      {{ $t('components.aiThreads.suggestions.dismiss') }}
     </Button>
   </div>
 </template>

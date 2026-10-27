@@ -299,16 +299,14 @@ const routes: RouteRecordRaw[] = [
     meta: { layout: 'default' },
   },
   {
-    path: '/:space/inbox',
-    name: 'space-ai-inbox',
-    component: () => import('~/pages/[space]/inbox.vue'),
+    path: '/:space/threads/:thread?',
+    name: 'space-ai-threads',
+    component: () => import('~/pages/[space]/threads.vue'),
     meta: { layout: 'default' },
   },
   {
-    path: '/:space/inbox/:changeset',
-    name: 'space-ai-inbox-changeset',
-    component: () => import('~/pages/[space]/inbox/[changeset].vue'),
-    meta: { layout: 'default' },
+    path: '/:space/inbox/:changeset?',
+    redirect: (to) => ({ name: 'space-ai-threads', params: { space: to.params.space } }),
   },
   {
     path: '/:space/audit-logs',
