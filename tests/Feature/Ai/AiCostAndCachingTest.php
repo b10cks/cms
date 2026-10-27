@@ -12,7 +12,6 @@ use App\Services\Ai\Run\Transcript;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 use PHPUnit\Framework\Attributes\Test;
-use RuntimeException;
 use Tests\Support\FakeModelRegistry;
 use Tests\TestCase;
 
@@ -50,12 +49,10 @@ class AiCostAndCachingTest extends TestCase
         $run->update(['cost_usd' => 0.5]);
         Http::fake(['openrouter.ai/api/v1/generation*' => Http::response(['error' => 'not found'], 404)]);
 
-        try {
-            (new ReconcileAiRunCostJob($run->id))->handle();
-            $this->fail('A failed lookup should make the job retry.');
-        } catch (RuntimeException) {
-            $this->assertEqualsWithDelta(0.5, $run->refresh()->cost_usd, 1e-9);
-        }
+        $job = (new ReconcileAiRunCostJob($run->id))->withFakeQueueInteractions();
+        $job->handle();
+        $job->assertReleased();
+        $this->assertEqualsWithDelta(0.5, $run->refresh()->cost_usd, 1e-9);
     }
 
     #[Test]
