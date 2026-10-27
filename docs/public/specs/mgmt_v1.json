@@ -8056,6 +8056,13 @@
                                     "background": {
                                         "type": "boolean"
                                     },
+                                    "attachments": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string",
+                                            "maxLength": 40
+                                        }
+                                    },
                                     "targets": {
                                         "type": "object",
                                         "properties": {
@@ -8285,6 +8292,99 @@
                                 }
                             }
                         }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/mgmt/v1/spaces/{space}/ai/attachments": {
+            "post": {
+                "summary": "Create attachments",
+                "description": "",
+                "tags": [
+                    "Ai"
+                ],
+                "operationId": "post_spaces_by_space_ai_attachments",
+                "parameters": [
+                    {
+                        "name": "space",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "The space identifier"
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "file": {
+                                        "type": "string",
+                                        "format": "binary",
+                                        "maxLength": 20480
+                                    }
+                                },
+                                "required": [
+                                    "file"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/mgmt/v1/spaces/{space}/ai/attachments/{attachment}": {
+            "get": {
+                "summary": "The uploader, or anyone who can view the thread the file was sent in",
+                "description": "The uploader, or anyone who can view the thread the file was sent in. Everyone else gets a 404.",
+                "tags": [
+                    "Ai"
+                ],
+                "operationId": "get_spaces_by_space_ai_attachments_by_attachment",
+                "parameters": [
+                    {
+                        "name": "space",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "The space identifier"
+                    },
+                    {
+                        "name": "attachment",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "The attachment identifier"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
                     }
                 },
                 "security": [
@@ -25246,6 +25346,12 @@
                         "nullable": true
                     },
                     "entry_count": {
+                        "nullable": true
+                    },
+                    "context": {
+                        "type": "string"
+                    },
+                    "skill": {
                         "nullable": true
                     }
                 }
