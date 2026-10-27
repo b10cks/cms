@@ -3,6 +3,22 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.10.27-af899e62] — 2026-10-27
+
+- ⬆️ Bump versions
+- 🐛 Install the zip extension so XLSX imports work in production
+- 📝 Record the settled UI rules in DESIGN.md
+- 💄 Style the content editor's tab rail like the main sidebar
+- 💄 Put usage and billing in single panels instead of a card inside a card
+- ✨ Regroup the space dashboard with sparkline tiles and token-styled charts
+- 🌐 Update copy for the dashboard, usage page and page headers in all locales
+- 💄 Lay settings out as two-column sections, full width where tables need it
+- 💄 Space select chevrons away from the text and drop a duplicate one
+- 💄 Move field hints and page explanations behind info tooltips
+- 💄 Give tags their own chip fill so they stand out in dark fields
+- 💄 Select tree rows like the asset tree and keep them on one line
+- 🎨 Add Panel and SettingsSection primitives with chip, tree, series and figure tokens
+
 ## [v2026.10.22-ea2caf65] — 2026-10-22
 
 - ⬆️ bump versions
