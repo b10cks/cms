@@ -11,6 +11,7 @@
   "require": {
     "php": "^8.5",
     "ext-pdo": "*",
+    "ext-zip": "*",
     "ext-zlib": "*",
     "coderscantina/laravel-filter": "^2.0",
     "guzzlehttp/guzzle": "^7.9",

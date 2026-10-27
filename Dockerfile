@@ -16,6 +16,7 @@ RUN apk add --no-cache supervisor ffmpeg libheif vips mariadb-client \
     pdo_mysql \
     pcntl \
     redis \
+    zip \
     zlib \
     && addgroup -g ${APP_GID} app \
     && adduser -D -u ${APP_UID} -G app -h /home/app -s /sbin/nologin app \

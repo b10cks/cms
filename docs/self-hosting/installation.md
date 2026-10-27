@@ -99,7 +99,7 @@ Serve `public/` with your web server of choice, then work through the [configura
 
 | Component | Requirement |
 | --- | --- |
-| PHP | 8.5+ (with `bcmath`, `exif`, `gd`/`imagick`, `intl`, `pdo_mysql`, `pcntl` extensions) |
+| PHP | 8.5+ (with `bcmath`, `exif`, `gd`/`imagick`, `intl`, `pdo_mysql`, `pcntl`, `zip` extensions) |
 | Database | MySQL 8.0+ / MariaDB (SQLite for space databases via the shared profile) |
 | Node / Bun | Node 20+ and Bun 1.0+ (build-time only, for the admin UI) |
 | Composer | 2.5+ |
