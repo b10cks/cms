@@ -33,6 +33,7 @@ use App\Services\Ai\Tools\SearchContentTool;
 use App\Services\Ai\Tools\SearchKnowledgeTool;
 use App\Services\Auth\AuthorizationService;
 use App\Services\Search\SearchService;
+use LogicException;
 
 /**
  * Builds a run's tools from its frozen setup. Every tool acts as the run's
@@ -82,7 +83,7 @@ class RunToolFactory
 
     public function make(AiRun $run, Space $space, User $actor): ToolSet
     {
-        return $this->build($run->setup, $run->surface, $space, $actor);
+        return $this->build($run->setup, $run->surface, $space, $actor, $run);
     }
 
     /**
@@ -101,8 +102,9 @@ class RunToolFactory
 
     /**
      * @param  array<string, mixed>  $setup
+     * @param  AiRun|null  $run  Proposal tools need one; callers without a run never request them.
      */
-    private function build(array $setup, string $surface, Space $space, User $actor): ToolSet
+    private function build(array $setup, string $surface, Space $space, User $actor, ?AiRun $run = null): ToolSet
     {
         $can = fn (string $ability) => fn (): bool => $this->auth->canInSpace($actor, $space, $ability);
         $catalog = [...($setup['catalog'] ?? []), ...($setup['skill'] ? [$setup['skill']['name'] => $setup['skill']] : [])];
@@ -126,8 +128,8 @@ class RunToolFactory
             'lookup_glossary' => new LookupGlossaryTool(fn () => $this->knowledge->glossaryTerms($space)),
             AskQuestionsTool::NAME => new AskQuestionsTool,
             'find_entries' => new FindEntriesTool($this->scope, $this->targets, $this->auth, $space, $actor),
-            ProposeUpdateTool::NAME => new ProposeUpdateTool($run, $space, $actor, $this->targets, $this->recorder, $this->auth),
-            ProposeCreateTool::NAME => new ProposeCreateTool($run, $space, $actor, $this->targets, $this->recorder, $this->auth),
+            ProposeUpdateTool::NAME => new ProposeUpdateTool($run ?? throw new LogicException('Proposals need a run.'), $space, $actor, $this->targets, $this->recorder, $this->auth),
+            ProposeCreateTool::NAME => new ProposeCreateTool($run ?? throw new LogicException('Proposals need a run.'), $space, $actor, $this->targets, $this->recorder, $this->auth),
         }, array_values(array_intersect($setup['tools'] ?? [], self::ALL)));
 
         return new ToolSet($tools);
