@@ -151,3 +151,24 @@ Acceptance:
 - Editing an AI-translated field before publish yields a learning suggestion.
 - A base64 glossary upload over MCP imports its terms; an oversize upload is rejected.
 - The SDK typecheck, lint and tests pass, and `OperationsMirrorTest` stays green.
+
+## W7 Threads (V2.1)
+
+Design: "Threads" in the concept doc. Branch `feat/ai-threads`, cut from `feat/ai-ux-simplify`; both merge together after Mike reviews screenshots.
+
+Two agents in parallel, contract first.
+
+**Backend:** migration, `AiConversation` changes, thread creation in the run path, schedule and suggestion threads, status derivation, `ai/threads` endpoints, follow-up memory in the context builder, `AiThreadChanged`, removal of `ai/inbox`.
+
+**Frontend:** dock, thread list, thread view with cards, composer, full page, Cmd+K and Cmd+J, feature buttons onto threads, toasts, removal of the inbox pages and the task dialog, glossary columns with language names.
+
+**After merge (main session):** `operations.php` and SDK `operations.ts`, OpenAPI specs, DESIGN.md "AI surfaces", browser check and screenshots.
+
+Acceptance:
+
+- A run started without `conversation_id` creates a thread owned by the actor; a selection run's thread is quiet.
+- A private thread is invisible to another member until shared; a shared thread's follow-up from a non-owner is rejected.
+- A schedule's second run appends to the same thread.
+- Status derivation returns each of the five states.
+- A follow-up run's request carries the earlier messages and the proposal ledger, and drops the oldest turns past the budget.
+- `meta.attention` ignores archived and quiet threads.

@@ -10,7 +10,7 @@ AI in b10cks should feel like part of each feature, not a chat box next to it. O
 
 ## Settled decisions
 
-1. One agent and one run service. Entry points stay inside features (field actions, rich text selection, bulk selections, data sources, canvas, assets). The only global surfaces are Cmd+K and the inbox.
+1. One agent and one run service. Entry points stay inside features (field actions, rich text selection, bulk selections, data sources, canvas, assets). The only global surfaces are Cmd+K and the threads dock (V2.1, replaces the inbox).
 2. The AI never writes content directly. Write tools create proposals: field-level patches pinned to the version they read. Accepting writes a draft through existing actions. Nothing is ever published by AI.
 3. Knowledge is typed: a structured glossary, always-on style guides, and reference documents retrieved on demand with citations.
 4. Skills and knowledge live in the management DB and resolve space, owning team, ancestor teams (nearest first), system. The nearest entry with the same name or slug shadows the rest.
@@ -222,11 +222,41 @@ Accepting groups items per entry and loads the current version. A field whose cu
 
 Inline edits on one entry are single-entry changesets reviewed in place. Background runs are reviewed in the inbox. One apply path, one diff UI (the schema-aware history diff renderers), one audit trail.
 
-## Inbox and Cmd+K (W2)
+## Threads (V2.1, replaces the inbox)
 
-- Inbox page per space: open changesets, learning suggestions (W3), runs awaiting input, running and failed runs. Sidebar badge with the open count, updated over the space channel.
-- Cmd+K: new command palette. A free-form task is matched to a skill by description, or runs on the general agent. Scope is the current screen.
-- Preflight: a read-only pass resolves the target entries and estimates cost from source token counts and `ModelRegistry` pricing. Tasks touching more than `ai.inline_entry_limit` entries (default 5) always go to the background after confirmation.
+Settled with Mike on 2026-10-27. Every AI conversation and run lives in a thread, shown in a dock modelled on agent apps like T3 Code. The inbox, its review page and the Cmd+K task dialog are removed.
+
+### Behaviour
+
+- Dock on every space page, on the right. Wide screens: a resizable split that pushes the page, width remembered. Below 1280px: a sheet over the page. Toggled with Cmd+J and a header button; the button shows how many threads need you. An expand button turns the dock into a full page (`/{space}/threads/{thread}`) with the thread list on the left. `/{space}/inbox` redirects to `/{space}/threads`.
+- Every user-started run belongs to a thread. Without a `conversation_id` the server creates one. Inline surfaces (rich text selection, single-field actions) create it `quiet`: listed, never raising attention or opening the dock. Internal runs (learning extraction, automatic asset classification) get no thread.
+- Each schedule has one standing thread (`kind = schedule`); each run appends a turn. Learning suggestions live in one standing thread per space (`kind = suggestions`). Both are visible to members with `ai.manage`.
+- Chat threads are private to their owner. The owner can share one with the space; then every member who can view the space sees it under "Shared", anyone with edit rights on an entry can accept or reject its cards, and only the owner sends follow-ups.
+- A turn is one run: the prompt, the streamed steps, the answer, a questionnaire if it paused, and its changeset as cards. One card per entry with per-field accept and reject as icon buttons; a field shows a status badge only once decided. Cross-locale changes show source and translation side by side; same-locale edits keep the word diff. A turn touching more than five entries renders one summary card (counts, glossary warnings, Accept all, Reject all) with the entries as collapsed rows.
+- Composer: a new thread attaches the current screen (open entry, data source, selection) as a removable chip. In an existing thread, a screen that isn't attached shows as a ghost chip to click. `@` mentions entries, assets and knowledge documents, `/` picks a skill, the model picker stays. An empty thread offers the resolved skills of the current surface as chips.
+- Cmd+K stays the command palette. Free text offers "Ask AI: …", and skill items start a thread in the dock with the current screen attached. Feature buttons start threads; the dock opens for them only when there is something to review or answer, except bulk starts, which open the dock on the running thread.
+- Status, derived and never stored, in priority order: `needs_input` (a run awaits answers), `needs_review` (an open non-inline changeset, or pending suggestions), `running`, `failed` (latest run failed), `done`. The list pins `needs_input` and `needs_review` on top, then sorts by last activity. Threads are archived by hand; archived ones sit behind a "Show archived" toggle. Search matches the title.
+- A background thread reaching `needs_input`, `needs_review` or `failed` while it is not the open thread raises a toast with "Open".
+- Titles: the skill label plus the scope label, else the first prompt cut to 60 characters. No model call.
+
+### Follow-up memory
+
+A run in a thread sees the thread's earlier user and assistant messages as conversation turns, followed by a proposal ledger inside the untrusted-data fence: per earlier changeset item the entry label, field path and status (`accepted`, `accepted_edited`, `rejected`, `pending`, `conflict`). Tool results are not replayed; the agent re-reads entries through tools. The oldest turns drop first once the history passes `ai.threads.history_tokens` (default 6000, estimated at four characters per token).
+
+### Data
+
+`ai_conversations` gains `kind` (`chat`, `schedule`, `suggestions`, default `chat`), `schedule_id` (nullable, unique, null on delete), `shared`, `quiet`, `archived_at`, `last_activity_at` and `context` (the chips the thread started with, long text JSON). `user_id` becomes nullable (the suggestions thread has no owner). Index on `space_id, last_activity_at`. `last_activity_at` moves on run start, run finish and every changeset or suggestion decision.
+
+### API
+
+All under `spaces/{space}`, behind `space.member`.
+
+- `GET ai/threads?archived=0|1&search=` lists the threads the user can see, at most 100, needs-you first then by `last_activity_at`. Each row: `id`, `kind`, `title`, `status`, `shared`, `quiet`, `archived`, `last_activity_at`, `owner` (`id`, `name`, or null), `is_owner`, `entry_count` (entries with pending items). `meta.attention` counts visible, unarchived, non-quiet threads in `needs_input` or `needs_review`.
+- `GET ai/threads/{thread}` returns the row plus `context` and `turns`: per run in start order `{ run, prompt, answer, changeset }`, where `run` is `AiRunResource` (with questionnaire and error) and `changeset` is `AiChangesetResource` with items filtered to target types the user may view. The suggestions thread instead carries `suggestions` and `glossaries`, the payload the inbox used to return.
+- `PATCH ai/threads/{thread}` with `title`, `shared` (owner only) and `archived` (owner, or `ai.manage` for schedule and suggestion threads).
+- `POST ai/runs` returns or streams the run with its `conversation_id`, including when the server created the thread.
+- Removed: `GET ai/inbox`. Changeset accept and reject and suggestion accept stay as they are.
+- Broadcast: `AiInboxChanged` becomes `AiThreadChanged` (`ai_thread:changed` on `spaces.{id}.ai`, payload `thread_id` only). Clients refetch through the authorised endpoints.
 
 ## Translation memory and learning (W3)
 
@@ -255,7 +285,8 @@ Inline edits on one entry are single-entry changesets reviewed in place. Backgro
 
 - `useAiRun`: one composable with a discriminated event union over SSE and Reverb, with catch-up by `seq`. Replaces the per-feature stream composables as features migrate.
 - `AiActions`: renders resolved skills for a surface. The rich text selection menu is a TipTap bubble menu built on it.
-- Proposals render in place for inline runs and in the inbox for changesets, both on the history diff renderers.
+- Proposals render in place for inline runs and as cards in their thread otherwise, both on the history diff renderers.
+- The dock state (open, width, active thread, pending draft) lives in one module store; the dock is mounted once in the space layout.
 - Helpers live in `resources/js/lib/`, not in sibling composables (auto-import trap).
 - Settings: Skills, Knowledge and Glossaries pages per space and per team, following DESIGN.md (`SettingsSection`, `wide` for tables, `Panel`).
 - All strings in `en` and `de`; other locales copy `en`.
