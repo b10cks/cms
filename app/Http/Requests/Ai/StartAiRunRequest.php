@@ -3,7 +3,10 @@
 namespace App\Http\Requests\Ai;
 
 use App\Models\Management\AiRun;
+use App\Services\Ai\Changesets\ChangeTargets;
+use App\Services\Ai\Changesets\EntryScope;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StartAiRunRequest extends FormRequest
 {
@@ -23,6 +26,10 @@ class StartAiRunRequest extends FormRequest
             'conversation_id' => ['sometimes', 'nullable', 'string'],
             'idempotency_key' => ['sometimes', 'nullable', 'string', 'max:100'],
             'background' => ['sometimes', 'boolean'],
+            'targets' => ['sometimes', 'nullable', 'array'],
+            'targets.type' => ['required_with:targets', Rule::in(ChangeTargets::TYPES)],
+            'targets.ids' => ['required_with:targets', 'array', 'min:1', 'max:'.EntryScope::MAX_ENTRIES],
+            'targets.ids.*' => ['string', 'max:40'],
         ];
     }
 }

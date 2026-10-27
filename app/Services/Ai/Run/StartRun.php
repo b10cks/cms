@@ -14,6 +14,7 @@ final readonly class StartRun
      * @param  array<string, mixed>  $context  screen context; untrusted, fenced in the prompt
      * @param  string  $instructions  trusted, server-built additions to the skill instructions
      * @param  list<array<string, mixed>>  $parts  extra user content parts (images), server-side only
+     * @param  array{type: string, ids: list<string>}|null  $targets  confirmed bulk selection; write tools may touch only these
      */
     public function __construct(
         public Space $space,
@@ -27,5 +28,6 @@ final readonly class StartRun
         public ?string $conversationId = null,
         public string $instructions = '',
         public array $parts = [],
+        public ?array $targets = null,
     ) {}
 }
