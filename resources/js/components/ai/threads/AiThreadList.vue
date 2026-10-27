@@ -115,7 +115,7 @@ const meta = (thread: AiThread) =>
         >
           {{ group.label }}
         </h3>
-        <ul class="grid gap-0.5">
+        <ul class="grid grid-cols-1 gap-0.5">
           <li
             v-for="thread in group.threads"
             :key="thread.id"

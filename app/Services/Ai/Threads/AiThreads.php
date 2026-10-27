@@ -106,7 +106,7 @@ class AiThreads
             default => Str::ucfirst(str_replace(['-', ':', '_'], ' ', $start->surface)),
         };
 
-        return Str::limit($title, self::TITLE_LENGTH, '');
+        return Str::limit($title, self::TITLE_LENGTH - 1, '…', preserveWords: true);
     }
 
     private function scopeLabel(StartRun $start): ?string

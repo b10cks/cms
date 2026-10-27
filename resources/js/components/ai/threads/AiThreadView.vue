@@ -131,7 +131,11 @@ const send = async (message: AiThreadMessage) => {
     }
   )
 
-  if (outcome.status === 'failed') showAiError(outcome.error?.reason, outcome.error?.message)
+  if (outcome.status === 'failed') {
+    showAiError(outcome.error?.reason, outcome.error?.message)
+    // A refused run has no turn to show the prompt in; give it back to the composer.
+    if (!prompt.value) prompt.value = message.prompt
+  }
   await refresh()
   endLiveTurn()
 }

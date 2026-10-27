@@ -2,6 +2,7 @@
 import AiQuestionnaireForm from '~/components/ai/AiQuestionnaireForm.vue'
 import AiThreadChangeset from '~/components/ai/threads/AiThreadChangeset.vue'
 import Icon from '~/components/Icon.vue'
+import Markdown from '~/components/Markdown.vue'
 import { Button } from '~/components/ui/button'
 import { Message, MessageContent } from '~/components/ui/message'
 import type { AiChangeset } from '~/lib/aiChangesets'
@@ -74,12 +75,11 @@ const hasItems = computed(() => (props.changeset?.items?.length ?? 0) > 0)
       </li>
     </ul>
 
-    <p
+    <Markdown
       v-if="answer"
-      class="text-sm whitespace-pre-wrap"
-    >
-      {{ answer }}
-    </p>
+      :content="answer"
+      class="max-w-none text-sm"
+    />
     <div
       v-if="state === 'running'"
       class="flex items-center gap-3 text-sm"

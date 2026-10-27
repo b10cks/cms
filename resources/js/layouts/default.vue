@@ -29,7 +29,6 @@ useSpaceBroadcasts(spaceId)
 
 // The dock and the threads page share one run, so it outlives both.
 provide(aiThreadRunKey, useAiRun(() => spaceId.value ?? ''))
-const aiEnabled = runtimeConfig.public.features.ai
 useUserNotifications()
 
 const { t } = useI18n()
@@ -93,7 +92,7 @@ useShortcut({
         <slot />
       </main>
       <AiDock
-        v-if="spaceId && aiEnabled"
+        v-if="spaceId"
         :space-id="spaceId"
       />
     </div>

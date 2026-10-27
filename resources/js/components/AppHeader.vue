@@ -20,7 +20,6 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from '~/components/ui/dropdown-menu'
-import { runtimeConfig } from '~/lib/runtime-config'
 
 const { useSpacesQuery, prefetchSpace } = useSpaces()
 const { data: spaces } = useSpacesQuery({ per_page: 1000 })
@@ -35,7 +34,6 @@ const route = useRoute()
 const commandOpen = inject<Ref<boolean>>('commandOpen')
 
 const selectedSpaceId = computed(() => route.params?.space as string | undefined)
-const aiEnabled = runtimeConfig.public.features.ai
 
 const selectedSpace = computed(() => {
   return spaces.value?.find((space) => space.id === selectedSpaceId.value) ?? null
@@ -208,7 +206,7 @@ const logout = () => {
         <slot name="headerActions" />
       </div>
       <AiDockButton
-        v-if="selectedSpaceId && aiEnabled"
+        v-if="selectedSpaceId"
         :space-id="selectedSpaceId"
       />
     </div>

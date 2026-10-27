@@ -50,6 +50,8 @@ const path = computed(() => {
   return shown.join(' → ')
 })
 
+const hasBefore = computed(() => props.item.before !== null && props.item.before !== undefined && props.item.before !== '')
+
 const diff = computed(() =>
   resolveDiffComponent({
     type: props.item.before === null || props.item.before === undefined ? 'added' : 'changed',
@@ -198,9 +200,11 @@ const STATUS_VARIANTS = {
     />
     <div
       v-else
-      class="grid gap-3 text-sm md:grid-cols-2"
+      class="grid gap-3 text-sm"
+      :class="hasBefore && '@md:grid-cols-2'"
     >
       <ValueRenderer
+        v-if="hasBefore"
         :value="item.before"
         class="text-muted"
       />
