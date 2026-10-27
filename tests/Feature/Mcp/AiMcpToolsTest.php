@@ -133,5 +133,4 @@ class AiMcpToolsTest extends TestCase
             'payload' => ['file' => ['filename' => 'big.csv', 'content_base64' => str_repeat('A', 14_000_000)]],
         ])->assertHasErrors(['exceeds the upload limit of 10240 KB']);
     }
-
 }
