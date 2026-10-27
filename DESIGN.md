@@ -55,7 +55,9 @@ Settled 2026-10-27. Concept: "Threads" in `docs/concepts/native-ai-integration.m
 - The dock copies T3 Code's thread list and composer: quiet, minimal, no borders between rows. Settled 2026-10-27, reference in the concept doc ("UI modelled on T3 Code").
   - List header: ghost search row and a small square-pen icon button for a new thread. No text buttons, no archive switch.
   - Rows are inbox cards: context line with the status (icon and label in the status color) or the relative time on the right, the title, an optional muted meta line.
-  - Done work is settled by hand ("Settle" on hover) and moves to the collapsible "Settled" shelf at the bottom with a muted count. Settled rows recede.
-  - Composer: one rounded-2xl surface with a hairline outline and soft shadow; small ghost footer controls (attach, config picker) and a round send button. The config picker trigger is a ghost label with a small chevron; its list shows name, model in muted text below, and a check.
+  - Done work is settled by hand ("Settle" on hover) and moves to the "Settled" shelf. The active list fills the height; the shelf is pinned to the bottom (one header line with a muted count) and opens upward. Settled rows are one line: title and time.
+  - Rows use the content tree highlight: `bg-tree-selected text-tree-selected-foreground` for the active row, `hover:bg-tree-hover`.
+  - Chrome (thread list, dock and thread headers) sits on `bg-sidebar`; the conversation body on `bg-background`, like the dashboard; the composer is the only card on it.
+  - Composer: one rounded-2xl surface with a hairline outline and soft shadow; the config picker on the left of the footer, attach and the round send button on the right. The config picker trigger is a ghost label with a small chevron; its list shows name, model in muted text below, and a check.
   - Skills are not shown up front; `/` opens them.
 - AI settings (Skills, Knowledge, Schedules) have three nav entries. Each page has the title with the primary action top right; lists are one table with a type or source column. Glossary detail looks like a data source: one column per language, headed by the language name, not the locale code.
