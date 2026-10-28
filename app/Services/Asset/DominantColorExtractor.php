@@ -135,21 +135,9 @@ class DominantColorExtractor
                 return null;
             }
 
-            try {
-                imagepalettetotruecolor($image);
+            imagepalettetotruecolor($image);
 
-                $sample = $this->downscale($image);
-
-                try {
-                    return $this->histogram($sample);
-                } finally {
-                    if ($sample !== $image) {
-                        imagedestroy($sample);
-                    }
-                }
-            } finally {
-                imagedestroy($image);
-            }
+            return $this->histogram($this->downscale($image));
         } catch (\Throwable) {
             return null;
         }
