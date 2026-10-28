@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "cd337cc6d1ba43ed5c8b4b07dc225d40",
+    "content-hash": "da20fb06e52020b9f834e3bedeb29040",
     "packages": [
         {
             "name": "aws/aws-crt-php",
@@ -2108,16 +2108,16 @@
         },
         {
             "name": "laravel/mcp",
-            "version": "v0.9.7",
+            "version": "v1.1.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/laravel/mcp.git",
-                "reference": "db4a846c1c4bf6713fa73624c8ed8371cc043ce8"
+                "reference": "ab9238ce6c89095679651dd3d19d67641d73a436"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/laravel/mcp/zipball/db4a846c1c4bf6713fa73624c8ed8371cc043ce8",
-                "reference": "db4a846c1c4bf6713fa73624c8ed8371cc043ce8",
+                "url": "https://api.github.com/repos/laravel/mcp/zipball/ab9238ce6c89095679651dd3d19d67641d73a436",
+                "reference": "ab9238ce6c89095679651dd3d19d67641d73a436",
                 "shasum": ""
             },
             "require": {
@@ -2135,6 +2135,7 @@
                 "symfony/process": "^7.4.5|^8.0.5"
             },
             "require-dev": {
+                "jasonmccreary/double": "^1.0",
                 "laravel/pint": "^1.20",
                 "orchestra/testbench": "^9.15|^10.8|^11.0",
                 "pestphp/pest": "^3.8.5|^4.3.2",
@@ -2178,7 +2179,7 @@
                 "issues": "https://github.com/laravel/mcp/issues",
                 "source": "https://github.com/laravel/mcp"
             },
-            "time": "2026-10-21T12:30:08+00:00"
+            "time": "2026-10-26T17:48:48+00:00"
         },
         {
             "name": "laravel/octane",
@@ -4347,16 +4348,16 @@
         },
         {
             "name": "openai-php/client",
-            "version": "v0.19.2",
+            "version": "v0.21.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/openai-php/client.git",
-                "reference": "12e3513527e22d5657f4f9809796f8fe254fd0a9"
+                "reference": "ebec896ab0b0dff3917a70d30db67c7a64c548c0"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/openai-php/client/zipball/12e3513527e22d5657f4f9809796f8fe254fd0a9",
-                "reference": "12e3513527e22d5657f4f9809796f8fe254fd0a9",
+                "url": "https://api.github.com/repos/openai-php/client/zipball/ebec896ab0b0dff3917a70d30db67c7a64c548c0",
+                "reference": "ebec896ab0b0dff3917a70d30db67c7a64c548c0",
                 "shasum": ""
             },
             "require": {
@@ -4418,7 +4419,7 @@
             ],
             "support": {
                 "issues": "https://github.com/openai-php/client/issues",
-                "source": "https://github.com/openai-php/client/tree/v0.19.2"
+                "source": "https://github.com/openai-php/client/tree/v0.21.0"
             },
             "funding": [
                 {
@@ -4434,26 +4435,26 @@
                     "type": "github"
                 }
             ],
-            "time": "2026-04-19T20:35:01+00:00"
+            "time": "2026-09-17T11:01:09+00:00"
         },
         {
             "name": "openai-php/laravel",
-            "version": "v0.19.1",
+            "version": "v0.21.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/openai-php/laravel.git",
-                "reference": "6d0172a2858be25c682f3eee216e31eb68da0ea5"
+                "reference": "2879cfa4cac3a3912a14a25c31b23027699929ff"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/openai-php/laravel/zipball/6d0172a2858be25c682f3eee216e31eb68da0ea5",
-                "reference": "6d0172a2858be25c682f3eee216e31eb68da0ea5",
+                "url": "https://api.github.com/repos/openai-php/laravel/zipball/2879cfa4cac3a3912a14a25c31b23027699929ff",
+                "reference": "2879cfa4cac3a3912a14a25c31b23027699929ff",
                 "shasum": ""
             },
             "require": {
                 "guzzlehttp/guzzle": "^7.9.3",
                 "laravel/framework": "^11.29|^12.12|^13.0",
-                "openai-php/client": "^0.19.1",
+                "openai-php/client": "^0.21.0",
                 "php": "^8.2.0"
             },
             "require-dev": {
@@ -4503,7 +4504,7 @@
             ],
             "support": {
                 "issues": "https://github.com/openai-php/laravel/issues",
-                "source": "https://github.com/openai-php/laravel/tree/v0.19.1"
+                "source": "https://github.com/openai-php/laravel/tree/v0.21.0"
             },
             "funding": [
                 {
@@ -4523,7 +4524,7 @@
                     "type": "patreon"
                 }
             ],
-            "time": "2026-03-17T21:02:26+00:00"
+            "time": "2026-09-17T11:18:43+00:00"
         },
         {
             "name": "paragonie/constant_time_encoding",
