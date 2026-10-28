@@ -3,6 +3,72 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.10.28-d6453c41] — 2026-10-28
+
+- 🐛 Drop imagedestroy calls deprecated in PHP 8.5
+- ⬆️ Upgrade laravel/mcp to 1.1 and openai-php/laravel to 0.21
+- ⬆️ Bump versions
+- 🐛 Roll back failed translation batches on the space connection
+- ✨ Include referenced AI attachment files in space backups
+- 🧹 Prune replay events 30 days after AI runs finish
+- 💄 Adjust AI message surfaces and line spacing
+- 🐛 Keep AI run state scoped to its space and turn
+- ♻️ Store AI runtime history in each space database
+- 🐛 Reject block proposals missing required attributes
+- ✨ Let the AI propose new blocks and edits to block definitions
+- 📝 Specify AI proposals for block definitions
+- ✨ Let the AI add and remove blocks in block lists
+- ✨ Show accepted AI changes in the open editor without a reload
+- 🐛 Show one placeholder in the AI composer
+- 💄 Align the composer editor with its chips and controls
+- 📝 Record the thread list and composer layout rules
+- 💄 Polish the AI threads list, thread view and composer
+- 🐛 Refuse images for models without vision before the run starts
+- 📝 Regenerate the API specs with AI attachments
+- ✨ Keep writing in settled threads and give refused files back
+- ✨ Give thread rows their context and first skill
+- 💄 Restyle the AI threads dock after T3 Code and add attachments
+- ✨ Add AI message attachments and the settled thread count
+- 📝 Specify the T3 Code style thread UI and AI attachments
+- 🐛 Fix AI dock issues found in the browser walk-through
+- 🐛 Store the composer's chips as a thread's context
+- ✨ Add the AI threads dock and replace the inbox
+- 📝 Regenerate the API specs with AI threads
+- 📝 Add AI surfaces rules to DESIGN.md
+- 🔒 Hide changesets of private threads and expose thread operations over MCP
+- ✨ Add AI threads and replace the inbox
+- 📝 Specify AI threads to replace the inbox
+- 💄 Keep inbox rows at the top, source badges on one line and switches off inherited skills
+- 💄 Simplify the AI settings, knowledge, skills and inbox UI
+- ✨ Add inherited AI knowledge lists, skill customize and inbox entry counts
+- 📝 Mark AI V2 as merged
+- 🐛 Release the cost reconcile job instead of failing the run when OpenRouter has no cost yet
+- 🎨 Format the MCP glossary upload test
+- ✨ Accept base64 file arguments in mgmt_call and add glossary and knowledge file operations
+- 🐛 Pass the AI owner route parameter before IDs in shared AI controllers
+- ✨ Feed editor translations and edited selection proposals into AI learning
+- ✨ Built-in bulk skills, calibrated preflight and Cmd+K title
+- 📝 Plan W6: built-in bulk skills and finishing follow-ups
+- ✅ Run the data entry translation count test on the fake AI driver
+- 📝 Mark AI V2 waves as merged
+- 📝 Regenerate the API specs with the AI routes
+- ✨ Reconcile AI run cost, add prompt cache breakpoints, mirror operations and add search_content over MCP
+- ✨ Add glossary suggestions, proposal edits and schedule settings to the UI
+- ✨ Add translation memory, the AI learning loop and scheduled agents
+- 🐛 Keep Ask AI in the command palette working while typing
+- 🐛 Serve AI inbox and settings deep links and bind the space on shared AI routes
+- 🐛 Drop sibling composable import from useDataEntryTranslation
+- 🐛 Count translated data entries across nested closures
+- 📝 Record settled AI V2 decisions and add W5
+- 🐛 Pass the run to proposal tools after the W2 and W4 merge
+- ✨ Add the AI inbox, Cmd+K tasks and bulk AI actions
+- ✨ Add AI changesets, preflight and the inbox API
+- ✨ Expose AI skills and knowledge over MCP and add the search_content tool
+- ✨ Run every AI feature through useAiRun and add AI settings pages
+- ✨ Add the AI run service, skills and knowledge base
+- ✨ Port the message, scroller and questionnaire UI for AI V2
+- 📝 Add the AI V2 briefing and milestone plan
+
 ## [v2026.10.27-af899e62] — 2026-10-27
 
 - ⬆️ Bump versions
