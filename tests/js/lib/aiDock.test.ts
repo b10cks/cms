@@ -7,6 +7,7 @@ import {
   closeDock,
   DOCK_MAX_WIDTH,
   DOCK_MIN_WIDTH,
+  endLiveTurn,
   resetDock,
   selectThread,
   startThread,
@@ -45,6 +46,17 @@ describe('aiDock', () => {
 
     expect(aiDock.state.threadId).toBe('thread-other')
     expect(aiDock.state.live?.threadId).toBe('thread-1')
+  })
+
+  it('keeps the newer live turn when the turn it replaced ends', () => {
+    const waiting = beginLiveTurn({ threadId: 'thread-1', prompt: 'Translate', attachments: [], skill: null })
+    const next = beginLiveTurn({ threadId: 'thread-1', prompt: 'Only the intro', attachments: [], skill: null })
+
+    endLiveTurn(waiting)
+    expect(aiDock.state.live?.prompt).toBe('Only the intro')
+
+    endLiveTurn(next)
+    expect(aiDock.state.live).toBeNull()
   })
 
   it('keeps the width within bounds and remembers it', async () => {

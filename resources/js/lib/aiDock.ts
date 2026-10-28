@@ -104,8 +104,10 @@ export function threadCreated(threadId: string) {
   state.composing = false
 }
 
-export function beginLiveTurn(turn: Omit<AiLiveTurn, 'steps'>) {
+/** Show a turn streaming; pass the returned turn to {@link endLiveTurn}. */
+export function beginLiveTurn(turn: Omit<AiLiveTurn, 'steps'>): AiLiveTurn {
   state.live = { ...turn, steps: [] }
+  return state.live
 }
 
 export function trackLiveStep(step: { id: string; name: string }, finished?: { ok: boolean }) {
@@ -116,8 +118,9 @@ export function trackLiveStep(step: { id: string; name: string }, finished?: { o
   else if (finished) Object.assign(existing, { done: true, ok: finished.ok })
 }
 
-export function endLiveTurn() {
-  state.live = null
+/** End the turn, unless a newer one already replaced it. */
+export function endLiveTurn(turn: AiLiveTurn) {
+  if (state.live === turn) state.live = null
 }
 
 /** A space switch starts from the thread list. */

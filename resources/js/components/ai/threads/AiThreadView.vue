@@ -107,7 +107,9 @@ watch(
 const send = async (message: AiThreadMessage) => {
   if (run.isActive.value) return
   const threadId = props.threadId
-  beginLiveTurn({ threadId, prompt: message.prompt, attachments: message.attachments, skill: message.skill })
+  // A run waiting for answers is not active: sending replaces it as the live
+  // turn and leaves it answerable from its own turn in the thread.
+  const turn = beginLiveTurn({ threadId, prompt: message.prompt, attachments: message.attachments, skill: message.skill })
 
   const outcome = await run.start(
     {
@@ -140,7 +142,7 @@ const send = async (message: AiThreadMessage) => {
     composer.value?.restore(message.attachments)
   }
   await refresh()
-  endLiveTurn()
+  endLiveTurn(turn)
 }
 
 /** A new thread starts from the draft Cmd+K or a feature left, with the screen attached. */

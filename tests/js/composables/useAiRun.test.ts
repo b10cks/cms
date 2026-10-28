@@ -1,12 +1,17 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { effectScope, ref } from 'vue'
+import { effectScope, nextTick, ref } from 'vue'
 
 import { useAiRun } from '~/composables/useAiRun'
 import type { AiRunEvent } from '~/lib/aiRun'
 
-const api = vi.hoisted(() => ({ getRunEvents: vi.fn(), cancelRun: vi.fn() }))
+const api = vi.hoisted(() => ({ forSpace: vi.fn(), getRunEvents: vi.fn(), cancelRun: vi.fn() }))
 vi.mock('~/api', () => ({
-  api: { forSpace: () => ({ ai: { getRunEvents: api.getRunEvents, cancelRun: api.cancelRun } }) },
+  api: {
+    forSpace: (space: string) => {
+      api.forSpace(space)
+      return { ai: { getRunEvents: api.getRunEvents, cancelRun: api.cancelRun } }
+    },
+  },
 }))
 vi.mock('~/composables/useAuth', async () => {
   const { ref: vueRef } = await import('vue')
@@ -73,6 +78,37 @@ describe('useAiRun', () => {
     expect(api.getRunEvents).toHaveBeenCalledWith('run-1', 3)
     expect(aiRun.text.value).toBe('Hello world')
     expect(outcome).toMatchObject({ status: 'completed', result })
+  })
+
+  it('lets go of a background run when the space changes and keeps it on its own space', async () => {
+    vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] })
+    fetchMock.mockResolvedValue(
+      sse([
+        { type: 'run_started', run_id: 'run-1', seq: 1, skill: null, surface: 'cmdk' },
+        { type: 'moved_to_background', run_id: 'run-1', seq: 2 },
+      ])
+    )
+    api.getRunEvents.mockResolvedValue({ data: [], run: { ...run, state: 'running' } })
+
+    const spaceId = ref('space-1')
+    const scope = effectScope()
+    const aiRun = scope.run(() => useAiRun(spaceId))!
+    const outcome = aiRun.start({ surface: 'cmdk', prompt: 'Hi' })
+    await vi.waitFor(() => expect(api.getRunEvents).toHaveBeenCalled())
+
+    spaceId.value = 'space-2'
+    await nextTick()
+    const polled = api.getRunEvents.mock.calls.length
+    vi.advanceTimersByTime(10_000)
+    scope.stop()
+    vi.useRealTimers()
+
+    expect(await outcome).toMatchObject({ status: 'cancelled' })
+    expect(aiRun.status.value).toBe('idle')
+    expect(api.getRunEvents).toHaveBeenCalledTimes(polled)
+    expect(api.cancelRun).not.toHaveBeenCalled()
+    expect(new Set(api.forSpace.mock.calls.map(([space]) => space))).toEqual(new Set(['space-1']))
+    expect(fetchMock.mock.calls[0][0]).toContain('space-1')
   })
 
   it('collects the proposals a run records into its changeset', async () => {
