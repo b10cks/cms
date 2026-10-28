@@ -173,12 +173,15 @@ class BlockTarget implements ChangeTarget
      */
     public function validateNew(array $data): array
     {
+        $allowed = ['name', 'slug', 'type', ...self::ATTRIBUTES];
         $schema = $this->definitions(\is_array($data['schema'] ?? null) ? $data['schema'] : []);
-        $data = [...Arr::only($data, ['name', 'slug', 'type', ...self::ATTRIBUTES]), 'schema' => $schema];
+        $data = [...Arr::only($data, $allowed), 'schema' => $schema];
         $editor = $this->layout([], array_keys($schema));
 
+        // Every allowed attribute's rules, so a missing slug or type fails here
+        // and not on insert after the proposal was accepted.
         $request = new CreateBlockRequest;
-        $validator = Validator::make($data, Arr::only($request->rules(), array_keys($data)), $request->messages());
+        $validator = Validator::make($data, Arr::only($request->rules(), [...$allowed, 'schema']), $request->messages());
         $problems = array_map(fn (array $messages) => implode(' ', $messages), $validator->errors()->messages());
 
         foreach ($this->schemaValidator->validate($schema, $editor) as $path => $messages) {

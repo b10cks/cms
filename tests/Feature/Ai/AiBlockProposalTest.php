@@ -132,6 +132,21 @@ class AiBlockProposalTest extends TestCase
     }
 
     #[Test]
+    public function a_new_block_without_slug_and_type_is_refused_and_nothing_is_stored(): void
+    {
+        $this->driver->push(new TurnResult('', [new ToolCall('call_'.Str::random(6), 'propose_create', [
+            'target_type' => 'block',
+            'name' => 'Teaser',
+        ])], new TurnUsage(10, 5)), FakeAiDriver::text('Gave up.'));
+        $run = $this->runToEnd();
+
+        $result = (string) collect($run->transcript)->firstWhere('role', 'tool')['content'];
+        $this->assertStringContainsString('slug:', $result);
+        $this->assertStringContainsString('type:', $result);
+        $this->assertSame(0, AiChangesetItem::query()->count());
+    }
+
+    #[Test]
     public function a_user_without_blocks_manage_cannot_accept(): void
     {
         $this->driver->push($this->propose([['path' => 'name', 'value' => 'Landing page']]), FakeAiDriver::text('Done.'));
