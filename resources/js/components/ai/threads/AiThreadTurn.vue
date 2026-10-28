@@ -46,7 +46,9 @@ const promptText = computed(() => {
 })
 
 const images = computed(() => props.attachments.filter((attachment) => attachment.kind === 'image'))
-const documents = computed(() => props.attachments.filter((attachment) => attachment.kind === 'document'))
+const documents = computed(() =>
+  props.attachments.filter((attachment) => attachment.kind === 'document')
+)
 
 const hasItems = computed(() => (props.changeset?.items?.length ?? 0) > 0)
 </script>
@@ -88,7 +90,7 @@ const hasItems = computed(() => (props.changeset?.items?.length ?? 0) > 0)
             :href="document.url"
             target="_blank"
             rel="noopener"
-            class="inline-flex h-7 max-w-full items-center gap-1 rounded-md bg-chip px-2 text-sm text-chip-foreground hover:bg-chip/80"
+            class="inline-flex h-7 max-w-full items-center gap-1 rounded-md bg-card px-2 text-sm text-chip-foreground hover:bg-card/80"
           >
             <Icon name="lucide:file-text" />
             <span class="truncate">{{ document.name }}</span>
@@ -96,8 +98,10 @@ const hasItems = computed(() => (props.changeset?.items?.length ?? 0) > 0)
         </div>
         <p
           v-if="promptText"
-          class="max-w-[80%] rounded-2xl bg-chip px-3.5 py-2 text-sm text-chip-foreground whitespace-pre-wrap"
-        >{{ promptText }}</p>
+          class="max-w-[80%] rounded-2xl bg-card px-3.5 py-2 leading-relaxed text-sm text-chip-foreground whitespace-pre-wrap"
+        >
+          {{ promptText }}
+        </p>
       </MessageContent>
     </Message>
 
@@ -115,14 +119,16 @@ const hasItems = computed(() => (props.changeset?.items?.length ?? 0) > 0)
           :name="!step.done ? 'lucide:loader' : step.ok ? 'lucide:check' : 'lucide:x'"
           :class="!step.done && 'animate-spin'"
         />
-        <span class="truncate">{{ $t('components.aiThreads.usingTool', { tool: step.name }) }}</span>
+        <span class="truncate">{{
+          $t('components.aiThreads.usingTool', { tool: step.name })
+        }}</span>
       </li>
     </ul>
 
     <Markdown
       v-if="answer"
       :content="answer"
-      class="max-w-none text-sm"
+      class="max-w-none text-sm leading-relaxed"
     />
     <div
       v-if="state === 'running'"

@@ -23,7 +23,7 @@ const props = withDefaults(defineProps<Props>(), {
     :as-child="asChild"
     :class="
       cn(
-        'text-sm gap-2 group/message relative flex w-full min-w-0 data-[align=end]:flex-row-reverse',
+        'gap-2 group/message relative flex w-full min-w-0 data-[align=end]:flex-row-reverse',
         props.class
       )
     "
