@@ -2,10 +2,11 @@
 
 namespace App\Jobs;
 
-use App\Models\Management\AiRun;
 use App\Models\Management\Space;
+use App\Models\Space\AiRun;
 use App\Services\Ai\Drivers\OpenRouterDriver;
 use App\Services\Ai\ModelRegistry;
+use App\Support\SpaceContext;
 
 /**
  * Replaces a finished OpenRouter run's token-based cost estimate with the
@@ -15,33 +16,38 @@ use App\Services\Ai\ModelRegistry;
  */
 class ReconcileAiRunCostJob extends QueuedJob
 {
-    public function __construct(public string $runId) {}
+    public function __construct(public string $spaceId, public string $runId) {}
 
     protected function execute(): void
     {
-        $run = AiRun::query()->find($this->runId);
-        $generations = $run?->setup['generations'] ?? [];
-        $space = $run ? Space::query()->find($run->space_id) : null;
-
-        if ($generations === [] || $space === null) {
+        $space = Space::query()->find($this->spaceId);
+        if ($space === null) {
             return;
         }
 
-        $driver = app(ModelRegistry::class)->getDriverForSpace('openrouter', $space);
+        $restore = SpaceContext::enter($space);
 
-        if (! $driver instanceof OpenRouterDriver) {
-            return;
+        try {
+            $run = AiRun::query()->find($this->runId);
+            $generations = $run?->setup['generations'] ?? [];
+            $driver = $generations !== [] ? app(ModelRegistry::class)->getDriverForSpace('openrouter', $space) : null;
+
+            if (! $driver instanceof OpenRouterDriver) {
+                return;
+            }
+
+            $costs = array_map($driver->generationCost(...), $generations);
+
+            if (\in_array(null, $costs, true)) {
+                $this->release($this->backoff[$this->attempts() - 1] ?? 300);
+
+                return;
+            }
+
+            $run->update(['cost_usd' => round(array_sum($costs), 6)]);
+        } finally {
+            $restore();
         }
-
-        $costs = array_map($driver->generationCost(...), $generations);
-
-        if (\in_array(null, $costs, true)) {
-            $this->release($this->backoff[$this->attempts() - 1] ?? 300);
-
-            return;
-        }
-
-        $run->update(['cost_usd' => round(array_sum($costs), 6)]);
     }
 
     protected function handleFailure(\Throwable $e): void {}

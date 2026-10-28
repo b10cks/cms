@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Models\Management;
+namespace App\Models\Space;
 
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -13,7 +13,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string $role
  * @property string $content
  */
-class AiMessage extends GlobalModel
+class AiMessage extends SpaceDatabaseModel
 {
     use HasUlids;
 

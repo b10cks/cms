@@ -2,7 +2,7 @@
 
 namespace App\Http\Requests\Ai;
 
-use App\Models\Management\AiRun;
+use App\Models\Space\AiRun;
 use App\Services\Ai\Changesets\ChangeTargets;
 use App\Services\Ai\Changesets\EntryScope;
 use Illuminate\Foundation\Http\FormRequest;

@@ -4,10 +4,10 @@ namespace App\Services\Ai\Threads;
 
 use App\Enums\AiThreadKind;
 use App\Events\Ai\AiThreadChanged;
-use App\Models\Management\AiConversation;
-use App\Models\Management\AiRun;
 use App\Models\Management\AiSchedule;
 use App\Models\Management\Space;
+use App\Models\Space\AiConversation;
+use App\Models\Space\AiRun;
 use App\Models\Space\Content;
 use App\Services\Ai\Run\StartRun;
 use Illuminate\Support\Facades\Cache;

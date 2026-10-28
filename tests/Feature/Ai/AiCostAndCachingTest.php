@@ -3,8 +3,8 @@
 namespace Tests\Feature\Ai;
 
 use App\Jobs\ReconcileAiRunCostJob;
-use App\Models\Management\AiRun;
 use App\Models\Management\Space;
+use App\Models\Space\AiRun;
 use App\Models\User;
 use App\Services\Ai\Drivers\OpenRouterDriver;
 use App\Services\Ai\ModelRegistry;
@@ -14,17 +14,21 @@ use Illuminate\Support\Facades\Http;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\Support\FakeModelRegistry;
 use Tests\TestCase;
+use Tests\Traits\SpaceTestingTrait;
 
 class AiCostAndCachingTest extends TestCase
 {
     use RefreshDatabase;
+    use SpaceTestingTrait;
 
     private function openRouterRun(): AiRun
     {
         $this->app->instance(ModelRegistry::class, new FakeModelRegistry(new OpenRouterDriver(['api_key' => 'k', 'enabled' => true])));
+        $space = Space::factory()->create();
+        $this->setUpSpaceTesting($space);
 
         return AiRun::create([
-            'space_id' => Space::factory()->create()->id,
+            'space_id' => $space->id,
             'actor_id' => User::factory()->create()->id,
             'surface' => 'cmdk',
             'model' => 'openrouter:openai/gpt-5',
@@ -43,13 +47,13 @@ class AiCostAndCachingTest extends TestCase
         Http::fake(['openrouter.ai/api/v1/generation*' => Http::sequence()
             ->push(['data' => ['total_cost' => 0.0125]])
             ->push(['data' => ['total_cost' => 0.0075]])]);
-        (new ReconcileAiRunCostJob($run->id))->handle();
+        (new ReconcileAiRunCostJob($run->space_id, $run->id))->handle();
         $this->assertEqualsWithDelta(0.02, $run->refresh()->cost_usd, 1e-9);
 
         $run->update(['cost_usd' => 0.5]);
         Http::fake(['openrouter.ai/api/v1/generation*' => Http::response(['error' => 'not found'], 404)]);
 
-        $job = (new ReconcileAiRunCostJob($run->id))->withFakeQueueInteractions();
+        $job = (new ReconcileAiRunCostJob($run->space_id, $run->id))->withFakeQueueInteractions();
         $job->handle();
         $job->assertReleased();
         $this->assertEqualsWithDelta(0.5, $run->refresh()->cost_usd, 1e-9);

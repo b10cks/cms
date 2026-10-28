@@ -2,7 +2,7 @@
 
 namespace App\Http\Resources\Management\Ai;
 
-use App\Models\Management\AiChangesetItem;
+use App\Models\Space\AiChangesetItem;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 

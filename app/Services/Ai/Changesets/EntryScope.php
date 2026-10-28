@@ -2,7 +2,7 @@
 
 namespace App\Services\Ai\Changesets;
 
-use App\Models\Management\AiChangesetItem;
+use App\Models\Space\AiChangesetItem;
 use App\Models\Space\Asset;
 use App\Models\Space\Content;
 use App\Models\Space\DataEntry;

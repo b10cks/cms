@@ -3,7 +3,7 @@
 namespace App\Services\Ai\Translation;
 
 use App\Enums\AiChangesetItemStatus;
-use App\Models\Management\AiChangesetItem;
+use App\Models\Space\AiChangesetItem;
 use App\Models\Space\Content;
 use App\Models\Space\TranslationUnit;
 use App\Services\ContentData\ContentTranslationExtractor;

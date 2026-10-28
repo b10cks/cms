@@ -4,8 +4,8 @@ namespace App\Services\Ai\Run;
 
 use App\Enums\AiKnowledgeType;
 use App\Models\Management\AiKnowledgeDocument;
-use App\Models\Management\AiRun;
 use App\Models\Management\Space;
+use App\Models\Space\AiRun;
 use App\Models\User;
 use App\Services\Ai\Changesets\ChangesetRecorder;
 use App\Services\Ai\Changesets\ChangeTargets;

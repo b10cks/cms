@@ -2,7 +2,7 @@
 
 namespace App\Http\Resources\Management\Ai;
 
-use App\Models\Management\AiGlossarySuggestion;
+use App\Models\Space\AiGlossarySuggestion;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 

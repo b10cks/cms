@@ -3,8 +3,8 @@
 namespace App\Actions\Ai;
 
 use App\Enums\AiChangesetItemStatus;
-use App\Models\Management\AiChangeset;
 use App\Models\Management\Space;
+use App\Models\Space\AiChangeset;
 use App\Models\User;
 use App\Services\Ai\Changesets\ChangeTargets;
 use App\Services\Ai\Threads\AiThreads;

@@ -7,9 +7,9 @@ use App\Enums\AiKnowledgeType;
 use App\Enums\AiRunState;
 use App\Jobs\RunAgentJob;
 use App\Models\Management\AiKnowledgeDocument;
-use App\Models\Management\AiRun;
 use App\Models\Management\Space;
 use App\Models\Management\Team;
+use App\Models\Space\AiRun;
 use App\Models\User;
 use App\Services\Ai\AiRunService;
 use App\Services\Ai\Knowledge\KnowledgeResolver;
@@ -166,7 +166,7 @@ class AiRunServiceTest extends TestCase
         $this->assertSame(AiRun::MODE_BACKGROUND, $run->refresh()->mode);
         Queue::assertPushed(RunAgentJob::class, fn (RunAgentJob $job) => $job->runId === $run->id);
 
-        (new RunAgentJob($run->id))->handle();
+        (new RunAgentJob($run->space_id, $run->id))->handle();
 
         $lastInline = end($inline)->seq;
         $stored = $this->service()->eventsAfter($run->refresh(), $lastInline);

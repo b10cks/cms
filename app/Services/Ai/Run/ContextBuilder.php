@@ -3,8 +3,8 @@
 namespace App\Services\Ai\Run;
 
 use App\Enums\AiKnowledgeType;
-use App\Models\Management\AiAttachment;
 use App\Models\Management\AiKnowledgeDocument;
+use App\Models\Space\AiAttachment;
 use App\Models\Space\Content;
 use App\Services\Ai\Attachments\AiAttachments;
 use App\Services\Ai\Knowledge\GlossaryMatcher;

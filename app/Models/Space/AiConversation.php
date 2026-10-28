@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Models\Management;
+namespace App\Models\Space;
 
 use App\Enums\AiChangesetItemStatus;
 use App\Enums\AiChangesetStatus;
@@ -14,7 +14,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\DB;
 
 /**
  * A thread: one user's chat, a schedule's standing thread or the space's
@@ -34,7 +33,7 @@ use Illuminate\Support\Facades\DB;
  * @property Carbon|null $last_activity_at
  * @property list<array{type: string, id: string, label: string}>|null $context
  */
-class AiConversation extends GlobalModel
+class AiConversation extends SpaceDatabaseModel
 {
     use HasUlids;
 
@@ -100,8 +99,8 @@ class AiConversation extends GlobalModel
                 ->orderByDesc('started_at')->orderByDesc('id')->limit(1),
         ]);
 
-        $entries = DB::table('ai_changeset_items')
-            ->selectRaw('count(distinct coalesce(ai_changeset_items.target_id, ai_changeset_items.id))')
+        $entries = self::table('ai_changeset_items')
+            ->selectRaw('count(distinct coalesce('.self::wrap('ai_changeset_items.target_id').', '.self::wrap('ai_changeset_items.id').'))')
             ->join('ai_changesets', 'ai_changesets.id', '=', 'ai_changeset_items.changeset_id')
             ->join('ai_runs', 'ai_runs.id', '=', 'ai_changesets.run_id')
             ->whereColumn('ai_runs.conversation_id', 'ai_conversations.id')
@@ -109,7 +108,7 @@ class AiConversation extends GlobalModel
             ->whereIn('ai_changeset_items.status', self::OPEN_ITEMS);
         $suggestions = self::pendingSuggestions()->selectRaw('count(*)');
         $query->selectRaw(
-            '(case when ai_conversations.kind = ? then ('.$suggestions->toSql().') else ('.$entries->toSql().') end) as entry_count',
+            '(case when '.self::wrap('ai_conversations.kind').' = ? then ('.$suggestions->toSql().') else ('.$entries->toSql().') end) as entry_count',
             [AiThreadKind::Suggestions->value, ...$suggestions->getBindings(), ...$entries->getBindings()],
         );
     }
@@ -152,7 +151,7 @@ class AiConversation extends GlobalModel
 
     private static function runsInState(AiRunState $state): QueryBuilder
     {
-        return DB::table('ai_runs')->select(DB::raw(1))
+        return self::table('ai_runs')->selectRaw('1')
             ->whereColumn('ai_runs.conversation_id', 'ai_conversations.id')
             ->where('ai_runs.state', $state->value);
     }
@@ -164,7 +163,7 @@ class AiConversation extends GlobalModel
 
     private static function pendingSuggestions(): QueryBuilder
     {
-        return DB::table('ai_glossary_suggestions')
+        return self::table('ai_glossary_suggestions')
             ->whereColumn('ai_glossary_suggestions.space_id', 'ai_conversations.space_id')
             ->where('ai_glossary_suggestions.status', AiGlossarySuggestion::STATUS_PENDING);
     }
@@ -177,18 +176,30 @@ class AiConversation extends GlobalModel
      */
     private static function reviewSql(): array
     {
-        $changesets = DB::table('ai_changesets')->select(DB::raw(1))
+        $changesets = self::table('ai_changesets')->selectRaw('1')
             ->join('ai_runs', 'ai_runs.id', '=', 'ai_changesets.run_id')
             ->whereColumn('ai_runs.conversation_id', 'ai_conversations.id')
             ->where('ai_changesets.inline', false)
             ->whereIn('ai_changesets.status', [AiChangesetStatus::Open->value, AiChangesetStatus::PartiallyApplied->value]);
-        [$suggestions, $suggestionBindings] = self::existsSql(self::pendingSuggestions()->select(DB::raw(1)));
+        [$suggestions, $suggestionBindings] = self::existsSql(self::pendingSuggestions()->selectRaw('1'));
         [$open, $openBindings] = self::existsSql($changesets);
 
         return [
-            "(case when ai_conversations.kind = ? then {$suggestions} else {$open} end)",
+            '(case when '.self::wrap('ai_conversations.kind')." = ? then {$suggestions} else {$open} end)",
             [AiThreadKind::Suggestions->value, ...$suggestionBindings, ...$openBindings],
         ];
+    }
+
+    /** A query on the space connection the threads live on. */
+    private static function table(string $table): QueryBuilder
+    {
+        return (new self)->getConnection()->table($table);
+    }
+
+    /** Quote a `table.column` for raw SQL, with the connection's table prefix. */
+    private static function wrap(string $column): string
+    {
+        return (new self)->getConnection()->getQueryGrammar()->wrap($column);
     }
 
     /**

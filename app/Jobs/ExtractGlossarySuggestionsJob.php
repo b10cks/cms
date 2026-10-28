@@ -9,6 +9,7 @@ use App\Services\Ai\AiRunService;
 use App\Services\Ai\Learning\EditLearning;
 use App\Services\Ai\Run\StartRun;
 use App\Services\Ai\Skills\SkillResolver;
+use App\Support\SpaceContext;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -41,21 +42,28 @@ class ExtractGlossarySuggestionsJob extends QueuedJob
             return;
         }
 
-        $run = app(AiRunService::class)->runToCompletion(new StartRun(
-            space: $space,
-            actor: $actor,
-            surface: 'learning',
-            skill: $skill,
-            context: ['edits' => array_map(
-                fn (array $edit) => array_intersect_key($edit, array_flip(['ai', 'final', 'locale', 'source', 'source_locale'])),
-                $this->edits,
-            )],
-        ));
+        // The run and the suggestions live in the space's database.
+        $restore = SpaceContext::enter($space);
 
-        $terms = $run->state === AiRunState::Completed ? ($run->result['data']['terms'] ?? []) : [];
+        try {
+            $run = app(AiRunService::class)->runToCompletion(new StartRun(
+                space: $space,
+                actor: $actor,
+                surface: 'learning',
+                skill: $skill,
+                context: ['edits' => array_map(
+                    fn (array $edit) => array_intersect_key($edit, array_flip(['ai', 'final', 'locale', 'source', 'source_locale'])),
+                    $this->edits,
+                )],
+            ));
 
-        if (\is_array($terms) && $terms !== []) {
-            app(EditLearning::class)->suggest($space, $actor->id, $run->id, array_values(array_filter($terms, 'is_array')), $this->edits);
+            $terms = $run->state === AiRunState::Completed ? ($run->result['data']['terms'] ?? []) : [];
+
+            if (\is_array($terms) && $terms !== []) {
+                app(EditLearning::class)->suggest($space, $actor->id, $run->id, array_values(array_filter($terms, 'is_array')), $this->edits);
+            }
+        } finally {
+            $restore();
         }
     }
 

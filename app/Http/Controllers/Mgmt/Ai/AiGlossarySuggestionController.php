@@ -6,8 +6,8 @@ use App\Actions\Ai\AcceptAiGlossarySuggestion;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Ai\AcceptAiGlossarySuggestionRequest;
 use App\Http\Resources\Management\Ai\AiGlossaryTermResource;
-use App\Models\Management\AiGlossarySuggestion;
 use App\Models\Management\Space;
+use App\Models\Space\AiGlossarySuggestion;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 

@@ -7,14 +7,14 @@ use App\Enums\AiRunState;
 use App\Events\Ai\AiRunEventsAvailable;
 use App\Jobs\ReconcileAiRunCostJob;
 use App\Jobs\RunAgentJob;
-use App\Models\Management\AiAttachment;
-use App\Models\Management\AiChangesetItem;
-use App\Models\Management\AiConversation;
-use App\Models\Management\AiMessage;
-use App\Models\Management\AiRun;
-use App\Models\Management\AiRunEvent;
 use App\Models\Management\Space;
 use App\Models\Management\SpaceAiConfig;
+use App\Models\Space\AiAttachment;
+use App\Models\Space\AiChangesetItem;
+use App\Models\Space\AiConversation;
+use App\Models\Space\AiMessage;
+use App\Models\Space\AiRun;
+use App\Models\Space\AiRunEvent;
 use App\Models\User;
 use App\Services\Ai\Changesets\ChangesetRecorder;
 use App\Services\Ai\Concerns\InteractsWithAiDriver;
@@ -600,7 +600,7 @@ class AiRunService
         }
 
         // Delayed so the inline request releases the run lock first.
-        RunAgentJob::dispatch($run->id)->delay(now()->addSeconds(2));
+        RunAgentJob::dispatch($run->space_id, $run->id)->delay(now()->addSeconds(2));
     }
 
     /**
@@ -628,7 +628,7 @@ class AiRunService
         $this->threads->changed($run->space_id, $run->conversation_id);
 
         if (($run->setup['driver'] ?? null) === 'openrouter' && ! empty($run->setup['generations'])) {
-            ReconcileAiRunCostJob::dispatch($run->id)->delay(now()->addSeconds(30));
+            ReconcileAiRunCostJob::dispatch($run->space_id, $run->id)->delay(now()->addSeconds(30));
         }
     }
 

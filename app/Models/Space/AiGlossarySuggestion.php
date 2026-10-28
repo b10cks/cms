@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Models\Management;
+namespace App\Models\Space;
 
+use App\Models\Management\AiGlossary;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -26,7 +27,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property \Illuminate\Support\Carbon|null $decided_at
  * @property \Illuminate\Support\Carbon|null $created_at
  */
-class AiGlossarySuggestion extends GlobalModel
+class AiGlossarySuggestion extends SpaceDatabaseModel
 {
     use HasUlids;
 

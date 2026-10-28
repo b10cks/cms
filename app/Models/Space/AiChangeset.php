@@ -1,9 +1,10 @@
 <?php
 
-namespace App\Models\Management;
+namespace App\Models\Space;
 
 use App\Enums\AiChangesetItemStatus;
 use App\Enums\AiChangesetStatus;
+use App\Models\Management\Space;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -24,7 +25,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property int $pending_count
  * @property \Illuminate\Support\Carbon|null $created_at
  */
-class AiChangeset extends GlobalModel
+class AiChangeset extends SpaceDatabaseModel
 {
     use HasUlids;
 

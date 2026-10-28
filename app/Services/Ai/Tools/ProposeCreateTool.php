@@ -2,7 +2,7 @@
 
 namespace App\Services\Ai\Tools;
 
-use App\Models\Management\AiChangesetItem;
+use App\Models\Space\AiChangesetItem;
 use App\Models\Space\Block;
 use App\Models\Space\Content;
 use App\Services\Ai\Changesets\BlockTarget;

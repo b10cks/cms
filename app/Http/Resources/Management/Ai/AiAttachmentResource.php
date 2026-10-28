@@ -2,7 +2,7 @@
 
 namespace App\Http\Resources\Management\Ai;
 
-use App\Models\Management\AiAttachment;
+use App\Models\Space\AiAttachment;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 

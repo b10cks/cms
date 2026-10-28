@@ -9,9 +9,9 @@ use App\Http\Requests\Ai\StartAiRunRequest;
 use App\Http\Resources\Management\Ai\AiRunEventResource;
 use App\Http\Resources\Management\Ai\AiRunResource;
 use App\Jobs\RunAgentJob;
-use App\Models\Management\AiConversation;
-use App\Models\Management\AiRun;
 use App\Models\Management\Space;
+use App\Models\Space\AiConversation;
+use App\Models\Space\AiRun;
 use App\Services\Ai\AiRunService;
 use App\Services\Ai\Attachments\AiAttachments;
 use App\Services\Ai\Changesets\ChangeTargets;
@@ -120,7 +120,7 @@ class AiRunController extends Controller
 
             if ($run->wasRecentlyCreated) {
                 $run->forceFill(['mode' => AiRun::MODE_BACKGROUND])->save();
-                RunAgentJob::dispatch($run->id);
+                RunAgentJob::dispatch($run->space_id, $run->id);
             }
 
             return response()->json(['data' => new AiRunResource($run)], $run->wasRecentlyCreated ? 202 : 200);
@@ -170,7 +170,7 @@ class AiRunController extends Controller
         $model = $runs->answer($this->findRun($request, $space, $run), $request->user(), $request->input('answers', []));
 
         if ($model->mode === AiRun::MODE_BACKGROUND) {
-            RunAgentJob::dispatch($model->id);
+            RunAgentJob::dispatch($model->space_id, $model->id);
 
             return response()->json(['data' => new AiRunResource($model)], 202);
         }
@@ -219,12 +219,14 @@ class AiRunController extends Controller
         } catch (\Throwable $e) {
             yield from $runs->fail($run, null, 'internal_error', 'Something went wrong while generating.', $e);
         } finally {
-            $restore();
-
-            // Nobody follows an inline run once its stream is gone (closed tab).
-            $run->refresh();
-            if ($owned && $run->state === AiRunState::Running && $run->mode === AiRun::MODE_INLINE) {
-                $runs->cancel($run);
+            try {
+                // Nobody follows an inline run once its stream is gone (closed tab).
+                $run->refresh();
+                if ($owned && $run->state === AiRunState::Running && $run->mode === AiRun::MODE_INLINE) {
+                    $runs->cancel($run);
+                }
+            } finally {
+                $restore();
             }
         }
     }

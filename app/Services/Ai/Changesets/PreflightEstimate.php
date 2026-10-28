@@ -3,7 +3,7 @@
 namespace App\Services\Ai\Changesets;
 
 use App\Enums\AiRunState;
-use App\Models\Management\AiRun;
+use App\Models\Space\AiRun;
 use App\Services\Ai\Dto\AiModelDto;
 
 /**
@@ -52,8 +52,10 @@ final class PreflightEstimate
             return null;
         }
 
-        $perRun = AiRun::query()
-            ->toBase()
+        $base = AiRun::query()->toBase();
+        // Raw SQL needs the connection's table prefix, which shared space databases use.
+        $wrap = $base->getGrammar()->wrap(...);
+        $perRun = $base
             ->from('ai_runs as r')
             ->join('ai_changesets as c', 'c.run_id', '=', 'r.id')
             ->join('ai_changeset_items as i', 'i.changeset_id', '=', 'c.id')
@@ -62,7 +64,7 @@ final class PreflightEstimate
             ->where('r.state', AiRunState::Completed->value)
             ->where('r.cost_usd', '>', 0)
             ->groupBy('r.id', 'r.cost_usd')
-            ->selectRaw('r.cost_usd as cost, count(distinct coalesce(i.target_id, i.id)) as entries');
+            ->selectRaw("{$wrap('r.cost_usd')} as cost, count(distinct coalesce({$wrap('i.target_id')}, {$wrap('i.id')})) as entries");
 
         $total = AiRun::query()->toBase()->fromSub($perRun, 'p')
             ->selectRaw('count(*) as runs, sum(cost) as cost, sum(entries) as entries')

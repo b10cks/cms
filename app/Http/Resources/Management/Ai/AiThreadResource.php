@@ -2,7 +2,7 @@
 
 namespace App\Http\Resources\Management\Ai;
 
-use App\Models\Management\AiConversation;
+use App\Models\Space\AiConversation;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 

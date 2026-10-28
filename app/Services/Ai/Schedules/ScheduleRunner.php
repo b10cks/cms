@@ -4,9 +4,9 @@ namespace App\Services\Ai\Schedules;
 
 use App\Enums\AiRunState;
 use App\Jobs\RunAgentJob;
-use App\Models\Management\AiRun;
 use App\Models\Management\AiSchedule;
 use App\Models\Management\Space;
+use App\Models\Space\AiRun;
 use App\Models\User;
 use App\Services\Ai\AiRunService;
 use App\Services\Ai\Changesets\ChangeTargets;
@@ -123,13 +123,13 @@ class ScheduleRunner
                 maxUsd: $schedule->max_usd,
                 conversationId: $this->threads->forSchedule($schedule, self::SURFACES[$type])->id,
             ));
+            $run->forceFill(['mode' => AiRun::MODE_BACKGROUND])->save();
         } finally {
             $restore();
         }
 
-        $run->forceFill(['mode' => AiRun::MODE_BACKGROUND])->save();
         $schedule->forceFill(['last_run_id' => $run->id])->save();
-        RunAgentJob::dispatch($run->id);
+        RunAgentJob::dispatch($run->space_id, $run->id);
 
         return $run;
     }

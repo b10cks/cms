@@ -2,8 +2,8 @@
 
 namespace App\Services\Ai\Attachments;
 
-use App\Models\Management\AiAttachment;
 use App\Models\Management\Space;
+use App\Models\Space\AiAttachment;
 use App\Models\User;
 use App\Services\Ai\Knowledge\DocumentTextExtractor;
 use Illuminate\Http\UploadedFile;
@@ -102,7 +102,7 @@ class AiAttachments
         }
     }
 
-    /** Delete unsent attachments older than the configured hours; returns how many. */
+    /** Delete the current space's unsent attachments older than the configured hours; returns how many. */
     public function pruneUnsent(): int
     {
         $pruned = 0;

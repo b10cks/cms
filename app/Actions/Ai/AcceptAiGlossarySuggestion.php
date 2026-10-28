@@ -3,12 +3,12 @@
 namespace App\Actions\Ai;
 
 use App\Enums\AiThreadKind;
-use App\Models\Management\AiConversation;
 use App\Models\Management\AiGlossary;
-use App\Models\Management\AiGlossarySuggestion;
 use App\Models\Management\AiGlossaryTerm;
 use App\Models\Management\Space;
 use App\Models\Management\Team;
+use App\Models\Space\AiConversation;
+use App\Models\Space\AiGlossarySuggestion;
 use App\Models\User;
 use App\Services\Ai\Threads\AiThreads;
 use Illuminate\Support\Collection;

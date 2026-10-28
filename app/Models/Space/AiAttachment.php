@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Models\Management;
+namespace App\Models\Space;
 
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -18,7 +18,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string $url storage path on the `transfers` disk
  * @property-read string $kind
  */
-class AiAttachment extends GlobalModel
+class AiAttachment extends SpaceDatabaseModel
 {
     use HasUlids;
 

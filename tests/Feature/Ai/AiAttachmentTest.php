@@ -2,10 +2,10 @@
 
 namespace Tests\Feature\Ai;
 
-use App\Models\Management\AiAttachment;
-use App\Models\Management\AiConversation;
-use App\Models\Management\AiMessage;
 use App\Models\Management\Space;
+use App\Models\Space\AiAttachment;
+use App\Models\Space\AiConversation;
+use App\Models\Space\AiMessage;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;

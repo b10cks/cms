@@ -8,7 +8,7 @@ use App\Events\Space\DataSourceContentChanged;
 use App\Models\Space\DataEntry;
 use App\Models\Space\DataSource;
 use App\Enums\AiRunState;
-use App\Models\Management\AiRun;
+use App\Models\Space\AiRun;
 use App\Services\Ai\AiRunService;
 use App\Services\Ai\Dto\StreamEvent;
 use App\Services\Ai\Exceptions\AiServiceException;

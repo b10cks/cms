@@ -1,8 +1,9 @@
 <?php
 
-namespace App\Models\Management;
+namespace App\Models\Space;
 
 use App\Enums\AiRunState;
+use App\Models\Management\Space;
 use App\Models\User;
 use App\Services\Ai\Run\Transcript;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
@@ -42,7 +43,7 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $started_at
  * @property Carbon|null $finished_at
  */
-class AiRun extends GlobalModel
+class AiRun extends SpaceDatabaseModel
 {
     use HasUlids;
 

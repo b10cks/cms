@@ -2,8 +2,8 @@
 
 namespace App\Policies;
 
-use App\Models\Management\AiRun;
 use App\Models\Management\Space;
+use App\Models\Space\AiRun;
 use App\Models\User;
 use App\Policies\Concerns\AuthorizesWithAbilities;
 

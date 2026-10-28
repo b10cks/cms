@@ -3,8 +3,8 @@
 namespace App\Policies;
 
 use App\Enums\AiThreadKind;
-use App\Models\Management\AiConversation;
 use App\Models\Management\Space;
+use App\Models\Space\AiConversation;
 use App\Models\User;
 use App\Policies\Concerns\AuthorizesWithAbilities;
 

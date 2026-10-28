@@ -2,9 +2,9 @@
 
 namespace App\Services\Ai\Run;
 
-use App\Models\Management\AiAttachment;
 use App\Models\Management\Space;
 use App\Models\Management\SpaceAiConfig;
+use App\Models\Space\AiAttachment;
 use App\Models\User;
 use App\Services\Ai\Skills\ResolvedSkill;
 

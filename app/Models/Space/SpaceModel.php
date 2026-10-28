@@ -7,16 +7,9 @@ use App\Services\Automation\Contracts\AutomationEngine;
 use App\Services\Automation\CurrentSpaceResolver;
 use App\Services\Automation\Enums\TriggerType;
 use App\Services\Automation\TriggerCatalog;
-use Illuminate\Database\Eloquent\Model;
 
-abstract class SpaceModel extends Model
+abstract class SpaceModel extends SpaceDatabaseModel
 {
-    /**
-     * The grammar default for every supported space driver (MySQL, Postgres,
-     * SQLite). Set here so datetime casts skip the connection lookup.
-     */
-    protected $dateFormat = 'Y-m-d H:i:s';
-
     /**
      * @var array<string, mixed>|null
      */
@@ -31,16 +24,6 @@ abstract class SpaceModel extends Model
      * @var array<int, string>
      */
     protected array $automationChangedColumns = [];
-
-    public function getConnection()
-    {
-        return app('App\Services\Database\SpaceModelResolver')->getDefaultConnection();
-    }
-
-    public function getConnectionName()
-    {
-        return app('App\Services\Database\SpaceModelResolver')->getConnectionName();
-    }
 
     protected static function booted(): void
     {

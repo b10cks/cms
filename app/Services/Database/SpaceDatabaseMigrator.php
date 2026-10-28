@@ -27,6 +27,20 @@ class SpaceDatabaseMigrator
      */
     private const SENTINEL_TABLES = ['blocks', 'contents'];
 
+    /**
+     * The last table each create migration builds. An unrecorded migration
+     * counts as applied only when its table exists; any other unrecorded
+     * migration is left for `migrate` to run.
+     */
+    private const PROOF_TABLES = [
+        '0000_00_00_000004_create_space_tables' => 'audit_logs',
+        '0000_00_00_000006_create_asset_collections_tables' => 'asset_share_events',
+        '0000_00_00_000009_create_field_plugins_table' => 'field_plugins',
+        '0000_00_00_000010_create_content_serials_table' => 'content_serials',
+        '0000_00_00_000017_create_translation_units_table' => 'translation_units',
+        '0000_00_00_000018_create_ai_tables' => 'ai_glossary_suggestions',
+    ];
+
     public function __construct(
         private readonly DatabaseConnectionService $connections,
     ) {
@@ -116,9 +130,9 @@ class SpaceDatabaseMigrator
     }
 
     /**
-     * Clean up orphaned migration records — migrations that created tables but
-     * weren't properly recorded in the migrations table. This can happen if
-     * a migration partially succeeded or the migrations table was cleared.
+     * Record migrations whose tables exist but which the ledger lacks, so
+     * `migrate` does not fail creating them again. This can happen if the
+     * migrations table was cleared. Recorded under the name `migrate` uses.
      */
     private function cleanupOrphanedMigrations(string $connectionName): void
     {
@@ -127,44 +141,18 @@ class SpaceDatabaseMigrator
                 return; // No migrations table yet, nothing to clean up
             }
 
-            $path = base_path(self::MIGRATION_PATH);
-            $files = glob($path . '/*.php');
-            $migrationNames = array_map(fn ($f) => basename($f, '.php'), $files ?: []);
-            sort($migrationNames);
+            $schema = Schema::connection($connectionName);
 
-            // Get applied migrations (format: "database/migrations/spaces/FILENAME")
-            $appliedMigrations = DB::connection($connectionName)
-                ->table('migrations')
-                ->where('migration', 'like', '%spaces/%')
-                ->pluck('migration')
-                ->toArray();
+            foreach ($this->getPendingMigrations($connectionName) as $migrationName) {
+                $table = self::PROOF_TABLES[$migrationName] ?? null;
 
-            // Extract just the filename from the migration path
-            $appliedNames = array_map(
-                fn ($m) => basename($m),
-                $appliedMigrations
-            );
-
-            // Find migrations that are in files but not recorded in database
-            $unrecordedMigrations = array_diff($migrationNames, $appliedNames);
-
-            if (empty($unrecordedMigrations)) {
-                return; // All migrations are recorded
-            }
-
-            // Check if sentinel tables from later migrations exist
-            $hasAssetCollections = Schema::connection($connectionName)->hasTable('asset_collections');
-
-            foreach ($unrecordedMigrations as $migrationName) {
-                // Skip if this is the asset_collections migration and its tables don't exist
-                if (str_contains($migrationName, '000006') && !$hasAssetCollections) {
-                    continue; // Tables not created, don't mark as applied
+                if ($table === null || !$schema->hasTable($table)) {
+                    continue;
                 }
 
-                // Record the migration as applied
                 $nextBatch = (DB::connection($connectionName)->table('migrations')->max('batch') ?? 0) + 1;
                 DB::connection($connectionName)->table('migrations')->insert([
-                    'migration' => "database/migrations/spaces/{$migrationName}",
+                    'migration' => $migrationName,
                     'batch' => $nextBatch,
                 ]);
 
@@ -194,16 +182,16 @@ class SpaceDatabaseMigrator
             $migrationNames = array_map(fn ($f) => basename($f, '.php'), $files ?: []);
             sort($migrationNames);
 
-            // Get applied migrations from the database
+            // `migrate` records the bare name; older cleanups wrote
+            // "database/migrations/spaces/NAME". Either counts as applied.
             $appliedMigrations = DB::connection($connectionName)
                 ->table('migrations')
-                ->where('migration', 'like', '%spaces/%')
                 ->pluck('migration')
                 ->map(fn ($m) => basename($m, '.php'))
                 ->toArray();
 
             // Return migrations that are in files but not in the applied list
-            return array_diff($migrationNames, $appliedMigrations);
+            return array_values(array_diff($migrationNames, $appliedMigrations));
         } catch (\Throwable $e) {
             // If migrations table doesn't exist, all are pending
             Log::debug('Could not check pending migrations', ['error' => $e->getMessage()]);

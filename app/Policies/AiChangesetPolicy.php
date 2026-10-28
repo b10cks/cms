@@ -2,8 +2,8 @@
 
 namespace App\Policies;
 
-use App\Models\Management\AiChangeset;
 use App\Models\Management\Space;
+use App\Models\Space\AiChangeset;
 use App\Models\User;
 use App\Policies\Concerns\AuthorizesWithAbilities;
 

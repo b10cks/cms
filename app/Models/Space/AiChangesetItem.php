@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Models\Management;
+namespace App\Models\Space;
 
 use App\Enums\AiChangesetItemStatus;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
@@ -32,7 +32,7 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $decided_at
  * @property Carbon|null $learned_at
  */
-class AiChangesetItem extends GlobalModel
+class AiChangesetItem extends SpaceDatabaseModel
 {
     use HasUlids;
 

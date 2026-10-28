@@ -2,7 +2,7 @@
 
 namespace App\Http\Requests\Ai;
 
-use App\Models\Management\AiRun;
+use App\Models\Space\AiRun;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\UploadedFile;
 

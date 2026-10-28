@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Models\Management;
+namespace App\Models\Space;
 
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -13,7 +13,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string $type
  * @property array<string, mixed> $payload
  */
-class AiRunEvent extends GlobalModel
+class AiRunEvent extends SpaceDatabaseModel
 {
     public const UPDATED_AT = null;
 

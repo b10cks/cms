@@ -3,9 +3,9 @@
 namespace App\Services\Ai\Changesets;
 
 use App\Enums\AiChangesetItemStatus;
-use App\Models\Management\AiChangeset;
-use App\Models\Management\AiChangesetItem;
-use App\Models\Management\AiRun;
+use App\Models\Space\AiChangeset;
+use App\Models\Space\AiChangesetItem;
+use App\Models\Space\AiRun;
 use App\Services\Ai\Knowledge\GlossaryChecker;
 use App\Services\Ai\Knowledge\GlossaryTerm;
 use App\Services\Ai\Threads\AiThreads;

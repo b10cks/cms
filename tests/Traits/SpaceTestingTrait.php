@@ -6,8 +6,11 @@ use App\Models\Management\Space;
 use App\Models\Management\SpaceConnection;
 use App\Models\System\AuditLog;
 use App\Models\User;
+use App\Services\Database\SpaceModelResolver;
 use App\Services\System\AuditService;
+use App\Support\SpaceContext;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 trait SpaceTestingTrait
@@ -41,6 +44,42 @@ trait SpaceTestingTrait
         $this->runSpaceMigrations();
         $this->stubManagementAuditService();
         app('router')->getCurrentRoute()?->setParameter('space', $space);
+        app()->offsetSet('currentSpace', $space);
+    }
+
+    /**
+     * Give the space its own prefixed in-memory database, the way a shared
+     * space connection works, instead of the test connection every other test
+     * shares. Space models resolve it only inside the space's route or
+     * context, like in production, so a query on the wrong connection or
+     * outside the context fails.
+     */
+    protected function setUpSeparateSpaceDatabase(Space $space): void
+    {
+        config(['database.connections.space_test' => [
+            'driver' => 'sqlite',
+            'database' => ':memory:',
+            'prefix' => 'space_',
+            'foreign_key_constraints' => true,
+        ]]);
+        $this->artisan('migrate', ['--database' => 'space_test', '--path' => 'database/migrations/spaces', '--realpath' => true]);
+
+        $this->app->instance(SpaceModelResolver::class, new class($space->id) extends SpaceModelResolver
+        {
+            public function __construct(private readonly string $spaceId)
+            {
+                parent::__construct();
+            }
+
+            public function getDefaultConnection()
+            {
+                $space = request()->route('space');
+                $space = $space instanceof Space ? $space : SpaceContext::current();
+                abort_unless($space?->id === $this->spaceId, 404, 'Space not found');
+
+                return DB::connection('space_test');
+            }
+        });
         app()->offsetSet('currentSpace', $space);
     }
 

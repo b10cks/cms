@@ -4,9 +4,9 @@ namespace App\Services\Ai\Learning;
 
 use App\Enums\AiChangesetItemStatus;
 use App\Jobs\ExtractGlossarySuggestionsJob;
-use App\Models\Management\AiChangesetItem;
-use App\Models\Management\AiGlossarySuggestion;
 use App\Models\Management\Space;
+use App\Models\Space\AiChangesetItem;
+use App\Models\Space\AiGlossarySuggestion;
 use App\Models\Space\Content;
 use App\Models\User;
 use App\Services\Ai\Changesets\FieldPath;

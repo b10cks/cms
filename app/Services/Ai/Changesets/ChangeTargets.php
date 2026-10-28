@@ -2,7 +2,7 @@
 
 namespace App\Services\Ai\Changesets;
 
-use App\Models\Management\AiChangesetItem;
+use App\Models\Space\AiChangesetItem;
 use App\Services\Ai\Run\ToolError;
 
 /** Resolves the target kind of a changeset item. */

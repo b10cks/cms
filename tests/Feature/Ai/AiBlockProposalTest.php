@@ -3,10 +3,10 @@
 namespace Tests\Feature\Ai;
 
 use App\Enums\AiChangesetItemStatus;
-use App\Models\Management\AiChangeset;
-use App\Models\Management\AiChangesetItem;
-use App\Models\Management\AiRun;
 use App\Models\Management\Space;
+use App\Models\Space\AiChangeset;
+use App\Models\Space\AiChangesetItem;
+use App\Models\Space\AiRun;
 use App\Models\Space\Block;
 use App\Models\Space\BlockVersion;
 use App\Models\User;

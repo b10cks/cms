@@ -3,10 +3,10 @@
 namespace App\Services\Ai\Threads;
 
 use App\Enums\AiChangesetItemStatus;
-use App\Models\Management\AiAttachment;
-use App\Models\Management\AiChangesetItem;
-use App\Models\Management\AiMessage;
-use App\Models\Management\AiRun;
+use App\Models\Space\AiAttachment;
+use App\Models\Space\AiChangesetItem;
+use App\Models\Space\AiMessage;
+use App\Models\Space\AiRun;
 
 /**
  * What a follow-up run remembers of its thread: earlier prompts and answers
