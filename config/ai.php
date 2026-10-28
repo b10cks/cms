@@ -32,6 +32,10 @@ return [
         'max_output_corrections' => 2,
         // Background runs one space may have going at once; more are refused.
         'max_concurrent_background' => (int) env('AI_RUN_MAX_CONCURRENT_BACKGROUND', 2),
+        // Stored stream events only serve live replay and catch-up; the
+        // transcript stays on the run. They are pruned this many days after
+        // a run finished.
+        'event_retention_days' => (int) env('AI_RUN_EVENT_RETENTION_DAYS', 30),
     ],
 
     // Earlier turns and proposals a follow-up run in a thread sees, estimated

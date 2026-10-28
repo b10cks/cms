@@ -12,7 +12,9 @@ use App\Models\Management\Space;
 use App\Models\Space\AiChangeset;
 use App\Models\Space\AiConversation;
 use App\Models\Space\AiGlossarySuggestion;
+use App\Models\Space\AiMessage;
 use App\Models\Space\AiRun;
+use App\Models\Space\AiRunEvent;
 use App\Models\Space\Block;
 use App\Models\Space\Content;
 use App\Models\Space\ContentVersion;
@@ -112,6 +114,34 @@ class AiSpaceDatabaseTest extends TestCase
         $this->deleteJson("/mgmt/v1/spaces/{$this->space->id}/ai/schedules/{$schedule->id}")->assertNoContent();
 
         $this->assertNull($run->conversation->refresh()->schedule_id);
+    }
+
+    #[Test]
+    public function pruning_drops_only_the_events_of_runs_finished_past_retention(): void
+    {
+        $old = $this->thread(AiRunState::Completed)->runs()->sole();
+        $recent = $this->thread(AiRunState::Failed)->runs()->sole();
+        $waiting = $this->thread(AiRunState::AwaitingInput)->runs()->sole();
+        $running = $this->thread(AiRunState::Running)->runs()->sole();
+        $old->forceFill(['finished_at' => now()->subDays(31), 'transcript' => [['role' => 'user', 'content' => 'Hi']]])->save();
+        $recent->forceFill(['finished_at' => now()->subDays(29)])->save();
+        // A run back in progress keeps its events, whatever an earlier finish left behind.
+        $waiting->forceFill(['finished_at' => now()->subDays(40)])->save();
+        $running->forceFill(['finished_at' => now()->subDays(40)])->save();
+        foreach ([$old, $recent, $waiting, $running] as $run) {
+            $run->events()->create(['seq' => 1, 'type' => 'text', 'payload' => ['text' => 'Hi']]);
+        }
+        $message = AiMessage::create(['conversation_id' => $old->conversation_id, 'run_id' => $old->id, 'role' => 'assistant', 'content' => 'Hi']);
+        $changeset = AiChangeset::create(['space_id' => $this->space->id, 'run_id' => $old->id, 'actor_id' => $this->user->id, 'title' => 'Edits', 'status' => AiChangesetStatus::Applied]);
+        app()->offsetUnset('currentSpace');
+
+        $this->artisan('ai:prune-run-events')->expectsOutputToContain('1 run event(s) pruned')->assertSuccessful();
+
+        app()->offsetSet('currentSpace', $this->space);
+        $this->assertSame([$recent->id, $waiting->id, $running->id], AiRunEvent::query()->orderBy('id')->pluck('run_id')->all());
+        $this->assertSame([['role' => 'user', 'content' => 'Hi']], $old->refresh()->transcript);
+        $this->assertModelExists($message);
+        $this->assertModelExists($changeset);
     }
 
     private function thread(AiRunState $state): AiConversation

@@ -52,6 +52,13 @@ class Kernel extends ConsoleKernel
             ->withoutOverlapping()
             ->runInBackground();
 
+        // Drop stored stream events of runs that finished long ago.
+        $schedule->command('ai:prune-run-events')
+            ->dailyAt('04:50')
+            ->onOneServer()
+            ->withoutOverlapping()
+            ->runInBackground();
+
         // Recompute asset rights_status (unrestricted/restricted/expired) from
         // license_expires_at across all spaces.
         $schedule->command('assets:sync-rights-status')
