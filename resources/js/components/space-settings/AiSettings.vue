@@ -186,7 +186,7 @@ const handleDeleteConfig = async (config: SpaceAiConfig) => {
 <template>
   <div class="divide-y divide-border pt-6">
     <SettingsSection
-      :title="$t('labels.settings.ai.title')"
+      :title="$t('labels.settings.ai.features')"
       :description="$t('labels.settings.ai.featuresDescription')"
     >
       <div class="space-y-2">

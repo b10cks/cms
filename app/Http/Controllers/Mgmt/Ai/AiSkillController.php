@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Mgmt\Ai;
 
 use App\Actions\Ai\PublishAiSkill;
+use App\Enums\AiScope;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\Mgmt\Concerns\ResolvesAiOwner;
 use App\Http\Requests\Ai\SaveAiSkillRequest;
@@ -46,6 +47,37 @@ class AiSkillController extends Controller
             'name' => $manifest->name,
             'enabled' => $request->boolean('enabled', true),
             'draft' => ['files' => $manifest->files],
+            'created_by' => $request->user()->id,
+            'updated_by' => $request->user()->id,
+        ]);
+
+        return new AiSkillResource($skill->load('publishedRevision'));
+    }
+
+    /**
+     * Copy an inherited skill (built-in or from a team above) into an editable
+     * draft of this owner. Publishing the copy makes it shadow the original.
+     */
+    public function customize(Request $request, SkillResolver $resolver): AiSkillResource
+    {
+        $owner = $this->aiOwner($request);
+        $this->authorize('manage', [AiSkill::class, $owner]);
+
+        $name = (string) $request->validate(['name' => ['required', 'string', 'max:64']])['name'];
+        $resolved = $resolver->resolve($owner)[$name] ?? null;
+        $ownerScope = $owner instanceof Space ? AiScope::Space : AiScope::Team;
+
+        if (! $resolved || ($resolved->source === $ownerScope && $resolved->ownerId === $owner->id)) {
+            throw ValidationException::withMessages(['name' => ["There is no inherited skill named {$name}."]]);
+        }
+
+        $this->ensureUniqueName($owner, $name);
+
+        $skill = AiSkill::create([
+            ...AiSkill::ownerAttributes($owner),
+            'name' => $name,
+            'enabled' => true,
+            'draft' => ['files' => $resolved->manifest->files],
             'created_by' => $request->user()->id,
             'updated_by' => $request->user()->id,
         ]);

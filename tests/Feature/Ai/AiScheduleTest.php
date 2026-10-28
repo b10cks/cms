@@ -3,10 +3,10 @@
 namespace Tests\Feature\Ai;
 
 use App\Actions\Ai\PublishAiSkill;
-use App\Models\Management\AiRun;
 use App\Models\Management\AiSchedule;
 use App\Models\Management\AiSkill;
 use App\Models\Management\Space;
+use App\Models\Space\AiRun;
 use App\Models\User;
 use App\Services\Auth\MembershipService;
 use Illuminate\Foundation\Testing\RefreshDatabase;

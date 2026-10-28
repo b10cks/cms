@@ -5,9 +5,13 @@ namespace App\Jobs\Space;
 use App\Jobs\QueuedJob;
 use App\Models\Management\Space;
 use App\Models\Management\SpaceBackup;
+use App\Models\Space\AiAttachment;
 use App\Notifications\Management\BackupReadyNotification;
 use App\Services\Storage\StorageService;
+use App\Support\SpaceContext;
+use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
@@ -58,7 +62,7 @@ class CreateBackup extends QueuedJob
                 throw new \Exception('No default database connection found for space');
             }
 
-            $this->backupDatabase($connection);
+            $this->backupDatabaseWithAttachments($connection);
             $this->backupAssets();
 
             $zipPath = $this->createZipArchive();
@@ -227,38 +231,90 @@ class CreateBackup extends QueuedJob
         $assetsPath = "{$this->tempPath}/assets";
 
         foreach ($allFiles as $file) {
-            $targetPath = "{$assetsPath}/{$file}";
-            File::makeDirectory(dirname($targetPath), 0755, true, true);
-
-            // Stream the source file to disk instead of loading it fully
-            // into memory — assets can be large videos.
-            $source = $filesystem->readStream($file);
-            if ($source === null || $source === false) {
-                throw new \RuntimeException("Unable to read source file: {$file}");
-            }
-
-            $target = null;
-            try {
-                $target = fopen($targetPath, 'w');
-                if ($target === false) {
-                    throw new \RuntimeException("Unable to open backup target: {$targetPath}");
-                }
-
-                if (stream_copy_to_stream($source, $target) === false) {
-                    throw new \RuntimeException("Unable to copy source file: {$file}");
-                }
-            } finally {
-                if (\is_resource($target)) {
-                    fclose($target);
-                }
-                if (\is_resource($source)) {
-                    fclose($source);
-                }
-            }
+            $this->copyFile($filesystem, $file, "{$assetsPath}/{$file}");
 
             $processedFiles++;
             $progress = 10 + (int) (($processedFiles / $totalFiles) * 90);
             $this->backup->updateProgress($progress);
+        }
+    }
+
+    protected function backupDatabaseWithAttachments($connection): void
+    {
+        $restore = SpaceContext::enter($this->space);
+
+        try {
+            $database = (new AiAttachment)->getConnection();
+            if (in_array($database->getDriverName(), ['mysql', 'mariadb'], true)) {
+                $database->statement('SET TRANSACTION ISOLATION LEVEL REPEATABLE READ');
+            }
+
+            // Keep the attachment rows fixed while the external dump reads them.
+            // MySQL's shared range lock also prevents new rows during the dump.
+            $attachments = $database->transaction(function () use ($connection) {
+                $attachments = AiAttachment::query()->select(['id', 'url'])->sharedLock()->get();
+                $this->backupDatabase($connection);
+
+                return $attachments;
+            });
+        } finally {
+            $restore();
+        }
+
+        $this->backupAiAttachments($attachments);
+    }
+
+    /**
+     * Copy the dump's attachment files to `transfers/{url}`. A file deleted
+     * after the dump is still required; an unreadable file fails the backup.
+     *
+     * @param  Collection<int, AiAttachment>  $attachments
+     */
+    protected function backupAiAttachments(Collection $attachments): void
+    {
+        $disk = Storage::disk('transfers');
+        $prefix = "ai-attachments/{$this->space->id}/";
+
+        foreach ($attachments as $attachment) {
+            $url = $attachment->url;
+            if (! str_starts_with($url, $prefix) || str_contains($url, '..')) {
+                throw new \RuntimeException("AI attachment {$attachment->id} points outside the space's attachments");
+            }
+
+            $this->copyFile($disk, $url, "{$this->tempPath}/transfers/{$url}");
+        }
+    }
+
+    /**
+     * Stream a file to disk instead of loading it fully into memory; assets
+     * can be large videos.
+     */
+    protected function copyFile(Filesystem $filesystem, string $file, string $targetPath): void
+    {
+        File::makeDirectory(dirname($targetPath), 0755, true, true);
+
+        $source = $filesystem->readStream($file);
+        if ($source === null || $source === false) {
+            throw new \RuntimeException("Unable to read source file: {$file}");
+        }
+
+        $target = null;
+        try {
+            $target = fopen($targetPath, 'w');
+            if ($target === false) {
+                throw new \RuntimeException("Unable to open backup target: {$targetPath}");
+            }
+
+            if (stream_copy_to_stream($source, $target) === false) {
+                throw new \RuntimeException("Unable to copy source file: {$file}");
+            }
+        } finally {
+            if (\is_resource($target)) {
+                fclose($target);
+            }
+            if (\is_resource($source)) {
+                fclose($source);
+            }
         }
     }
 

@@ -41,6 +41,7 @@ export type AiKnowledgeType = 'style' | 'reference'
 export interface AiKnowledgeDocumentResource {
   id: string
   scope: AiScope
+  owner_id: string
   slug: string
   title: string
   type: AiKnowledgeType
@@ -64,6 +65,7 @@ export interface AiKnowledgeDocumentPayload {
 export interface AiGlossaryResource {
   id: string
   scope: AiScope
+  owner_id: string
   name: string
   enabled: boolean
   terms_count?: number
@@ -106,6 +108,15 @@ export class AiKnowledge {
     )
   }
 
+  /** Copy an inherited (built-in or team) skill into an editable draft of this owner. */
+  public customizeSkill(name: string) {
+    return this.client.post<{ data: AiSkillResource }>(`${this.base}/skills/customize`, { name })
+  }
+
+  public skill(id: string) {
+    return this.client.get<{ data: AiSkillResource }>(`${this.base}/skills/${id}`)
+  }
+
   public createSkill(payload: AiSkillPayload) {
     return this.client.post<{ data: AiSkillResource }>(`${this.base}/skills`, payload)
   }
@@ -122,8 +133,11 @@ export class AiKnowledge {
     return this.client.delete(`${this.base}/skills/${id}`)
   }
 
-  public documents() {
-    return this.client.get<{ data: AiKnowledgeDocumentResource[] }>(`${this.base}/knowledge`)
+  /** With `inherited`, team layers above the owner are listed too (read-only here). */
+  public documents(inherited = false) {
+    return this.client.get<{ data: AiKnowledgeDocumentResource[] }>(`${this.base}/knowledge`, {
+      inherited: inherited ? 1 : undefined,
+    })
   }
 
   public document(id: string) {
@@ -161,8 +175,10 @@ export class AiKnowledge {
     return this.client.delete(`${this.base}/knowledge/${id}`)
   }
 
-  public glossaries() {
-    return this.client.get<{ data: AiGlossaryResource[] }>(`${this.base}/glossaries`)
+  public glossaries(inherited = false) {
+    return this.client.get<{ data: AiGlossaryResource[] }>(`${this.base}/glossaries`, {
+      inherited: inherited ? 1 : undefined,
+    })
   }
 
   public createGlossary(payload: { name: string; enabled?: boolean }) {

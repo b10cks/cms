@@ -7,6 +7,7 @@ use App\Http\Requests\Ai\SaveAiScheduleRequest;
 use App\Http\Resources\Management\Ai\AiScheduleResource;
 use App\Models\Management\AiSchedule;
 use App\Models\Management\Space;
+use App\Models\Space\AiConversation;
 use App\Services\Ai\Schedules\ScheduleRunner;
 use App\Services\Ai\Skills\ResolvedSkill;
 use Illuminate\Http\JsonResponse;
@@ -70,7 +71,10 @@ class AiScheduleController extends Controller
     public function destroy(Space $space, string $schedule): JsonResponse
     {
         $this->authorizeSpace($space, 'ai.manage');
-        AiSchedule::query()->where('space_id', $space->id)->findOrFail($schedule)->delete();
+        $model = AiSchedule::query()->where('space_id', $space->id)->findOrFail($schedule);
+        $model->delete();
+        // The standing thread lives in the space database and outlives its schedule.
+        AiConversation::query()->where('schedule_id', $model->id)->update(['schedule_id' => null]);
 
         return response()->json(null, 204);
     }

@@ -2,8 +2,9 @@
 
 namespace App\Services\Ai\Tools;
 
-use App\Models\Management\AiChangesetItem;
 use App\Models\Management\Space;
+use App\Models\Space\AiChangesetItem;
+use App\Models\Space\Block;
 use App\Models\Space\Content;
 use App\Models\User;
 use App\Services\Ai\Changesets\ChangeTargets;
@@ -29,7 +30,8 @@ class GetEntryTool implements AiToolInterface
     public function description(): string
     {
         return 'Reads one entry by ID. Content returns its name, slug, block, version_id and the field values of its current draft; '
-            .'data entries return `value` and `dimensions`; assets return their metadata `fields` per locale.';
+            .'data entries return `value` and `dimensions`; assets return their metadata `fields` per locale; '
+            .'blocks (by ID or slug) return their name, slug, type, description, icon, color, `schema` (field definitions by key) and `editor` (the page layout).';
     }
 
     public function inputSchema(): array
@@ -38,7 +40,7 @@ class GetEntryTool implements AiToolInterface
             'type' => 'object',
             'properties' => [
                 'id' => ['type' => 'string', 'description' => 'The entry ID (ULID).'],
-                'target_type' => ['type' => 'string', 'enum' => ChangeTargets::TYPES, 'description' => 'Defaults to content.'],
+                'target_type' => ['type' => 'string', 'enum' => ChangeTargets::PROPOSAL_TYPES, 'description' => 'Defaults to content.'],
             ],
             'required' => ['id'],
         ];
@@ -67,6 +69,10 @@ class GetEntryTool implements AiToolInterface
                 'version_id' => $snapshot->versionId,
                 'content' => $snapshot->document,
             ];
+        }
+
+        if ($model instanceof Block) {
+            return ['id' => $model->id, 'target_type' => $type, 'slug' => $model->slug, ...$snapshot->document];
         }
 
         return ['id' => $model->getKey(), 'target_type' => $type, 'name' => $snapshot->label, ...$snapshot->document];

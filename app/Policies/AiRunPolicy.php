@@ -2,8 +2,8 @@
 
 namespace App\Policies;
 
-use App\Models\Management\AiRun;
 use App\Models\Management\Space;
+use App\Models\Space\AiRun;
 use App\Models\User;
 use App\Policies\Concerns\AuthorizesWithAbilities;
 
@@ -22,6 +22,13 @@ class AiRunPolicy
     public function create(User $user, Space $space, string $surface): bool
     {
         return $this->canInSpace($user, $space, self::SURFACE_ABILITIES[$surface] ?? 'content.manage');
+    }
+
+    /** Attaching files needs the right to start a run on any surface. */
+    public function attach(User $user, Space $space): bool
+    {
+        return collect(['content.manage', 'assets.manage', 'data_entries.manage'])
+            ->contains(fn (string $ability) => $this->canInSpace($user, $space, $ability));
     }
 
     public function view(User $user, AiRun $run, Space $space): bool

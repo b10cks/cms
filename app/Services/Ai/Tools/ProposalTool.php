@@ -2,9 +2,9 @@
 
 namespace App\Services\Ai\Tools;
 
-use App\Models\Management\AiChangesetItem;
-use App\Models\Management\AiRun;
 use App\Models\Management\Space;
+use App\Models\Space\AiChangesetItem;
+use App\Models\Space\AiRun;
 use App\Models\User;
 use App\Services\Ai\Changesets\ChangesetRecorder;
 use App\Services\Ai\Changesets\ChangeTarget;
@@ -50,6 +50,11 @@ abstract class ProposalTool implements AiToolInterface, ProposesChanges
         }
 
         return $target;
+    }
+
+    protected function canEdit(ChangeTarget $target): bool
+    {
+        return $this->auth->canInSpace($this->actor, $this->space, $target->editAbility());
     }
 
     /** @throws ToolError when the entry is outside what this run may touch */

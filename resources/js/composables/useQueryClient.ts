@@ -1,6 +1,7 @@
 import type { MaybeRef } from 'vue'
 
 import type { AiOwner } from '~/api/resources/ai-knowledge'
+import type { AiThreadListParams } from '~/lib/aiThreads'
 
 import {
   entityKeys,
@@ -147,8 +148,10 @@ export const queryKeys = {
       config: (configId: MaybeRef<string>) => [...all(), 'configs', configId] as const,
       surfaceSkills: (surface: string, block: string | null) =>
         [...all(), 'context', surface, block] as const,
-      inbox: () => [...all(), 'inbox'] as const,
-      changeset: (changesetId: string) => [...all(), 'changesets', changesetId] as const,
+      threads: () => [...all(), 'threads'] as const,
+      threadList: (params: AiThreadListParams) => [...all(), 'threads', 'list', params] as const,
+      threadLists: () => [...all(), 'threads', 'list'] as const,
+      thread: (threadId: string) => [...all(), 'threads', 'detail', threadId] as const,
       schedules: () => [...all(), 'schedules'] as const,
     }
   },
@@ -158,6 +161,7 @@ export const queryKeys = {
     return {
       all,
       skills: () => [...all(), 'skills'] as const,
+      skill: (id: string) => [...all(), 'skills', id] as const,
       documents: () => [...all(), 'knowledge'] as const,
       document: (id: string) => [...all(), 'knowledge', id] as const,
       glossaries: () => [...all(), 'glossaries'] as const,

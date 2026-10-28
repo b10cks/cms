@@ -8,7 +8,7 @@ use App\Events\Space\DataSourceContentChanged;
 use App\Models\Space\DataEntry;
 use App\Models\Space\DataSource;
 use App\Enums\AiRunState;
-use App\Models\Management\AiRun;
+use App\Models\Space\AiRun;
 use App\Services\Ai\AiRunService;
 use App\Services\Ai\Dto\StreamEvent;
 use App\Services\Ai\Exceptions\AiServiceException;
@@ -20,7 +20,6 @@ use Generator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -194,10 +193,11 @@ class DataEntryTranslationStreamController extends Controller
             }
 
             // Mute the per-entry broadcasts; one content-changed event after
-            // the run stands in for the whole batch. Both closures capture the
-            // counters by reference: an arrow function would capture by value.
+            // the run stands in for the whole batch. The transaction runs on the
+            // space connection the entries are written to. Both closures capture
+            // the counters by reference: an arrow function would capture by value.
             DataEntry::withoutBroadcasts(function () use ($chunk, $decoded, $targetDimension, &$translated, &$skipped, &$processed): void {
-                DB::transaction(function () use ($chunk, $decoded, $targetDimension, &$translated, &$skipped, &$processed): void {
+                (new DataEntry)->getConnection()->transaction(function () use ($chunk, $decoded, $targetDimension, &$translated, &$skipped, &$processed): void {
                     foreach ($chunk as $entry) {
                         $processed++;
                         $value = $decoded[$entry->key] ?? null;

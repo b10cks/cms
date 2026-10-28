@@ -3,11 +3,10 @@
 namespace App\Services\Ai\Schedules;
 
 use App\Enums\AiRunState;
-use App\Events\Ai\AiInboxChanged;
 use App\Jobs\RunAgentJob;
-use App\Models\Management\AiRun;
 use App\Models\Management\AiSchedule;
 use App\Models\Management\Space;
+use App\Models\Space\AiRun;
 use App\Models\User;
 use App\Services\Ai\AiRunService;
 use App\Services\Ai\Changesets\ChangeTargets;
@@ -15,6 +14,7 @@ use App\Services\Ai\Changesets\EntryScope;
 use App\Services\Ai\Run\StartRun;
 use App\Services\Ai\Skills\ResolvedSkill;
 use App\Services\Ai\Skills\SkillResolver;
+use App\Services\Ai\Threads\AiThreads;
 use App\Services\Ai\Tools\ProposeUpdateTool;
 use App\Services\Auth\AuthorizationService;
 use App\Support\SpaceContext;
@@ -42,6 +42,7 @@ class ScheduleRunner
         private readonly ChangeTargets $targets,
         private readonly EntryScope $scope,
         private readonly AiRunService $runs,
+        private readonly AiThreads $threads,
     ) {}
 
     /**
@@ -109,6 +110,7 @@ class ScheduleRunner
                 return null;
             }
 
+            // Each run appends a turn to the schedule's standing thread.
             $run = $this->runs->start(new StartRun(
                 space: $space,
                 actor: $creator,
@@ -119,15 +121,15 @@ class ScheduleRunner
                 instructions: StartRun::TARGET_INSTRUCTIONS,
                 targets: ['type' => $type, 'ids' => array_column($entries, 'id')],
                 maxUsd: $schedule->max_usd,
+                conversationId: $this->threads->forSchedule($schedule, self::SURFACES[$type])->id,
             ));
+            $run->forceFill(['mode' => AiRun::MODE_BACKGROUND])->save();
         } finally {
             $restore();
         }
 
-        $run->forceFill(['mode' => AiRun::MODE_BACKGROUND])->save();
         $schedule->forceFill(['last_run_id' => $run->id])->save();
-        broadcast(new AiInboxChanged($space->id, runId: $run->id));
-        RunAgentJob::dispatch($run->id);
+        RunAgentJob::dispatch($run->space_id, $run->id);
 
         return $run;
     }

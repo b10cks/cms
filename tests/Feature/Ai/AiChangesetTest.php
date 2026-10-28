@@ -5,11 +5,12 @@ namespace Tests\Feature\Ai;
 use App\Actions\Content\UpdateContent;
 use App\Enums\AiChangesetItemStatus;
 use App\Enums\AiRunState;
-use App\Models\Management\AiChangeset;
-use App\Models\Management\AiChangesetItem;
-use App\Models\Management\AiRun;
+use App\Events\Space\ContentUpdated;
 use App\Models\Management\AiSkill;
 use App\Models\Management\Space;
+use App\Models\Space\AiChangeset;
+use App\Models\Space\AiChangesetItem;
+use App\Models\Space\AiRun;
 use App\Models\Space\Block;
 use App\Models\Space\Content;
 use App\Models\Space\ContentVersion;
@@ -23,6 +24,7 @@ use App\Services\Ai\Run\TurnResult;
 use App\Services\Ai\Run\TurnUsage;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Str;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\Support\FakeAiDriver;
@@ -95,11 +97,14 @@ class AiChangesetTest extends TestCase
         $this->runToEnd();
 
         $changeset = AiChangeset::query()->sole();
-        $this->postJson($this->url("ai/changesets/{$changeset->id}/accept"))
+        Event::fake([ContentUpdated::class]);
+        $this->postJson($this->url("ai/changesets/{$changeset->id}/accept"), [], ['X-Socket-ID' => '1234.5678'])
             ->assertOk()
             ->assertJsonPath('accepted', 1)
             ->assertJsonPath('data.status', 'applied');
 
+        // The tab that accepted has the entry open, so the broadcast includes it.
+        Event::assertDispatched(ContentUpdated::class, fn (ContentUpdated $event) => $event->socket === null);
         $content->refresh()->load('current_version');
         $this->assertSame(['title' => 'Hello there', 'summary' => 'World'], $content->current_version->content);
         $this->assertNotSame($publishedVersionId, $content->current_version_id);
@@ -157,7 +162,7 @@ class AiChangesetTest extends TestCase
     }
 
     #[Test]
-    public function a_background_run_hitting_its_usd_cap_stops_with_a_partial_changeset_in_the_inbox(): void
+    public function a_background_run_hitting_its_usd_cap_stops_with_a_partial_changeset_in_its_thread(): void
     {
         config(['ai.runs.max_usd' => 0.05]);
         $pages = [
@@ -182,12 +187,15 @@ class AiChangesetTest extends TestCase
         $this->assertSame('max_usd', $run->setup['stopped_by']);
         $this->assertSame(2, $this->driver->calls);
 
-        $this->getJson($this->url('ai/inbox'))
+        $this->getJson($this->url('ai/threads'))
             ->assertOk()
-            ->assertJsonPath('count', 1)
-            ->assertJsonPath('changesets.0.item_count', 2)
-            ->assertJsonPath('changesets.0.run.partial', true)
-            ->assertJsonPath('changesets.0.run.stopped_by', 'max_usd');
+            ->assertJsonPath('meta.attention', 1)
+            ->assertJsonPath('data.0.status', 'needs_review')
+            ->assertJsonPath('data.0.entry_count', 2);
+        $this->getJson($this->url("ai/threads/{$run->conversation_id}"))
+            ->assertJsonPath('data.turns.0.changeset.item_count', 2)
+            ->assertJsonPath('data.turns.0.changeset.run.partial', true)
+            ->assertJsonPath('data.turns.0.changeset.run.stopped_by', 'max_usd');
     }
 
     #[Test]
@@ -288,6 +296,86 @@ class AiChangesetTest extends TestCase
     /**
      * @param  array<string, mixed>  $changes
      */
+    #[Test]
+    public function inserting_a_block_and_editing_another_in_the_same_list_become_one_item_that_applies(): void
+    {
+        $page = $this->pageWithBlocks();
+        $content = $this->publishedPage(['title' => 'Home', 'body' => [
+            ['id' => 'b1', 'block' => 'hero', 'heading' => 'One'],
+            ['id' => 'b2', 'block' => 'hero', 'heading' => 'Two'],
+        ]], $page);
+        $this->driver->push($this->proposeChanges($content, [
+            ['path' => 'body.b2.heading', 'value' => 'Two, better'],
+            ['path' => 'body', 'insert' => ['block' => 'hero', 'values' => ['heading' => 'New']], 'after' => 'b1'],
+        ]), FakeAiDriver::text('Done.'));
+
+        $run = $this->runToEnd();
+
+        $item = AiChangesetItem::query()->sole();
+        $this->assertSame(['body', 'blocks'], [$item->path, $item->field_type]);
+        $result = json_decode((string) collect($run->transcript)->firstWhere('role', 'tool')['content'], true);
+        $newId = $result['inserted_blocks'][0]['id'];
+
+        $this->postJson($this->url("ai/changesets/{$item->changeset_id}/accept"))->assertOk()->assertJsonPath('accepted', 1);
+
+        $body = $content->refresh()->load('current_version')->current_version->content['body'];
+        $this->assertSame(['b1', $newId, 'b2'], array_column($body, 'id'));
+        $this->assertSame(['One', 'New', 'Two, better'], array_column($body, 'heading'));
+    }
+
+    #[Test]
+    public function a_block_outside_the_whitelist_is_refused_and_a_removal_drops_the_block(): void
+    {
+        $page = $this->pageWithBlocks();
+        $content = $this->publishedPage(['title' => 'Home', 'body' => [
+            ['id' => 'b1', 'block' => 'hero', 'heading' => 'One'],
+            ['id' => 'b2', 'block' => 'hero', 'heading' => 'Two'],
+        ]], $page);
+        $this->driver->push(
+            $this->proposeChanges($content, [['path' => 'body', 'insert' => ['block' => 'quote', 'values' => ['text' => 'Hi']]]]),
+            $this->proposeChanges($content, [['path' => 'body', 'remove' => 'b1']]),
+            FakeAiDriver::text('Done.'),
+        );
+
+        $run = $this->runToEnd();
+
+        $refusal = json_decode((string) collect($run->transcript)->where('role', 'tool')->first()['content'], true)['error'];
+        $this->assertStringContainsString('"quote" is not allowed here. Allowed: hero.', $refusal);
+        $this->assertSame(['b2'], array_column(AiChangesetItem::query()->sole()->after, 'id'));
+    }
+
+    /**
+     * @param  list<array<string, mixed>>  $changes
+     */
+    private function proposeChanges(Content $content, array $changes): TurnResult
+    {
+        return new TurnResult('', [new ToolCall('call_'.Str::random(6), 'propose_update', [
+            'target_type' => 'content',
+            'id' => $content->id,
+            'version_id' => $content->current_version_id,
+            'changes' => $changes,
+        ])], new TurnUsage(10, 5));
+    }
+
+    /** A page whose `body` block list allows only heroes; quotes exist but are not allowed there. */
+    private function pageWithBlocks(): Block
+    {
+        foreach (['hero' => ['heading' => ['type' => 'text', 'name' => 'Heading']], 'quote' => ['text' => ['type' => 'text', 'name' => 'Text']]] as $slug => $schema) {
+            Block::query()->create(['external_id' => (string) Str::uuid(), 'name' => ucfirst($slug), 'slug' => $slug, 'type' => 'nestable', 'schema' => $schema]);
+        }
+
+        return Block::query()->create([
+            'external_id' => (string) Str::uuid(),
+            'name' => 'Landing',
+            'slug' => 'landing',
+            'type' => 'root',
+            'schema' => [
+                'title' => ['type' => 'text', 'name' => 'Title'],
+                'body' => ['type' => 'blocks', 'name' => 'Body', 'restrict_blocks' => true, 'block_whitelist' => ['hero']],
+            ],
+        ]);
+    }
+
     private function propose(Content $content, array $changes, ?string $versionId = null, ?float $cost = null): TurnResult
     {
         return new TurnResult('', [new ToolCall('call_'.Str::random(6), 'propose_update', [

@@ -4,17 +4,18 @@ namespace App\Actions\Ai;
 
 use App\Actions\Content\CreateContent;
 use App\Enums\AiChangesetItemStatus;
-use App\Events\Ai\AiInboxChanged;
-use App\Models\Management\AiChangeset;
-use App\Models\Management\AiChangesetItem;
 use App\Models\Management\Space;
+use App\Models\Space\AiChangeset;
+use App\Models\Space\AiChangesetItem;
 use App\Models\Space\Content;
 use App\Models\User;
+use App\Services\Ai\Changesets\BlockTarget;
 use App\Services\Ai\Changesets\CanonicalJson;
 use App\Services\Ai\Changesets\ChangeTargets;
 use App\Services\Ai\Changesets\FieldPath;
 use App\Services\Ai\Learning\EditLearning;
 use App\Services\Ai\Run\ToolError;
+use App\Services\Ai\Threads\AiThreads;
 use App\Services\Auth\AuthorizationService;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Collection;
@@ -34,6 +35,7 @@ class AcceptAiChangesetItems
         private readonly AuthorizationService $auth,
         private readonly CreateContent $createContent,
         private readonly EditLearning $learning,
+        private readonly AiThreads $threads,
     ) {}
 
     /**
@@ -79,9 +81,7 @@ class AcceptAiChangesetItems
         }
 
         $changeset->refreshCounts();
-        if (! $changeset->inline) {
-            broadcast(new AiInboxChanged($space->id, changesetId: $changeset->id));
-        }
+        $this->threads->changedByRun($changeset->run_id);
 
         return ['accepted' => $accepted, 'conflicts' => $conflicts];
     }
@@ -162,6 +162,20 @@ class AcceptAiChangesetItems
      */
     private function create(AiChangesetItem $item, Space $space, User $user): array
     {
+        if ($item->target_type === AiChangesetItem::TARGET_BLOCK) {
+            $target = $this->targets->for(AiChangesetItem::TARGET_BLOCK);
+            \assert($target instanceof BlockTarget);
+
+            try {
+                // Another block may have taken the slug since.
+                $item->target_id = $target->create($target->validateNew((array) $item->after))->id;
+            } catch (ToolError $e) {
+                throw ValidationException::withMessages(['items' => [$e->getMessage()]]);
+            }
+
+            return [collect([$item]), collect()];
+        }
+
         $content = new Content;
         $this->createContent->execute((array) $item->after, $content, $space, $user);
         $item->target_id = $content->id;

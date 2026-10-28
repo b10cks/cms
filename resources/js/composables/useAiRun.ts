@@ -47,12 +47,18 @@ const FOLLOW_INTERVAL = 4000
  * moves to the background (Reverb nudges plus catch-up by `seq`), pauses for
  * questionnaires and resumes with answers. `start()` resolves once the run
  * completes, fails or is cancelled.
+ *
+ * A run belongs to the space it started in. When `spaceId` changes, the run
+ * is let go as if its screen closed: an inline run ends with its stream, a
+ * background one keeps going on the server.
  */
 export function useAiRun(spaceId: MaybeRefOrGetter<string>) {
   const { t } = useI18n()
   const { user } = useAuth()
 
   const runId = ref<string | null>(null)
+  /** The run's thread, known once the server started it */
+  const conversationId = ref<string | null>(null)
   const status = ref<AiRunStatus>('idle')
   const text = ref('')
   const activeTool = ref<string | null>(null)
@@ -65,6 +71,8 @@ export function useAiRun(spaceId: MaybeRefOrGetter<string>) {
   const error = shallowRef<AiRunError | null>(null)
 
   let lastSeq = 0
+  /** The space the current run started in; its requests go there. */
+  let runSpaceId = ''
   let options: AiRunOptions = {}
   let controller: AbortController | null = null
   let settle: ((outcome: AiRunOutcome) => void) | null = null
@@ -92,6 +100,7 @@ export function useAiRun(spaceId: MaybeRefOrGetter<string>) {
     switch (event.type) {
       case 'run_started':
         status.value = 'running'
+        conversationId.value = event.conversation_id ?? conversationId.value
         break
       case 'text_delta':
         text.value += event.text
@@ -155,11 +164,12 @@ export function useAiRun(spaceId: MaybeRefOrGetter<string>) {
     const id = runId.value
     if (!id) return
 
-    const response = await api.forSpace(toValue(spaceId)).ai.getRunEvents(id, lastSeq)
+    const response = await api.forSpace(runSpaceId).ai.getRunEvents(id, lastSeq)
     for (const raw of response.data) {
       const event = toAiRunEvent(raw)
       if (event) apply(event)
     }
+    conversationId.value = response.run.conversation_id ?? conversationId.value
     reconcile(response.run)
   }
 
@@ -212,6 +222,7 @@ export function useAiRun(spaceId: MaybeRefOrGetter<string>) {
       if (response.headers.get('Content-Type')?.includes('application/json')) {
         const { data } = (await response.json()) as { data: AiRunRecord }
         runId.value = data.id
+        conversationId.value = data.conversation_id ?? conversationId.value
         status.value = data.mode === 'background' ? 'background' : status.value
         follow()
         return
@@ -236,6 +247,7 @@ export function useAiRun(spaceId: MaybeRefOrGetter<string>) {
     stopFollowing?.()
     controller?.abort()
     runId.value = null
+    conversationId.value = null
     status.value = 'idle'
     text.value = ''
     activeTool.value = null
@@ -249,20 +261,27 @@ export function useAiRun(spaceId: MaybeRefOrGetter<string>) {
     lastSeq = 0
   }
 
+  /** Settle a pending `start()` as cancelled and forget the run locally. */
+  const release = () => {
+    settle?.({ status: 'cancelled', result: null, partial: false, error: null })
+    settle = null
+    reset()
+  }
+
   const start = <TData = unknown>(
     request: StartAiRunRequest,
     runOptions: AiRunOptions = {}
   ): Promise<AiRunOutcome<TData>> => {
-    settle?.({ status: 'cancelled', result: null, partial: false, error: null })
-    reset()
+    release()
     options = runOptions
+    runSpaceId = toValue(spaceId)
     status.value = 'running'
 
     const outcome = new Promise<AiRunOutcome>((resolve) => {
       settle = resolve
     })
 
-    void send(aiRunUrl(toValue(spaceId)), {
+    void send(aiRunUrl(runSpaceId), {
       idempotency_key: crypto.randomUUID(),
       ...request,
     })
@@ -277,7 +296,7 @@ export function useAiRun(spaceId: MaybeRefOrGetter<string>) {
 
     questionnaire.value = null
     status.value = 'running'
-    await send(aiRunUrl(toValue(spaceId), `/${id}/answers`), { answers })
+    await send(aiRunUrl(runSpaceId, `/${id}/answers`), { answers })
   }
 
   const cancel = async () => {
@@ -287,8 +306,10 @@ export function useAiRun(spaceId: MaybeRefOrGetter<string>) {
     stopFollowing?.()
 
     if (wasPending) finish('cancelled')
-    if (id) await api.forSpace(toValue(spaceId)).ai.cancelRun(id).catch(() => {})
+    if (id) await api.forSpace(runSpaceId).ai.cancelRun(id).catch(() => {})
   }
+
+  watch(() => toValue(spaceId), release)
 
   if (getCurrentScope()) {
     onScopeDispose(() => {
@@ -301,6 +322,7 @@ export function useAiRun(spaceId: MaybeRefOrGetter<string>) {
 
   return {
     runId: readonly(runId),
+    conversationId: readonly(conversationId),
     status: readonly(status),
     isActive,
     text: readonly(text),

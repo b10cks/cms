@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import AppHeader from '~/components/AppHeader.vue'
+import AiDock from '~/components/ai/threads/AiDock.vue'
 import AppSidebar from '~/components/AppSidebar.vue'
 import PendingSubscriptionBanner from '~/components/PendingSubscriptionBanner.vue'
+import { aiThreadRunKey } from '~/lib/aiDock'
 import { runtimeConfig } from '~/lib/runtime-config'
 
 const { useCurrentSpaceQuery } = useSpaces()
@@ -24,6 +26,9 @@ useSeoMeta({
 provide('spaceId', spaceId)
 
 useSpaceBroadcasts(spaceId)
+
+// The dock and the threads page share one run, so it outlives both.
+provide(aiThreadRunKey, useAiRun(() => spaceId.value ?? ''))
 useUserNotifications()
 
 const { t } = useI18n()
@@ -82,10 +87,14 @@ useShortcut({
       <main
         id="main-content"
         tabindex="-1"
-        class="flex min-h-0 grow w-[calc(100%-3.5rem)] overflow-x-clip focus:outline-none"
+        class="flex min-h-0 min-w-0 grow w-[calc(100%-3.5rem)] overflow-x-clip focus:outline-none"
       >
         <slot />
       </main>
+      <AiDock
+        v-if="spaceId"
+        :space-id="spaceId"
+      />
     </div>
   </div>
 </template>

@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import type { AiResolvedSkill } from '~/api/resources/ai'
 import AiCommandItems from '~/components/ai/AiCommandItems.vue'
-import AiTaskDialog from '~/components/ai/AiTaskDialog.vue'
 import Icon from '~/components/Icon.vue'
 import NuxtImg from '~/components/NuxtImg.vue'
 import SpaceBadge from '~/components/space/SpaceBadge.vue'
@@ -15,6 +14,7 @@ import {
 } from '~/components/ui/command'
 import { DialogTitle } from '~/components/ui/dialog'
 import { getActionAccessRequirement } from '~/lib/access-control'
+import { startThread } from '~/lib/aiDock'
 
 const route = useRoute()
 const router = useRouter()
@@ -72,13 +72,10 @@ useShortcut({
 })
 
 const canUseAi = computed(() => !!spaceId.value && access.hasAbility('content.manage'))
-const aiTask = ref<{ prompt: string; skill: AiResolvedSkill | null }>({ prompt: '', skill: null })
-const aiTaskOpen = ref(false)
-
+/** Ask AI and skill items start a thread in the dock with the current screen attached. */
 const startAiTask = (task: { prompt: string; skill: AiResolvedSkill | null }) => {
-  aiTask.value = task
   open.value = false
-  aiTaskOpen.value = true
+  startThread({ prompt: task.prompt, skill: task.skill?.name ?? null, send: true })
 }
 
 const jumpTo = (url: string) => {
@@ -169,11 +166,4 @@ const jumpTo = (url: string) => {
       </CommandGroup>
     </CommandList>
   </CommandDialog>
-  <AiTaskDialog
-    v-if="canUseAi"
-    v-model:open="aiTaskOpen"
-    :space-id="spaceId"
-    :prompt="aiTask.prompt"
-    :skill="aiTask.skill"
-  />
 </template>

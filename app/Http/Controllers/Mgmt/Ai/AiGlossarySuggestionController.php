@@ -6,12 +6,12 @@ use App\Actions\Ai\AcceptAiGlossarySuggestion;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Ai\AcceptAiGlossarySuggestionRequest;
 use App\Http\Resources\Management\Ai\AiGlossaryTermResource;
-use App\Models\Management\AiGlossarySuggestion;
 use App\Models\Management\Space;
+use App\Models\Space\AiGlossarySuggestion;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
-/** Learning suggestions from the inbox: accept into a glossary or dismiss. */
+/** Learning suggestions from the suggestions thread: accept into a glossary or dismiss. */
 class AiGlossarySuggestionController extends Controller
 {
     public function accept(AcceptAiGlossarySuggestionRequest $request, Space $space, string $suggestion, AcceptAiGlossarySuggestion $action): AiGlossaryTermResource

@@ -3,6 +3,7 @@ import type { Ref } from 'vue'
 import { RouterLink } from 'vue-router'
 
 import Logo from '~/assets/logo.svg'
+import AiDockButton from '~/components/ai/threads/AiDockButton.vue'
 import Icon from '~/components/Icon.vue'
 import NuxtImg from '~/components/NuxtImg.vue'
 import SpaceBadge from '~/components/space/SpaceBadge.vue'
@@ -204,6 +205,10 @@ const logout = () => {
       <div id="appHeaderActions">
         <slot name="headerActions" />
       </div>
+      <AiDockButton
+        v-if="selectedSpaceId"
+        :space-id="selectedSpaceId"
+      />
     </div>
   </div>
 </template>

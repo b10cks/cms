@@ -1,15 +1,17 @@
 <?php
 
+use App\Http\Controllers\Mgmt\Ai\AiAttachmentController;
 use App\Http\Controllers\Mgmt\Ai\AiChangesetController;
 use App\Http\Controllers\Mgmt\Ai\AiContextController;
 use App\Http\Controllers\Mgmt\Ai\AiGlossaryController;
 use App\Http\Controllers\Mgmt\Ai\AiGlossarySuggestionController;
-use App\Http\Controllers\Mgmt\Ai\AiScheduleController;
 use App\Http\Controllers\Mgmt\Ai\AiKnowledgeDocumentController;
 use App\Http\Controllers\Mgmt\Ai\AiModelsController;
 use App\Http\Controllers\Mgmt\Ai\AiPreflightController;
 use App\Http\Controllers\Mgmt\Ai\AiRunController;
+use App\Http\Controllers\Mgmt\Ai\AiScheduleController;
 use App\Http\Controllers\Mgmt\Ai\AiSkillController;
+use App\Http\Controllers\Mgmt\Ai\AiThreadController;
 use App\Http\Controllers\Mgmt\Ai\AssetClassificationController;
 use App\Http\Controllers\Mgmt\Ai\AvailableModelsController;
 use App\Http\Controllers\Mgmt\Ai\SpaceAiConfigController;
@@ -218,6 +220,7 @@ Route::delete('space-blueprints/{blueprint}', [SystemSpaceBlueprintController::c
 $aiKnowledgeRoutes = static function (string $name): void {
     Route::get('ai/skills', [AiSkillController::class, 'index'])->name("{$name}.ai.skills.index");
     Route::post('ai/skills', [AiSkillController::class, 'store'])->name("{$name}.ai.skills.store");
+    Route::post('ai/skills/customize', [AiSkillController::class, 'customize'])->name("{$name}.ai.skills.customize");
     Route::get('ai/skills/{skill}', [AiSkillController::class, 'show'])->name("{$name}.ai.skills.show");
     Route::patch('ai/skills/{skill}', [AiSkillController::class, 'update'])->name("{$name}.ai.skills.update");
     Route::delete('ai/skills/{skill}', [AiSkillController::class, 'destroy'])->name("{$name}.ai.skills.destroy");
@@ -290,8 +293,12 @@ Route::group(['prefix' => 'spaces/{space}', 'middleware' => 'space.member'], fun
     Route::get('ai/runs/{run}/events', [AiRunController::class, 'events'])->name('spaces.ai.runs.events');
     Route::post('ai/runs/{run}/answers', [AiRunController::class, 'answer'])->name('spaces.ai.runs.answer');
     Route::post('ai/runs/{run}/cancel', [AiRunController::class, 'cancel'])->name('spaces.ai.runs.cancel');
+    Route::post('ai/attachments', [AiAttachmentController::class, 'store'])->name('spaces.ai.attachments.store');
+    Route::get('ai/attachments/{attachment}', [AiAttachmentController::class, 'show'])->name('spaces.ai.attachments.show');
     Route::post('ai/preflight', AiPreflightController::class)->name('spaces.ai.preflight');
-    Route::get('ai/inbox', [AiChangesetController::class, 'inbox'])->name('spaces.ai.inbox');
+    Route::get('ai/threads', [AiThreadController::class, 'index'])->name('spaces.ai.threads.index');
+    Route::get('ai/threads/{thread}', [AiThreadController::class, 'show'])->name('spaces.ai.threads.show');
+    Route::patch('ai/threads/{thread}', [AiThreadController::class, 'update'])->name('spaces.ai.threads.update');
     Route::get('ai/changesets/{changeset}', [AiChangesetController::class, 'show'])->name('spaces.ai.changesets.show');
     Route::post('ai/changesets/{changeset}/accept', [AiChangesetController::class, 'accept'])->name('spaces.ai.changesets.accept');
     Route::post('ai/changesets/{changeset}/reject', [AiChangesetController::class, 'reject'])->name('spaces.ai.changesets.reject');

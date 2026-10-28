@@ -162,6 +162,8 @@ Roles here apply to this space. Where the space belongs to a team, team members 
 
 A backup is a single archive containing the space's database content and the files from its media library. It is built in the background, so you can start one and close the tab.
 
+Files attached to AI messages are included too, under `backup/transfers/`, at the path stored in each attachment's `url`. If one of them can't be read, the backup fails instead of finishing incomplete.
+
 When creating one you set:
 
 - **Name and description**, so a list of twenty backups is still readable in six months.

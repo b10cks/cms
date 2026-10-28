@@ -3,17 +3,17 @@
 namespace App\Http\Controllers\Mgmt\Ai;
 
 use App\Enums\AiRunState;
-use App\Events\Ai\AiInboxChanged;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Ai\AnswerAiRunRequest;
 use App\Http\Requests\Ai\StartAiRunRequest;
 use App\Http\Resources\Management\Ai\AiRunEventResource;
 use App\Http\Resources\Management\Ai\AiRunResource;
 use App\Jobs\RunAgentJob;
-use App\Models\Management\AiConversation;
-use App\Models\Management\AiRun;
 use App\Models\Management\Space;
+use App\Models\Space\AiConversation;
+use App\Models\Space\AiRun;
 use App\Services\Ai\AiRunService;
+use App\Services\Ai\Attachments\AiAttachments;
 use App\Services\Ai\Changesets\ChangeTargets;
 use App\Services\Ai\Changesets\EntryScope;
 use App\Services\Ai\Run\RunBusy;
@@ -37,13 +37,14 @@ use Symfony\Component\HttpFoundation\Response;
  */
 class AiRunController extends Controller
 {
-    public function store(StartAiRunRequest $request, Space $space, AiRunService $runs, SkillResolver $skills, EntryScope $scope): Response
+    public function store(StartAiRunRequest $request, Space $space, AiRunService $runs, SkillResolver $skills, EntryScope $scope, AiAttachments $attachments): Response
     {
         $skill = null;
         if ($name = $request->input('skill')) {
             $skill = $skills->resolve($space)[$name] ?? throw ValidationException::withMessages(['skill' => ['This skill is not available in the space.']]);
         }
 
+        // Only the owner sends follow-ups, also in a shared thread.
         $conversationId = $request->input('conversation_id');
         if ($conversationId !== null) {
             abort_unless(AiConversation::query()
@@ -59,6 +60,8 @@ class AiRunController extends Controller
             $context['targets'] = $targets['context'];
         }
 
+        $files = $attachments->claimable((array) $request->input('attachments', []), $space, $request->user());
+
         $start = new StartRun(
             space: $space,
             actor: $request->user(),
@@ -69,8 +72,10 @@ class AiRunController extends Controller
             config: $request->filled('config_id') ? $space->aiConfigs()->find($request->input('config_id')) : null,
             idempotencyKey: $request->input('idempotency_key'),
             conversationId: $conversationId,
+            attachments: $files->all(),
             instructions: $targets !== null ? StartRun::TARGET_INSTRUCTIONS : '',
             targets: $targets['frozen'] ?? null,
+            opensThread: $conversationId === null,
         );
 
         // More entries than an inline request may touch always run in the background.
@@ -115,8 +120,7 @@ class AiRunController extends Controller
 
             if ($run->wasRecentlyCreated) {
                 $run->forceFill(['mode' => AiRun::MODE_BACKGROUND])->save();
-                broadcast(new AiInboxChanged($space->id, runId: $run->id));
-                RunAgentJob::dispatch($run->id);
+                RunAgentJob::dispatch($run->space_id, $run->id);
             }
 
             return response()->json(['data' => new AiRunResource($run)], $run->wasRecentlyCreated ? 202 : 200);
@@ -166,7 +170,7 @@ class AiRunController extends Controller
         $model = $runs->answer($this->findRun($request, $space, $run), $request->user(), $request->input('answers', []));
 
         if ($model->mode === AiRun::MODE_BACKGROUND) {
-            RunAgentJob::dispatch($model->id);
+            RunAgentJob::dispatch($model->space_id, $model->id);
 
             return response()->json(['data' => new AiRunResource($model)], 202);
         }
@@ -215,12 +219,14 @@ class AiRunController extends Controller
         } catch (\Throwable $e) {
             yield from $runs->fail($run, null, 'internal_error', 'Something went wrong while generating.', $e);
         } finally {
-            $restore();
-
-            // Nobody follows an inline run once its stream is gone (closed tab).
-            $run->refresh();
-            if ($owned && $run->state === AiRunState::Running && $run->mode === AiRun::MODE_INLINE) {
-                $runs->cancel($run);
+            try {
+                // Nobody follows an inline run once its stream is gone (closed tab).
+                $run->refresh();
+                if ($owned && $run->state === AiRunState::Running && $run->mode === AiRun::MODE_INLINE) {
+                    $runs->cancel($run);
+                }
+            } finally {
+                $restore();
             }
         }
     }

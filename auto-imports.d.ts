@@ -95,15 +95,16 @@ declare global {
   const unref: typeof import('vue').unref
   const useAiConfigs: typeof import('./resources/js/composables/useAiModels').useAiConfigs
   const useAiErrorToast: typeof import('./resources/js/composables/useAiErrorToast').useAiErrorToast
-  const useAiInbox: typeof import('./resources/js/composables/useAiInbox').useAiInbox
   const useAiKnowledge: typeof import('./resources/js/composables/useAiKnowledge').useAiKnowledge
   const useAiMentions: typeof import('./resources/js/composables/useAiMentions').useAiMentions
   const useAiModels: typeof import('./resources/js/composables/useAiModels').useAiModels
   const useAiRun: typeof import('./resources/js/composables/useAiRun').useAiRun
   const useAiSchedules: typeof import('./resources/js/composables/useAiSchedules').useAiSchedules
+  const useAiScreenChips: typeof import('./resources/js/composables/useAiScreenChips').useAiScreenChips
   const useAiSettings: typeof import('./resources/js/composables/useAiModels').useAiSettings
   const useAiStream: typeof import('./resources/js/composables/useAiStream').useAiStream
   const useAiSurfaceSkills: typeof import('./resources/js/composables/useAiSurfaceSkills').useAiSurfaceSkills
+  const useAiThreads: typeof import('./resources/js/composables/useAiThreads').useAiThreads
   const useAiUsage: typeof import('./resources/js/composables/useAiModels').useAiUsage
   const useAlertDialog: typeof import('./resources/js/composables/useAlertDialog').useAlertDialog
   const useApiClient: typeof import('./resources/js/composables/useApiClient').useApiClient
@@ -423,15 +424,16 @@ declare module 'vue' {
     readonly unref: UnwrapRef<typeof import('vue')['unref']>
     readonly useAiConfigs: UnwrapRef<typeof import('./resources/js/composables/useAiModels')['useAiConfigs']>
     readonly useAiErrorToast: UnwrapRef<typeof import('./resources/js/composables/useAiErrorToast')['useAiErrorToast']>
-    readonly useAiInbox: UnwrapRef<typeof import('./resources/js/composables/useAiInbox')['useAiInbox']>
     readonly useAiKnowledge: UnwrapRef<typeof import('./resources/js/composables/useAiKnowledge')['useAiKnowledge']>
     readonly useAiMentions: UnwrapRef<typeof import('./resources/js/composables/useAiMentions')['useAiMentions']>
     readonly useAiModels: UnwrapRef<typeof import('./resources/js/composables/useAiModels')['useAiModels']>
     readonly useAiRun: UnwrapRef<typeof import('./resources/js/composables/useAiRun')['useAiRun']>
     readonly useAiSchedules: UnwrapRef<typeof import('./resources/js/composables/useAiSchedules')['useAiSchedules']>
+    readonly useAiScreenChips: UnwrapRef<typeof import('./resources/js/composables/useAiScreenChips')['useAiScreenChips']>
     readonly useAiSettings: UnwrapRef<typeof import('./resources/js/composables/useAiModels')['useAiSettings']>
     readonly useAiStream: UnwrapRef<typeof import('./resources/js/composables/useAiStream')['useAiStream']>
     readonly useAiSurfaceSkills: UnwrapRef<typeof import('./resources/js/composables/useAiSurfaceSkills')['useAiSurfaceSkills']>
+    readonly useAiThreads: UnwrapRef<typeof import('./resources/js/composables/useAiThreads')['useAiThreads']>
     readonly useAiUsage: UnwrapRef<typeof import('./resources/js/composables/useAiModels')['useAiUsage']>
     readonly useAlertDialog: UnwrapRef<typeof import('./resources/js/composables/useAlertDialog')['useAlertDialog']>
     readonly useApiClient: UnwrapRef<typeof import('./resources/js/composables/useApiClient')['useApiClient']>

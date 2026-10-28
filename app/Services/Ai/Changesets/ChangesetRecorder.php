@@ -3,19 +3,22 @@
 namespace App\Services\Ai\Changesets;
 
 use App\Enums\AiChangesetItemStatus;
-use App\Events\Ai\AiInboxChanged;
-use App\Models\Management\AiChangeset;
-use App\Models\Management\AiChangesetItem;
-use App\Models\Management\AiRun;
+use App\Models\Space\AiChangeset;
+use App\Models\Space\AiChangesetItem;
+use App\Models\Space\AiRun;
 use App\Services\Ai\Knowledge\GlossaryChecker;
 use App\Services\Ai\Knowledge\GlossaryTerm;
+use App\Services\Ai\Threads\AiThreads;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
 
 /** Writes a run's proposals into its changeset, one per run. */
 class ChangesetRecorder
 {
-    public function __construct(private readonly GlossaryChecker $checker) {}
+    public function __construct(
+        private readonly GlossaryChecker $checker,
+        private readonly AiThreads $threads,
+    ) {}
 
     /**
      * Store items, replacing a still pending proposal for the same field so
@@ -53,8 +56,9 @@ class ChangesetRecorder
 
         $changeset->refreshCounts();
 
+        // Only a background changeset puts its thread up for review.
         if (! $changeset->inline) {
-            broadcast(new AiInboxChanged($run->space_id, changesetId: $changeset->id));
+            $this->threads->changed($run->space_id, $run->conversation_id, activity: false);
         }
 
         return $created;

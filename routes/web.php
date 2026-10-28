@@ -74,6 +74,9 @@ Route::get('/teams/{team}/roles', AppController::class)->name('team-roles');
 Route::get('/teams/{team}/saml', AppController::class)->name('team-saml');
 Route::get('/teams/{team}/settings', AppController::class)->name('team-settings');
 Route::get('/teams/{team}/ai', AppController::class)->name('team-ai');
+Route::get('/teams/{team}/ai/skills/{skillId}', AppController::class)->name('team-ai-skill');
+Route::get('/teams/{team}/ai/documents/{documentId}', AppController::class)->name('team-ai-document');
+Route::get('/teams/{team}/ai/glossaries/{glossaryId}', AppController::class)->name('team-ai-glossary');
 
 // Account settings
 Route::get('/account/settings', AppController::class)->name('account-settings');
@@ -107,12 +110,17 @@ Route::get('/{space}/automations/automations', AppController::class)->name('spac
 Route::get('/{space}/automations/executions', AppController::class)->name('space-automations-executions');
 Route::get('/{space}/redirects', AppController::class)->name('space-redirects');
 Route::get('/{space}/mass-edit', AppController::class)->name('space-mass-edit');
-Route::get('/{space}/inbox', AppController::class)->name('space-ai-inbox');
+Route::get('/{space}/threads', AppController::class)->name('space-ai-threads');
+Route::get('/{space}/threads/{thread}', AppController::class)->name('space-ai-thread');
+Route::get('/{space}/inbox/{changeset?}', fn (string $space) => redirect("/{$space}/threads"))->name('space-ai-inbox');
 Route::get('/{space}/settings', AppController::class)->name('space-settings');
 Route::get('/{space}/settings/configuration', AppController::class)->name('space-settings-configuration');
 Route::get('/{space}/settings/ai', AppController::class)->name('space-settings-ai');
 Route::get('/{space}/settings/ai-skills', AppController::class)->name('space-settings-ai-skills');
+Route::get('/{space}/settings/ai-skills/{skillId}', AppController::class)->name('space-settings-ai-skill');
 Route::get('/{space}/settings/ai-knowledge', AppController::class)->name('space-settings-ai-knowledge');
+Route::get('/{space}/settings/ai-knowledge/documents/{documentId}', AppController::class)->name('space-settings-ai-document');
+Route::get('/{space}/settings/ai-knowledge/glossaries/{glossaryId}', AppController::class)->name('space-settings-ai-glossary');
 Route::get('/{space}/settings/ai-glossaries', AppController::class)->name('space-settings-ai-glossaries');
 Route::get('/{space}/settings/ai-schedules', AppController::class)->name('space-settings-ai-schedules');
 Route::get('/{space}/settings/people', AppController::class)->name('space-settings-people');

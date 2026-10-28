@@ -12,7 +12,9 @@ import { toastError } from '~/lib/toast-error'
 
 /**
  * Queries and mutations for the skills, knowledge documents and glossaries of
- * a space or team. Every mutation refreshes the owner's AI queries.
+ * a space or team. Document and glossary lists include the team layers above
+ * the owner, which are read-only here. Every mutation refreshes the owner's AI
+ * queries.
  */
 export function useAiKnowledge(owner: MaybeRefOrGetter<AiOwner>) {
   const { t } = useI18n()
@@ -40,10 +42,17 @@ export function useAiKnowledge(owner: MaybeRefOrGetter<AiOwner>) {
       queryFn: () => resource().skills(),
     })
 
+  const useSkillQuery = (id: MaybeRefOrGetter<string | null>) =>
+    useQuery({
+      queryKey: computed(() => keys.value.skill(toValue(id) ?? '')),
+      queryFn: async () => (await resource().skill(toValue(id) ?? '')).data,
+      enabled: computed(() => !!toValue(id)),
+    })
+
   const useDocumentsQuery = () =>
     useQuery({
       queryKey: computed(() => keys.value.documents()),
-      queryFn: async () => (await resource().documents()).data,
+      queryFn: async () => (await resource().documents(true)).data,
       // Extraction runs on the queue; poll while a document waits for it.
       refetchInterval: (query) =>
         query.state.data?.some((doc) => doc.extraction_status === 'pending') ? 3000 : false,
@@ -60,7 +69,7 @@ export function useAiKnowledge(owner: MaybeRefOrGetter<AiOwner>) {
   const useGlossariesQuery = () =>
     useQuery({
       queryKey: computed(() => keys.value.glossaries()),
-      queryFn: async () => (await resource().glossaries()).data,
+      queryFn: async () => (await resource().glossaries(true)).data,
     })
 
   const useTermsQuery = (
@@ -75,6 +84,7 @@ export function useAiKnowledge(owner: MaybeRefOrGetter<AiOwner>) {
 
   return {
     useSkillsQuery,
+    useSkillQuery,
     useDocumentsQuery,
     useDocumentQuery,
     useGlossariesQuery,
@@ -87,6 +97,8 @@ export function useAiKnowledge(owner: MaybeRefOrGetter<AiOwner>) {
         'composables.aiKnowledge.saved',
         'composables.aiKnowledge.saveError'
       ),
+    useCustomizeSkillMutation: () =>
+      mutation((name: string) => resource().customizeSkill(name), null, 'composables.aiKnowledge.saveError'),
     usePublishSkillMutation: () =>
       mutation((id: string) => resource().publishSkill(id), 'composables.aiKnowledge.published', 'composables.aiKnowledge.publishError'),
     useDeleteSkillMutation: () =>

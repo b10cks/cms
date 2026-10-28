@@ -2,6 +2,7 @@
 import type { MentionItem } from '~/api/resources/ai'
 import type { AiMentionItem } from '~/components/editor/extensions/AiMention'
 import Icon from '~/components/Icon.vue'
+import type { TipTapCommandItem } from '~/components/ui/input-group/InputGroupTipTap.vue'
 import AiConfigSelector from '~/components/ui/AiConfigSelector.vue'
 import {
   InputGroup,
@@ -37,6 +38,7 @@ const editorValue = computed({
 const emit = defineEmits<{
   (e: 'send', value: string, files: never[], configId: string | null, mentions: MentionItem[]): void
   (e: 'cancel'): void
+  (e: 'command', item: TipTapCommandItem): void
   (e: 'streamStart'): void
   (e: 'streamEnd'): void
 }>()
@@ -52,6 +54,10 @@ const props = withDefaults(
     showConfigSelector?: boolean
     directEmit?: boolean
     extraMentionItems?: AiMentionItem[]
+    /** `/` commands at the start of the input */
+    commands?: TipTapCommandItem[]
+    /** Send without text, when a picked skill is the task */
+    allowEmpty?: boolean
   }>(),
   {
     placeholder: '',
@@ -62,6 +68,8 @@ const props = withDefaults(
     showConfigSelector: true,
     directEmit: false,
     extraMentionItems: () => [],
+    commands: () => [],
+    allowEmpty: false,
   }
 )
 
@@ -91,7 +99,7 @@ const mergedMentionItems = computed(() => {
 
 const canSend = computed(
   () =>
-    (modelValue.value?.trim()?.length ?? 0) > 0 &&
+    ((modelValue.value?.trim()?.length ?? 0) > 0 || props.allowEmpty) &&
     !isStreaming.value &&
     !isThinking.value &&
     !props.loading &&
@@ -154,7 +162,7 @@ const handleSend = async () => {
   if (!canSend.value) return
 
   const prompt = (tiptapRef.value?.getTextWithMentions() ?? modelValue.value ?? '').trim()
-  if (!prompt) return
+  if (!prompt && !props.allowEmpty) return
 
   const editorMentions = tiptapRef.value?.getMentions() ?? []
 
@@ -251,6 +259,7 @@ const configError = computed(() => {
 defineExpose({
   clear,
   selectedConfigId,
+  focus: () => tiptapRef.value?.focus(),
 })
 </script>
 
@@ -311,13 +320,22 @@ defineExpose({
           : 'focus-within:ring-1 focus-within:ring-ai/30',
       ]"
     >
+      <InputGroupAddon
+        v-if="$slots.context"
+        align="block-start"
+        class="flex-wrap gap-1.5"
+      >
+        <slot name="context" />
+      </InputGroupAddon>
       <InputGroupTipTap
         ref="tiptapRef"
         v-model="editorValue"
         :placeholder="dynamicPlaceholder"
         :disabled="loading || isStreaming || isThinking"
         :mention-items="mergedMentionItems"
+        :commands="commands"
         @submit="handleSend"
+        @command="(item) => emit('command', item)"
       />
 
       <InputGroupAddon align="block-end">

@@ -2,13 +2,15 @@
 
 namespace App\Actions\Ai;
 
-use App\Events\Ai\AiInboxChanged;
+use App\Enums\AiThreadKind;
 use App\Models\Management\AiGlossary;
-use App\Models\Management\AiGlossarySuggestion;
 use App\Models\Management\AiGlossaryTerm;
 use App\Models\Management\Space;
 use App\Models\Management\Team;
+use App\Models\Space\AiConversation;
+use App\Models\Space\AiGlossarySuggestion;
 use App\Models\User;
+use App\Services\Ai\Threads\AiThreads;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\ValidationException;
@@ -19,6 +21,8 @@ use Illuminate\Validation\ValidationException;
  */
 class AcceptAiGlossarySuggestion
 {
+    public function __construct(private readonly AiThreads $threads) {}
+
     /**
      * Glossaries of the space and its owning team the user may add terms to.
      *
@@ -66,6 +70,10 @@ class AcceptAiGlossarySuggestion
             'decided_at' => now(),
         ]);
 
-        broadcast(new AiInboxChanged($suggestion->space_id));
+        $thread = AiConversation::query()
+            ->where('space_id', $suggestion->space_id)
+            ->where('kind', AiThreadKind::Suggestions->value)
+            ->value('id');
+        $this->threads->changed($suggestion->space_id, $thread);
     }
 }

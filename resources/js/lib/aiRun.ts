@@ -65,6 +65,10 @@ export interface AiRunRecord {
   error: string | null
   event_seq: number
   usage: AiRunUsage
+  /** The thread the run belongs to */
+  conversation_id?: string | null
+  started_at?: string | null
+  finished_at?: string | null
 }
 
 /** A changeset item a run added; review loads the changeset. */
@@ -87,6 +91,8 @@ export interface StartAiRunRequest {
   background?: boolean
   /** A confirmed preflight selection; the run may touch only these entries. */
   targets?: { type: string; ids: string[] }
+  /** Uploaded, unsent attachment IDs for the user message */
+  attachments?: string[]
 }
 
 interface EventBase {
@@ -95,7 +101,7 @@ interface EventBase {
 }
 
 export type AiRunEvent =
-  | (EventBase & { type: 'run_started'; skill: string | null; surface: string })
+  | (EventBase & { type: 'run_started'; skill: string | null; surface: string; conversation_id?: string | null })
   | (EventBase & { type: 'text_delta'; text: string })
   | (EventBase & { type: 'tool_started'; id: string; name: string })
   | (EventBase & { type: 'tool_finished'; id: string; name: string; ok: boolean })

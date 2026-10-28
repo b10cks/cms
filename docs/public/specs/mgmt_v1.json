@@ -2567,6 +2567,33 @@
                 ]
             }
         },
+        "/mgmt/v1/teams/{team}/ai/skills/customize": {
+            "post": {
+                "summary": "Copy an inherited skill (built-in or from a team above) into an editable",
+                "description": "Copy an inherited skill (built-in or from a team above) into an editable\ndraft of this owner. Publishing the copy makes it shadow the original.",
+                "tags": [
+                    "Ai"
+                ],
+                "operationId": "post_teams_by_team_ai_skills_customize",
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AiSkillResource"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/mgmt/v1/teams/{team}/ai/skills/{skill}": {
             "get": {
                 "summary": "Get a single skill",
@@ -2743,8 +2770,8 @@
         },
         "/mgmt/v1/teams/{team}/ai/knowledge": {
             "get": {
-                "summary": "List knowledge",
-                "description": "",
+                "summary": "`?inherited=1` adds the documents of the owning and ancestor teams, read-only for this owner",
+                "description": "`?inherited=1` adds the documents of the owning and ancestor teams, read-only for this owner.",
                 "tags": [
                     "Ai"
                 ],
@@ -3141,8 +3168,8 @@
         },
         "/mgmt/v1/teams/{team}/ai/glossaries": {
             "get": {
-                "summary": "List glossaries",
-                "description": "",
+                "summary": "`?inherited=1` adds the glossaries of the owning and ancestor teams, read-only for this owner",
+                "description": "`?inherited=1` adds the glossaries of the owning and ancestor teams, read-only for this owner.",
                 "tags": [
                     "Ai"
                 ],
@@ -6615,6 +6642,33 @@
                 ]
             }
         },
+        "/mgmt/v1/spaces/{space}/ai/skills/customize": {
+            "post": {
+                "summary": "Copy an inherited skill (built-in or from a team above) into an editable",
+                "description": "Copy an inherited skill (built-in or from a team above) into an editable\ndraft of this owner. Publishing the copy makes it shadow the original.",
+                "tags": [
+                    "Ai"
+                ],
+                "operationId": "post_spaces_by_space_ai_skills_customize",
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AiSkillResource"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/mgmt/v1/spaces/{space}/ai/skills/{skill}": {
             "get": {
                 "summary": "Get a single skill",
@@ -6791,8 +6845,8 @@
         },
         "/mgmt/v1/spaces/{space}/ai/knowledge": {
             "get": {
-                "summary": "List knowledge",
-                "description": "",
+                "summary": "`?inherited=1` adds the documents of the owning and ancestor teams, read-only for this owner",
+                "description": "`?inherited=1` adds the documents of the owning and ancestor teams, read-only for this owner.",
                 "tags": [
                     "Ai"
                 ],
@@ -7189,8 +7243,8 @@
         },
         "/mgmt/v1/spaces/{space}/ai/glossaries": {
             "get": {
-                "summary": "List glossaries",
-                "description": "",
+                "summary": "`?inherited=1` adds the glossaries of the owning and ancestor teams, read-only for this owner",
+                "description": "`?inherited=1` adds the glossaries of the owning and ancestor teams, read-only for this owner.",
                 "tags": [
                     "Ai"
                 ],
@@ -8002,6 +8056,13 @@
                                     "background": {
                                         "type": "boolean"
                                     },
+                                    "attachments": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string",
+                                            "maxLength": 40
+                                        }
+                                    },
                                     "targets": {
                                         "type": "object",
                                         "properties": {
@@ -8240,6 +8301,99 @@
                 ]
             }
         },
+        "/mgmt/v1/spaces/{space}/ai/attachments": {
+            "post": {
+                "summary": "Create attachments",
+                "description": "",
+                "tags": [
+                    "Ai"
+                ],
+                "operationId": "post_spaces_by_space_ai_attachments",
+                "parameters": [
+                    {
+                        "name": "space",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "The space identifier"
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "file": {
+                                        "type": "string",
+                                        "format": "binary",
+                                        "maxLength": 20480
+                                    }
+                                },
+                                "required": [
+                                    "file"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/mgmt/v1/spaces/{space}/ai/attachments/{attachment}": {
+            "get": {
+                "summary": "The uploader, or anyone who can view the thread the file was sent in",
+                "description": "The uploader, or anyone who can view the thread the file was sent in. Everyone else gets a 404.",
+                "tags": [
+                    "Ai"
+                ],
+                "operationId": "get_spaces_by_space_ai_attachments_by_attachment",
+                "parameters": [
+                    {
+                        "name": "space",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "The space identifier"
+                    },
+                    {
+                        "name": "attachment",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "The attachment identifier"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/mgmt/v1/spaces/{space}/ai/preflight": {
             "post": {
                 "summary": "Read-only pass before a bulk run: resolves the entries and estimates the",
@@ -8271,6 +8425,11 @@
                                         "type": "string",
                                         "maxLength": 64,
                                         "pattern": "^[a-z0-9:_-]+$"
+                                    },
+                                    "skill": {
+                                        "type": "string",
+                                        "maxLength": 64,
+                                        "nullable": true
                                     },
                                     "config_id": {
                                         "type": "string",
@@ -8323,14 +8482,14 @@
                 ]
             }
         },
-        "/mgmt/v1/spaces/{space}/ai/inbox": {
+        "/mgmt/v1/spaces/{space}/ai/threads": {
             "get": {
-                "summary": "List inbox",
+                "summary": "List threads",
                 "description": "",
                 "tags": [
                     "Ai"
                 ],
-                "operationId": "get_spaces_by_space_ai_inbox",
+                "operationId": "get_spaces_by_space_ai_threads",
                 "parameters": [
                     {
                         "name": "space",
@@ -8345,7 +8504,201 @@
                 ],
                 "responses": {
                     "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "description": "Paginated resource collection",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "description": "Collection of resources",
+                                            "items": {
+                                                "$ref": "#/components/schemas/AiThreadResource"
+                                            }
+                                        },
+                                        "links": {
+                                            "type": "object",
+                                            "description": "Pagination links",
+                                            "properties": {
+                                                "first": {
+                                                    "type": "string",
+                                                    "format": "uri",
+                                                    "description": "URL to the first page"
+                                                },
+                                                "last": {
+                                                    "type": "string",
+                                                    "format": "uri",
+                                                    "description": "URL to the last page"
+                                                },
+                                                "prev": {
+                                                    "type": "string",
+                                                    "format": "uri",
+                                                    "nullable": true,
+                                                    "description": "URL to the previous page"
+                                                },
+                                                "next": {
+                                                    "type": "string",
+                                                    "format": "uri",
+                                                    "nullable": true,
+                                                    "description": "URL to the next page"
+                                                }
+                                            }
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "description": "Pagination metadata",
+                                            "properties": {
+                                                "current_page": {
+                                                    "type": "integer",
+                                                    "description": "Current page number"
+                                                },
+                                                "from": {
+                                                    "type": "integer",
+                                                    "nullable": true,
+                                                    "description": "Index of first item on current page"
+                                                },
+                                                "last_page": {
+                                                    "type": "integer",
+                                                    "description": "Total number of pages"
+                                                },
+                                                "per_page": {
+                                                    "type": "integer",
+                                                    "description": "Number of items per page"
+                                                },
+                                                "to": {
+                                                    "type": "integer",
+                                                    "nullable": true,
+                                                    "description": "Index of last item on current page"
+                                                },
+                                                "total": {
+                                                    "type": "integer",
+                                                    "description": "Total number of items"
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "links",
+                                        "meta"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/mgmt/v1/spaces/{space}/ai/threads/{thread}": {
+            "get": {
+                "summary": "Get a single thread",
+                "description": "",
+                "tags": [
+                    "Ai"
+                ],
+                "operationId": "get_spaces_by_space_ai_threads_by_thread",
+                "parameters": [
+                    {
+                        "name": "space",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "The space identifier"
+                    },
+                    {
+                        "name": "thread",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "The thread identifier"
+                    }
+                ],
+                "responses": {
+                    "200": {
                         "description": "Successful response"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "patch": {
+                "summary": "Update thread",
+                "description": "",
+                "tags": [
+                    "Ai"
+                ],
+                "operationId": "patch_spaces_by_space_ai_threads_by_thread",
+                "parameters": [
+                    {
+                        "name": "space",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "The space identifier"
+                    },
+                    {
+                        "name": "thread",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "The thread identifier"
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "title": {
+                                        "type": "string",
+                                        "maxLength": 255
+                                    },
+                                    "shared": {
+                                        "type": "boolean"
+                                    },
+                                    "archived": {
+                                        "type": "boolean"
+                                    }
+                                },
+                                "required": [
+                                    "title"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AiThreadResource"
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [
@@ -24540,6 +24893,9 @@
                     "scope": {
                         "type": "string"
                     },
+                    "owner_id": {
+                        "nullable": true
+                    },
                     "slug": {
                         "type": "string"
                     },
@@ -24581,6 +24937,9 @@
                     },
                     "scope": {
                         "type": "string"
+                    },
+                    "owner_id": {
+                        "nullable": true
                     },
                     "name": {
                         "type": "string"
@@ -24892,6 +25251,9 @@
                     "id": {
                         "type": "string"
                     },
+                    "conversation_id": {
+                        "type": "string"
+                    },
                     "surface": {
                         "type": "string"
                     },
@@ -24946,6 +25308,50 @@
                         "nullable": true
                     },
                     "finished_at": {
+                        "nullable": true
+                    }
+                }
+            },
+            "AiThreadResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "kind": {
+                        "type": "string"
+                    },
+                    "title": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "type": "string"
+                    },
+                    "shared": {
+                        "type": "string"
+                    },
+                    "quiet": {
+                        "type": "string"
+                    },
+                    "archived": {
+                        "nullable": true
+                    },
+                    "last_activity_at": {
+                        "nullable": true
+                    },
+                    "owner": {
+                        "type": "string"
+                    },
+                    "is_owner": {
+                        "nullable": true
+                    },
+                    "entry_count": {
+                        "nullable": true
+                    },
+                    "context": {
+                        "type": "string"
+                    },
+                    "skill": {
                         "nullable": true
                     }
                 }

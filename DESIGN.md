@@ -43,3 +43,21 @@ Settled 2026-10-22.
 - Line charts are `TrendChart`: every series has a fading area gradient, zero-based scale whose middle tick is a whole number, 13px axes, a crosshair with the readout above the plot, one tab stop with arrow keys. Shares of a whole (content by type, data entries by source, assets by type) are `DistributionList` (stacked bar plus rows, linked hover), never a pie.
 - The activity calendar stays GitHub-style. Cell size is a whole pixel count derived from the panel width, so every gap is exactly 3px; the hovered day's count shows in the line under the grid.
 - Chart series colors come from `--series-1` to `--series-4` in that order, validated for colorblind separation in both modes.
+
+## AI surfaces
+
+Settled 2026-10-27. Concept: "Threads" in `docs/concepts/native-ai-integration.md`.
+
+- Every AI conversation and run lives in a thread, shown in the threads dock on the right of every space page. There is no inbox and no AI task dialog. Don't add a second global AI surface; extend the dock or Cmd+K.
+- The dock pushes the page on wide screens (resizable, width remembered) and overlays as a sheet below 1280px. Cmd+J toggles it. The header button carries the count of threads that need you; the main sidebar has no AI entry.
+- Feature buttons stay inside features. They start threads but open the dock only when there is something to review or answer. Bulk starts are the exception and open the dock on the running thread.
+- Proposals are cards in the thread, one per entry. Per-field accept and reject are icon buttons. A field shows a status badge only once it is decided. Cross-locale changes show source and translation side by side, same-locale edits show the word diff. More than five entries collapse into one summary card with Accept all and Reject all.
+- The dock copies T3 Code's thread list and composer: quiet, minimal, no borders between rows. Settled 2026-10-27, reference in the concept doc ("UI modelled on T3 Code").
+  - List header: ghost search row and a small square-pen icon button for a new thread. No text buttons, no archive switch.
+  - Rows are inbox cards: context line with the status (icon and label in the status color) or the relative time on the right, the title, an optional muted meta line.
+  - Done work is settled by hand ("Settle" on hover) and moves to the "Settled" shelf. The active list fills the height; the shelf is pinned to the bottom (one header line with a muted count) and opens upward. Settled rows are one line: title and time.
+  - Rows use the content tree highlight: `bg-tree-selected text-tree-selected-foreground` for the active row, `hover:bg-tree-hover`.
+  - Chrome (thread list, dock and thread headers) sits on `bg-sidebar`; the conversation body on `bg-background`, like the dashboard; the composer is the only card on it.
+  - Composer: one rounded-2xl surface with a hairline outline and soft shadow; the config picker on the left of the footer, attach and the round send button on the right. The config picker trigger is a ghost label with a small chevron; its list shows name, model in muted text below, and a check.
+  - Skills are not shown up front; `/` opens them.
+- AI settings (Skills, Knowledge, Schedules) have three nav entries. Each page has the title with the primary action top right; lists are one table with a type or source column. Glossary detail looks like a data source: one column per language, headed by the language name, not the locale code.

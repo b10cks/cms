@@ -12,6 +12,7 @@ use App\Http\Resources\Management\Ai\AiGlossaryTermResource;
 use App\Models\Management\AiGlossary;
 use App\Models\Management\Space;
 use App\Models\Management\Team;
+use App\Services\Ai\Knowledge\AiLayers;
 use App\Services\Ai\Knowledge\GlossaryTransfer;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -24,12 +25,17 @@ class AiGlossaryController extends Controller
 {
     use ResolvesAiOwner;
 
-    public function index(Request $request): AnonymousResourceCollection
+    /** `?inherited=1` adds the glossaries of the owning and ancestor teams, read-only for this owner. */
+    public function index(Request $request, AiLayers $layers): AnonymousResourceCollection
     {
         $owner = $this->aiOwner($request);
         $this->authorize('viewAny', [AiGlossary::class, $owner]);
 
-        return AiGlossaryResource::collection(AiGlossary::query()->ownedBy($owner)->withCount('terms')->orderBy('name')->get());
+        $query = $request->boolean('inherited')
+            ? AiGlossary::query()->inLayers($owner instanceof Space ? $owner->id : null, $layers->teamIds($owner))
+            : AiGlossary::query()->ownedBy($owner);
+
+        return AiGlossaryResource::collection($query->withCount('terms')->orderBy('name')->get());
     }
 
     public function store(SaveAiGlossaryRequest $request): AiGlossaryResource

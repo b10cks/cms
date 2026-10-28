@@ -49,13 +49,6 @@ const { data: currentSpace } = useSpaceQuery(computed(() => spaceId?.value))
 const { useDismissOnboardingMutation } = useOnboarding(computed(() => spaceId?.value ?? ''))
 const { mutate: dismissOnboarding } = useDismissOnboardingMutation()
 
-const { useInboxQuery } = useAiInbox(computed(() => spaceId?.value ?? ''))
-const { data: inbox } = useInboxQuery(computed(() => !!spaceId?.value))
-const inboxBadge = computed(() => {
-  const count = inbox.value?.count ?? 0
-  return count > 99 ? '99+' : count > 0 ? String(count) : null
-})
-
 const isOnboardingDismissed = computed(
   () => !!currentSpace.value?.settings?.onboarding_dismissed_at
 )
@@ -203,13 +196,6 @@ const availableLocales = locales
               </span>
             </RouterLink>
           </SimpleTooltip>
-          <span
-            v-if="m.routeName === 'space-ai-inbox' && inboxBadge"
-            class="pointer-events-none absolute -top-0.5 -right-0.5 flex min-w-4 items-center justify-center rounded-full bg-accent px-1 text-[10px] leading-4 font-semibold text-white"
-            :aria-label="t('labels.navigation.aiInboxCount', { count: inbox?.count ?? 0 })"
-          >
-            {{ inboxBadge }}
-          </span>
           <button
             v-if="m.routeName === 'space-onboarding' && canDismissOnboarding"
             type="button"

@@ -2,7 +2,7 @@
 
 namespace App\Http\Resources\Management\Ai;
 
-use App\Models\Management\AiRun;
+use App\Models\Space\AiRun;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -13,6 +13,7 @@ class AiRunResource extends JsonResource
     {
         return [
             'id' => $this->id,
+            'conversation_id' => $this->conversation_id,
             'surface' => $this->surface,
             'skill' => $this->skill,
             'model' => $this->model,

@@ -32,6 +32,26 @@ return [
         'max_output_corrections' => 2,
         // Background runs one space may have going at once; more are refused.
         'max_concurrent_background' => (int) env('AI_RUN_MAX_CONCURRENT_BACKGROUND', 2),
+        // Stored stream events only serve live replay and catch-up; the
+        // transcript stays on the run. They are pruned this many days after
+        // a run finished.
+        'event_retention_days' => (int) env('AI_RUN_EVENT_RETENTION_DAYS', 30),
+    ],
+
+    // Earlier turns and proposals a follow-up run in a thread sees, estimated
+    // at four characters per token. The oldest turns drop first.
+    'threads' => [
+        'history_tokens' => (int) env('AI_THREAD_HISTORY_TOKENS', 6000),
+    ],
+
+    // Files attached to a message. Documents reach the model as extracted
+    // text, capped per file; unsent uploads are pruned after a day.
+    'attachments' => [
+        'max_files' => 10,
+        'image_kb' => 5120,
+        'document_kb' => 20480,
+        'document_chars' => (int) env('AI_ATTACHMENT_DOCUMENT_CHARS', 50000),
+        'prune_after_hours' => 24,
     ],
 
     // Entries one request may change before it must run in the background

@@ -4,10 +4,12 @@ namespace Tests\Feature\Ai;
 
 use App\Actions\Content\PublishContent;
 use App\Enums\AiScope;
-use App\Models\Management\AiChangeset;
+use App\Enums\AiThreadKind;
 use App\Models\Management\AiGlossary;
-use App\Models\Management\AiGlossarySuggestion;
 use App\Models\Management\Space;
+use App\Models\Space\AiChangeset;
+use App\Models\Space\AiConversation;
+use App\Models\Space\AiGlossarySuggestion;
 use App\Models\Space\Block;
 use App\Models\Space\Content;
 use App\Models\Space\ContentVersion;
@@ -76,9 +78,11 @@ class AiLearningTest extends TestCase
 
         $suggestion = AiGlossarySuggestion::query()->sole();
         $this->assertSame(['basket', ['cart']], [$suggestion->term, $suggestion->forbidden]);
-        $this->getJson("/mgmt/v1/spaces/{$space->id}/ai/inbox")
-            ->assertJsonPath('suggestions.0.term', 'basket')
-            ->assertJsonPath('glossaries.0.id', $glossary->id);
+        $thread = AiConversation::query()->where('kind', AiThreadKind::Suggestions->value)->sole();
+        $this->getJson("/mgmt/v1/spaces/{$space->id}/ai/threads/{$thread->id}")
+            ->assertJsonPath('data.status', 'needs_review')
+            ->assertJsonPath('data.suggestions.0.term', 'basket')
+            ->assertJsonPath('data.glossaries.0.id', $glossary->id);
     }
 
     #[Test]

@@ -1,5 +1,8 @@
 <script setup lang="ts">
-import AiSkillsSettings from '~/components/ai-settings/AiSkillsSettings.vue'
+import AiSchedulesPanel from '~/components/ai-settings/AiSchedulesPanel.vue'
+import AiSkillsList from '~/components/ai-settings/AiSkillsList.vue'
+import Icon from '~/components/Icon.vue'
+import { Button } from '~/components/ui/button'
 import ContentHeader from '~/components/ui/ContentHeader.vue'
 
 const route = useRoute()
@@ -18,12 +21,31 @@ useSeoMeta({
 
 <template>
   <div class="content-grid">
-    <ContentHeader :header="$t('components.aiSettings.skills.title')" />
-    <div class="divide-y divide-border pt-6">
-      <AiSkillsSettings
-        :owner="owner"
-        :can-manage="canManage"
-      />
-    </div>
+    <ContentHeader
+      :header="$t('components.aiSettings.skills.title')"
+      :description="$t('components.aiSettings.skills.description')"
+    >
+      <template #actions>
+        <Button
+          v-if="canManage"
+          as-child
+          variant="primary"
+        >
+          <RouterLink :to="{ name: 'space-settings-ai-skill', params: { space: spaceId, skillId: 'new' } }">
+            <Icon name="lucide:plus" />
+            {{ $t('components.aiSettings.skills.create') }}
+          </RouterLink>
+        </Button>
+      </template>
+    </ContentHeader>
+    <AiSkillsList
+      :owner="owner"
+      :can-manage="canManage"
+    />
+    <AiSchedulesPanel
+      v-if="canManage"
+      :space-id="spaceId"
+      class="mt-4"
+    />
   </div>
 </template>

@@ -1193,9 +1193,7 @@
       "extendedSidebar": "Erweiterte Seitenleiste",
       "icons": "Icons",
       "onboarding": "Onboarding",
-      "massEdit": "Massenbearbeitung",
-      "aiInbox": "Posteingang",
-      "aiInboxCount": "{count} Einträge warten auf Prüfung"
+      "massEdit": "Massenbearbeitung"
     },
     "provider": {
       "title": "Provider",
@@ -2512,7 +2510,10 @@
         "creative": "Creative",
         "maxTokens": "Max Tokens",
         "maxTokensDescription": "Maximum number of tokens the AI can generate in a single response.",
-        "setAsDefault": "Set as default configuration"
+        "setAsDefault": "Set as default configuration",
+        "navLabel": "KI",
+        "features": "Funktionen",
+        "description": "Modelle, Konfigurationen und Verbrauch der KI in diesem Space."
       },
       "members": {
         "title": "Mitglieder",
@@ -4612,7 +4613,9 @@
       "blocks": "Blöcke",
       "noResults": "Keine Treffer gefunden",
       "hint": "Tippe {'@'} um Inhalte oder Blöcke zu erwähnen",
-      "suggestions": "Mention suggestions"
+      "suggestions": "Mention suggestions",
+      "assets": "Assets",
+      "documents": "Wissen"
     },
     "aiSettings": {
       "saveSuccess": "KI-Einstellungen erfolgreich gespeichert",
@@ -4637,13 +4640,13 @@
         "enabled": "Aktiv",
         "actions": "Aktionen",
         "source": "Quelle",
-        "surfaces": "Wo sie erscheint",
-        "shadows": "Ersetzt"
+        "surfaces": "Wo sie erscheint"
       },
       "status": {
         "draft": "Entwurf",
         "published": "Revision {revision}",
-        "changed": "Revision {revision}, geändert"
+        "changed": "Revision {revision}, geändert",
+        "unpublishedChanges": "Unveröffentlichte Änderungen"
       },
       "sources": {
         "space": "Space",
@@ -4652,44 +4655,58 @@
       },
       "skills": {
         "title": "Skills",
-        "description": "Anweisungen, die die KI für eine Aufgabe nutzt. Ein Skill in diesem Space ersetzt einen Team- oder eingebauten Skill gleichen Namens.",
+        "description": "Anweisungen, die die KI für eine Aufgabe nutzt. Passe einen integrierten Skill oder Team-Skill an, um ihn für diesen Space zu ändern; deine Kopie ersetzt das Original, sobald sie veröffentlicht ist.",
         "create": "Neuer Skill",
-        "edit": "Skill bearbeiten",
         "format": "SKILL.md mit Name und Beschreibung im Frontmatter. Zusatzdateien liest die KI bei Bedarf.",
         "filePath": "Dateipfad",
         "fileContent": "Inhalt",
         "addFile": "Datei hinzufügen",
-        "empty": "Noch keine Skills.",
+        "empty": "Keine Skills verfügbar.",
         "confirmDelete": "Skill {name} löschen?",
-        "resolvedTitle": "Verfügbare Skills",
-        "resolvedDescription": "Was die KI hier nach Auflösung von Space-, Team- und eingebauten Skills nutzt."
+        "customize": "Anpassen",
+        "back": "Skills",
+        "delete": "Skill löschen",
+        "details": "Skill",
+        "rawView": "SKILL.md roh",
+        "nameHint": "Die Kennung des Skills: Kleinbuchstaben, Ziffern und Bindestriche. Ein Skill mit dem Namen eines integrierten Skills oder Team-Skills ersetzt diesen.",
+        "descriptionLabel": "Beschreibung",
+        "descriptionHint": "Was der Skill tut und wann er passt. Die KI wählt Skills anhand dieses Texts.",
+        "instructions": "Anweisungen",
+        "otherSurfaces": "Erscheint auch in: {surfaces}. Diese in der Rohansicht bearbeiten.",
+        "removeFile": "{path} entfernen",
+        "notFound": "Diesen Skill gibt es nicht oder er wurde gelöscht."
       },
       "knowledge": {
         "title": "Wissen",
-        "description": "Styleguides gelten immer. Referenzdokumente werden durchsucht, wenn eine Aufgabe sie braucht.",
-        "create": "Neues Dokument",
-        "edit": "Dokument bearbeiten",
+        "description": "Styleguides werden immer befolgt. Dokumente werden durchsucht, wenn eine Aufgabe sie braucht. Glossare legen fest, welche Begriffe die KI verwenden, unübersetzt lassen oder vermeiden muss.",
         "editorHint": "Schreibe Markdown oder lade eine PDF- oder Word-Datei hoch. Läufe nutzen die veröffentlichte Revision.",
         "markdown": "Markdown",
         "upload": "PDF oder DOCX hochladen",
-        "empty": "Noch keine Dokumente.",
+        "empty": "Noch kein Wissen.",
         "confirmDelete": "Dokument {title} löschen?",
         "types": {
           "style": "Styleguide",
-          "reference": "Referenz"
+          "reference": "Dokument",
+          "glossary": "Glossar"
         },
         "extraction": {
           "pending": "Text wird extrahiert",
           "done": "Text extrahiert",
           "failed": "Extraktion fehlgeschlagen"
-        }
+        },
+        "new": "Neu",
+        "newOfType": {
+          "style": "Neuer Styleguide",
+          "reference": "Neues Dokument"
+        },
+        "back": "Wissen",
+        "delete": "Dokument löschen",
+        "replaceSource": "Datei ersetzen",
+        "notFound": "Dieses Dokument gibt es nicht oder es wurde gelöscht."
       },
       "glossaries": {
-        "title": "Glossare",
         "description": "Begriffe, die die KI verwenden, unübersetzt lassen oder vermeiden muss. Abweichungen werden am Text markiert.",
-        "create": "Hinzufügen",
-        "newName": "Neues Glossar",
-        "empty": "Noch keine Glossare.",
+        "create": "Neues Glossar",
         "emptyTerms": "Keine Begriffe gefunden.",
         "confirmDelete": "Glossar {name} mit allen Begriffen löschen?",
         "addTerm": "Begriff hinzufügen",
@@ -4704,13 +4721,21 @@
         "doNotTranslate": "Unübersetzt lassen",
         "caseSensitive": "Groß-/Kleinschreibung beachten",
         "rules": "Regeln",
-        "neverUse": "Nie: {terms}",
         "import": "Importieren",
-        "export": "{format} exportieren",
-        "importErrors": "{count} Zeilen konnten nicht importiert werden"
+        "importErrors": "{count} Zeilen konnten nicht importiert werden",
+        "termCount": "{count} Begriff | {count} Begriffe",
+        "avoid": "Vermeiden: {terms}",
+        "editTermNamed": "{term} bearbeiten",
+        "deleteTermNamed": "{term} löschen",
+        "confirmDeleteTerm": "Den Begriff {term} löschen?",
+        "notFound": "Glossar nicht gefunden",
+        "terms": "Begriffe",
+        "search": "Begriffe suchen",
+        "exportLabel": "Exportieren",
+        "delete": "Glossar löschen"
       },
       "schedules": {
-        "title": "Geplante Agenten",
+        "title": "Zeitpläne",
         "description": "Führt einen Skill nach Zeitplan über einen gespeicherten Bereich aus. Jeder Lauf handelt als die Person, die den Zeitplan zuletzt gespeichert hat, stoppt an seinem Budget und legt seine Vorschläge in den Posteingang.",
         "add": "Zeitplan hinzufügen",
         "edit": "Zeitplan bearbeiten",
@@ -4746,6 +4771,26 @@
         "confirmDelete": "Zeitplan „{name}“ löschen?",
         "saveFailed": "Zeitplan konnte nicht gespeichert werden: {error}",
         "deleteFailed": "Zeitplan konnte nicht gelöscht werden: {error}"
+      },
+      "enabledFor": "{name} verwenden",
+      "saveDraft": "Entwurf speichern",
+      "markdown": {
+        "write": "Schreiben",
+        "preview": "Vorschau",
+        "empty": "Noch nichts für die Vorschau."
+      },
+      "surfaces": {
+        "selection": "Textauswahl",
+        "cmdk": "Befehlspalette",
+        "canvas": "Canvas",
+        "content_tree": "Inhaltsbaum",
+        "meta_tags": "Meta-Tags",
+        "translate": "Übersetzung",
+        "asset": "Assets",
+        "bulk_content": "Sammelaktionen für Einträge",
+        "bulk_data_entries": "Sammelaktionen für Datensätze",
+        "bulk_assets": "Sammelaktionen für Assets",
+        "learning": "Lernen aus Korrekturen"
       }
     },
     "contentTreeAi": {
@@ -4805,16 +4850,22 @@
       }
     },
     "aiChangeset": {
-      "meta": "{pending} von {total} offen",
+      "blockChange": {
+        "added": "Block hinzugefügt",
+        "removed": "Block entfernt",
+        "changed": "Block geändert"
+      },
       "acceptAll": "Alle übernehmen",
       "rejectAll": "Alle ablehnen",
-      "acceptEntry": "Eintrag übernehmen",
-      "rejectEntry": "Eintrag ablehnen",
       "accept": "Übernehmen",
       "reject": "Ablehnen",
       "keepCurrent": "Aktuellen Wert behalten",
       "useProposal": "KI-Version verwenden",
       "newEntry": "Neuer Eintrag",
+      "newBlock": "Neuer Block",
+      "blockField": "Feld {key}",
+      "blockFields": "Felder des neuen Blocks",
+      "noBlockFields": "Keine Felder",
       "partial": "Der Lauf wurde vorzeitig beendet ({reason}). Das sind die bisher vorgeschlagenen Änderungen.",
       "stoppedBy": {
         "max_usd": "Kostenlimit erreicht",
@@ -4827,6 +4878,7 @@
         "content": "Inhalt",
         "data_entry": "Datensatz",
         "asset": "Asset",
+        "block": "Block",
         "selection": "Auswahl"
       },
       "status": {
@@ -4838,70 +4890,25 @@
       "columns": {
         "read": "Beim Lesen durch die KI",
         "current": "Jetzt",
-        "proposed": "KI-Vorschlag"
+        "proposed": "KI-Vorschlag",
+        "currentIn": "Jetzt ({language})"
       },
       "acceptFailed": "Die Änderungen konnten nicht übernommen werden: {error}",
       "rejectFailed": "Die Änderungen konnten nicht abgelehnt werden: {error}",
       "edit": "Bearbeiten",
       "discardEdit": "Bearbeitung verwerfen",
       "editLabel": "Bearbeiteter Vorschlag",
-      "editedBeforeAccepting": "Vor dem Übernehmen bearbeitet"
-    },
-    "aiInbox": {
-      "title": "Posteingang",
-      "description": "Von KI-Aufgaben vorgeschlagene Änderungen warten hier auf Prüfung. Übernehmen speichert einen Entwurf, veröffentlicht wird nichts.",
-      "changesets": "Vorgeschlagene Änderungen",
-      "empty": "Nichts zu prüfen.",
-      "partial": "Vorzeitig beendet",
-      "runs": "Hintergrundaufgaben",
-      "states": {
-        "running": "Läuft",
-        "awaiting_input": "Wartet auf Antwort",
-        "completed": "Fertig",
-        "failed": "Fehlgeschlagen",
-        "cancelled": "Abgebrochen"
-      },
-      "surfaces": {
-        "bulk": "Sammelaufgabe",
-        "agent": "KI-Aufgabe"
-      },
-      "cancel": "Abbrechen",
-      "answerFailed": "Die Antworten konnten nicht gesendet werden: {error}",
-      "cancelFailed": "Die Aufgabe konnte nicht abgebrochen werden: {error}",
-      "suggestions": {
-        "title": "Glossarvorschläge",
-        "evidence": "KI schrieb „{ai}“, behalten wurde „{final}“",
-        "addTo": "Zum Glossar hinzufügen",
-        "chooseGlossary": "Hinzufügen zu",
-        "createGlossary": "Zuerst ein Glossar anlegen",
-        "dismiss": "Verwerfen",
-        "scopes": {
-          "space": "Space",
-          "team": "Team"
-        },
-        "acceptFailed": "Begriff konnte nicht hinzugefügt werden: {error}",
-        "dismissFailed": "Vorschlag konnte nicht verworfen werden: {error}"
-      }
+      "editedBeforeAccepting": "Vor dem Übernehmen bearbeitet",
+      "glossaryFindings": "Glossar-Hinweise"
     },
     "aiCommand": {
       "ask": "KI fragen: {prompt}",
-      "skills": "KI-Skills",
-      "title": "KI fragen",
-      "prompt": "Aufgabe",
-      "scope": {
-        "entry": "Arbeitet am geöffneten Eintrag.",
-        "dataSource": "Arbeitet an der geöffneten Datenquelle.",
-        "space": "Arbeitet in diesem Space."
-      },
-      "background": "Das dauert etwas. Die Aufgabe läuft im Hintergrund weiter, ihre Änderungen landen im Posteingang.",
-      "usingTool": "Verwendet {tool}...",
-      "run": "Ausführen",
-      "close": "Schließen"
+      "skills": "KI-Skills"
     },
     "aiBulk": {
       "entry": "KI fragen",
       "title": "KI zu diesen Einträgen fragen",
-      "description": "Läuft im Hintergrund. Die Änderungen landen zur Prüfung im Posteingang, gespeichert wird erst, was du übernimmst.",
+      "description": "Läuft im Hintergrund in einem Thread. Die Änderungen landen dort zur Prüfung, gespeichert wird erst, was du übernimmst.",
       "skills": "Skills",
       "task": "Was soll die KI tun?",
       "extraInstructions": "Zusätzliche Anweisungen (optional)",
@@ -4913,9 +4920,112 @@
       "preflightFailed": "Diese Aufgabe konnte nicht geschätzt werden.",
       "cancel": "Abbrechen",
       "confirm": "Für {count} Einträge starten",
-      "started": "Die KI-Aufgabe läuft im Hintergrund.",
-      "openInbox": "Posteingang öffnen",
       "failed": "Die Aufgabe konnte nicht gestartet werden: {error}"
+    },
+    "aiThreads": {
+      "title": "KI-Threads",
+      "toggle": "KI-Threads",
+      "toggleWithCount": "KI-Threads, {count} brauchen dich",
+      "resize": "Größe des KI-Docks ändern",
+      "new": "Neuer Thread",
+      "newThread": "Neuer Thread",
+      "search": "Threads durchsuchen",
+      "shared": "Geteilt",
+      "sharedWithSpace": "Mit dem Space geteilt",
+      "empty": "Noch keine Threads. Frag die KI etwas, um einen zu starten.",
+      "noMatches": "Kein Thread passt.",
+      "toReview": "{count} Eintrag zu prüfen | {count} Einträge zu prüfen",
+      "status": {
+        "needs_input": "Antwort",
+        "needs_review": "Prüfen",
+        "running": "Läuft",
+        "failed": "Fehler",
+        "done": "Fertig"
+      },
+      "states": {
+        "running": "Läuft",
+        "awaiting_input": "Wartet auf Antwort",
+        "completed": "Fertig",
+        "failed": "Fehlgeschlagen",
+        "cancelled": "Abgebrochen"
+      },
+      "toast": {
+        "needs_input": "{title} wartet auf deine Antwort",
+        "needs_review": "{title} hat Änderungen zum Prüfen",
+        "failed": "{title} ist fehlgeschlagen"
+      },
+      "open": "Öffnen",
+      "allThreads": "Alle Threads",
+      "expand": "Als Seite öffnen",
+      "close": "Schließen",
+      "menu": "Thread-Aktionen",
+      "rename": "Umbenennen",
+      "titleLabel": "Thread-Titel",
+      "share": "Mit dem Space teilen",
+      "updateFailed": "Thread konnte nicht geändert werden: {error}",
+      "ownerOnly": "Nur {name} kann in diesem Thread weiterschreiben.",
+      "emptyThread": "Frag alles zu diesem Space. Mit / wählst du einen Skill, mit {'@'} erwähnst du einen Eintrag. Änderungen landen hier zur Prüfung, gespeichert wird erst, was du übernimmst.",
+      "placeholder": "Frag die KI, {'@'} zum Erwähnen, / für Skills",
+      "extraInstructions": "Zusätzliche Anweisungen (optional)",
+      "removeSkill": "Skill entfernen",
+      "removeChip": "{name} entfernen",
+      "attachChip": "{name} anhängen",
+      "screen": {
+        "entry": "Geöffneter Eintrag",
+        "dataSource": "Geöffnete Datenquelle"
+      },
+      "steps": "Schritte",
+      "usingTool": "Nutzt {tool}",
+      "cancel": "Abbrechen",
+      "waitingForOwner": "Wartet auf die Antwort der besitzenden Person.",
+      "answerFailed": "Die Antworten konnten nicht gesendet werden: {error}",
+      "cancelFailed": "Die Aufgabe konnte nicht abgebrochen werden: {error}",
+      "openFields": "{count} offenes Feld | {count} offene Felder",
+      "expandEntry": "Änderungen an {name} anzeigen",
+      "collapseEntry": "Änderungen an {name} ausblenden",
+      "summary": {
+        "counts": "{entries} Einträge, {open} offen, {accepted} übernommen, {rejected} abgelehnt",
+        "findings": "{count} Glossar-Warnung | {count} Glossar-Warnungen"
+      },
+      "suggestions": {
+        "addTo": "Zum Glossar hinzufügen",
+        "chooseGlossary": "Hinzufügen zu",
+        "createGlossary": "Zuerst ein Glossar anlegen",
+        "dismiss": "Verwerfen",
+        "scopes": {
+          "space": "Space",
+          "team": "Team"
+        },
+        "acceptFailed": "Begriff konnte nicht hinzugefügt werden: {error}",
+        "dismissFailed": "Vorschlag konnte nicht verworfen werden: {error}",
+        "addTermTo": "{term} zu einem Glossar hinzufügen",
+        "dismissTerm": "{term} verwerfen",
+        "empty": "Keine Glossarvorschläge offen.",
+        "evidence": "Die KI schrieb „{ai}“, eine Person änderte es zu „{final}“."
+      },
+      "searchPlaceholder": "Suchen",
+      "clearSearch": "Suche leeren",
+      "settled": "Erledigt",
+      "settle": "Erledigen",
+      "unsettle": "Wieder öffnen",
+      "settleThread": "{title} erledigen",
+      "unsettleThread": "{title} wieder öffnen",
+      "sharedBy": "Geteilt von {name}",
+      "context": {
+        "schedule": "Zeitplan",
+        "suggestions": "Glossarvorschläge"
+      },
+      "config": {
+        "label": "KI-Konfiguration",
+        "none": "Konfiguration wählen"
+      },
+      "files": {
+        "attach": "Dateien anhängen",
+        "unsupported": "{name} kann nicht angehängt werden. Erlaubt sind Bilder (PNG, JPEG, WebP, GIF) sowie PDF-, DOCX-, Markdown-, Text- und CSV-Dateien.",
+        "tooLarge": "{name} ist zu groß. Erlaubt sind höchstens {max}.",
+        "tooMany": "Höchstens {max} Dateien pro Nachricht.",
+        "uploadFailed": "{name} konnte nicht hochgeladen werden: {error}"
+      }
     }
   },
   "alertDialog": {
@@ -5142,6 +5252,7 @@
         "not_provisioned": "Dein KI-Zugang wird gerade eingerichtet. Bitte versuche es in einem Moment erneut.",
         "plan_excluded": "Dein aktueller Tarif enthält keine KI-Funktionen. Führe ein Upgrade durch, um sie zu nutzen.",
         "no_result": "Die KI hat kein verwertbares Ergebnis geliefert. Bitte versuche es erneut.",
+        "model_no_vision": "Das gewählte Modell kann keine Bilder lesen. Wähle eine Konfiguration mit einem Bildmodell oder entferne die Bilder.",
         "csrf": "Deine Sitzung ist abgelaufen. Bitte lade die Seite neu und versuche es erneut.",
         "csrfUnavailable": "Sicherheitstoken nicht verfügbar. Bitte lade die Seite neu und versuche es erneut.",
         "noSpace": "Kein Space ausgewählt. Bitte lade die Seite neu und versuche es erneut.",
@@ -5439,7 +5550,8 @@
       "help": "Diese Kürzelliste anzeigen",
       "search": "Suchfeld fokussieren",
       "toggleSidebar": "Seitenleiste ein- oder ausblenden",
-      "skipToContent": "Zum Hauptinhalt springen"
+      "skipToContent": "Zum Hauptinhalt springen",
+      "toggleAiDock": "KI-Dock ein- oder ausblenden"
     },
     "editor": {
       "save": "Aktuellen Eintrag oder Block speichern"
