@@ -634,6 +634,36 @@ class AssetTest extends TestCase
     }
 
     #[Test]
+    public function editing_an_asset_shown_by_published_content_bumps_the_delivery_revision(): void
+    {
+        $asset = Asset::factory()->create([
+            'storage_id' => $this->storage->id,
+        ]);
+        $this->createContentWithVersions(currentAssetIds: [$asset->id], publishedAssetIds: [$asset->id]);
+
+        $this->patchJson("/mgmt/v1/spaces/{$this->space->id}/assets/{$asset->id}", [
+            'metadata' => ['description' => 'Updated'],
+        ])->assertOk();
+
+        $this->assertNotNull($this->space->fresh()->content_updated_at);
+    }
+
+    #[Test]
+    public function editing_an_asset_used_only_by_drafts_keeps_the_delivery_revision(): void
+    {
+        $asset = Asset::factory()->create([
+            'storage_id' => $this->storage->id,
+        ]);
+        $this->createContentWithVersions(currentAssetIds: [$asset->id]);
+
+        $this->patchJson("/mgmt/v1/spaces/{$this->space->id}/assets/{$asset->id}", [
+            'metadata' => ['description' => 'Updated'],
+        ])->assertOk();
+
+        $this->assertNull($this->space->fresh()->content_updated_at);
+    }
+
+    #[Test]
     public function user_can_update_asset_metadata()
     {
         $asset = Asset::factory()->create([
