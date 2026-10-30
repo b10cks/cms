@@ -103,11 +103,9 @@ const customPoster = computed(
   () => assetCopy.value?.metadata?.thumbnails?.find((thumb) => thumb?.custom && thumb.path) ?? null
 )
 
-const applyAssetResponse = (updated?: AssetResource | null) => {
-  if (updated) {
-    assetCopy.value = deepClone(updated)
-    originalSnapshot = editableSnapshot(updated)
-  }
+const applyAssetResponse = (updated: AssetResource) => {
+  assetCopy.value = deepClone(updated)
+  originalSnapshot = editableSnapshot(updated)
 }
 
 const onRemovePoster = async () => {
@@ -129,7 +127,7 @@ const onRemovePoster = async () => {
   }
 
   removePoster(assetCopy.value.id, {
-    onSuccess: (response) => applyAssetResponse(response?.data),
+    onSuccess: applyAssetResponse,
   })
 }
 
@@ -144,8 +142,8 @@ const onPosterSelected = (event: Event) => {
   uploadPoster(
     { id: assetCopy.value.id, file },
     {
-      onSuccess: (response) => {
-        applyAssetResponse(response?.data)
+      onSuccess: (asset) => {
+        applyAssetResponse(asset)
         clearInput()
       },
       onError: clearInput,
@@ -168,10 +166,7 @@ const onReplaceFileSelected = (event: Event) => {
     },
     {
       onSuccess: (updated) => {
-        if (updated) {
-          assetCopy.value = deepClone(updated)
-          originalSnapshot = editableSnapshot(updated)
-        }
+        applyAssetResponse(updated)
         replaceProgress.value = 0
         if (replaceFileInputRef.value) replaceFileInputRef.value.value = ''
       },
@@ -661,10 +656,7 @@ const restoreVersionWithConfirm = async (version: AssetVersionResource) => {
   restoringVersionId.value = version.id
   restoreVersion(version.id, {
     onSuccess: (updated) => {
-      if (updated) {
-        assetCopy.value = deepClone(updated)
-        originalSnapshot = editableSnapshot(updated)
-      }
+      applyAssetResponse(updated)
       restoringVersionId.value = null
     },
     onError: () => {

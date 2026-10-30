@@ -318,7 +318,7 @@ describe('useUpdateAssetMutation', () => {
     const inCollection = queryKeys.assetCollections(SPACE).assetsList('c1', {})
     const detail = queryKeys.assets(SPACE).detail('a1')
     const page = (items: AssetResource[]) => ({ data: items, meta: { total: items.length } })
-    assets.update.mockResolvedValue({ data: { ...asset(), filename: 'renamed.png' } })
+    assets.update.mockResolvedValue({ ...asset(), filename: 'renamed.png' })
 
     harness = withSetup(mountAssets, {
       seed: [
@@ -344,7 +344,7 @@ describe('useUpdateAssetMutation', () => {
   })
 
   it('refetches the grids and folder counts after a move instead of patching', async () => {
-    assets.update.mockResolvedValue({ data: asset() })
+    assets.update.mockResolvedValue(asset())
     const { update } = mutations()
     const invalidate = spyInvalidate()
 
@@ -482,20 +482,6 @@ describe('useReplaceAssetFileMutation', () => {
     expect(success).toHaveBeenCalledWith('Asset file replaced successfully')
   })
 
-  it('reports a failure when the API resolves with nothing', async () => {
-    // An empty response is not a success worth announcing, and the UI must not
-    // be left reporting neither outcome.
-    assets.replaceFile.mockResolvedValue(null)
-    const { replace } = mutations()
-    const invalidate = spyInvalidate()
-
-    await replace.mutateAsync({ id: 'a1', file: new File(['x'], 'x.png') })
-
-    expect(invalidate).not.toHaveBeenCalled()
-    expect(success).not.toHaveBeenCalled()
-    expect(failure).toHaveBeenCalledWith('Failed to replace asset file: Unknown error')
-  })
-
   it('reports failure', async () => {
     assets.replaceFile.mockRejectedValue(new Error('mime mismatch'))
 
@@ -507,8 +493,8 @@ describe('useReplaceAssetFileMutation', () => {
 })
 
 describe('useUploadAssetPosterMutation', () => {
-  it('reads the id out of the response envelope', async () => {
-    assets.uploadPoster.mockResolvedValue({ data: asset('a2') })
+  it('invalidates the lists and the asset', async () => {
+    assets.uploadPoster.mockResolvedValue(asset('a2'))
     const { poster } = mutations()
     const invalidate = spyInvalidate()
     const file = new File(['x'], 'poster.jpg')
@@ -523,18 +509,6 @@ describe('useUploadAssetPosterMutation', () => {
     expect(success).toHaveBeenCalledWith('Poster updated successfully')
   })
 
-  it('reports a failure for an empty envelope', async () => {
-    assets.uploadPoster.mockResolvedValue({})
-    const { poster } = mutations()
-    const invalidate = spyInvalidate()
-
-    await poster.mutateAsync({ id: 'a2', file: new File(['x'], 'p.jpg') })
-
-    expect(invalidate).not.toHaveBeenCalled()
-    expect(success).not.toHaveBeenCalled()
-    expect(failure).toHaveBeenCalledWith('Failed to upload poster: Unknown error')
-  })
-
   it('reports failure', async () => {
     assets.uploadPoster.mockRejectedValue(new Error('not a video'))
 
@@ -546,8 +520,8 @@ describe('useUploadAssetPosterMutation', () => {
 })
 
 describe('useRemoveAssetPosterMutation', () => {
-  it('reads the id out of the response envelope', async () => {
-    assets.removePoster.mockResolvedValue({ data: asset('a2') })
+  it('invalidates the lists and the asset', async () => {
+    assets.removePoster.mockResolvedValue(asset('a2'))
     const { removePoster } = mutations()
     const invalidate = spyInvalidate()
 
@@ -559,18 +533,6 @@ describe('useRemoveAssetPosterMutation', () => {
       queryKeys.assets(SPACE).detail('a2'),
     ])
     expect(success).toHaveBeenCalledWith('Poster removed')
-  })
-
-  it('reports a failure for an empty envelope', async () => {
-    assets.removePoster.mockResolvedValue({})
-    const { removePoster } = mutations()
-    const invalidate = spyInvalidate()
-
-    await removePoster.mutateAsync('a2')
-
-    expect(invalidate).not.toHaveBeenCalled()
-    expect(success).not.toHaveBeenCalled()
-    expect(failure).toHaveBeenCalledWith('Failed to remove poster: Unknown error')
   })
 
   it('reports failure', async () => {
@@ -626,7 +588,7 @@ describe('export and import', () => {
 })
 
 describe('uploadAsset', () => {
-  const ok = (body: Record<string, unknown>) => (xhr: FakeXhr) => {
+  const ok = (body: AssetResource) => (xhr: FakeXhr) => {
     xhr.status = 201
     xhr.responseText = JSON.stringify(body)
   }
@@ -634,7 +596,7 @@ describe('uploadAsset', () => {
   it('posts the file to the space endpoint with credentials and the xsrf header', async () => {
     const file = new File(['x'], 'x.png')
 
-    const { xhr } = await uploadWith({ file }, ok({ data: asset() }))
+    const { xhr } = await uploadWith({ file }, ok(asset()))
 
     expect(ensureCsrfCookie).toHaveBeenCalled()
     expect(xhr.opened).toEqual(['POST', `/mgmt/v1/spaces/${SPACE}/assets`])
@@ -652,7 +614,7 @@ describe('uploadAsset', () => {
         metadata: { alt: 'cat' },
         data: { credit: 'me' },
       } as never,
-      ok({ data: asset() })
+      ok(asset())
     )
 
     expect(fields(xhr.sent)).toMatchObject({
@@ -666,7 +628,7 @@ describe('uploadAsset', () => {
   it('omits every optional field that is falsy', async () => {
     const { xhr } = await uploadWith(
       { file: new File(['x'], 'x.png'), folder_id: null, tags: [], metadata: null } as never,
-      ok({ data: asset() })
+      ok(asset())
     )
 
     // Pinned: an empty tag array is falsy-adjacent — `[]` is truthy, so it is
@@ -677,7 +639,7 @@ describe('uploadAsset', () => {
   it('sends force as the string "1" only when asked', async () => {
     const { xhr } = await uploadWith(
       { file: new File(['x'], 'x.png') } as never,
-      ok({ data: asset() }),
+      ok(asset()),
       { force: true }
     )
 
@@ -687,7 +649,7 @@ describe('uploadAsset', () => {
   it('returns a success outcome carrying the created asset', async () => {
     const { outcome } = await uploadWith(
       { file: new File(['x'], 'x.png') } as never,
-      ok({ data: asset('new') })
+      ok(asset('new'))
     )
 
     expect(outcome).toEqual({ status: 'success', asset: asset('new') })
@@ -699,7 +661,7 @@ describe('uploadAsset', () => {
     const promise = upload({ file: new File(['x'], 'x.png') } as never)
     const xhr = await nextXhr()
 
-    ok({ data: asset() })(xhr)
+    ok(asset())(xhr)
     xhr.flush('load')
     await promise
 
@@ -723,7 +685,7 @@ describe('uploadAsset', () => {
       const promise = upload({ file: new File(['x'], name) } as never)
       const xhr = await nextXhr()
 
-      ok({ data: asset() })(xhr)
+      ok(asset())(xhr)
       xhr.flush('load')
       await promise
     }
@@ -732,13 +694,6 @@ describe('uploadAsset', () => {
 
     expect(success).toHaveBeenCalledTimes(1)
     expect(invalidatedKeys(invalidate)).toEqual([queryKeys.assets(SPACE).lists()])
-  })
-
-  it('resolves null and skips the toast when the response carries no asset', async () => {
-    const { outcome } = await uploadWith({ file: new File(['x'], 'x.png') } as never, ok({}))
-
-    expect(outcome).toBeNull()
-    expect(success).not.toHaveBeenCalled()
   })
 
   it('returns a duplicate outcome for a 409 checksum match', async () => {
@@ -851,7 +806,7 @@ describe('uploadAsset', () => {
     expect(onProgress).toHaveBeenCalledWith(33)
 
     xhr.status = 201
-    xhr.responseText = JSON.stringify({ data: asset() })
+    xhr.responseText = JSON.stringify(asset())
     xhr.flush('load')
     await promise
   })
@@ -861,7 +816,7 @@ describe('uploadAsset', () => {
 
     const { xhr } = await uploadWith(
       { file: new File(['x'], 'x.png') } as never,
-      ok({ data: asset() })
+      ok(asset())
     )
 
     expect(xhr.headers).toEqual({ accept: 'application/json' })

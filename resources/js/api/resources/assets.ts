@@ -19,6 +19,14 @@ export interface AssetsQueryParams extends BaseQueryParams {
 
 export interface LinkedAssetContentsQueryParams extends BaseQueryParams {}
 
+/**
+ * Single asset responses carry no `data` envelope: the asset's own `data` field
+ * collides with it, so Laravel skips the wrap. Unwraps responses typed through
+ * the shared {@link BaseResource} methods, which still declare the envelope.
+ */
+export const unwrapAsset = (response: AssetResource | ApiResponse<AssetResource>): AssetResource =>
+  'id' in response ? response : response.data
+
 export class Assets extends BaseResource<
   AssetResource,
   UploadAssetPayload,
@@ -64,38 +72,32 @@ export class Assets extends BaseResource<
     assetId: string,
     file: File,
     onProgress?: (progress: number) => void
-  ): Promise<AssetResource | null> {
+  ): Promise<AssetResource> {
     const formData = new FormData()
     formData.append('file', file)
 
-    const response = await xhrUpload<ApiResponse<AssetResource>>(
-      `${this.basePath}/${assetId}/replace-file`,
-      formData,
-      { onProgress }
-    )
-
-    return response.data ?? null
+    // Unwrapped like every single asset response, see unwrapAsset.
+    return xhrUpload<AssetResource>(`${this.basePath}/${assetId}/replace-file`, formData, {
+      onProgress,
+    })
   }
 
   /**
    * Upload a hand-picked poster/thumbnail, shown in place of the generated
    * video frames or the file-type icon.
    */
-  public async uploadPoster(assetId: string, file: File): Promise<ApiResponse<AssetResource>> {
+  public async uploadPoster(assetId: string, file: File): Promise<AssetResource> {
     const formData = new FormData()
     formData.append('poster', file)
 
-    return this.client.post<ApiResponse<AssetResource>>(
-      `${this.basePath}/${assetId}/poster`,
-      formData
-    )
+    return this.client.post<AssetResource>(`${this.basePath}/${assetId}/poster`, formData)
   }
 
   /**
    * Remove the custom poster, restoring generated video frames when present.
    */
-  public async removePoster(assetId: string): Promise<ApiResponse<AssetResource>> {
-    return this.client.delete<ApiResponse<AssetResource>>(`${this.basePath}/${assetId}/poster`)
+  public async removePoster(assetId: string): Promise<AssetResource> {
+    return this.client.delete<AssetResource>(`${this.basePath}/${assetId}/poster`)
   }
 
   public async getLinkedContents(

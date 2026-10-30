@@ -3,7 +3,7 @@ import { useDebounceFn } from '@vueuse/core'
 import { toast } from 'vue-sonner'
 
 import { api } from '~/api'
-import type { AssetsQueryParams } from '~/api/resources/assets'
+import { type AssetsQueryParams, unwrapAsset } from '~/api/resources/assets'
 import { UploadError, xhrUpload } from '~/lib/xhr-upload'
 
 import { queryKeys } from './useQueryClient'
@@ -87,10 +87,7 @@ export function useAssets(spaceId: MaybeRef<string>) {
   }
 
   const getAsset = async (id: string, signal?: AbortSignal): Promise<AssetResource> => {
-    // The show endpoint returns the asset without a `data` envelope;
-    // `response.data` would resolve to the asset's own `data` attribute.
-    const response = await spaceAPI.value.assets.get(id, {}, { signal })
-    return ('id' in response ? response : response.data) as AssetResource
+    return unwrapAsset(await spaceAPI.value.assets.get(id, {}, { signal }))
   }
 
   const useAssetQuery = (id: MaybeRef<string>, enabled: MaybeRef<boolean> = true) => {
@@ -172,7 +169,8 @@ export function useAssets(spaceId: MaybeRef<string>) {
         formData.append('force', '1')
       }
 
-      const response = await xhrUpload<{ data?: AssetResource }>(
+      // Unwrapped like every single asset response, see unwrapAsset.
+      const asset = await xhrUpload<AssetResource>(
         `/mgmt/v1/spaces/${toValue(spaceId)}/assets`,
         formData,
         {
@@ -183,15 +181,11 @@ export function useAssets(spaceId: MaybeRef<string>) {
         }
       )
 
-      if (!response.data) {
-        return null
-      }
-
       if (!options.silent) {
         debouncedInvalidateQueries()
       }
 
-      return { status: 'success', asset: response.data }
+      return { status: 'success', asset }
     } catch (err) {
       // A checksum match is not a failure: the caller gets the existing asset
       // back and may retry with `{ force: true }`.
@@ -219,8 +213,7 @@ export function useAssets(spaceId: MaybeRef<string>) {
   const useUpdateAssetMutation = () => {
     return useMutation({
       mutationFn: async ({ id, payload }: { id: string; payload: UpdateAssetPayload }) => {
-        const response = await spaceAPI.value.assets.update(id, payload)
-        return response.data
+        return unwrapAsset(await spaceAPI.value.assets.update(id, payload))
       },
       onSuccess: (data, { id, payload }) => {
         if (payload.folder_id !== undefined) {
@@ -314,12 +307,6 @@ export function useAssets(spaceId: MaybeRef<string>) {
         return await spaceAPI.value.assets.replaceFile(id, file, onProgress)
       },
       onSuccess: (data) => {
-        if (!data) {
-          // An empty response is not a success we can report on.
-          toast.error(t('composables.assets.replaceError', { error: 'Unknown error' }) as string)
-          return
-        }
-
         queryClient.invalidateQueries({ queryKey: queryKeys.assets(spaceId).lists() })
         queryClient.invalidateQueries({ queryKey: queryKeys.assets(spaceId).detail(data.id) })
         toast.success(t('composables.assets.replaceSuccess') as string)
@@ -337,15 +324,7 @@ export function useAssets(spaceId: MaybeRef<string>) {
       mutationFn: async ({ id, file }: { id: string; file: File }) => {
         return await spaceAPI.value.assets.uploadPoster(id, file)
       },
-      onSuccess: (response) => {
-        const asset = response?.data
-
-        if (!asset) {
-          // An empty response is not a success we can report on.
-          toast.error(t('composables.assets.posterError', { error: 'Unknown error' }) as string)
-          return
-        }
-
+      onSuccess: (asset) => {
         queryClient.invalidateQueries({ queryKey: queryKeys.assets(spaceId).lists() })
         queryClient.invalidateQueries({ queryKey: queryKeys.assets(spaceId).detail(asset.id) })
         toast.success(t('composables.assets.posterSuccess') as string)
@@ -363,17 +342,7 @@ export function useAssets(spaceId: MaybeRef<string>) {
       mutationFn: async (id: string) => {
         return await spaceAPI.value.assets.removePoster(id)
       },
-      onSuccess: (response) => {
-        const asset = response?.data
-
-        if (!asset) {
-          // An empty response is not a success we can report on.
-          toast.error(
-            t('composables.assets.posterRemoveError', { error: 'Unknown error' }) as string
-          )
-          return
-        }
-
+      onSuccess: (asset) => {
         queryClient.invalidateQueries({ queryKey: queryKeys.assets(spaceId).lists() })
         queryClient.invalidateQueries({ queryKey: queryKeys.assets(spaceId).detail(asset.id) })
         toast.success(t('composables.assets.posterRemoveSuccess') as string)

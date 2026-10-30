@@ -16,10 +16,8 @@ export class AssetVersions extends BaseResource<
     this.basePath = `/mgmt/v1/spaces/${spaceId}/assets/${assetId}/versions`
   }
 
+  /** Returns the restored asset, unwrapped like every single asset response (see unwrapAsset). */
   async restore(versionId: string): Promise<AssetResource> {
-    const response = await this.client.post<ApiResponse<AssetResource>>(
-      `${this.basePath}/${versionId}/restore`
-    )
-    return response.data
+    return this.client.post<AssetResource>(`${this.basePath}/${versionId}/restore`)
   }
 }
