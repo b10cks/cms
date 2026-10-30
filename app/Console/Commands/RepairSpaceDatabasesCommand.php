@@ -3,7 +3,9 @@
 namespace App\Console\Commands;
 
 use App\Models\Management\Space;
+use App\Services\Content\ContentReferenceIndexer;
 use App\Services\Database\SpaceDatabaseMigrator;
+use App\Support\SpaceContext;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 
@@ -21,7 +23,7 @@ class RepairSpaceDatabasesCommand extends Command
 
     protected $description = 'Detect and repair space databases that were created but never migrated';
 
-    public function handle(SpaceDatabaseMigrator $migrator): int
+    public function handle(SpaceDatabaseMigrator $migrator, ContentReferenceIndexer $indexer): int
     {
         $dryRun = (bool) $this->option('dry-run');
         $force = (bool) $this->option('force');
@@ -42,7 +44,7 @@ class RepairSpaceDatabasesCommand extends Command
         $failed = 0;
         $noConnection = 0;
 
-        $query->orderBy('id')->chunkById(100, function ($spaces) use ($migrator, $dryRun, $force, &$checked, &$repaired, &$healthy, &$failed, &$noConnection) {
+        $query->orderBy('id')->chunkById(100, function ($spaces) use ($migrator, $indexer, $dryRun, $force, &$checked, &$repaired, &$healthy, &$failed, &$noConnection) {
             foreach ($spaces as $space) {
                 $connection = $space->connections->firstWhere('is_default', true)
                     ?? $space->connections->first();
@@ -73,18 +75,27 @@ class RepairSpaceDatabasesCommand extends Command
 
                     $migrator->migrate($connection);
 
-                    // A migration can rewrite delivered content (a data backfill
-                    // as much as a schema change), and the delivery cache is
-                    // keyed on this timestamp — without the bump the CDN keeps
-                    // serving the pre-migration payload for up to a day.
-                    $space->touchContentUpdatedAt();
-
                     if ($connection->state !== 'live') {
                         $connection->update(['state' => 'live']);
                     }
                     if ($space->state !== 'live') {
                         $space->update(['state' => 'live']);
                     }
+
+                    // Reference ids may predate the current extractors, and
+                    // asset usage and delivery asset resolution read them.
+                    $restore = SpaceContext::enter($space);
+                    try {
+                        $indexer->reindex();
+                    } finally {
+                        $restore();
+                    }
+
+                    // A migration can rewrite delivered content (a data backfill
+                    // as much as a schema change), and the delivery cache is
+                    // keyed on this timestamp — without the bump the CDN keeps
+                    // serving the pre-migration payload for up to a day.
+                    $space->touchContentUpdatedAt();
 
                     $repaired++;
                     $this->line("  <fg=green>✓ migrated</>  {$space->id}");

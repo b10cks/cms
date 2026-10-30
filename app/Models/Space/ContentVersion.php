@@ -110,11 +110,7 @@ class ContentVersion extends SpaceModel
             $model->created_at = $model->freshTimestamp();
         });
 
-        static::saving(function ($model) {
-            $model->prepareLinksForSave();
-            $model->prepareAssetsForSave();
-            $model->prepareRelationsForSave();
-        });
+        static::saving(fn (self $model) => $model->refreshReferenceIds());
     }
 
     public static function createWithContentContext(array $attributes, ?Content $content = null): self
@@ -134,6 +130,18 @@ class ContentVersion extends SpaceModel
     protected function message(): Attribute
     {
         return $this->makePurifiedAttribute('removeAll');
+    }
+
+    /**
+     * Recompute `asset_ids`, `link_ids` and `relation_ids` from the payload.
+     * Runs on every save; `ContentReferenceIndexer` calls it for rows written
+     * around the model.
+     */
+    public function refreshReferenceIds(): void
+    {
+        $this->prepareLinksForSave();
+        $this->prepareAssetsForSave();
+        $this->prepareRelationsForSave();
     }
 
     protected function prepareLinksForSave(): void
