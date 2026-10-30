@@ -1,6 +1,7 @@
 import type { ContentBlockOperationPayload } from '~/composables/useContentLiveCollaboration'
 import type { ContentTreeItem } from '~/composables/useContentTree'
 import { isSameJsonValue } from '~/lib/contentEditorState'
+import { normalizeSchemaTypeName } from '~/lib/tableField'
 import type { BlockAction, FieldPath } from '~/utils/preview-bridge'
 
 /**
@@ -420,4 +421,66 @@ export function isBlockAllowed(
     blockAllowlist.includes(block.slug) ||
     Boolean(block.tags?.some((tag) => tagAllowlist.includes(tag)))
   )
+}
+
+/** Why a clipboard of blocks may not be pasted into a blocks field. */
+export type BlockPasteRejection =
+  | { reason: 'space' }
+  | { reason: 'block'; slug: string }
+  | { reason: 'max'; max: number }
+
+type BlockAllowLists = Pick<BlocksSchema, 'block_whitelist' | 'tag_whitelist'>
+type PasteBlockLookup = (
+  slug: string
+) => Pick<BlockResource, 'slug' | 'type' | 'tags' | 'schema'> | undefined
+
+/** Slug of the first block in `items`, at any depth, that its blocks field does not allow. */
+function findRefusedBlock(
+  items: unknown[],
+  field: BlockAllowLists,
+  lookup: PasteBlockLookup
+): string | null {
+  for (const item of items) {
+    const slug = isRecord(item) && typeof item.block === 'string' ? item.block : ''
+    const block = lookup(slug)
+    if (!isRecord(item) || !block || !isBlockAllowed(field, block)) return slug
+
+    for (const [key, nestedField] of Object.entries(block.schema ?? {})) {
+      const nested = item[key]
+      if (normalizeSchemaTypeName(nestedField.type) !== 'blocks' || !Array.isArray(nested)) continue
+
+      const refused = findRefusedBlock(nested, nestedField as BlocksSchema, lookup)
+      if (refused !== null) return refused
+    }
+  }
+
+  return null
+}
+
+/**
+ * Check blocks copied in `source.spaceId` against the field they would be
+ * pasted into, which holds `length` items. Slugs only mean the same block
+ * within one space, the field must have room for all of them, and every block
+ * must pass the allow lists of the field it lands in, nested ones included,
+ * as the schemas stand now. A paste is all or nothing: dropping the refused
+ * blocks would paste something other than what was copied.
+ */
+export function checkBlockPaste(
+  source: { spaceId: string; items: Record<string, unknown>[] },
+  target: {
+    spaceId: string
+    field: BlockAllowLists
+    length: number
+    max: number | null
+    lookup: PasteBlockLookup
+  }
+): BlockPasteRejection | null {
+  if (source.spaceId !== target.spaceId) return { reason: 'space' }
+
+  if (target.max !== null && target.length + source.items.length > target.max) {
+    return { reason: 'max', max: target.max }
+  }
+
+  const refused = findRefusedBlock(source.items, target.field, target.lookup)
+  return refused === null ? null : { reason: 'block', slug: refused }
 }

@@ -7,6 +7,7 @@ import {
   AccordionRoot,
   AccordionTrigger,
 } from 'reka-ui'
+import { toast } from 'vue-sonner'
 
 import AddDropdown from '~/components/editor/AddDropdown.vue'
 import BlockHeader from '~/components/editor/BlockHeader.vue'
@@ -22,7 +23,9 @@ import type {
   ContentFieldFocusPayload,
   ContentFieldUpdatePayload,
 } from '~/composables/useContentLiveCollaboration'
+import { resolveItemLimits } from '~/composables/useContentSchemaState'
 import type { ContentTreeItem } from '~/composables/useContentTree'
+import { type ClipboardItem, clipboardItemBlocks } from '~/composables/useGlobalClipboard'
 import {
   createBlockItemWithDefaults,
   createContentDefaultsBlockLookup,
@@ -30,7 +33,12 @@ import {
   switchBlockItemType,
 } from '~/composables/useSchemaDefaults'
 import { resolveItemBlock } from '~/lib/blockItemTitle'
-import { type BlockPickerRequest, isBlockAllowed } from '~/lib/blockTreeEdits'
+import {
+  type BlockPasteRejection,
+  type BlockPickerRequest,
+  checkBlockPaste,
+  isBlockAllowed,
+} from '~/lib/blockTreeEdits'
 import { buildContentPath, buildPreviewUrl } from '~/lib/preview-url'
 import type { ContentResource } from '~/types/contents'
 
@@ -86,7 +94,8 @@ const {
   copyItem: globalCopyItem,
   cutItem: globalCutItem,
   pasteItem: globalPasteItem,
-  hasClipboardItem,
+  getClipboardItem,
+  clipboardItem,
 } = useGlobalClipboard()
 
 const emit = defineEmits<{
@@ -257,7 +266,46 @@ const allowedBlocks = computed(() =>
   (blocks.value?.data || []).filter((block) => isBlockAllowed(props.item, block))
 )
 
+const maxItems = computed(() => resolveItemLimits(props.item).max)
+/** A full field offers no way to add more, by hand or by paste. */
+const canAdd = computed(
+  () => !props.readOnly && (maxItems.value === null || blockItems.value.length < maxItems.value)
+)
+
+const checkPaste = (item: ClipboardItem) =>
+  checkBlockPaste(
+    { spaceId: item.spaceId, items: clipboardItemBlocks(item) },
+    {
+      spaceId: props.spaceId,
+      field: props.item,
+      length: blockItems.value.length,
+      max: maxItems.value,
+      lookup: (slug) => blocksBySlug.value[slug],
+    }
+  )
+
+/** Paste is offered only when this field takes everything on the clipboard. */
+const canPaste = computed(
+  () => canAdd.value && !!clipboardItem.value && !checkPaste(clipboardItem.value)
+)
+
+const pasteRejectionMessage = (rejection: BlockPasteRejection) => {
+  switch (rejection.reason) {
+    case 'space':
+      return $t('labels.contents.paste.otherSpace')
+    case 'max':
+      return $t('labels.contents.paste.tooMany', { max: rejection.max })
+    case 'block':
+      return $t('labels.contents.paste.blockNotAllowed', {
+        name: blocksBySlug.value[rejection.slug]?.name ?? rejection.slug,
+      })
+  }
+}
+
 const insertItem = (item: Record<string, unknown>, index: number = -1) => {
+  // A collaborator may have filled the field while the picker was open.
+  if (!canAdd.value) return
+
   const previousItems = [...blockItems.value]
   const updatedItems = [...previousItems]
   const insertIndex = index === -1 ? updatedItems.length : index
@@ -424,8 +472,17 @@ const pasteItems = async (event?: ClipboardEvent | null, insertIndex?: number) =
     event.preventDefault()
   }
 
-  const pastedItem = await globalPasteItem()
-  const pastedItems = normalizeClipboardItems(pastedItem)
+  // The clipboard may have changed since the paste button was shown.
+  const clipboard = await getClipboardItem()
+  if (!clipboard) return
+
+  const rejection = checkPaste(clipboard)
+  if (rejection) {
+    toast.error(String(pasteRejectionMessage(rejection)))
+    return
+  }
+
+  const pastedItems = normalizeClipboardItems(await globalPasteItem(clipboard))
 
   if (pastedItems.length > 0) {
     const previousItems = [...blockItems.value]
@@ -679,8 +736,8 @@ const getItemRingStyle = (content: Record<string, unknown>, index: number) => {
               :open="openPickerIndex === i"
               :item="item"
               :space-id="spaceId"
-              :can-mutate="!props.readOnly"
-              :has-clipboard-item="hasClipboardItem"
+              :can-mutate="canAdd"
+              :has-clipboard-item="canPaste"
               @update:open="(open: boolean) => setPickerOpen(i, open)"
               @paste="() => pasteItems(null, i)"
               @select="
@@ -831,8 +888,8 @@ const getItemRingStyle = (content: Record<string, unknown>, index: number) => {
           :open="openPickerIndex === blockItems.length"
           :item="item"
           :space-id="spaceId"
-          :can-mutate="!props.readOnly"
-          :has-clipboard-item="hasClipboardItem"
+          :can-mutate="canAdd"
+          :has-clipboard-item="canPaste"
           @update:open="(open: boolean) => setPickerOpen(blockItems.length, open)"
           @paste="pasteItems"
           @select="
@@ -841,7 +898,7 @@ const getItemRingStyle = (content: Record<string, unknown>, index: number) => {
           "
         />
         <div
-          v-if="!props.readOnly && hasClipboardItem"
+          v-if="canPaste"
           class="mt-2 flex justify-center pb-2"
         >
           <Button

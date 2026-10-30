@@ -1049,6 +1049,11 @@
       "emptyDescription": "Commencez par créer votre première page de contenu",
       "managerTitle": "Gestionnaire de contenu",
       "managerDescription": "Sélectionnez un élément dans le menu de contenu pour le modifier ou créer un nouveau contenu.",
+      "paste": {
+        "otherSpace": "Ces blocs ont été copiés dans un autre espace. Les blocs ne peuvent être collés que dans leur espace.",
+        "blockNotAllowed": "Ce champ n'autorise pas les blocs \"{name}\".",
+        "tooMany": "Ce champ contient au plus {max} éléments."
+      },
       "translationExport": {
         "entry": "Exporter les traductions",
         "title": "Exporter les traductions de contenu",

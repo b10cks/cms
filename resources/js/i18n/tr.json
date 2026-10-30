@@ -1049,6 +1049,11 @@
       "emptyDescription": "İlk içerik sayfanızı oluşturarak başlayın",
       "managerTitle": "İçerik Yöneticisi",
       "managerDescription": "Düzenlemek veya yeni içerik oluşturmak için içerik menüsünden bir öğe seçin.",
+      "paste": {
+        "otherSpace": "Bu bloklar başka bir çalışma alanında kopyalandı. Bloklar yalnızca kendi çalışma alanlarına yapıştırılabilir.",
+        "blockNotAllowed": "Bu alan \"{name}\" bloklarına izin vermiyor.",
+        "tooMany": "Bu alan en fazla {max} öğe içerebilir."
+      },
       "translationExport": {
         "entry": "Çevirileri dışa aktar",
         "title": "İçerik çevirilerini dışa aktar",

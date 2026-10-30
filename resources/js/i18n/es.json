@@ -1049,6 +1049,11 @@
       "emptyDescription": "Empieza creando tu primera página de contenido",
       "managerTitle": "Gestor de contenido",
       "managerDescription": "Selecciona un elemento del menú de contenido para editarlo o crear contenido nuevo.",
+      "paste": {
+        "otherSpace": "Estos bloques se copiaron en otro espacio. Los bloques solo se pueden pegar dentro de su espacio.",
+        "blockNotAllowed": "Este campo no permite bloques \"{name}\".",
+        "tooMany": "Este campo admite como máximo {max} elementos."
+      },
       "translationExport": {
         "entry": "Exportar traducciones",
         "title": "Exportar traducciones de contenido",

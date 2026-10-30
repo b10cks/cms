@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import type { ContentTreeItem } from '~/composables/useContentTree'
 import {
+  checkBlockPaste,
   findHiddenBlockIds,
   isBlockAllowed,
   planBlockAction,
@@ -279,5 +280,65 @@ describe('isBlockAllowed', () => {
     expect(isBlockAllowed(field, block('hero'))).toBe(true)
     expect(isBlockAllowed(field, block('teaser', 'nestable', ['cards']))).toBe(true)
     expect(isBlockAllowed(field, block('teaser'))).toBe(false)
+  })
+})
+
+describe('checkBlockPaste', () => {
+  const blocks: Record<string, Pick<BlockResource, 'slug' | 'type' | 'tags' | 'schema'>> = {
+    hero: { slug: 'hero', type: 'nestable', tags: [], schema: {} },
+    card: { slug: 'card', type: 'nestable', tags: ['cards'], schema: {} },
+    grid: {
+      slug: 'grid',
+      type: 'nestable',
+      tags: [],
+      schema: {
+        cells: { type: 'blocks', name: 'Cells', tag_whitelist: ['cards'] } as unknown as SchemaType,
+      },
+    },
+    page: { slug: 'page', type: 'root', tags: [], schema: {} },
+  }
+  const target = {
+    spaceId: 'space-1',
+    field: { block_whitelist: ['hero', 'grid'], tag_whitelist: ['cards'] },
+    length: 1,
+    max: null as number | null,
+    lookup: (slug: string) => blocks[slug],
+  }
+  const paste = (items: Record<string, unknown>[], overrides: Partial<typeof target> = {}) =>
+    checkBlockPaste({ spaceId: 'space-1', items }, { ...target, ...overrides })
+
+  it('accepts blocks the field allows', () => {
+    expect(paste([{ id: 'b1', block: 'hero' }, { id: 'b2', block: 'card' }])).toBeNull()
+  })
+
+  it('rejects blocks copied in another space', () => {
+    const items = [{ id: 'b1', block: 'hero' }]
+
+    expect(checkBlockPaste({ spaceId: 'space-2', items }, target)).toEqual({ reason: 'space' })
+  })
+
+  it('rejects the whole paste when one block is not allowed', () => {
+    expect(paste([{ id: 'b1', block: 'hero' }, { id: 'b2', block: 'page' }])).toEqual({
+      reason: 'block',
+      slug: 'page',
+    })
+  })
+
+  it('checks nested blocks against the field they sit in', () => {
+    const grid = (cell: string) => ({
+      id: 'g1',
+      block: 'grid',
+      cells: [{ id: 'c1', block: cell }],
+    })
+
+    expect(paste([grid('card')])).toBeNull()
+    expect(paste([grid('hero')])).toEqual({ reason: 'block', slug: 'hero' })
+  })
+
+  it('rejects more blocks than the field has room for', () => {
+    const items = [{ id: 'b1', block: 'hero' }, { id: 'b2', block: 'hero' }]
+
+    expect(paste(items, { max: 3 })).toBeNull()
+    expect(paste(items, { max: 2 })).toEqual({ reason: 'max', max: 2 })
   })
 })

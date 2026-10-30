@@ -1049,6 +1049,11 @@
       "emptyDescription": "Start by creating your first content page",
       "managerTitle": "Content Manager",
       "managerDescription": "Select an item from the content menu to edit or create new content.",
+      "paste": {
+        "otherSpace": "These blocks were copied in another space. Blocks can only be pasted within their space.",
+        "blockNotAllowed": "This field does not allow \"{name}\" blocks.",
+        "tooMany": "This field holds at most {max} items."
+      },
       "translationExport": {
         "entry": "Export translations",
         "title": "Export content translations",

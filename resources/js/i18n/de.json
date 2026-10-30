@@ -1058,6 +1058,11 @@
       "emptyDescription": "Erstelle zunächst deine erste Inhaltsseite",
       "managerTitle": "Inhalts-Manager",
       "managerDescription": "Wähle ein Element aus dem Inhaltsmenü aus, um es zu bearbeiten oder neuen Inhalt zu erstellen.",
+      "paste": {
+        "otherSpace": "Diese Blöcke wurden in einem anderen Space kopiert. Blöcke lassen sich nur im selben Space einfügen.",
+        "blockNotAllowed": "Dieses Feld erlaubt keine Blöcke vom Typ \"{name}\".",
+        "tooMany": "Dieses Feld fasst höchstens {max} Elemente."
+      },
       "translationExport": {
         "entry": "Übersetzungen exportieren",
         "title": "Inhaltsübersetzungen exportieren",

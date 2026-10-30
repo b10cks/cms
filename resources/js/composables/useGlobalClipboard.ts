@@ -6,12 +6,12 @@ import {
   useWindowFocus,
 } from '@vueuse/core'
 import {
+  computed,
   effectScope,
   getCurrentInstance,
   onMounted,
   onUnmounted,
-  readonly,
-  ref,
+  shallowRef,
   watch,
 } from 'vue'
 
@@ -37,12 +37,17 @@ export interface ClipboardMultipleItems {
 
 export type ClipboardItem = ClipboardSingleItem | ClipboardMultipleItems
 
+/** The copied blocks of `item`, as a list either way. */
+export const clipboardItemBlocks = (item: ClipboardItem): Record<string, unknown>[] =>
+  item.type === 'blocks-editor-clipboard-items' ? item.data : [item.data]
+
 const { copy: copyToClipboard, text: clipboardText, isSupported } = useClipboard({ read: true })
 const localStorageClipboard = useLocalStorage<string | null>('blocks-clipboard', null)
 const ulid = useUlid()
 const focused = useWindowFocus()
 const clipboardPermission = usePermission('clipboard-read')
-const hasClipboardItem = ref(false)
+const currentItem = shallowRef<ClipboardItem | null>(null)
+const hasClipboardItem = computed(() => currentItem.value !== null)
 
 // Function to check clipboard and validate format
 const checkClipboard = async () => {
@@ -73,9 +78,9 @@ const checkClipboard = async () => {
       }
     }
 
-    hasClipboardItem.value = !!clipboardData
+    currentItem.value = clipboardData
   } catch {
-    hasClipboardItem.value = false
+    currentItem.value = null
   }
 }
 
@@ -194,10 +199,10 @@ export const useGlobalClipboard = () => {
     try {
       await copyToClipboard(serializedItem)
       localStorageClipboard.value = serializedItem
-      hasClipboardItem.value = true
+      currentItem.value = clipboardItem
     } catch (error) {
       localStorageClipboard.value = serializedItem
-      hasClipboardItem.value = true
+      currentItem.value = clipboardItem
       // eslint-disable-next-line no-console
       console.warn('Failed to copy to system clipboard, using localStorage:', error)
     }
@@ -294,10 +299,15 @@ export const useGlobalClipboard = () => {
     return null
   }
 
-  const pasteItem = async (): Promise<
-    Record<string, unknown> | Record<string, unknown>[] | null
-  > => {
-    const clipboardItem = await getClipboardItem()
+  /**
+   * A copy of `item`, by default the current clipboard item, with fresh ids
+   * for every block in it. Pass the item a paste was checked against, so the
+   * check and the paste see the same clipboard.
+   */
+  const pasteItem = async (
+    item?: ClipboardItem | null
+  ): Promise<Record<string, unknown> | Record<string, unknown>[] | null> => {
+    const clipboardItem = item === undefined ? await getClipboardItem() : item
 
     if (!clipboardItem) {
       return null
@@ -308,7 +318,7 @@ export const useGlobalClipboard = () => {
 
   const clearClipboard = async () => {
     localStorageClipboard.value = null
-    hasClipboardItem.value = false
+    currentItem.value = null
 
     // getClipboardItem prefers the system clipboard, so leaving our serialized
     // item there means a "cleared" clipboard still pastes. Only our own payload
@@ -328,7 +338,9 @@ export const useGlobalClipboard = () => {
     copyItem,
     cutItem,
     pasteItem,
-    hasClipboardItem: readonly(hasClipboardItem),
+    hasClipboardItem,
+    /** The last item seen on the clipboard; re-read with getClipboardItem before pasting. */
+    clipboardItem: computed(() => currentItem.value),
     clearClipboard,
     getClipboardItem,
   }
