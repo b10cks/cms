@@ -230,6 +230,9 @@ describe('useSetCurrentVersionMutation', () => {
       queryKeys.contents(SPACE).lists(),
       queryKeys.contents(SPACE).detail(CONTENT),
       queryKeys.contentVersions(SPACE, CONTENT).detail('v1'),
+      queryKeys.assets(SPACE).lists(),
+      queryKeys.assets(SPACE).details(),
+      queryKeys.assetCollections(SPACE).assetsLists(),
     ])
     expect(toastSuccess).toHaveBeenCalledWith('Version set as current successfully')
   })
@@ -306,9 +309,10 @@ describe('usePublishVersionMutation', () => {
     await expect(mutation.mutateAsync('v1')).resolves.toEqual({ id: 'v1' })
 
     expect(publish).toHaveBeenCalledWith('v1')
-    expect(invalidatedKeys(invalidate).at(-1)).toEqual(
+    expect(invalidatedKeys(invalidate)).toContainEqual(
       queryKeys.contentVersions(SPACE, CONTENT).detail('v1')
     )
+    expect(invalidatedKeys(invalidate)).toContainEqual(queryKeys.assets(SPACE).lists())
     expect(toastSuccess).toHaveBeenCalledWith('Version published successfully')
   })
 
