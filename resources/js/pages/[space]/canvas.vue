@@ -113,6 +113,9 @@ const pendingRemoteOperations: ContentWizardSyncOperation[] = []
 const liveFieldTimers = new Map<string, ReturnType<typeof setTimeout>>()
 const queuedRemoteOperations = new Map<string, ContentWizardSyncOperation>()
 const editSessionSnapshots = new Map<string, ContentWizardDraftTree>()
+// The tree as loaded from the server, before any draft edits. Late joiners load
+// the same tree and replay the diff from here to the current draft.
+let sourceSnapshot: ContentWizardDraftTree | null = null
 let pendingInitializationFrame: number | null = null
 let preserveSelectionOnNextFocus = false
 
@@ -437,6 +440,7 @@ const cancelPendingInitialization = () => {
 const initializeCanvasTree = () => {
   cancelPendingInitialization()
   treeApi.initializeFromSource()
+  sourceSnapshot = treeApi.createSnapshot()
   history.clearHistory()
   clearEditSessions()
   focusedNodeId.value = CONTENT_WIZARD_ROOT_ID
@@ -765,6 +769,32 @@ const history = useContentCanvasCommands({
   },
   serializeSnapshot: serializeHistorySnapshot,
 })
+
+// Collapse state is shared but outside the history diff, and it drives the
+// layout remote cursors are positioned in, so late joiners get it as well.
+const buildLateJoinOperations = (): ContentWizardSyncOperation[] => {
+  if (!initialized.value || !sourceSnapshot) {
+    return []
+  }
+
+  const baseline = sourceSnapshot
+  const current = treeApi.createSnapshot()
+  const collapseOperations = Object.values(current.nodes)
+    .filter(
+      (node) =>
+        !node.isRootVirtual &&
+        node.isCollapsed !== (baseline.nodes[node.id]?.isCollapsed ?? false)
+    )
+    .map((node) => ({
+      type: 'collapse-state' as const,
+      nodeId: node.id,
+      collapsed: node.isCollapsed,
+    }))
+
+  return [...buildSyncOperations(baseline, current), ...collapseOperations]
+}
+
+collaboration.provideSyncOperations(buildLateJoinOperations)
 
 const stopRemoteOperationListener = collaboration.onOperation((operation) => {
   history.clearHistory()

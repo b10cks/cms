@@ -30,6 +30,8 @@ const { useContentWizardCollaboration } = await import('~/composables/useContent
 const FOCUS_EVENT = 'content-canvas-focus'
 const CURSOR_EVENT = 'content-canvas-cursor'
 const OPERATION_EVENT = 'content-canvas-operation'
+const SYNC_REQUEST_EVENT = 'content-canvas-sync-request'
+const SYNC_STATE_EVENT = 'content-canvas-sync-state'
 
 type Collaboration = ReturnType<typeof useContentWizardCollaboration>
 
@@ -159,6 +161,7 @@ describe('broadcasting', () => {
   it('stays silent while there is no authenticated user', () => {
     const result = setup()
     ;(presence.currentUser as Ref<unknown>).value = null
+    presence.sent.length = 0
 
     result.broadcastFocus('node-1')
     result.broadcastCursor({ x: 1, y: 1 })
@@ -379,6 +382,96 @@ describe('onOperation', () => {
 
     expect(first).toHaveLength(1)
     expect(second).toHaveLength(1)
+  })
+})
+
+describe('late-join sync', () => {
+  it('asks the room for drafts once connected', () => {
+    setup()
+
+    expect(sentOf(SYNC_REQUEST_EVENT)).toEqual([
+      { event: SYNC_REQUEST_EVENT, payload: { userId: 'me' } },
+    ])
+  })
+
+  it('replies to a joiner with the provided operations after a jitter', () => {
+    vi.useFakeTimers()
+    const operation = addOperation('node-1')
+    setup().provideSyncOperations(() => [operation])
+
+    presence.fire(SYNC_REQUEST_EVENT, { userId: 'joiner' })
+    expect(sentOf(SYNC_STATE_EVENT)).toEqual([])
+
+    vi.advanceTimersByTime(400)
+
+    expect(sentOf(SYNC_STATE_EVENT)[0].payload).toEqual({
+      userId: 'me',
+      requesterId: 'joiner',
+      operations: [operation],
+    })
+  })
+
+  it('stays silent without a draft', () => {
+    vi.useFakeTimers()
+    setup().provideSyncOperations(() => [])
+
+    presence.fire(SYNC_REQUEST_EVENT, { userId: 'joiner' })
+    vi.advanceTimersByTime(400)
+
+    expect(sentOf(SYNC_STATE_EVENT)).toEqual([])
+  })
+
+  it('stands down when another peer answered the joiner first', () => {
+    vi.useFakeTimers()
+    setup().provideSyncOperations(() => [addOperation('node-1')])
+
+    presence.fire(SYNC_REQUEST_EVENT, { userId: 'joiner' })
+    presence.fire(SYNC_STATE_EVENT, { userId: 'peer', requesterId: 'joiner', operations: [] })
+    vi.advanceTimersByTime(400)
+
+    expect(sentOf(SYNC_STATE_EVENT)).toEqual([])
+  })
+
+  it('splits large replies to stay under the Reverb message limit', () => {
+    vi.useFakeTimers()
+    const operations = Array.from({ length: 40 }, (_, index) => ({
+      ...addOperation(`node-${index}`),
+      title: 'x'.repeat(500),
+    }))
+    setup().provideSyncOperations(() => operations)
+
+    presence.fire(SYNC_REQUEST_EVENT, { userId: 'joiner' })
+    vi.advanceTimersByTime(400)
+
+    const replies = sentOf(SYNC_STATE_EVENT)
+    expect(replies.length).toBeGreaterThan(1)
+    replies.forEach((reply) => expect(JSON.stringify(reply.payload).length).toBeLessThan(10_000))
+    expect(
+      replies.flatMap((reply) => (reply.payload as { operations: unknown[] }).operations)
+    ).toEqual(operations)
+  })
+
+  it('replays the first responder only and ignores replies meant for others', () => {
+    const received: ContentWizardSyncOperation[] = []
+    setup().onOperation((incoming) => received.push(incoming))
+
+    presence.fire(SYNC_STATE_EVENT, {
+      userId: 'peer',
+      requesterId: 'someone-else',
+      operations: [addOperation('elsewhere')],
+    })
+    presence.fire(SYNC_STATE_EVENT, {
+      userId: 'peer',
+      requesterId: 'me',
+      operations: [addOperation('node-1')],
+    })
+    presence.fire(SYNC_STATE_EVENT, {
+      userId: 'other',
+      requesterId: 'me',
+      operations: [addOperation('node-2')],
+    })
+
+    expect(received.map((operation) => operation.nodeId)).toEqual(['node-1'])
   })
 })
 
