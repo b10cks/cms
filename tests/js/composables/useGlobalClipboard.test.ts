@@ -411,7 +411,7 @@ describe('pasteItem', () => {
   it('gives every copied block a fresh id', async () => {
     const store = clipboard()
 
-    await store.copyItem({ id: 'b1', headline: 'Hi' }, SPACE)
+    await store.copyItem({ id: 'b1', block: 'hero', headline: 'Hi' }, SPACE)
     const pasted = (await store.pasteItem()) as Record<string, unknown>
 
     expect(pasted.headline).toBe('Hi')
@@ -419,11 +419,15 @@ describe('pasteItem', () => {
     expect(pasted.id).not.toBe('b1')
   })
 
-  it('rewrites ids at every depth, through arrays', async () => {
+  it('rewrites block ids at every depth, through arrays', async () => {
     const store = clipboard()
 
     await store.copyItem(
-      { id: 'root', items: [{ id: 'child', items: [{ id: 'grandchild' }] }] },
+      {
+        id: 'root',
+        block: 'list',
+        items: [{ id: 'child', block: 'list', items: [{ id: 'grandchild', block: 'item' }] }],
+      },
       SPACE
     )
     const pasted = (await store.pasteItem()) as Record<string, unknown>
@@ -434,20 +438,30 @@ describe('pasteItem', () => {
     expect(new Set([pasted.id, child.id, grandchild.id]).size).toBe(3)
   })
 
-  it('leaves other id-like keys alone', async () => {
+  // Asset values carry the asset's id; rewriting it would break the image.
+  it('keeps the ids of references inside a block', async () => {
     const store = clipboard()
 
-    await store.copyItem({ id: 'b1', block_id: 'block-card', parent_id: 'p1' }, SPACE)
+    await store.copyItem(
+      { id: 'b1', block: 'card', image: { id: 'asset-1', type: 'asset' }, parent_id: 'p1' },
+      SPACE
+    )
     const pasted = (await store.pasteItem()) as Record<string, unknown>
 
-    expect(pasted.block_id).toBe('block-card')
+    expect(pasted.image).toEqual({ id: 'asset-1', type: 'asset' })
     expect(pasted.parent_id).toBe('p1')
   })
 
   it('returns a list for a multi-block clipboard, each with a new id', async () => {
     const store = clipboard()
 
-    await store.copyItem([{ id: 'b1' }, { id: 'b2' }], SPACE)
+    await store.copyItem(
+      [
+        { id: 'b1', block: 'hero' },
+        { id: 'b2', block: 'hero' },
+      ],
+      SPACE
+    )
     const pasted = (await store.pasteItem()) as Record<string, unknown>[]
 
     expect(pasted).toHaveLength(2)
@@ -457,7 +471,7 @@ describe('pasteItem', () => {
   it('pastes the same clipboard twice with different ids', async () => {
     const store = clipboard()
 
-    await store.copyItem({ id: 'b1' }, SPACE)
+    await store.copyItem({ id: 'b1', block: 'hero' }, SPACE)
     const first = (await store.pasteItem()) as Record<string, unknown>
     const second = (await store.pasteItem()) as Record<string, unknown>
 

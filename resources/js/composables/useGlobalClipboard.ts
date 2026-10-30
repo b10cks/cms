@@ -15,6 +15,8 @@ import {
   watch,
 } from 'vue'
 
+import { withFreshIds } from '~/lib/blockTreeEdits'
+
 export interface ClipboardSingleItem {
   type: 'blocks-editor-clipboard-item'
   data: Record<string, unknown>
@@ -186,25 +188,6 @@ export const useGlobalClipboard = () => {
     })
   }
 
-  const replaceIds = (obj: unknown): unknown => {
-    if (Array.isArray(obj)) {
-      return obj.map(replaceIds)
-    } else if (obj && typeof obj === 'object') {
-      const newObj: Record<string, unknown> = {}
-      for (const key in obj as Record<string, unknown>) {
-        if (Object.prototype.hasOwnProperty.call(obj, key)) {
-          if (key === 'id') {
-            newObj[key] = ulid()
-          } else {
-            newObj[key] = replaceIds((obj as Record<string, unknown>)[key])
-          }
-        }
-      }
-      return newObj
-    }
-    return obj
-  }
-
   const writeClipboardItem = async (clipboardItem: ClipboardItem) => {
     const serializedItem = JSON.stringify(clipboardItem)
 
@@ -320,11 +303,7 @@ export const useGlobalClipboard = () => {
       return null
     }
 
-    if (clipboardItem.type === 'blocks-editor-clipboard-items') {
-      return clipboardItem.data.map((item) => replaceIds(item) as Record<string, unknown>)
-    }
-
-    return replaceIds(clipboardItem.data) as Record<string, unknown>
+    return withFreshIds(clipboardItem.data, ulid)
   }
 
   const clearClipboard = async () => {

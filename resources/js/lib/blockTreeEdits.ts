@@ -215,8 +215,12 @@ export function planFieldUpdate(
   }
 }
 
-/** Deep copy of a block with fresh ids for it and every block nested in it. */
-function withFreshIds<T>(value: T, newId: () => string): T {
+/**
+ * Deep copy with fresh ids for every block in it, at any depth. Other `id`
+ * keys (asset references, table rows) are kept: they point at things outside
+ * the block.
+ */
+export function withFreshIds<T>(value: T, newId: () => string): T {
   if (Array.isArray(value)) return value.map((entry) => withFreshIds(entry, newId)) as T
   if (!isRecord(value)) return value
 
