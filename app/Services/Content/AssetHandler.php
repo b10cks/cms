@@ -23,6 +23,32 @@ class AssetHandler
         );
     }
 
+    /**
+     * Point asset references at other asset ids, e.g. when content moves to a
+     * space where the same assets were created under new keys. Ids missing
+     * from the map stay as they are.
+     *
+     * @param  array<string, string>  $idMap  old asset id => new asset id
+     */
+    public function remapContentAssets(array $data, array $idMap): array
+    {
+        if ($idMap === []) {
+            return $data;
+        }
+
+        return $this->replaceMatching(
+            $data,
+            ['type' => 'asset'],
+            function (array $src) use ($idMap): array {
+                $id = $src['id'] ?? null;
+
+                return \is_string($id) && isset($idMap[$id])
+                    ? array_replace($src, ['id' => $idMap[$id]])
+                    : $src;
+            },
+        );
+    }
+
     public function updateContentAssets(array $data, Collection $assets): array
     {
         $assets = $assets->reverse()->keyBy('id');

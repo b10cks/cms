@@ -95,6 +95,17 @@ class AssetHandlerTest extends TestCase
     }
 
     #[Test]
+    public function remapping_rewrites_known_asset_ids_and_keeps_the_rest_of_the_node(): void
+    {
+        $payload = ['hero' => ['type' => 'asset', 'id' => 'old-1', 'data' => ['alt' => 'Hero']], 'other' => ['type' => 'asset', 'id' => 'unknown']];
+
+        $remapped = (new AssetHandler)->remapContentAssets($payload, ['old-1' => 'new-1']);
+
+        $this->assertSame(['type' => 'asset', 'id' => 'new-1', 'data' => ['alt' => 'Hero']], $remapped['hero']);
+        $this->assertSame($payload['other'], $remapped['other']);
+    }
+
+    #[Test]
     public function it_updates_root_level_asset_payloads(): void
     {
         $handler = new AssetHandler;
