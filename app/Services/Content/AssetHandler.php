@@ -6,21 +6,26 @@ use App\Http\Resources\Api\ContentResource;
 use App\Models\Space\Asset;
 use App\Models\Space\Content;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Str;
 
 class AssetHandler
 {
     use ContentExtractor;
     use ContentReplacer;
 
+    /**
+     * Ids of the assets a content payload references. Only ULID strings are
+     * kept: asset keys are ULIDs, and the multi-valued index on
+     * `content_versions.asset_ids` rejects longer values, which would fail the save.
+     *
+     * @return list<string>
+     */
     public function extractContentAssets(array $data): array
     {
-        return $this->extractMatchingField(
-            $data,
-            [
-                'type' => 'asset',
-            ],
-            'id',
-        );
+        return array_values(array_filter(
+            $this->extractMatchingField($data, ['type' => 'asset'], 'id'),
+            static fn (mixed $id): bool => \is_string($id) && Str::isUlid($id),
+        ));
     }
 
     /**

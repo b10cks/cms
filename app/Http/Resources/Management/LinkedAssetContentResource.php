@@ -13,9 +13,6 @@ class LinkedAssetContentResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
-        /** @var string $assetId */
-        $assetId = $request->route('asset')->id;
-
         return [
             'id' => $this->id,
             'name' => $this->name,
@@ -32,10 +29,8 @@ class LinkedAssetContentResource extends JsonResource
                     'slug' => $this->block->slug,
                 ]
                 : null,
-            'usage' => [
-                'current' => in_array($assetId, $this->current_version?->asset_ids ?? [], true),
-                'published' => in_array($assetId, $this->published_version?->asset_ids ?? [], true),
-            ],
+            // Set by AssetLinkedContentController from AssetUsageService::linkedContents().
+            'usage' => $this->resource->getAttribute('asset_usage'),
         ];
     }
 }

@@ -88,10 +88,23 @@ class AssetHandlerTest extends TestCase
 
         $assetIds = $handler->extractContentAssets([
             'type' => 'asset',
-            'id' => 'asset-01',
+            'id' => '01k0s6v4rsjjjgkhepj496dj5e',
         ]);
 
-        $this->assertSame(['asset-01'], $assetIds);
+        $this->assertSame(['01k0s6v4rsjjjgkhepj496dj5e'], $assetIds);
+    }
+
+    #[Test]
+    public function extraction_keeps_only_ulid_asset_ids(): void
+    {
+        $assetIds = (new AssetHandler)->extractContentAssets(['images' => [
+            ['type' => 'asset', 'id' => '01k0s6v4rsjjjgkhepj496dj5e'],
+            ['type' => 'asset', 'id' => 'https://example.com/a-long-legacy-reference.jpg'],
+            ['type' => 'asset', 'id' => 42],
+            ['type' => 'asset', 'id' => ['nested']],
+        ]]);
+
+        $this->assertSame(['01k0s6v4rsjjjgkhepj496dj5e'], $assetIds);
     }
 
     #[Test]
