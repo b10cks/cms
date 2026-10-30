@@ -437,20 +437,26 @@ const handleNodeDrop = (node: ContentWizardDraftNode, event: DragEvent) => {
   emit('drop-on-node', { nodeId: node.id, event })
 }
 
-const emitCursorPosition = (event: PointerEvent | null) => {
+let lastPointer: { clientX: number; clientY: number } | null = null
+
+// Cursors travel in layout space (relative to canvasOrigin, same as node.layout):
+// the origin includes overscroll padding derived from the viewer's own container
+// size, so scene coordinates differ between peers with different window sizes.
+const emitCursorPosition = (pointer: { clientX: number; clientY: number } | null) => {
+  lastPointer = pointer
   const element = containerRef.value
-  if (!element || !event) {
+  if (!element || !pointer) {
     emit('cursor-move', null)
     return
   }
 
   const rect = element.getBoundingClientRect()
-  const relativeX = event.clientX - rect.left
-  const relativeY = event.clientY - rect.top
+  const relativeX = pointer.clientX - rect.left
+  const relativeY = pointer.clientY - rect.top
 
   emit('cursor-move', {
-    x: (element.scrollLeft + relativeX) / viewport.scale,
-    y: (element.scrollTop + relativeY) / viewport.scale,
+    x: (element.scrollLeft + relativeX) / viewport.scale - canvasOrigin.value.x,
+    y: (element.scrollTop + relativeY) / viewport.scale - canvasOrigin.value.y,
   })
 }
 
@@ -463,6 +469,13 @@ const handleCanvasPointerLeave = () => {
   hoveredNodeId.value = null
   emitCursorPosition(null)
   handlePointerLeave()
+}
+
+// Wheel panning moves the canvas under a resting pointer without a pointermove.
+const handleCanvasScroll = () => {
+  if (lastPointer) {
+    emitCursorPosition(lastPointer)
+  }
 }
 
 const handleNodePointerEnter = (nodeId: string) => {
@@ -581,6 +594,7 @@ defineExpose({
     @pointermove="handleCanvasPointerMove"
     @pointerup="handlePointerUp"
     @pointerleave="handleCanvasPointerLeave"
+    @scroll.passive="handleCanvasScroll"
   >
     <div
       class="relative min-h-full min-w-full"
@@ -593,15 +607,15 @@ defineExpose({
       <div class="pointer-events-none absolute inset-0">
         <div
           v-for="cursor in props.remoteCursors"
-          :key="`${cursor.userId}:${cursor.updatedAt}`"
-          class="absolute z-30"
+          :key="cursor.userId"
+          class="absolute z-30 transition-[left,top] duration-100 ease-linear"
           :style="{
-            left: `${cursor.x * viewport.scale}px`,
-            top: `${cursor.y * viewport.scale}px`,
+            left: `${(canvasOrigin.x + cursor.x) * viewport.scale}px`,
+            top: `${(canvasOrigin.y + cursor.y) * viewport.scale}px`,
           }"
         >
           <svg
-            class="size-6"
+            class="-ml-[3px] -mt-[3px] size-6"
             :style="{ color: cursor.user.color }"
             viewBox="0 0 24 24"
           >
