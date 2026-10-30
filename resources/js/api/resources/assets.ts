@@ -40,34 +40,6 @@ export class Assets extends BaseResource<
     this.basePath = `/mgmt/v1/spaces/${spaceId}/assets`
   }
 
-  public async upload(
-    payload: UploadAssetPayload,
-    onProgress?: (progress: number) => void
-  ): Promise<unknown> {
-    const formData = new FormData()
-    formData.append('file', payload.file)
-
-    if (payload.folder_id) {
-      formData.append('folder_id', payload.folder_id)
-    }
-    if (payload.tags && payload.tags.length > 0) {
-      formData.append('tags', JSON.stringify(payload.tags))
-    }
-    if (payload.metadata) {
-      formData.append('metadata', JSON.stringify(payload.metadata))
-    }
-    if (payload.data) {
-      formData.append('data', JSON.stringify(payload.data))
-    }
-
-    // If progress tracking is needed, use XMLHttpRequest
-    if (onProgress && typeof window !== 'undefined') {
-      return xhrUpload<ApiResponse<AssetResource>>(this.basePath, formData, { onProgress })
-    }
-
-    return this.client.post<ApiResponse<AssetResource>>(this.basePath, formData)
-  }
-
   public async replaceFile(
     assetId: string,
     file: File,
