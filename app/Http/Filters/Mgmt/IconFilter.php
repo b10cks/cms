@@ -8,9 +8,10 @@ class IconFilter extends AdvancedFilter
 {
     protected array $sortableColumns = ['key', 'name', 'external_id', 'created_at', 'updated_at'];
 
+    /** Exact match: callers resolve a stored `b10cks:<key>` reference. Use `q` to search. */
     public function key($value)
     {
-        $this->builder->where('key', 'LIKE', "%{$value}%");
+        $this->builder->where('key', $value);
     }
 
     public function external_id($value)

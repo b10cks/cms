@@ -140,6 +140,15 @@ class IconTest extends TestCase
             ->assertOk()
             ->assertJsonCount(2, 'data');
 
+        $this->getJson("/mgmt/v1/spaces/{$this->space->id}/icons?key=arrow")
+            ->assertOk()
+            ->assertJsonCount(0, 'data');
+
+        $this->getJson("/mgmt/v1/spaces/{$this->space->id}/icons?key=arrow-left")
+            ->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.key', 'arrow-left');
+
         $this->getJson("/mgmt/v1/spaces/{$this->space->id}/icons?tags[]=social")
             ->assertOk()
             ->assertJsonCount(1, 'data')
