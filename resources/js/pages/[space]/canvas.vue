@@ -704,6 +704,37 @@ const buildHistoryOperations = (
   return operations
 }
 
+// `add` appends to the end of the siblings, so every node that is new or sits
+// elsewhere gets an explicit move, top-down and in sibling order.
+const buildPlacementOperations = (
+  fromSnapshot: ContentWizardDraftTree,
+  toSnapshot: ContentWizardDraftTree
+): ContentWizardSyncOperation[] =>
+  Object.values(toSnapshot.nodes)
+    .filter((node) => {
+      if (node.isRootVirtual) {
+        return false
+      }
+
+      const source = fromSnapshot.nodes[node.id]
+      return !source || source.parentId !== node.parentId || source.position !== node.position
+    })
+    .sort((left, right) => left.depth - right.depth || left.position - right.position)
+    .map((node) => ({
+      type: 'move',
+      nodeId: node.id,
+      parentId: node.parentId,
+      index: node.position,
+    }))
+
+const buildSyncOperations = (
+  fromSnapshot: ContentWizardDraftTree,
+  toSnapshot: ContentWizardDraftTree
+) => [
+  ...buildHistoryOperations(fromSnapshot, toSnapshot),
+  ...buildPlacementOperations(fromSnapshot, toSnapshot),
+]
+
 const broadcastOperations = (operations: ContentWizardSyncOperation[]) => {
   operations.forEach((operation) => {
     collaboration.broadcastOperation(operation)
@@ -713,8 +744,8 @@ const broadcastOperations = (operations: ContentWizardSyncOperation[]) => {
 const broadcastHistoryEntry = (entry: ContentCanvasHistoryEntry, direction: 'undo' | 'redo') => {
   const operations =
     direction === 'undo'
-      ? buildHistoryOperations(entry.after, entry.before)
-      : buildHistoryOperations(entry.before, entry.after)
+      ? buildSyncOperations(entry.after, entry.before)
+      : buildSyncOperations(entry.before, entry.after)
 
   broadcastOperations(operations)
 }
@@ -1963,7 +1994,7 @@ const handleAiSubmit = async ({
   updateAiPreview(parsed.operations, true)
   if (beforeSnapshot) {
     const afterSnapshot = treeApi.createSnapshot()
-    broadcastOperations(buildHistoryOperations(beforeSnapshot, afterSnapshot))
+    broadcastOperations(buildSyncOperations(beforeSnapshot, afterSnapshot))
   }
   clearAiStreamState()
 }
