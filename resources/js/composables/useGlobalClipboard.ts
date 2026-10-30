@@ -1,5 +1,6 @@
 import {
   useClipboard,
+  useEventListener,
   useIntervalFn,
   useLocalStorage,
   usePermission,
@@ -42,7 +43,8 @@ export const clipboardItemBlocks = (item: ClipboardItem): Record<string, unknown
   item.type === 'blocks-editor-clipboard-items' ? item.data : [item.data]
 
 const { copy: copyToClipboard, text: clipboardText, isSupported } = useClipboard({ read: true })
-const localStorageClipboard = useLocalStorage<string | null>('blocks-clipboard', null)
+const STORAGE_KEY = 'blocks-clipboard'
+const localStorageClipboard = useLocalStorage<string | null>(STORAGE_KEY, null)
 const ulid = useUlid()
 const focused = useWindowFocus()
 const clipboardPermission = usePermission('clipboard-read')
@@ -136,6 +138,12 @@ const startWatchers = () => {
     } else {
       pauseInterval()
     }
+  })
+
+  // Another tab copied or cleared. The storage event only fires for other tabs,
+  // and useLocalStorage has already updated the mirror when this runs.
+  useEventListener(window, 'storage', (event) => {
+    if (event.key === STORAGE_KEY) void checkClipboard()
   })
 
   // Watch for permission changes

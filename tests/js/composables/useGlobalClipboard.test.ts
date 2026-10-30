@@ -177,6 +177,16 @@ describe('hasClipboardItem', () => {
     expect(await clipboard().getClipboardItem()).not.toBeNull()
   })
 
+  it('is recomputed when another tab writes the storage mirror', async () => {
+    const store = clipboard()
+    writeRaw({ type: 'blocks-editor-clipboard-item', data: { id: 'b1' }, timestamp: 0, spaceId: SPACE })
+
+    window.dispatchEvent(new StorageEvent('storage', { key: 'blocks-clipboard' }))
+    await Promise.resolve()
+
+    expect(store.hasClipboardItem.value).toBe(true)
+  })
+
   it('is recomputed when clipboard-read permission is granted', async () => {
     writeRaw({ type: 'blocks-editor-clipboard-item', data: { id: 'b1' }, timestamp: 0, spaceId: SPACE })
 
