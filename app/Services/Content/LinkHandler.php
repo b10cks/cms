@@ -50,6 +50,11 @@ class LinkHandler
     ): array {
         $resolvedLinks = $this->resolveLocalizedLinks($links, $languageIso, $defaultLanguageIso, $publishedOnly);
 
+        // Both passes only ever add to nodes with a resolved link.
+        if ($resolvedLinks->isEmpty()) {
+            return $data;
+        }
+
         $data = $this->replaceMatching($data, [
             'type' => 'internal',
         ], function ($src) use ($resolvedLinks) {
