@@ -216,6 +216,7 @@ declare global {
   const useSubscription: typeof import('./resources/js/composables/useSubscription').useSubscription
   const useTableKeyboard: typeof import('./resources/js/composables/useTableKeyboard').useTableKeyboard
   const useTableQueryState: typeof import('./resources/js/composables/useTableQueryState').useTableQueryState
+  const useTeamDomains: typeof import('./resources/js/composables/useTeamDomains').useTeamDomains
   const useTeamTypes: typeof import('./resources/js/composables/useTeamTypes').useTeamTypes
   const useTeamWorkspace: typeof import('./resources/js/composables/useTeamWorkspace').useTeamWorkspace
   const useTeams: typeof import('./resources/js/composables/useTeams').useTeams
@@ -545,6 +546,7 @@ declare module 'vue' {
     readonly useSubscription: UnwrapRef<typeof import('./resources/js/composables/useSubscription')['useSubscription']>
     readonly useTableKeyboard: UnwrapRef<typeof import('./resources/js/composables/useTableKeyboard')['useTableKeyboard']>
     readonly useTableQueryState: UnwrapRef<typeof import('./resources/js/composables/useTableQueryState')['useTableQueryState']>
+    readonly useTeamDomains: UnwrapRef<typeof import('./resources/js/composables/useTeamDomains')['useTeamDomains']>
     readonly useTeamTypes: UnwrapRef<typeof import('./resources/js/composables/useTeamTypes')['useTeamTypes']>
     readonly useTeamWorkspace: UnwrapRef<typeof import('./resources/js/composables/useTeamWorkspace')['useTeamWorkspace']>
     readonly useTeams: UnwrapRef<typeof import('./resources/js/composables/useTeams')['useTeams']>

@@ -11,7 +11,7 @@ final readonly class AttentionItem
 {
     /**
      * @param  array<int, string>  $details
-     * @param  array{name: string, params?: array<string, string>, query?: array<string, string>}|null  $target
+     * @param  array{name: string, params?: array<string, string>, query?: array<string, string>, hash?: string}|null  $target
      */
     public function __construct(
         public string $type,

@@ -3013,6 +3013,10 @@
         "empty": "Şu an ilgilenilecek bir şey yok.",
         "open": "Aç",
         "types": {
+          "join_requests": {
+            "title": "{count} kişi katılmak istiyor | {count} kişi katılmak istiyor | {count} kişi katılmak istiyor",
+            "action": "İncele"
+          },
           "expiring_access": {
             "title": "{count} kişinin erişimi sona eriyor | {count} kişinin erişimi sona eriyor | {count} kişinin erişimi sona eriyor",
             "action": "İncele"
@@ -5209,6 +5213,74 @@
         "tooLarge": "{name} is too large. The limit is {max}.",
         "tooMany": "Up to {max} files per message.",
         "uploadFailed": "Could not upload {name}: {error}"
+      }
+    },
+    "teamDomains": {
+      "title": "Alan adları",
+      "description": "Kuruluşunuzun e-posta alan adlarını doğrulayın. Eşleşen bir adresle oturum açanlar katılma isteği gönderebilir, otomatik katılır ya da SSO kullanmak zorunda kalır.",
+      "add": "Alan adı ekle",
+      "verify": "Doğrula",
+      "empty": "Henüz alan adı yok.",
+      "fields": {
+        "domain": "Alan adı",
+        "domainPlaceholder": "ornek.com",
+        "domainHint": "gmail.com gibi herkese açık e-posta sağlayıcıları eklenemez.",
+        "txtHost": "TXT kaydı ana makinesi",
+        "txtValue": "TXT kaydı değeri"
+      },
+      "columns": {
+        "domain": "Alan adı",
+        "status": "Durum",
+        "policy": "Oturum açıldığında",
+        "defaultRole": "Varsayılan rol"
+      },
+      "status": {
+        "verified": "Doğrulandı",
+        "pending": "Doğrulanmadı"
+      },
+      "policies": {
+        "request": "Katılma isteği",
+        "auto_join": "Otomatik katıl",
+        "require_sso": "SSO zorunlu"
+      },
+      "txtInstructions": "Bu TXT kaydını DNS sağlayıcınıza ekleyin, ardından Doğrula’ya basın. DNS değişikliklerinin görünmesi biraz sürebilir.",
+      "removeConfirm": {
+        "title": "Alan adını kaldır",
+        "message": "{domain} kaldırılsın mı? Bu alan adındaki kişiler artık katılma isteği gönderemez ve SSO onlar için zorunlu olmaz.",
+        "confirm": "Kaldır"
+      },
+      "toast": {
+        "failed": "Bu işe yaramadı: {error}",
+        "verified": "{domain} doğrulandı."
+      },
+      "requests": {
+        "title": "Katılma istekleri",
+        "description": "Doğrulanmış alan adlarınızdan bu takıma katılmak isteyen kişiler.",
+        "empty": "Açık istek yok.",
+        "approve": "Onayla",
+        "decline": "Reddet",
+        "columns": {
+          "person": "Kişi",
+          "domain": "Alan adı",
+          "requested": "İstendi",
+          "role": "Rol"
+        },
+        "declineConfirm": {
+          "title": "İsteği reddet",
+          "message": "{name} kişisinin isteği reddedilsin mi? Yeni bir istek gönderemez."
+        }
+      },
+      "join": {
+        "title": "{team} takımına katıl",
+        "description": "{domain} alan adındaki e-posta adresiniz bu takıma katılma isteği göndermenizi sağlar.",
+        "pending": "İstek gönderildi. Bir takım sahibi inceleyecek.",
+        "declined": "Takım isteğinizi reddetti. Bir sahipten davet isteyin.",
+        "request": "Katılma isteği gönder",
+        "cancel": "İsteği geri çek"
+      },
+      "login": {
+        "ssoRequired": "Kuruluşunuz bu e-posta adresi için çoklu oturum açma gerektiriyor.",
+        "continueWithSso": "SSO ile devam et"
       }
     }
   },

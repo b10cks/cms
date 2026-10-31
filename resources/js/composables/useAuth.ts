@@ -43,6 +43,8 @@ interface ParsedError {
   status?: number
   errorCode?: string
   message?: string
+  /** The team SSO login URL, when the email's domain requires SSO. */
+  ssoUrl?: string
 }
 
 const globalUser = ref<User | null>(null)
@@ -123,6 +125,7 @@ export function useAuth() {
   const isReady = globalIsReady
   const isInitializing = globalIsInitializing
   const error = ref<string | null>(null)
+  const ssoUrl = ref<string | null>(null)
 
   const requiresTwoFactor = ref(false)
   const pendingLoginPayload = ref<LoginPayload | null>(null)
@@ -132,8 +135,9 @@ export function useAuth() {
     const data = err?.data || err?.response?.data || err?.response?._data
     const errorCode = data?.error_code || data?.code
     const message = data?.message || data?.error || err?.message
+    const ssoUrl = errorCode === 'SSO_REQUIRED' ? data?.sso_url : undefined
 
-    return { status, errorCode, message }
+    return { status, errorCode, message, ssoUrl }
   }
 
   const ensureCsrfCookie = async () => {
@@ -181,6 +185,7 @@ export function useAuth() {
   const login = async (payload: LoginPayload, twoFactorCode?: string): Promise<boolean> => {
     isLoading.value = true
     error.value = null
+    ssoUrl.value = null
 
     try {
       const { api } = await import('~/api')
@@ -202,7 +207,8 @@ export function useAuth() {
         router.push(safeReturnPath(currentRoute.query.return))
       })
     } catch (err: any) {
-      const { status, errorCode, message } = parseErrorResponse(err)
+      const { status, errorCode, message, ssoUrl: requiredSsoUrl } = parseErrorResponse(err)
+      ssoUrl.value = requiredSsoUrl ?? null
 
       if (status === 423 && errorCode === 'TOTP_VERIFICATION_REQUIRED') {
         requiresTwoFactor.value = true
@@ -317,6 +323,7 @@ export function useAuth() {
   const register = async (payload: RegisterPayload): Promise<boolean> => {
     isLoading.value = true
     error.value = null
+    ssoUrl.value = null
 
     try {
       const { api } = await import('~/api')
@@ -329,6 +336,7 @@ export function useAuth() {
       })
     } catch (err: any) {
       const parsedError = parseErrorResponse(err)
+      ssoUrl.value = parsedError.ssoUrl ?? null
 
       // A 409 is usually a taken email, but not always (an already accepted invite
       // answers 409 too), so a server message wins over the assumption.
@@ -457,6 +465,7 @@ export function useAuth() {
     isReady: readonly(isReady),
     sessionExpired: readonly(globalSessionExpired),
     error,
+    ssoUrl,
     requiresTwoFactor: readonly(requiresTwoFactor),
 
     login,

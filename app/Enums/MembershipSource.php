@@ -27,6 +27,14 @@ enum MembershipSource: string
     case Direct = 'direct';
 
     /**
+     * Joined through one of the team's verified email domains, by auto-join
+     * or an approved join request. Not SAML-trusted on its own: the claim is
+     * the domain, which can be removed later. SamlLoginService checks the
+     * live verified domain instead.
+     */
+    case Domain = 'domain';
+
+    /**
      * Sources that prove the team and the user both agreed to the membership,
      * and may therefore back a SAML assertion about that user's address.
      *

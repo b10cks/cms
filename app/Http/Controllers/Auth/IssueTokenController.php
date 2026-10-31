@@ -3,9 +3,11 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Exceptions\AccountSuspendedException;
+use App\Exceptions\SsoRequiredException;
 use App\Models\User;
 use App\Notifications\User\VerifyEmailNotification;
 use App\Services\Auth\TwoFactorAuthService;
+use App\Services\Team\TeamDomainService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -24,7 +26,7 @@ class IssueTokenController extends AuthController
     {
     }
 
-    public function __invoke(Request $request): JsonResponse
+    public function __invoke(Request $request, TeamDomainService $domains): JsonResponse
     {
         $request->validate([
             'email' => 'required|email:rfc,filter',
@@ -45,6 +47,14 @@ class IssueTokenController extends AuthController
         }
 
         $user = Auth::guard('web')->user();
+
+        // Checked after the password so the answer reveals nothing about it.
+        if ($ssoTeam = $domains->ssoRequiredTeam($user->email, $user)) {
+            $this->logoutSession($request);
+
+            throw new SsoRequiredException($ssoTeam);
+        }
+
         if ($user->hasEnabledTwoFactor()) {
             $totpCode = $request->header('X-TOTP-Code');
             if (!$totpCode) {
@@ -79,6 +89,7 @@ class IssueTokenController extends AuthController
         }
 
         $this->updateUserLogin($user);
+        $domains->joinThroughDomain($user);
         if ($request->hasSession()) {
             $request->session()->regenerate();
         }

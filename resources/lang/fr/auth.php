@@ -45,4 +45,5 @@ return [
     'social_link_already_used' => 'Ce profil social est déjà lié à un autre compte.',
     'social_link_required' => 'Un compte utilise déjà cette adresse e-mail. Connectez-vous avec votre mot de passe, puis liez ce profil social depuis les paramètres de votre compte.',
     'suspended' => 'Ce compte est suspendu. Contactez l\'opérateur de cette instance.',
+    'sso_required' => 'Votre organisation exige l\'authentification unique. Connectez-vous avec le SSO de :team.',
 ];

@@ -7,6 +7,7 @@ use App\Enums\MembershipSource;
 use App\Models\Management\TeamSamlProvider;
 use App\Models\Management\UserSamlIdentity;
 use App\Models\User;
+use App\Services\Team\TeamDomainService;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -22,6 +23,7 @@ class SamlLoginService
     public function __construct(
         private readonly CreateUser $createUser,
         private readonly MembershipService $membershipService,
+        private readonly TeamDomainService $teamDomains,
     ) {}
 
     public function authFor(TeamSamlProvider $provider): Auth
@@ -147,11 +149,22 @@ class SamlLoginService
                 // this check looks for. Only a membership the user themselves
                 // agreed to — an accepted invite, their own team, or an
                 // account this very provider created — counts as a claim.
+                //
+                // A domain the team verified by DNS is a claim too: whoever
+                // runs its DNS runs its mail. That is what lets a domain that
+                // requires SSO adopt the password accounts already on it.
+                // Only verified, non-root accounts are adopted that way, so a
+                // stranger who pre-registered the address gains nothing.
+                $ownsDomain = $this->teamDomains->teamOwnsEmailDomain($provider->team_id, $email);
                 $user = User::query()
                     ->where('email', $email)
-                    ->whereHas('teams', fn ($query) => $query
-                        ->whereKey($provider->team_id)
-                        ->whereIn('team_user.source', MembershipSource::samlTrusted()))
+                    ->when(
+                        $ownsDomain,
+                        fn ($query) => $query->where('is_root', false)->whereNotNull('email_verified_at'),
+                        fn ($query) => $query->whereHas('teams', fn ($query) => $query
+                            ->whereKey($provider->team_id)
+                            ->whereIn('team_user.source', MembershipSource::samlTrusted())),
+                    )
                     ->first();
             }
 

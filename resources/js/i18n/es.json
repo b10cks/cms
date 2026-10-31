@@ -3013,6 +3013,10 @@
         "empty": "No hay nada pendiente.",
         "open": "Abrir",
         "types": {
+          "join_requests": {
+            "title": "{count} personas pidieron unirse | {count} persona pidió unirse | {count} personas pidieron unirse",
+            "action": "Revisar"
+          },
           "expiring_access": {
             "title": "El acceso vence para {count} personas | El acceso vence para {count} persona | El acceso vence para {count} personas",
             "action": "Revisar"
@@ -5209,6 +5213,74 @@
         "tooLarge": "{name} is too large. The limit is {max}.",
         "tooMany": "Up to {max} files per message.",
         "uploadFailed": "Could not upload {name}: {error}"
+      }
+    },
+    "teamDomains": {
+      "title": "Dominios",
+      "description": "Verifique los dominios de correo de su organización. Quien inicie sesión con una dirección coincidente puede solicitar unirse, unirse automáticamente o debe usar su SSO.",
+      "add": "Añadir dominio",
+      "verify": "Verificar",
+      "empty": "Aún no hay dominios.",
+      "fields": {
+        "domain": "Dominio",
+        "domainPlaceholder": "ejemplo.com",
+        "domainHint": "No se pueden añadir proveedores de correo públicos como gmail.com.",
+        "txtHost": "Host del registro TXT",
+        "txtValue": "Valor del registro TXT"
+      },
+      "columns": {
+        "domain": "Dominio",
+        "status": "Estado",
+        "policy": "Al iniciar sesión",
+        "defaultRole": "Rol predeterminado"
+      },
+      "status": {
+        "verified": "Verificado",
+        "pending": "Sin verificar"
+      },
+      "policies": {
+        "request": "Solicitar unirse",
+        "auto_join": "Unirse automáticamente",
+        "require_sso": "Exigir SSO"
+      },
+      "txtInstructions": "Añada este registro TXT en su proveedor de DNS y pulse Verificar. Los cambios de DNS pueden tardar en aparecer.",
+      "removeConfirm": {
+        "title": "Quitar dominio",
+        "message": "¿Quitar {domain}? Las personas de este dominio ya no podrán solicitar unirse y dejará de exigírseles el SSO.",
+        "confirm": "Quitar"
+      },
+      "toast": {
+        "failed": "No ha funcionado: {error}",
+        "verified": "{domain} está verificado."
+      },
+      "requests": {
+        "title": "Solicitudes de acceso",
+        "description": "Personas de sus dominios verificados que han pedido unirse a este equipo.",
+        "empty": "No hay solicitudes abiertas.",
+        "approve": "Aprobar",
+        "decline": "Rechazar",
+        "columns": {
+          "person": "Persona",
+          "domain": "Dominio",
+          "requested": "Solicitado",
+          "role": "Rol"
+        },
+        "declineConfirm": {
+          "title": "Rechazar solicitud",
+          "message": "¿Rechazar la solicitud de {name}? No podrá enviar otra."
+        }
+      },
+      "join": {
+        "title": "Unirse a {team}",
+        "description": "Su dirección de correo en {domain} le permite solicitar unirse a este equipo.",
+        "pending": "Solicitud enviada. Un propietario del equipo la revisará.",
+        "declined": "El equipo rechazó su solicitud. Pida una invitación a un propietario.",
+        "request": "Solicitar unirse",
+        "cancel": "Cancelar solicitud"
+      },
+      "login": {
+        "ssoRequired": "Su organización exige el inicio de sesión único para esta dirección de correo.",
+        "continueWithSso": "Continuar con SSO"
       }
     }
   },
