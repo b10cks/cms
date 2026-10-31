@@ -68,7 +68,7 @@ class TeamControllerTest extends TestCase
     #[Test]
     public function root_can_create_a_top_level_team(): void
     {
-        $root = User::factory()->create(['is_root' => true]);
+        $root = $this->elevate(User::factory()->create(['is_root' => true]));
 
         $response = $this->actingAs($root)->postJson(route('mgmt.teams.store'), [
             'name' => 'Top level',
@@ -130,7 +130,7 @@ class TeamControllerTest extends TestCase
     #[Test]
     public function root_can_move_a_team_to_the_top_level(): void
     {
-        $root = User::factory()->create(['is_root' => true]);
+        $root = $this->elevate(User::factory()->create(['is_root' => true]));
         $parent = Team::factory()->create();
         $team = Team::factory()->create(['parent_id' => $parent->id]);
 
@@ -145,7 +145,7 @@ class TeamControllerTest extends TestCase
     #[Test]
     public function a_team_cannot_be_its_own_parent(): void
     {
-        $root = User::factory()->create(['is_root' => true]);
+        $root = $this->elevate(User::factory()->create(['is_root' => true]));
         $team = Team::factory()->create();
 
         $response = $this->actingAs($root)->patchJson(route('mgmt.teams.update', $team), [
@@ -225,7 +225,7 @@ class TeamControllerTest extends TestCase
     #[Test]
     public function reparenting_updates_inherited_access_for_both_ancestor_chains(): void
     {
-        $root = User::factory()->create(['is_root' => true]);
+        $root = $this->elevate(User::factory()->create(['is_root' => true]));
         $source = Team::factory()->create();
         $destination = Team::factory()->create();
         $moved = Team::factory()->create(['parent_id' => $source->id]);
@@ -309,7 +309,7 @@ class TeamControllerTest extends TestCase
     #[Test]
     public function root_can_create_a_team_with_a_type(): void
     {
-        $root = User::factory()->create(['is_root' => true]);
+        $root = $this->elevate(User::factory()->create(['is_root' => true]));
 
         $this->actingAs($root)->postJson(route('mgmt.teams.store'), [
             'name' => 'Typed',
@@ -354,7 +354,7 @@ class TeamControllerTest extends TestCase
     #[Test]
     public function an_unknown_type_is_rejected(): void
     {
-        $root = User::factory()->create(['is_root' => true]);
+        $root = $this->elevate(User::factory()->create(['is_root' => true]));
 
         $this->actingAs($root)->postJson(route('mgmt.teams.store'), [
             'name' => 'Ghost',
@@ -365,7 +365,7 @@ class TeamControllerTest extends TestCase
     #[Test]
     public function root_can_change_and_clear_the_team_type(): void
     {
-        $root = User::factory()->create(['is_root' => true]);
+        $root = $this->elevate(User::factory()->create(['is_root' => true]));
         $team = Team::factory()->create(['type' => 'partner']);
 
         $this->actingAs($root)->patchJson(route('mgmt.teams.update', $team), [

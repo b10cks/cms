@@ -172,15 +172,45 @@ const routes: RouteRecordRaw[] = [
   },
   {
     path: '/provider',
-    name: 'provider-dashboard',
-    component: () => import('~/pages/provider/index.vue'),
+    component: () => import('~/pages/provider.vue'),
     meta: { layout: 'default' },
-  },
-  {
-    path: '/provider/notes',
-    name: 'provider-notes',
-    component: () => import('~/pages/provider/notes.vue'),
-    meta: { layout: 'default' },
+    children: [
+      {
+        path: '',
+        name: 'provider-dashboard',
+        component: () => import('~/pages/provider/index.vue'),
+      },
+      {
+        path: 'tenants',
+        name: 'provider-tenants',
+        component: () => import('~/pages/provider/tenants.vue'),
+      },
+      {
+        path: 'users',
+        name: 'provider-users',
+        component: () => import('~/pages/provider/users.vue'),
+      },
+      {
+        path: 'usage',
+        name: 'provider-usage',
+        component: () => import('~/pages/provider/usage.vue'),
+      },
+      {
+        path: 'audit',
+        name: 'provider-audit',
+        component: () => import('~/pages/provider/audit.vue'),
+      },
+      {
+        path: 'health',
+        name: 'provider-health',
+        component: () => import('~/pages/provider/health.vue'),
+      },
+      {
+        path: 'notes',
+        name: 'provider-notes',
+        component: () => import('~/pages/provider/notes.vue'),
+      },
+    ],
   },
   {
     path: '/:space',

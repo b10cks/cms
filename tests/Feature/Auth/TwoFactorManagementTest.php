@@ -175,11 +175,11 @@ class TwoFactorManagementTest extends TestCase
     #[Test]
     public function an_impersonator_cannot_rotate_backup_codes(): void
     {
-        $root = User::factory()->create(['is_root' => true]);
+        $root = $this->elevate(User::factory()->create(['is_root' => true]));
         $target = $this->userWithTwoFactor();
 
         $this->actingAs($root);
-        $token = $this->postJson(route('auth.impersonate.store'), ['userId' => $target->id])
+        $token = $this->postJson(route('auth.impersonate.store'), ['userId' => $target->id, 'reason' => 'Support ticket'])
             ->assertOk()
             ->json('access_token');
 
@@ -196,11 +196,11 @@ class TwoFactorManagementTest extends TestCase
     #[Test]
     public function an_impersonator_cannot_disable_two_factor(): void
     {
-        $root = User::factory()->create(['is_root' => true]);
+        $root = $this->elevate(User::factory()->create(['is_root' => true]));
         $target = $this->userWithTwoFactor();
 
         $this->actingAs($root);
-        $token = $this->postJson(route('auth.impersonate.store'), ['userId' => $target->id])
+        $token = $this->postJson(route('auth.impersonate.store'), ['userId' => $target->id, 'reason' => 'Support ticket'])
             ->assertOk()
             ->json('access_token');
 
@@ -217,11 +217,11 @@ class TwoFactorManagementTest extends TestCase
     #[Test]
     public function an_impersonator_cannot_enroll_a_second_factor(): void
     {
-        $root = User::factory()->create(['is_root' => true]);
+        $root = $this->elevate(User::factory()->create(['is_root' => true]));
         $target = User::factory()->create(['password' => Hash::make(self::PASSWORD)]);
 
         $this->actingAs($root);
-        $token = $this->postJson(route('auth.impersonate.store'), ['userId' => $target->id])
+        $token = $this->postJson(route('auth.impersonate.store'), ['userId' => $target->id, 'reason' => 'Support ticket'])
             ->assertOk()
             ->json('access_token');
 

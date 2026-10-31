@@ -19,7 +19,7 @@ import { Skeleton } from '~/components/ui/skeleton'
 import { Tabs, TabsList, TabsTrigger } from '~/components/ui/tabs'
 import { TooltipIcon } from '~/components/ui/tooltip'
 import { useAuthorization } from '~/composables/useAuthorization'
-import { teamNavigationItems } from '~/lib/access-control'
+import { hasRootWriteAccess, teamNavigationItems } from '~/lib/access-control'
 import type { CreateTeamSpaceRolePayload, RoleCatalogEntry } from '~/types/authorization'
 import type { TeamSamlProviderPayload } from '~/types/teams'
 
@@ -78,7 +78,8 @@ const canManageSettings = computed(() => access.canAccessRoute('team-settings'))
 const canManageAi = computed(() => access.canAccessRoute('team-ai'))
 const aiOwner = computed(() => ({ kind: 'team' as const, id: teamId.value }))
 const canViewPeople = computed(() => access.canAccessRoute('team'))
-const isRoot = computed(() => access.authorization.value?.is_root ?? false)
+// Moving to the top level and changing the type are root writes: they need a running elevation.
+const isRoot = computed(() => hasRootWriteAccess(access.authorization.value))
 
 const { data: hierarchyData } = useTeamHierarchyQuery(canManageSettings)
 const hierarchy = computed(() => hierarchyData.value || [])

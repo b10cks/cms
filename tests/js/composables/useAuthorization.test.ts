@@ -72,6 +72,10 @@ const payload = (
   return {
     user_id: 'user-1',
     is_root: false,
+    is_elevated: false,
+    elevated_until: null,
+    elevation_reason: null,
+    impersonation: null,
     teams: [],
     spaces: [],
     team: { id: 'team-1', role_keys: [], abilities: teamAbilities },
@@ -303,8 +307,11 @@ describe('useAbility', () => {
     expect(mountAbility('content.view.all', granted).value).toBe(false)
   })
 
-  it('grants everything to a root user', () => {
-    expect(mountAbility('anything.at.all', payload({ is_root: true })).value).toBe(true)
+  it('gives root no shortcut: the abilities the server sent decide', () => {
+    expect(mountAbility('content.manage', payload({ is_root: true })).value).toBe(false)
+    expect(
+      mountAbility('content.view', payload({ is_root: true, spaceAbilities: ['content.view'] })).value
+    ).toBe(true)
   })
 
   it('denies while the authorization context has not resolved yet', () => {
@@ -385,12 +392,15 @@ describe('useAccessControl abilities', () => {
     expect(check(mountAccessControl())).toBe(false)
   })
 
-  it('lets root through every check', () => {
-    const access = mountAccessControl({ authorization: payload({ is_root: true }) })
+  it('checks root against the abilities the server sent, like everyone', () => {
+    const access = mountAccessControl({
+      authorization: payload({ is_root: true, spaceAbilities: ['space.view'] }),
+    })
 
-    expect(access.hasAbility('nope.at.all')).toBe(true)
-    expect(access.hasAnyAbility(['nope.at.all'])).toBe(true)
-    expect(access.hasAllAbilities(['nope.at.all', 'also.nope'])).toBe(true)
+    expect(access.hasAbility('space.view')).toBe(true)
+    expect(access.hasAbility('space.update')).toBe(false)
+    expect(access.hasAnyAbility(['space.update', 'space.view'])).toBe(true)
+    expect(access.hasAllAbilities(['space.update', 'space.view'])).toBe(false)
   })
 
   it('needs one of hasAnyAbility', () => {
@@ -574,10 +584,14 @@ describe('useAccessControl navigation helpers', () => {
     ])
   })
 
-  it('keeps every navigation item for root', () => {
-    const access = mountAccessControl({ authorization: payload({ is_root: true }) })
+  it('shows root only the navigation its abilities reach', () => {
+    const access = mountAccessControl({
+      authorization: payload({ is_root: true, spaceAbilities: ['assets.view'] }),
+    })
 
-    expect(access.filterVisibleItems(spaceNavigationItems)).toHaveLength(spaceNavigationItems.length)
+    expect(access.filterVisibleItems(spaceNavigationItems).map((item) => item.routeName)).toEqual([
+      'space-assets-index',
+    ])
   })
 
   it('drops every navigation item without a context', () => {

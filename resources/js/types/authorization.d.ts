@@ -31,9 +31,21 @@ export interface AuthorizationSpaceContext {
   } | null
 }
 
+export interface AuthorizationImpersonation {
+  impersonator: { id: string; name: string } | null
+  reason: string
+  expires_at: string
+}
+
 export interface AuthorizationPayload {
   user_id: string
   is_root: boolean
+  /** Root writes need a running elevation; reads never do. */
+  is_elevated: boolean
+  elevated_until: string | null
+  elevation_reason: string | null
+  /** Set while an operator is signed in as this user. */
+  impersonation: AuthorizationImpersonation | null
   teams: Array<{ id: string; name: string }>
   spaces: Array<{ id: string; name: string; team_id?: string | null }>
   team?: AuthorizationTeamContext | null

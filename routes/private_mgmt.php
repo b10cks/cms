@@ -114,6 +114,9 @@ use App\Http\Controllers\Mgmt\TeamInviteResendController;
 use App\Http\Controllers\Mgmt\TeamMemberController;
 use App\Http\Controllers\Mgmt\TeamPeopleController;
 use App\Http\Controllers\Mgmt\TeamSamlProviderController;
+use App\Http\Controllers\Mgmt\Provider\ProviderConsoleController;
+use App\Http\Controllers\Mgmt\Provider\ProviderUserController;
+use App\Http\Controllers\Mgmt\Root\RootElevationController;
 use App\Http\Controllers\Mgmt\TeamUserController;
 use App\Http\Controllers\Mgmt\User\UserAvatarController;
 use App\Http\Controllers\Mgmt\User\UserController;
@@ -182,6 +185,29 @@ Route::group(['prefix' => 'users'], function () {
 });
 
 Route::get('authorization', AuthorizationController::class)->name('authorization.show');
+
+// Root elevation: reads stay unconditional for root, writes need a running elevation.
+Route::group(['prefix' => 'root/elevation', 'middleware' => ['not-impersonating']], function () {
+    Route::get('/', [RootElevationController::class, 'show'])->name('root.elevation.show');
+    Route::post('/', [RootElevationController::class, 'store'])->middleware('throttle:crucial')->name('root.elevation.store');
+    Route::delete('/', [RootElevationController::class, 'destroy'])->name('root.elevation.destroy');
+});
+
+// Provider console. Root-only; the user actions also need an elevation (form requests).
+Route::group(['prefix' => 'provider', 'middleware' => ['root', 'not-impersonating']], function () {
+    Route::get('tenants', [ProviderConsoleController::class, 'tenants'])->name('provider.tenants');
+    Route::get('usage', [ProviderConsoleController::class, 'usage'])->name('provider.usage');
+    Route::get('health', [ProviderConsoleController::class, 'health'])->name('provider.health');
+    Route::get('audit', [ProviderConsoleController::class, 'audit'])->name('provider.audit');
+    Route::get('users', [ProviderUserController::class, 'index'])->name('provider.users.index');
+    Route::get('users/{user}', [ProviderUserController::class, 'show'])->name('provider.users.show');
+    Route::group(['middleware' => ['throttle:crucial']], function () {
+        Route::post('users/{user}/suspend', [ProviderUserController::class, 'suspend'])->name('provider.users.suspend');
+        Route::post('users/{user}/restore', [ProviderUserController::class, 'restore'])->name('provider.users.restore');
+        Route::post('users/{user}/sign-out', [ProviderUserController::class, 'signOut'])->name('provider.users.sign-out');
+        Route::post('users/{user}/transfer-ownership', [ProviderUserController::class, 'transferOwnership'])->name('provider.users.transfer-ownership');
+    });
+});
 Route::get('provider/stats', ProviderStatsController::class)->name('provider.stats');
 Route::apiResource('provider/notes', ProviderNoteController::class)
     ->parameters(['notes' => 'providerNote']);

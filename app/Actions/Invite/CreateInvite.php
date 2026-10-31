@@ -39,7 +39,7 @@ class CreateInvite
             ? $this->roleService->resolveSpaceRole($data['role'], $team)
             : $this->roleService->resolveTeamRole($data['role']);
 
-        if ($inviter instanceof User && ! $inviter->is_root) {
+        if ($inviter instanceof User && ! $inviter->isElevatedRoot()) {
             $space
                 ? $this->guard->ensureCanAssignSpaceRole($inviter, $space, $role)
                 : $this->guard->ensureCanAssignTeamRole($inviter, $team, $role);

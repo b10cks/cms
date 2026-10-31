@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Auth;
 
+use App\Exceptions\AccountSuspendedException;
 use App\Models\User;
 use App\Notifications\User\VerifyEmailNotification;
 use App\Services\Auth\TwoFactorAuthService;
@@ -9,6 +10,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\URL;
 
 
@@ -32,6 +34,13 @@ class IssueTokenController extends AuthController
         $credentials = $request->only(['email', 'password']);
 
         if (!Auth::guard('web')->attempt($credentials, $request->boolean('remember'))) {
+            // The user provider hides suspended accounts, so their sign-in fails
+            // above. Only someone who knows the password learns why.
+            $suspended = User::query()->where('email', $credentials['email'])->whereNotNull('suspended_at')->first();
+            if ($suspended && Hash::check($credentials['password'], $suspended->password)) {
+                throw new AccountSuspendedException;
+            }
+
             return response()->json(['message' => __('auth.failed')], 401);
         }
 

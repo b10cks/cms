@@ -44,7 +44,7 @@ class StoreTeamRequest extends FormRequest
     {
         return [
             function (Validator $validator) {
-                if ($this->user()?->is_root || $this->input('type') === null) {
+                if ($this->user()?->isElevatedRoot() || $this->input('type') === null) {
                     return;
                 }
 

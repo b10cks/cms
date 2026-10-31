@@ -190,7 +190,7 @@ class SpaceBlueprintTest extends TestCase
             ->postJson(route('mgmt.space-blueprints.store'), ['name' => 'System'])
             ->assertForbidden();
 
-        $this->actingAs(User::factory()->create(['is_root' => true]))
+        $this->actingAs($this->elevate(User::factory()->create(['is_root' => true])))
             ->postJson(route('mgmt.space-blueprints.store'), ['name' => 'System'])
             ->assertStatus(201)
             ->assertJsonPath('data.team_id', null);
@@ -212,7 +212,7 @@ class SpaceBlueprintTest extends TestCase
             ->deleteJson(route('mgmt.space-blueprints.destroy', $blueprint))
             ->assertForbidden();
 
-        $this->actingAs(User::factory()->create(['is_root' => true]))
+        $this->actingAs($this->elevate(User::factory()->create(['is_root' => true])))
             ->patchJson(route('mgmt.space-blueprints.update', $blueprint), ['name' => 'Renamed'])
             ->assertOk()
             ->assertJsonPath('data.name', 'Renamed');
@@ -224,7 +224,7 @@ class SpaceBlueprintTest extends TestCase
         $team = Team::factory()->create();
         $blueprint = $this->blueprint($team);
 
-        $this->actingAs(User::factory()->create(['is_root' => true]))
+        $this->actingAs($this->elevate(User::factory()->create(['is_root' => true])))
             ->getJson(route('mgmt.space-blueprints.show', $blueprint))
             ->assertNotFound();
     }

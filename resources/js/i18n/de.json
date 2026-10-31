@@ -5534,6 +5534,216 @@
       "deleteConfirmation": "Sind Sie sicher, dass Sie diesen Eintrag löschen möchten?"
     }
   },
+  "providerConsole": {
+    "badge": "Provider-Konsole",
+    "elevateFirst": "Erhöhe deine Rechte, um diese Aktion zu nutzen",
+    "never": "Nie",
+    "reason": "Grund",
+    "flags": {
+      "no_owner": "Kein Inhaber",
+      "trial_ended": "Testphase beendet",
+      "payment_failed": "Zahlung fehlgeschlagen"
+    },
+    "actions": {
+      "impersonate": "Anmelden als",
+      "signOut": "Überall abmelden",
+      "transfer": "Inhaberschaft übertragen",
+      "suspend": "Sperren",
+      "restore": "Wiederherstellen"
+    },
+    "tenants": {
+      "title": "Mandanten",
+      "description": "Alle Teams dieser Instanz mit Spaces, Personen, Monatsumsatz und Anmeldeart. Öffne ein Team, um es als Root anzusehen.",
+      "createTopLevel": "Team auf oberster Ebene",
+      "search": "Teams durchsuchen",
+      "empty": "Keine passenden Teams.",
+      "open": "Öffnen",
+      "ssoOff": "Aus",
+      "segments": {
+        "all": "Alle",
+        "paying": "Zahlend",
+        "trial": "Testphase",
+        "flagged": "Markiert"
+      },
+      "columns": {
+        "team": "Team",
+        "type": "Typ",
+        "spaces": "Spaces",
+        "people": "Personen",
+        "mrr": "MRR",
+        "sso": "SSO",
+        "lastActive": "Zuletzt aktiv"
+      }
+    },
+    "users": {
+      "title": "Benutzer",
+      "description": "Alle Konten dieser Instanz. Öffne einen Benutzer, um Mitgliedschaften zu sehen und auf das Konto zuzugreifen.",
+      "search": "Name oder E-Mail suchen",
+      "empty": "Keine passenden Benutzer.",
+      "segments": {
+        "all": "Alle",
+        "active": "Aktiv 30 T.",
+        "suspended": "Gesperrt",
+        "root": "Root"
+      },
+      "status": {
+        "active": "Aktiv",
+        "suspended": "Gesperrt",
+        "root": "Root"
+      },
+      "signIn": {
+        "password": "Passwort",
+        "2fa": "2FA",
+        "saml": "SAML"
+      },
+      "columns": {
+        "name": "Name",
+        "teams": "Teams",
+        "signIn": "Anmeldung",
+        "status": "Status",
+        "lastActive": "Zuletzt aktiv"
+      },
+      "sheet": {
+        "teams": "Teams",
+        "sessions": "Sitzungen",
+        "tokens": "Tokens",
+        "memberships": "Mitgliedschaften",
+        "noMemberships": "Keine Mitgliedschaften in Teams oder Spaces.",
+        "activity": "Letzte Aktivität",
+        "noActivity": "Keine Aktivität aufgezeichnet.",
+        "onlyOwner": "Einziger Inhaber",
+        "teamRole": "Teamrolle",
+        "spaceRole": "Direkte Space-Rolle",
+        "elevateHint": "Diese Aktionen ändern das Konto einer anderen Person. Erhöhe zuerst deine Rechte.",
+        "suspendedSince": "Gesperrt {time} von {by}."
+      },
+      "toasts": {
+        "suspended": "Benutzer gesperrt",
+        "restored": "Benutzer wiederhergestellt",
+        "signedOut": "Alle Sitzungen beendet",
+        "transferred": "Inhaberschaft übertragen",
+        "failed": "Das hat nicht geklappt: {error}"
+      }
+    },
+    "impersonate": {
+      "title": "Als {name} anmelden",
+      "description": "Du siehst die App genau so wie {name}. Passwortänderungen und das Erstellen von Tokens bleiben gesperrt. Die Sitzung endet nach 1 Stunde.",
+      "reasonPlaceholder": "Ticketnummer oder warum du das brauchst",
+      "submit": "Als {name} anmelden"
+    },
+    "suspend": {
+      "title": "{name} sperren?",
+      "description": "Die Anmeldung wird gesperrt, {sessions} enden und {tokens} werden widerrufen. Mitgliedschaften und Inhalte bleiben, beim Wiederherstellen geht nichts verloren.",
+      "allSessions": "alle Sitzungen",
+      "sessions": "keine Sitzungen | 1 Sitzung | {count} Sitzungen",
+      "tokens": "keine persönlichen Zugriffstokens | 1 persönliches Zugriffstoken | {count} persönliche Zugriffstokens",
+      "soleOwner": "{name} ist einziger Inhaber von {team}. Wähle einen neuen Inhaber, sonst wird das Team markiert.",
+      "newOwner": "Neuer Inhaber",
+      "leaveFlagged": "Markiert lassen",
+      "reasonPlaceholder": "Warum das Konto gesperrt wird",
+      "submit": "Sperren"
+    },
+    "restore": {
+      "title": "Konto wiederherstellen",
+      "message": "{name} kann sich wieder anmelden. Sitzungen und Tokens, die mit der Sperre geendet haben, bleiben beendet."
+    },
+    "signOut": {
+      "title": "Überall abmelden",
+      "message": "Alle Browsersitzungen von {name} beenden? Persönliche Zugriffstokens funktionieren weiter."
+    },
+    "transfer": {
+      "title": "Inhaberschaft übertragen",
+      "description": "Der neue Inhaber erhält die Inhaberrolle, {name} wird Admin des Teams.",
+      "team": "Team",
+      "newOwner": "Neuer Inhaber",
+      "noCandidates": "Kein anderes aktives Mitglied",
+      "submit": "Übertragen"
+    },
+    "usage": {
+      "title": "Nutzung",
+      "description": "Pro Team der obersten Ebene, Unterteams eingeschlossen: Planumsatz, KI-Kosten aus abgeschlossenen Abrechnungszeiträumen sowie Speicher und Traffic als Anteil der Plankontingente. API-Anfragen haben kein Kontingent.",
+      "empty": "Keine Nutzung in diesem Monat.",
+      "unlimited": "Kein Kontingent",
+      "storageFlag": "Speicher {percent} %",
+      "columns": {
+        "team": "Team",
+        "revenue": "Planumsatz",
+        "aiSpend": "KI-Kosten",
+        "storage": "Speicher",
+        "apiRequests": "API-Anfragen",
+        "traffic": "Traffic",
+        "flags": "Hinweise"
+      }
+    },
+    "audit": {
+      "title": "Audit",
+      "description": "Jede Root-Aktion auf dieser Instanz: Rechteerhöhungen, Anmeldungen als andere Benutzer, Sperren, Abmeldungen und Übertragungen der Inhaberschaft.",
+      "empty": "Noch keine Root-Aktionen aufgezeichnet.",
+      "allActions": "Alle Aktionen",
+      "system": "System",
+      "columns": {
+        "time": "Zeit",
+        "actor": "Root-Benutzer",
+        "action": "Aktion",
+        "detail": "Details"
+      },
+      "actions": {
+        "elevation_started": "Rechte erhöht",
+        "elevation_ended": "Rechteerhöhung beendet",
+        "impersonation_started": "Als Benutzer angemeldet",
+        "impersonation_ended": "Vom Benutzer zurückgekehrt",
+        "user_suspended": "Benutzer gesperrt",
+        "user_restored": "Benutzer wiederhergestellt",
+        "user_signed_out": "Benutzer überall abgemeldet",
+        "team_ownership_transferred": "Inhaberschaft übertragen"
+      }
+    },
+    "health": {
+      "title": "Zustand",
+      "description": "Warteschlangen, fehlgeschlagene Jobs und ob Space-Datenbanken antworten. Die Datenbankprüfung öffnet eine zufällige Auswahl an Spaces und wird 10 Minuten zwischengespeichert.",
+      "queued": "Wartende Jobs",
+      "connection": "Verbindung {name}",
+      "failedJobs": "Fehlgeschlagene Jobs",
+      "last24h": "Letzte 24 Stunden",
+      "spaceDatabases": "Space-Datenbanken",
+      "sampled": "Stichprobe aus {total} Spaces",
+      "queues": "Warteschlangen",
+      "queue": "Warteschlange",
+      "size": "Wartend",
+      "unknown": "Unbekannt",
+      "checkedAt": "Geprüft {time}",
+      "recheck": "Erneut prüfen",
+      "allReachable": "Alle {count} geprüften Datenbanken haben geantwortet."
+    }
+  },
+  "rootAccess": {
+    "elevate": {
+      "title": "Root-Rechte erhöhen",
+      "description": "Du erhältst für die gewählte Zeit jede Aktion auf dieser Instanz. Der Grund landet im Instanz-Audit.",
+      "reason": "Grund",
+      "reasonPlaceholder": "Ticket #4821: Inhaberzugang wiederherstellen",
+      "duration": "Dauer",
+      "minutes": "{count} Minuten",
+      "submit": "Rechte erhöhen"
+    },
+    "banner": {
+      "viewing": {
+        "team": "Du siehst dieses Team als Root. Bis du deine Rechte erhöhst, kannst du nur lesen.",
+        "space": "Du siehst diesen Space als Root. Bis du deine Rechte erhöhst, kannst du nur lesen."
+      },
+      "elevate": "Rechte erhöhen",
+      "backToTenants": "Zurück zu Mandanten",
+      "elevatedUntil": "Erhöht bis {time}.",
+      "endNow": "Jetzt beenden",
+      "signedInAs": "Angemeldet als {name}.",
+      "endsAt": "Endet um {time}. Passwort- und Tokenänderungen sind gesperrt.",
+      "return": "Zurück zu deinem Konto"
+    },
+    "toasts": {
+      "elevated": "Rechte erhöht. Root-Aktionen sind freigeschaltet.",
+      "failed": "Das hat nicht geklappt: {error}"
+    }
+  },
   "shortcuts": {
     "title": "Tastenkürzel",
     "description": "Alles, was gerade belegt ist. Die Liste folgt dem, was am Bildschirm ist.",

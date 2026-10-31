@@ -16,6 +16,12 @@ return [
     'default' => env('QUEUE_CONNECTION', 'sync'),
 
     /*
+    | Queues whose depth the provider console's Health page shows.
+    */
+
+    'monitored' => array_values(array_filter(explode(',', env('QUEUE_MONITORED', 'default,heavy')))),
+
+    /*
     |--------------------------------------------------------------------------
     | Queue Connections
     |--------------------------------------------------------------------------

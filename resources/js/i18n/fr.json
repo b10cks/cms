@@ -5518,6 +5518,216 @@
       "deleteConfirmation": "Êtes-vous sûr de vouloir supprimer cette entrée ?"
     }
   },
+  "providerConsole": {
+    "badge": "Console fournisseur",
+    "elevateFirst": "Élevez vos droits pour utiliser cette action",
+    "never": "Jamais",
+    "reason": "Motif",
+    "flags": {
+      "no_owner": "Sans propriétaire",
+      "trial_ended": "Essai terminé",
+      "payment_failed": "Paiement échoué"
+    },
+    "actions": {
+      "impersonate": "Se connecter en tant que",
+      "signOut": "Déconnecter partout",
+      "transfer": "Transférer la propriété",
+      "suspend": "Suspendre",
+      "restore": "Rétablir"
+    },
+    "tenants": {
+      "title": "Clients",
+      "description": "Toutes les équipes de cette instance avec leurs espaces, personnes, revenu mensuel et mode de connexion. Ouvrez une équipe pour la consulter en tant que root.",
+      "createTopLevel": "Équipe de premier niveau",
+      "search": "Rechercher des équipes",
+      "empty": "Aucune équipe ne correspond.",
+      "open": "Ouvrir",
+      "ssoOff": "Désactivé",
+      "segments": {
+        "all": "Toutes",
+        "paying": "Payantes",
+        "trial": "Essai",
+        "flagged": "Signalées"
+      },
+      "columns": {
+        "team": "Équipe",
+        "type": "Type",
+        "spaces": "Espaces",
+        "people": "Personnes",
+        "mrr": "MRR",
+        "sso": "SSO",
+        "lastActive": "Dernière activité"
+      }
+    },
+    "users": {
+      "title": "Utilisateurs",
+      "description": "Tous les comptes de cette instance. Ouvrez un utilisateur pour voir ses adhésions et agir sur le compte.",
+      "search": "Rechercher un nom ou un e-mail",
+      "empty": "Aucun utilisateur ne correspond.",
+      "segments": {
+        "all": "Tous",
+        "active": "Actifs 30 j",
+        "suspended": "Suspendus",
+        "root": "Root"
+      },
+      "status": {
+        "active": "Actif",
+        "suspended": "Suspendu",
+        "root": "Root"
+      },
+      "signIn": {
+        "password": "Mot de passe",
+        "2fa": "2FA",
+        "saml": "SAML"
+      },
+      "columns": {
+        "name": "Nom",
+        "teams": "Équipes",
+        "signIn": "Connexion",
+        "status": "Statut",
+        "lastActive": "Dernière activité"
+      },
+      "sheet": {
+        "teams": "Équipes",
+        "sessions": "Sessions",
+        "tokens": "Jetons",
+        "memberships": "Adhésions",
+        "noMemberships": "Aucune adhésion à une équipe ou un espace.",
+        "activity": "Activité récente",
+        "noActivity": "Aucune activité enregistrée.",
+        "onlyOwner": "Seul propriétaire",
+        "teamRole": "Rôle d'équipe",
+        "spaceRole": "Rôle direct dans l'espace",
+        "elevateHint": "Ces actions modifient le compte de quelqu'un d'autre. Élevez d'abord vos droits.",
+        "suspendedSince": "Suspendu {time} par {by}."
+      },
+      "toasts": {
+        "suspended": "Utilisateur suspendu",
+        "restored": "Utilisateur rétabli",
+        "signedOut": "Toutes les sessions sont terminées",
+        "transferred": "Propriété transférée",
+        "failed": "Cela n'a pas fonctionné : {error}"
+      }
+    },
+    "impersonate": {
+      "title": "Se connecter en tant que {name}",
+      "description": "Vous voyez l'application exactement comme {name}. Les changements de mot de passe et la création de jetons restent bloqués. La session se termine après 1 heure.",
+      "reasonPlaceholder": "Numéro de ticket ou raison",
+      "submit": "Se connecter en tant que {name}"
+    },
+    "suspend": {
+      "title": "Suspendre {name} ?",
+      "description": "La connexion est bloquée, {sessions} prennent fin et {tokens} sont révoqués. Les adhésions et le contenu restent, le rétablissement ne perd donc rien.",
+      "allSessions": "toutes les sessions",
+      "sessions": "aucune session | 1 session | {count} sessions",
+      "tokens": "aucun jeton d'accès personnel | 1 jeton d'accès personnel | {count} jetons d'accès personnels",
+      "soleOwner": "{name} est le seul propriétaire de {team}. Choisissez un nouveau propriétaire, sinon l'équipe sera signalée.",
+      "newOwner": "Nouveau propriétaire",
+      "leaveFlagged": "Laisser signalée",
+      "reasonPlaceholder": "Pourquoi le compte est suspendu",
+      "submit": "Suspendre"
+    },
+    "restore": {
+      "title": "Rétablir le compte",
+      "message": "{name} pourra se reconnecter. Les sessions et jetons terminés par la suspension restent terminés."
+    },
+    "signOut": {
+      "title": "Déconnecter partout",
+      "message": "Terminer toutes les sessions de navigateur de {name} ? Les jetons d'accès personnels continuent de fonctionner."
+    },
+    "transfer": {
+      "title": "Transférer la propriété",
+      "description": "Le nouveau propriétaire reçoit le rôle de propriétaire, {name} devient administrateur de l'équipe.",
+      "team": "Équipe",
+      "newOwner": "Nouveau propriétaire",
+      "noCandidates": "Aucun autre membre actif",
+      "submit": "Transférer"
+    },
+    "usage": {
+      "title": "Utilisation",
+      "description": "Par équipe de premier niveau, sous-équipes comprises : revenu du plan, dépenses IA des périodes de facturation clôturées, ainsi que stockage et trafic en part des quotas du plan. Les requêtes API n'ont pas de quota.",
+      "empty": "Aucune utilisation ce mois-ci.",
+      "unlimited": "Pas de quota",
+      "storageFlag": "Stockage {percent} %",
+      "columns": {
+        "team": "Équipe",
+        "revenue": "Revenu du plan",
+        "aiSpend": "Dépenses IA",
+        "storage": "Stockage",
+        "apiRequests": "Requêtes API",
+        "traffic": "Trafic",
+        "flags": "Alertes"
+      }
+    },
+    "audit": {
+      "title": "Audit",
+      "description": "Chaque action root sur cette instance : élévations, connexions en tant qu'autre utilisateur, suspensions, déconnexions et transferts de propriété.",
+      "empty": "Aucune action root enregistrée pour l'instant.",
+      "allActions": "Toutes les actions",
+      "system": "Système",
+      "columns": {
+        "time": "Heure",
+        "actor": "Utilisateur root",
+        "action": "Action",
+        "detail": "Détail"
+      },
+      "actions": {
+        "elevation_started": "Droits élevés",
+        "elevation_ended": "Élévation terminée",
+        "impersonation_started": "Connecté en tant qu'utilisateur",
+        "impersonation_ended": "Retour depuis l'utilisateur",
+        "user_suspended": "Utilisateur suspendu",
+        "user_restored": "Utilisateur rétabli",
+        "user_signed_out": "Utilisateur déconnecté partout",
+        "team_ownership_transferred": "Propriété transférée"
+      }
+    },
+    "health": {
+      "title": "Santé",
+      "description": "Profondeur des files, tâches échouées et réponse des bases de données des espaces. Le contrôle ouvre un échantillon aléatoire d'espaces et reste en cache 10 minutes.",
+      "queued": "Tâches en attente",
+      "connection": "Connexion {name}",
+      "failedJobs": "Tâches échouées",
+      "last24h": "Dernières 24 heures",
+      "spaceDatabases": "Bases de données des espaces",
+      "sampled": "Échantillon de {total} espaces",
+      "queues": "Files",
+      "queue": "File",
+      "size": "En attente",
+      "unknown": "Inconnu",
+      "checkedAt": "Vérifié {time}",
+      "recheck": "Vérifier à nouveau",
+      "allReachable": "Les {count} bases de l'échantillon ont répondu."
+    }
+  },
+  "rootAccess": {
+    "elevate": {
+      "title": "Élever en root",
+      "description": "Vous disposez de toutes les actions sur cette instance pendant la durée choisie. Le motif est consigné dans l'audit de l'instance.",
+      "reason": "Motif",
+      "reasonPlaceholder": "Ticket #4821 : rétablir l'accès du propriétaire",
+      "duration": "Durée",
+      "minutes": "{count} minutes",
+      "submit": "Élever"
+    },
+    "banner": {
+      "viewing": {
+        "team": "Vous consultez cette équipe en tant que root. Elle est en lecture seule jusqu'à ce que vous éleviez vos droits.",
+        "space": "Vous consultez cet espace en tant que root. Il est en lecture seule jusqu'à ce que vous éleviez vos droits."
+      },
+      "elevate": "Élever",
+      "backToTenants": "Retour aux clients",
+      "elevatedUntil": "Élevé jusqu'à {time}.",
+      "endNow": "Terminer maintenant",
+      "signedInAs": "Connecté en tant que {name}.",
+      "endsAt": "Se termine à {time}. Les changements de mot de passe et de jetons sont bloqués.",
+      "return": "Revenir à votre compte"
+    },
+    "toasts": {
+      "elevated": "Droits élevés. Les actions root sont débloquées.",
+      "failed": "Cela n'a pas fonctionné : {error}"
+    }
+  },
   "shortcuts": {
     "title": "Raccourcis clavier",
     "description": "Tout ce qui est actuellement lié. La liste suit ce qui est affiché à l'écran.",

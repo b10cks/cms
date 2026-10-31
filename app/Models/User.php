@@ -2,8 +2,10 @@
 
 namespace App\Models;
 
+use App\Models\Management\RootElevation;
 use App\Models\Management\Space;
 use App\Models\Management\Team;
+use App\Models\Management\UserSamlIdentity;
 use App\Models\Traits\HasPurifiedAttributes;
 use App\Models\User\UserSettings;
 use App\Models\User\UserSocialLink;
@@ -39,6 +41,10 @@ use Laravel\Sanctum\HasApiTokens;
  * @property int $login_count
  * @property \Illuminate\Support\Carbon|null $last_login_at
  * @property bool $is_root
+ * @property \Illuminate\Support\Carbon|null $suspended_at
+ * @property string|null $suspended_by
+ * @property string|null $suspension_reason
+ * @property int $session_epoch
  * @property \Illuminate\Support\Carbon|null $two_factor_enabled_at
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
@@ -113,6 +119,12 @@ class User extends Authenticatable implements HasLocalePreference, MustVerifyEma
         'language_iso',
     ];
 
+    /** Column defaults, so fresh instances answer the suspension and session checks. */
+    protected $attributes = [
+        'suspended_at' => null,
+        'session_epoch' => 0,
+    ];
+
     /**
      * The attributes that should be hidden for serialization.
      *
@@ -133,6 +145,8 @@ class User extends Authenticatable implements HasLocalePreference, MustVerifyEma
     protected $casts = [
         'email_verified_at' => 'datetime',
         'is_root' => 'boolean',
+        'suspended_at' => 'datetime',
+        'session_epoch' => 'integer',
         'last_login_at' => 'datetime',
         'password' => 'hashed',
         'settings' => UserSettings::class,
@@ -153,6 +167,47 @@ class User extends Authenticatable implements HasLocalePreference, MustVerifyEma
             get: fn ($value) => $value ? json_decode(decrypt($value), true) : null,
             set: fn ($value) => $value ? encrypt(json_encode($value)) : null,
         );
+    }
+
+    /** Memo for {@see activeElevation()}; false means "not looked up yet". */
+    private RootElevation|false|null $elevationMemo = false;
+
+    public function elevations(): HasMany
+    {
+        return $this->hasMany(RootElevation::class);
+    }
+
+    /**
+     * The root user's running elevation. Looked up once per instance; the
+     * expiry is re-checked on every call so a lapse takes effect mid-request.
+     */
+    public function activeElevation(): ?RootElevation
+    {
+        if (! $this->is_root) {
+            return null;
+        }
+
+        if ($this->elevationMemo === false) {
+            $this->elevationMemo = $this->elevations()->active()->latest('expires_at')->first();
+        }
+
+        return $this->elevationMemo?->isActive() ? $this->elevationMemo : null;
+    }
+
+    /** Root write powers: a root user with a running elevation. Reads never need this. */
+    public function isElevatedRoot(): bool
+    {
+        return $this->activeElevation() !== null;
+    }
+
+    public function forgetElevation(): void
+    {
+        $this->elevationMemo = false;
+    }
+
+    public function isSuspended(): bool
+    {
+        return $this->suspended_at !== null;
     }
 
     public function spaces(): BelongsToMany
@@ -183,6 +238,11 @@ class User extends Authenticatable implements HasLocalePreference, MustVerifyEma
     protected function displayName(): Attribute
     {
         return Attribute::get(fn () => $this->firstname || $this->lastname ? $this->name : $this->email);
+    }
+
+    public function samlIdentities(): HasMany
+    {
+        return $this->hasMany(UserSamlIdentity::class);
     }
 
     public function socialLinks(): HasMany
