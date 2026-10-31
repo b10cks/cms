@@ -48,21 +48,7 @@ class AssetFolderResource extends JsonResource
             return $preloadedFields;
         }
 
-        return $this->resolveMetadataFieldResolver($request)
+        return AssetMetadataFieldResolver::forRequest($request)
             ->getEffectiveFieldsForFolder($space, $this->resource);
-    }
-
-    private function resolveMetadataFieldResolver(Request $request): AssetMetadataFieldResolver
-    {
-        $resolver = $request->attributes->get(AssetMetadataFieldResolver::class);
-
-        if ($resolver instanceof AssetMetadataFieldResolver) {
-            return $resolver;
-        }
-
-        $resolver = app(AssetMetadataFieldResolver::class);
-        $request->attributes->set(AssetMetadataFieldResolver::class, $resolver);
-
-        return $resolver;
     }
 }

@@ -9,6 +9,7 @@ use App\Http\Requests\Asset\UpdateAssetFolderRequest;
 use App\Http\Resources\Management\AssetFolderResource;
 use App\Models\Management\Space;
 use App\Models\Space\AssetFolder;
+use App\Services\Asset\AssetMetadataFieldResolver;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\ResourceCollection;
@@ -26,6 +27,8 @@ class AssetFolderController extends Controller
         $assetFolders = AssetFolder::filter($filter)
             ->withCount(['children', 'assets'])
             ->get();
+
+        AssetMetadataFieldResolver::forRequest($request)->rememberFolders($assetFolders);
 
         return AssetFolderResource::collection($assetFolders);
     }
