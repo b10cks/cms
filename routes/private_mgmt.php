@@ -77,6 +77,7 @@ use App\Http\Controllers\Mgmt\IconDataImportController;
 use App\Http\Controllers\Mgmt\MigrationController;
 use App\Http\Controllers\Mgmt\NotificationController;
 use App\Http\Controllers\Mgmt\PlanProposalController;
+use App\Http\Controllers\Mgmt\Provider\ProviderMetricsController;
 use App\Http\Controllers\Mgmt\Provider\ProviderNoteController;
 use App\Http\Controllers\Mgmt\Provider\ProviderStatsController;
 use App\Http\Controllers\Mgmt\RedirectController;
@@ -183,6 +184,7 @@ Route::group(['prefix' => 'users'], function () {
 
 Route::get('authorization', AuthorizationController::class)->name('authorization.show');
 Route::get('provider/stats', ProviderStatsController::class)->name('provider.stats');
+Route::get('provider/metrics', ProviderMetricsController::class)->name('provider.metrics');
 Route::apiResource('provider/notes', ProviderNoteController::class)
     ->parameters(['notes' => 'providerNote']);
 

@@ -83,6 +83,14 @@ class Kernel extends ConsoleKernel
             ->withoutOverlapping()
             ->runInBackground();
 
+        // Daily rollups of per-space edits, publishes and AI runs for the
+        // provider dashboard, which never reads a space DB on request.
+        $schedule->command('provider:collect-activity')
+            ->hourlyAt(35)
+            ->onOneServer()
+            ->withoutOverlapping()
+            ->runInBackground();
+
         // Delete expired asset download packages (transfers-disk archive +
         // row); shares rebuild their package on the next download.
         $schedule->command('assets:prune-packages')
