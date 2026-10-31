@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { useSortable } from '@vueuse/integrations/useSortable'
+import { unrefElement, usePreferredReducedMotion } from '@vueuse/core'
+import { useSortable, type UseSortableOptions } from '@vueuse/integrations/useSortable'
 import {
   AccordionContent,
   AccordionHeader,
@@ -200,20 +201,33 @@ const openItems = ref<string[]>([])
 // Sortable leaves `draggable="false"` on a dropped item, which is why the
 // handle must not be the `draggable` attribute itself. Fallback mode draws
 // the clone and placeholder ourselves instead of the browser's snapshot.
-;(useSortable as any)(accordionContainer, blockItems, {
-  handle: '[data-block-handle]',
-  draggable: '[data-block-item]',
+// Handles and items are scoped to this list, so a nested blocks field never
+// picks up the grips of its parent list or the other way round.
+const sortId = useId()
+const handleSelector = `[data-block-handle="${sortId}"]`
+const reducedMotion = usePreferredReducedMotion()
+const sortAnimation = () => (reducedMotion.value === 'reduce' ? 0 : 150)
+
+// The sortablejs `Options` type doesn't resolve in this project, hence the cast.
+const { option: setSortableOption } = useSortable(accordionContainer, blockItems, {
+  handle: handleSelector,
+  draggable: '>[data-block-item]',
   forceFallback: true,
   fallbackOnBody: true,
   fallbackTolerance: 4,
-  animation: 150,
+  animation: sortAnimation(),
+  forceAutoScrollFallback: true,
+  scrollSensitivity: 80,
+  scrollSpeed: 14,
   ghostClass: 'blocks-sortable-ghost',
   dragClass: 'blocks-sortable-drag',
   chosenClass: 'blocks-sortable-chosen',
   onEnd: () => {
     lastSortEndedAt = Date.now()
   },
-})
+} as UseSortableOptions)
+
+watch(reducedMotion, () => setSortableOption('animation', sortAnimation()))
 
 // Releasing a drag fires a click on the header under the pointer, which would
 // toggle that item open. Swallow the click that directly follows a sort.
@@ -231,15 +245,35 @@ const suppressClickAfterSort = (event: MouseEvent) => {
  * collaborators is identical.
  */
 const moveItem = (index: number, direction: -1 | 1) => {
-  if (props.readOnly) return
+  if (props.readOnly) return false
 
   const items = [...blockItems.value]
   const target = index + direction
-  if (target < 0 || target >= items.length) return
+  if (target < 0 || target >= items.length) return false
 
   const [moved] = items.splice(index, 1)
   items.splice(target, 0, moved)
   blockItems.value = items
+  return true
+}
+
+/** Read out by screen readers after a keyboard move. */
+const moveAnnouncement = ref('')
+
+/**
+ * Up/Down on a focused grip. The item's DOM node moves, which drops focus, so
+ * the grip at the new position takes it back.
+ */
+const moveItemFromHandle = async (index: number, direction: -1 | 1) => {
+  if (!moveItem(index, direction)) return
+
+  const position = index + direction
+  moveAnnouncement.value = String(
+    $t('actions.blocks.moved', { position: position + 1, count: blockItems.value.length })
+  )
+
+  await nextTick()
+  unrefElement(accordionContainer)?.querySelectorAll<HTMLElement>(handleSelector)[position]?.focus()
 }
 
 useShortcut({
@@ -712,6 +746,12 @@ const getItemRingStyle = (content: Record<string, unknown>, index: number) => {
         </div>
       </div>
 
+      <p
+        class="sr-only"
+        aria-live="polite"
+      >
+        {{ moveAnnouncement }}
+      </p>
       <AccordionRoot
         ref="accordionContainer"
         v-model="openItems"
@@ -765,6 +805,19 @@ const getItemRingStyle = (content: Record<string, unknown>, index: number) => {
               @keydown.alt.up.prevent.stop="moveItem(i, -1)"
               @keydown.alt.down.prevent.stop="moveItem(i, 1)"
             >
+              <div
+                v-if="!props.readOnly"
+                role="button"
+                tabindex="0"
+                :data-block-handle="sortId"
+                :aria-label="$t('actions.blocks.tooltips.reorder')"
+                :title="$t('actions.blocks.tooltips.reorder')"
+                class="-m-1 flex shrink-0 cursor-grab touch-none items-center rounded-sm p-1 text-muted-foreground select-none hover:text-foreground focus-visible:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none active:cursor-grabbing"
+                @keydown.up.prevent.stop="moveItemFromHandle(i, -1)"
+                @keydown.down.prevent.stop="moveItemFromHandle(i, 1)"
+              >
+                <Icon name="lucide:grip-vertical" />
+              </div>
               <AccordionTrigger class="flex min-w-0 grow items-center gap-2">
                 <BlockHeader
                   :content="content"

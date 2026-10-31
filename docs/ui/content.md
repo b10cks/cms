@@ -51,7 +51,7 @@ The editor is organized in four tabs across the top.
 
 This is the content itself: all the fields that make up your page, grouped into the sections your team designed, often something like *Content*, *SEO*, and *Settings*.
 
-**Sections you can add and rearrange.** Larger parts of a page, such as a hero image, an image gallery, or a text-and-image row, appear as a list you can sort. Click **+** to add one, either empty or from a template, then drag them into the order you want. Each one can be duplicated or removed. A newly added section already contains the default values your team set for it, so it is never completely blank.
+**Sections you can add and rearrange.** Larger parts of a page, such as a hero image, an image gallery, or a text-and-image row, appear as a list you can sort. Click **+** to add one, either empty or from a template, then drag them by the grip on the left into the order you want. A dashed outline shows where the section lands. From the keyboard, focus the grip and use the arrow keys. Each one can be duplicated or removed. A newly added section already contains the default values your team set for it, so it is never completely blank.
 
 **Fields that appear and disappear.** Some fields only show up once they are relevant. Choosing the layout "Video" may reveal a field for the video address that was hidden before. This is intentional, and nothing you typed earlier is lost when a field hides itself.
 

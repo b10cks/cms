@@ -4670,8 +4670,10 @@
         "copy": "Öğeyi kopyala",
         "cut": "Öğeyi kes",
         "delete": "Öğeyi sil",
-        "paste": "Öğeyi yapıştır"
+        "paste": "Öğeyi yapıştır",
+        "reorder": "Sıralamak için sürükleyin veya ok tuşlarını kullanın"
       },
+      "moved": "{count} içinde {position}. konuma taşındı",
       "richtext": {
         "addHtmlClass": "HTML Sınıfı Ekle",
         "removeHtmlClass": "HTML sınıfını kaldır",

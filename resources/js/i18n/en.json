@@ -4670,8 +4670,10 @@
         "copy": "Copy item",
         "cut": "Cut item",
         "delete": "Delete item",
-        "paste": "Paste item"
+        "paste": "Paste item",
+        "reorder": "Drag to reorder, or use the arrow keys"
       },
+      "moved": "Moved to position {position} of {count}",
       "richtext": {
         "addHtmlClass": "Add HTML Class",
         "removeHtmlClass": "Remove HTML class",

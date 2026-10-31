@@ -22,13 +22,6 @@ const guessedTitle = computed(() =>
 
 <template>
   <div class="flex shrink-0 items-center gap-2">
-    <div
-      data-block-handle
-      class="flex cursor-grab touch-none items-center text-muted-foreground select-none hover:text-foreground active:cursor-grabbing"
-      @click.stop.prevent
-    >
-      <Icon name="lucide:grip-vertical" />
-    </div>
     <div class="relative flex size-4 items-center justify-center">
       <Icon
         v-if="block.icon"

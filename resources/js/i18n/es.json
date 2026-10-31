@@ -4670,8 +4670,10 @@
         "copy": "Copiar elemento",
         "cut": "Cortar elemento",
         "delete": "Eliminar elemento",
-        "paste": "Pegar elemento"
+        "paste": "Pegar elemento",
+        "reorder": "Arrastra para reordenar o usa las teclas de flecha"
       },
+      "moved": "Movido a la posición {position} de {count}",
       "richtext": {
         "addHtmlClass": "Añadir Clase HTML",
         "removeHtmlClass": "Quitar clase HTML",
