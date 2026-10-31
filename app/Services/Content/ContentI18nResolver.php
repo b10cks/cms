@@ -158,8 +158,14 @@ class ContentI18nResolver
                 $resolvedLanguage = $resolvedRow->language_iso;
             }
 
+            // Seed from the family row: it carries the version loaded for this
+            // scope, while the caller's row may not, which lazy loads per item.
             $effectiveBaseContent = $effectiveMode === 'overlay'
-                ? $this->mergeBaseChain($fallbackChain, $blockSchema, $targetVersion ? null : $resolvedCanonical)
+                ? $this->mergeBaseChain(
+                    $fallbackChain,
+                    $blockSchema,
+                    $targetVersion ? null : ($family->firstWhere('id', $resolvedCanonical->id) ?? $resolvedCanonical),
+                )
                 : [];
 
             $effectiveContent = match (true) {

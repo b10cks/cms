@@ -1019,7 +1019,10 @@ onUnmounted(() => {
                     {{ asset.extension }} • {{ asset.mime_type }}
                   </span>
                 </div>
-                <p class="text-xs text-muted-foreground">
+                <p
+                  v-if="asset.linked_contents_count !== undefined"
+                  class="text-xs text-muted-foreground"
+                >
                   {{
                     asset.linked_contents_count === 1
                       ? $t('labels.assets.usedInSingleContent')

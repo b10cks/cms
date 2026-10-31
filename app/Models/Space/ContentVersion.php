@@ -10,12 +10,14 @@ use App\Services\Content\AssetHandler;
 use App\Services\Content\LinkHandler;
 use App\Services\Content\RelationHandler;
 use CodersCantina\Filter\Filterable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\MySqlConnection;
 use Illuminate\Support\Carbon;
 use Staudenmeir\EloquentJsonRelations\HasJsonRelationships;
 use Staudenmeir\EloquentJsonRelations\Relations\BelongsToJson;
@@ -110,11 +112,7 @@ class ContentVersion extends SpaceModel
             $model->created_at = $model->freshTimestamp();
         });
 
-        static::saving(function ($model) {
-            $model->prepareLinksForSave();
-            $model->prepareAssetsForSave();
-            $model->prepareRelationsForSave();
-        });
+        static::saving(fn (self $model) => $model->refreshReferenceIds());
     }
 
     public static function createWithContentContext(array $attributes, ?Content $content = null): self
@@ -134,6 +132,47 @@ class ContentVersion extends SpaceModel
     protected function message(): Attribute
     {
         return $this->makePurifiedAttribute('removeAll');
+    }
+
+    /**
+     * Recompute `asset_ids`, `link_ids` and `relation_ids` from the payload.
+     * Runs on every save; `ContentReferenceIndexer` calls it for rows written
+     * around the model.
+     */
+    public function refreshReferenceIds(): void
+    {
+        $this->prepareLinksForSave();
+        $this->prepareAssetsForSave();
+        $this->prepareRelationsForSave();
+    }
+
+    /**
+     * Versions whose `asset_ids` contain any of the given asset ids. On MySQL
+     * this matches the multi-valued index on `asset_ids->'$'`; the bare column
+     * or `JSON_CONTAINS` would scan the table instead.
+     *
+     * @param  Builder<self>  $query
+     * @param  list<string>  $assetIds
+     */
+    public function scopeReferencingAssets(Builder $query, array $assetIds): void
+    {
+        $connection = $query->getConnection();
+        $column = $query->qualifyColumn('asset_ids');
+
+        if ($connection instanceof MySqlConnection && ! $connection->isMaria()) {
+            $query->whereRaw(
+                'json_overlaps('.$query->getQuery()->getGrammar()->wrap($column)."->'$', cast(? as json))",
+                [json_encode(array_values($assetIds))],
+            );
+
+            return;
+        }
+
+        $query->where(function (Builder $query) use ($column, $assetIds): void {
+            foreach ($assetIds as $assetId) {
+                $query->orWhereJsonContains($column, $assetId);
+            }
+        });
     }
 
     protected function prepareLinksForSave(): void
@@ -228,11 +267,13 @@ class ContentVersion extends SpaceModel
 
     public function links(): BelongsToJson
     {
-        return $this->belongsToJson(Content::class, 'link_ids');
+        return $this->belongsToJson(Content::class, 'link_ids')
+            ->select(Content::deliveryColumns());
     }
 
     public function relations(): BelongsToJson
     {
-        return $this->belongsToJson(Content::class, 'relation_ids');
+        return $this->belongsToJson(Content::class, 'relation_ids')
+            ->select(Content::deliveryColumns());
     }
 }

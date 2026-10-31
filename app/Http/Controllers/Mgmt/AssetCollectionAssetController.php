@@ -10,6 +10,7 @@ use App\Models\Space\Asset;
 use App\Models\Space\AssetCollection;
 use App\Models\Space\AssetCollectionItem;
 use App\Services\Asset\AssetPackageService;
+use App\Services\Asset\AssetUsageService;
 use App\Services\Asset\SmartCollectionRuleService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -26,7 +27,12 @@ class AssetCollectionAssetController extends Controller
      * explicit items (ordered by position unless the client sorts), smart
      * collections evaluate their stored rules.
      */
-    public function index(Space $space, AssetCollection $collection, Request $request): ResourceCollection
+    public function index(
+        Space $space,
+        AssetCollection $collection,
+        Request $request,
+        AssetUsageService $assetUsageService,
+    ): ResourceCollection
     {
         $this->authorizeSpace($space, 'asset_collections.view');
 
@@ -53,7 +59,10 @@ class AssetCollectionAssetController extends Controller
             }
         }
 
-        return AssetResource::collection($query->paginate($this->perPage($request)));
+        $assets = $query->paginate($this->perPage($request));
+        $assetUsageService->attachCounts($assets->getCollection());
+
+        return AssetResource::collection($assets);
     }
 
     /**

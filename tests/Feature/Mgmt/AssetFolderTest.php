@@ -7,7 +7,9 @@ use App\Models\Management\Space;
 use App\Models\Management\Storage;
 use App\Models\Space\AssetFolder;
 use App\Models\User;
+use Illuminate\Database\Events\QueryExecuted;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Foundation\Testing\WithFaker;
 use Laravel\Sanctum\Sanctum;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -449,5 +451,32 @@ class AssetFolderTest extends TestCase
         $response->assertStatus(200);
         $response->assertJsonCount(1, 'data');
         $this->assertEquals('Marketing Assets', $response->json('data.0.name'));
+    }
+
+    #[Test]
+    public function folder_index_resolves_inherited_fields_from_the_listed_folders()
+    {
+        $parentFolder = AssetFolder::factory()->create([
+            'settings' => [
+                'additional_fields' => [
+                    ['key' => 'photographer', 'label' => 'Photographer', 'required' => true],
+                ],
+            ],
+        ]);
+        $childFolder = AssetFolder::factory()->create(['parent_id' => $parentFolder->id]);
+
+        $folderSelects = 0;
+        DB::listen(function (QueryExecuted $query) use (&$folderSelects): void {
+            if (str_starts_with($query->sql, 'select') && str_contains($query->sql, 'from "asset_folders"')) {
+                $folderSelects++;
+            }
+        });
+
+        $response = $this->getJson("/mgmt/v1/spaces/{$this->space->id}/asset-folders");
+
+        $response->assertOk();
+        $child = collect($response->json('data'))->firstWhere('id', $childFolder->id);
+        $this->assertContains('photographer', array_column($child['effective_asset_fields'], 'key'));
+        $this->assertSame(1, $folderSelects);
     }
 }

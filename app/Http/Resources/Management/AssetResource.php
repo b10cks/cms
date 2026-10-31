@@ -34,13 +34,28 @@ class AssetResource extends JsonResource
             'tags' => $this->tags,
             'license_expires_at' => $this->license_expires_at?->toIso8601String(),
             'rights_status' => $this->rights_status,
-            'linked_contents_count' => (int) ($this->resource->getAttributes()['linked_contents_count'] ?? 0),
+            // Only where the controller attached usage counts. A write response
+            // without them merges into the cached asset and must not zero them.
+            ...$this->usageCounts(),
             'effective_asset_fields' => $this->resolveEffectiveAssetFields($request, $space),
             'url' => app(AssetService::class)->getAssetUrl($this->resource),
             'poster_url' => app(AssetService::class)->getPosterUrl($this->resource),
             'created_at' => $this->created_at?->toIso8601String(),
             'updated_at' => $this->updated_at?->toIso8601String(),
         ];
+    }
+
+    /**
+     * @return array{linked_contents_count?: int, trashed_contents_count?: int}
+     */
+    private function usageCounts(): array
+    {
+        $attributes = $this->resource->getAttributes();
+
+        return array_map(
+            static fn (mixed $count): int => (int) $count,
+            array_intersect_key($attributes, array_flip(['linked_contents_count', 'trashed_contents_count'])),
+        );
     }
 
     private function enrichMetadata(?array $metadata): ?array
@@ -69,21 +84,7 @@ class AssetResource extends JsonResource
             return $preloadedFields;
         }
 
-        return $this->resolveMetadataFieldResolver($request)
+        return AssetMetadataFieldResolver::forRequest($request)
             ->getEffectiveFieldsForAsset($space, $this->resource);
-    }
-
-    private function resolveMetadataFieldResolver(Request $request): AssetMetadataFieldResolver
-    {
-        $resolver = $request->attributes->get(AssetMetadataFieldResolver::class);
-
-        if ($resolver instanceof AssetMetadataFieldResolver) {
-            return $resolver;
-        }
-
-        $resolver = app(AssetMetadataFieldResolver::class);
-        $request->attributes->set(AssetMetadataFieldResolver::class, $resolver);
-
-        return $resolver;
     }
 }

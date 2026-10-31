@@ -153,11 +153,12 @@ const dragPreviewTitle = computed(() => {
   return String(t('labels.selectionCount', { count: items.length }))
 })
 const linkedContentsLabel = computed(() => {
-  return props.asset.linked_contents_count === 1
+  const count = props.asset.linked_contents_count
+  if (count === undefined) return ''
+
+  return count === 1
     ? String(t('labels.assets.linkedContentsSingle'))
-    : String(
-        t('labels.assets.linkedContentsMultiple', { count: props.asset.linked_contents_count })
-      )
+    : String(t('labels.assets.linkedContentsMultiple', { count }))
 })
 
 function handleCheckboxSelect(event: Event) {
@@ -361,8 +362,7 @@ watchEffect((onCleanup) => {
               {{ asset.extension }} • {{ formatFileSize(asset.size)
               }}<template v-if="asset.metadata?.duration">
                 • {{ formatVideoDuration(asset.metadata.duration) }}</template
-              >
-              • {{ linkedContentsLabel }}
+              ><template v-if="linkedContentsLabel"> • {{ linkedContentsLabel }}</template>
             </div>
           </div>
           <DropdownMenu

@@ -6,20 +6,51 @@ use App\Http\Resources\Api\ContentResource;
 use App\Models\Space\Asset;
 use App\Models\Space\Content;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Str;
 
 class AssetHandler
 {
     use ContentExtractor;
     use ContentReplacer;
 
+    /**
+     * Ids of the assets a content payload references. Only ULID strings are
+     * kept: asset keys are ULIDs, and the multi-valued index on
+     * `content_versions.asset_ids` rejects longer values, which would fail the save.
+     *
+     * @return list<string>
+     */
     public function extractContentAssets(array $data): array
     {
-        return $this->extractMatchingField(
+        return array_values(array_filter(
+            $this->extractMatchingField($data, ['type' => 'asset'], 'id'),
+            static fn (mixed $id): bool => \is_string($id) && Str::isUlid($id),
+        ));
+    }
+
+    /**
+     * Point asset references at other asset ids, e.g. when content moves to a
+     * space where the same assets were created under new keys. Ids missing
+     * from the map stay as they are.
+     *
+     * @param  array<string, string>  $idMap  old asset id => new asset id
+     */
+    public function remapContentAssets(array $data, array $idMap): array
+    {
+        if ($idMap === []) {
+            return $data;
+        }
+
+        return $this->replaceMatching(
             $data,
-            [
-                'type' => 'asset',
-            ],
-            'id',
+            ['type' => 'asset'],
+            function (array $src) use ($idMap): array {
+                $id = $src['id'] ?? null;
+
+                return \is_string($id) && isset($idMap[$id])
+                    ? array_replace($src, ['id' => $idMap[$id]])
+                    : $src;
+            },
         );
     }
 
@@ -51,6 +82,10 @@ class AssetHandler
 
     public function replaceContentAssets(Content|ContentResource $content, $data, Collection $assets): array
     {
+        if ($assets->isEmpty()) {
+            return $data;
+        }
+
         $assets = $assets->reverse()->keyBy('id');
 
         return $this->replaceMatching(

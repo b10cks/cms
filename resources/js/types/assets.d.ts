@@ -82,7 +82,10 @@ interface AssetResource {
   tags: string[]
   license_expires_at: string | null
   rights_status: AssetRightsStatus
-  linked_contents_count: number
+  /** Entries that use the asset; only on list and detail responses, not on writes */
+  linked_contents_count?: number
+  /** Entries in the trash that use the asset; same responses as linked_contents_count */
+  trashed_contents_count?: number
   effective_asset_fields?: SpaceAssetField[]
   url: string
   /** Delivery URL for the poster frame; null when the asset has none */
@@ -132,6 +135,8 @@ interface LinkedAssetContentResource {
   usage: {
     current: boolean
     published: boolean
+    /** A scheduled version or one in an unpublished release uses the asset */
+    pending: boolean
   }
 }
 
@@ -139,6 +144,7 @@ interface AssetDeleteConflict {
   message: string
   code: 'asset_in_use'
   linked_contents_count: number
+  trashed_contents_count: number
   can_force_delete: boolean
 }
 

@@ -106,6 +106,13 @@ const spyInvalidate = () => vi.spyOn((harness as Harness<unknown>).queryClient, 
 const invalidatedKeys = (spy: ReturnType<typeof spyInvalidate>) =>
   spy.mock.calls.map(([filters]) => (typeof filters === 'function' ? filters() : filters)?.queryKey)
 
+// Writes that can change which versions reference an asset refresh its usage counts last.
+const assetUsageKeys = [
+  queryKeys.assets(SPACE).lists(),
+  queryKeys.assets(SPACE).details(),
+  queryKeys.assetCollections(SPACE).assetsLists(),
+]
+
 beforeEach(() => {
   for (const fn of Object.values(contents)) fn.mockReset()
   success.mockReset()
@@ -401,6 +408,7 @@ describe('useCreateContentMutation', () => {
       queryKeys.contentMenu(SPACE).all(),
       queryKeys.contents(SPACE).detail('c1'),
       queryKeys.contentVersions(SPACE, 'c1').lists(),
+      ...assetUsageKeys,
     ])
   })
 
@@ -451,6 +459,7 @@ describe('invalidateContentFamily', () => {
       queryKeys.contentVersions(SPACE, 'en').lists(),
       queryKeys.contents(SPACE).detail('fr'),
       queryKeys.contentVersions(SPACE, 'fr').lists(),
+      ...assetUsageKeys,
     ])
   })
 
@@ -467,7 +476,7 @@ describe('invalidateContentFamily', () => {
 
     await update.mutateAsync({ id: 'de', payload: {} })
 
-    expect(invalidatedKeys(invalidate)).toHaveLength(3)
+    expect(invalidatedKeys(invalidate)).toHaveLength(3 + assetUsageKeys.length)
   })
 
   it('skips a language version with no content id', async () => {
@@ -479,7 +488,7 @@ describe('invalidateContentFamily', () => {
 
     await update.mutateAsync({ id: 'c1', payload: {} })
 
-    expect(invalidatedKeys(invalidate)).toHaveLength(3)
+    expect(invalidatedKeys(invalidate)).toHaveLength(3 + assetUsageKeys.length)
   })
 
   it('still succeeds when the response omits language_versions', async () => {
@@ -605,6 +614,8 @@ describe('publish, schedule and unpublish', () => {
       queryKeys.contents(SPACE).lists(),
       queryKeys.contents(SPACE).detail('c1'),
       queryKeys.contentVersions(SPACE, 'c1').lists(),
+      // Unpublishing keeps the published version pointer, so usage stays.
+      ...(name === 'unpublish' ? [] : assetUsageKeys),
     ])
   })
 
@@ -693,6 +704,7 @@ describe('bulk publish and unpublish', () => {
       queryKeys.contentVersions(SPACE, 'c1').lists(),
       queryKeys.contents(SPACE).detail('c2'),
       queryKeys.contentVersions(SPACE, 'c2').lists(),
+      ...assetUsageKeys,
     ])
     expect(success).toHaveBeenCalledWith('2 entries published')
   })
@@ -788,6 +800,7 @@ describe('useDuplicateContentMutation', () => {
     expect(invalidatedKeys(invalidate)).toEqual([
       queryKeys.contents(SPACE).lists(),
       queryKeys.contentMenu(SPACE).all(),
+      ...assetUsageKeys,
     ])
     expect(success).toHaveBeenCalledWith('Content duplicated successfully as "Home copy"')
   })
@@ -829,6 +842,7 @@ describe('useDeleteContentMutation', () => {
     expect(invalidatedKeys(invalidate)).toEqual([
       queryKeys.contents(SPACE).lists(),
       queryKeys.contentMenu(SPACE).all(),
+      ...assetUsageKeys,
     ])
     expect(removeQueries).toHaveBeenCalledWith({ queryKey: queryKeys.contents(SPACE).detail('c1') })
     expect(success).toHaveBeenCalledWith('Content deleted successfully')

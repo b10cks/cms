@@ -7,6 +7,8 @@ use App\Models\Management\Storage;
 use App\Models\Traits\BroadcastsSpaceModelEvents;
 use App\Models\Traits\HasPurifiedAttributes;
 use App\Models\Traits\SpaceAuditable;
+use App\Services\Asset\AssetUsageService;
+use App\Services\Automation\CurrentSpaceResolver;
 use CodersCantina\Filter\Filterable;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
@@ -75,6 +77,20 @@ class Asset extends SpaceModel
     use SoftDeletes;
     use SpaceAuditable;
 
+    /**
+     * Columns `AssetHandler::replaceContentAssets()` puts into delivered content.
+     */
+    private const DELIVERED_ATTRIBUTES = [
+        'filename',
+        'extension',
+        'mime_type',
+        'path',
+        'storage_id',
+        'size',
+        'metadata',
+        'data',
+    ];
+
     protected string $spaceChannel = 'assets';
 
     protected $table = 'assets';
@@ -116,11 +132,34 @@ class Asset extends SpaceModel
         // selections, folders) — one memoized ping burst per request.
         static::saved(fn () => \App\Services\Asset\AssetSharePinger::pingAllAccessible());
         static::deleted(fn () => \App\Services\Asset\AssetSharePinger::pingAllAccessible());
+
+        static::updated(function (self $asset): void {
+            if ($asset->wasChanged(self::DELIVERED_ATTRIBUTES)) {
+                $asset->refreshDeliveryCache();
+            }
+        });
+        static::deleted(fn (self $asset) => $asset->refreshDeliveryCache());
+        static::restored(fn (self $asset) => $asset->refreshDeliveryCache());
+    }
+
+    /**
+     * Delivery overlays live asset data (url, file details, alt texts, focus,
+     * dimensions) onto content, but its CDN cache is keyed on the space's
+     * `content_updated_at`. Bump it when published content shows this asset,
+     * or edits stay invisible until the next unrelated publish.
+     */
+    protected function refreshDeliveryCache(): void
+    {
+        $space = app(CurrentSpaceResolver::class)->resolve();
+
+        if ($space && app(AssetUsageService::class)->isPublished($this)) {
+            $space->touchContentUpdatedAt();
+        }
     }
 
     protected function filename(): Attribute
     {
-        return $this->makePurifiedAttribute('removeAll');
+        return $this->makeWritePurifiedAttribute('removeAll');
     }
 
     public function storage(): BelongsTo

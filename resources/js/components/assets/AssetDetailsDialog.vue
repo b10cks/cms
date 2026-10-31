@@ -236,15 +236,19 @@ const hasMoreLinkedContents = computed(() => {
   return meta ? meta.current_page < meta.last_page : false
 })
 const linkedContentsSummary = computed(() => {
-  if (!props.asset) {
+  const count = props.asset?.linked_contents_count
+  if (count === undefined) {
     return ''
   }
 
-  return props.asset.linked_contents_count === 1
+  return count === 1
     ? String(t('labels.assets.usedInSingleContent'))
-    : String(
-        t('labels.assets.usedInMultipleContents', { count: props.asset.linked_contents_count })
-      )
+    : String(t('labels.assets.usedInMultipleContents', { count }))
+})
+const trashedContentsSummary = computed(() => {
+  const count = props.asset?.trashed_contents_count ?? 0
+
+  return count > 0 ? String(t('labels.assets.usedInTrashedContents', { count }, count)) : ''
 })
 
 const shouldLoadVersions = computed(() => {
@@ -1467,6 +1471,12 @@ const restoreVersionWithConfirm = async (version: AssetVersionResource) => {
                 <div class="mb-4">
                   <p class="font-semibold">{{ $t('labels.assets.linkedContents') }}</p>
                   <p class="text-sm text-muted">{{ linkedContentsSummary }}</p>
+                  <p
+                    v-if="trashedContentsSummary"
+                    class="text-sm text-muted"
+                  >
+                    {{ trashedContentsSummary }}
+                  </p>
                 </div>
 
                 <div
@@ -1530,6 +1540,13 @@ const restoreVersionWithConfirm = async (version: AssetVersionResource) => {
                               size="sm"
                             >
                               {{ $t('labels.assets.published') }}
+                            </Badge>
+                            <Badge
+                              v-if="item.usage.pending"
+                              variant="info"
+                              size="sm"
+                            >
+                              {{ $t('labels.assets.pending') }}
                             </Badge>
                           </div>
                         </div>
