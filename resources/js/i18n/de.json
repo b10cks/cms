@@ -5622,5 +5622,89 @@
     "dialog": {
       "submit": "Diesen Dialog bestätigen"
     }
+  },
+  "providerDashboard": {
+    "title": "Dashboard",
+    "span": "{from} bis {to}",
+    "range": {
+      "6m": "Letzte 6 Monate",
+      "12m": "Letzte 12 Monate",
+      "24m": "Letzte 24 Monate",
+      "ytd": "Seit Jahresbeginn"
+    },
+    "actions": {
+      "export": "Exportieren",
+      "png": "PNG-Bild",
+      "pdf": "PDF",
+      "present": "Präsentieren",
+      "exit": "Beenden",
+      "export_failed": "Der Export ist fehlgeschlagen. Bitte erneut versuchen."
+    },
+    "sections": {
+      "revenue": "Umsatz",
+      "growth": "Wachstum",
+      "engagement": "Nutzung und Auslieferung",
+      "ai": "KI"
+    },
+    "tiles": {
+      "mrr": "MRR",
+      "net_new_mrr": "Netto-Neu-MRR",
+      "paying_spaces": "Zahlende Spaces",
+      "arpa": "ARPA",
+      "revenue_churn": "Umsatz-Churn",
+      "new_users": "Neue Nutzer",
+      "new_spaces": "Neue Spaces",
+      "new_teams": "Neue Teams",
+      "activation": "Aktivierung",
+      "weekly_active_editors": "Wöchentlich aktive Redakteure",
+      "entries_published": "Veröffentlichte Einträge",
+      "api_requests": "API-Anfragen",
+      "traffic": "Ausgelieferter Traffic",
+      "ai_revenue": "KI-Umsatz",
+      "model_spend": "Modellkosten",
+      "ai_margin": "KI-Marge",
+      "spaces_using_ai": "Spaces mit KI"
+    },
+    "details": {
+      "arr": "ARR {value}",
+      "movement": "Neu {new}, Ausbau {expansion}, Abgang {churn}",
+      "teams": "In {count} Team | In {count} Teams",
+      "per_team": "Pro zahlendem Team",
+      "churn": "Monatlich, Kunden-Churn {rate}",
+      "this_month": "Diesen Monat",
+      "activation": "Spaces, die innerhalb von 14 Tagen veröffentlichen",
+      "editors": "In 7 Tagen bearbeitet oder veröffentlicht",
+      "api": "Delivery API, diesen Monat",
+      "traffic": "CDN, diesen Monat",
+      "ai_revenue": "In Tarifen enthaltenes KI-Guthaben",
+      "spend": "Über alle Spaces erfasst",
+      "margin": "Umsatz abzüglich Kosten",
+      "using_ai": "{count} von {total} zahlenden Spaces"
+    },
+    "change": {
+      "mom": "Im Vergleich zum Vormonat",
+      "yoy": "{change} zum Vorjahr"
+    },
+    "panels": {
+      "mrr_movement": "MRR-Bewegung",
+      "revenue_by_plan": "Umsatz nach Tarif",
+      "sign_ups": "Registrierungen",
+      "retention": "Umsatzbindung",
+      "retention_meta": "nach Startmonat",
+      "ai": "KI-Umsatz und -Kosten"
+    },
+    "series": {
+      "new": "Neu",
+      "expansion": "Ausbau",
+      "churn": "Abgang",
+      "users": "Nutzer",
+      "spaces": "Spaces",
+      "teams": "Teams",
+      "ai_revenue": "KI-Umsatz",
+      "spend": "Modellkosten"
+    },
+    "retention": {
+      "month": "M{n}"
+    }
   }
 }

@@ -5606,5 +5606,89 @@
     "dialog": {
       "submit": "Confirm this dialog"
     }
+  },
+  "providerDashboard": {
+    "title": "Dashboard",
+    "span": "{from} to {to}",
+    "range": {
+      "6m": "Last 6 months",
+      "12m": "Last 12 months",
+      "24m": "Last 24 months",
+      "ytd": "Year to date"
+    },
+    "actions": {
+      "export": "Export",
+      "png": "PNG image",
+      "pdf": "PDF",
+      "present": "Present",
+      "exit": "Exit",
+      "export_failed": "The export failed. Try again."
+    },
+    "sections": {
+      "revenue": "Revenue",
+      "growth": "Growth",
+      "engagement": "Engagement and delivery",
+      "ai": "AI"
+    },
+    "tiles": {
+      "mrr": "MRR",
+      "net_new_mrr": "Net new MRR",
+      "paying_spaces": "Paying spaces",
+      "arpa": "ARPA",
+      "revenue_churn": "Revenue churn",
+      "new_users": "New users",
+      "new_spaces": "New spaces",
+      "new_teams": "New teams",
+      "activation": "Activation",
+      "weekly_active_editors": "Weekly active editors",
+      "entries_published": "Entries published",
+      "api_requests": "API requests",
+      "traffic": "Traffic served",
+      "ai_revenue": "AI revenue",
+      "model_spend": "Model spend",
+      "ai_margin": "AI margin",
+      "spaces_using_ai": "Spaces using AI"
+    },
+    "details": {
+      "arr": "ARR {value}",
+      "movement": "New {new}, expansion {expansion}, churn {churn}",
+      "teams": "Across {count} team | Across {count} teams",
+      "per_team": "Per paying team",
+      "churn": "Monthly, logo churn {rate}",
+      "this_month": "This month",
+      "activation": "Spaces publishing within 14 days",
+      "editors": "Edited or published in 7 days",
+      "api": "Delivery API, this month",
+      "traffic": "CDN, this month",
+      "ai_revenue": "AI credit included in plans",
+      "spend": "Recorded across all spaces",
+      "margin": "Revenue minus spend",
+      "using_ai": "{count} of {total} paying spaces"
+    },
+    "change": {
+      "mom": "Compared with last month",
+      "yoy": "{change} on last year"
+    },
+    "panels": {
+      "mrr_movement": "MRR movement",
+      "revenue_by_plan": "Revenue by plan",
+      "sign_ups": "Sign-ups",
+      "retention": "Revenue retention",
+      "retention_meta": "by start month",
+      "ai": "AI revenue and spend"
+    },
+    "series": {
+      "new": "New",
+      "expansion": "Expansion",
+      "churn": "Churn",
+      "users": "Users",
+      "spaces": "Spaces",
+      "teams": "Teams",
+      "ai_revenue": "AI revenue",
+      "spend": "Model spend"
+    },
+    "retention": {
+      "month": "M{n}"
+    }
   }
 }

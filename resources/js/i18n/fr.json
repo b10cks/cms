@@ -5606,5 +5606,89 @@
     "dialog": {
       "submit": "Confirmer cette boîte de dialogue"
     }
+  },
+  "providerDashboard": {
+    "title": "Tableau de bord",
+    "span": "{from} à {to}",
+    "range": {
+      "6m": "6 derniers mois",
+      "12m": "12 derniers mois",
+      "24m": "24 derniers mois",
+      "ytd": "Depuis le début de l’année"
+    },
+    "actions": {
+      "export": "Exporter",
+      "png": "Image PNG",
+      "pdf": "PDF",
+      "present": "Présenter",
+      "exit": "Quitter",
+      "export_failed": "L’export a échoué. Réessayez."
+    },
+    "sections": {
+      "revenue": "Revenus",
+      "growth": "Croissance",
+      "engagement": "Utilisation et diffusion",
+      "ai": "IA"
+    },
+    "tiles": {
+      "mrr": "MRR",
+      "net_new_mrr": "MRR net nouveau",
+      "paying_spaces": "Espaces payants",
+      "arpa": "ARPA",
+      "revenue_churn": "Attrition des revenus",
+      "new_users": "Nouveaux utilisateurs",
+      "new_spaces": "Nouveaux espaces",
+      "new_teams": "Nouvelles équipes",
+      "activation": "Activation",
+      "weekly_active_editors": "Rédacteurs actifs par semaine",
+      "entries_published": "Entrées publiées",
+      "api_requests": "Requêtes API",
+      "traffic": "Trafic servi",
+      "ai_revenue": "Revenus IA",
+      "model_spend": "Dépenses en modèles",
+      "ai_margin": "Marge IA",
+      "spaces_using_ai": "Espaces utilisant l’IA"
+    },
+    "details": {
+      "arr": "ARR {value}",
+      "movement": "Nouveau {new}, expansion {expansion}, attrition {churn}",
+      "teams": "Sur {count} équipe | Sur {count} équipes",
+      "per_team": "Par équipe payante",
+      "churn": "Mensuelle, attrition clients {rate}",
+      "this_month": "Ce mois-ci",
+      "activation": "Espaces qui publient sous 14 jours",
+      "editors": "Modifié ou publié en 7 jours",
+      "api": "Delivery API, ce mois-ci",
+      "traffic": "CDN, ce mois-ci",
+      "ai_revenue": "Crédit IA inclus dans les offres",
+      "spend": "Enregistré sur tous les espaces",
+      "margin": "Revenus moins dépenses",
+      "using_ai": "{count} sur {total} espaces payants"
+    },
+    "change": {
+      "mom": "Par rapport au mois dernier",
+      "yoy": "{change} sur un an"
+    },
+    "panels": {
+      "mrr_movement": "Mouvement du MRR",
+      "revenue_by_plan": "Revenus par offre",
+      "sign_ups": "Inscriptions",
+      "retention": "Rétention des revenus",
+      "retention_meta": "par mois de départ",
+      "ai": "Revenus et dépenses IA"
+    },
+    "series": {
+      "new": "Nouveau",
+      "expansion": "Expansion",
+      "churn": "Attrition",
+      "users": "Utilisateurs",
+      "spaces": "Espaces",
+      "teams": "Équipes",
+      "ai_revenue": "Revenus IA",
+      "spend": "Dépenses en modèles"
+    },
+    "retention": {
+      "month": "M{n}"
+    }
   }
 }

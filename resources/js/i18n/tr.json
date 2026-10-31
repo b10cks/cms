@@ -5606,5 +5606,89 @@
     "dialog": {
       "submit": "Bu açılır pencereyi onayla"
     }
+  },
+  "providerDashboard": {
+    "title": "Gösterge paneli",
+    "span": "{from} – {to}",
+    "range": {
+      "6m": "Son 6 ay",
+      "12m": "Son 12 ay",
+      "24m": "Son 24 ay",
+      "ytd": "Yıl başından beri"
+    },
+    "actions": {
+      "export": "Dışa aktar",
+      "png": "PNG görseli",
+      "pdf": "PDF",
+      "present": "Sun",
+      "exit": "Çık",
+      "export_failed": "Dışa aktarma başarısız oldu. Tekrar deneyin."
+    },
+    "sections": {
+      "revenue": "Gelir",
+      "growth": "Büyüme",
+      "engagement": "Kullanım ve teslim",
+      "ai": "Yapay zeka"
+    },
+    "tiles": {
+      "mrr": "MRR",
+      "net_new_mrr": "Net yeni MRR",
+      "paying_spaces": "Ücretli alanlar",
+      "arpa": "ARPA",
+      "revenue_churn": "Gelir kaybı",
+      "new_users": "Yeni kullanıcılar",
+      "new_spaces": "Yeni alanlar",
+      "new_teams": "Yeni ekipler",
+      "activation": "Aktivasyon",
+      "weekly_active_editors": "Haftalık aktif editörler",
+      "entries_published": "Yayınlanan girdiler",
+      "api_requests": "API istekleri",
+      "traffic": "Sunulan trafik",
+      "ai_revenue": "Yapay zeka geliri",
+      "model_spend": "Model harcaması",
+      "ai_margin": "Yapay zeka marjı",
+      "spaces_using_ai": "Yapay zeka kullanan alanlar"
+    },
+    "details": {
+      "arr": "ARR {value}",
+      "movement": "Yeni {new}, genişleme {expansion}, kayıp {churn}",
+      "teams": "{count} ekipte | {count} ekipte",
+      "per_team": "Ücretli ekip başına",
+      "churn": "Aylık, müşteri kaybı {rate}",
+      "this_month": "Bu ay",
+      "activation": "14 gün içinde yayın yapan alanlar",
+      "editors": "7 günde düzenleyen veya yayınlayan",
+      "api": "Delivery API, bu ay",
+      "traffic": "CDN, bu ay",
+      "ai_revenue": "Planlara dahil yapay zeka kredisi",
+      "spend": "Tüm alanlarda kaydedilen",
+      "margin": "Gelir eksi harcama",
+      "using_ai": "{total} ücretli alandan {count}"
+    },
+    "change": {
+      "mom": "Geçen aya göre",
+      "yoy": "Geçen yıla göre {change}"
+    },
+    "panels": {
+      "mrr_movement": "MRR hareketi",
+      "revenue_by_plan": "Plana göre gelir",
+      "sign_ups": "Kayıtlar",
+      "retention": "Gelir tutma",
+      "retention_meta": "başlangıç ayına göre",
+      "ai": "Yapay zeka geliri ve harcaması"
+    },
+    "series": {
+      "new": "Yeni",
+      "expansion": "Genişleme",
+      "churn": "Kayıp",
+      "users": "Kullanıcılar",
+      "spaces": "Alanlar",
+      "teams": "Ekipler",
+      "ai_revenue": "Yapay zeka geliri",
+      "spend": "Model harcaması"
+    },
+    "retention": {
+      "month": "A{n}"
+    }
   }
 }

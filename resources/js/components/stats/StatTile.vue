@@ -15,7 +15,7 @@ const props = defineProps<{
   /** `null` while loading. */
   value: string | null
   detail?: string
-  change?: { value: number; label: string; title?: string }
+  change?: { value: number; label: string; title?: string; inverse?: boolean }
   /** One value per period; `null` where the period has none, drawn as a gap. */
   series?: Array<number | null>
   /** Display label per series point. */
@@ -23,6 +23,8 @@ const props = defineProps<{
   format?: (value: number) => string
   /** The series holds changes per period (items created), not absolute values. */
   relative?: boolean
+  /** Sparkline color, a `--series-*` token; series 1 by default. */
+  color?: string
 }>()
 
 const hovered = ref<number | null>(null)
@@ -79,7 +81,7 @@ const readout = computed(() => {
     >
       <TrendSparkline
         :values="series"
-        color="var(--series-1)"
+        :color="color ?? 'var(--series-1)'"
         :label="label"
         from-zero
         @hover="hovered = $event"

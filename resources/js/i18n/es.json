@@ -5606,5 +5606,89 @@
     "dialog": {
       "submit": "Confirmar este diálogo"
     }
+  },
+  "providerDashboard": {
+    "title": "Panel",
+    "span": "{from} a {to}",
+    "range": {
+      "6m": "Últimos 6 meses",
+      "12m": "Últimos 12 meses",
+      "24m": "Últimos 24 meses",
+      "ytd": "En lo que va de año"
+    },
+    "actions": {
+      "export": "Exportar",
+      "png": "Imagen PNG",
+      "pdf": "PDF",
+      "present": "Presentar",
+      "exit": "Salir",
+      "export_failed": "La exportación ha fallado. Inténtalo de nuevo."
+    },
+    "sections": {
+      "revenue": "Ingresos",
+      "growth": "Crecimiento",
+      "engagement": "Uso y entrega",
+      "ai": "IA"
+    },
+    "tiles": {
+      "mrr": "MRR",
+      "net_new_mrr": "MRR neto nuevo",
+      "paying_spaces": "Espacios de pago",
+      "arpa": "ARPA",
+      "revenue_churn": "Pérdida de ingresos",
+      "new_users": "Usuarios nuevos",
+      "new_spaces": "Espacios nuevos",
+      "new_teams": "Equipos nuevos",
+      "activation": "Activación",
+      "weekly_active_editors": "Editores activos semanales",
+      "entries_published": "Entradas publicadas",
+      "api_requests": "Solicitudes a la API",
+      "traffic": "Tráfico servido",
+      "ai_revenue": "Ingresos de IA",
+      "model_spend": "Gasto en modelos",
+      "ai_margin": "Margen de IA",
+      "spaces_using_ai": "Espacios que usan IA"
+    },
+    "details": {
+      "arr": "ARR {value}",
+      "movement": "Nuevo {new}, expansión {expansion}, pérdida {churn}",
+      "teams": "En {count} equipo | En {count} equipos",
+      "per_team": "Por equipo de pago",
+      "churn": "Mensual, pérdida de clientes {rate}",
+      "this_month": "Este mes",
+      "activation": "Espacios que publican en 14 días",
+      "editors": "Editado o publicado en 7 días",
+      "api": "Delivery API, este mes",
+      "traffic": "CDN, este mes",
+      "ai_revenue": "Crédito de IA incluido en los planes",
+      "spend": "Registrado en todos los espacios",
+      "margin": "Ingresos menos gasto",
+      "using_ai": "{count} de {total} espacios de pago"
+    },
+    "change": {
+      "mom": "Comparado con el mes pasado",
+      "yoy": "{change} frente al año pasado"
+    },
+    "panels": {
+      "mrr_movement": "Movimiento del MRR",
+      "revenue_by_plan": "Ingresos por plan",
+      "sign_ups": "Registros",
+      "retention": "Retención de ingresos",
+      "retention_meta": "por mes de inicio",
+      "ai": "Ingresos y gasto de IA"
+    },
+    "series": {
+      "new": "Nuevo",
+      "expansion": "Expansión",
+      "churn": "Pérdida",
+      "users": "Usuarios",
+      "spaces": "Espacios",
+      "teams": "Equipos",
+      "ai_revenue": "Ingresos de IA",
+      "spend": "Gasto en modelos"
+    },
+    "retention": {
+      "month": "M{n}"
+    }
   }
 }

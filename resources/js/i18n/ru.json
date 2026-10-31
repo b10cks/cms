@@ -5606,5 +5606,89 @@
     "dialog": {
       "submit": "Подтвердить этот диалог"
     }
+  },
+  "providerDashboard": {
+    "title": "Дашборд",
+    "span": "с {from} по {to}",
+    "range": {
+      "6m": "Последние 6 месяцев",
+      "12m": "Последние 12 месяцев",
+      "24m": "Последние 24 месяца",
+      "ytd": "С начала года"
+    },
+    "actions": {
+      "export": "Экспорт",
+      "png": "Изображение PNG",
+      "pdf": "PDF",
+      "present": "Презентация",
+      "exit": "Выйти",
+      "export_failed": "Не удалось выполнить экспорт. Попробуйте ещё раз."
+    },
+    "sections": {
+      "revenue": "Выручка",
+      "growth": "Рост",
+      "engagement": "Использование и доставка",
+      "ai": "ИИ"
+    },
+    "tiles": {
+      "mrr": "MRR",
+      "net_new_mrr": "Чистый новый MRR",
+      "paying_spaces": "Платные пространства",
+      "arpa": "ARPA",
+      "revenue_churn": "Отток выручки",
+      "new_users": "Новые пользователи",
+      "new_spaces": "Новые пространства",
+      "new_teams": "Новые команды",
+      "activation": "Активация",
+      "weekly_active_editors": "Активные редакторы за неделю",
+      "entries_published": "Опубликованные записи",
+      "api_requests": "Запросы к API",
+      "traffic": "Отданный трафик",
+      "ai_revenue": "Выручка ИИ",
+      "model_spend": "Расходы на модели",
+      "ai_margin": "Маржа ИИ",
+      "spaces_using_ai": "Пространства с ИИ"
+    },
+    "details": {
+      "arr": "ARR {value}",
+      "movement": "Новые {new}, расширение {expansion}, отток {churn}",
+      "teams": "Команд: {count}",
+      "per_team": "На платную команду",
+      "churn": "В месяц, отток клиентов {rate}",
+      "this_month": "В этом месяце",
+      "activation": "Публикация в течение 14 дней",
+      "editors": "Правки или публикации за 7 дней",
+      "api": "Delivery API, в этом месяце",
+      "traffic": "CDN, в этом месяце",
+      "ai_revenue": "ИИ-кредит, включённый в тарифы",
+      "spend": "По всем пространствам",
+      "margin": "Выручка минус расходы",
+      "using_ai": "{count} из {total} платных пространств"
+    },
+    "change": {
+      "mom": "По сравнению с прошлым месяцем",
+      "yoy": "{change} к прошлому году"
+    },
+    "panels": {
+      "mrr_movement": "Движение MRR",
+      "revenue_by_plan": "Выручка по тарифам",
+      "sign_ups": "Регистрации",
+      "retention": "Удержание выручки",
+      "retention_meta": "по месяцу начала",
+      "ai": "Выручка и расходы ИИ"
+    },
+    "series": {
+      "new": "Новые",
+      "expansion": "Расширение",
+      "churn": "Отток",
+      "users": "Пользователи",
+      "spaces": "Пространства",
+      "teams": "Команды",
+      "ai_revenue": "Выручка ИИ",
+      "spend": "Расходы на модели"
+    },
+    "retention": {
+      "month": "M{n}"
+    }
   }
 }
