@@ -3,6 +3,8 @@
  * inline SSE stream and the stored events a background run is followed by.
  */
 
+import type { AiReasoningEffort } from '~/api/resources/ai'
+
 export type AiRunState = 'running' | 'awaiting_input' | 'completed' | 'failed' | 'cancelled'
 
 export interface AiQuestionOption {
@@ -57,6 +59,8 @@ export interface AiRunRecord {
   surface: string
   skill: string | null
   model: string | null
+  /** The level the run was started with; null when the config default applied */
+  reasoning_effort?: AiReasoningEffort | null
   state: AiRunState
   mode: 'inline' | 'background'
   partial: boolean
@@ -86,6 +90,8 @@ export interface StartAiRunRequest {
   prompt?: string
   context?: Record<string, unknown>
   config_id?: string | null
+  /** Overrides the config's reasoning level for this run */
+  reasoning_effort?: AiReasoningEffort | null
   conversation_id?: string | null
   idempotency_key?: string
   background?: boolean

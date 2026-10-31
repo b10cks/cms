@@ -2495,7 +2495,6 @@
         "loadingModels": "Lade verfügbare Modelle...",
         "loadingUsage": "Lade Nutzungsdaten...",
         "noUsageData": "Keine Nutzungsdaten verfügbar",
-        "placeholder": "Bitte die KI, deinen Content zu bearbeiten...",
         "dropFiles": "Dateien hier ablegen",
         "configurations": "AI Configurations",
         "configurationsDescription": "Create and manage named AI configurations with different models and settings for various use cases.",
@@ -2518,7 +2517,8 @@
         "setAsDefault": "Set as default configuration",
         "navLabel": "KI",
         "features": "Funktionen",
-        "description": "Modelle, Konfigurationen und Verbrauch der KI in diesem Space."
+        "description": "Modelle, Konfigurationen und Verbrauch der KI in diesem Space.",
+        "configurationsKept": "KI-Features sind ausgeschaltet. Diese Konfigurationen bleiben erhalten und gelten wieder, sobald KI eingeschaltet ist."
       },
       "members": {
         "title": "Mitglieder",
@@ -4811,14 +4811,27 @@
     "aiModelSelector": {
       "selectModel": "KI-Modell auswählen",
       "loadError": "Modelle konnten nicht geladen werden",
-      "noModels": "Keine Modelle verfügbar",
       "favourites": "Favoriten",
       "favouriteError": "Favorit konnte nicht aktualisiert werden",
-      "setModelError": "Modell-Präferenz konnte nicht gespeichert werden",
-      "drivers": {
-        "openai": "OpenAI",
-        "bedrock": "AWS Bedrock",
-        "openrouter": "OpenRouter"
+      "dialogDescription": "Durchsuche die Modelle dieses Space und wähle eines für die Konfiguration.",
+      "providers": "Anbieter",
+      "all": "Alle Modelle",
+      "search": "Modelle suchen",
+      "noMatches": "Kein Modell gefunden",
+      "count": "{count} Modell | {count} Modelle",
+      "toggleFavourite": "{name} als Favorit",
+      "capabilities": {
+        "vision": "Bilder",
+        "reasoning": "Denken",
+        "tools": "Werkzeuge"
+      },
+      "reasoning": {
+        "label": "Denktiefe",
+        "description": "Wie lange das Modell nachdenkt, bevor es antwortet. Threads können sie pro Unterhaltung ändern.",
+        "off": "Aus",
+        "low": "Niedrig",
+        "medium": "Mittel",
+        "high": "Hoch"
       }
     },
     "flattenedLocalization": {
@@ -4851,13 +4864,10 @@
     },
     "aiText": {
       "inputLabel": "KI-Nachricht",
-      "streamError": "KI-Stream-Fehler: {error}",
       "thinking": "Denke nach...",
-      "placeholderSelectConfig": "Select a configuration to start...",
-      "placeholderDefault": "Ask {name} to help with your content...",
       "noConfigSelected": "Please select an AI configuration to continue",
       "working": "Schlage nach...",
-      "background": "Das dauert länger und läuft im Hintergrund weiter..."
+      "placeholder": "KI fragen…"
     },
     "aiMention": {
       "content": "Inhalte",
@@ -5064,10 +5074,6 @@
       "movingItems": "Verschiebe {count} Element... | Verschiebe {count} Elemente..."
     },
     "aiConfigSelector": {
-      "selectConfig": "Select AI configuration",
-      "availableConfigs": "Available Configurations",
-      "default": "Default",
-      "loading": "Loading configurations...",
       "noConfigs": "No configurations available"
     },
     "fieldEditor": {
@@ -5224,7 +5230,10 @@
       "attachChip": "{name} anhängen",
       "screen": {
         "entry": "Geöffneter Eintrag",
-        "dataSource": "Geöffnete Datenquelle"
+        "dataSource": "Geöffnete Datenquelle",
+        "block": "Geöffneter Block",
+        "folder": "Geöffneter Ordner",
+        "asset": "Geöffnetes Asset"
       },
       "steps": "Schritte",
       "usingTool": "Nutzt {tool}",
@@ -5321,7 +5330,15 @@
         "cached": "Zwischengespeichert: {count}",
         "steps": "Schritte: {count}",
         "cost": "Kosten: {cost}"
-      }
+      },
+      "thisPage": "Diese Seite",
+      "other": "Weitere Threads",
+      "disabled": "KI-Features sind in diesem Space ausgeschaltet.",
+      "enableInSettings": "In den KI-Einstellungen einschalten"
+    },
+    "metaBlock": {
+      "generate": "Mit KI erstellen",
+      "generating": "Wird erstellt…"
     }
   },
   "alertDialog": {

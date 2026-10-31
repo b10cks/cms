@@ -15,7 +15,6 @@ import EditorComponent from '~/components/editor/EditorComponent.vue'
 import Icon from '~/components/Icon.vue'
 import { animatedIcons } from '~/components/icons'
 import Preview from '~/components/Preview.vue'
-import AiContentInteraction from '~/components/ui/AiContentInteraction.vue'
 import { Badge, type BadgeVariants } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
 import { ScrollArea } from '~/components/ui/scroll-area'
@@ -312,10 +311,6 @@ const { useCommentsQuery } = useComments(
   computed(() => content.value?.id || null)
 )
 const { data: comments, isLoading: isLoadingComments } = useCommentsQuery()
-
-const aiInteractionRef = useTemplateRef('aiInteractionRef')
-
-const showAi = ref(false)
 
 const cloneContent = (value: ContentResource): ContentResource => JSON.parse(JSON.stringify(value))
 
@@ -837,7 +832,7 @@ provide('reloadServerContent', reloadServerContent)
     >
       <TabsContent
         value="edit"
-        :class="['min-w-0! p-4', showPreview ? '' : 'mx-auto max-w-4xl', showAi ? 'pb-52' : 'pb-8']"
+        :class="['min-w-0! p-4', showPreview ? '' : 'mx-auto max-w-4xl', 'pb-8']"
       >
         <EditorComponent
           v-if="content.block"
@@ -883,16 +878,6 @@ provide('reloadServerContent', reloadServerContent)
                 <span>{{ t('actions.clearClipboard') }}</span>
               </Button>
             </div>
-            <AiContentInteraction
-              v-if="showAi"
-              key="ai"
-              ref="aiInteractionRef"
-              v-model:content="content"
-              :space-id="spaceId"
-              :content-id="content?.id"
-              class="mx-auto max-w-xl"
-              :placeholder="t('labels.settings.ai.placeholder', 'Ask AI to modify your content...')"
-            />
           </TransitionGroup>
         </div>
       </TabsContent>
@@ -1002,36 +987,6 @@ provide('reloadServerContent', reloadServerContent)
             </TabsTrigger>
           </SimpleTooltip>
         </div>
-      </div>
-      <div class="flex flex-col">
-        <button
-          type="button"
-          :aria-pressed="showAi"
-          :class="[
-            'flex w-full cursor-pointer flex-col items-center justify-center rounded-lg transition-[padding,gap,background-color,color] duration-200 ease-butter hover:bg-sidebar-accent',
-            isExtendedSidebar ? 'gap-1 p-2' : 'gap-0 p-1.5',
-            showAi ? 'bg-sidebar-accent text-sidebar-accent-foreground' : '',
-          ]"
-          @click="showAi = !showAi"
-        >
-          <Icon
-            name="lucide:wand-sparkles"
-            size="20"
-            :class="[
-              showAi ? 'text-primary' : 'text-ai',
-              'transition-colors duration-200 ease-butter ',
-            ]"
-          />
-          <span
-            :class="[
-              'grid w-full transition-[grid-template-rows,opacity] duration-200 ease-butter',
-              isExtendedSidebar ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0',
-            ]"
-            :aria-hidden="!isExtendedSidebar"
-          >
-            <span class="line-clamp-2 min-h-0 overflow-hidden text-[10px] leading-tight">AI</span>
-          </span>
-        </button>
       </div>
     </TabsList>
   </TabsRoot>

@@ -5,16 +5,15 @@ import type { SpaceAiConfig } from '~/api/resources/ai'
 import AssetBlock from '~/components/editor/AssetBlock.vue'
 import LinkEditor from '~/components/editor/LinkEditor.vue'
 import RobotsDirectiveEditor from '~/components/editor/RobotsDirectiveEditor.vue'
+import AiConfigMenuItems from '~/components/ai/AiConfigMenuItems.vue'
 import Icon from '~/components/Icon.vue'
 import SplitButton from '~/components/ui/button/SplitButton.vue'
-import { DropdownMenuItem } from '~/components/ui/dropdown-menu'
 import { InputField, TextField } from '~/components/ui/form'
 import Label from '~/components/ui/form/Label.vue'
 import { useAiConfigs } from '~/composables/useAiModels'
 import { normalizeLanguageIso } from '~/lib/content-i18n'
 import type { ContentResource } from '~/types/contents'
 
-import { Badge } from '../ui/badge'
 
 interface MetaSchema {
   key: string
@@ -55,6 +54,7 @@ const props = defineProps<{
 const content = inject<Ref<ContentValue>>('content', ref({}))
 const { t } = useI18n()
 const metaRun = useAiRun(toRef(props, 'spaceId'))
+const aiEnabled = useAiEnabled(() => props.spaceId)
 const { showAiError } = useAiErrorToast()
 const { useAiConfigsQuery } = useAiConfigs(toRef(props, 'spaceId'))
 const { data: aiConfigs } = useAiConfigsQuery()
@@ -330,9 +330,13 @@ const updateCanonicalValue = (value: LinkValue | null): void => {
       <div class="mb-2 text-sm text-muted">
         {{ serpUrl }}
       </div>
-      <div class="absolute top-1 right-1">
+      <div
+        v-if="aiEnabled"
+        class="absolute top-1 right-1"
+      >
         <SplitButton
           size="sm"
+          variant="ai"
           :disabled="!canGenerateWithAI"
           :menu-disabled="isGenerating"
           :has-menu="(aiConfigs?.length || 0) > 1"
@@ -341,28 +345,16 @@ const updateCanonicalValue = (value: LinkValue | null): void => {
         >
           <Icon
             v-if="!isGenerating"
-            name="lucide:wand-sparkles"
-            class="text-ai"
+            name="ai:bot-star"
           />
-          <span>{{ isGenerating ? 'Generating...' : 'AI Generate' }}</span>
+          <span>{{ isGenerating ? $t('components.metaBlock.generating') : $t('components.metaBlock.generate') }}</span>
           <template #menu>
-            <DropdownMenuItem
-              v-for="config in aiConfigs"
-              :key="config.id"
+            <AiConfigMenuItems
+              :configs="aiConfigs ?? []"
+              :selected-id="aiConfigs?.find((config) => config.is_default)?.id ?? null"
               :disabled="isGenerating"
-              @select="handleGenerateWithConfig(config.id)"
-            >
-              <div class="flex items-center gap-2">
-                <span class="font-medium">
-                  {{ config.name }}
-                </span>
-                <Badge
-                  v-if="config.is_default"
-                  size="sm"
-                  >Default</Badge
-                >
-              </div>
-            </DropdownMenuItem>
+              @select="handleGenerateWithConfig"
+            />
           </template>
         </SplitButton>
       </div>

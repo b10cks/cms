@@ -2,11 +2,15 @@
 import { Icon as IconifyIcon } from '@iconify/vue'
 import type { HTMLAttributes } from 'vue'
 
+import { aiIcons } from '~/components/icons'
+
 const props = defineProps<{
   name?: string | null
   size?: string | number
   class?: HTMLAttributes['class']
 }>()
+
+const aiIcon = computed(() => (props.name ? aiIcons[props.name] : undefined))
 
 const iconData = computed(() => {
   const icon = props.name
@@ -31,8 +35,14 @@ const iconSize = computed(() => {
 </script>
 
 <template>
+  <component
+    :is="aiIcon"
+    v-if="aiIcon"
+    :size="iconSize"
+    :class="props.class"
+  />
   <IconifyIcon
-    v-if="iconData"
+    v-else-if="iconData"
     :icon="iconData"
     :width="iconSize"
     :height="iconSize"

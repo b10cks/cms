@@ -4,12 +4,11 @@ import { computed, inject, onBeforeUnmount, ref, watch } from 'vue'
 import { toast } from 'vue-sonner'
 
 import type { SpaceAiConfig } from '~/api/resources/ai'
+import AiConfigMenuItems from '~/components/ai/AiConfigMenuItems.vue'
 import Icon from '~/components/Icon.vue'
 import MetaLocalization from '~/components/localization/MetaLocalization.vue'
 import { AvatarList } from '~/components/ui/avatar'
-import { Badge } from '~/components/ui/badge'
 import SplitButton from '~/components/ui/button/SplitButton.vue'
-import { DropdownMenuItem } from '~/components/ui/dropdown-menu'
 import { CheckboxField } from '~/components/ui/form'
 import { Input } from '~/components/ui/input'
 import { useAiConfigs } from '~/composables/useAiModels'
@@ -153,6 +152,7 @@ const showUntranslatedOnly = ref(false)
 const searchQuery = ref('')
 const { t } = useI18n()
 const { showAiError } = useAiErrorToast()
+const aiEnabled = useAiEnabled(() => props.spaceId)
 const { useAiConfigsQuery } = useAiConfigs(computed(() => props.spaceId))
 const { data: aiConfigs, isLoading: isLoadingAiConfigs } = useAiConfigsQuery()
 const selectedConfigId = ref<string | null>(null)
@@ -1417,10 +1417,13 @@ const removeAllOrphanedBlocks = (): void => {
       </div>
 
       <div class="flex items-center gap-3">
-        <div class="flex flex-col items-end gap-1">
+        <div
+          v-if="aiEnabled"
+          class="flex flex-col items-end gap-1"
+        >
           <SplitButton
             size="sm"
-            variant="default"
+            variant="ai"
             :primary-action="() => translateWithAI()"
             :disabled="!canTranslateWithAI"
             :has-menu="(aiConfigs?.length ?? 0) > 1"
@@ -1429,8 +1432,7 @@ const removeAllOrphanedBlocks = (): void => {
           >
             <Icon
               v-if="!isTranslating"
-              name="lucide:sparkles"
-              class="text-ai"
+              name="ai:bot-translate"
             />
             <span>{{
               isTranslating
@@ -1438,23 +1440,12 @@ const removeAllOrphanedBlocks = (): void => {
                 : $t('components.flattenedLocalization.translate')
             }}</span>
             <template #menu>
-              <DropdownMenuItem
-                v-for="config in aiConfigs"
-                :key="config.id"
+              <AiConfigMenuItems
+                :configs="aiConfigs ?? []"
+                :selected-id="aiConfigs?.find((config) => config.is_default)?.id ?? null"
                 :disabled="isTranslating"
-                @select="translateWithAI(config.id)"
-              >
-                <div class="flex items-center gap-2">
-                  <span class="font-medium">
-                    {{ config.name }}
-                  </span>
-                  <Badge
-                    v-if="config.is_default"
-                    size="sm"
-                    >Default</Badge
-                  >
-                </div>
-              </DropdownMenuItem>
+                @select="translateWithAI"
+              />
             </template>
           </SplitButton>
           <Transition

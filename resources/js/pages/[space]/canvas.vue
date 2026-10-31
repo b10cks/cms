@@ -2,7 +2,7 @@
 import { useThrottleFn } from '@vueuse/core'
 import { toast } from 'vue-sonner'
 
-import type { MentionItem } from '~/api/resources/ai'
+import type { AiPromptPayload } from '~/components/ui/AiText.vue'
 import ContentWizardAiDock from '~/components/content-wizard/ContentWizardAiDock.vue'
 import ContentWizardCanvas from '~/components/content-wizard/ContentWizardCanvas.vue'
 import ContentWizardToolbar from '~/components/content-wizard/ContentWizardToolbar.vue'
@@ -53,6 +53,7 @@ const { showAiError } = useAiErrorToast()
 const { alert } = useAlertDialog()
 const { useAccessControl } = useAuthorization()
 const spaceId = computed(() => route.params.space as string)
+const aiEnabled = useAiEnabled(spaceId)
 const access = useAccessControl(computed(() => ({ space_id: spaceId.value })))
 const canApplyCanvas = computed(() => access.hasAbility('content.manage'))
 
@@ -1945,15 +1946,7 @@ const updateAiPreview = (operations: TreeOperation[], isFinal: boolean = false) 
   }
 }
 
-const handleAiSubmit = async ({
-  prompt,
-  configId,
-  mentions,
-}: {
-  prompt: string
-  configId: string | null
-  mentions: MentionItem[]
-}) => {
+const handleAiSubmit = async ({ prompt, configId, reasoningEffort, mentions }: AiPromptPayload) => {
   clearTransientState()
   history.clearHistory()
   clearEditSessions()
@@ -1976,6 +1969,7 @@ const handleAiSubmit = async ({
       prompt,
       context: { tree: treeApi.exportForAi(), mentions },
       config_id: configId,
+      reasoning_effort: reasoningEffort,
     },
     {
       onEvent: (event) => {
@@ -2292,6 +2286,7 @@ onBeforeUnmount(() => {
         />
 
         <ContentWizardAiDock
+          v-if="aiEnabled"
           :space-id="spaceId"
           :loading="isAiBusy"
           :status-message="aiStatus?.message"

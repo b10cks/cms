@@ -11,8 +11,9 @@ import { groupThreads } from '~/lib/aiThreads'
 
 /**
  * The threads the user can see, modelled on T3 Code's sidebar: a ghost search
- * row with the new-thread button, the active threads (needs-you first, as the
- * server sorts them; shared threads of others in their own group), and the
+ * row with the new-thread button, the active threads (those about the current
+ * page first, then needs-you first as the server sorts them; shared threads of
+ * others in their own group), and the
  * settled ones on a collapsed shelf at the bottom, loaded only when opened.
  */
 const props = defineProps<{
@@ -48,10 +49,13 @@ const access = useAccessControl(computed(() => ({ space_id: props.spaceId })))
 const canManage = computed(() => access.hasAbility('ai.manage'))
 const canSettle = (thread: AiThread) => thread.is_owner || (thread.kind !== 'chat' && canManage.value)
 
+const screenChips = useAiScreenChips(() => props.spaceId)
+
 const groups = computed(() => {
-  const { mine, shared } = groupThreads(data.value?.data ?? [])
+  const { page, mine, shared } = groupThreads(data.value?.data ?? [], screenChips.value)
   return [
-    { key: 'mine', label: null, threads: mine },
+    { key: 'page', label: t('components.aiThreads.thisPage'), threads: page },
+    { key: 'mine', label: page.length > 0 ? t('components.aiThreads.other') : null, threads: mine },
     { key: 'shared', label: t('components.aiThreads.shared'), threads: shared },
   ].filter((group) => group.threads.length > 0)
 })

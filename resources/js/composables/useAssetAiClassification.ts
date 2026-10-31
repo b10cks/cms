@@ -11,11 +11,7 @@ import type { ClassifyAssetsPayload, ClassifyAssetsResult } from '~/api/resource
  */
 export function useAssetAiClassification(spaceId: MaybeRefOrGetter<string>) {
   const { t } = useI18n()
-  const { useSpaceQuery } = useSpaces()
-  const { data: space } = useSpaceQuery(() => toValue(spaceId))
-
-  /** False only when the space explicitly turned AI features off. */
-  const isAvailable = computed(() => space.value?.settings.ai?.enabled !== false)
+  const isAvailable = useAiEnabled(spaceId)
 
   const isImage = (asset: Pick<AssetResource, 'mime_type'>) => asset.mime_type.startsWith('image/')
   const timers = new Set<ReturnType<typeof setTimeout>>()

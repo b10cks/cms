@@ -35,7 +35,7 @@ const { t } = useI18n()
         :disabled="disabled || skills.length === 0"
         :loading="loading"
       >
-        <Icon name="lucide:sparkles" />
+        <Icon name="ai:bot-star" />
         {{ $t('components.aiActions.trigger') }}
       </Button>
     </DropdownMenuTrigger>

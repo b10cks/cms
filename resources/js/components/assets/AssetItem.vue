@@ -409,7 +409,7 @@ watchEffect((onCleanup) => {
                 v-if="canEdit && isClassifiable"
                 @select="emit('classify', asset)"
               >
-                <Icon name="lucide:sparkles" />
+                <Icon name="ai:bot-star" />
                 <span>{{ $t('actions.assets.classify') }}</span>
               </DropdownMenuItem>
               <DropdownMenuItem
@@ -485,7 +485,7 @@ watchEffect((onCleanup) => {
         v-if="canEdit && isClassifiable"
         @select="emit('classify', asset)"
       >
-        <Icon name="lucide:sparkles" />
+        <Icon name="ai:bot-star" />
         <span>{{ $t('actions.assets.classify') }}</span>
       </ContextMenuItem>
       <ContextMenuItem

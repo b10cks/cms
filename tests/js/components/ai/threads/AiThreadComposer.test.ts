@@ -63,7 +63,7 @@ const mountComposer = async (props: { prompt?: string | null; questionnaire?: Ai
     },
     global: {
       plugins: [[VueQueryPlugin, { queryClient }]],
-      stubs: { Icon: true, InputGroupTipTap: Editor, AiThreadConfigPicker: ConfigPicker },
+      stubs: { Icon: true, InputGroupTipTap: Editor, AiConfigPicker: ConfigPicker, AiReasoningPicker: true },
     },
   })
   await flushPromises()

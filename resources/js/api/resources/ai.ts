@@ -81,6 +81,23 @@ export interface AiSchedules {
   skills: Record<AiScheduleTargetType, Array<{ name: string; description: string }>>
 }
 
+/** How hard a reasoning model thinks; `off` only where the model can skip it. */
+export type AiReasoningEffort = 'off' | 'low' | 'medium' | 'high'
+
+export const AI_REASONING_EFFORTS = ['off', 'low', 'medium', 'high'] as const satisfies readonly AiReasoningEffort[]
+
+/** The level a config uses when it doesn't set one. */
+export const DEFAULT_REASONING_EFFORT: AiReasoningEffort = 'medium'
+
+/** What a config's model can do, resolved from the model catalogue. */
+export interface AiModelInfo {
+  name: string
+  supports_vision: boolean
+  supports_tools: boolean
+  supports_reasoning: boolean
+  reasoning_required: boolean
+}
+
 export interface SpaceAiConfig {
   id: string
   name: string
@@ -89,10 +106,19 @@ export interface SpaceAiConfig {
   system_prompt: string | null
   temperature: number
   max_tokens: number
+  reasoning_effort: AiReasoningEffort | null
+  /** Null when the model is no longer in the catalogue. */
+  model_info: AiModelInfo | null
   is_default: boolean
   created_at: string
   updated_at: string
 }
+
+/** What a config is created or updated with; `model_info` is resolved by the server. */
+export type SpaceAiConfigPayload = Omit<
+  SpaceAiConfig,
+  'id' | 'created_at' | 'updated_at' | 'model_info' | 'reasoning_effort'
+> & { reasoning_effort?: AiReasoningEffort | null }
 
 export class Ai {
   protected client: ApiClient

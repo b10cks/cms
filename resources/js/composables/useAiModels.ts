@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
 import type { MaybeRefOrGetter } from 'vue'
 import { toast } from 'vue-sonner'
 
-import type { SpaceAiConfig } from '~/api/resources/ai'
+import type { SpaceAiConfig, SpaceAiConfigPayload } from '~/api/resources/ai'
 
 export interface AiModel {
   id: string
@@ -20,6 +20,9 @@ export interface AiModel {
   supports_streaming: boolean
   supports_tools: boolean
   supports_vision: boolean
+  supports_reasoning: boolean
+  /** The model always reasons, so `off` is not offered. */
+  reasoning_required: boolean
   is_favourite: boolean
 }
 
@@ -81,10 +84,10 @@ export function useAiSettings(spaceId: MaybeRefOrGetter<string | null>) {
     })
   }
 
-  // One mutation for both writers: they PATCH the same endpoint, so this is the
-  // single place that owns the pending flag, the error surface and the
-  // invalidation set. `is_favourite` is denormalised onto every model, so the
-  // model list has to be refreshed alongside the settings.
+  // The single place that owns the pending flag and the invalidation set for
+  // settings writes. `is_favourite` is denormalised onto every model, so the
+  // model list has to be refreshed alongside the settings; the space detail
+  // carries `settings.ai`, which gates every AI button.
   const settingsMutation = useMutation<void, Error, Partial<SpaceAiSettings>>({
     mutationFn: async (payload: Partial<SpaceAiSettings>) => {
       const id = toValue(spaceId)
@@ -95,6 +98,7 @@ export function useAiSettings(spaceId: MaybeRefOrGetter<string | null>) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: aiKeys(spaceId).settings() })
       queryClient.invalidateQueries({ queryKey: aiKeys(spaceId).models() })
+      queryClient.invalidateQueries({ queryKey: queryKeys.spaces.detail(toValue(spaceId) as string) })
     },
   })
 
@@ -125,24 +129,11 @@ export function useAiSettings(spaceId: MaybeRefOrGetter<string | null>) {
     }
   }
 
-  const setModel = async (modelId: string | null) => {
-    const id = toValue(spaceId)
-    if (!id) return
-
-    try {
-      await settingsMutation.mutateAsync({ model: modelId })
-    } catch (error) {
-      toast.error(t('components.aiModelSelector.setModelError') as string)
-      throw error
-    }
-  }
-
   return {
     useAiSettingsQuery,
     settingsMutation,
     isSavingSettings: settingsMutation.isPending,
     toggleFavourite,
-    setModel,
   }
 }
 
@@ -185,7 +176,7 @@ export function useAiConfigs(spaceId: MaybeRefOrGetter<string | null>) {
 
   const useCreateAiConfigMutation = () => {
     return useMutation({
-      mutationFn: async (payload: Omit<SpaceAiConfig, 'id' | 'created_at' | 'updated_at'>) => {
+      mutationFn: async (payload: SpaceAiConfigPayload) => {
         const id = toValue(spaceId)
         if (!id) throw new Error('No space ID')
 
@@ -208,7 +199,7 @@ export function useAiConfigs(spaceId: MaybeRefOrGetter<string | null>) {
         payload,
       }: {
         configId: string
-        payload: Partial<SpaceAiConfig>
+        payload: Partial<SpaceAiConfigPayload>
       }) => {
         const id = toValue(spaceId)
         if (!id) throw new Error('No space ID')

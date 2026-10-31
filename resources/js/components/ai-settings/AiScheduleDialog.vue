@@ -109,7 +109,7 @@ const save = () => {
 
 <template>
   <Dialog v-model:open="open">
-    <DialogContent class="max-w-xl">
+    <DialogContent class="max-w-xl!">
       <DialogHeader>
         <DialogTitle>
           {{ schedule ? $t('components.aiSettings.schedules.edit') : $t('components.aiSettings.schedules.add') }}

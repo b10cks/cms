@@ -342,7 +342,7 @@ const handleSubmit = async () => {
               type="button"
               :disabled="isEditing"
               :class="[
-                'flex flex-col gap-1 rounded-md border p-3 text-left transition-colors',
+                'icon-anim flex flex-col gap-1 rounded-md border p-3 text-left transition-colors',
                 type === option ? 'border-accent bg-accent/10' : 'border-border hover:bg-input',
                 isEditing && type !== option ? 'opacity-50' : '',
                 isEditing ? 'cursor-not-allowed' : 'cursor-pointer',
@@ -350,7 +350,7 @@ const handleSubmit = async () => {
               @click="type = option"
             >
               <span class="flex items-center gap-2 font-semibold">
-                <Icon :name="option === 'smart' ? 'lucide:sparkles' : 'lucide:layers'" />
+                <Icon :name="option === 'smart' ? 'ai:bot-star' : 'lucide:layers'" />
                 {{ $t(`labels.assetCollections.types.${option}`) }}
               </span>
               <span class="text-xs text-muted">

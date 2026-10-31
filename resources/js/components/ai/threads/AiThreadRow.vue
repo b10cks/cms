@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import Icon from '~/components/Icon.vue'
 import type { AiThread } from '~/lib/aiThreads'
-import { formatElapsed, THREAD_STATUS_STYLES } from '~/lib/aiThreads'
+import { formatElapsed, SCREEN_CHIP_TYPES, THREAD_STATUS_STYLES } from '~/lib/aiThreads'
 import { aiSkillLabel } from '~/lib/aiSkills'
 
 /**
@@ -30,7 +30,7 @@ const context = computed(() => {
   const { thread } = props
   if (thread.kind === 'schedule') return t('components.aiThreads.context.schedule')
   if (thread.kind === 'suggestions') return t('components.aiThreads.context.suggestions')
-  const screen = thread.context?.find((chip) => chip.type === 'content' || chip.type === 'data_source')
+  const screen = thread.context?.find((chip) => SCREEN_CHIP_TYPES.has(chip.type))
   return screen?.label ?? (thread.skill ? aiSkillLabel(thread.skill, t) : '')
 })
 

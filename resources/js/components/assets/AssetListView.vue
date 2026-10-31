@@ -1109,7 +1109,7 @@ onUnmounted(() => {
                       @click="openClassifyDialog([asset])"
                     >
                       <Icon
-                        name="lucide:sparkles"
+                        name="ai:bot-star"
                         size="1rem"
                         class="mr-2"
                       />

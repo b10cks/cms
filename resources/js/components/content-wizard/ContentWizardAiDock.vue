@@ -1,7 +1,6 @@
 <script setup lang="ts">
-import type { MentionItem } from '~/api/resources/ai'
 import type { AiMentionItem } from '~/components/editor/extensions/AiMention'
-import AiText from '~/components/ui/AiText.vue'
+import AiText, { type AiPromptPayload } from '~/components/ui/AiText.vue'
 import { Button } from '~/components/ui/button'
 
 type AiDockWarning = {
@@ -29,22 +28,11 @@ const props = withDefaults(
 )
 
 const emit = defineEmits<{
-  (
-    event: 'send',
-    payload: { prompt: string; configId: string | null; mentions: MentionItem[] }
-  ): void
+  (event: 'send', payload: AiPromptPayload): void
   (event: 'cancel'): void
   (event: 'focus-warning', warning: AiDockWarning): void
 }>()
 
-const handleSend = (
-  prompt: string,
-  _files: never[],
-  configId: string | null,
-  mentions: MentionItem[]
-) => {
-  emit('send', { prompt, configId, mentions })
-}
 </script>
 
 <template>
@@ -98,9 +86,8 @@ const handleSend = (
         :space-id="props.spaceId"
         :placeholder="$t('labels.contents.canvas.aiDockPlaceholder')"
         :loading="props.loading"
-        :direct-emit="true"
         :extra-mention-items="props.draftMentionItems"
-        @send="handleSend"
+        @send="emit('send', $event)"
         @cancel="emit('cancel')"
       />
     </div>

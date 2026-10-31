@@ -3,6 +3,10 @@ import type { Component } from 'vue'
 import BadgeInfoIcon from './BadgeInfoIcon.vue'
 import BellIcon from './BellIcon.vue'
 import BlocksIcon from './BlocksIcon.vue'
+import BotIcon from './BotIcon.vue'
+import BotMessageIcon from './BotMessageIcon.vue'
+import BotStarIcon from './BotStarIcon.vue'
+import BotTranslateIcon from './BotTranslateIcon.vue'
 import CircleHelpIcon from './CircleHelpIcon.vue'
 import CompassIcon from './CompassIcon.vue'
 import DatabaseZapIcon from './DatabaseZapIcon.vue'
@@ -51,10 +55,26 @@ export const animatedIcons: Record<string, Component> = {
   'lucide:history': HistoryIcon,
 }
 
+/**
+ * Animated AI icons, rendered by `<Icon name="ai:…">`. Use `ai:bot` for general
+ * AI entry points, `ai:bot-message` for asking, `ai:bot-star` for skills and
+ * generation, `ai:bot-translate` for AI translation.
+ */
+export const aiIcons: Record<string, Component> = {
+  'ai:bot': BotIcon,
+  'ai:bot-message': BotMessageIcon,
+  'ai:bot-star': BotStarIcon,
+  'ai:bot-translate': BotTranslateIcon,
+}
+
 export {
   BadgeInfoIcon,
   BellIcon,
   BlocksIcon,
+  BotIcon,
+  BotMessageIcon,
+  BotStarIcon,
+  BotTranslateIcon,
   CircleHelpIcon,
   CompassIcon,
   DatabaseZapIcon,

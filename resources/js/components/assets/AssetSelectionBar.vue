@@ -136,20 +136,20 @@ const selectionCount = computed(() => props.assetCount + props.folderCount)
       </Button>
       <Button
         v-if="canClassify && assetCount > 0"
-        variant="ghost"
+        variant="ai"
         size="sm"
         @click="emit('classify')"
       >
-        <Icon name="lucide:sparkles" />
+        <Icon name="ai:bot-star" />
         {{ $t('actions.assets.classify') }}
       </Button>
       <Button
         v-if="canAskAi && assetCount > 0"
-        variant="ghost"
+        variant="ai"
         size="sm"
         @click="emit('askAi')"
       >
-        <Icon name="lucide:wand-sparkles" />
+        <Icon name="ai:bot-message" />
         {{ $t('components.aiBulk.entry') }}
       </Button>
       <Button

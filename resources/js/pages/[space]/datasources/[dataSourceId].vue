@@ -176,7 +176,8 @@ const defaultDimensionLocale = computed(() => {
 
 const { useAccessControl } = useAuthorization()
 const access = useAccessControl(computed(() => ({ space_id: spaceId.value })))
-const canAskAi = computed(() => access.hasAbility('data_entries.manage'))
+const aiEnabled = useAiEnabled(spaceId)
+const canAskAi = computed(() => aiEnabled.value && access.hasAbility('data_entries.manage'))
 const aiBulkOpen = ref(false)
 const aiBulkMounted = useMountOnFirstOpen(() => aiBulkOpen.value)
 
@@ -643,12 +644,12 @@ const handleTranslateMissingDimensions = async () => {
             <div class="ml-auto flex items-center gap-2">
               <Button
                 v-if="canAskAi"
-                variant="outline"
+                variant="ai"
                 size="sm"
                 @click="aiBulkOpen = true"
               >
                 <Icon
-                  name="lucide:wand-sparkles"
+                  name="ai:bot-message"
                   class="h-4 w-4"
                 />
                 {{ $t('components.aiBulk.entry') }}

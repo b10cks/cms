@@ -28,7 +28,7 @@ const search = computed(() => filterState.search.trim())
     @select="emit('start', { prompt: search, skill: null })"
   >
     <Icon
-      name="lucide:sparkles"
+      name="ai:bot-message"
       class="text-ai"
     />
     <span class="truncate">{{ $t('components.aiCommand.ask', { prompt: search }) }}</span>
@@ -45,7 +45,7 @@ const search = computed(() => filterState.search.trim())
       @select="emit('start', { prompt: search, skill })"
     >
       <Icon
-        name="lucide:sparkles"
+        name="ai:bot-star"
         class="text-ai"
       />
       <span class="font-medium">{{ aiSkillLabel(skill.name, t) }}</span>

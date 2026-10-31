@@ -71,7 +71,8 @@ useShortcut({
   },
 })
 
-const canUseAi = computed(() => !!spaceId.value && access.hasAbility('content.manage'))
+const aiEnabled = useAiEnabled(spaceId)
+const canUseAi = computed(() => aiEnabled.value && access.hasAbility('content.manage'))
 /** Ask AI and skill items start a thread in the dock with the current screen attached. */
 const startAiTask = (task: { prompt: string; skill: AiResolvedSkill | null }) => {
   open.value = false

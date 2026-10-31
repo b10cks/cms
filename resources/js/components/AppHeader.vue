@@ -35,6 +35,7 @@ const route = useRoute()
 const commandOpen = inject<Ref<boolean>>('commandOpen')
 
 const selectedSpaceId = computed(() => route.params?.space as string | undefined)
+const aiEnabled = useAiEnabled(selectedSpaceId)
 
 const selectedSpace = computed(() => {
   return spaces.value?.find((space) => space.id === selectedSpaceId.value) ?? null
@@ -207,7 +208,7 @@ const logout = () => {
         <slot name="headerActions" />
       </div>
       <AiDockButton
-        v-if="selectedSpaceId"
+        v-if="selectedSpaceId && aiEnabled"
         :space-id="selectedSpaceId"
       />
     </div>

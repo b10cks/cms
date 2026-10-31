@@ -6,6 +6,7 @@ import ExportContentTranslationsDialog from '~/components/content/ExportContentT
 import ImportContentTranslationsDialog from '~/components/content/ImportContentTranslationsDialog.vue'
 import type { FilterableField } from '~/components/SearchFilter.vue'
 import SearchFilter from '~/components/SearchFilter.vue'
+import AiConfigMenuItems from '~/components/ai/AiConfigMenuItems.vue'
 import { Badge } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
 import SplitButton from '~/components/ui/button/SplitButton.vue'
@@ -45,6 +46,7 @@ const spaceId = computed(() => route.params.space as string)
 const { useAccessControl } = useAuthorization()
 const access = useAccessControl(computed(() => ({ space_id: spaceId.value })))
 const canManageContent = computed(() => access.hasAbility('content.manage'))
+const aiEnabled = useAiEnabled(spaceId)
 const canPublishContent = computed(() => access.hasAbility('content.publish'))
 
 const { useSpaceQuery } = useSpaces()
@@ -588,8 +590,8 @@ const exportFilters = computed(() => ({
               {{ $t('labels.massEdit.translating', translationProgress) }}
             </span>
             <SplitButton
-              v-if="canManageContent"
-              variant="outline"
+              v-if="canManageContent && aiEnabled"
+              variant="ai"
               :title="$t('labels.massEdit.translateAiHint')"
               :primary-action="() => translateWithAI()"
               :disabled="
@@ -600,26 +602,16 @@ const exportFilters = computed(() => ({
             >
               <Icon
                 v-if="!isTranslating && !isPreparingTranslation"
-                name="lucide:sparkles"
-                class="text-ai"
+                name="ai:bot-translate"
               />
               {{ $t('labels.massEdit.translateAi') }}
               <template #menu>
-                <DropdownMenuItem
-                  v-for="config in aiConfigs"
-                  :key="config.id"
+                <AiConfigMenuItems
+                  :configs="aiConfigs ?? []"
+                  :selected-id="aiConfigs?.find((config) => config.is_default)?.id ?? null"
                   :disabled="isTranslating || isPreparingTranslation"
-                  @select="translateWithAI(config.id)"
-                >
-                  <div class="flex items-center gap-2">
-                    <span class="font-medium">{{ config.name }}</span>
-                    <Badge
-                      v-if="config.is_default"
-                      size="sm"
-                      >Default</Badge
-                    >
-                  </div>
-                </DropdownMenuItem>
+                  @select="translateWithAI"
+                />
               </template>
             </SplitButton>
 

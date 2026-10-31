@@ -28,6 +28,7 @@ import type {
   ContentFieldFocusPayload,
   ContentFieldUpdatePayload,
 } from '~/composables/useContentLiveCollaboration'
+import { aiFocusedField } from '~/lib/aiFocusedField'
 
 import FieldComments from '../comments/FieldComments.vue'
 
@@ -207,7 +208,19 @@ const collaborationStyle = computed(() => {
   return style
 })
 
-const handleFocusIn = () => {
+const route = useRoute()
+
+const handleFocusIn = (event: FocusEvent) => {
+  // Focus bubbles through every enclosing field; only the innermost one is the focused field.
+  const contentId = route.params.contentId
+  if (typeof contentId === 'string' && (event.target as Element | null)?.closest('[data-field-path]') === event.currentTarget) {
+    aiFocusedField.value = {
+      contentId,
+      path: fieldPath.value.replace(/^content\./, ''),
+      label: props.item.name || props.item.key,
+    }
+  }
+
   if (!tracksOwnFocus.value) return
   if (isFocused.value) return
 

@@ -141,6 +141,10 @@
   --ai: var(--color-purple-600);
   --ai-foreground: var(--color-purple-50);
   --ai-background: var(--color-purple-600);
+  /* AI action buttons: a purple wash with purple ink */
+  --ai-tint: color-mix(in oklch, var(--color-purple-600) 10%, transparent);
+  --ai-tint-hover: color-mix(in oklch, var(--color-purple-600) 18%, transparent);
+  --ai-tint-foreground: var(--color-purple-600);
 
   /* Chart series in fixed order, validated for CVD separation in both modes */
   --series-1: #2a86d1;
@@ -220,6 +224,9 @@
   --ai: var(--color-purple-500);
   --ai-foreground: var(--color-purple-200);
   --ai-background: var(--color-purple-800);
+  --ai-tint: color-mix(in oklch, var(--color-purple-500) 18%, transparent);
+  --ai-tint-hover: color-mix(in oklch, var(--color-purple-500) 28%, transparent);
+  --ai-tint-foreground: var(--color-purple-300);
 
   --series-1: #3d98e6;
   --series-2: #d95926;
@@ -308,6 +315,9 @@
   --color-ai: var(--ai);
   --color-ai-foreground: var(--ai-foreground);
   --color-ai-background: var(--ai-background);
+  --color-ai-tint: var(--ai-tint);
+  --color-ai-tint-hover: var(--ai-tint-hover);
+  --color-ai-tint-foreground: var(--ai-tint-foreground);
 
   --color-info: var(--info);
   --color-info-foreground: var(--info-foreground);
