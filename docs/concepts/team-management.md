@@ -29,9 +29,9 @@ Root users run the instance from one console, and they act inside a tenant only 
 10. **Provider console.** `/provider` grows into the instance console. It keeps its route, root gate and notes. Nav: Dashboard, Tenants, Users, Usage, Audit, Health, Notes.
 11. **Elevate on demand.**
     - Root opens any team as a viewer, with a banner and team actions disabled.
-    - "Elevate" asks for a reason and a duration (30 minutes by default). It unlocks override actions, and the reason is written to the instance audit and the team's activity.
+    - "Elevate" asks for a reason and a duration (30 minutes by default). It unlocks override actions instance-wide. The reason goes to the instance audit only, since an elevation has no team.
     - Today `AuthorizationService` grants root everything unconditionally. Elevation becomes the condition for write abilities.
-12. **Impersonation.** The UI is built on the existing `POST/DELETE /impersonate`. It needs a reason, ends after 1 hour and shows a persistent banner. The existing `not-impersonating` blocks stay.
+12. **Impersonation.** The UI is built on the existing `POST/DELETE /impersonate`. It needs a reason, ends after 1 hour and shows a persistent banner. The existing `not-impersonating` blocks stay. Starting it requires a running elevation; returning never does.
 13. **Suspend.** Suspending blocks login, ends sessions and revokes personal access tokens. Memberships and content stay, so restoring loses nothing. If the user is the last owner of a team, the dialog asks for a new owner, or flags the team as "No owner" in Tenants.
 14. **Investor dashboard.** The provider Dashboard is root-only and has four sections: Revenue, Growth, Engagement and delivery, and AI.
     - **Time framing:** monthly buckets over the trailing 12 months, with a range picker. Tiles show month-over-month change through `ChangeIndicator`, and year-over-year where data exists. There is a revenue retention grid by start month.
@@ -92,7 +92,7 @@ Definitions as built (`ProviderMetricsService`, `GET provider/metrics?range=6m|1
 - `AuthorizationService`: root write abilities require an active elevation, stored per user with an expiry and a reason. Reads stay unconditional.
 - Users get `suspended_at`, `suspended_by` and `suspension_reason`, and an auth guard check. Suspending revokes Sanctum tokens and sessions.
 - New `team_domains` table: team, domain, verification token, verified_at, policy (request, auto_join, require_sso), default role. Join requests live in their own table.
-- `expires_at` on `team_user`, `space_user` and `invites`, plus a scheduled sweep through `MembershipService`.
+- `expires_at` on `team_user` and `space_user`, and `access_expires_at` on `invites` (its `expires_at` is the link expiry). The `memberships:expire` sweep runs every five minutes through `MembershipService` and never removes a last owner.
 - A team-scoped audit endpoint, a provider audit endpoint, provider users and tenants endpoints, and provider metrics endpoints with monthly aggregation (cached).
 
 ## Out of scope
