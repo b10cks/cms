@@ -64,6 +64,7 @@ class StoreInviteRequest extends FormRequest
             'language' => ['sometimes', 'string', Rule::in(config('app.locales'))],
             'message' => 'nullable|string|max:1000',
             'expires_in_days' => 'nullable|integer|min:1|max:90',
+            'access_until' => 'nullable|date_format:Y-m-d|after_or_equal:today',
         ];
     }
 
@@ -101,5 +102,13 @@ class StoreInviteRequest extends FormRequest
     public function getExpiresAt(): Carbon
     {
         return now()->addDays($this->input('expires_in_days', 7));
+    }
+
+    /** Access granted by the invite ends with the chosen day. */
+    public function getAccessExpiresAt(): ?Carbon
+    {
+        return $this->filled('access_until')
+            ? Carbon::createFromFormat('Y-m-d', $this->input('access_until'))->endOfDay()
+            : null;
     }
 }

@@ -103,7 +103,13 @@ class TeamMemberDirectoryService
             ->join('team_user', 'team_user.user_id', '=', 'users.id')
             ->leftJoin('roles', 'roles.id', '=', 'team_user.role_id')
             ->where('team_user.team_id', $team->id)
-            ->select('users.*', 'roles.key as role_key', 'team_user.created_at as joined_at')
+            ->select(
+                'users.*',
+                'roles.key as role_key',
+                'team_user.created_at as joined_at',
+                'team_user.source as membership_source',
+                'team_user.expires_at as access_expires_at',
+            )
             ->get()
             ->map(function (User $member) {
                 $member->setAttribute('membership_origin', 'team');
@@ -141,6 +147,10 @@ class TeamMemberDirectoryService
                 $member->setAttribute('role_key', null);
                 $member->setAttribute('joined_at', $group
                     ->min(fn (User $row) => Carbon::parse($row->source_joined_at)->toIso8601String()));
+                $member->setAttribute('membership_source', null);
+                $member->setAttribute('access_expires_at', $group
+                    ->filter(fn (User $row) => $row->source_expires_at !== null)
+                    ->min(fn (User $row) => Carbon::parse($row->source_expires_at)->toIso8601String()));
                 $member->setAttribute('membership_origin', 'space');
                 $member->setAttribute('can_assign_team_role', true);
                 $member->setAttribute('can_remove', false);
@@ -187,6 +197,7 @@ class TeamMemberDirectoryService
                 'teams.id as inherited_team_id',
                 'teams.name as inherited_team_name',
                 'team_user.created_at as joined_at',
+                'team_user.source as membership_source',
             )
             ->get()
             ->groupBy('id')
@@ -241,6 +252,7 @@ class TeamMemberDirectoryService
                 'spaces.name as source_space_name',
                 'roles.key as source_space_role_key',
                 'space_user.created_at as source_joined_at',
+                'space_user.expires_at as source_expires_at',
             )
             ->orderBy('spaces.name')
             ->get()
@@ -261,6 +273,7 @@ class TeamMemberDirectoryService
                 ],
                 'role' => $row->source_space_role_key,
                 'joined_at' => Carbon::parse($row->source_joined_at)->toIso8601String(),
+                'expires_at' => $row->source_expires_at ? Carbon::parse($row->source_expires_at)->toIso8601String() : null,
             ])
             ->sortBy(fn (array $membership) => mb_strtolower((string) $membership['space']['name']))
             ->values()

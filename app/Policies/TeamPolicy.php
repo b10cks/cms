@@ -50,6 +50,11 @@ class TeamPolicy
         return $this->canInTeam($user, $team, 'team.members.manage');
     }
 
+    public function viewAuditLogs(User $user, Team $team): bool
+    {
+        return $this->canInTeam($user, $team, 'team.audit.view');
+    }
+
     public function viewInvites(User $user, Team $team): bool
     {
         return $this->canInTeam($user, $team, 'team.invites.view');

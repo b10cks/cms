@@ -99,7 +99,7 @@ const hasActiveFilters = computed(() => Object.keys(filters.value).length > 0)
 </script>
 
 <template>
-  <div class="flex flex-col gap-8">
+  <div class="content-grid w-full content-start pb-8">
     <ContentHeader
       :header="$t('labels.teams.pageTitle')"
     >

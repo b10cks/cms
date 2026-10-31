@@ -19,9 +19,12 @@ const props = withDefaults(
   defineProps<{
     hierarchy: TeamHierarchyItem[]
     isRoot?: boolean
+    /** Preselected parent, e.g. when adding a sub-team from a team's page. */
+    parentId?: string | null
   }>(),
   {
     isRoot: false,
+    parentId: null,
   }
 )
 
@@ -31,14 +34,14 @@ const emit = defineEmits<{
 
 const { t } = useI18n()
 
-const open = ref(false)
+const open = defineModel<boolean>('open', { default: false })
 const isSubmitting = ref(false)
 
 const createDefaults = (): CreateTeamPayload => ({
   name: '',
   description: '',
   type: null,
-  parent_id: null,
+  parent_id: props.parentId,
   icon: null,
   color: null,
   settings: {},
@@ -81,6 +84,8 @@ const handleSubmit = async () => {
 const resetForm = () => {
   formData.value = createDefaults()
 }
+
+watch(() => props.parentId, resetForm)
 
 const handleOpenChange = (value: boolean) => {
   open.value = value

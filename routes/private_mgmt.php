@@ -113,6 +113,10 @@ use App\Http\Controllers\Mgmt\TeamInviteController;
 use App\Http\Controllers\Mgmt\TeamInviteResendController;
 use App\Http\Controllers\Mgmt\TeamMemberController;
 use App\Http\Controllers\Mgmt\TeamPeopleController;
+use App\Http\Controllers\Mgmt\TeamOverviewController;
+use App\Http\Controllers\Mgmt\TeamAccessMatrixController;
+use App\Http\Controllers\Mgmt\TeamAuditLogController;
+use App\Http\Controllers\Mgmt\MembershipExpiryController;
 use App\Http\Controllers\Mgmt\TeamSamlProviderController;
 use App\Http\Controllers\Mgmt\TeamUserController;
 use App\Http\Controllers\Mgmt\User\UserAvatarController;
@@ -253,6 +257,11 @@ Route::group(['prefix' => 'teams/{team}'], function () use ($aiKnowledgeRoutes) 
     Route::delete('avatar', [TeamAvatarController::class, 'destroy'])->name('teams.avatar.destroy');
 
     Route::get('people', [TeamPeopleController::class, 'index'])->name('teams.people.index');
+    Route::get('overview', [TeamOverviewController::class, 'show'])->name('teams.overview');
+    Route::get('move-preview', [TeamOverviewController::class, 'movePreview'])->name('teams.move-preview');
+    Route::get('access-matrix', TeamAccessMatrixController::class)->name('teams.access-matrix');
+    Route::get('audit-logs', [TeamAuditLogController::class, 'index'])->name('teams.audit-logs.index');
+    Route::put('users/{user}/expiry', [MembershipExpiryController::class, 'team'])->name('teams.users.expiry');
 
     Route::get('members', [TeamMemberController::class, 'index'])->name('teams.members.index');
     Route::get('users', [TeamMemberController::class, 'index'])->name('teams.users.index');
@@ -337,6 +346,8 @@ Route::group(['prefix' => 'spaces/{space}', 'middleware' => 'space.member'], fun
     Route::get('people', [SpacePeopleController::class, 'index'])->name('spaces.people.index');
 
     Route::get('members', [SpaceMemberController::class, 'index'])->name('spaces.members.index');
+    Route::post('members', [SpaceMemberController::class, 'store'])->name('spaces.members.store');
+    Route::put('members/{user}/expiry', [MembershipExpiryController::class, 'space'])->name('spaces.members.expiry');
     Route::patch('members/{user}', [SpaceMemberController::class, 'update'])->name('spaces.members.update');
     Route::delete('members/{user}', [SpaceMemberController::class, 'destroy'])->name('spaces.members.destroy');
 

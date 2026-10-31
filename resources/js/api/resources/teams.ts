@@ -4,6 +4,12 @@ import type {
   UpdateTeamSpaceRolePayload,
 } from '~/types/authorization'
 import type {
+  AccessMatrix,
+  TeamAuditEntry,
+  TeamMovePreview,
+  TeamOverview,
+} from '~/types/team-workspace'
+import type {
   CreateTeamPayload,
   UpdateTeamPayload,
   TeamHierarchyItem,
@@ -114,5 +120,50 @@ export class Teams extends BaseResource<
 
   public async deleteSamlProvider(teamId: string): Promise<void> {
     return this.client.delete(`/mgmt/v1/teams/${teamId}/saml-provider`)
+  }
+
+  public async getOverview(teamId: string): Promise<ApiResponse<TeamOverview>> {
+    return this.client.get<ApiResponse<TeamOverview>>(`/mgmt/v1/teams/${teamId}/overview`)
+  }
+
+  public async getMovePreview(
+    teamId: string,
+    parentId: string | null
+  ): Promise<ApiResponse<TeamMovePreview>> {
+    return this.client.get<ApiResponse<TeamMovePreview>>(
+      `/mgmt/v1/teams/${teamId}/move-preview`,
+      parentId ? { parent_id: parentId } : {}
+    )
+  }
+
+  public async getAccessMatrix(
+    teamId: string,
+    filterTeamId: string | null = null
+  ): Promise<ApiResponse<AccessMatrix>> {
+    return this.client.get<ApiResponse<AccessMatrix>>(
+      `/mgmt/v1/teams/${teamId}/access-matrix`,
+      filterTeamId ? { team_id: filterTeamId } : {}
+    )
+  }
+
+  public async getAuditLogs(
+    teamId: string,
+    params: { page?: number; per_page?: number } = {}
+  ): Promise<ApiCollectionResponse<TeamAuditEntry>> {
+    return this.client.get<ApiCollectionResponse<TeamAuditEntry>>(
+      `/mgmt/v1/teams/${teamId}/audit-logs`,
+      params
+    )
+  }
+
+  /** `accessUntil` is a `YYYY-MM-DD` day; `null` keeps the membership open-ended. */
+  public async setUserExpiry(
+    teamId: string,
+    userId: string,
+    accessUntil: string | null
+  ): Promise<void> {
+    return this.client.put(`/mgmt/v1/teams/${teamId}/users/${userId}/expiry`, {
+      access_until: accessUntil,
+    })
   }
 }

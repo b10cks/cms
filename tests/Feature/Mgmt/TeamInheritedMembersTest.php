@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Mgmt;
 
+use App\Models\Management\Space;
 use App\Models\Management\Team;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -186,5 +187,29 @@ class TeamInheritedMembersTest extends TestCase
             ->assertSuccessful();
 
         $this->assertTeamRole($child, $inherited, 'admin');
+    }
+
+    #[Test]
+    public function space_people_list_members_who_hold_a_team_role(): void
+    {
+        $team = Team::factory()->create(['name' => 'Agency']);
+        $space = Space::factory()->create(['team_id' => $team->id]);
+        $teamAdmin = User::factory()->create();
+        $editor = User::factory()->create();
+        $this->assignTeamRole($team, $teamAdmin, 'admin');
+        $this->assignSpaceRole($space, $editor, 'editor');
+
+        $root = User::factory()->create(['is_root' => true]);
+        $people = collect($this->actingAs($root)
+            ->getJson(route('mgmt.spaces.people.index', $space))
+            ->assertSuccessful()
+            ->json('data'))->keyBy('id');
+
+        $this->assertSame('inherited', $people[$teamAdmin->id]['membership_origin']);
+        $this->assertSame('admin', $people[$teamAdmin->id]['inherited_role']);
+        $this->assertSame('Agency', $people[$teamAdmin->id]['inherited_from']['name']);
+        $this->assertFalse($people[$teamAdmin->id]['can_remove']);
+        $this->assertSame('space', $people[$editor->id]['membership_origin']);
+        $this->assertSame('editor', $people[$editor->id]['role']);
     }
 }
