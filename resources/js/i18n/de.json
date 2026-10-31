@@ -4969,7 +4969,7 @@
       "share": "Mit dem Space teilen",
       "updateFailed": "Thread konnte nicht geändert werden: {error}",
       "ownerOnly": "Nur {name} kann in diesem Thread weiterschreiben.",
-      "emptyThread": "Frag alles zu diesem Space. Mit / wählst du einen Skill, mit {'@'} erwähnst du einen Eintrag. Änderungen landen hier zur Prüfung, gespeichert wird erst, was du übernimmst.",
+      "emptyThread": "Frag etwas zu diesem Space",
       "placeholder": "Frag die KI, {'@'} zum Erwähnen, / für Skills",
       "extraInstructions": "Zusätzliche Anweisungen (optional)",
       "removeSkill": "Skill entfernen",
@@ -5030,6 +5030,50 @@
         "tooLarge": "{name} ist zu groß. Erlaubt sind höchstens {max}.",
         "tooMany": "Höchstens {max} Dateien pro Nachricht.",
         "uploadFailed": "{name} konnte nicht hochgeladen werden: {error}"
+      },
+      "working": "Arbeitet seit {duration}",
+      "worked": "Hat {duration} gearbeitet",
+      "workSteps": "{count} Schritt | {count} Schritte",
+      "copyAnswer": "Antwort kopieren",
+      "copied": "Kopiert",
+      "duration": {
+        "seconds": "{s} s",
+        "minutes": "{m} min {s} s"
+      },
+      "tools": {
+        "ask_questions": "Rückfrage",
+        "find_entries": "Einträge finden",
+        "get_block_list": "Blöcke auflisten",
+        "get_block_schemas": "Block-Schemas lesen",
+        "get_entry": "Eintrag lesen",
+        "get_mentioned_content": "Erwähnungen lesen",
+        "lookup_glossary": "Glossar prüfen",
+        "propose_create": "Neuen Eintrag entwerfen",
+        "propose_update": "Änderungen entwerfen",
+        "read_knowledge": "Wissen lesen",
+        "read_skill": "Skill lesen",
+        "read_skill_file": "Skill-Datei lesen",
+        "search_assets": "Assets durchsuchen",
+        "search_content": "Inhalte durchsuchen",
+        "search_knowledge": "Wissen durchsuchen"
+      },
+      "sources": "{count} Quelle | {count} Quellen",
+      "questions": {
+        "progress": "Frage {n} von {total}",
+        "previous": "Vorherige Frage",
+        "skip": "Überspringen",
+        "ownAnswer": "Oder eigene Antwort eingeben",
+        "typeAnswer": "Antwort eingeben",
+        "label": "Fragen der KI",
+        "skipped": "Übersprungen"
+      },
+      "usage": {
+        "tokens": "{count} Tokens",
+        "input": "Eingabe: {count}",
+        "output": "Ausgabe: {count}",
+        "cached": "Zwischengespeichert: {count}",
+        "steps": "Schritte: {count}",
+        "cost": "Kosten: {cost}"
       }
     }
   },

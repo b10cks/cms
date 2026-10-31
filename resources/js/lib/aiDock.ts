@@ -30,6 +30,8 @@ export interface AiLiveTurn {
   attachments: AiAttachment[]
   skill: string | null
   steps: AiThreadStep[]
+  /** Epoch ms, for the elapsed time until the run reports its own */
+  startedAt: number
 }
 
 interface AiDockState {
@@ -105,8 +107,8 @@ export function threadCreated(threadId: string) {
 }
 
 /** Show a turn streaming; pass the returned turn to {@link endLiveTurn}. */
-export function beginLiveTurn(turn: Omit<AiLiveTurn, 'steps'>): AiLiveTurn {
-  state.live = { ...turn, steps: [] }
+export function beginLiveTurn(turn: Omit<AiLiveTurn, 'steps' | 'startedAt'>): AiLiveTurn {
+  state.live = { ...turn, steps: [], startedAt: Date.now() }
   return state.live
 }
 

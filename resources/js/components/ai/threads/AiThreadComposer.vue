@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { AiResolvedSkill, MentionItem } from '~/api/resources/ai'
 import AiThreadConfigPicker from '~/components/ai/threads/AiThreadConfigPicker.vue'
+import AiThreadQuestions from '~/components/ai/threads/AiThreadQuestions.vue'
 import type { AiMentionItem } from '~/components/editor/extensions/AiMention'
 import Icon from '~/components/Icon.vue'
 import { Button } from '~/components/ui/button'
@@ -8,6 +9,7 @@ import { InputGroupTipTap } from '~/components/ui/input-group'
 import { useAiMentions } from '~/composables/useAiMentions'
 import type { AiAttachment, AiAttachmentKind } from '~/lib/aiAttachments'
 import { ATTACHMENT_ACCEPT, ATTACHMENT_LIMITS, checkAttachment, formatMegabytes, MAX_ATTACHMENTS } from '~/lib/aiAttachments'
+import type { AiQuestionnaire, AiQuestionnaireAnswers } from '~/lib/aiRun'
 import type { AiThreadChip } from '~/lib/aiThreads'
 import { sameChip } from '~/lib/aiThreads'
 import { aiSkillLabel } from '~/lib/aiSkills'
@@ -36,6 +38,10 @@ interface ComposerFile {
  * config picker and the send button. Files upload as they are added, by the
  * paperclip, paste or drop. `@` mentions entries, assets and knowledge
  * documents; `/` picks a skill.
+ *
+ * While a run waits for answers, its questions sit as a tray on top and the
+ * composer is the answer form: Send takes the selected option, or the typed
+ * text as an own answer, and moves on; after the last question it submits.
  */
 const props = defineProps<{
   spaceId: string
@@ -43,6 +49,8 @@ const props = defineProps<{
   /** Chips the screen offers that the thread doesn't have yet */
   ghostChips: readonly AiThreadChip[]
   running: boolean
+  /** Questions of a paused run the user answers here */
+  questionnaire?: AiQuestionnaire | null
 }>()
 
 const chips = defineModel<AiThreadChip[]>('chips', { required: true })
@@ -52,6 +60,7 @@ const prompt = defineModel<string | null>('prompt', { required: true })
 const emit = defineEmits<{
   send: [message: AiThreadMessage]
   cancel: []
+  answer: [answers: AiQuestionnaireAnswers]
 }>()
 
 const { t } = useI18n()
@@ -217,12 +226,67 @@ const onDrop = (event: DragEvent) => {
 }
 
 const hasText = computed(() => (prompt.value?.trim().length ?? 0) > 0)
-const canSend = computed(
-  () => (hasText.value || !!skill.value) && !props.running && !uploading.value && !!configId.value
+
+const questionIndex = ref(0)
+const answers = ref<AiQuestionnaireAnswers>({})
+const selected = ref<string | null>(null)
+const question = computed(() => props.questionnaire?.questions[questionIndex.value] ?? null)
+
+watch(
+  () => props.questionnaire,
+  () => {
+    questionIndex.value = 0
+    answers.value = {}
+    selected.value = null
+  }
 )
+
+/** Show a question with its earlier answer: an option is selected, own text goes back to the editor. */
+const showQuestion = (index: number) => {
+  questionIndex.value = index
+  const next = props.questionnaire?.questions[index]
+  const answer = next ? (answers.value[next.id] ?? null) : null
+  const isOption = !!next?.options.some((option) => option.id === answer)
+  selected.value = isOption ? answer : null
+  prompt.value = isOption ? null : answer
+  if (!prompt.value) editor.value?.clear()
+}
+
+const commitAnswer = (value: string | null) => {
+  const questionnaire = props.questionnaire
+  if (!questionnaire || !question.value) return
+  answers.value = { ...answers.value, [question.value.id]: value }
+  if (questionIndex.value < questionnaire.questions.length - 1) {
+    showQuestion(questionIndex.value + 1)
+    editor.value?.focus()
+  } else {
+    emit('answer', { ...answers.value })
+  }
+}
+
+/** Number keys pick an option while the editor is empty; once there is text they type. */
+const onKeydown = (event: KeyboardEvent) => {
+  const options = question.value?.options ?? []
+  if (options.length === 0 || hasText.value || event.metaKey || event.ctrlKey || event.altKey) return
+  if (!/^[1-9]$/.test(event.key)) return
+  const option = options[Number(event.key) - 1]
+  if (!option) return
+  event.preventDefault()
+  selected.value = option.id
+}
+
+const canSend = computed(() => {
+  if (props.running) return false
+  if (question.value) return hasText.value || !!selected.value || !question.value.required
+  return (hasText.value || !!skill.value) && !uploading.value && !!configId.value
+})
 
 const send = () => {
   if (!canSend.value) return
+  if (question.value) {
+    commitAnswer(hasText.value ? (editor.value?.getText() ?? prompt.value ?? '').trim() : selected.value)
+    return
+  }
   const text = (editor.value?.getTextWithMentions() ?? prompt.value ?? '').trim()
   const mentions = (editor.value?.getMentions() ?? []).map((mention) => ({
     type: mention.type,
@@ -245,8 +309,19 @@ const send = () => {
 }
 
 const showStrip = computed(
-  () => !!skill.value || chips.value.length > 0 || props.ghostChips.length > 0 || files.value.length > 0
+  () =>
+    !question.value &&
+    (!!skill.value || chips.value.length > 0 || props.ghostChips.length > 0 || files.value.length > 0)
 )
+
+const placeholder = computed(() => {
+  if (question.value) {
+    return question.value.options.length > 0
+      ? t('components.aiThreads.questions.ownAnswer')
+      : t('components.aiThreads.questions.typeAnswer')
+  }
+  return skill.value ? t('components.aiThreads.extraInstructions') : t('components.aiThreads.placeholder')
+})
 
 const controlClass =
   'inline-flex h-7 shrink-0 cursor-pointer items-center justify-center gap-1 rounded-md px-2 text-sm text-muted transition-colors outline-none hover:bg-muted-background hover:text-foreground focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50'
@@ -278,7 +353,18 @@ defineExpose({ focus: () => editor.value?.focus(), restore })
       @dragover="onDragOver"
       @dragleave="onDragLeave"
       @drop.capture="onDrop"
+      @keydown.capture="onKeydown"
     >
+      <AiThreadQuestions
+        v-if="question && questionnaire"
+        v-model:selected="selected"
+        :question="question"
+        :index="questionIndex"
+        :total="questionnaire.questions.length"
+        :overridden="hasText"
+        @previous="showQuestion(questionIndex - 1)"
+        @skip="commitAnswer(null)"
+      />
       <div
         v-if="showStrip"
         class="flex flex-wrap items-center gap-1.5 px-2 pt-2"
@@ -374,7 +460,7 @@ defineExpose({ focus: () => editor.value?.focus(), restore })
       <InputGroupTipTap
         ref="editor"
         :model-value="prompt ?? ''"
-        :placeholder="skill ? $t('components.aiThreads.extraInstructions') : $t('components.aiThreads.placeholder')"
+        :placeholder="placeholder"
         :disabled="running"
         :mention-items="mentionItems"
         :commands="commands"
@@ -385,6 +471,7 @@ defineExpose({ focus: () => editor.value?.focus(), restore })
 
       <div class="flex items-center gap-1 px-2 pb-2">
         <AiThreadConfigPicker
+          v-show="!question"
           v-model="configId"
           :space-id="spaceId"
           :disabled="running"
@@ -396,6 +483,7 @@ defineExpose({ focus: () => editor.value?.focus(), restore })
           :title="$t('components.aiThreads.files.attach')"
           :aria-label="$t('components.aiThreads.files.attach')"
           :disabled="files.length >= MAX_ATTACHMENTS"
+          v-show="!question"
           data-attach
           @click="fileInput?.click()"
         >

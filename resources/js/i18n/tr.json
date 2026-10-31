@@ -4953,7 +4953,7 @@
       "share": "Share with the space",
       "updateFailed": "Could not update the thread: {error}",
       "ownerOnly": "Only {name} can send follow-ups in this thread.",
-      "emptyThread": "Ask anything about this space. Type / for a skill, {'@'} to mention an entry. Changes arrive here for review; nothing is saved until you accept it.",
+      "emptyThread": "Ask about this space",
       "placeholder": "Ask the AI, {'@'} to mention, / for skills",
       "extraInstructions": "Extra instructions (optional)",
       "removeSkill": "Remove skill",
@@ -5014,6 +5014,50 @@
         "tooLarge": "{name} is too large. The limit is {max}.",
         "tooMany": "Up to {max} files per message.",
         "uploadFailed": "Could not upload {name}: {error}"
+      },
+      "working": "Working for {duration}",
+      "worked": "Worked for {duration}",
+      "workSteps": "{count} step | {count} steps",
+      "copyAnswer": "Copy answer",
+      "copied": "Copied",
+      "duration": {
+        "seconds": "{s}s",
+        "minutes": "{m}m {s}s"
+      },
+      "tools": {
+        "ask_questions": "Ask you",
+        "find_entries": "Find entries",
+        "get_block_list": "List blocks",
+        "get_block_schemas": "Read block schemas",
+        "get_entry": "Read entry",
+        "get_mentioned_content": "Read mentions",
+        "lookup_glossary": "Check glossary",
+        "propose_create": "Draft new entry",
+        "propose_update": "Draft changes",
+        "read_knowledge": "Read knowledge",
+        "read_skill": "Read skill",
+        "read_skill_file": "Read skill file",
+        "search_assets": "Search assets",
+        "search_content": "Search content",
+        "search_knowledge": "Search knowledge"
+      },
+      "sources": "{count} source | {count} sources",
+      "questions": {
+        "progress": "Question {n} of {total}",
+        "previous": "Previous question",
+        "skip": "Skip",
+        "ownAnswer": "Or type your own answer",
+        "typeAnswer": "Type your answer",
+        "label": "Questions from the AI",
+        "skipped": "Skipped"
+      },
+      "usage": {
+        "tokens": "{count} tokens",
+        "input": "Input: {count}",
+        "output": "Output: {count}",
+        "cached": "Cached: {count}",
+        "steps": "Steps: {count}",
+        "cost": "Cost: {cost}"
       }
     }
   },

@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from 'vitest'
 import { computed, defineComponent, h, ref } from 'vue'
 
 import type { AiAttachment } from '~/lib/aiAttachments'
+import type { AiQuestionnaire } from '~/lib/aiRun'
 
 const uploads = new Map<string, { resolve: (attachment: AiAttachment) => void; signal?: AbortSignal }>()
 const uploadAttachment = vi.fn(
@@ -35,15 +36,31 @@ const ConfigPicker = defineComponent({
 const Editor = defineComponent({
   props: { modelValue: { type: String, default: '' } },
   setup(props, { expose }) {
-    expose({ getTextWithMentions: () => props.modelValue, getMentions: () => [], clear: () => {}, focus: () => {} })
+    expose({
+      getText: () => props.modelValue,
+      getTextWithMentions: () => props.modelValue,
+      getMentions: () => [],
+      clear: () => {},
+      focus: () => {},
+    })
     return () => h('div')
   },
 })
 
-const mountComposer = async () => {
+const mountComposer = async (props: { prompt?: string | null; questionnaire?: AiQuestionnaire } = {}) => {
   const queryClient = new QueryClient()
   const wrapper = mount(AiThreadComposer, {
-    props: { spaceId: 'space-1', skills: [], ghostChips: [], running: false, chips: [], skill: null, prompt: 'Describe these' },
+    props: {
+      spaceId: 'space-1',
+      skills: [],
+      ghostChips: [],
+      running: false,
+      chips: [],
+      skill: null,
+      prompt: 'Describe these',
+      'onUpdate:prompt': (value: string | null) => wrapper.setProps({ prompt: value }),
+      ...props,
+    },
     global: {
       plugins: [[VueQueryPlugin, { queryClient }]],
       stubs: { Icon: true, InputGroupTipTap: Editor, AiThreadConfigPicker: ConfigPicker },
@@ -103,6 +120,53 @@ describe('AiThreadComposer attachments', () => {
     await pick(wrapper, [big])
     expect(wrapper.get('[role="alert"]').text()).toBe('huge.png is too large. The limit is 5 MB.')
     expect(uploadAttachment).not.toHaveBeenCalled()
+    wrapper.unmount()
+  })
+})
+
+const questionnaire: AiQuestionnaire = {
+  questions: [
+    {
+      id: 'tone',
+      title: 'Which tone?',
+      description: null,
+      required: true,
+      options: [
+        { id: 'friendly', label: 'Friendly', description: null },
+        { id: 'formal', label: 'Formal', description: null },
+      ],
+    },
+    { id: 'length', title: 'How long?', description: null, required: false, options: [] },
+  ],
+}
+
+describe('AiThreadComposer questions', () => {
+  it('picks an option by number while the editor is empty and submits after the last question', async () => {
+    const wrapper = await mountComposer({ prompt: null, questionnaire })
+    expect(wrapper.text()).toContain('Which tone?')
+    expect(wrapper.get('[data-send]').attributes('disabled')).toBeDefined()
+
+    await wrapper.get('[role="radiogroup"]').trigger('keydown', { key: '2' })
+    expect(wrapper.findAll<HTMLInputElement>('input[type="radio"]')[1]?.element.checked).toBe(true)
+
+    await wrapper.get('[data-send]').trigger('click')
+    expect(wrapper.text()).toContain('How long?')
+    expect(wrapper.emitted('answer')).toBeUndefined()
+
+    await wrapper.get('[data-send]').trigger('click')
+    expect(wrapper.emitted('answer')?.[0]).toEqual([{ tone: 'formal', length: null }])
+    expect(wrapper.emitted('send')).toBeUndefined()
+    wrapper.unmount()
+  })
+
+  it('takes typed text as an own answer over the selected option', async () => {
+    const wrapper = await mountComposer({ prompt: null, questionnaire: { questions: [questionnaire.questions[0]!] } })
+    await wrapper.findAll('input[type="radio"]')[0]?.setValue(true)
+    await wrapper.setProps({ prompt: 'Formal, but warm' })
+    await wrapper.get('[role="radiogroup"]').trigger('keydown', { key: '1' })
+
+    await wrapper.get('[data-send]').trigger('click')
+    expect(wrapper.emitted('answer')?.[0]).toEqual([{ tone: 'Formal, but warm' }])
     wrapper.unmount()
   })
 })

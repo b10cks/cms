@@ -64,7 +64,7 @@ export interface AiRunRecord {
   result: AiRunResult | null
   error: string | null
   event_seq: number
-  usage: AiRunUsage
+  usage: AiRunUsage & { cached_tokens: number }
   /** The thread the run belongs to */
   conversation_id?: string | null
   started_at?: string | null

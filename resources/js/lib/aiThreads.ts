@@ -5,7 +5,7 @@
 import type { AiGlossaryResource } from '~/api/resources/ai-knowledge'
 import type { AiAttachment } from '~/lib/aiAttachments'
 import type { AiChangeset, AiChangesetItem, AiGlossarySuggestion } from '~/lib/aiChangesets'
-import type { AiRunRecord } from '~/lib/aiRun'
+import type { AiRunRecord, AiSource } from '~/lib/aiRun'
 
 export type AiThreadKind = 'chat' | 'schedule' | 'suggestions'
 
@@ -37,12 +37,16 @@ export interface AiThread {
   skill?: string | null
 }
 
-/** A tool call of the live run, shown while it streams. */
-export interface AiThreadStep {
+/** A tool call that got its result, read back from the run's transcript. */
+export interface AiRunStep {
   id: string
   name: string
-  done: boolean
   ok: boolean
+}
+
+/** A tool call of the live run, shown while it streams. */
+export interface AiThreadStep extends AiRunStep {
+  done: boolean
 }
 
 export interface AiThreadTurn {
@@ -51,6 +55,21 @@ export interface AiThreadTurn {
   answer: string | null
   changeset: AiChangeset | null
   attachments: AiAttachment[]
+  steps: AiRunStep[]
+  answers: AiThreadAnswer[]
+  sources: AiThreadSource[]
+}
+
+/** An answer to a question the run asked; null when skipped. */
+export interface AiThreadAnswer {
+  question: string
+  answer: string | null
+}
+
+/** A knowledge source of a stored turn; scope is null once the document is gone. */
+export interface AiThreadSource extends AiSource {
+  scope: 'space' | 'team' | 'system' | null
+  team_id: string | null
 }
 
 export interface AiThreadDetail extends AiThread {
