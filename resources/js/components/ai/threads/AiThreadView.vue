@@ -37,6 +37,7 @@ import {
 import type { AiQuestionnaireAnswers } from '~/lib/aiRun'
 import type { AiThreadChip } from '~/lib/aiThreads'
 import { chipsToRunContext, sameChip, THREAD_STATUS_STYLES } from '~/lib/aiThreads'
+import { aiSkillLabel } from '~/lib/aiSkills'
 import { runtimeConfig } from '~/lib/runtime-config'
 
 /**
@@ -75,6 +76,21 @@ const {
 const { data: thread, isLoading } = useThreadQuery(() => props.threadId)
 const { data: skills } = useAiSurfaceSkills(() => props.spaceId, 'cmdk')
 const screenChips = useAiScreenChips(() => props.spaceId)
+
+/** Skills an empty thread offers for the page it was opened on, in this order. */
+const SUGGESTED_SKILLS: Partial<Record<AiThreadChip['type'], readonly string[]>> = {
+  content: ['translate-fields', 'meta-tags', 'find-untranslated'],
+  field: ['translate-fields', 'meta-tags', 'find-untranslated'],
+  data_source: ['translate-data-entries'],
+  asset: ['asset-classification'],
+  asset_folder: ['asset-classification'],
+}
+
+const suggestions = computed(() => {
+  const type = screenChips.value[0]?.type
+  const names = (type && SUGGESTED_SKILLS[type]) || []
+  return names.flatMap((name) => skills.value?.find((option) => option.name === name) ?? []).slice(0, 3)
+})
 
 const { useAccessControl } = useAuthorization()
 const access = useAccessControl(computed(() => ({ space_id: props.spaceId })))
@@ -165,6 +181,7 @@ const send = async (message: AiThreadMessage) => {
       prompt: message.prompt,
       context: { ...chipsToRunContext(chips.value), mentions: message.mentions },
       config_id: message.configId,
+      reasoning_effort: message.reasoningEffort,
       conversation_id: threadId,
       attachments: message.attachments.map((attachment) => attachment.id),
     },
@@ -201,7 +218,7 @@ watch(
     chips.value = [...(draft.context ?? screenChips.value)]
     skill.value = draft.skill
     prompt.value = draft.prompt
-    if (draft.send) void send({ prompt: draft.prompt, skill: draft.skill, configId: null, mentions: [], attachments: [] })
+    if (draft.send) void send({ prompt: draft.prompt, skill: draft.skill, configId: null, reasoningEffort: null, mentions: [], attachments: [] })
   },
   { immediate: true }
 )
@@ -463,12 +480,31 @@ const suggestionsBusy = computed(
                   @cancel="run.cancel()"
                 />
               </MessageScrollerItem>
-              <p
+              <div
                 v-if="isNew && !live"
-                class="mt-auto pb-2 text-center text-sm text-muted"
+                class="mt-auto flex flex-col items-center gap-3 pb-2"
               >
-                {{ $t('components.aiThreads.emptyThread') }}
-              </p>
+                <p class="text-center text-sm text-muted">
+                  {{ $t('components.aiThreads.emptyThread') }}
+                </p>
+                <div
+                  v-if="suggestions.length > 0"
+                  class="flex flex-wrap justify-center gap-1.5"
+                  data-skill-suggestions
+                >
+                  <Button
+                    v-for="suggestion in suggestions"
+                    :key="suggestion.name"
+                    variant="ai"
+                    size="xs"
+                    :title="suggestion.description"
+                    @click="skill = suggestion.name"
+                  >
+                    <Icon name="ai:bot-star" />
+                    {{ aiSkillLabel(suggestion.name, t) }}
+                  </Button>
+                </div>
+              </div>
             </template>
           </MessageScrollerContent>
         </MessageScrollerViewport>
@@ -491,6 +527,7 @@ const suggestionsBusy = computed(
         :ghost-chips="ghostChips"
         :running="run.isActive.value || answerMutation.isPending.value"
         :questionnaire="pending?.questionnaire ?? null"
+        :thread-reasoning="thread?.turns.at(-1)?.run.reasoning_effort ?? null"
         @send="send"
         @answer="(answers) => pending && answer(pending.runId, answers)"
         @cancel="run.cancel()"

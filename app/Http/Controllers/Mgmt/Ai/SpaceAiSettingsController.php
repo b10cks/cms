@@ -22,34 +22,41 @@ class SpaceAiSettingsController extends Controller
         $validated = $request->validated();
 
         $settings = $space->settings;
+        // Settings are magic properties: build the section, then assign it once.
+        $ai = $settings->ai ?? [];
 
-        if (isset($validated['model'])) {
-            $model = $this->registry->findModel($validated['model']);
+        if (\array_key_exists('model', $validated)) {
+            $model = $validated['model'] === null ? null : $this->registry->findModel($validated['model']);
             if (!$model && $validated['model'] !== null) {
                 return response()->json([
                     'message' => 'Invalid model ID',
                 ], 422);
             }
-            $settings->ai['model'] = $validated['model'];
+            $ai['model'] = $validated['model'];
         }
 
         if (isset($validated['favourites'])) {
-            $settings->ai['favourites'] = $this->registry->validateFavourites(
-                $space,
-                $validated['favourites']
-            );
+            $ai['favourites'] = $this->registry->validateFavourites($space, $validated['favourites']);
         }
 
         if (isset($validated['enabled'])) {
-            $settings->ai['enabled'] = $validated['enabled'];
+            $ai['enabled'] = $validated['enabled'];
         }
 
+        if (isset($validated['asset_classification'])) {
+            $ai['asset_classification'] = [
+                ...($ai['asset_classification'] ?? []),
+                ...$validated['asset_classification'],
+            ];
+        }
+
+        $settings->ai = $ai;
         $space->settings = $settings;
         $space->save();
 
         return response()->json([
             'data' => [
-                'ai' => $settings->ai,
+                'ai' => $ai,
             ],
         ]);
     }
@@ -58,12 +65,15 @@ class SpaceAiSettingsController extends Controller
     {
         $this->authorizeSpace($space, 'ai.view');
 
+        // Spaces that never saved the AI section, or saved only part of it
+        // (asset classification), still get every key; a missing `enabled` is on.
         return response()->json([
             'data' => [
-                'ai' => $space->settings->ai ?? [
+                'ai' => [
                     'enabled' => true,
                     'model' => null,
                     'favourites' => [],
+                    ...($space->settings->ai ?? []),
                 ],
             ],
         ]);

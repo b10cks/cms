@@ -2,6 +2,7 @@
 
 namespace Tests\Unit\Services\Ai;
 
+use App\Services\Ai\Drivers\BaseAiDriver;
 use App\Services\Ai\Drivers\BedrockDriver;
 use App\Services\Ai\Drivers\OpenAiDriver;
 use App\Services\Ai\Drivers\OpenRouterDriver;
@@ -19,9 +20,9 @@ class DriverMessageNormalizationTest extends TestCase
 
         // getModels() caches per driver name; forget so each test's config-model
         // capabilities (vision on/off) actually take effect.
-        Cache::forget('ai.models.openai');
-        Cache::forget('ai.models.openrouter');
-        Cache::forget('ai.models.bedrock');
+        Cache::forget(BaseAiDriver::modelCacheKey('openai'));
+        Cache::forget(BaseAiDriver::modelCacheKey('openrouter'));
+        Cache::forget(BaseAiDriver::modelCacheKey('bedrock'));
     }
 
     #[Test]

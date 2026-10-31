@@ -82,7 +82,8 @@ class AiConversation extends SpaceDatabaseModel
 
     /**
      * Select what {@see status()} and the list need, as subqueries per row:
-     * `needs_input`, `needs_review`, `running`, `latest_run_state` and `entry_count`.
+     * `needs_input`, `needs_review`, `running`, `latest_run_state`,
+     * `reasoning_effort` (the latest run's) and `entry_count`.
      */
     public function scopeWithStatus(Builder $query): void
     {
@@ -93,11 +94,10 @@ class AiConversation extends SpaceDatabaseModel
             $query->selectRaw("{$sql} as {$alias}", $bindings);
         }
 
-        $query->addSelect([
-            'latest_run_state' => AiRun::query()->select('state')
-                ->whereColumn('conversation_id', 'ai_conversations.id')
-                ->orderByDesc('started_at')->orderByDesc('id')->limit(1),
-        ]);
+        $latest = fn (string $column) => AiRun::query()->select($column)
+            ->whereColumn('conversation_id', 'ai_conversations.id')
+            ->orderByDesc('started_at')->orderByDesc('id')->limit(1);
+        $query->addSelect(['latest_run_state' => $latest('state'), 'reasoning_effort' => $latest('reasoning_effort')]);
 
         $entries = self::table('ai_changeset_items')
             ->selectRaw('count(distinct coalesce('.self::wrap('ai_changeset_items.target_id').', '.self::wrap('ai_changeset_items.id').'))')

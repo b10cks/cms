@@ -3,6 +3,7 @@
 namespace App\Services\Ai;
 
 use App\Enums\AiChangesetItemStatus;
+use App\Enums\AiReasoningEffort;
 use App\Enums\AiRunState;
 use App\Events\Ai\AiRunEventsAvailable;
 use App\Jobs\ReconcileAiRunCostJob;
@@ -102,9 +103,10 @@ class AiRunService
         [$driver, $model] = $this->resolveSpaceDriver($start->space, $config);
         $manifest = $start->skill?->manifest;
 
+        $modelInfo = app(ModelRegistry::class)->findModelForConfig($driver->getName(), $model);
         $sendsImages = collect($start->parts)->contains('type', 'image')
             || collect($start->attachments)->contains(fn (AiAttachment $file) => $file->kind === AiAttachment::KIND_IMAGE);
-        if ($sendsImages && ! (app(ModelRegistry::class)->findModelForConfig($driver->getName(), $model)?->supportsVision ?? false)) {
+        if ($sendsImages && ! ($modelInfo?->supportsVision ?? false)) {
             throw AiServiceException::modelNoVision();
         }
 
@@ -118,6 +120,7 @@ class AiRunService
             (int) ($config?->max_tokens ?? config('ai.runs.max_output_tokens')),
             (float) ($config?->temperature ?? 0.3),
             $output === SkillManifest::OUTPUT_JSON,
+            AiReasoningEffort::resolve($start->reasoningEffort, $config?->reasoning_effort)->forModel($modelInfo),
         );
 
         $thread = $start->opensThread && $start->conversationId === null ? $this->threads->open($start) : null;
@@ -132,6 +135,7 @@ class AiRunService
             'skill' => $manifest?->name,
             'ai_config_id' => $config?->id,
             'model' => "{$driver->getName()}:{$model}",
+            'reasoning_effort' => $start->reasoningEffort,
             'state' => AiRunState::Running,
             'mode' => AiRun::MODE_INLINE,
             'setup' => [

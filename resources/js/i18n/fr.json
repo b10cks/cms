@@ -2481,7 +2481,6 @@
         "loadingModels": "Chargement des modèles disponibles…",
         "loadingUsage": "Chargement des données d'utilisation…",
         "noUsageData": "Aucune donnée d'utilisation disponible",
-        "placeholder": "Demandez à l'IA de modifier votre contenu…",
         "dropFiles": "Déposez des fichiers ici",
         "systemPrompt": "Instructions IA",
         "systemPromptDescription": "Définissez comment l'IA doit se comporter dans cet espace. Incluez le ton, les directives de style, les règles spécifiques au domaine et toute autre contrainte ou préférence.",
@@ -2504,7 +2503,8 @@
         "noConfigsDescription": "Créez votre première configuration pour commencer à utiliser les fonctionnalités IA.",
         "navLabel": "AI",
         "features": "Features",
-        "description": "Models, configurations and usage of the AI in this space."
+        "description": "Models, configurations and usage of the AI in this space.",
+        "configurationsKept": "Les fonctionnalités IA sont désactivées. Ces configurations sont conservées et refonctionnent dès que l’IA est réactivée."
       },
       "members": {
         "title": "Membres",
@@ -4797,14 +4797,27 @@
     "aiModelSelector": {
       "selectModel": "Sélectionner un modèle IA",
       "loadError": "Échec du chargement des modèles",
-      "noModels": "Aucun modèle disponible",
       "favourites": "Favoris",
       "favouriteError": "Échec de la mise à jour du favori",
-      "setModelError": "Échec de l'enregistrement de la préférence de modèle",
-      "drivers": {
-        "openai": "OpenAI",
-        "bedrock": "AWS Bedrock",
-        "openrouter": "OpenRouter"
+      "dialogDescription": "Recherchez parmi les modèles de cet espace et choisissez-en un pour la configuration.",
+      "providers": "Fournisseurs",
+      "all": "Tous les modèles",
+      "search": "Rechercher des modèles",
+      "noMatches": "Aucun modèle ne correspond",
+      "count": "{count} modèle | {count} modèles",
+      "toggleFavourite": "Mettre {name} en favori",
+      "capabilities": {
+        "vision": "Vision",
+        "reasoning": "Raisonnement",
+        "tools": "Outils"
+      },
+      "reasoning": {
+        "label": "Raisonnement",
+        "description": "Le temps de réflexion du modèle avant de répondre. Les fils peuvent le changer par conversation.",
+        "off": "Désactivé",
+        "low": "Faible",
+        "medium": "Moyen",
+        "high": "Élevé"
       }
     },
     "aiMention": {
@@ -4992,10 +5005,6 @@
       }
     },
     "aiConfigSelector": {
-      "selectConfig": "Sélectionner une configuration IA",
-      "availableConfigs": "Configurations disponibles",
-      "default": "Par défaut",
-      "loading": "Chargement des configurations…",
       "noConfigs": "Aucune configuration disponible"
     },
     "flattenedLocalization": {
@@ -5029,12 +5038,9 @@
     "aiText": {
       "inputLabel": "Message IA",
       "thinking": "Réflexion…",
-      "streamError": "Erreur IA : {error}",
       "noConfigSelected": "Veuillez sélectionner une configuration IA pour continuer",
-      "placeholderSelectConfig": "Sélectionner une configuration pour commencer…",
-      "placeholderDefault": "Demandez à {name} de vous aider avec votre contenu…",
       "working": "Looking things up...",
-      "background": "This takes a while, it continues in the background..."
+      "placeholder": "Demander à l’IA…"
     },
     "contentTreeAi": {
       "title": "Générer une arborescence de contenu avec l'IA",
@@ -5208,7 +5214,10 @@
       "attachChip": "Attach {name}",
       "screen": {
         "entry": "Open entry",
-        "dataSource": "Open data source"
+        "dataSource": "Open data source",
+        "block": "Bloc ouvert",
+        "folder": "Dossier ouvert",
+        "asset": "Ressource ouverte"
       },
       "steps": "Steps",
       "usingTool": "Using {tool}",
@@ -5305,7 +5314,15 @@
         "cached": "Cached: {count}",
         "steps": "Steps: {count}",
         "cost": "Cost: {cost}"
-      }
+      },
+      "thisPage": "Cette page",
+      "other": "Autres fils",
+      "disabled": "Les fonctionnalités IA sont désactivées pour cet espace.",
+      "enableInSettings": "Les activer dans les réglages IA"
+    },
+    "metaBlock": {
+      "generate": "Générer avec l’IA",
+      "generating": "Génération…"
     }
   },
   "alertDialog": {

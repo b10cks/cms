@@ -2,6 +2,7 @@
 
 namespace App\Models\Space;
 
+use App\Enums\AiReasoningEffort;
 use App\Enums\AiRunState;
 use App\Models\Management\Space;
 use App\Models\User;
@@ -24,6 +25,7 @@ use Illuminate\Support\Carbon;
  * @property string|null $skill
  * @property string|null $ai_config_id
  * @property string|null $model
+ * @property AiReasoningEffort|null $reasoning_effort
  * @property AiRunState $state
  * @property string $mode
  * @property array<string, mixed> $setup
@@ -60,6 +62,7 @@ class AiRun extends SpaceDatabaseModel
         'skill',
         'ai_config_id',
         'model',
+        'reasoning_effort',
         'state',
         'mode',
         'setup',
@@ -82,6 +85,7 @@ class AiRun extends SpaceDatabaseModel
 
     protected $casts = [
         'state' => AiRunState::class,
+        'reasoning_effort' => AiReasoningEffort::class,
         'setup' => 'array',
         'input' => 'array',
         'transcript' => 'array',

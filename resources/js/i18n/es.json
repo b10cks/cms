@@ -2481,7 +2481,6 @@
         "loadingModels": "Cargando modelos disponibles...",
         "loadingUsage": "Cargando datos de uso...",
         "noUsageData": "No hay datos de uso disponibles",
-        "placeholder": "Pídale a la IA que modifique su contenido...",
         "dropFiles": "Suelte archivos aquí",
         "systemPrompt": "Instrucciones de IA",
         "systemPromptDescription": "Defina cómo debe comportarse la IA en este espacio. Incluya tono, pautas de estilo, reglas específicas del dominio y cualquier otra restricción o preferencia.",
@@ -2504,7 +2503,8 @@
         "noConfigsDescription": "Cree su primera configuración para comenzar a usar las funciones de IA.",
         "navLabel": "AI",
         "features": "Features",
-        "description": "Models, configurations and usage of the AI in this space."
+        "description": "Models, configurations and usage of the AI in this space.",
+        "configurationsKept": "Las funciones de IA están desactivadas. Estas configuraciones se conservan y vuelven a funcionar al reactivar la IA."
       },
       "members": {
         "title": "Miembros",
@@ -4797,14 +4797,27 @@
     "aiModelSelector": {
       "selectModel": "Seleccionar modelo de IA",
       "loadError": "Error al cargar los modelos",
-      "noModels": "No hay modelos disponibles",
       "favourites": "Favoritos",
       "favouriteError": "Error al actualizar el favorito",
-      "setModelError": "Error al guardar la preferencia de modelo",
-      "drivers": {
-        "openai": "OpenAI",
-        "bedrock": "AWS Bedrock",
-        "openrouter": "OpenRouter"
+      "dialogDescription": "Busca entre los modelos de este espacio y elige uno para la configuración.",
+      "providers": "Proveedores",
+      "all": "Todos los modelos",
+      "search": "Buscar modelos",
+      "noMatches": "Ningún modelo coincide",
+      "count": "{count} modelo | {count} modelos",
+      "toggleFavourite": "Marcar {name} como favorito",
+      "capabilities": {
+        "vision": "Visión",
+        "reasoning": "Razonamiento",
+        "tools": "Herramientas"
+      },
+      "reasoning": {
+        "label": "Razonamiento",
+        "description": "Cuánto piensa el modelo antes de responder. Los hilos pueden cambiarlo por conversación.",
+        "off": "No",
+        "low": "Bajo",
+        "medium": "Medio",
+        "high": "Alto"
       }
     },
     "aiMention": {
@@ -4992,10 +5005,6 @@
       }
     },
     "aiConfigSelector": {
-      "selectConfig": "Seleccionar configuración de IA",
-      "availableConfigs": "Configuraciones Disponibles",
-      "default": "Predeterminada",
-      "loading": "Cargando configuraciones...",
       "noConfigs": "No hay configuraciones disponibles"
     },
     "flattenedLocalization": {
@@ -5029,12 +5038,9 @@
     "aiText": {
       "inputLabel": "Mensaje de IA",
       "thinking": "Pensando...",
-      "streamError": "Error de IA: {error}",
       "noConfigSelected": "Por favor, seleccione una configuración de IA para continuar",
-      "placeholderSelectConfig": "Seleccione una configuración para comenzar...",
-      "placeholderDefault": "Pida a {name} que le ayude con su contenido...",
       "working": "Looking things up...",
-      "background": "This takes a while, it continues in the background..."
+      "placeholder": "Pregunta a la IA…"
     },
     "contentTreeAi": {
       "title": "Generar Árbol de Contenido con IA",
@@ -5208,7 +5214,10 @@
       "attachChip": "Attach {name}",
       "screen": {
         "entry": "Open entry",
-        "dataSource": "Open data source"
+        "dataSource": "Open data source",
+        "block": "Bloque abierto",
+        "folder": "Carpeta abierta",
+        "asset": "Recurso abierto"
       },
       "steps": "Steps",
       "usingTool": "Using {tool}",
@@ -5305,7 +5314,15 @@
         "cached": "Cached: {count}",
         "steps": "Steps: {count}",
         "cost": "Cost: {cost}"
-      }
+      },
+      "thisPage": "Esta página",
+      "other": "Otros hilos",
+      "disabled": "Las funciones de IA están desactivadas en este espacio.",
+      "enableInSettings": "Actívalas en los ajustes de IA"
+    },
+    "metaBlock": {
+      "generate": "Generar con IA",
+      "generating": "Generando…"
     }
   },
   "alertDialog": {

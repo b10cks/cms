@@ -100,6 +100,7 @@ const { mutateAsync: deleteAsset } = useDeleteAssetMutation()
 const { mutateAsync: deleteFolder } = useDeleteAssetFolderMutation()
 const access = useAccessControl(computed(() => ({ space_id: props.spaceId })))
 const canManageAssets = computed(() => access.hasAbility('assets.manage'))
+const aiEnabled = useAiEnabled(() => props.spaceId)
 const canManageFolders = computed(() => access.hasAbility('asset_folders.manage'))
 const canManageCollections = computed(() => access.hasAbility('asset_collections.manage'))
 const canShareAssets = computed(() => access.hasAbility('asset_shares.manage'))
@@ -2057,7 +2058,7 @@ onUnmounted(() => {
       :can-remove-from-collection="canManageCollections && isManualCollectionView"
       :can-share="canShareAssets"
       :can-classify="canClassifyAssets"
-      :can-ask-ai="canManageAssets"
+      :can-ask-ai="canManageAssets && aiEnabled"
       @ask-ai="openAiBulkDialog"
       @move="openMoveDialog(getSelectedDragItems())"
       @tag="openBulkTagDialog(Array.from(selectedAssets.values()))"

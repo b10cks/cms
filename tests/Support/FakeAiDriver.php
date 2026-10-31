@@ -31,6 +31,9 @@ class FakeAiDriver implements AiDriverInterface
 
     public int $calls = 0;
 
+    /** @var list<RunOptions> */
+    public array $options = [];
+
     public bool $tools = true;
 
     /**
@@ -95,6 +98,7 @@ class FakeAiDriver implements AiDriverInterface
     {
         $this->calls++;
         $this->transcripts[] = $transcript->toArray();
+        $this->options[] = $options;
         $this->toolNames[] = $tools->names();
 
         $next = array_shift($this->script) ?? self::text('');

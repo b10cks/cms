@@ -75,7 +75,7 @@ const save = () => {
 
 <template>
   <Dialog v-model:open="open">
-    <DialogContent class="max-w-xl">
+    <DialogContent class="max-w-xl!">
       <DialogHeader>
         <DialogTitle>
           {{ term ? $t('components.aiSettings.glossaries.editTerm') : $t('components.aiSettings.glossaries.addTerm') }}

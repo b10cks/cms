@@ -162,6 +162,7 @@ const insertPlaceholder = (placeholder: Placeholder) => {
 
 const canLinkUrl = computed(() => isEnabled('link'))
 const canLinkInternal = computed(() => isEnabled('internalLink') && !!props.spaceId)
+const aiEnabled = useAiEnabled(() => props.spaceId)
 const canLink = computed(() => canLinkUrl.value || canLinkInternal.value)
 const isLinkActive = computed(
   () => editor.value?.isActive('link') || editor.value?.isActive('internalLink')
@@ -781,7 +782,7 @@ onBeforeUnmount(() => {
     />
 
     <RichTextAiMenu
-      v-if="editor && spaceId && !props.disabled"
+      v-if="editor && spaceId && aiEnabled && !props.disabled"
       :editor="editor"
       :space-id="spaceId"
     />

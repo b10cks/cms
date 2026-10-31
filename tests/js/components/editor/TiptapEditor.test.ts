@@ -1,9 +1,14 @@
 import type { TiptapEditorHTMLElement } from '@tiptap/core'
 import { TextSelection } from '@tiptap/pm/state'
 import { flushPromises, mount } from '@vue/test-utils'
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import TiptapEditor from '~/components/editor/TiptapEditor.vue'
+
+vi.mock('~/composables/useAiEnabled', async () => {
+  const { computed } = await import('vue')
+  return { useAiEnabled: () => computed(() => false) }
+})
 
 const mounted: { unmount: () => void }[] = []
 

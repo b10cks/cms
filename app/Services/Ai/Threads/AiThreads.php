@@ -25,7 +25,7 @@ class AiThreads
 
     private const TITLE_LENGTH = 60;
 
-    private const CHIP_TYPES = ['content', 'data_source', 'asset', 'document'];
+    public const CHIP_TYPES = ['content', 'data_source', 'asset', 'asset_folder', 'block', 'field', 'document'];
 
     public static function isQuiet(string $surface): bool
     {
@@ -123,17 +123,19 @@ class AiThreads
 
     /**
      * The chips the composer attached (`context.chips`): type, ID and label
-     * only, never the payloads the screen sent.
+     * only, never the payloads the screen sent. A `field` chip keeps its
+     * `field` key (a field key or dotted block path).
      *
      * @param  array<string, mixed>  $context
-     * @return list<array{type: string, id: string, label: string}>|null
+     * @return list<array{type: string, id: string, label: string, field?: string}>|null
      */
     private function chips(array $context): ?array
     {
         $chips = [];
         foreach ((array) ($context['chips'] ?? []) as $chip) {
             if (\is_array($chip) && \in_array($chip['type'] ?? null, self::CHIP_TYPES, true) && \is_string($chip['id'] ?? null)) {
-                $chips[] = ['type' => $chip['type'], 'id' => $chip['id'], 'label' => Str::limit((string) ($chip['label'] ?? ''), self::TITLE_LENGTH, '')];
+                $chips[] = ['type' => $chip['type'], 'id' => $chip['id'], 'label' => Str::limit((string) ($chip['label'] ?? ''), self::TITLE_LENGTH, '')]
+                    + ($chip['type'] === 'field' && \is_string($chip['field'] ?? null) ? ['field' => Str::limit($chip['field'], 255, '')] : []);
             }
         }
 

@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import type { AiResolvedSkill, MentionItem } from '~/api/resources/ai'
-import AiThreadConfigPicker from '~/components/ai/threads/AiThreadConfigPicker.vue'
+import type { AiReasoningEffort, AiResolvedSkill, MentionItem } from '~/api/resources/ai'
+import AiConfigPicker from '~/components/ai/AiConfigPicker.vue'
+import AiReasoningPicker from '~/components/ai/AiReasoningPicker.vue'
 import AiThreadQuestions from '~/components/ai/threads/AiThreadQuestions.vue'
 import type { AiMentionItem } from '~/components/editor/extensions/AiMention'
 import Icon from '~/components/Icon.vue'
@@ -9,6 +10,7 @@ import { InputGroupTipTap } from '~/components/ui/input-group'
 import { useAiMentions } from '~/composables/useAiMentions'
 import type { AiAttachment, AiAttachmentKind } from '~/lib/aiAttachments'
 import { ATTACHMENT_ACCEPT, ATTACHMENT_LIMITS, checkAttachment, formatMegabytes, MAX_ATTACHMENTS } from '~/lib/aiAttachments'
+import { useAiReasoning } from '~/lib/aiReasoning'
 import type { AiQuestionnaire, AiQuestionnaireAnswers } from '~/lib/aiRun'
 import type { AiThreadChip } from '~/lib/aiThreads'
 import { sameChip } from '~/lib/aiThreads'
@@ -18,6 +20,8 @@ export interface AiThreadMessage {
   prompt: string
   skill: string | null
   configId: string | null
+  /** Null for models that don't reason */
+  reasoningEffort: AiReasoningEffort | null
   mentions: MentionItem[]
   attachments: AiAttachment[]
 }
@@ -37,7 +41,9 @@ interface ComposerFile {
  * of context chips and files above the editor, and a footer with attach, the
  * config picker and the send button. Files upload as they are added, by the
  * paperclip, paste or drop. `@` mentions entries, assets and knowledge
- * documents; `/` picks a skill.
+ * documents; `/` picks a skill. Next to the config picker, models that reason
+ * get the reasoning bars; the level starts at the thread's last one, else the
+ * config's default.
  *
  * While a run waits for answers, its questions sit as a tray on top and the
  * composer is the answer form: Send takes the selected option, or the typed
@@ -51,6 +57,8 @@ const props = defineProps<{
   running: boolean
   /** Questions of a paused run the user answers here */
   questionnaire?: AiQuestionnaire | null
+  /** The reasoning level of the thread's last run */
+  threadReasoning?: AiReasoningEffort | null
 }>()
 
 const chips = defineModel<AiThreadChip[]>('chips', { required: true })
@@ -68,6 +76,11 @@ const { uploadAttachment } = useAiThreads(() => props.spaceId)
 const editor = ref<InstanceType<typeof InputGroupTipTap> | null>(null)
 const fileInput = ref<HTMLInputElement | null>(null)
 const configId = ref<string | null>(null)
+const {
+  modelInfo,
+  level: reasoning,
+  effort: reasoningEffort,
+} = useAiReasoning(() => props.spaceId, configId, () => props.threadReasoning ?? null)
 
 const { useMentionItemsQuery } = useAiMentions(computed(() => props.spaceId))
 const { items: baseMentionItems } = useMentionItemsQuery()
@@ -120,8 +133,11 @@ const detach = (chip: AiThreadChip) => {
 
 const CHIP_ICONS = {
   content: 'lucide:file-text',
+  field: 'lucide:text-cursor-input',
   data_source: 'lucide:database',
   asset: 'lucide:image',
+  asset_folder: 'lucide:folder',
+  block: 'lucide:blocks',
   document: 'lucide:book-open',
 } as const satisfies Record<AiThreadChip['type'], string>
 
@@ -298,6 +314,7 @@ const send = () => {
     prompt: text,
     skill: skill.value,
     configId: configId.value,
+    reasoningEffort: reasoningEffort.value,
     mentions,
     attachments: files.value.flatMap((file) => (file.attachment ? [file.attachment] : [])),
   })
@@ -374,7 +391,7 @@ defineExpose({ focus: () => editor.value?.focus(), restore })
           v-if="skill"
           class="inline-flex h-7 items-center gap-1 rounded-md bg-ai-background/20 pr-1 pl-2 text-sm text-ai"
         >
-          <Icon name="lucide:sparkles" />
+          <Icon name="ai:bot-star" />
           {{ aiSkillLabel(skill, t) }}
           <button
             type="button"
@@ -470,10 +487,17 @@ defineExpose({ focus: () => editor.value?.focus(), restore })
       />
 
       <div class="flex items-center gap-1 px-2 pb-2">
-        <AiThreadConfigPicker
+        <AiConfigPicker
           v-show="!question"
           v-model="configId"
           :space-id="spaceId"
+          :disabled="running"
+        />
+        <AiReasoningPicker
+          v-if="modelInfo?.supports_reasoning"
+          v-show="!question"
+          v-model="reasoning"
+          :required="modelInfo.reasoning_required"
           :disabled="running"
         />
         <span class="flex-1" />

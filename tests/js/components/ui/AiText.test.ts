@@ -2,30 +2,13 @@ import { flushPromises, mount } from '@vue/test-utils'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import AiText from '~/components/ui/AiText.vue'
-import type { AiRunOptions, AiRunOutcome } from '~/composables/useAiRun'
 
-const transport = vi.hoisted(() => ({ start: vi.fn(), cancel: vi.fn() }))
-vi.mock('~/composables/useAiRun', async () => {
-  const { computed, ref, shallowRef } = await import('vue')
-  return {
-    useAiRun: () => ({
-      start: transport.start,
-      cancel: transport.cancel,
-      answer: vi.fn(),
-      isActive: computed(() => false),
-      questionnaire: shallowRef(null),
-      text: ref(''),
-    }),
-  }
-})
+const configs = vi.hoisted(() => ({ list: [] as Array<Record<string, unknown>> }))
 vi.mock('~/composables/useAiModels', async () => {
   const { ref } = await import('vue')
   return {
     useAiConfigs: () => ({
-      useAiConfigsQuery: () => ({
-        data: ref([{ id: 'default', name: 'Assistant', is_default: true }]),
-        isLoading: ref(false),
-      }),
+      useAiConfigsQuery: () => ({ data: ref(configs.list), isLoading: ref(false) }),
     }),
   }
 })
@@ -33,9 +16,16 @@ vi.mock('~/composables/useAiMentions', async () => {
   const { ref } = await import('vue')
   return { useAiMentions: () => ({ useMentionItemsQuery: () => ({ items: ref([]) }) }) }
 })
-vi.mock('~/composables/useAiErrorToast', () => ({
-  useAiErrorToast: () => ({ showAiError: vi.fn() }),
-}))
+
+const config = (modelInfo: Record<string, unknown> | null, reasoning: string | null = null) => ({
+  id: 'default',
+  name: 'Assistant',
+  driver: 'openrouter',
+  model: 'anthropic/claude-sonnet-4.5',
+  is_default: true,
+  reasoning_effort: reasoning,
+  model_info: modelInfo,
+})
 
 const wrappers: { unmount: () => void }[] = []
 afterEach(() => {
@@ -43,55 +33,37 @@ afterEach(() => {
   vi.clearAllMocks()
 })
 
-const mountComposer = async (directEmit = false) => {
+const send = async () => {
   const wrapper = mount(AiText, {
-    props: {
-      spaceId: 'space',
-      modelValue: 'Write an intro',
-      showConfigSelector: false,
-      directEmit,
-    },
+    props: { spaceId: 'space', modelValue: 'Write an intro' },
     attachTo: document.body,
   })
   wrappers.push(wrapper)
   await flushPromises()
+  await wrapper.findAll('button').at(-1)!.trigger('click')
   return wrapper
 }
 
-describe('AI text interaction', () => {
-  it('locks the composer before the stream starts and retains the completed response', async () => {
-    let options: AiRunOptions | undefined
-    let complete: ((outcome: AiRunOutcome) => void) | undefined
-    transport.start.mockImplementation((_request, value: AiRunOptions) => {
-      options = value
-      return new Promise<AiRunOutcome>((resolve) => {
-        complete = resolve
-      })
+describe('AiText', () => {
+  it("sends the prompt with the default config and its model's reasoning level", async () => {
+    configs.list = [
+      config({ name: 'Claude', supports_reasoning: true, reasoning_required: false, supports_vision: true, supports_tools: true }, 'high'),
+    ]
+    const wrapper = await send()
+
+    expect(wrapper.emitted('send')?.[0]?.[0]).toEqual({
+      prompt: 'Write an intro',
+      configId: 'default',
+      reasoningEffort: 'high',
+      mentions: [],
     })
-    const wrapper = await mountComposer()
-    await wrapper.find('button').trigger('click')
-    expect(wrapper.find('.ProseMirror').attributes('contenteditable')).toBe('false')
-    expect(wrapper.text()).toContain('Cancel')
-    options?.onEvent?.({ type: 'text_delta', run_id: 'run', seq: 2, text: 'Suggested intro' })
-    await flushPromises()
-    expect(wrapper.find('[data-slot=message-content]').text()).toBe('Suggested intro')
-    complete?.({
-      status: 'completed',
-      result: { text: 'Suggested intro', data: null, glossary_findings: [] },
-      partial: false,
-      error: null,
-    })
-    await flushPromises()
-    expect(wrapper.emitted('send')?.[0]?.[0]).toBe('Suggested intro')
-    expect(wrapper.emitted('streamEnd')).toHaveLength(1)
-    expect(wrapper.find('[data-slot=message-content]').text()).toBe('Suggested intro')
+    expect(wrapper.find('.ProseMirror').text()).toBe('')
   })
 
-  it('keeps direct emit callers on their existing contract', async () => {
-    const wrapper = await mountComposer(true)
-    await wrapper.find('button').trigger('click')
-    expect(wrapper.emitted('send')?.[0]).toEqual(['Write an intro', [], 'default', []])
-    expect(transport.start).not.toHaveBeenCalled()
-    expect(wrapper.find('.ProseMirror').text()).toBe('')
+  it('sends no reasoning level for models that do not reason', async () => {
+    configs.list = [config({ name: 'Mistral', supports_reasoning: false, reasoning_required: false, supports_vision: false, supports_tools: true })]
+    const wrapper = await send()
+
+    expect(wrapper.emitted('send')?.[0]?.[0]).toMatchObject({ configId: 'default', reasoningEffort: null })
   })
 })

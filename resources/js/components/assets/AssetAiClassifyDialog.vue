@@ -176,14 +176,14 @@ watch(
         </Button>
         <Button
           type="button"
-          variant="primary"
+          variant="ai"
           :loading="isPending"
           :disabled="!canStart"
           @click="handleStart"
         >
           <Icon
             v-if="!isPending"
-            name="lucide:sparkles"
+            name="ai:bot-star"
           />
           {{ $t('actions.assets.startClassification') }}
         </Button>

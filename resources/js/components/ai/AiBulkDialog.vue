@@ -76,11 +76,11 @@ const canStart = computed(
 
 <template>
   <Dialog v-model:open="open">
-    <DialogContent class="max-w-2xl">
+    <DialogContent class="max-w-2xl!">
       <DialogHeader>
         <DialogTitle class="flex items-center gap-2">
           <Icon
-            name="lucide:sparkles"
+            name="ai:bot-message"
             class="text-ai"
           />
           {{ $t('components.aiBulk.title') }}

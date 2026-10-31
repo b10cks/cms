@@ -83,12 +83,12 @@ export const spaceSettingsNavigationItems: NavigationAccessItem[] = [
   },
   {
     label: 'labels.settings.ai.navLabel',
-    icon: 'lucide:sparkles',
+    icon: 'ai:bot',
     routeName: 'space-settings-ai',
   },
   {
     label: 'components.aiSettings.skills.title',
-    icon: 'lucide:wand-sparkles',
+    icon: 'ai:bot-star',
     routeName: 'space-settings-ai-skills',
   },
   {
@@ -151,7 +151,7 @@ export const teamNavigationItems: NavigationAccessItem[] = [
   },
   {
     label: 'labels.teamWorkspace.nav.ai',
-    icon: 'lucide:sparkles',
+    icon: 'ai:bot',
     routeName: 'team-ai',
   },
   {

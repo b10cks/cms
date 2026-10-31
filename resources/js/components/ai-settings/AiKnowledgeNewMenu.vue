@@ -81,7 +81,7 @@ const submitGlossary = async () => {
   </DropdownMenu>
 
   <Dialog v-model:open="glossaryDialogOpen">
-    <DialogContent class="max-w-md">
+    <DialogContent class="max-w-md!">
       <form
         class="grid gap-4"
         @submit.prevent="submitGlossary"

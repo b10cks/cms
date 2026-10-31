@@ -214,11 +214,11 @@ const saveSettings = async () => {
         class="space-y-2"
       >
         <Button
-          variant="outline"
+          variant="ai"
           size="sm"
           @click="classifyAllOpen = true"
         >
-          <Icon name="lucide:sparkles" />
+          <Icon name="ai:bot-star" />
           {{ $t('labels.settings.assetLibrary.ai.classifyExisting') }}
         </Button>
         <p class="text-sm text-muted">

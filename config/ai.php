@@ -185,6 +185,22 @@ return [
         ],
     ],
 
+    // Models that cannot switch reasoning off, so "off" is sent as "low".
+    // No provider API reports this. Matched with Str::is against OpenRouter
+    // style ids (`openai/o3`); the OpenAI driver prefixes its ids with
+    // `openai/`. `optional` lists exceptions to `required`.
+    'reasoning' => [
+        'required' => [
+            'openai/o*',
+            'openai/gpt-5*',
+            'deepseek/deepseek-r1*',
+            '*-thinking*',
+        ],
+        'optional' => [
+            'openai/gpt-5*-chat*',
+        ],
+    ],
+
     'cache' => [
         'models_ttl' => env('AI_MODELS_CACHE_TTL', 43200),
     ],

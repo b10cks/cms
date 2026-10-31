@@ -65,7 +65,7 @@ provide('teamId', teamId)
           :to="linkTo(item.routeName)"
           :aria-current="item.routeName === activeNavItem ? 'page' : undefined"
           :class="[
-            'flex items-center gap-2 rounded-md px-4 py-2',
+            'icon-anim flex items-center gap-2 rounded-md px-4 py-2',
             'transition-colors duration-200 hover:bg-secondary',
             'cursor-pointer font-semibold whitespace-nowrap',
             item.routeName === activeNavItem && 'bg-secondary text-primary',

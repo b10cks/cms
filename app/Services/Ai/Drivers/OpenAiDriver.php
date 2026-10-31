@@ -2,6 +2,7 @@
 
 namespace App\Services\Ai\Drivers;
 
+use App\Enums\AiReasoningEffort;
 use App\Services\Ai\Dto\AiModelDto;
 use GuzzleHttp\Client as GuzzleClient;
 use OpenAI;
@@ -43,11 +44,41 @@ class OpenAiDriver extends BaseAiDriver
 
     protected function shouldShapeForReasoning(string $modelId, ?AiModelDto $model): bool
     {
-        if ($model && in_array('reasoning', $model->capabilities, true)) {
-            return true;
-        }
+        return $this->isReasoningModel($modelId, $model?->capabilities ?? []);
+    }
 
-        return (bool) preg_match('/^o\d/i', $modelId);
+    /** The o-series and anything the catalogue marks with the `reasoning` capability. */
+    protected function isReasoningModel(string $modelId, array $capabilities): bool
+    {
+        return in_array('reasoning', $capabilities, true) || (bool) preg_match('/^o\d/i', $modelId);
+    }
+
+    /** OpenAI has no "off": the parameter is left out and the model's own default applies. */
+    protected function reasoningParams(AiReasoningEffort $effort): array
+    {
+        return $effort === AiReasoningEffort::Off ? [] : ['reasoning_effort' => $effort->value];
+    }
+
+    protected function makeModel(string $id, string $name, array $info): AiModelDto
+    {
+        $reasoning = $this->isReasoningModel($id, $info['capabilities'] ?? []);
+
+        return new AiModelDto(
+            id: $id,
+            name: $name,
+            driver: $this->name,
+            description: $info['description'] ?? null,
+            contextWindow: $info['context_window'] ?? ['input' => 8192, 'output' => 4096],
+            inputCost: $info['input_cost'] ?? 0.0,
+            outputCost: $info['output_cost'] ?? 0.0,
+            capabilities: $info['capabilities'] ?? ['text'],
+            supportsStreaming: $info['supports_streaming'] ?? true,
+            supportsTools: $info['supports_tools'] ?? true,
+            supportsVision: $info['supports_vision'] ?? false,
+            supportsJsonMode: $info['supports_json_mode'] ?? ! (bool) preg_match('/^o\d/i', $id),
+            supportsReasoning: $reasoning,
+            reasoningRequired: $reasoning && $this->reasoningRequired("openai/{$id}"),
+        );
     }
 
     public function isConfigured(): bool
@@ -83,22 +114,7 @@ class OpenAiDriver extends BaseAiDriver
                     continue;
                 }
 
-                $modelInfo = $this->getModelInfo($model->id);
-
-                $models[] = new AiModelDto(
-                    id: $model->id,
-                    name: $this->formatModelName($model->id),
-                    driver: $this->name,
-                    description: $modelInfo['description'] ?? null,
-                    contextWindow: $modelInfo['context_window'] ?? ['input' => 8192, 'output' => 4096],
-                    inputCost: $modelInfo['input_cost'] ?? 0.0,
-                    outputCost: $modelInfo['output_cost'] ?? 0.0,
-                    capabilities: $modelInfo['capabilities'] ?? ['text'],
-                    supportsStreaming: $modelInfo['supports_streaming'] ?? true,
-                    supportsTools: $modelInfo['supports_tools'] ?? true,
-                    supportsVision: $modelInfo['supports_vision'] ?? false,
-                    supportsJsonMode: $modelInfo['supports_json_mode'] ?? ! (bool) preg_match('/^o\d/i', $model->id),
-                );
+                $models[] = $this->makeModel($model->id, $this->formatModelName($model->id), $this->getModelInfo($model->id));
             }
 
             if (empty($models)) {
@@ -173,20 +189,7 @@ class OpenAiDriver extends BaseAiDriver
         $models = [];
 
         foreach ($this->config['models'] ?? [] as $modelConfig) {
-            $models[] = new AiModelDto(
-                id: $modelConfig['id'],
-                name: $modelConfig['name'],
-                driver: $this->name,
-                description: $modelConfig['description'] ?? null,
-                contextWindow: $modelConfig['context_window'] ?? [],
-                inputCost: $modelConfig['input_cost'] ?? 0.0,
-                outputCost: $modelConfig['output_cost'] ?? 0.0,
-                capabilities: $modelConfig['capabilities'] ?? [],
-                supportsStreaming: $modelConfig['supports_streaming'] ?? true,
-                supportsTools: $modelConfig['supports_tools'] ?? true,
-                supportsVision: $modelConfig['supports_vision'] ?? false,
-                supportsJsonMode: $modelConfig['supports_json_mode'] ?? ! (bool) preg_match('/^o\d/i', $modelConfig['id']),
-            );
+            $models[] = $this->makeModel($modelConfig['id'], $modelConfig['name'], $modelConfig + ['context_window' => [], 'capabilities' => []]);
         }
 
         return $models;

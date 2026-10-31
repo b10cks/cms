@@ -95,6 +95,7 @@ declare global {
   const triggerRef: typeof import('vue').triggerRef
   const unref: typeof import('vue').unref
   const useAiConfigs: typeof import('./resources/js/composables/useAiModels').useAiConfigs
+  const useAiEnabled: typeof import('./resources/js/composables/useAiEnabled').useAiEnabled
   const useAiErrorToast: typeof import('./resources/js/composables/useAiErrorToast').useAiErrorToast
   const useAiKnowledge: typeof import('./resources/js/composables/useAiKnowledge').useAiKnowledge
   const useAiMentions: typeof import('./resources/js/composables/useAiMentions').useAiMentions
@@ -428,6 +429,7 @@ declare module 'vue' {
     readonly triggerRef: UnwrapRef<typeof import('vue')['triggerRef']>
     readonly unref: UnwrapRef<typeof import('vue')['unref']>
     readonly useAiConfigs: UnwrapRef<typeof import('./resources/js/composables/useAiModels')['useAiConfigs']>
+    readonly useAiEnabled: UnwrapRef<typeof import('./resources/js/composables/useAiEnabled')['useAiEnabled']>
     readonly useAiErrorToast: UnwrapRef<typeof import('./resources/js/composables/useAiErrorToast')['useAiErrorToast']>
     readonly useAiKnowledge: UnwrapRef<typeof import('./resources/js/composables/useAiKnowledge')['useAiKnowledge']>
     readonly useAiMentions: UnwrapRef<typeof import('./resources/js/composables/useAiMentions')['useAiMentions']>

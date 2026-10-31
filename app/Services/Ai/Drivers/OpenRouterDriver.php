@@ -2,6 +2,7 @@
 
 namespace App\Services\Ai\Drivers;
 
+use App\Enums\AiReasoningEffort;
 use App\Services\Ai\Dto\AiModelDto;
 use Arr;
 use GuzzleHttp\Client as GuzzleClient;
@@ -64,6 +65,12 @@ class OpenRouterDriver extends BaseAiDriver
         return max(1, $requested);
     }
 
+    /** OpenRouter's unified switch: an effort level, or reasoning disabled for off. */
+    protected function reasoningParams(AiReasoningEffort $effort): array
+    {
+        return ['reasoning' => $effort === AiReasoningEffort::Off ? ['enabled' => false] : ['effort' => $effort->value]];
+    }
+
     /** Anthropic and Gemini need explicit `cache_control` breakpoints via OpenRouter. */
     protected function usesCacheBreakpoints(string $model): bool
     {
@@ -105,6 +112,7 @@ class OpenRouterDriver extends BaseAiDriver
 
             foreach ($data['data'] ?? [] as $modelData) {
                 $supportedParams = $modelData['supported_parameters'] ?? [];
+                $supportsReasoning = \in_array('reasoning', $supportedParams) || \in_array('include_reasoning', $supportedParams);
                 $models[] = new AiModelDto(
                     id: $modelData['id'],
                     name: $modelData['name'] ?? $modelData['id'],
@@ -121,6 +129,8 @@ class OpenRouterDriver extends BaseAiDriver
                     supportsVision: ($modelData['architecture']['modality'] ?? '') === 'text+image->text',
                     supportsJsonMode: \in_array('response_format', $supportedParams)
                         || \in_array('structured_outputs', $supportedParams),
+                    supportsReasoning: $supportsReasoning,
+                    reasoningRequired: $supportsReasoning && $this->reasoningRequired($modelData['id']),
                 );
             }
 

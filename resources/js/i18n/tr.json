@@ -2481,7 +2481,6 @@
         "loadingModels": "Kullanılabilir modeller yükleniyor...",
         "loadingUsage": "Kullanım verileri yükleniyor...",
         "noUsageData": "Kullanım verisi yok",
-        "placeholder": "Yapay zekaya içeriğinizi değiştirmesini söyleyin...",
         "dropFiles": "Dosyaları buraya bırakın",
         "systemPrompt": "Yapay Zeka Talimatları",
         "systemPromptDescription": "Bu çalışma alanında yapay zekanın nasıl davranması gerektiğini tanımlayın. Ton, stil yönergeleri, alana özgü kurallar ve diğer kısıtlamaları veya tercihleri dahil edin.",
@@ -2504,7 +2503,8 @@
         "noConfigsDescription": "Yapay zeka özelliklerini kullanmaya başlamak için ilk yapılandırmanızı oluşturun.",
         "navLabel": "AI",
         "features": "Features",
-        "description": "Models, configurations and usage of the AI in this space."
+        "description": "Models, configurations and usage of the AI in this space.",
+        "configurationsKept": "Yapay zekâ özellikleri kapalı. Bu yapılandırmalar korunur ve yapay zekâ yeniden açıldığında tekrar çalışır."
       },
       "members": {
         "title": "Üyeler",
@@ -4797,14 +4797,27 @@
     "aiModelSelector": {
       "selectModel": "Yapay zeka modelini seç",
       "loadError": "Modeller yüklenemedi",
-      "noModels": "Model mevcut değil",
       "favourites": "Favoriler",
       "favouriteError": "Favori güncellenemedi",
-      "setModelError": "Model tercihi kaydedilemedi",
-      "drivers": {
-        "openai": "OpenAI",
-        "bedrock": "AWS Bedrock",
-        "openrouter": "OpenRouter"
+      "dialogDescription": "Bu alanın modellerinde arayın ve yapılandırma için birini seçin.",
+      "providers": "Sağlayıcılar",
+      "all": "Tüm modeller",
+      "search": "Model ara",
+      "noMatches": "Eşleşen model yok",
+      "count": "{count} model | {count} model",
+      "toggleFavourite": "{name} favorilere ekle",
+      "capabilities": {
+        "vision": "Görme",
+        "reasoning": "Akıl yürütme",
+        "tools": "Araçlar"
+      },
+      "reasoning": {
+        "label": "Akıl yürütme",
+        "description": "Modelin yanıt vermeden önce ne kadar düşündüğü. Konular bunu konuşma başına değiştirebilir.",
+        "off": "Kapalı",
+        "low": "Düşük",
+        "medium": "Orta",
+        "high": "Yüksek"
       }
     },
     "aiMention": {
@@ -4992,10 +5005,6 @@
       }
     },
     "aiConfigSelector": {
-      "selectConfig": "Yapay zeka yapılandırmasını seç",
-      "availableConfigs": "Mevcut Yapılandırmalar",
-      "default": "Varsayılan",
-      "loading": "Yapılandırmalar yükleniyor…",
       "noConfigs": "Yapılandırma mevcut değil"
     },
     "flattenedLocalization": {
@@ -5029,12 +5038,9 @@
     "aiText": {
       "inputLabel": "Yapay zekâ mesajı",
       "thinking": "Düşünüyor…",
-      "streamError": "Yapay zeka hatası: {error}",
       "noConfigSelected": "Devam etmek için lütfen bir yapay zeka yapılandırması seçin",
-      "placeholderSelectConfig": "Başlamak için bir yapılandırma seçin…",
-      "placeholderDefault": "İçeriğinizde yardımcı olması için {name}'dan bir şey isteyin…",
       "working": "Looking things up...",
-      "background": "This takes a while, it continues in the background..."
+      "placeholder": "Yapay zekâya sor…"
     },
     "contentTreeAi": {
       "title": "Yapay Zeka ile İçerik Ağacı Oluştur",
@@ -5208,7 +5214,10 @@
       "attachChip": "Attach {name}",
       "screen": {
         "entry": "Open entry",
-        "dataSource": "Open data source"
+        "dataSource": "Open data source",
+        "block": "Açık blok",
+        "folder": "Açık klasör",
+        "asset": "Açık varlık"
       },
       "steps": "Steps",
       "usingTool": "Using {tool}",
@@ -5305,7 +5314,15 @@
         "cached": "Cached: {count}",
         "steps": "Steps: {count}",
         "cost": "Cost: {cost}"
-      }
+      },
+      "thisPage": "Bu sayfa",
+      "other": "Diğer konular",
+      "disabled": "Bu alanda yapay zekâ özellikleri kapalı.",
+      "enableInSettings": "Yapay zekâ ayarlarından açın"
+    },
+    "metaBlock": {
+      "generate": "Yapay zekâ ile oluştur",
+      "generating": "Oluşturuluyor…"
     }
   },
   "alertDialog": {

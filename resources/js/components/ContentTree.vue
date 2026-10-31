@@ -103,6 +103,9 @@ const {
 } = useContent(props.spaceId)
 const access = useAccessControl(computed(() => ({ space_id: props.spaceId })))
 const canManageContent = computed(() => access.hasAbility('content.manage'))
+
+/** Menu icons are lucide names unless they carry their own prefix (`ai:bot-message`). */
+const menuIcon = (icon: string) => (icon.includes(':') ? icon : `lucide:${icon}`)
 const canPublishContent = computed(() => access.hasAbility('content.publish'))
 const canManageReleases = computed(() => access.hasAbility('releases.manage'))
 // automations.trigger also implies listing automations (policy viewAny), so
@@ -1226,6 +1229,7 @@ const buildPublishActions = (item: FlatContentMenuItem): ContentTreeMenuAction[]
   return actions
 }
 
+const aiEnabled = useAiEnabled(() => props.spaceId)
 const aiBulkOpen = ref(false)
 const aiBulkIds = ref<string[]>([])
 const aiBulkMounted = useMountOnFirstOpen(() => aiBulkOpen.value)
@@ -1237,7 +1241,7 @@ const buildAiAction = (item: FlatContentMenuItem): ContentTreeMenuAction => {
   return {
     id: 'ai',
     label: t('labels.contentTree.actions.askAi', { count: ids.length }, ids.length) as string,
-    icon: 'sparkles',
+    icon: 'ai:bot-message',
     separatorBefore: true,
     disabled: !canManageContent.value,
     onSelect: () => {
@@ -1306,7 +1310,7 @@ const buildItemMenuActions = (item: FlatContentMenuItem): ContentTreeMenuAction[
       onSelect: () => openEdit(item.id),
     },
     ...buildPublishActions(item),
-    buildAiAction(item),
+    ...(aiEnabled.value ? [buildAiAction(item)] : []),
     ...buildItemAutomationActions(item),
     {
       id: 'rename',
@@ -3080,7 +3084,7 @@ onBeforeUnmount(() => {
           <DropdownMenuSeparator v-if="action.separatorBefore" />
           <DropdownMenuSub v-if="action.children">
             <DropdownMenuSubTrigger :disabled="action.disabled">
-              <Icon :name="`lucide:${action.icon}`" />
+              <Icon :name="menuIcon(action.icon)" />
               <span>{{ action.label }}</span>
             </DropdownMenuSubTrigger>
             <DropdownMenuSubContent>
@@ -3090,7 +3094,7 @@ onBeforeUnmount(() => {
                 :disabled="child.disabled"
                 @select.prevent="handleActionSelect(child)"
               >
-                <Icon :name="`lucide:${child.icon}`" />
+                <Icon :name="menuIcon(child.icon)" />
                 <span>{{ child.label }}</span>
               </DropdownMenuItem>
             </DropdownMenuSubContent>
@@ -3101,7 +3105,7 @@ onBeforeUnmount(() => {
             :class="action.destructive ? 'text-destructive focus:text-destructive' : ''"
             @select.prevent="handleActionSelect(action)"
           >
-            <Icon :name="`lucide:${action.icon}`" />
+            <Icon :name="menuIcon(action.icon)" />
             <span>{{ action.label }}</span>
           </DropdownMenuItem>
         </template>

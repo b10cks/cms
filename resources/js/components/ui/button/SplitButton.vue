@@ -43,7 +43,8 @@ const primaryButtonClasses = computed(() => {
 const triggerButtonClasses = computed(() => {
   return [
     buttonVariants({ variant: props.variant, size: props.size }),
-    'rounded-l-none border-l border-l-primary/15 !px-2',
+    'rounded-l-none border-l !px-2',
+    props.variant === 'ai' ? 'border-l-current/25' : 'border-l-primary/15',
   ].filter(Boolean)
 })
 </script>

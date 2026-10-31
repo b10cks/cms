@@ -27,6 +27,10 @@ const getThreads = vi.fn(async (params: AiThreadListParams) =>
 const updateThread = vi.fn().mockResolvedValue({ data: {} })
 
 vi.mock('~/api', () => ({ api: { forSpace: () => ({ ai: { getThreads, updateThread } }) } }))
+vi.mock('~/composables/useAiScreenChips', async () => {
+  const { computed } = await import('vue')
+  return { useAiScreenChips: () => computed(() => []) }
+})
 vi.mock('~/composables/useAuthorization', () => ({
   useAuthorization: () => ({ useAccessControl: () => ({ hasAbility: () => false }) }),
 }))

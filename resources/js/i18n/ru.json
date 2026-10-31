@@ -2481,7 +2481,6 @@
         "loadingModels": "Загрузка доступных моделей…",
         "loadingUsage": "Загрузка данных использования…",
         "noUsageData": "Нет данных об использовании",
-        "placeholder": "Попросите ИИ изменить ваш контент…",
         "dropFiles": "Перетащите файлы сюда",
         "systemPrompt": "Инструкции для ИИ",
         "systemPromptDescription": "Задайте, как ИИ должен вести себя в этом пространстве. Включите тон, гайдлайны стиля, доменные правила и другие ограничения или предпочтения.",
@@ -2504,7 +2503,8 @@
         "noConfigsDescription": "Создайте первую конфигурацию, чтобы начать использовать возможности ИИ.",
         "navLabel": "AI",
         "features": "Features",
-        "description": "Models, configurations and usage of the AI in this space."
+        "description": "Models, configurations and usage of the AI in this space.",
+        "configurationsKept": "Функции ИИ отключены. Эти конфигурации сохранены и снова заработают после включения ИИ."
       },
       "members": {
         "title": "Участники",
@@ -4797,14 +4797,27 @@
     "aiModelSelector": {
       "selectModel": "Выберите модель ИИ",
       "loadError": "Не удалось загрузить модели",
-      "noModels": "Нет доступных моделей",
       "favourites": "Избранное",
       "favouriteError": "Не удалось обновить избранное",
-      "setModelError": "Не удалось сохранить предпочтение модели",
-      "drivers": {
-        "openai": "OpenAI",
-        "bedrock": "AWS Bedrock",
-        "openrouter": "OpenRouter"
+      "dialogDescription": "Найдите модель этого пространства и выберите её для конфигурации.",
+      "providers": "Провайдеры",
+      "all": "Все модели",
+      "search": "Поиск моделей",
+      "noMatches": "Модели не найдены",
+      "count": "{count} модель | {count} модели | {count} моделей",
+      "toggleFavourite": "Добавить {name} в избранное",
+      "capabilities": {
+        "vision": "Зрение",
+        "reasoning": "Рассуждение",
+        "tools": "Инструменты"
+      },
+      "reasoning": {
+        "label": "Рассуждение",
+        "description": "Сколько модель думает перед ответом. В тредах его можно менять для каждой беседы.",
+        "off": "Выкл.",
+        "low": "Низкий",
+        "medium": "Средний",
+        "high": "Высокий"
       }
     },
     "aiMention": {
@@ -4992,10 +5005,6 @@
       }
     },
     "aiConfigSelector": {
-      "selectConfig": "Выберите конфигурацию ИИ",
-      "availableConfigs": "Доступные конфигурации",
-      "default": "По умолчанию",
-      "loading": "Загрузка конфигураций...",
       "noConfigs": "Нет доступных конфигураций"
     },
     "flattenedLocalization": {
@@ -5029,12 +5038,9 @@
     "aiText": {
       "inputLabel": "Сообщение ИИ",
       "thinking": "Думает...",
-      "streamError": "Ошибка ИИ: {error}",
       "noConfigSelected": "Пожалуйста, выберите конфигурацию ИИ, чтобы продолжить",
-      "placeholderSelectConfig": "Выберите конфигурацию, чтобы начать...",
-      "placeholderDefault": "Попросите {name} помочь с вашим контентом...",
       "working": "Looking things up...",
-      "background": "This takes a while, it continues in the background..."
+      "placeholder": "Спросить ИИ…"
     },
     "contentTreeAi": {
       "title": "Создать дерево контента с помощью ИИ",
@@ -5208,7 +5214,10 @@
       "attachChip": "Attach {name}",
       "screen": {
         "entry": "Open entry",
-        "dataSource": "Open data source"
+        "dataSource": "Open data source",
+        "block": "Открытый блок",
+        "folder": "Открытая папка",
+        "asset": "Открытый ассет"
       },
       "steps": "Steps",
       "usingTool": "Using {tool}",
@@ -5305,7 +5314,15 @@
         "cached": "Cached: {count}",
         "steps": "Steps: {count}",
         "cost": "Cost: {cost}"
-      }
+      },
+      "thisPage": "Эта страница",
+      "other": "Другие треды",
+      "disabled": "Функции ИИ отключены для этого пространства.",
+      "enableInSettings": "Включить в настройках ИИ"
+    },
+    "metaBlock": {
+      "generate": "Создать с ИИ",
+      "generating": "Создание…"
     }
   },
   "alertDialog": {

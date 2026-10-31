@@ -5,6 +5,7 @@ namespace App\Services\Ai;
 use App\Models\Management\Space;
 use App\Models\Management\SpaceAiKey;
 use App\Services\Ai\Contracts\AiDriverInterface;
+use App\Services\Ai\Drivers\BaseAiDriver;
 use App\Services\Ai\Drivers\BedrockDriver;
 use App\Services\Ai\Drivers\OpenAiDriver;
 use App\Services\Ai\Drivers\OpenRouterDriver;
@@ -14,6 +15,9 @@ use Illuminate\Support\Facades\Cache;
 class ModelRegistry
 {
     protected array $drivers = [];
+
+    /** @var array<string, array<string, AiModelDto>> models by id per driver, built once per instance */
+    protected array $index = [];
 
     protected int $cacheTtl = 43200;
 
@@ -110,12 +114,13 @@ class ModelRegistry
         foreach ($this->getEnabledDrivers() as $driverName => $driver) {
             $driverModels = $driver->getModels();
 
-            $grouped[$driverName] = \Arr::sort(\array_map(function (AiModelDto $model) use ($favourites) {
+            // Arr::sort keeps the keys; array_values makes it a JSON list again.
+            $grouped[$driverName] = \array_values(\Arr::sort(\array_map(function (AiModelDto $model) use ($favourites) {
                 $modelArray = $model->toArray();
                 $modelArray['is_favourite'] = \in_array($model->getFullId(), $favourites);
 
                 return $modelArray;
-            }, $driverModels), 'name');
+            }, $driverModels), 'name'));
         }
 
         return $grouped;
@@ -146,13 +151,11 @@ class ModelRegistry
             return null;
         }
 
-        foreach ($driver->getModels() as $model) {
-            if ($model->id === $modelId) {
-                return $model;
-            }
-        }
+        // One lookup map per driver, so a list of configs reads the cached
+        // catalogue once instead of once per row.
+        $this->index[$driverName] ??= array_column(array_map(fn (AiModelDto $model) => ['id' => $model->id, 'model' => $model], $driver->getModels()), 'model', 'id');
 
-        return null;
+        return $this->index[$driverName][$modelId] ?? null;
     }
 
     public function findModelForConfig(?string $driver, ?string $model): ?AiModelDto
@@ -181,12 +184,10 @@ class ModelRegistry
 
     public function bustCache(?string $driverName = null): void
     {
-        if ($driverName) {
-            Cache::forget("ai.models.{$driverName}");
-        } else {
-            foreach ($this->getDriverNames() as $name) {
-                Cache::forget("ai.models.{$name}");
-            }
+        $this->index = [];
+
+        foreach ($driverName ? [$driverName] : $this->getDriverNames() as $name) {
+            Cache::forget(BaseAiDriver::modelCacheKey($name));
         }
     }
 }

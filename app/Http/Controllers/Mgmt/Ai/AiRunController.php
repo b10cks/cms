@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Mgmt\Ai;
 
+use App\Enums\AiReasoningEffort;
 use App\Enums\AiRunState;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Ai\AnswerAiRunRequest;
@@ -76,6 +77,7 @@ class AiRunController extends Controller
             instructions: $targets !== null ? StartRun::TARGET_INSTRUCTIONS : '',
             targets: $targets['frozen'] ?? null,
             opensThread: $conversationId === null,
+            reasoningEffort: $request->enum('reasoning_effort', AiReasoningEffort::class),
         );
 
         // More entries than an inline request may touch always run in the background.

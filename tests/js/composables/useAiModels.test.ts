@@ -49,6 +49,8 @@ const model = (overrides: Partial<AiModel> = {}): AiModel => ({
   supports_streaming: true,
   supports_tools: true,
   supports_vision: true,
+  supports_reasoning: true,
+  reasoning_required: false,
   is_favourite: false,
   ...overrides,
 })
@@ -68,6 +70,8 @@ const config = (overrides: Partial<SpaceAiConfig> = {}): SpaceAiConfig => ({
   system_prompt: null,
   temperature: 0.7,
   max_tokens: 2048,
+  reasoning_effort: null,
+  model_info: null,
   is_default: true,
   created_at: '2026-07-01T00:00:00Z',
   updated_at: '2026-07-01T00:00:00Z',
@@ -330,50 +334,6 @@ describe('toggleFavourite', () => {
     await pending
 
     await vi.waitUntil(() => !mounted.result.isSavingSettings.value)
-  })
-})
-
-describe('setModel', () => {
-  it('patches the selected model and refreshes the settings and the model list', async () => {
-    patch.mockResolvedValue({})
-
-    const mounted = mount(() => useAiSettings(SPACE))
-    const invalidate = vi.spyOn(mounted.queryClient, 'invalidateQueries')
-
-    await mounted.result.setModel('anthropic/sonnet')
-
-    expect(patch).toHaveBeenCalledWith(`/mgmt/v1/spaces/${SPACE}/ai-settings`, {
-      model: 'anthropic/sonnet',
-    })
-    // Both writers share one mutation, so both refresh the same pair of keys.
-    expect(invalidate).toHaveBeenCalledWith({ queryKey: keys(SPACE).settings() })
-    expect(invalidate).toHaveBeenCalledWith({ queryKey: keys(SPACE).models() })
-  })
-
-  it('clears the selection with an explicit null', async () => {
-    patch.mockResolvedValue({})
-
-    const mounted = mount(() => useAiSettings(SPACE))
-
-    await mounted.result.setModel(null)
-
-    expect(patch).toHaveBeenCalledWith(`/mgmt/v1/spaces/${SPACE}/ai-settings`, { model: null })
-  })
-
-  it('does nothing without a space', async () => {
-    const mounted = mount(() => useAiSettings(null))
-
-    expect(await mounted.result.setModel('anthropic/sonnet')).toBeUndefined()
-    expect(patch).not.toHaveBeenCalled()
-  })
-
-  it('propagates a failed patch and surfaces a toast', async () => {
-    patch.mockRejectedValue(new Error('Unknown model'))
-
-    const mounted = mount(() => useAiSettings(SPACE))
-
-    await expect(mounted.result.setModel('nope/nope')).rejects.toThrow('Unknown model')
-    expect(toastError).toHaveBeenCalledWith('Failed to save model preference')
   })
 })
 

@@ -124,7 +124,7 @@ const discard = () => {
       :aria-label="aiSkillLabel(proposal.skill.name, t)"
     >
       <div class="flex items-center gap-2 text-sm font-medium text-ai">
-        <Icon name="lucide:sparkles" />
+        <Icon name="ai:bot-star" />
         {{ aiSkillLabel(proposal.skill.name, t) }}
       </div>
       <AiQuestionnaireForm

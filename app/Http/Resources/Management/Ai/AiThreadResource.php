@@ -34,6 +34,8 @@ class AiThreadResource extends JsonResource
             'entry_count' => (int) $this->getAttribute('entry_count'),
             'context' => $this->context,
             'skill' => $this->resource->getAttributes()['skill'] ?? null,
+            // The latest run's pick, so the composer restores it; null means the config's level.
+            'reasoning_effort' => $this->resource->getAttributes()['reasoning_effort'] ?? null,
         ];
     }
 }

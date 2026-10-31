@@ -1,9 +1,16 @@
 <script setup lang="ts">
 import { toast } from 'vue-sonner'
 
-import type { SpaceAiConfig } from '~/api/resources/ai'
+import {
+  type AiReasoningEffort,
+  DEFAULT_REASONING_EFFORT,
+  type SpaceAiConfig,
+  type SpaceAiConfigPayload,
+} from '~/api/resources/ai'
+import AiCapabilityIcons from '~/components/ai/AiCapabilityIcons.vue'
+import AiModelPickerDialog from '~/components/ai/AiModelPickerDialog.vue'
+import AiReasoningPicker from '~/components/ai/AiReasoningPicker.vue'
 import Icon from '~/components/Icon.vue'
-import AiModelSelector from '~/components/ui/AiModelSelector.vue'
 import { Button } from '~/components/ui/button'
 import {
   Dialog,
@@ -17,6 +24,7 @@ import {
 import { FormField, InputField, TextField } from '~/components/ui/form'
 import { Switch } from '~/components/ui/switch'
 import type { AiModel } from '~/composables/useAiModels'
+import { modelDisplayName, modelIcon } from '~/lib/modelIcons'
 
 const open = defineModel<boolean>('open', { required: true })
 
@@ -29,20 +37,24 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  submit: [payload: Partial<SpaceAiConfig>]
+  submit: [payload: SpaceAiConfigPayload]
 }>()
 
 const { t } = useI18n()
 
-const formData = ref({
+const emptyForm = () => ({
   name: '',
   driver: '',
   model: '',
   system_prompt: '',
   temperature: 0.7,
   max_tokens: 32768,
+  reasoning_effort: DEFAULT_REASONING_EFFORT as AiReasoningEffort,
   is_default: false,
 })
+
+const formData = ref(emptyForm())
+const pickerOpen = ref(false)
 
 const flatModels = computed(() => {
   if (!props.groupedModels) return []
@@ -63,31 +75,20 @@ const isFormValid = computed(() => {
   )
 })
 
-const formatContextWindow = (input: number): string => {
-  if (input >= 1000000) return `${(input / 1000000).toFixed(1)}M`
-  if (input >= 1000) return `${(input / 1000).toFixed(0)}k`
-  return input.toString()
-}
-
-const handleModelSelect = (modelId: string | null | undefined) => {
-  if (!modelId) {
-    formData.value.driver = ''
-    formData.value.model = ''
-    return
-  }
-
-  const [driver, model] = modelId.split(':')
-  formData.value.driver = driver
-  formData.value.model = model
+const handleModelSelect = (model: AiModel) => {
+  formData.value.driver = model.driver
+  formData.value.model = model.id
+  if (model.reasoning_required && formData.value.reasoning_effort === 'off') formData.value.reasoning_effort = 'low'
 }
 
 const handleSubmit = () => {
   if (!isFormValid.value) return
 
-  const payload = {
+  const payload: SpaceAiConfigPayload = {
     ...formData.value,
     temperature: Number(formData.value.temperature),
     max_tokens: Number(formData.value.max_tokens),
+    reasoning_effort: selectedModel.value?.supports_reasoning ? formData.value.reasoning_effort : null,
   }
 
   emit('submit', payload)
@@ -96,27 +97,18 @@ const handleSubmit = () => {
 watch(
   () => props.config,
   (config) => {
-    if (config) {
-      formData.value = {
-        name: config.name,
-        driver: config.driver,
-        model: config.model,
-        system_prompt: config.system_prompt ?? '',
-        temperature: config.temperature,
-        max_tokens: config.max_tokens,
-        is_default: config.is_default,
-      }
-    } else {
-      formData.value = {
-        name: '',
-        driver: '',
-        model: '',
-        system_prompt: '',
-        temperature: 0.7,
-        max_tokens: 32768,
-        is_default: false,
-      }
-    }
+    formData.value = config
+      ? {
+          name: config.name,
+          driver: config.driver,
+          model: config.model,
+          system_prompt: config.system_prompt ?? '',
+          temperature: config.temperature,
+          max_tokens: config.max_tokens,
+          reasoning_effort: config.reasoning_effort ?? DEFAULT_REASONING_EFFORT,
+          is_default: config.is_default,
+        }
+      : emptyForm()
   },
   { immediate: true }
 )
@@ -124,7 +116,7 @@ watch(
 
 <template>
   <Dialog v-model:open="open">
-    <DialogContent class="max-w-2xl">
+    <DialogContent class="max-w-2xl!">
       <DialogHeader>
         <DialogTitle>
           <template v-if="config">
@@ -149,53 +141,53 @@ watch(
         />
 
         <FormField
-          name="driver"
+          name="model"
           :label="$t('labels.settings.ai.selectModel')"
           required
         >
-          <AiModelSelector
-            :key="`${formData.driver}:${formData.model}`"
-            :model-value="
-              formData.driver && formData.model ? `${formData.driver}:${formData.model}` : null
-            "
-            :space-id="spaceId"
-            :show-costs="true"
-            @update:model-value="handleModelSelect"
-          />
+          <button
+            id="model"
+            type="button"
+            class="flex h-10 w-full cursor-pointer items-center gap-2.5 rounded-lg bg-input px-3 text-left text-sm shadow-sm transition-colors hover:bg-input/80 focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none"
+            @click="pickerOpen = true"
+          >
+            <template v-if="formData.model">
+              <Icon
+                :name="modelIcon(formData.driver, formData.model, 'color')"
+                size="1.125rem"
+                class="shrink-0"
+              />
+              <span class="min-w-0 truncate font-medium">{{ selectedModel ? modelDisplayName(selectedModel.name) : formData.model }}</span>
+              <AiCapabilityIcons
+                v-if="selectedModel"
+                :capabilities="selectedModel"
+              />
+            </template>
+            <span
+              v-else
+              class="text-muted"
+            >
+              {{ $t('components.aiModelSelector.selectModel') }}
+            </span>
+            <Icon
+              name="lucide:chevron-down"
+              class="ml-auto shrink-0 text-muted"
+            />
+          </button>
         </FormField>
 
-        <div
-          v-if="selectedModel"
-          class="rounded-lg bg-surface p-3"
+        <FormField
+          v-if="selectedModel?.supports_reasoning"
+          name="reasoning"
+          :label="$t('components.aiModelSelector.reasoning.label')"
+          :description="$t('components.aiModelSelector.reasoning.description')"
         >
-          <div class="space-y-1">
-            <div class="flex items-center gap-2">
-              <h4 class="text-sm font-semibold">{{ selectedModel.name }}</h4>
-            </div>
-            <p
-              v-if="selectedModel.description"
-              class="text-muted-foreground text-xs"
-            >
-              {{ selectedModel.description }}
-            </p>
-            <div class="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
-              <span class="flex items-center gap-1">
-                <Icon
-                  name="lucide:gauge"
-                  class="h-3 w-3"
-                />
-                {{ formatContextWindow(selectedModel.context_window.input) }}
-              </span>
-              <span class="flex items-center gap-1">
-                <Icon
-                  name="lucide:server"
-                  class="h-3 w-3"
-                />
-                {{ selectedModel.driver }}
-              </span>
-            </div>
-          </div>
-        </div>
+          <AiReasoningPicker
+            v-model="formData.reasoning_effort"
+            variant="segmented"
+            :required="selectedModel.reasoning_required"
+          />
+        </FormField>
 
         <TextField
           v-model="formData.system_prompt"
@@ -268,6 +260,12 @@ watch(
           {{ isSubmitting ? $t('actions.saving') : $t('actions.save') }}
         </Button>
       </DialogFooter>
+      <AiModelPickerDialog
+        v-model:open="pickerOpen"
+        :space-id="spaceId"
+        :selected="formData.model ? `${formData.driver}:${formData.model}` : null"
+        @select="handleModelSelect"
+      />
     </DialogContent>
   </Dialog>
 </template>

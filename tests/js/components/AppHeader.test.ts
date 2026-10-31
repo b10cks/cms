@@ -11,6 +11,10 @@ const spaces = ref([
 const canAccessRoute = vi.fn(() => true)
 
 // The logo is an SFC via vite-svg-loader, which the test config does not load.
+vi.mock('~/composables/useAiEnabled', async () => {
+  const { computed } = await import('vue')
+  return { useAiEnabled: () => computed(() => false) }
+})
 vi.mock('~/assets/logo.svg', () => ({ default: { template: '<svg />' } }))
 
 vi.mock('~/composables/useSpace', () => ({

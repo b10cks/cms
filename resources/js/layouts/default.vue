@@ -11,6 +11,7 @@ const { data: currentSpace } = useCurrentSpaceQuery()
 
 const route = useRoute()
 const spaceId = computed(() => (route.params?.space as string) || null)
+const aiEnabled = useAiEnabled(spaceId)
 
 useSeoMeta({
   titleTemplate: (title) => {
@@ -92,7 +93,7 @@ useShortcut({
         <slot />
       </main>
       <AiDock
-        v-if="spaceId"
+        v-if="spaceId && aiEnabled"
         :space-id="spaceId"
       />
     </div>

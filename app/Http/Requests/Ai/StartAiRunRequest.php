@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Ai;
 
+use App\Enums\AiReasoningEffort;
 use App\Models\Space\AiRun;
 use App\Services\Ai\Changesets\ChangeTargets;
 use App\Services\Ai\Changesets\EntryScope;
@@ -23,6 +24,7 @@ class StartAiRunRequest extends FormRequest
             'prompt' => ['sometimes', 'nullable', 'string', 'max:20000'],
             'context' => ['sometimes', 'array'],
             'config_id' => ['sometimes', 'nullable', 'string'],
+            'reasoning_effort' => ['sometimes', 'nullable', Rule::enum(AiReasoningEffort::class)],
             'conversation_id' => ['sometimes', 'nullable', 'string'],
             'idempotency_key' => ['sometimes', 'nullable', 'string', 'max:100'],
             'background' => ['sometimes', 'boolean'],

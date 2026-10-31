@@ -2481,7 +2481,6 @@
         "loadingModels": "Loading available models...",
         "loadingUsage": "Loading usage data...",
         "noUsageData": "No usage data available",
-        "placeholder": "Ask AI to modify your content...",
         "dropFiles": "Drop files here",
         "systemPrompt": "AI Instructions",
         "systemPromptDescription": "Define how AI should behave in this space. Include tone, style guidelines, domain-specific rules, and any other constraints or preferences.",
@@ -2504,7 +2503,8 @@
         "noConfigsDescription": "Create your first configuration to start using AI features.",
         "navLabel": "AI",
         "features": "Features",
-        "description": "Models, configurations and usage of the AI in this space."
+        "description": "Models, configurations and usage of the AI in this space.",
+        "configurationsKept": "AI features are off. These configurations are kept and work again once AI is back on."
       },
       "members": {
         "title": "Members",
@@ -4797,14 +4797,27 @@
     "aiModelSelector": {
       "selectModel": "Select AI model",
       "loadError": "Failed to load models",
-      "noModels": "No models available",
       "favourites": "Favourites",
       "favouriteError": "Failed to update favourite",
-      "setModelError": "Failed to save model preference",
-      "drivers": {
-        "openai": "OpenAI",
-        "bedrock": "AWS Bedrock",
-        "openrouter": "OpenRouter"
+      "dialogDescription": "Search the models of this space and pick one for the configuration.",
+      "providers": "Providers",
+      "all": "All models",
+      "search": "Search models",
+      "noMatches": "No model matches",
+      "count": "{count} model | {count} models",
+      "toggleFavourite": "Favourite {name}",
+      "capabilities": {
+        "vision": "Vision",
+        "reasoning": "Reasoning",
+        "tools": "Tools"
+      },
+      "reasoning": {
+        "label": "Reasoning",
+        "description": "How long the model thinks before it answers. Threads can change it per conversation.",
+        "off": "Off",
+        "low": "Low",
+        "medium": "Medium",
+        "high": "High"
       }
     },
     "aiMention": {
@@ -4992,10 +5005,6 @@
       }
     },
     "aiConfigSelector": {
-      "selectConfig": "Select AI configuration",
-      "availableConfigs": "Available Configurations",
-      "default": "Default",
-      "loading": "Loading configurations...",
       "noConfigs": "No configurations available"
     },
     "flattenedLocalization": {
@@ -5029,12 +5038,9 @@
     "aiText": {
       "inputLabel": "AI message",
       "thinking": "Thinking...",
-      "streamError": "AI error: {error}",
       "noConfigSelected": "Please select an AI configuration to continue",
-      "placeholderSelectConfig": "Select a configuration to start...",
-      "placeholderDefault": "Ask {name} to help with your content...",
       "working": "Looking things up...",
-      "background": "This takes a while, it continues in the background..."
+      "placeholder": "Ask AI…"
     },
     "contentTreeAi": {
       "title": "Generate Content Tree with AI",
@@ -5208,7 +5214,10 @@
       "attachChip": "Attach {name}",
       "screen": {
         "entry": "Open entry",
-        "dataSource": "Open data source"
+        "dataSource": "Open data source",
+        "block": "Open block",
+        "folder": "Open folder",
+        "asset": "Open asset"
       },
       "steps": "Steps",
       "usingTool": "Using {tool}",
@@ -5305,7 +5314,15 @@
         "cached": "Cached: {count}",
         "steps": "Steps: {count}",
         "cost": "Cost: {cost}"
-      }
+      },
+      "thisPage": "This page",
+      "other": "Other threads",
+      "disabled": "AI features are turned off for this space.",
+      "enableInSettings": "Turn them on in the AI settings"
+    },
+    "metaBlock": {
+      "generate": "AI Generate",
+      "generating": "Generating…"
     }
   },
   "alertDialog": {

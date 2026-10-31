@@ -3,7 +3,7 @@ import { cva, type VariantProps } from 'class-variance-authority'
 export { default as Button } from './Button.vue'
 
 export const buttonVariants = cva(
-  'cursor-pointer shrink-0 inline-flex items-center justify-center gap-2 whitespace-nowrap font-semibold transition-colors duration-300 ease-butter focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0',
+  'icon-anim cursor-pointer shrink-0 inline-flex items-center justify-center gap-2 whitespace-nowrap font-semibold transition-colors duration-300 ease-butter focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0',
   {
     variants: {
       variant: {
@@ -14,7 +14,7 @@ export const buttonVariants = cva(
         destructive:
           'bg-destructive-background/20 text-destructive shadow-sm hover:bg-destructive-background/30',
         warning: 'bg-warning-background/20 text-warning shadow-sm hover:bg-warning-background/80',
-        ai: 'bg-ai-background/20 text-ai shadow-sm hover:bg-ai-background/80',
+        ai: 'bg-ai-tint text-ai-tint-foreground shadow-sm hover:bg-ai-tint-hover',
         outline: 'border border-border bg-transparent shadow-sm hover:bg-input/80',
         ghost: 'hover:bg-secondary/80',
         link: 'text-primary underline-offset-4 hover:underline !px-0',

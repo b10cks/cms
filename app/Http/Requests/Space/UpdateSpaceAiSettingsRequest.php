@@ -12,8 +12,19 @@ class UpdateSpaceAiSettingsRequest extends FormRequest
         return true;
     }
 
+    /**
+     * The `ai.*` rules of the space settings, unprefixed: this endpoint takes
+     * the AI section itself as its body (`{ enabled, model, favourites }`).
+     */
     public function rules(): array
     {
-        return SpaceSettings::toValidator('ai', true);
+        $rules = [];
+        foreach (SpaceSettings::validationRules(partial: true) as $key => $rule) {
+            if (str_starts_with($key, 'ai.')) {
+                $rules[substr($key, 3)] = $rule;
+            }
+        }
+
+        return $rules;
     }
 }

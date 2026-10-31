@@ -13,10 +13,23 @@ export type AiThreadStatus = 'needs_input' | 'needs_review' | 'running' | 'faile
 
 /** Something a thread works on: the screen it started from or a mention. */
 export interface AiThreadChip {
-  type: 'content' | 'data_source' | 'asset' | 'document'
+  type: 'content' | 'field' | 'data_source' | 'asset' | 'asset_folder' | 'block' | 'document'
+  /** The entry's id for `field` chips */
   id: string
   label: string
+  /** Path of the focused field inside the entry, `field` chips only */
+  field?: string
 }
+
+/** Chip types that name a page or a thing on it, as opposed to attached knowledge. */
+export const SCREEN_CHIP_TYPES: ReadonlySet<AiThreadChip['type']> = new Set([
+  'content',
+  'field',
+  'data_source',
+  'asset',
+  'asset_folder',
+  'block',
+])
 
 export interface AiThread {
   id: string
@@ -125,10 +138,23 @@ export function formatElapsed(milliseconds: number): string {
 }
 
 /** The user's own and unowned threads, and the ones others shared. */
-export function groupThreads(threads: readonly AiThread[]) {
+/**
+ * Splits the list for the dock: threads about the current screen first, then
+ * the user's own (and the space's non-chat threads), then others' shared chats.
+ * A thread is about the screen when one of its chips names the same thing; a
+ * field chip counts as its entry.
+ */
+export function groupThreads(threads: readonly AiThread[], screen: readonly AiThreadChip[] = []) {
+  const screenIds = new Set(screen.map((chip) => chip.id))
+  const onScreen = (thread: AiThread) =>
+    thread.context?.some((chip) => SCREEN_CHIP_TYPES.has(chip.type) && screenIds.has(chip.id)) ?? false
+
+  const page = threads.filter(onScreen)
+  const rest = threads.filter((thread) => !onScreen(thread))
   return {
-    mine: threads.filter((thread) => thread.is_owner || thread.kind !== 'chat'),
-    shared: threads.filter((thread) => !thread.is_owner && thread.kind === 'chat'),
+    page,
+    mine: rest.filter((thread) => thread.is_owner || thread.kind !== 'chat'),
+    shared: rest.filter((thread) => !thread.is_owner && thread.kind === 'chat'),
   }
 }
 
@@ -163,7 +189,8 @@ export function chipsToRunContext(chips: readonly AiThreadChip[]): Record<string
   }
 }
 
-export const sameChip = (a: AiThreadChip, b: AiThreadChip) => a.type === b.type && a.id === b.id
+export const sameChip = (a: AiThreadChip, b: AiThreadChip) =>
+  a.type === b.type && a.id === b.id && a.field === b.field
 
 export interface AiItemLocales {
   source: string
