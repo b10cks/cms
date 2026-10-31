@@ -90,7 +90,7 @@ class TeamWorkspaceTest extends TestCase
     #[Test]
     public function the_move_preview_lists_who_gains_and_loses_access_and_which_roles_change(): void
     {
-        $root = User::factory()->create(['is_root' => true]);
+        $root = $this->elevate(User::factory()->create(['is_root' => true]));
         $from = Team::factory()->create(['name' => 'From']);
         $to = Team::factory()->create(['name' => 'To']);
         $moved = Team::factory()->create(['parent_id' => $from->id]);

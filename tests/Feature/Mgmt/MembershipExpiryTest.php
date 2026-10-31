@@ -44,7 +44,7 @@ class MembershipExpiryTest extends TestCase
     #[Test]
     public function the_last_owner_cannot_get_an_end_date(): void
     {
-        $root = User::factory()->create(['is_root' => true]);
+        $root = $this->elevate(User::factory()->create(['is_root' => true]));
         $owner = User::factory()->create();
         $team = Team::factory()->create();
         $this->assignTeamRole($team, $owner, 'owner');

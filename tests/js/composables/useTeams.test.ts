@@ -314,7 +314,8 @@ describe('useCreateTeamMutation', () => {
 
     await mutations.createTeam.mutateAsync({ name: 'Platform' } as CreateTeamPayload)
 
-    expect(invalidate).toHaveBeenCalledTimes(3)
+    expect(invalidate).toHaveBeenCalledTimes(4)
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: queryKeys.teams.details() })
     expect(invalidate).toHaveBeenCalledWith({ queryKey: queryKeys.authorization.all() })
   })
 
