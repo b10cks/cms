@@ -8,7 +8,7 @@ use Illuminate\Support\Str;
 
 class ContentMenuCache
 {
-    private const int MENU_TTL_SECONDS = 86400;
+    private const int MENU_TTL_SECONDS = 3600;
 
     /**
      * Bump whenever the cached menu payload shape changes so stale-format
