@@ -4,8 +4,10 @@ namespace Tests\Feature\Ai;
 
 use App\Enums\AiChangesetItemStatus;
 use App\Enums\AiChangesetStatus;
+use App\Enums\AiKnowledgeType;
 use App\Enums\AiRunState;
 use App\Enums\AiThreadKind;
+use App\Models\Management\AiKnowledgeDocument;
 use App\Models\Management\AiSchedule;
 use App\Models\Management\Space;
 use App\Models\Space\AiChangeset;
@@ -162,6 +164,54 @@ class AiThreadTest extends TestCase
         $this->assertMatchesRegularExpression('/<proposals-(\w{8})>\n\{"entry":"Home","field":"title","status":"accepted_edited"\}\n<\/proposals-\1>/', $messages[3]['content']);
         $this->assertStringStartsWith('Third question', $messages[3]['content']);
         $this->assertNull($thread->refresh()->archived_at, 'A new turn unsettles the thread.');
+    }
+
+    #[Test]
+    public function a_stored_turn_lists_its_steps_answers_and_sources(): void
+    {
+        $thread = $this->thread([AiRunState::Completed]);
+        $document = AiKnowledgeDocument::create([
+            ...AiKnowledgeDocument::ownerAttributes($this->space),
+            'slug' => 'style',
+            'title' => 'Style guide',
+            'type' => AiKnowledgeType::Reference,
+            'draft' => '# Tone',
+        ]);
+        $sources = [
+            ['document_id' => $document->id, 'revision_id' => 'r1', 'title' => 'Style guide', 'heading' => 'Tone'],
+            ['document_id' => 'deleted', 'revision_id' => 'r2', 'title' => 'Old guide', 'heading' => null],
+        ];
+        AiRun::query()->where('conversation_id', $thread->id)->update(['setup' => json_encode(['sources' => $sources]), 'transcript' => json_encode([
+            ['role' => 'user', 'content' => 'Fix the title'],
+            ['role' => 'assistant', 'content' => '', 'tool_calls' => [
+                ['id' => 'call_1', 'name' => 'get_entry', 'arguments' => []],
+                ['id' => 'call_2', 'name' => 'propose_update', 'arguments' => []],
+            ]],
+            ['role' => 'tool', 'tool_call_id' => 'call_1', 'name' => 'get_entry', 'content' => '{"id":"c1"}'],
+            ['role' => 'tool', 'tool_call_id' => 'call_2', 'name' => 'propose_update', 'content' => '{"error":"invalid path"}'],
+            ['role' => 'assistant', 'content' => '', 'tool_calls' => [['id' => 'call_3', 'name' => 'ask_questions', 'arguments' => []]]],
+            ['role' => 'tool', 'tool_call_id' => 'call_3', 'name' => 'ask_questions', 'content' => json_encode(['answers' => [
+                ['id' => 'tone', 'question' => 'Which tone?', 'answer' => 'Friendly', 'skipped' => false],
+                ['id' => 'length', 'question' => 'How long?', 'answer' => null, 'skipped' => true],
+            ]])],
+            ['role' => 'assistant', 'content' => 'Done'],
+        ])]);
+
+        $this->getJson($this->url("ai/threads/{$thread->id}"))
+            ->assertOk()
+            ->assertJsonPath('data.turns.0.steps', [
+                ['id' => 'call_1', 'name' => 'get_entry', 'ok' => true],
+                ['id' => 'call_2', 'name' => 'propose_update', 'ok' => false],
+                ['id' => 'call_3', 'name' => 'ask_questions', 'ok' => true],
+            ])
+            ->assertJsonPath('data.turns.0.answers', [
+                ['question' => 'Which tone?', 'answer' => 'Friendly'],
+                ['question' => 'How long?', 'answer' => null],
+            ])
+            ->assertJsonPath('data.turns.0.sources', [
+                [...$sources[0], 'scope' => 'space', 'team_id' => null],
+                [...$sources[1], 'scope' => null, 'team_id' => null],
+            ]);
     }
 
     #[Test]

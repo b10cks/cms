@@ -198,6 +198,7 @@ class AiRunServiceTest extends TestCase
         $result = collect($run->refresh()->transcript)->firstWhere('role', 'tool')['content'];
         $this->assertStringContainsString('alpha plan', $result);
         $this->assertStringNotContainsString('beta plan', $result);
+        $this->assertSame([$document->id], array_column($run->setup['sources'], 'document_id'));
     }
 
     #[Test]

@@ -2,6 +2,8 @@
 
 namespace App\Services\Ai\Run;
 
+use App\Services\Ai\Tools\AskQuestionsTool;
+
 /**
  * Provider-neutral message list of a run. Drivers translate it into their wire
  * format; the run service appends to it and checkpoints it after every step.
@@ -135,6 +137,58 @@ final class Transcript
         }
 
         return '';
+    }
+
+    /**
+     * Tool calls that got a result, in order: the work log of a stored turn.
+     *
+     * @return list<array{id: string, name: string, ok: bool}>
+     */
+    public function steps(): array
+    {
+        $steps = [];
+
+        foreach ($this->messages as $message) {
+            if ($message['role'] === 'tool') {
+                $steps[] = [
+                    'id' => (string) ($message['tool_call_id'] ?? ''),
+                    'name' => (string) ($message['name'] ?? ''),
+                    'ok' => ! self::isErrorResult((string) ($message['content'] ?? '')),
+                ];
+            }
+        }
+
+        return $steps;
+    }
+
+    /**
+     * The user's answers to the run's questionnaires, in order, read from the
+     * `ask_questions` tool results. `answer` is the option label or own text.
+     *
+     * @return list<array{question: string, answer: string|null}>
+     */
+    public function answers(): array
+    {
+        $answers = [];
+
+        foreach ($this->messages as $message) {
+            if ($message['role'] !== 'tool' || ($message['name'] ?? null) !== AskQuestionsTool::NAME) {
+                continue;
+            }
+
+            $result = json_decode((string) ($message['content'] ?? ''), true);
+            foreach ($result['answers'] ?? [] as $line) {
+                $answers[] = ['question' => (string) $line['question'], 'answer' => $line['answer']];
+            }
+        }
+
+        return $answers;
+    }
+
+    /** Tools answer a failure with a JSON `error` object. */
+    public static function isErrorResult(string $result): bool
+    {
+        return str_starts_with($result, '{"error"');
     }
 
     /**

@@ -439,6 +439,7 @@ class AiRunService
             $tool = $tools->get($call->name);
             if ($tool instanceof ProvidesSources) {
                 foreach ($tool->takeSources() as $source) {
+                    $this->rememberSource($run, $source);
                     yield $this->emit($run, RunEventType::Source, ['source' => $source]);
                 }
             }
@@ -451,7 +452,7 @@ class AiRunService
             yield $this->emit($run, RunEventType::ToolFinished, [
                 'id' => $call->id,
                 'name' => $call->name,
-                'ok' => ! str_starts_with($result, '{"error"'),
+                'ok' => ! Transcript::isErrorResult($result),
             ]);
         }
 
@@ -751,6 +752,24 @@ class AiRunService
             ->update(['learned_at' => now()]);
 
         app(ChangesetRecorder::class)->record($run, $items, inline: true);
+    }
+
+    /**
+     * Keep each knowledge source once in the run setup; inline runs store no
+     * events, and the thread lists a turn's sources from here.
+     *
+     * @param  array<string, mixed>  $source
+     */
+    private function rememberSource(AiRun $run, array $source): void
+    {
+        $sources = $run->setup['sources'] ?? [];
+        foreach ($sources as $known) {
+            if ($known['document_id'] === $source['document_id'] && $known['heading'] === $source['heading']) {
+                return;
+            }
+        }
+
+        $run->setup = [...$run->setup, 'sources' => [...$sources, $source]];
     }
 
     private function checkpoint(AiRun $run, Transcript $transcript): void
