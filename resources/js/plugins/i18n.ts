@@ -169,6 +169,7 @@ export function useI18n() {
   return {
     t,
     $t: t,
+    te: composer.te.bind(composer),
     locale: composer.locale,
     locales,
     setLocale,

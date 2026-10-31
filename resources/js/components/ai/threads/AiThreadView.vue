@@ -24,6 +24,7 @@ import {
   MessageScrollerViewport,
 } from '~/components/ui/message-scroller'
 import { Skeleton } from '~/components/ui/skeleton'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '~/components/ui/tooltip'
 import {
   aiDock,
   aiThreadRunKey,
@@ -36,6 +37,7 @@ import {
 import type { AiQuestionnaireAnswers } from '~/lib/aiRun'
 import type { AiThreadChip } from '~/lib/aiThreads'
 import { chipsToRunContext, sameChip, THREAD_STATUS_STYLES } from '~/lib/aiThreads'
+import { runtimeConfig } from '~/lib/runtime-config'
 
 /**
  * A thread, or a new one when `threadId` is null: header with the thread
@@ -55,7 +57,7 @@ const emit = defineEmits<{
   created: [threadId: string]
 }>()
 
-const { t } = useI18n()
+const { t, getLocale } = useI18n()
 const { showAiError } = useAiErrorToast()
 const provided = inject(aiThreadRunKey)
 if (!provided) throw new Error('AiThreadView needs the thread run of the space layout')
@@ -89,6 +91,51 @@ const live = computed(() => {
 })
 const liveRunId = computed(() => (live.value ? run.runId.value : null))
 const turns = computed(() => (thread.value?.turns ?? []).filter((turn) => turn.run.id !== liveRunId.value))
+
+/** The questions the owner answers in the composer: the live run's, else the latest paused turn's. */
+const pending = computed(() => {
+  if (!isOwner.value) return null
+  const liveId = run.runId.value
+  if (live.value && liveId && run.status.value === 'awaiting_input' && run.questionnaire.value) {
+    return { runId: liveId, questionnaire: run.questionnaire.value }
+  }
+  const paused = turns.value.findLast((turn) => turn.run.state === 'awaiting_input' && turn.run.questionnaire)
+  return paused?.run.questionnaire ? { runId: paused.run.id, questionnaire: paused.run.questionnaire } : null
+})
+
+const { formatNumber } = useUsageFormatters()
+const usage = computed(() => {
+  const total = { input: 0, output: 0, cached: 0, steps: 0, cost: 0 }
+  for (const turn of thread.value?.turns ?? []) {
+    total.input += turn.run.usage.input_tokens
+    total.output += turn.run.usage.output_tokens
+    total.cached += turn.run.usage.cached_tokens
+    total.steps += turn.run.usage.steps
+    total.cost += turn.run.usage.cost_usd
+  }
+  return total.input + total.output > 0 ? total : null
+})
+const usageLabel = computed(() =>
+  usage.value
+    ? t('components.aiThreads.usage.tokens', {
+        count: new Intl.NumberFormat(getLocale(), { notation: 'compact' }).format(usage.value.input + usage.value.output),
+      })
+    : ''
+)
+const usageDetail = computed(() => {
+  if (!usage.value) return []
+  const lines = [
+    t('components.aiThreads.usage.input', { count: formatNumber(usage.value.input) }),
+    t('components.aiThreads.usage.output', { count: formatNumber(usage.value.output) }),
+    t('components.aiThreads.usage.cached', { count: formatNumber(usage.value.cached) }),
+    t('components.aiThreads.usage.steps', { count: formatNumber(usage.value.steps) }),
+  ]
+  if (runtimeConfig.public.features.ai) {
+    const cost = new Intl.NumberFormat(getLocale(), { style: 'currency', currency: 'USD', maximumFractionDigits: 4 })
+    lines.push(t('components.aiThreads.usage.cost', { cost: cost.format(usage.value.cost) }))
+  }
+  return lines
+})
 
 const composer = useTemplateRef<InstanceType<typeof AiThreadComposer>>('composer')
 const chips = ref<AiThreadChip[]>([])
@@ -238,6 +285,27 @@ const suggestionsBusy = computed(
       >
         {{ title }}
       </h2>
+      <TooltipProvider
+        v-if="usage"
+        :delay-duration="300"
+      >
+        <Tooltip>
+          <TooltipTrigger
+            type="button"
+            class="shrink-0 rounded-md px-1.5 text-sm text-muted tabular-nums hover:text-foreground"
+          >
+            {{ usageLabel }}
+          </TooltipTrigger>
+          <TooltipContent side="bottom">
+            <p
+              v-for="line in usageDetail"
+              :key="line"
+            >
+              {{ line }}
+            </p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
       <Badge
         v-if="thread?.archived"
         variant="surface"
@@ -361,12 +429,15 @@ const suggestionsBusy = computed(
                   :skill="turn.run.skill"
                   :state="turn.run.state"
                   :answer="turn.answer ?? turn.run.result?.text ?? null"
-                  :questionnaire="turn.run.questionnaire"
+                  :answers="turn.answers"
+                  :sources="turn.sources"
                   :error="turn.run.error"
                   :changeset="turn.changeset"
+                  :steps="turn.steps"
+                  :started-at="turn.run.started_at ?? null"
+                  :finished-at="turn.run.finished_at ?? null"
                   :can-act="isOwner"
-                  :busy="answerMutation.isPending.value || cancelMutation.isPending.value"
-                  @answer="(answers) => answer(turn.run.id, answers)"
+                  :busy="cancelMutation.isPending.value"
                   @cancel="cancel(turn.run.id)"
                 />
               </MessageScrollerItem>
@@ -381,18 +452,20 @@ const suggestionsBusy = computed(
                   :skill="live.skill"
                   :state="run.status.value === 'awaiting_input' ? 'awaiting_input' : run.isActive.value ? 'running' : 'completed'"
                   :answer="run.text.value || null"
-                  :questionnaire="run.questionnaire.value"
+                  :answers="[]"
+                  :sources="run.sources.value"
                   :error="null"
                   :changeset="null"
                   :steps="live.steps"
+                  :started-at="live.startedAt"
+                  :finished-at="null"
                   can-act
-                  @answer="(answers) => run.answer(answers)"
                   @cancel="run.cancel()"
                 />
               </MessageScrollerItem>
               <p
                 v-if="isNew && !live"
-                class="text-sm text-muted"
+                class="mt-auto pb-2 text-center text-sm text-muted"
               >
                 {{ $t('components.aiThreads.emptyThread') }}
               </p>
@@ -416,8 +489,10 @@ const suggestionsBusy = computed(
         :space-id="spaceId"
         :skills="skills ?? []"
         :ghost-chips="ghostChips"
-        :running="run.isActive.value"
+        :running="run.isActive.value || answerMutation.isPending.value"
+        :questionnaire="pending?.questionnaire ?? null"
         @send="send"
+        @answer="(answers) => pending && answer(pending.runId, answers)"
         @cancel="run.cancel()"
       />
     </div>

@@ -60,6 +60,9 @@ Settled 2026-10-27. Concept: "Threads" in `docs/concepts/native-ai-integration.m
   - Chrome (thread list, dock and thread headers) sits on `bg-sidebar`; the conversation body on `bg-background`, like the dashboard; the composer is the only card on it.
   - Composer: one rounded-2xl surface with a hairline outline and soft shadow; the config picker on the left of the footer, attach and the round send button on the right. The config picker trigger is a ghost label with a small chevron; its list shows name, model in muted text below, and a check.
   - Skills are not shown up front; `/` opens them.
+  - A paused run's questions are a tray inside the composer, above the editor, split by a hairline, one question at a time. Options are borderless rows with the tree highlight (`bg-tree-selected` selected, `hover:bg-tree-hover`) and a muted number hint on the right; 1 to 9 pick while the editor is empty. Typed text is an own answer and dims the options. Settled 2026-10-31.
+  - A turn reads: prompt bubble, work log, answered questions (muted question, answer below), the answer with a hover copy button, sources. The work log and sources are one muted line with a chevron ("Worked for 14s, 4 steps", "2 sources") that opens into an indented list on a hairline.
+  - The empty thread is one muted line centered above the composer. The thread header shows the thread's tokens as a muted label; the breakdown is in its tooltip, cost only on metered spaces.
 - AI settings (Skills, Knowledge, Schedules) have three nav entries. Each page has the title with the primary action top right; lists are one table with a type or source column. Glossary detail looks like a data source: one column per language, headed by the language name, not the locale code.
 
 ## Team area and provider console

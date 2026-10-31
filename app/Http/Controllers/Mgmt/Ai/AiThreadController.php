@@ -12,6 +12,7 @@ use App\Http\Resources\Management\Ai\AiGlossaryResource;
 use App\Http\Resources\Management\Ai\AiGlossarySuggestionResource;
 use App\Http\Resources\Management\Ai\AiRunResource;
 use App\Http\Resources\Management\Ai\AiThreadResource;
+use App\Models\Management\AiKnowledgeDocument;
 use App\Models\Management\Space;
 use App\Models\Space\AiAttachment;
 use App\Models\Space\AiChangeset;
@@ -120,15 +121,30 @@ class AiThreadController extends Controller
             ->get()
             ->keyBy('run_id');
 
-        return $runs->map(function (AiRun $run) use ($messages, $changesets, $attachments) {
+        $documentIds = $runs->flatMap(fn (AiRun $run) => array_column($run->setup['sources'] ?? [], 'document_id'))->unique();
+        $documents = $documentIds->isEmpty() ? collect() : AiKnowledgeDocument::query()
+            ->whereIn('id', $documentIds)
+            ->get(['id', 'scope', 'team_id'])
+            ->keyBy('id');
+
+        return $runs->map(function (AiRun $run) use ($messages, $changesets, $attachments, $documents) {
             $question = $messages->get($run->id)?->firstWhere('role', 'user');
             $changeset = $changesets->get($run->id)?->setRelation('run', $run);
+            $transcript = $run->transcriptObject();
 
             return [
                 'run' => new AiRunResource($run),
                 'prompt' => $question?->content,
                 'attachments' => AiAttachmentResource::collection($attachments->get($question?->id, collect())),
                 'answer' => $messages->get($run->id)?->firstWhere('role', 'assistant')?->content,
+                'steps' => $transcript->steps(),
+                'answers' => $transcript->answers(),
+                // Scope and team let the client link the document; a deleted one stays unlinked.
+                'sources' => array_map(fn (array $source) => [
+                    ...$source,
+                    'scope' => $documents->get($source['document_id'])?->scope->value,
+                    'team_id' => $documents->get($source['document_id'])?->team_id,
+                ], $run->setup['sources'] ?? []),
                 'changeset' => $changeset ? new AiChangesetResource($changeset) : null,
             ];
         })->all();

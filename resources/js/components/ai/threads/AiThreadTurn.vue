@@ -1,20 +1,24 @@
 <script setup lang="ts">
-import AiQuestionnaireForm from '~/components/ai/AiQuestionnaireForm.vue'
+import { useClipboard } from '@vueuse/core'
+
 import AiThreadChangeset from '~/components/ai/threads/AiThreadChangeset.vue'
+import AiThreadSources from '~/components/ai/threads/AiThreadSources.vue'
+import AiThreadWorkLog from '~/components/ai/threads/AiThreadWorkLog.vue'
 import Icon from '~/components/Icon.vue'
 import Markdown from '~/components/Markdown.vue'
 import { Button } from '~/components/ui/button'
 import { Message, MessageContent } from '~/components/ui/message'
 import type { AiAttachment } from '~/lib/aiAttachments'
 import type { AiChangeset } from '~/lib/aiChangesets'
-import type { AiQuestionnaire, AiQuestionnaireAnswers, AiRunState } from '~/lib/aiRun'
+import type { AiRunState, AiSource } from '~/lib/aiRun'
 import { aiSkillLabel } from '~/lib/aiSkills'
-import type { AiThreadStep } from '~/lib/aiThreads'
+import type { AiRunStep, AiThreadAnswer, AiThreadSource, AiThreadStep } from '~/lib/aiThreads'
 
 /**
- * One turn of a thread: the prompt with its attachments, the steps while it runs, the answer, a
- * questionnaire when it paused and its changeset as cards. The live run and
- * stored turns render through the same props.
+ * One turn of a thread: the prompt with its attachments, the work log, the
+ * questions it asked with their answers, the answer with its sources and its
+ * changeset as cards. A paused run's questions are answered in the composer.
+ * The live run and stored turns render through the same props.
  */
 const props = defineProps<{
   spaceId: string
@@ -23,17 +27,19 @@ const props = defineProps<{
   skill: string | null
   state: AiRunState
   answer: string | null
-  questionnaire: AiQuestionnaire | null
+  answers: readonly AiThreadAnswer[]
+  sources: readonly (AiSource | AiThreadSource)[]
   error: string | null
   changeset: AiChangeset | null
-  steps?: readonly AiThreadStep[]
+  steps: readonly (AiRunStep | AiThreadStep)[]
+  startedAt: string | number | null
+  finishedAt: string | null
   /** Only the owner answers and cancels */
   canAct: boolean
   busy?: boolean
 }>()
 
 const emit = defineEmits<{
-  answer: [answers: AiQuestionnaireAnswers]
   cancel: []
 }>()
 
@@ -49,6 +55,8 @@ const images = computed(() => props.attachments.filter((attachment) => attachmen
 const documents = computed(() =>
   props.attachments.filter((attachment) => attachment.kind === 'document')
 )
+
+const { copy, copied } = useClipboard({ legacy: true })
 
 const hasItems = computed(() => (props.changeset?.items?.length ?? 0) > 0)
 </script>
@@ -105,41 +113,19 @@ const hasItems = computed(() => (props.changeset?.items?.length ?? 0) > 0)
       </MessageContent>
     </Message>
 
-    <ul
-      v-if="steps?.length"
-      class="grid gap-1 text-sm text-muted"
-      :aria-label="$t('components.aiThreads.steps')"
-    >
-      <li
-        v-for="step in steps"
-        :key="step.id"
-        class="flex items-center gap-2"
-      >
-        <Icon
-          :name="!step.done ? 'lucide:loader' : step.ok ? 'lucide:check' : 'lucide:x'"
-          :class="!step.done && 'animate-spin'"
-        />
-        <span class="truncate">{{
-          $t('components.aiThreads.usingTool', { tool: step.name })
-        }}</span>
-      </li>
-    </ul>
-
-    <Markdown
-      v-if="answer"
-      :content="answer"
-      class="max-w-none text-sm leading-relaxed"
-    />
-    <div
-      v-if="state === 'running'"
-      class="flex items-center gap-3 text-sm"
-      role="status"
-    >
-      <span class="ai-animate-text">{{ $t('components.aiText.thinking') }}</span>
+    <div class="flex items-start gap-3">
+      <AiThreadWorkLog
+        class="min-w-0 flex-1"
+        :steps="steps"
+        :running="state === 'running'"
+        :started-at="startedAt"
+        :finished-at="finishedAt"
+      />
       <Button
-        v-if="canAct"
+        v-if="state === 'running' && canAct"
         size="xs"
         variant="ghost"
+        class="-my-1"
         :disabled="busy"
         @click="emit('cancel')"
       >
@@ -147,14 +133,54 @@ const hasItems = computed(() => (props.changeset?.items?.length ?? 0) > 0)
       </Button>
     </div>
 
-    <AiQuestionnaireForm
-      v-if="state === 'awaiting_input' && questionnaire && canAct"
-      :questionnaire="questionnaire"
-      :disabled="busy"
-      @submit="(answers) => emit('answer', answers)"
+    <dl
+      v-if="answers.length > 0"
+      class="grid gap-2 text-sm"
+    >
+      <div
+        v-for="(line, position) in answers"
+        :key="position"
+        class="grid gap-0.5"
+      >
+        <dt class="text-muted">{{ line.question }}</dt>
+        <dd :class="line.answer === null && 'text-muted'">
+          {{ line.answer ?? $t('components.aiThreads.questions.skipped') }}
+        </dd>
+      </div>
+    </dl>
+
+    <div
+      v-if="answer"
+      class="group/answer grid gap-1"
+    >
+      <Markdown
+        :content="answer"
+        class="max-w-none text-sm leading-relaxed"
+      />
+      <div
+        v-if="state !== 'running'"
+        class="flex opacity-0 transition-opacity group-hover/answer:opacity-100 focus-within:opacity-100"
+      >
+        <Button
+          size="toolbar"
+          variant="ghost"
+          class="-ml-2 text-muted"
+          :title="copied ? $t('components.aiThreads.copied') : $t('components.aiThreads.copyAnswer')"
+          :aria-label="$t('components.aiThreads.copyAnswer')"
+          @click="copy(answer)"
+        >
+          <Icon :name="copied ? 'lucide:check' : 'lucide:copy'" />
+        </Button>
+      </div>
+    </div>
+
+    <AiThreadSources
+      :space-id="spaceId"
+      :sources="sources"
     />
+
     <p
-      v-else-if="state === 'awaiting_input'"
+      v-if="state === 'awaiting_input' && !canAct"
       class="text-sm text-muted"
     >
       {{ $t('components.aiThreads.waitingForOwner') }}
