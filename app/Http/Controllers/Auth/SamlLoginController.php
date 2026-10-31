@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Auth;
 use App\Models\Management\Team;
 use App\Models\Management\TeamSamlProvider;
 use App\Services\Auth\SamlLoginService;
-use App\Services\Team\TeamDomainService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -19,10 +18,7 @@ class SamlLoginController extends AuthController
 
     private const string REQUEST_ID = 'auth.saml.request_id.';
 
-    public function __construct(
-        private readonly SamlLoginService $samlLoginService,
-        private readonly TeamDomainService $domains,
-    ) {}
+    public function __construct(private readonly SamlLoginService $samlLoginService) {}
 
     public function redirect(Request $request, Team $team): RedirectResponse
     {
@@ -57,7 +53,6 @@ class SamlLoginController extends AuthController
 
             Auth::guard('web')->login($user);
             $this->updateUserLogin($user);
-            $this->domains->joinThroughDomain($user);
             $request->session()->regenerate();
 
             return redirect()->to($returnTo);

@@ -12,7 +12,6 @@ use App\Models\User;
 use App\Services\Provider\ProviderMetricsService;
 use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\DB;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -92,73 +91,13 @@ class ProviderMetricsTest extends TestCase
     }
 
     #[Test]
-    public function ai_revenue_is_the_included_credit_and_margin_weighs_spend_so_far(): void
-    {
-        $team = Team::factory()->create();
-        $using = $this->space($team);
-        $this->period($using, $this->pro, '2026-09-01', price: 100);
-        $this->period($this->space($team), $this->pro, '2026-09-01', price: 100);
-        DB::table('space_activity_daily')->insert([
-            'space_id' => $using->id, 'day' => '2026-10-03', 'ai_runs' => 2, 'ai_cost_usd' => 4,
-        ]);
-
-        $ai = $this->getJson(route('mgmt.provider.metrics'))->assertOk()->json('data.ai');
-
-        $this->assertEqualsWithDelta(20, $ai['revenue_usd']['current'], 0.001);
-        $this->assertEqualsWithDelta(4, $ai['spend_usd']['current'], 0.001);
-        // 14.5 of October's 31 days have passed: 20 * 14.5 / 31 earned so far.
-        $earned = 20 * 14.5 / 31;
-        $this->assertEqualsWithDelta(($earned - 4) / $earned, $ai['margin']['current'], 0.001);
-        $this->assertEqualsWithDelta(0.5, $ai['spaces_using_ai']['current'], 0.001);
-    }
-
-    #[Test]
-    public function activation_counts_spaces_publishing_within_fourteen_days(): void
-    {
-        $fast = Space::factory()->create(['created_at' => '2026-09-01 09:00:00']);
-        $slow = Space::factory()->create(['created_at' => '2026-09-02 09:00:00']);
-        Space::factory()->create(['created_at' => '2026-09-03 09:00:00']);
-        // Younger than 14 days: no verdict yet.
-        Space::factory()->create(['created_at' => '2026-10-10 09:00:00']);
-        DB::table('space_activity_daily')->insert([
-            ['space_id' => $fast->id, 'day' => '2026-09-10', 'entries_published' => 3],
-            ['space_id' => $slow->id, 'day' => '2026-09-30', 'entries_published' => 1],
-        ]);
-
-        $growth = $this->getJson(route('mgmt.provider.metrics'))->assertOk()->json('data.growth');
-
-        $this->assertEqualsWithDelta(1 / 3, $growth['activation']['series'][self::SEP], 0.001);
-        $this->assertNull($growth['activation']['series'][11]);
-        $this->assertEqualsWithDelta(1 / 3, $growth['activation']['current'], 0.001);
-        // Flows compare month to date: October's one space against 1 to 15 September.
-        $this->assertEquals(1, $growth['new_spaces']['current']);
-        $this->assertEquals(3, $growth['new_spaces']['previous']);
-    }
-
-    #[Test]
-    public function weekly_active_editors_count_distinct_people_over_seven_days(): void
-    {
-        DB::table('editor_activity_daily')->insert([
-            ['user_id' => 'a', 'day' => '2026-10-09'],
-            ['user_id' => 'a', 'day' => '2026-10-14'],
-            ['user_id' => 'b', 'day' => '2026-10-15'],
-            ['user_id' => 'c', 'day' => '2026-10-08'],
-        ]);
-
-        $editors = $this->getJson(route('mgmt.provider.metrics'))->assertOk()->json('data.engagement.weekly_active_editors');
-
-        $this->assertEquals(2, $editors['current']);
-    }
-
-    #[Test]
-    public function self_hosted_omits_revenue_and_ai(): void
+    public function self_hosted_omits_revenue(): void
     {
         config(['edition.features.billing' => false]);
 
         $data = $this->getJson(route('mgmt.provider.metrics', ['range' => '6m']))->assertOk()->json('data');
 
         $this->assertArrayNotHasKey('revenue', $data);
-        $this->assertArrayNotHasKey('ai', $data);
         $this->assertCount(6, $data['months']);
         $this->assertArrayHasKey('engagement', $data);
     }

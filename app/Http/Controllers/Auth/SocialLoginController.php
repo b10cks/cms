@@ -9,7 +9,6 @@ use App\Models\User;
 use App\Models\User\UserSocialLink;
 use App\Notifications\User\VerifyEmailNotification;
 use App\Services\Auth\TwoFactorAuthService;
-use App\Services\Team\TeamDomainService;
 use App\Support\EditionGate;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -46,7 +45,6 @@ class SocialLoginController extends AuthController
         private readonly CreateUser $createUser,
         private readonly AcceptInvite $acceptInvite,
         private readonly TwoFactorAuthService $twoFactorService,
-        private readonly TeamDomainService $domains,
     ) {}
 
     public function redirect(Request $request, string $provider): RedirectResponse
@@ -129,16 +127,6 @@ class SocialLoginController extends AuthController
                 ->redirectUrl(route('auth.social.callback', ['provider' => $provider]))
                 ->user();
 
-            // Before resolveUser, which may create the account.
-            $email = $this->emailFrom($socialUser);
-            $ssoTeam = $this->domains->ssoRequiredTeam($email, User::query()->where('email', $email)->first());
-            if ($ssoTeam) {
-                return redirect()->to($this->loginPath($request, [
-                    'sso_required' => $ssoTeam->id,
-                    'return' => $this->safeReturnPath($request->session()->get(self::RETURN_TO)),
-                ]));
-            }
-
             $user = DB::transaction(fn () => $this->resolveUser($provider, $socialUser, $request));
 
             if ($user->hasEnabledTwoFactor()) {
@@ -152,7 +140,6 @@ class SocialLoginController extends AuthController
 
             Auth::guard('web')->login($user);
             $this->updateUserLogin($user);
-            $this->domains->joinThroughDomain($user);
             $request->session()->regenerate();
 
             return redirect()->to($this->safeReturnPath($request->session()->pull(self::RETURN_TO)));
@@ -200,7 +187,6 @@ class SocialLoginController extends AuthController
 
         Auth::guard('web')->login($user);
         $this->updateUserLogin($user);
-        $this->domains->joinThroughDomain($user);
         $request->session()->forget(self::PENDING_2FA_USER_ID);
         $request->session()->regenerate();
 

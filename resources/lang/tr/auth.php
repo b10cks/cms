@@ -45,5 +45,4 @@ return [
     'social_link_already_used' => 'Bu sosyal profil zaten başka bir hesaba bağlı.',
     'social_link_required' => 'Bu e-posta adresi zaten başka bir hesap tarafından kullanılıyor. Şifrenizle oturum açın, sonra bu sosyal profili hesap ayarlarınızdan bağlayın.',
     'suspended' => 'Bu hesap askıya alındı. Bu kurulumun operatörüyle iletişime geçin.',
-    'sso_required' => 'Kuruluşunuz çoklu oturum açma gerektiriyor. Bunun yerine :team SSO ile oturum açın.',
 ];

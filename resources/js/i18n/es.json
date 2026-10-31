@@ -3013,10 +3013,6 @@
         "empty": "No hay nada pendiente.",
         "open": "Abrir",
         "types": {
-          "join_requests": {
-            "title": "{count} personas pidieron unirse | {count} persona pidió unirse | {count} personas pidieron unirse",
-            "action": "Revisar"
-          },
           "expiring_access": {
             "title": "El acceso vence para {count} personas | El acceso vence para {count} persona | El acceso vence para {count} personas",
             "action": "Revisar"
@@ -5310,74 +5306,6 @@
         "steps": "Steps: {count}",
         "cost": "Cost: {cost}"
       }
-    },
-    "teamDomains": {
-      "title": "Dominios",
-      "description": "Verifique los dominios de correo de su organización. Quien inicie sesión con una dirección coincidente puede solicitar unirse, unirse automáticamente o debe usar su SSO.",
-      "add": "Añadir dominio",
-      "verify": "Verificar",
-      "empty": "Aún no hay dominios.",
-      "fields": {
-        "domain": "Dominio",
-        "domainPlaceholder": "ejemplo.com",
-        "domainHint": "No se pueden añadir proveedores de correo públicos como gmail.com.",
-        "txtHost": "Host del registro TXT",
-        "txtValue": "Valor del registro TXT"
-      },
-      "columns": {
-        "domain": "Dominio",
-        "status": "Estado",
-        "policy": "Al iniciar sesión",
-        "defaultRole": "Rol predeterminado"
-      },
-      "status": {
-        "verified": "Verificado",
-        "pending": "Sin verificar"
-      },
-      "policies": {
-        "request": "Solicitar unirse",
-        "auto_join": "Unirse automáticamente",
-        "require_sso": "Exigir SSO"
-      },
-      "txtInstructions": "Añada este registro TXT en su proveedor de DNS y pulse Verificar. Los cambios de DNS pueden tardar en aparecer.",
-      "removeConfirm": {
-        "title": "Quitar dominio",
-        "message": "¿Quitar {domain}? Las personas de este dominio ya no podrán solicitar unirse y dejará de exigírseles el SSO.",
-        "confirm": "Quitar"
-      },
-      "toast": {
-        "failed": "No ha funcionado: {error}",
-        "verified": "{domain} está verificado."
-      },
-      "requests": {
-        "title": "Solicitudes de acceso",
-        "description": "Personas de sus dominios verificados que han pedido unirse a este equipo.",
-        "empty": "No hay solicitudes abiertas.",
-        "approve": "Aprobar",
-        "decline": "Rechazar",
-        "columns": {
-          "person": "Persona",
-          "domain": "Dominio",
-          "requested": "Solicitado",
-          "role": "Rol"
-        },
-        "declineConfirm": {
-          "title": "Rechazar solicitud",
-          "message": "¿Rechazar la solicitud de {name}? No podrá enviar otra."
-        }
-      },
-      "join": {
-        "title": "Unirse a {team}",
-        "description": "Su dirección de correo en {domain} le permite solicitar unirse a este equipo.",
-        "pending": "Solicitud enviada. Un propietario del equipo la revisará.",
-        "declined": "El equipo rechazó su solicitud. Pida una invitación a un propietario.",
-        "request": "Solicitar unirse",
-        "cancel": "Cancelar solicitud"
-      },
-      "login": {
-        "ssoRequired": "Su organización exige el inicio de sesión único para esta dirección de correo.",
-        "continueWithSso": "Continuar con SSO"
-      }
     }
   },
   "alertDialog": {
@@ -6200,8 +6128,7 @@
     "sections": {
       "revenue": "Ingresos",
       "growth": "Crecimiento",
-      "engagement": "Uso y entrega",
-      "ai": "IA"
+      "engagement": "Uso y entrega"
     },
     "tiles": {
       "mrr": "MRR",
@@ -6212,15 +6139,8 @@
       "new_users": "Usuarios nuevos",
       "new_spaces": "Espacios nuevos",
       "new_teams": "Equipos nuevos",
-      "activation": "Activación",
-      "weekly_active_editors": "Editores activos semanales",
-      "entries_published": "Entradas publicadas",
       "api_requests": "Solicitudes a la API",
-      "traffic": "Tráfico servido",
-      "ai_revenue": "Ingresos de IA",
-      "model_spend": "Gasto en modelos",
-      "ai_margin": "Margen de IA",
-      "spaces_using_ai": "Espacios que usan IA"
+      "traffic": "Tráfico servido"
     },
     "details": {
       "arr": "ARR {value}",
@@ -6229,14 +6149,8 @@
       "per_team": "Por equipo de pago",
       "churn": "Mensual, pérdida de clientes {rate}",
       "this_month": "Este mes",
-      "activation": "Espacios que publican en 14 días",
-      "editors": "Editado o publicado en 7 días",
       "api": "Delivery API, este mes",
-      "traffic": "CDN, este mes",
-      "ai_revenue": "Crédito de IA incluido en los planes",
-      "spend": "Registrado en todos los espacios",
-      "margin": "Ingresos menos gasto",
-      "using_ai": "{count} de {total} espacios de pago"
+      "traffic": "CDN, este mes"
     },
     "change": {
       "mom": "Comparado con el mes pasado",
@@ -6247,8 +6161,7 @@
       "revenue_by_plan": "Ingresos por plan",
       "sign_ups": "Registros",
       "retention": "Retención de ingresos",
-      "retention_meta": "por mes de inicio",
-      "ai": "Ingresos y gasto de IA"
+      "retention_meta": "por mes de inicio"
     },
     "series": {
       "new": "Nuevo",
@@ -6256,9 +6169,7 @@
       "churn": "Pérdida",
       "users": "Usuarios",
       "spaces": "Espacios",
-      "teams": "Equipos",
-      "ai_revenue": "Ingresos de IA",
-      "spend": "Gasto en modelos"
+      "teams": "Equipos"
     },
     "retention": {
       "month": "M{n}"

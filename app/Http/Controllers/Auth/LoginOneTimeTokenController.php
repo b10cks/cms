@@ -2,15 +2,13 @@
 
 namespace App\Http\Controllers\Auth;
 
-use App\Exceptions\SsoRequiredException;
 use App\Models\User;
-use App\Services\Team\TeamDomainService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class LoginOneTimeTokenController extends AuthController
 {
-    public function __invoke(Request $request, TeamDomainService $domains)
+    public function __invoke(Request $request)
     {
         $request->validate([
             'email' => 'required|email:rfc,filter',
@@ -29,10 +27,6 @@ class LoginOneTimeTokenController extends AuthController
         $tokens = \Cache::get($cacheKey, []);
         if (!in_array($request->token, $tokens)) {
             return response(['message' => __('auth.failed')], 401);
-        }
-
-        if ($ssoTeam = $domains->ssoRequiredTeam($user->email, $user)) {
-            throw new SsoRequiredException($ssoTeam);
         }
 
         Auth::guard('web')->login($user);
@@ -60,7 +54,6 @@ class LoginOneTimeTokenController extends AuthController
         }
 
         $this->updateUserLogin($user);
-        $domains->joinThroughDomain($user);
         \Cache::delete($cacheKey);
         if ($request->hasSession()) {
             $request->session()->regenerate();

@@ -4,7 +4,6 @@ namespace App\Services\Team\Attention;
 
 use App\Models\User;
 use App\Services\Team\Attention\Checks\ExpiringAccess;
-use App\Services\Team\Attention\Checks\PendingJoinRequests;
 use App\Services\Team\Attention\Checks\SamlCertificateExpiry;
 use App\Services\Team\Attention\Checks\StaleInvites;
 use App\Services\Team\Attention\Checks\TeamsWithoutOwner;
@@ -19,7 +18,6 @@ class TeamAttentionCollector
 {
     /** @var array<int, class-string<AttentionCheck>> */
     public const CHECKS = [
-        PendingJoinRequests::class,
         ExpiringAccess::class,
         StaleInvites::class,
         SamlCertificateExpiry::class,

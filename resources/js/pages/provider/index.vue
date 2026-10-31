@@ -59,7 +59,6 @@ const money = (currency: string) => (value: number) =>
     maximumFractionDigits: Math.abs(value) < 1000 ? 0 : 1,
   })
 const eur = money('EUR')
-const usd = money('USD')
 const percent = (fraction: number) => `${formatNumber(fraction * 100, fraction < 0.1 ? 1 : 0)}%`
 
 type Change = { value: number; label: string; title?: string; inverse?: boolean }
@@ -189,7 +188,7 @@ const revenueTiles = computed(() => {
 
 const growthTiles = computed(() => {
   const growth = data.value?.growth
-  if (!growth) return loading(['new_users', 'new_spaces', 'new_teams', 'activation'])
+  if (!growth) return loading(['new_users', 'new_spaces', 'new_teams'])
   const thisMonth = t('providerDashboard.details.this_month')
   return [
     tile({ key: 'new_users', metric: growth.new_users, format: compact, detail: thisMonth }),
@@ -207,33 +206,13 @@ const growthTiles = computed(() => {
       detail: thisMonth,
       color: 'var(--series-3)',
     }),
-    tile({
-      key: 'activation',
-      metric: growth.activation,
-      format: percent,
-      kind: 'points',
-      detail: t('providerDashboard.details.activation'),
-    }),
   ]
 })
 
 const engagementTiles = computed(() => {
   const engagement = data.value?.engagement
-  if (!engagement)
-    return loading(['weekly_active_editors', 'entries_published', 'api_requests', 'traffic'])
+  if (!engagement) return loading(['api_requests', 'traffic'])
   return [
-    tile({
-      key: 'weekly_active_editors',
-      metric: engagement.weekly_active_editors,
-      format: compact,
-      detail: t('providerDashboard.details.editors'),
-    }),
-    tile({
-      key: 'entries_published',
-      metric: engagement.entries_published,
-      format: compact,
-      detail: t('providerDashboard.details.this_month'),
-    }),
     tile({
       key: 'api_requests',
       metric: engagement.api_requests,
@@ -245,44 +224,6 @@ const engagementTiles = computed(() => {
       metric: engagement.traffic_bytes,
       format: formatFileSize,
       detail: t('providerDashboard.details.traffic'),
-    }),
-  ]
-})
-
-const aiTiles = computed(() => {
-  const ai = data.value?.ai
-  if (!ai) return loading(['ai_revenue', 'model_spend', 'ai_margin', 'spaces_using_ai'])
-  return [
-    tile({
-      key: 'ai_revenue',
-      metric: ai.revenue_usd,
-      format: usd,
-      detail: t('providerDashboard.details.ai_revenue'),
-    }),
-    tile({
-      key: 'model_spend',
-      metric: ai.spend_usd,
-      format: usd,
-      color: 'var(--series-2)',
-      detail: t('providerDashboard.details.spend'),
-    }),
-    tile({
-      key: 'ai_margin',
-      metric: ai.margin,
-      format: percent,
-      kind: 'points',
-      color: 'var(--series-3)',
-      detail: t('providerDashboard.details.margin'),
-    }),
-    tile({
-      key: 'spaces_using_ai',
-      metric: ai.spaces_using_ai,
-      format: percent,
-      kind: 'points',
-      detail: t('providerDashboard.details.using_ai', {
-        count: compact(ai.spaces_using_ai_count.current ?? 0),
-        total: compact(data.value?.revenue?.paying_spaces.current ?? 0),
-      }),
     }),
   ]
 })
@@ -337,21 +278,6 @@ const signUpSeries = computed(() => {
     },
   ]
 })
-
-const aiSeries = computed(() => [
-  {
-    key: 'revenue',
-    label: t('providerDashboard.series.ai_revenue'),
-    color: 'var(--series-1)',
-    values: values(data.value?.ai?.revenue_usd),
-  },
-  {
-    key: 'spend',
-    label: t('providerDashboard.series.spend'),
-    color: 'var(--series-2)',
-    values: values(data.value?.ai?.spend_usd),
-  },
-])
 
 const plans = computed(() =>
   (data.value?.revenue?.by_plan ?? []).map((plan) => ({ name: plan.name, count: plan.mrr }))
@@ -513,7 +439,7 @@ function exportPdf() {
         <h2 class="text-panel font-semibold text-primary select-none">
           {{ t('providerDashboard.sections.growth') }}
         </h2>
-        <dl class="grid grid-cols-2 gap-4 xl:grid-cols-4">
+        <dl class="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <StatTile
             v-for="item in growthTiles"
             v-bind="item"
@@ -559,7 +485,7 @@ function exportPdf() {
         <h2 class="text-panel font-semibold text-primary select-none">
           {{ t('providerDashboard.sections.engagement') }}
         </h2>
-        <dl class="grid grid-cols-2 gap-4 xl:grid-cols-4">
+        <dl class="grid grid-cols-2 gap-4">
           <StatTile
             v-for="item in engagementTiles"
             v-bind="item"
@@ -569,35 +495,6 @@ function exportPdf() {
         </dl>
       </section>
 
-      <section
-        v-if="billing"
-        class="grid gap-4"
-      >
-        <h2 class="text-panel font-semibold text-primary select-none">
-          {{ t('providerDashboard.sections.ai') }}
-        </h2>
-        <dl class="grid grid-cols-2 gap-4 xl:grid-cols-4">
-          <StatTile
-            v-for="item in aiTiles"
-            v-bind="item"
-            :key="item.key"
-            :periods="periods"
-          />
-        </dl>
-        <Panel :title="t('providerDashboard.panels.ai')">
-          <TrendChart
-            v-if="data"
-            :periods="periods"
-            :series="aiSeries"
-            :format="usd"
-            :height="176"
-          />
-          <Skeleton
-            v-else
-            class="h-[236px] w-full"
-          />
-        </Panel>
-      </section>
     </div>
   </div>
 </template>

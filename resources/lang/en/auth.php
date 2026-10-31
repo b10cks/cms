@@ -45,5 +45,4 @@ return [
     'social_link_already_used' => 'This social profile is already linked to another account.',
     'social_link_required' => 'An account already uses this email address. Sign in with your password, then link this social profile from your account settings.',
     'suspended' => 'This account is suspended. Contact the operator of this instance.',
-    'sso_required' => 'Your organisation requires single sign-on. Sign in with :team SSO instead.',
 ];

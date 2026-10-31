@@ -78,10 +78,4 @@ class TeamPolicy
     {
         return $user->isElevatedRoot() || $this->hasAnyTeamRole($user, $team, ['owner']);
     }
-
-    /** Verified email domains decide who may join or must use SSO, so owners only. */
-    public function manageDomains(User $user, Team $team): bool
-    {
-        return $this->canInTeam($user, $team, 'team.domains.manage');
-    }
 }

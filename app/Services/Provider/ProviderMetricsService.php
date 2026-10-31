@@ -20,13 +20,13 @@ use Illuminate\Support\Facades\DB;
  * the app timezone; the last one is the current, partial month.
  *
  * Every figure is a {@see self::metric()}: the series over the range plus the
- * current value and the values to compare it with. Flows (sign-ups, publishes,
- * requests, spend) compare month-to-date with the same days of the previous
+ * current value and the values to compare it with. Flows (sign-ups, requests,
+ * traffic) compare month-to-date with the same days of the previous
  * month and of the month a year ago, so the first days of a month don't read
  * as a collapse. Stocks (MRR, paying spaces, rates) compare with the value at
  * the end of those months.
  *
- * Revenue and AI are omitted when billing is off (self-hosted).
+ * Revenue is omitted when billing is off (self-hosted).
  */
 class ProviderMetricsService
 {
@@ -34,8 +34,6 @@ class ProviderMetricsService
     public const RANGES = ['6m' => 6, '12m' => 12, '24m' => 24, 'ytd' => null];
 
     private const CACHE_TTL = 900;
-
-    private const ACTIVATION_DAYS = 14;
 
     private const COHORT_MONTHS = 12;
 
@@ -55,7 +53,7 @@ class ProviderMetricsService
     {
         $billing = EditionGate::billingEnabled() ? 'billing' : 'free';
 
-        return Cache::remember("provider.metrics.v1.{$range}.{$billing}", self::CACHE_TTL, fn () => $this->build($range));
+        return Cache::remember("provider.metrics.v2.{$range}.{$billing}", self::CACHE_TTL, fn () => $this->build($range));
     }
 
     /**
@@ -85,10 +83,6 @@ class ProviderMetricsService
         $payload['growth'] = $this->growth();
         $payload['engagement'] = $this->engagement();
 
-        if (isset($snapshots)) {
-            $payload['ai'] = $this->ai($snapshots);
-        }
-
         return $payload;
     }
 
@@ -99,7 +93,7 @@ class ProviderMetricsService
      * current one), from the paid billing periods. A yearly period counts a
      * twelfth of its price; a trial counts from the day it ends.
      *
-     * @return array{months: list<CarbonImmutable>, space: array<string, array<string, float>>, account: array<string, array<string, float>>, ai: array<string, float>, plan: array<string, string>, names: array<string, string>}
+     * @return array{months: list<CarbonImmutable>, space: array<string, array<string, float>>, account: array<string, array<string, float>>, plan: array<string, string>, names: array<string, string>}
      */
     private function snapshots(): array
     {
@@ -122,7 +116,6 @@ class ProviderMetricsService
                         'forever' => 0.0,
                         default => (float) $period->price,
                     },
-                    'ai' => (float) (is_array($quotas) ? ($quotas['aiCredit'] ?? 0) : 0),
                     'from' => ($trialEnd !== null && $trialEnd->gt($start) ? $trialEnd : $start)->getTimestamp(),
                     'to' => $period->ended_at ? CarbonImmutable::parse($period->ended_at)->getTimestamp() : PHP_INT_MAX,
                 ];
@@ -140,7 +133,6 @@ class ProviderMetricsService
 
         $space = [];
         $account = [];
-        $ai = [];
         $plan = [];
         $names = [];
         foreach ($months as $month) {
@@ -148,7 +140,6 @@ class ProviderMetricsService
             $at = min($month->addMonth(), $this->now)->getTimestamp();
             $space[$key] = [];
             $account[$key] = [];
-            $ai[$key] = 0.0;
 
             foreach ($periods as $period) {
                 if ($period['from'] > $at || $period['to'] <= $at) {
@@ -157,7 +148,6 @@ class ProviderMetricsService
                 $space[$key][$period['space']] = ($space[$key][$period['space']] ?? 0) + $period['mrr'];
                 $owner = $accounts[$period['space']];
                 $account[$key][$owner] = ($account[$key][$owner] ?? 0) + $period['mrr'];
-                $ai[$key] += $period['ai'];
 
                 if ($month->equalTo($this->current)) {
                     $plan[$period['space']] = $period['plan'];
@@ -166,7 +156,7 @@ class ProviderMetricsService
             }
         }
 
-        return compact('months', 'space', 'account', 'ai', 'plan', 'names');
+        return compact('months', 'space', 'account', 'plan', 'names');
     }
 
     /**
@@ -316,38 +306,10 @@ class ProviderMetricsService
 
     private function growth(): array
     {
-        $from = $this->window[0];
-
-        $spaces = Space::query()
-            ->where('created_at', '>=', $from)
-            ->where('created_at', '<=', $this->now->subDays(self::ACTIVATION_DAYS))
-            ->get(['id', 'created_at']);
-        $firstPublish = DB::table('space_activity_daily')
-            ->whereIn('space_id', $spaces->modelKeys())
-            ->where('entries_published', '>', 0)
-            ->groupBy('space_id')
-            ->selectRaw('space_id, MIN(day) as day')
-            ->pluck('day', 'space_id');
-
-        $activation = [];
-        foreach ($spaces->groupBy(fn (Space $space) => $space->created_at->format('Y-m')) as $month => $created) {
-            $activated = $created->filter(function (Space $space) use ($firstPublish) {
-                $day = $firstPublish[$space->id] ?? null;
-
-                return $day !== null
-                    && substr((string) $day, 0, 10) <= $space->created_at->copy()->addDays(self::ACTIVATION_DAYS)->toDateString();
-            });
-            $activation[$month] = $activated->count() / $created->count();
-        }
-
         return [
             'new_users' => $this->flow($this->daily(User::query()->toBase(), 'created_at')),
             'new_spaces' => $this->flow($this->daily(Space::query()->toBase(), 'created_at')),
             'new_teams' => $this->flow($this->daily(Team::query()->toBase(), 'created_at')),
-            'activation' => $this->latestStock(array_map(
-                fn (CarbonImmutable $month) => $activation[$this->key($month)] ?? null,
-                array_combine(array_map($this->key(...), $this->window), $this->window),
-            )),
         ];
     }
 
@@ -355,75 +317,14 @@ class ProviderMetricsService
 
     private function engagement(): array
     {
-        $editors = [];
-        foreach ($this->window as $month) {
-            $end = min($month->endOfMonth(), $this->now)->startOfDay();
-            $editors[$this->key($month)] = DB::table('editor_activity_daily')
-                ->whereBetween('day', [$end->subDays(6)->toDateString(), $end->toDateString()])
-                ->distinct()
-                ->count('user_id');
-        }
-
         $traffic = $this->daily(SpaceTrafficUsageHourly::query()->toBase(), 'hour_timestamp', 'SUM(total_bytes)');
         foreach ($this->daily(SpaceDownloadUsageHourly::query()->toBase(), 'hour_timestamp', 'SUM(bytes_sent)') as $day => $bytes) {
             $traffic[$day] = ($traffic[$day] ?? 0) + $bytes;
         }
 
         return [
-            'weekly_active_editors' => $this->stock($editors),
-            'entries_published' => $this->flow($this->daily(DB::table('space_activity_daily'), 'day', 'SUM(entries_published)')),
             'api_requests' => $this->flow($this->daily(SpaceApiHitHourly::query()->toBase(), 'hour_timestamp', 'SUM(hit_count)')),
             'traffic_bytes' => $this->flow($traffic),
-        ];
-    }
-
-    // AI
-
-    /**
-     * AI revenue is the AI credit (`quotas.aiCredit`, USD a month) that paid
-     * plans include; spend is the cost of every AI run in every space, free
-     * ones included. Both are USD. The current month's margin weighs spend so
-     * far against the share of the month that has passed.
-     */
-    private function ai(array $snapshots): array
-    {
-        $spendDaily = $this->daily(DB::table('space_activity_daily'), 'day', 'SUM(ai_cost_usd)');
-        $spend = $this->flow($spendDaily);
-        $spendByMonth = [];
-        foreach ($spendDaily as $day => $cost) {
-            $spendByMonth[substr($day, 0, 7)] = ($spendByMonth[substr($day, 0, 7)] ?? 0) + $cost;
-        }
-
-        $elapsed = ($this->now->getTimestamp() - $this->current->getTimestamp())
-            / ($this->current->addMonth()->getTimestamp() - $this->current->getTimestamp());
-
-        $revenue = [];
-        $margin = [];
-        $using = [];
-        $usingCount = [];
-        foreach ($this->window as $month) {
-            $key = $this->key($month);
-            $revenue[$key] = $snapshots['ai'][$key] ?? 0.0;
-            $earned = $revenue[$key] * ($month->equalTo($this->current) ? $elapsed : 1);
-            $margin[$key] = $earned > 0 ? ($earned - ($spendByMonth[$key] ?? 0)) / $earned : null;
-
-            $paying = array_keys($snapshots['space'][$key] ?? []);
-            $active = $paying === [] ? 0 : DB::table('space_activity_daily')
-                ->whereIn('space_id', $paying)
-                ->whereBetween('day', [$month->toDateString(), $month->endOfMonth()->toDateString()])
-                ->where('ai_runs', '>', 0)
-                ->distinct()
-                ->count('space_id');
-            $usingCount[$key] = $active;
-            $using[$key] = $paying === [] ? null : $active / count($paying);
-        }
-
-        return [
-            'revenue_usd' => $this->stock($revenue),
-            'spend_usd' => $spend,
-            'margin' => $this->stock($margin),
-            'spaces_using_ai' => $this->stock($using),
-            'spaces_using_ai_count' => $this->stock($usingCount),
         ];
     }
 
@@ -458,26 +359,6 @@ class ProviderMetricsService
             $value($this->current->subMonth()),
             $value($this->current->subYear()),
             $this->current,
-        );
-    }
-
-    /**
-     * A stock whose latest months can be empty (activation needs 14 days):
-     * `current` is the latest month with a value.
-     *
-     * @param  array<string, float|null>  $byMonth
-     */
-    private function latestStock(array $byMonth): array
-    {
-        $at = collect($this->window)->reverse()->first(fn (CarbonImmutable $month) => $byMonth[$this->key($month)] !== null);
-        $value = fn (CarbonImmutable $month) => $byMonth[$this->key($month)] ?? null;
-
-        return $this->metric(
-            array_map($value, $this->range),
-            $at ? $value($at) : null,
-            $at ? $value($at->subMonth()) : null,
-            $at ? $value($at->subYear()) : null,
-            $at ?? $this->current,
         );
     }
 

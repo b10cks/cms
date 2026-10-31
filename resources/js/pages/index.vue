@@ -12,7 +12,6 @@ import CreateBlueprintDialog from '~/components/space/CreateBlueprintDialog.vue'
 import SpaceActionsMenu from '~/components/space/SpaceActionsMenu.vue'
 import SpaceBadge from '~/components/space/SpaceBadge.vue'
 import SpaceBadgeDialog from '~/components/space/SpaceBadgeDialog.vue'
-import DomainJoinSuggestions from '~/components/teams/DomainJoinSuggestions.vue'
 import TeamSelector from '~/components/TeamSelector.vue'
 import { Badge, type BadgeVariants } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
@@ -295,8 +294,6 @@ const getSpacePlanLabel = (plan: SpacePlanSummary) => {
             </SelectContent>
           </Select>
         </ContentHeader>
-
-        <DomainJoinSuggestions />
 
         <div class="flex gap-8">
           <div

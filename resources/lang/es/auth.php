@@ -45,5 +45,4 @@ return [
     'social_link_already_used' => 'Este perfil social ya está vinculado a otra cuenta.',
     'social_link_required' => 'Ya existe una cuenta con esta dirección de correo. Inicie sesión con su contraseña y, a continuación, vincule este perfil social desde la configuración de su cuenta.',
     'suspended' => 'Esta cuenta está suspendida. Contacta con el operador de esta instancia.',
-    'sso_required' => 'Su organización exige el inicio de sesión único. Inicie sesión con el SSO de :team.',
 ];

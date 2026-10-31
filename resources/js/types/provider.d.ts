@@ -79,20 +79,9 @@ interface ProviderMetrics {
     new_users: ProviderMetric
     new_spaces: ProviderMetric
     new_teams: ProviderMetric
-    activation: ProviderMetric
   }
   engagement: {
-    weekly_active_editors: ProviderMetric
-    entries_published: ProviderMetric
     api_requests: ProviderMetric
     traffic_bytes: ProviderMetric
-  }
-  /** Omitted when billing is off (self-hosted). */
-  ai?: {
-    revenue_usd: ProviderMetric
-    spend_usd: ProviderMetric
-    margin: ProviderMetric
-    spaces_using_ai: ProviderMetric
-    spaces_using_ai_count: ProviderMetric
   }
 }

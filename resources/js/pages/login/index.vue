@@ -2,7 +2,6 @@
 import Logo from '~/assets/logo.svg'
 import Markdown from '~/components/Markdown.vue'
 import SocialLoginButtons from '~/components/SocialLoginButtons.vue'
-import SsoRequiredAlert from '~/components/teams/SsoRequiredAlert.vue'
 import TwoFactorVerifyDialog from '~/components/TwoFactorVerifyDialog.vue'
 import { Alert } from '~/components/ui/alert'
 import { Button } from '~/components/ui/button'
@@ -13,7 +12,6 @@ import { safeReturnPath } from '~/lib/safeReturnPath'
 const {
   login,
   error,
-  ssoUrl,
   requiresTwoFactor,
   verifyTwoFactorAndLogin,
   verifySocialTwoFactorAndLogin,
@@ -114,11 +112,6 @@ onMounted(() => {
     error.value = t('composables.auth.socialLoginFailed') as string
   }
 
-  // Social sign-in for a domain that requires SSO lands back here with the team.
-  if (typeof route.query.sso_required === 'string' && route.query.sso_required !== '') {
-    ssoUrl.value = `/auth/v1/saml/${encodeURIComponent(route.query.sso_required)}/redirect`
-  }
-
   if (route.query.social_2fa === '1') {
     isSocialTwoFactor.value = true
     twoFactorDialogOpen.value = true
@@ -152,13 +145,8 @@ onMounted(() => {
       >
         {{ $t('composables.auth.sessionExpired') }}
       </Alert>
-      <SsoRequiredAlert
-        v-if="ssoUrl"
-        :url="ssoUrl"
-        :message="error"
-      />
       <Alert
-        v-else-if="error && !requiresTwoFactor"
+        v-if="error && !requiresTwoFactor"
         color="destructive"
         icon="lucide:alert-circle"
         class="select-text"

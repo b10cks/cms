@@ -49,7 +49,6 @@ import { Notifications } from './resources/notifications'
 import { Usage } from './resources/usage'
 import { SpaceBlueprints } from './resources/space-blueprints'
 import { Spaces } from './resources/spaces'
-import { TeamDomains } from './resources/team-domains'
 import { Teams } from './resources/teams'
 
 export class API {
@@ -62,7 +61,6 @@ export class API {
   private readonly _spaces: Spaces
   private readonly _spaceBlueprints: SpaceBlueprints
   private readonly _teams: Teams
-  private readonly _teamDomains: TeamDomains
   private readonly _invites: Invites
   private readonly _notifications: Notifications
   private readonly _users: Users
@@ -84,7 +82,6 @@ export class API {
     this._spaces = new Spaces(this.client)
     this._spaceBlueprints = new SpaceBlueprints(this.client)
     this._teams = new Teams(this.client)
-    this._teamDomains = new TeamDomains(this.client)
     this._invites = new Invites(this.client)
     this._notifications = new Notifications(this.client)
     this._users = new Users(this.client)
@@ -130,10 +127,6 @@ export class API {
 
   public get teams(): Teams {
     return this._teams
-  }
-
-  public get teamDomains(): TeamDomains {
-    return this._teamDomains
   }
 
   public get invites(): Invites {

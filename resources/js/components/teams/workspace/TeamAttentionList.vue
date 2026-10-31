@@ -15,7 +15,6 @@ defineProps<{
 const { t } = useI18n()
 
 const ICONS: Record<string, string> = {
-  join_requests: 'lucide:globe',
   expiring_access: 'lucide:clock',
   stale_invites: 'lucide:mail',
   saml_certificate_expiring: 'lucide:key-round',
@@ -66,7 +65,7 @@ const copy = (item: TeamAttentionItem, part: 'title' | 'action') => {
         variant="outline"
         as-child
       >
-        <RouterLink :to="{ name: item.target.name, params: item.target.params, query: item.target.query, hash: item.target.hash }">
+        <RouterLink :to="{ name: item.target.name, params: item.target.params, query: item.target.query }">
           {{ copy(item, 'action') }}
         </RouterLink>
       </Button>

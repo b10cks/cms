@@ -3013,10 +3013,6 @@
         "empty": "Şu an ilgilenilecek bir şey yok.",
         "open": "Aç",
         "types": {
-          "join_requests": {
-            "title": "{count} kişi katılmak istiyor | {count} kişi katılmak istiyor | {count} kişi katılmak istiyor",
-            "action": "İncele"
-          },
           "expiring_access": {
             "title": "{count} kişinin erişimi sona eriyor | {count} kişinin erişimi sona eriyor | {count} kişinin erişimi sona eriyor",
             "action": "İncele"
@@ -5310,74 +5306,6 @@
         "steps": "Steps: {count}",
         "cost": "Cost: {cost}"
       }
-    },
-    "teamDomains": {
-      "title": "Alan adları",
-      "description": "Kuruluşunuzun e-posta alan adlarını doğrulayın. Eşleşen bir adresle oturum açanlar katılma isteği gönderebilir, otomatik katılır ya da SSO kullanmak zorunda kalır.",
-      "add": "Alan adı ekle",
-      "verify": "Doğrula",
-      "empty": "Henüz alan adı yok.",
-      "fields": {
-        "domain": "Alan adı",
-        "domainPlaceholder": "ornek.com",
-        "domainHint": "gmail.com gibi herkese açık e-posta sağlayıcıları eklenemez.",
-        "txtHost": "TXT kaydı ana makinesi",
-        "txtValue": "TXT kaydı değeri"
-      },
-      "columns": {
-        "domain": "Alan adı",
-        "status": "Durum",
-        "policy": "Oturum açıldığında",
-        "defaultRole": "Varsayılan rol"
-      },
-      "status": {
-        "verified": "Doğrulandı",
-        "pending": "Doğrulanmadı"
-      },
-      "policies": {
-        "request": "Katılma isteği",
-        "auto_join": "Otomatik katıl",
-        "require_sso": "SSO zorunlu"
-      },
-      "txtInstructions": "Bu TXT kaydını DNS sağlayıcınıza ekleyin, ardından Doğrula’ya basın. DNS değişikliklerinin görünmesi biraz sürebilir.",
-      "removeConfirm": {
-        "title": "Alan adını kaldır",
-        "message": "{domain} kaldırılsın mı? Bu alan adındaki kişiler artık katılma isteği gönderemez ve SSO onlar için zorunlu olmaz.",
-        "confirm": "Kaldır"
-      },
-      "toast": {
-        "failed": "Bu işe yaramadı: {error}",
-        "verified": "{domain} doğrulandı."
-      },
-      "requests": {
-        "title": "Katılma istekleri",
-        "description": "Doğrulanmış alan adlarınızdan bu takıma katılmak isteyen kişiler.",
-        "empty": "Açık istek yok.",
-        "approve": "Onayla",
-        "decline": "Reddet",
-        "columns": {
-          "person": "Kişi",
-          "domain": "Alan adı",
-          "requested": "İstendi",
-          "role": "Rol"
-        },
-        "declineConfirm": {
-          "title": "İsteği reddet",
-          "message": "{name} kişisinin isteği reddedilsin mi? Yeni bir istek gönderemez."
-        }
-      },
-      "join": {
-        "title": "{team} takımına katıl",
-        "description": "{domain} alan adındaki e-posta adresiniz bu takıma katılma isteği göndermenizi sağlar.",
-        "pending": "İstek gönderildi. Bir takım sahibi inceleyecek.",
-        "declined": "Takım isteğinizi reddetti. Bir sahipten davet isteyin.",
-        "request": "Katılma isteği gönder",
-        "cancel": "İsteği geri çek"
-      },
-      "login": {
-        "ssoRequired": "Kuruluşunuz bu e-posta adresi için çoklu oturum açma gerektiriyor.",
-        "continueWithSso": "SSO ile devam et"
-      }
     }
   },
   "alertDialog": {
@@ -6200,8 +6128,7 @@
     "sections": {
       "revenue": "Gelir",
       "growth": "Büyüme",
-      "engagement": "Kullanım ve teslim",
-      "ai": "Yapay zeka"
+      "engagement": "Kullanım ve teslim"
     },
     "tiles": {
       "mrr": "MRR",
@@ -6212,15 +6139,8 @@
       "new_users": "Yeni kullanıcılar",
       "new_spaces": "Yeni alanlar",
       "new_teams": "Yeni ekipler",
-      "activation": "Aktivasyon",
-      "weekly_active_editors": "Haftalık aktif editörler",
-      "entries_published": "Yayınlanan girdiler",
       "api_requests": "API istekleri",
-      "traffic": "Sunulan trafik",
-      "ai_revenue": "Yapay zeka geliri",
-      "model_spend": "Model harcaması",
-      "ai_margin": "Yapay zeka marjı",
-      "spaces_using_ai": "Yapay zeka kullanan alanlar"
+      "traffic": "Sunulan trafik"
     },
     "details": {
       "arr": "ARR {value}",
@@ -6229,14 +6149,8 @@
       "per_team": "Ücretli ekip başına",
       "churn": "Aylık, müşteri kaybı {rate}",
       "this_month": "Bu ay",
-      "activation": "14 gün içinde yayın yapan alanlar",
-      "editors": "7 günde düzenleyen veya yayınlayan",
       "api": "Delivery API, bu ay",
-      "traffic": "CDN, bu ay",
-      "ai_revenue": "Planlara dahil yapay zeka kredisi",
-      "spend": "Tüm alanlarda kaydedilen",
-      "margin": "Gelir eksi harcama",
-      "using_ai": "{total} ücretli alandan {count}"
+      "traffic": "CDN, bu ay"
     },
     "change": {
       "mom": "Geçen aya göre",
@@ -6247,8 +6161,7 @@
       "revenue_by_plan": "Plana göre gelir",
       "sign_ups": "Kayıtlar",
       "retention": "Gelir tutma",
-      "retention_meta": "başlangıç ayına göre",
-      "ai": "Yapay zeka geliri ve harcaması"
+      "retention_meta": "başlangıç ayına göre"
     },
     "series": {
       "new": "Yeni",
@@ -6256,9 +6169,7 @@
       "churn": "Kayıp",
       "users": "Kullanıcılar",
       "spaces": "Alanlar",
-      "teams": "Ekipler",
-      "ai_revenue": "Yapay zeka geliri",
-      "spend": "Model harcaması"
+      "teams": "Ekipler"
     },
     "retention": {
       "month": "A{n}"
