@@ -6,6 +6,7 @@ import Logo from '~/assets/logo.svg'
 import AiDockButton from '~/components/ai/threads/AiDockButton.vue'
 import Icon from '~/components/Icon.vue'
 import NuxtImg from '~/components/NuxtImg.vue'
+import RootContextBanner from '~/components/root/RootContextBanner.vue'
 import SpaceBadge from '~/components/space/SpaceBadge.vue'
 import {
   DropdownMenu,
@@ -211,4 +212,5 @@ const logout = () => {
       />
     </div>
   </div>
+  <RootContextBanner />
 </template>

@@ -6,6 +6,7 @@ import TeamsList from '~/components/teams/TeamsList.vue'
 import { Card, CardContent } from '~/components/ui/card'
 import ContentHeader from '~/components/ui/ContentHeader.vue'
 import { useAuthorization } from '~/composables/useAuthorization'
+import { hasRootWriteAccess } from '~/lib/access-control'
 import type {
   CreateTeamPayload,
   TeamHierarchyItem,
@@ -18,7 +19,8 @@ const router = useRouter()
 
 const { useAccessControl } = useAuthorization()
 const access = useAccessControl(computed(() => ({})))
-const isRoot = computed(() => access.authorization.value?.is_root ?? false)
+// Top-level teams and team types are root writes: they need a running elevation.
+const isRoot = computed(() => hasRootWriteAccess(access.authorization.value))
 
 useSeoMeta({
   title: computed(() => t('labels.teams.pageTitle')),

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { hasRootWriteAccess } from '~/lib/access-control'
 import TeamDetailsSettings from '~/components/teams/TeamDetailsSettings.vue'
 import ContentHeader from '~/components/ui/ContentHeader.vue'
 import { Skeleton } from '~/components/ui/skeleton'
@@ -10,7 +11,8 @@ const teamId = computed(() => route.params.team as string)
 const { useTeamQuery, useTeamHierarchyQuery } = useTeams()
 const { useAccessControl } = useAuthorization()
 const access = useAccessControl(computed(() => ({ team_id: teamId.value })))
-const isRoot = computed(() => access.authorization.value?.is_root ?? false)
+// Moving to the top level and changing the type are root writes: they need a running elevation.
+const isRoot = computed(() => hasRootWriteAccess(access.authorization.value))
 
 const { data: team } = useTeamQuery(teamId)
 const { data: hierarchy } = useTeamHierarchyQuery()

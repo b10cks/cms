@@ -13,6 +13,7 @@ import {
   getActionAccessRequirement,
   getRouteAccessRequirement,
   hasAbilityRequirement,
+  hasRootWriteAccess,
   spaceNavigationItems,
 } from '~/lib/access-control'
 
@@ -27,6 +28,10 @@ const authorization = (
   return {
     user_id: 'user-1',
     is_root: false,
+    is_elevated: false,
+    elevated_until: null,
+    elevation_reason: null,
+    impersonation: null,
     teams: [],
     spaces: [],
     team: { id: 'team-1', role_keys: [], abilities: teamAbilities },
@@ -56,8 +61,8 @@ describe('hasAbilityRequirement', () => {
     expect(hasAbilityRequirement(null, undefined)).toBe(true)
   })
 
-  it('short-circuits for root users', () => {
-    expect(hasAbilityRequirement(authorization({ is_root: true }), 'anything.at.all')).toBe(true)
+  it('has no root shortcut', () => {
+    expect(hasAbilityRequirement(authorization({ is_root: true }), 'content.manage')).toBe(false)
   })
 
   it('matches a single ability string', () => {
@@ -104,13 +109,13 @@ describe('canAccessRequirement', () => {
     expect(canAccessRequirement(null, { authorization: authorization() })).toBe(true)
   })
 
-  it('allows root regardless of the requirement', () => {
+  it('holds root to the requirement like everyone', () => {
     expect(
       canAccessRequirement(
         { check: () => false, abilities: 'nope' },
         { authorization: authorization({ is_root: true }) }
       )
-    ).toBe(true)
+    ).toBe(false)
   })
 
   it('resolves anyRouteOf against the nested route requirements', () => {
@@ -214,12 +219,12 @@ describe('filterNavigationItems', () => {
     ])
   })
 
-  it('keeps everything for root', () => {
+  it('keeps only what the abilities allow for root too', () => {
     const filtered = filterNavigationItems(spaceNavigationItems, {
-      authorization: authorization({ is_root: true }),
+      authorization: authorization({ is_root: true, spaceAbilities: ['icons.view'] }),
     })
 
-    expect(filtered).toHaveLength(spaceNavigationItems.length)
+    expect(filtered.map((item) => item.routeName)).toEqual(['space-icons-index'])
   })
 })
 
@@ -283,5 +288,13 @@ describe('requirement lookups', () => {
         authorization: authorization({ teamAbilities: ['team.spaces.create'] }),
       })
     ).toBe(true)
+  })
+})
+
+describe('hasRootWriteAccess', () => {
+  it('needs root and a running elevation', () => {
+    expect(hasRootWriteAccess(authorization())).toBe(false)
+    expect(hasRootWriteAccess(authorization({ is_root: true }))).toBe(false)
+    expect(hasRootWriteAccess(authorization({ is_root: true, is_elevated: true }))).toBe(true)
   })
 })

@@ -38,14 +38,14 @@ Route::post('logout', DeleteTokenController::class)
     ->name('logout');
 
 Route::post('impersonate', [ImpersonationController::class, 'store'])
-    ->middleware(['auth:sanctum'])
+    ->middleware(['auth:sanctum', 'stateful', 'throttle:crucial'])
     ->name('impersonate.store');
 
 Route::match(['get', 'post'], '/broadcast', BroadcastController::class)
     ->middleware(['auth:sanctum', 'stateful']);
 
 Route::delete('impersonate', [ImpersonationController::class, 'destroy'])
-    ->middleware(['auth:sanctum'])
+    ->middleware(['auth:sanctum', 'stateful'])
     ->name('impersonate.destroy');
 
 Route::post('password/email', ForgotPasswordController::class)

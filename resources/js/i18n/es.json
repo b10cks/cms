@@ -5713,6 +5713,216 @@
       "deleteConfirmation": "¿Está seguro de que desea eliminar esta entrada?"
     }
   },
+  "providerConsole": {
+    "badge": "Consola del proveedor",
+    "elevateFirst": "Eleva tus permisos para usar esta acción",
+    "never": "Nunca",
+    "reason": "Motivo",
+    "flags": {
+      "no_owner": "Sin propietario",
+      "trial_ended": "Prueba terminada",
+      "payment_failed": "Pago fallido"
+    },
+    "actions": {
+      "impersonate": "Iniciar sesión como",
+      "signOut": "Cerrar todas las sesiones",
+      "transfer": "Transferir propiedad",
+      "suspend": "Suspender",
+      "restore": "Restaurar"
+    },
+    "tenants": {
+      "title": "Clientes",
+      "description": "Todos los equipos de esta instancia con sus espacios, personas, ingresos mensuales y configuración de inicio de sesión. Abre un equipo para verlo como root.",
+      "createTopLevel": "Equipo de nivel superior",
+      "search": "Buscar equipos",
+      "empty": "Ningún equipo coincide.",
+      "open": "Abrir",
+      "ssoOff": "Desactivado",
+      "segments": {
+        "all": "Todos",
+        "paying": "De pago",
+        "trial": "Prueba",
+        "flagged": "Marcados"
+      },
+      "columns": {
+        "team": "Equipo",
+        "type": "Tipo",
+        "spaces": "Espacios",
+        "people": "Personas",
+        "mrr": "MRR",
+        "sso": "SSO",
+        "lastActive": "Última actividad"
+      }
+    },
+    "users": {
+      "title": "Usuarios",
+      "description": "Todas las cuentas de esta instancia. Abre un usuario para ver sus membresías y actuar sobre la cuenta.",
+      "search": "Buscar nombre o correo",
+      "empty": "Ningún usuario coincide.",
+      "segments": {
+        "all": "Todos",
+        "active": "Activos 30 d",
+        "suspended": "Suspendidos",
+        "root": "Root"
+      },
+      "status": {
+        "active": "Activo",
+        "suspended": "Suspendido",
+        "root": "Root"
+      },
+      "signIn": {
+        "password": "Contraseña",
+        "2fa": "2FA",
+        "saml": "SAML"
+      },
+      "columns": {
+        "name": "Nombre",
+        "teams": "Equipos",
+        "signIn": "Inicio de sesión",
+        "status": "Estado",
+        "lastActive": "Última actividad"
+      },
+      "sheet": {
+        "teams": "Equipos",
+        "sessions": "Sesiones",
+        "tokens": "Tokens",
+        "memberships": "Membresías",
+        "noMemberships": "Sin membresías en equipos ni espacios.",
+        "activity": "Actividad reciente",
+        "noActivity": "No hay actividad registrada.",
+        "onlyOwner": "Único propietario",
+        "teamRole": "Rol de equipo",
+        "spaceRole": "Rol directo en el espacio",
+        "elevateHint": "Estas acciones cambian la cuenta de otra persona. Eleva tus permisos primero.",
+        "suspendedSince": "Suspendido {time} por {by}."
+      },
+      "toasts": {
+        "suspended": "Usuario suspendido",
+        "restored": "Usuario restaurado",
+        "signedOut": "Todas las sesiones cerradas",
+        "transferred": "Propiedad transferida",
+        "failed": "No ha funcionado: {error}"
+      }
+    },
+    "impersonate": {
+      "title": "Iniciar sesión como {name}",
+      "description": "Ves la aplicación exactamente como {name}. Los cambios de contraseña y la creación de tokens siguen bloqueados. La sesión termina tras 1 hora.",
+      "reasonPlaceholder": "Número de ticket o por qué lo necesitas",
+      "submit": "Iniciar sesión como {name}"
+    },
+    "suspend": {
+      "title": "¿Suspender a {name}?",
+      "description": "Se bloquea el inicio de sesión, terminan {sessions} y se revocan {tokens}. Las membresías y el contenido se mantienen, así que restaurar no pierde nada.",
+      "allSessions": "todas las sesiones",
+      "sessions": "ninguna sesión | 1 sesión | {count} sesiones",
+      "tokens": "ningún token de acceso personal | 1 token de acceso personal | {count} tokens de acceso personal",
+      "soleOwner": "{name} es el único propietario de {team}. Elige un nuevo propietario o el equipo quedará marcado.",
+      "newOwner": "Nuevo propietario",
+      "leaveFlagged": "Dejar marcado",
+      "reasonPlaceholder": "Por qué se suspende la cuenta",
+      "submit": "Suspender"
+    },
+    "restore": {
+      "title": "Restaurar cuenta",
+      "message": "{name} podrá volver a iniciar sesión. Las sesiones y tokens que terminaron con la suspensión siguen terminados."
+    },
+    "signOut": {
+      "title": "Cerrar todas las sesiones",
+      "message": "¿Cerrar todas las sesiones del navegador de {name}? Los tokens de acceso personal siguen funcionando."
+    },
+    "transfer": {
+      "title": "Transferir propiedad",
+      "description": "El nuevo propietario recibe el rol de propietario y {name} pasa a ser administrador del equipo.",
+      "team": "Equipo",
+      "newOwner": "Nuevo propietario",
+      "noCandidates": "Ningún otro miembro activo",
+      "submit": "Transferir"
+    },
+    "usage": {
+      "title": "Uso",
+      "description": "Por equipo de nivel superior, incluidos los subequipos: ingresos del plan, gasto en IA de los periodos de facturación cerrados, y almacenamiento y tráfico como porcentaje de las cuotas del plan. Las solicitudes de API no tienen cuota.",
+      "empty": "No hay uso este mes.",
+      "unlimited": "Sin cuota",
+      "storageFlag": "Almacenamiento {percent} %",
+      "columns": {
+        "team": "Equipo",
+        "revenue": "Ingresos del plan",
+        "aiSpend": "Gasto en IA",
+        "storage": "Almacenamiento",
+        "apiRequests": "Solicitudes de API",
+        "traffic": "Tráfico",
+        "flags": "Avisos"
+      }
+    },
+    "audit": {
+      "title": "Auditoría",
+      "description": "Cada acción root en esta instancia: elevaciones, inicios de sesión como otro usuario, suspensiones, cierres de sesión y transferencias de propiedad.",
+      "empty": "Aún no hay acciones root registradas.",
+      "allActions": "Todas las acciones",
+      "system": "Sistema",
+      "columns": {
+        "time": "Hora",
+        "actor": "Usuario root",
+        "action": "Acción",
+        "detail": "Detalle"
+      },
+      "actions": {
+        "elevation_started": "Permisos elevados",
+        "elevation_ended": "Elevación terminada",
+        "impersonation_started": "Sesión iniciada como usuario",
+        "impersonation_ended": "Vuelta desde el usuario",
+        "user_suspended": "Usuario suspendido",
+        "user_restored": "Usuario restaurado",
+        "user_signed_out": "Sesiones del usuario cerradas",
+        "team_ownership_transferred": "Propiedad transferida"
+      }
+    },
+    "health": {
+      "title": "Estado",
+      "description": "Profundidad de las colas, trabajos fallidos y si las bases de datos de los espacios responden. La comprobación abre una muestra aleatoria de espacios y se guarda en caché 10 minutos.",
+      "queued": "Trabajos en cola",
+      "connection": "Conexión {name}",
+      "failedJobs": "Trabajos fallidos",
+      "last24h": "Últimas 24 horas",
+      "spaceDatabases": "Bases de datos de espacios",
+      "sampled": "Muestra de {total} espacios",
+      "queues": "Colas",
+      "queue": "Cola",
+      "size": "En espera",
+      "unknown": "Desconocido",
+      "checkedAt": "Comprobado {time}",
+      "recheck": "Comprobar de nuevo",
+      "allReachable": "Las {count} bases de datos de la muestra respondieron."
+    }
+  },
+  "rootAccess": {
+    "elevate": {
+      "title": "Elevar a root",
+      "description": "Obtienes todas las acciones de esta instancia durante el tiempo elegido. El motivo queda en la auditoría de la instancia.",
+      "reason": "Motivo",
+      "reasonPlaceholder": "Ticket #4821: restaurar el acceso del propietario",
+      "duration": "Duración",
+      "minutes": "{count} minutos",
+      "submit": "Elevar"
+    },
+    "banner": {
+      "viewing": {
+        "team": "Estás viendo este equipo como root. Es de solo lectura hasta que eleves tus permisos.",
+        "space": "Estás viendo este espacio como root. Es de solo lectura hasta que eleves tus permisos."
+      },
+      "elevate": "Elevar",
+      "backToTenants": "Volver a clientes",
+      "elevatedUntil": "Elevado hasta las {time}.",
+      "endNow": "Terminar ahora",
+      "signedInAs": "Sesión iniciada como {name}.",
+      "endsAt": "Termina a las {time}. Los cambios de contraseña y tokens están bloqueados.",
+      "return": "Volver a tu cuenta"
+    },
+    "toasts": {
+      "elevated": "Permisos elevados. Las acciones root están desbloqueadas.",
+      "failed": "No ha funcionado: {error}"
+    }
+  },
   "shortcuts": {
     "title": "Atajos de teclado",
     "description": "Todo lo que está vinculado ahora mismo. La lista sigue a lo que hay en pantalla.",

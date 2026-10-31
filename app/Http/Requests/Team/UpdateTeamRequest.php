@@ -58,7 +58,7 @@ class UpdateTeamRequest extends FormRequest
     {
         return [
             function (Validator $validator) {
-                if ($this->user()?->is_root || ! $this->has('type')) {
+                if ($this->user()?->isElevatedRoot() || ! $this->has('type')) {
                     return;
                 }
 

@@ -5713,6 +5713,216 @@
       "deleteConfirmation": "Are you sure you want to delete this entry?"
     }
   },
+  "providerConsole": {
+    "badge": "Provider console",
+    "elevateFirst": "Elevate to use this action",
+    "never": "Never",
+    "reason": "Reason",
+    "flags": {
+      "no_owner": "No owner",
+      "trial_ended": "Trial ended",
+      "payment_failed": "Payment failed"
+    },
+    "actions": {
+      "impersonate": "Sign in as",
+      "signOut": "Sign out everywhere",
+      "transfer": "Transfer ownership",
+      "suspend": "Suspend",
+      "restore": "Restore"
+    },
+    "tenants": {
+      "title": "Tenants",
+      "description": "Every team on this instance with its spaces, people, monthly revenue and sign-in setup. Open a team to look at it as root.",
+      "createTopLevel": "Top-level team",
+      "search": "Search teams",
+      "empty": "No teams match.",
+      "open": "Open",
+      "ssoOff": "Off",
+      "segments": {
+        "all": "All",
+        "paying": "Paying",
+        "trial": "Trial",
+        "flagged": "Flagged"
+      },
+      "columns": {
+        "team": "Team",
+        "type": "Type",
+        "spaces": "Spaces",
+        "people": "People",
+        "mrr": "MRR",
+        "sso": "SSO",
+        "lastActive": "Last active"
+      }
+    },
+    "users": {
+      "title": "Users",
+      "description": "Every account on this instance. Open a user to see their memberships and to act on the account.",
+      "search": "Search name or email",
+      "empty": "No users match.",
+      "segments": {
+        "all": "All",
+        "active": "Active 30d",
+        "suspended": "Suspended",
+        "root": "Root"
+      },
+      "status": {
+        "active": "Active",
+        "suspended": "Suspended",
+        "root": "Root"
+      },
+      "signIn": {
+        "password": "Password",
+        "2fa": "2FA",
+        "saml": "SAML"
+      },
+      "columns": {
+        "name": "Name",
+        "teams": "Teams",
+        "signIn": "Sign-in",
+        "status": "Status",
+        "lastActive": "Last active"
+      },
+      "sheet": {
+        "teams": "Teams",
+        "sessions": "Sessions",
+        "tokens": "Tokens",
+        "memberships": "Memberships",
+        "noMemberships": "No team or space memberships.",
+        "activity": "Recent activity",
+        "noActivity": "No recorded activity.",
+        "onlyOwner": "Only owner",
+        "teamRole": "Team role",
+        "spaceRole": "Direct space role",
+        "elevateHint": "These actions change someone else's account. Elevate first.",
+        "suspendedSince": "Suspended {time} by {by}."
+      },
+      "toasts": {
+        "suspended": "User suspended",
+        "restored": "User restored",
+        "signedOut": "All sessions ended",
+        "transferred": "Ownership transferred",
+        "failed": "That did not work: {error}"
+      }
+    },
+    "impersonate": {
+      "title": "Sign in as {name}",
+      "description": "You see the app exactly as {name} does. Password changes and token minting stay blocked. The session ends after 1 hour.",
+      "reasonPlaceholder": "Ticket number or why you need this",
+      "submit": "Sign in as {name}"
+    },
+    "suspend": {
+      "title": "Suspend {name}?",
+      "description": "Login is blocked, {sessions} end and {tokens} are revoked. Memberships and content stay, so restoring loses nothing.",
+      "allSessions": "all sessions",
+      "sessions": "no sessions | 1 session | {count} sessions",
+      "tokens": "no personal access tokens | 1 personal access token | {count} personal access tokens",
+      "soleOwner": "{name} is the only owner of {team}. Pick a new owner or the team is flagged.",
+      "newOwner": "New owner",
+      "leaveFlagged": "Leave flagged",
+      "reasonPlaceholder": "Why the account is suspended",
+      "submit": "Suspend"
+    },
+    "restore": {
+      "title": "Restore account",
+      "message": "{name} can sign in again. Sessions and tokens that ended with the suspension stay ended."
+    },
+    "signOut": {
+      "title": "Sign out everywhere",
+      "message": "End every browser session of {name}? Personal access tokens keep working."
+    },
+    "transfer": {
+      "title": "Transfer ownership",
+      "description": "The new owner gets the owner role, {name} becomes an admin of the team.",
+      "team": "Team",
+      "newOwner": "New owner",
+      "noCandidates": "No other active member",
+      "submit": "Transfer"
+    },
+    "usage": {
+      "title": "Usage",
+      "description": "Per top-level team, child teams included: plan revenue, AI spend from closed billing periods, and storage and traffic as a share of the plan quotas. API requests have no quota.",
+      "empty": "No usage for this month.",
+      "unlimited": "No quota",
+      "storageFlag": "Storage {percent}%",
+      "columns": {
+        "team": "Team",
+        "revenue": "Plan revenue",
+        "aiSpend": "AI spend",
+        "storage": "Storage",
+        "apiRequests": "API requests",
+        "traffic": "Traffic",
+        "flags": "Flags"
+      }
+    },
+    "audit": {
+      "title": "Audit",
+      "description": "Every root action on this instance: elevations, impersonations, suspensions, sign-outs and ownership transfers.",
+      "empty": "No root actions recorded yet.",
+      "allActions": "All actions",
+      "system": "System",
+      "columns": {
+        "time": "Time",
+        "actor": "Root user",
+        "action": "Action",
+        "detail": "Detail"
+      },
+      "actions": {
+        "elevation_started": "Elevated",
+        "elevation_ended": "Ended elevation",
+        "impersonation_started": "Signed in as user",
+        "impersonation_ended": "Returned from user",
+        "user_suspended": "Suspended user",
+        "user_restored": "Restored user",
+        "user_signed_out": "Signed user out everywhere",
+        "team_ownership_transferred": "Transferred ownership"
+      }
+    },
+    "health": {
+      "title": "Health",
+      "description": "Queue depth, failed jobs and whether space databases answer. The database check opens a random sample of spaces and is cached for 10 minutes.",
+      "queued": "Queued jobs",
+      "connection": "Connection {name}",
+      "failedJobs": "Failed jobs",
+      "last24h": "Last 24 hours",
+      "spaceDatabases": "Space databases",
+      "sampled": "Sample of {total} spaces",
+      "queues": "Queues",
+      "queue": "Queue",
+      "size": "Waiting",
+      "unknown": "Unknown",
+      "checkedAt": "Checked {time}",
+      "recheck": "Check again",
+      "allReachable": "All {count} sampled databases answered."
+    }
+  },
+  "rootAccess": {
+    "elevate": {
+      "title": "Elevate to root",
+      "description": "You get every action on this instance for the chosen time. The reason goes into the instance audit.",
+      "reason": "Reason",
+      "reasonPlaceholder": "Ticket #4821: restore owner access",
+      "duration": "Duration",
+      "minutes": "{count} minutes",
+      "submit": "Elevate"
+    },
+    "banner": {
+      "viewing": {
+        "team": "You're viewing this team as root. It's read only until you elevate.",
+        "space": "You're viewing this space as root. It's read only until you elevate."
+      },
+      "elevate": "Elevate",
+      "backToTenants": "Back to tenants",
+      "elevatedUntil": "Elevated until {time}.",
+      "endNow": "End now",
+      "signedInAs": "Signed in as {name}.",
+      "endsAt": "Ends at {time}. Password and token changes are blocked.",
+      "return": "Return to your account"
+    },
+    "toasts": {
+      "elevated": "Elevated. Root actions are unlocked.",
+      "failed": "That did not work: {error}"
+    }
+  },
   "shortcuts": {
     "title": "Keyboard shortcuts",
     "description": "Everything bound right now. The list follows what is on screen.",

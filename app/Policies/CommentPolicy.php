@@ -30,19 +30,19 @@ class CommentPolicy
 
     public function update(User $user, Comment $comment, Space $space): bool
     {
-        return $user->is_root
+        return $user->isElevatedRoot()
             || ($comment->author_id === $user->id && $this->canInSpace($user, $space, 'comments.update_own'));
     }
 
     public function delete(User $user, Comment $comment, Space $space): bool
     {
-        return $user->is_root
+        return $user->isElevatedRoot()
             || ($comment->author_id === $user->id && $this->canInSpace($user, $space, 'comments.delete_own'));
     }
 
     public function resolve(User $user, Comment $comment, Space $space): bool
     {
-        return $user->is_root
+        return $user->isElevatedRoot()
             || ($comment->author_id === $user->id && $this->canInSpace($user, $space, 'comments.resolve_own'));
     }
 

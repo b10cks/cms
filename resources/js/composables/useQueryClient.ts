@@ -73,6 +73,16 @@ export const queryKeys = {
     notes: () => ['provider', 'notes'] as const,
     notesList: (params: unknown = {}) => ['provider', 'notes', 'list', params] as const,
   },
+  providerConsole: {
+    all: () => ['provider-console'] as const,
+    tenants: () => ['provider-console', 'tenants'] as const,
+    users: () => ['provider-console', 'users'] as const,
+    userList: (params: unknown = {}) => ['provider-console', 'users', 'list', params] as const,
+    user: (id: MaybeRef<string>) => ['provider-console', 'users', 'detail', id] as const,
+    usage: (month: MaybeRef<string>) => ['provider-console', 'usage', month] as const,
+    health: () => ['provider-console', 'health'] as const,
+    audit: (params: unknown = {}) => ['provider-console', 'audit', params] as const,
+  },
   redirects: spaceEntityKeys('redirects'),
   assets: (spaceId: MaybeRef<string>) => {
     const keys = spaceEntityKeys('assets')(spaceId)

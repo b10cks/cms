@@ -107,7 +107,7 @@ class TeamController extends Controller
         // team being moved. Only root may move a team to / from the top level.
         if (array_key_exists('parent_id', $data) && $data['parent_id'] !== $team->parent_id) {
             if ($data['parent_id'] === null) {
-                abort_unless($request->user()->is_root, 403);
+                abort_unless($request->user()->isElevatedRoot(), 403);
             } else {
                 $this->authorize('createChild', Team::findOrFail($data['parent_id']));
             }

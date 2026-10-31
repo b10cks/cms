@@ -20,9 +20,10 @@ class TeamPolicy
         return $this->canInTeam($user, $team, 'team.view');
     }
 
+    /** Top-level teams are root-only, and creating one is a root write. */
     public function create(User $user): bool
     {
-        return $user->is_root;
+        return $user->isElevatedRoot();
     }
 
     public function createChild(User $user, Team $parent): bool
@@ -75,6 +76,6 @@ class TeamPolicy
 
     public function manageSaml(User $user, Team $team): bool
     {
-        return $user->is_root || $this->hasAnyTeamRole($user, $team, ['owner']);
+        return $user->isElevatedRoot() || $this->hasAnyTeamRole($user, $team, ['owner']);
     }
 }

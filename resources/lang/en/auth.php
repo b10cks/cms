@@ -44,4 +44,5 @@ return [
     'social_email_missing' => 'We could not read an email address from this social account.',
     'social_link_already_used' => 'This social profile is already linked to another account.',
     'social_link_required' => 'An account already uses this email address. Sign in with your password, then link this social profile from your account settings.',
+    'suspended' => 'This account is suspended. Contact the operator of this instance.',
 ];

@@ -14,8 +14,10 @@ import { FieldPlugins } from '~/api/resources/field-plugins'
 import { PersonalAccessTokens } from '~/api/resources/personal-access-tokens'
 import { Plans } from '~/api/resources/plans'
 import { Provider } from '~/api/resources/provider'
+import { ProviderConsole } from '~/api/resources/provider-console'
 import { Redirects } from '~/api/resources/redirects'
 import { Releases } from '~/api/resources/releases'
+import { RootAccess } from '~/api/resources/root-access'
 import { SpaceMembers } from '~/api/resources/space-members'
 import { SpacePeople } from '~/api/resources/space-people'
 import { Subscriptions } from '~/api/resources/subscriptions'
@@ -54,6 +56,8 @@ export class API {
   private readonly _authorization: Authorization
   private readonly _plans: Plans
   private readonly _provider: Provider
+  private readonly _providerConsole: ProviderConsole
+  private readonly _rootAccess: RootAccess
   private readonly _spaces: Spaces
   private readonly _spaceBlueprints: SpaceBlueprints
   private readonly _teams: Teams
@@ -73,6 +77,8 @@ export class API {
     this._authorization = new Authorization(this.client)
     this._plans = new Plans(this.client)
     this._provider = new Provider(this.client)
+    this._providerConsole = new ProviderConsole(this.client)
+    this._rootAccess = new RootAccess(this.client)
     this._spaces = new Spaces(this.client)
     this._spaceBlueprints = new SpaceBlueprints(this.client)
     this._teams = new Teams(this.client)
@@ -101,6 +107,14 @@ export class API {
 
   public get provider(): Provider {
     return this._provider
+  }
+
+  public get providerConsole(): ProviderConsole {
+    return this._providerConsole
+  }
+
+  public get rootAccess(): RootAccess {
+    return this._rootAccess
   }
 
   public get spaces(): Spaces {

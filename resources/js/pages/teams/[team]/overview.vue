@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { hasRootWriteAccess } from '~/lib/access-control'
 import Icon from '~/components/Icon.vue'
 import CreateInviteDialog from '~/components/invites/CreateInviteDialog.vue'
 import StatTile from '~/components/stats/StatTile.vue'
@@ -32,7 +33,8 @@ const { data: overview } = useTeamOverviewQuery(teamId)
 const canViewActivity = computed(() => access.hasAbility('team.audit.view'))
 const canInvite = computed(() => access.hasAbility('team.invites.manage'))
 const canCreateChild = computed(() => access.hasAbility('team.children.manage'))
-const isRoot = computed(() => access.authorization.value?.is_root ?? false)
+// Moving to the top level and changing the type are root writes: they need a running elevation.
+const isRoot = computed(() => hasRootWriteAccess(access.authorization.value))
 
 const { data: activity } = useTeamAuditLogsQuery(teamId, { per_page: 5 }, canViewActivity)
 const { data: hierarchy } = useTeamHierarchyQuery(canCreateChild)

@@ -5713,6 +5713,216 @@
       "deleteConfirmation": "Bu girdiyi silmek istediğinize emin misiniz?"
     }
   },
+  "providerConsole": {
+    "badge": "Sağlayıcı konsolu",
+    "elevateFirst": "Bu işlemi kullanmak için yetkini yükselt",
+    "never": "Hiç",
+    "reason": "Gerekçe",
+    "flags": {
+      "no_owner": "Sahibi yok",
+      "trial_ended": "Deneme sona erdi",
+      "payment_failed": "Ödeme başarısız"
+    },
+    "actions": {
+      "impersonate": "Bu kullanıcı olarak oturum aç",
+      "signOut": "Her yerden çıkış yap",
+      "transfer": "Sahipliği devret",
+      "suspend": "Askıya al",
+      "restore": "Geri yükle"
+    },
+    "tenants": {
+      "title": "Kiracılar",
+      "description": "Bu kurulumdaki tüm ekipler; alanları, kişileri, aylık geliri ve oturum açma ayarlarıyla. Bir ekibi root olarak görüntülemek için aç.",
+      "createTopLevel": "Üst düzey ekip",
+      "search": "Ekip ara",
+      "empty": "Eşleşen ekip yok.",
+      "open": "Aç",
+      "ssoOff": "Kapalı",
+      "segments": {
+        "all": "Tümü",
+        "paying": "Ödeyen",
+        "trial": "Deneme",
+        "flagged": "İşaretli"
+      },
+      "columns": {
+        "team": "Ekip",
+        "type": "Tür",
+        "spaces": "Alanlar",
+        "people": "Kişiler",
+        "mrr": "MRR",
+        "sso": "SSO",
+        "lastActive": "Son etkinlik"
+      }
+    },
+    "users": {
+      "title": "Kullanıcılar",
+      "description": "Bu kurulumdaki tüm hesaplar. Üyeliklerini görmek ve hesap üzerinde işlem yapmak için bir kullanıcı aç.",
+      "search": "Ad veya e-posta ara",
+      "empty": "Eşleşen kullanıcı yok.",
+      "segments": {
+        "all": "Tümü",
+        "active": "30 günde etkin",
+        "suspended": "Askıda",
+        "root": "Root"
+      },
+      "status": {
+        "active": "Etkin",
+        "suspended": "Askıda",
+        "root": "Root"
+      },
+      "signIn": {
+        "password": "Parola",
+        "2fa": "2FA",
+        "saml": "SAML"
+      },
+      "columns": {
+        "name": "Ad",
+        "teams": "Ekipler",
+        "signIn": "Oturum açma",
+        "status": "Durum",
+        "lastActive": "Son etkinlik"
+      },
+      "sheet": {
+        "teams": "Ekipler",
+        "sessions": "Oturumlar",
+        "tokens": "Token'lar",
+        "memberships": "Üyelikler",
+        "noMemberships": "Ekip veya alan üyeliği yok.",
+        "activity": "Son etkinlik",
+        "noActivity": "Kayıtlı etkinlik yok.",
+        "onlyOwner": "Tek sahip",
+        "teamRole": "Ekip rolü",
+        "spaceRole": "Doğrudan alan rolü",
+        "elevateHint": "Bu işlemler başka birinin hesabını değiştirir. Önce yetkini yükselt.",
+        "suspendedSince": "{time} {by} tarafından askıya alındı."
+      },
+      "toasts": {
+        "suspended": "Kullanıcı askıya alındı",
+        "restored": "Kullanıcı geri yüklendi",
+        "signedOut": "Tüm oturumlar sonlandırıldı",
+        "transferred": "Sahiplik devredildi",
+        "failed": "Bu işe yaramadı: {error}"
+      }
+    },
+    "impersonate": {
+      "title": "{name} olarak oturum aç",
+      "description": "Uygulamayı tam olarak {name} gibi görürsün. Parola değişiklikleri ve token oluşturma engelli kalır. Oturum 1 saat sonra biter.",
+      "reasonPlaceholder": "Destek kaydı numarası veya neden gerektiği",
+      "submit": "{name} olarak oturum aç"
+    },
+    "suspend": {
+      "title": "{name} askıya alınsın mı?",
+      "description": "Oturum açma engellenir, {sessions} sonlanır ve {tokens} iptal edilir. Üyelikler ve içerik kalır, geri yüklemede hiçbir şey kaybolmaz.",
+      "allSessions": "tüm oturumlar",
+      "sessions": "hiç oturum | 1 oturum | {count} oturum",
+      "tokens": "hiç kişisel erişim token'ı | 1 kişisel erişim token'ı | {count} kişisel erişim token'ı",
+      "soleOwner": "{name}, {team} ekibinin tek sahibi. Yeni bir sahip seç, yoksa ekip işaretlenir.",
+      "newOwner": "Yeni sahip",
+      "leaveFlagged": "İşaretli bırak",
+      "reasonPlaceholder": "Hesabın neden askıya alındığı",
+      "submit": "Askıya al"
+    },
+    "restore": {
+      "title": "Hesabı geri yükle",
+      "message": "{name} yeniden oturum açabilir. Askıya almayla sonlanan oturumlar ve token'lar sonlanmış kalır."
+    },
+    "signOut": {
+      "title": "Her yerden çıkış yap",
+      "message": "{name} kullanıcısının tüm tarayıcı oturumları sonlandırılsın mı? Kişisel erişim token'ları çalışmaya devam eder."
+    },
+    "transfer": {
+      "title": "Sahipliği devret",
+      "description": "Yeni sahip, sahip rolünü alır; {name} ekibin yöneticisi olur.",
+      "team": "Ekip",
+      "newOwner": "Yeni sahip",
+      "noCandidates": "Başka etkin üye yok",
+      "submit": "Devret"
+    },
+    "usage": {
+      "title": "Kullanım",
+      "description": "Alt ekipler dahil her üst düzey ekip için: plan geliri, kapanmış fatura dönemlerinden yapay zeka harcaması, plan kotalarının payı olarak depolama ve trafik. API isteklerinin kotası yoktur.",
+      "empty": "Bu ay kullanım yok.",
+      "unlimited": "Kota yok",
+      "storageFlag": "Depolama %{percent}",
+      "columns": {
+        "team": "Ekip",
+        "revenue": "Plan geliri",
+        "aiSpend": "Yapay zeka harcaması",
+        "storage": "Depolama",
+        "apiRequests": "API istekleri",
+        "traffic": "Trafik",
+        "flags": "Uyarılar"
+      }
+    },
+    "audit": {
+      "title": "Denetim",
+      "description": "Bu kurulumdaki her root işlemi: yetki yükseltmeleri, başka kullanıcı olarak oturum açmalar, askıya almalar, oturum kapatmalar ve sahiplik devirleri.",
+      "empty": "Henüz kayıtlı root işlemi yok.",
+      "allActions": "Tüm işlemler",
+      "system": "Sistem",
+      "columns": {
+        "time": "Zaman",
+        "actor": "Root kullanıcı",
+        "action": "İşlem",
+        "detail": "Ayrıntı"
+      },
+      "actions": {
+        "elevation_started": "Yetki yükseltildi",
+        "elevation_ended": "Yetki yükseltme bitti",
+        "impersonation_started": "Kullanıcı olarak oturum açıldı",
+        "impersonation_ended": "Kullanıcıdan dönüldü",
+        "user_suspended": "Kullanıcı askıya alındı",
+        "user_restored": "Kullanıcı geri yüklendi",
+        "user_signed_out": "Kullanıcının tüm oturumları kapatıldı",
+        "team_ownership_transferred": "Sahiplik devredildi"
+      }
+    },
+    "health": {
+      "title": "Sağlık",
+      "description": "Kuyruk derinliği, başarısız işler ve alan veritabanlarının yanıt verip vermediği. Kontrol rastgele bir alan örneğini açar ve 10 dakika önbellekte kalır.",
+      "queued": "Bekleyen işler",
+      "connection": "Bağlantı {name}",
+      "failedJobs": "Başarısız işler",
+      "last24h": "Son 24 saat",
+      "spaceDatabases": "Alan veritabanları",
+      "sampled": "{total} alandan örnek",
+      "queues": "Kuyruklar",
+      "queue": "Kuyruk",
+      "size": "Bekleyen",
+      "unknown": "Bilinmiyor",
+      "checkedAt": "Kontrol edildi {time}",
+      "recheck": "Yeniden kontrol et",
+      "allReachable": "Örnekteki {count} veritabanının hepsi yanıt verdi."
+    }
+  },
+  "rootAccess": {
+    "elevate": {
+      "title": "Root yetkisine yükselt",
+      "description": "Seçilen süre boyunca bu kurulumdaki her işleme erişirsin. Gerekçe kurulum denetimine yazılır.",
+      "reason": "Gerekçe",
+      "reasonPlaceholder": "Kayıt #4821: sahip erişimini geri yükle",
+      "duration": "Süre",
+      "minutes": "{count} dakika",
+      "submit": "Yükselt"
+    },
+    "banner": {
+      "viewing": {
+        "team": "Bu ekibi root olarak görüntülüyorsun. Yetkini yükseltene kadar salt okunur.",
+        "space": "Bu alanı root olarak görüntülüyorsun. Yetkini yükseltene kadar salt okunur."
+      },
+      "elevate": "Yükselt",
+      "backToTenants": "Kiracılara dön",
+      "elevatedUntil": "{time} saatine kadar yükseltildi.",
+      "endNow": "Şimdi bitir",
+      "signedInAs": "{name} olarak oturum açıldı.",
+      "endsAt": "{time} saatinde biter. Parola ve token değişiklikleri engelli.",
+      "return": "Kendi hesabına dön"
+    },
+    "toasts": {
+      "elevated": "Yetki yükseltildi. Root işlemleri açıldı.",
+      "failed": "Bu işe yaramadı: {error}"
+    }
+  },
   "shortcuts": {
     "title": "Klavye kısayolları",
     "description": "Şu anda tanımlı olan her şey. Liste ekrandakini takip eder.",
