@@ -114,12 +114,13 @@ class ModelRegistry
         foreach ($this->getEnabledDrivers() as $driverName => $driver) {
             $driverModels = $driver->getModels();
 
-            $grouped[$driverName] = \Arr::sort(\array_map(function (AiModelDto $model) use ($favourites) {
+            // Arr::sort keeps the keys; array_values makes it a JSON list again.
+            $grouped[$driverName] = \array_values(\Arr::sort(\array_map(function (AiModelDto $model) use ($favourites) {
                 $modelArray = $model->toArray();
                 $modelArray['is_favourite'] = \in_array($model->getFullId(), $favourites);
 
                 return $modelArray;
-            }, $driverModels), 'name');
+            }, $driverModels), 'name'));
         }
 
         return $grouped;
