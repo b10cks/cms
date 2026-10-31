@@ -88,10 +88,34 @@ class AssetHandlerTest extends TestCase
 
         $assetIds = $handler->extractContentAssets([
             'type' => 'asset',
-            'id' => 'asset-01',
+            'id' => '01k0s6v4rsjjjgkhepj496dj5e',
         ]);
 
-        $this->assertSame(['asset-01'], $assetIds);
+        $this->assertSame(['01k0s6v4rsjjjgkhepj496dj5e'], $assetIds);
+    }
+
+    #[Test]
+    public function extraction_keeps_only_ulid_asset_ids(): void
+    {
+        $assetIds = (new AssetHandler)->extractContentAssets(['images' => [
+            ['type' => 'asset', 'id' => '01k0s6v4rsjjjgkhepj496dj5e'],
+            ['type' => 'asset', 'id' => 'https://example.com/a-long-legacy-reference.jpg'],
+            ['type' => 'asset', 'id' => 42],
+            ['type' => 'asset', 'id' => ['nested']],
+        ]]);
+
+        $this->assertSame(['01k0s6v4rsjjjgkhepj496dj5e'], $assetIds);
+    }
+
+    #[Test]
+    public function remapping_rewrites_known_asset_ids_and_keeps_the_rest_of_the_node(): void
+    {
+        $payload = ['hero' => ['type' => 'asset', 'id' => 'old-1', 'data' => ['alt' => 'Hero']], 'other' => ['type' => 'asset', 'id' => 'unknown']];
+
+        $remapped = (new AssetHandler)->remapContentAssets($payload, ['old-1' => 'new-1']);
+
+        $this->assertSame(['type' => 'asset', 'id' => 'new-1', 'data' => ['alt' => 'Hero']], $remapped['hero']);
+        $this->assertSame($payload['other'], $remapped['other']);
     }
 
     #[Test]

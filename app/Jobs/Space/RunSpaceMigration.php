@@ -3,6 +3,7 @@
 namespace App\Jobs\Space;
 
 use App\DTOs\Migration\MigrationResult;
+use App\Services\Content\AssetHandler;
 use App\Services\Content\Serial\ScopeKeyRemapper;
 use App\Jobs\QueuedJob;
 use App\Models\Management\Space;
@@ -581,6 +582,14 @@ class RunSpaceMigration extends QueuedJob
         $rows = $src->table('contents')->whereNull('deleted_at')->get()->all();
         $sorted = $this->sortByParentDepth($rows, 'id', 'parent_id');
 
+        // Assets migrated by an earlier run are known by their external id; this
+        // run's asset step, if any, already filled the map and takes precedence.
+        $this->assetIdMap += $tgt->table('assets')
+            ->whereNotNull('external_id')
+            ->whereNull('deleted_at')
+            ->pluck('id', 'external_id')
+            ->all();
+
         // Preload source block id → slug once instead of querying per content in
         // the slug-based fallback below.
         $sourceBlockSlugById = $src->table('blocks')->pluck('slug', 'id')->all();
@@ -646,7 +655,7 @@ class RunSpaceMigration extends QueuedJob
                     'full_slug' => $row['full_slug'],
                     'language_iso' => $row['language_iso'],
                     'i18n_parent_id' => $targetI18nParentId,
-                    'content' => $row['content'],
+                    'content' => $this->remapAssetReferences($row['content']),
                     'settings' => $row['settings'],
                     'current_version_id' => $currentVersionId,
                     'published_version_id' => $publishedVersionId,
@@ -676,7 +685,7 @@ class RunSpaceMigration extends QueuedJob
                     'full_slug' => $row['full_slug'],
                     'language_iso' => $row['language_iso'],
                     'i18n_parent_id' => $targetI18nParentId,
-                    'content' => $row['content'],
+                    'content' => $this->remapAssetReferences($row['content']),
                     'settings' => $row['settings'],
                     'current_version_id' => $currentVersionId,
                     'published_version_id' => $publishedVersionId,
@@ -689,6 +698,24 @@ class RunSpaceMigration extends QueuedJob
                 $this->result->incrementCreated('contents');
             }
         }
+    }
+
+    /**
+     * Point the asset references in a raw JSON payload at the target space's
+     * asset ids. Migrated assets get new keys, so copied references would
+     * resolve nothing in the target.
+     */
+    private function remapAssetReferences(?string $json): ?string
+    {
+        if ($json === null || $this->assetIdMap === []) {
+            return $json;
+        }
+
+        $data = json_decode($json, true);
+
+        return \is_array($data)
+            ? json_encode(app(AssetHandler::class)->remapContentAssets($data, $this->assetIdMap))
+            : $json;
     }
 
     /**
@@ -807,11 +834,17 @@ class RunSpaceMigration extends QueuedJob
                 ->where('content_id', $targetContentId)
                 ->first();
 
+            $content = $this->remapAssetReferences($version['content']);
+
             $data = [
                 'external_id' => $sourceVersionId,
                 'message' => $version['message'],
-                'content' => $version['content'],
-                'asset_ids' => $version['asset_ids'],
+                'content' => $content,
+                // Derived from the remapped payload; the source column holds
+                // source-space asset ids.
+                'asset_ids' => json_encode(app(AssetHandler::class)->extractContentAssets(
+                    json_decode($content ?? '', true) ?: [],
+                )),
                 'relation_ids' => $version['relation_ids'],
                 'link_ids' => $version['link_ids'],
                 'content_id' => $targetContentId,

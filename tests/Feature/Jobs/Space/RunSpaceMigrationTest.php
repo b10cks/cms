@@ -537,6 +537,76 @@ class RunSpaceMigrationTest extends TestCase
         $this->assertSame(1, $migration->result['updated']['field_plugins']);
     }
 
+    #[Test]
+    public function migrated_content_points_at_the_target_space_asset_ids(): void
+    {
+        $this->seedBlock($this->src, ['slug' => 'page', 'name' => 'Page']);
+        $sourceAssetId = strtolower((string) Str::ulid());
+        // Brought over by an earlier run, so this content-only run finds it by external id.
+        $targetAssetId = $this->seedAsset($this->tgt, ['external_id' => $sourceAssetId]);
+        $payload = json_encode(['hero' => ['type' => 'asset', 'id' => $sourceAssetId, 'data' => ['alt' => 'Hero']]]);
+        $this->seedContent($this->src, $this->src->table('blocks')->value('id'), $payload, [$sourceAssetId]);
+
+        $this->runMigration(scope: ['blocks' => true, 'content' => true]);
+
+        $version = $this->tgt->table('content_versions')->first();
+        $this->assertSame($targetAssetId, json_decode($version->content, true)['hero']['id']);
+        $this->assertSame('Hero', json_decode($version->content, true)['hero']['data']['alt']);
+        $this->assertSame([$targetAssetId], json_decode($version->asset_ids, true));
+        $this->assertSame($targetAssetId, json_decode($this->tgt->table('contents')->value('content'), true)['hero']['id']);
+    }
+
+    private function seedAsset(ConnectionInterface $conn, array $attributes): string
+    {
+        $id = $attributes['id'] ?? strtolower((string) Str::ulid());
+
+        $conn->table('assets')->insert(array_merge([
+            'id' => $id,
+            'external_id' => null,
+            'filename' => 'hero',
+            'extension' => 'jpg',
+            'mime_type' => 'image/jpeg',
+            'path' => "space/{$id}/hero.jpg",
+            'storage_id' => strtolower((string) Str::ulid()),
+            'size' => 1,
+            'created_at' => '2026-01-01 00:00:00',
+            'updated_at' => '2026-01-01 00:00:00',
+        ], $attributes, ['id' => $id]));
+
+        return $id;
+    }
+
+    private function seedContent(ConnectionInterface $conn, string $blockId, string $payload, array $assetIds): string
+    {
+        $id = strtolower((string) Str::ulid());
+        $versionId = strtolower((string) Str::ulid());
+
+        $conn->table('content_versions')->insert([
+            'id' => $versionId,
+            'content_id' => $id,
+            'content' => $payload,
+            'asset_ids' => json_encode($assetIds),
+            'relation_ids' => '[]',
+            'link_ids' => '[]',
+            'created_at' => '2026-01-01 00:00:00',
+        ]);
+        $conn->table('contents')->insert([
+            'id' => $id,
+            'block_id' => $blockId,
+            'name' => 'Home',
+            'slug' => 'home',
+            'full_slug' => 'home',
+            'language_iso' => 'en',
+            'content' => $payload,
+            'settings' => '{}',
+            'current_version_id' => $versionId,
+            'created_at' => '2026-01-01 00:00:00',
+            'updated_at' => '2026-01-01 00:00:00',
+        ]);
+
+        return $id;
+    }
+
     private function seedFieldPlugin(ConnectionInterface $conn, array $attributes): string
     {
         $id = $attributes['id'] ?? (string) Str::ulid();

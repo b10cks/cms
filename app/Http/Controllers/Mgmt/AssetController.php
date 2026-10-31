@@ -36,7 +36,7 @@ class AssetController extends Controller
             ->with('folder')
             ->paginate($this->perPage($request));
 
-        $this->attachUsageCounts($assets->getCollection(), app(AssetUsageService::class));
+        app(AssetUsageService::class)->attachCounts($assets->getCollection());
 
         return AssetResource::collection($assets);
     }
@@ -105,7 +105,7 @@ class AssetController extends Controller
         $this->authorizeSpace($space, 'assets.view');
 
         $asset->load('folder');
-        $asset->setAttribute('linked_contents_count', $assetUsageService->getUsageCountForAsset($asset));
+        $assetUsageService->attachCounts([$asset]);
 
         return new AssetResource($asset);
     }
@@ -256,13 +256,14 @@ class AssetController extends Controller
         AssetUsageService $assetUsageService
     ): JsonResponse {
         $this->authorizeSpace($space, 'assets.manage');
-        $linkedContentsCount = $assetUsageService->getUsageCountForAsset($asset);
+        ['linked' => $linked, 'trashed' => $trashed] = $assetUsageService->counts([$asset->id])[$asset->id];
 
-        if ($linkedContentsCount > 0 && !$request->boolean('force')) {
+        if ($linked > 0 && !$request->boolean('force')) {
             return response()->json([
                 'message' => 'Asset is currently linked to content.',
                 'code' => 'asset_in_use',
-                'linked_contents_count' => $linkedContentsCount,
+                'linked_contents_count' => $linked,
+                'trashed_contents_count' => $trashed,
                 'can_force_delete' => true,
             ], 409);
         }
@@ -270,15 +271,5 @@ class AssetController extends Controller
         abort_unless($assetService->deleteAsset($asset), 500, 'Failed to delete asset');
 
         return response()->json(null, 204);
-    }
-
-    private function attachUsageCounts(iterable $assets, AssetUsageService $assetUsageService): void
-    {
-        $collection = collect($assets);
-        $counts = $assetUsageService->getUsageCountsForAssets($collection);
-
-        foreach ($collection as $asset) {
-            $asset->setAttribute('linked_contents_count', $counts[$asset->id] ?? 0);
-        }
     }
 }

@@ -50,6 +50,14 @@ export function useContent(spaceId: MaybeRef<string>) {
     content.current_version_id !== undefined &&
     Array.isArray(content.language_versions)
 
+  // Asset usage counts come from the current, published and pending versions, so
+  // writes that move those, or trash the entry, change them.
+  const invalidateAssetUsage = () => {
+    queryClient.invalidateQueries({ queryKey: queryKeys.assets(spaceId).lists() })
+    queryClient.invalidateQueries({ queryKey: queryKeys.assets(spaceId).details() })
+    queryClient.invalidateQueries({ queryKey: queryKeys.assetCollections(spaceId).assetsLists() })
+  }
+
   const invalidateContentFamily = (content: ContentResource, reuseDetail = false) => {
     const familyContentIds = new Set<string>()
 
@@ -186,6 +194,7 @@ export function useContent(spaceId: MaybeRef<string>) {
         queryClient.invalidateQueries({ queryKey: queryKeys.contents(spaceId).lists() })
         queryClient.invalidateQueries({ queryKey: queryKeys.contentMenu(spaceId).all() })
         invalidateContentFamily(data)
+        invalidateAssetUsage()
 
         toast.success(t('composables.content.createSuccess', { name: data.name }) as string)
       },
@@ -224,6 +233,7 @@ export function useContent(spaceId: MaybeRef<string>) {
       },
       onSuccess: async (data, variables, context) => {
         await applySavedContent(data, variables.id, context?.refetchMenu)
+        invalidateAssetUsage()
 
         toast.success(t('composables.content.updateSuccess', { name: data.name }) as string)
       },
@@ -259,6 +269,7 @@ export function useContent(spaceId: MaybeRef<string>) {
       },
       onSuccess: async (data, variables) => {
         await applySavedContent(data, variables.id)
+        invalidateAssetUsage()
 
         toast.success(t('composables.content.publishSuccess', { name: data.name }) as string)
       },
@@ -282,6 +293,7 @@ export function useContent(spaceId: MaybeRef<string>) {
         queryClient.invalidateQueries({ queryKey: queryKeys.contents(spaceId).lists() })
         queryClient.invalidateQueries({ queryKey: queryKeys.contentMenu(spaceId).all() })
         invalidateContentFamily(data)
+        invalidateAssetUsage()
 
         toast.success(t('composables.content.publishSuccess', { name: data.name }) as string)
       },
@@ -303,6 +315,7 @@ export function useContent(spaceId: MaybeRef<string>) {
       },
       onSuccess: async (data, variables) => {
         await applySavedContent(data, variables.id)
+        invalidateAssetUsage()
 
         toast.success(t('composables.content.scheduleSuccess', { name: data.name }) as string)
       },
@@ -444,7 +457,10 @@ export function useContent(spaceId: MaybeRef<string>) {
       mutationFn: async (payload: { ids: string[]; message?: string }) => {
         return startBulkRun(() => spaceAPI.value.contents.bulkPublish(payload), 'publish')
       },
-      onSuccess: (result) => settleBulkPublish(result, 'publish'),
+      onSuccess: (result) => {
+        settleBulkPublish(result, 'publish')
+        invalidateAssetUsage()
+      },
       onError: (error: Error) => {
         invalidateContentLists()
         toast.error(
@@ -488,6 +504,7 @@ export function useContent(spaceId: MaybeRef<string>) {
       onSuccess: (data) => {
         queryClient.invalidateQueries({ queryKey: queryKeys.contents(spaceId).lists() })
         queryClient.invalidateQueries({ queryKey: queryKeys.contentMenu(spaceId).all() })
+        invalidateAssetUsage()
 
         toast.success(t('composables.content.duplicateSuccess', { name: data.name }) as string)
       },
@@ -513,6 +530,7 @@ export function useContent(spaceId: MaybeRef<string>) {
         // The version history is a sibling of the detail key, not a child of it.
         queryClient.removeQueries({ queryKey: queryKeys.contentVersions(spaceId, id).all() })
         queryClient.invalidateQueries({ queryKey: queryKeys.contentMenu(spaceId).all() })
+        invalidateAssetUsage()
 
         toast.success(t('composables.content.deleteSuccess') as string)
       },

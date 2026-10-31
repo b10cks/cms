@@ -10,6 +10,7 @@ use App\Models\Space\AssetFolder;
 use App\Models\Space\Block;
 use App\Models\Space\Content;
 use App\Models\Space\ContentVersion;
+use App\Models\Space\Release;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\WithFaker;
@@ -577,7 +578,7 @@ class AssetTest extends TestCase
     }
 
     #[Test]
-    public function linked_contents_count_ignores_soft_deleted_contents(): void
+    public function soft_deleted_contents_count_as_trashed_instead_of_linked(): void
     {
         $asset = Asset::factory()->create([
             'storage_id' => $this->storage->id,
@@ -589,6 +590,77 @@ class AssetTest extends TestCase
 
         $response->assertOk();
         $response->assertJsonPath('linked_contents_count', 0);
+        $response->assertJsonPath('trashed_contents_count', 1);
+    }
+
+    #[Test]
+    public function scheduled_versions_and_versions_in_unpublished_releases_count_as_usage(): void
+    {
+        $asset = Asset::factory()->create([
+            'storage_id' => $this->storage->id,
+        ]);
+        $this->addVersion($this->createContentWithVersions(), [$asset->id], ['scheduled_at' => now()->addDay()]);
+        $this->addVersion($this->createContentWithVersions(), [$asset->id], ['release_id' => Release::factory()->create()->id]);
+        // Already went live with its release and is no longer a current or published version.
+        $this->addVersion($this->createContentWithVersions(), [$asset->id], [
+            'release_id' => Release::factory()->create(['published_at' => now()])->id,
+            'published_at' => now(),
+        ]);
+
+        $this->getJson("/mgmt/v1/spaces/{$this->space->id}/assets/{$asset->id}")
+            ->assertOk()
+            ->assertJsonPath('linked_contents_count', 2);
+
+        $this->deleteJson("/mgmt/v1/spaces/{$this->space->id}/assets/{$asset->id}")
+            ->assertStatus(409)
+            ->assertJsonPath('linked_contents_count', 2);
+    }
+
+    #[Test]
+    public function update_responses_leave_out_usage_counts(): void
+    {
+        $asset = Asset::factory()->create([
+            'storage_id' => $this->storage->id,
+        ]);
+        $this->createContentWithVersions(currentAssetIds: [$asset->id]);
+
+        $response = $this->patchJson("/mgmt/v1/spaces/{$this->space->id}/assets/{$asset->id}", [
+            'metadata' => ['description' => 'Updated'],
+        ]);
+
+        $response->assertOk();
+        $response->assertJsonMissingPath('linked_contents_count');
+        $response->assertJsonMissingPath('trashed_contents_count');
+    }
+
+    #[Test]
+    public function editing_an_asset_shown_by_published_content_bumps_the_delivery_revision(): void
+    {
+        $asset = Asset::factory()->create([
+            'storage_id' => $this->storage->id,
+        ]);
+        $this->createContentWithVersions(currentAssetIds: [$asset->id], publishedAssetIds: [$asset->id]);
+
+        $this->patchJson("/mgmt/v1/spaces/{$this->space->id}/assets/{$asset->id}", [
+            'metadata' => ['description' => 'Updated'],
+        ])->assertOk();
+
+        $this->assertNotNull($this->space->fresh()->content_updated_at);
+    }
+
+    #[Test]
+    public function editing_an_asset_used_only_by_drafts_keeps_the_delivery_revision(): void
+    {
+        $asset = Asset::factory()->create([
+            'storage_id' => $this->storage->id,
+        ]);
+        $this->createContentWithVersions(currentAssetIds: [$asset->id]);
+
+        $this->patchJson("/mgmt/v1/spaces/{$this->space->id}/assets/{$asset->id}", [
+            'metadata' => ['description' => 'Updated'],
+        ])->assertOk();
+
+        $this->assertNull($this->space->fresh()->content_updated_at);
     }
 
     #[Test]
@@ -812,16 +884,19 @@ class AssetTest extends TestCase
             currentAssetIds: [$asset->id],
             publishedAssetIds: [],
         );
+        $releaseOnly = $this->createContentWithVersions();
+        $this->addVersion($releaseOnly, [$asset->id], ['release_id' => Release::factory()->create()->id]);
 
         $response = $this->getJson("/mgmt/v1/spaces/{$this->space->id}/assets/{$asset->id}/linked-contents");
 
         $response->assertOk();
-        $response->assertJsonCount(2, 'data');
+        $response->assertJsonCount(3, 'data');
         $response->assertJsonFragment([
             'id' => $bothVersions->id,
             'usage' => [
                 'current' => true,
                 'published' => true,
+                'pending' => false,
             ],
         ]);
         $response->assertJsonFragment([
@@ -829,6 +904,15 @@ class AssetTest extends TestCase
             'usage' => [
                 'current' => true,
                 'published' => false,
+                'pending' => false,
+            ],
+        ]);
+        $response->assertJsonFragment([
+            'id' => $releaseOnly->id,
+            'usage' => [
+                'current' => false,
+                'published' => false,
+                'pending' => true,
             ],
         ]);
     }
@@ -894,6 +978,24 @@ class AssetTest extends TestCase
 
         $response->assertOk();
         $response->assertJsonPath('meta.per_page', 100);
+    }
+
+    /**
+     * A version that is neither current nor published, e.g. scheduled or part of a release.
+     */
+    private function addVersion(Content $content, array $assetIds, array $attributes = []): ContentVersion
+    {
+        $version = ContentVersion::query()->forceCreate([
+            'content_id' => $content->id,
+            'parent_id' => $content->current_version_id,
+            'content' => ['title' => 'Pending'],
+            'created_by_id' => $this->user->id,
+            ...$attributes,
+        ]);
+        // The saving hook derives asset_ids from the payload, so they are set afterwards.
+        ContentVersion::query()->whereKey($version->id)->update(['asset_ids' => $assetIds]);
+
+        return $version;
     }
 
     private function createContentWithVersions(

@@ -44,6 +44,13 @@ export function useContentVersions(
     }
   }
 
+  // Asset usage counts come from the current and published versions.
+  const invalidateAssetUsage = () => {
+    queryClient.invalidateQueries({ queryKey: queryKeys.assets(spaceId).lists() })
+    queryClient.invalidateQueries({ queryKey: queryKeys.assets(spaceId).details() })
+    queryClient.invalidateQueries({ queryKey: queryKeys.assetCollections(spaceId).assetsLists() })
+  }
+
   const useContentVersionsQuery = (params: MaybeRef<ContentVersionsQueryParams> = {}) => {
     return useQuery({
       queryKey: computed(() =>
@@ -91,6 +98,7 @@ export function useContentVersions(
       },
       onSuccess: (data) => {
         invalidateVersionQueries(data.id)
+        invalidateAssetUsage()
         toast.success(t('composables.contentVersions.setCurrentSuccess') as string)
       },
       onError: (error: Error) => {
@@ -134,6 +142,7 @@ export function useContentVersions(
       },
       onSuccess: (data) => {
         invalidateVersionQueries(data.id)
+        invalidateAssetUsage()
         toast.success(t('composables.contentVersions.publishSuccess') as string)
       },
       onError: (error: Error) => {

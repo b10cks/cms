@@ -149,6 +149,13 @@ describe('linked content count', () => {
     expect(mountItem({ asset: asset({ linked_contents_count: 3 }) }).text()).toContain('3 contents')
     expect(mountItem({ asset: asset({ linked_contents_count: 0 }) }).text()).toContain('0 contents')
   })
+
+  it('leaves the label out when the asset carries no count', () => {
+    const text = mountItem({ asset: asset({ linked_contents_count: undefined }) }).text()
+
+    expect(text).not.toMatch(/contents?\b/)
+    expect(text).not.toContain('undefined')
+  })
 })
 
 describe('checkbox', () => {
