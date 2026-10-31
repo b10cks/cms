@@ -3,6 +3,54 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.10.31-6852a93a] — 2026-10-31
+
+- ♿️ Move editor blocks from a focusable grip with the arrow keys
+- 🚚 Number the asset reference index migration after the AI reasoning one
+- 🐛 Refetch asset usage counts after content writes
+- 🐛 Refresh the delivery cache when a published asset changes
+- 🐛 Count asset usage from every version that can still go live
+- ✨ Add content:reindex-references to rebuild stored reference ids
+- 🐛 Point migrated content at the target space's asset ids
+- ✅ Pin the root URL in the delivery snapshot test
+- ✅ Lock delivery output and query counts on a payload fixture
+- ⚡ Load the space connection with the delivery token
+- ⚡ Stop fetching version payloads twice in the delivery index
+- ⚡ Leave searchable_content out of version links and relations
+- ⚡ Skip link and asset passes when there is nothing to inject
+- ⚡ Seed the folder metadata resolver from the folder index
+- ⚡ Purify asset and folder names on write, not on every read
+- ⚡ Expire cached content menus after an hour, not a day
+- ✨ Overhaul the AI integration: animated icons, model logos, reasoning levels
+- 📱 Stack the settings nav above the content on small screens
+- 🐛 Save the AI switch, model and favourites
+- 🐛 Return each driver's models as a list
+- ✨ Add reasoning effort to AI configs and runs
+- 🔥 Park verified domains and the provider activity rollup on their own branches
+- ✨ Turn the teams page into a dashboard and restore the classic team switcher
+- 📝 Align the team management concept with what was built
+- ✅ Elevate root in merged tests and count the overview refresh
+- ✨ Answer AI questions in the composer and show each turn's work
+- ✨ Return steps, answers and sources with every stored thread turn
+- ✨ Accept the user's own answer to an AI question with options
+- ✨ Gate root writes behind elevation and grow the provider console
+- ✨ Rebuild the team area as a workspace with overview, people matrix and switcher
+- ✨ Manage team domains and join requests in the UI
+- ✨ Turn the provider dashboard into an investor dashboard
+- ✨ Add team overview, access matrix, activity and expiring access APIs
+- ✨ Verify team email domains and let matching users join
+- ✨ Add provider metrics endpoint with monthly revenue, growth, engagement and AI figures
+- 📝 Plan team management v2 and provider console
+- ✨ Sync existing canvas drafts to collaborators who join late
+- 🐛 Keep sibling order when undo, redo and AI changes reach peers
+- 🐛 Place remote canvas cursors where the peer actually points
+- 🐛 Refresh paste buttons when another tab copies blocks
+- ✨ Paste blocks only where the field accepts all of them
+- 🐛 Keep asset references when pasting blocks
+- 🔥 Remove the unused Assets.upload API method
+- 🐛 Read single asset responses without the data envelope
+- 🐛 Render the selected registry icon instead of a similar one
+
 ## [v2026.10.28-d6453c41] — 2026-10-28
 
 - 🐛 Drop imagedestroy calls deprecated in PHP 8.5
