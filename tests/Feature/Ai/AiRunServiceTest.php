@@ -100,7 +100,7 @@ class AiRunServiceTest extends TestCase
     }
 
     #[Test]
-    public function a_paused_run_resumes_only_with_valid_answers_from_its_actor_once(): void
+    public function a_paused_run_resumes_only_with_valid_answers_from_its_actor_once_and_takes_own_answers(): void
     {
         $this->driver->push(
             FakeAiDriver::toolCall('ask_questions', ['questions' => [[
@@ -126,14 +126,14 @@ class AiRunServiceTest extends TestCase
         }
 
         try {
-            $this->service()->answer($run, $this->user, ['tone' => 'casual']);
-            $this->fail('An unknown option must be rejected.');
+            $this->service()->answer($run, $this->user, ['mood' => 'calm']);
+            $this->fail('An unknown question must be rejected.');
         } catch (ValidationException $e) {
-            $this->assertArrayHasKey('answers.tone', $e->errors());
+            $this->assertArrayHasKey('answers.mood', $e->errors());
         }
 
         $stale = AiRun::query()->findOrFail($run->id);
-        $this->service()->answer($run, $this->user, ['tone' => 'formal']);
+        $this->service()->answer($run, $this->user, ['tone' => 'Formal, but warm']);
 
         $this->expectException(RunBusy::class);
         try {
@@ -142,7 +142,10 @@ class AiRunServiceTest extends TestCase
             $this->drain($this->service()->advance($run));
             $this->assertSame('Formal copy.', $run->refresh()->result['text']);
             $this->assertSame(2, $this->driver->calls);
-            $this->assertStringContainsString('Formal', collect($run->transcript)->firstWhere('role', 'tool')['content']);
+            $this->assertSame(
+                ['answers' => [['id' => 'tone', 'question' => 'Which tone?', 'answer' => 'Formal, but warm', 'skipped' => false, 'own_answer' => true]]],
+                json_decode(collect($run->transcript)->firstWhere('role', 'tool')['content'], true),
+            );
         }
     }
 

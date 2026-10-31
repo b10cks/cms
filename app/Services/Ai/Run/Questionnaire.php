@@ -6,7 +6,8 @@ use Illuminate\Validation\ValidationException;
 
 /**
  * Validates questionnaires the model asks and the answers users give. A
- * question with options takes one option ID; one without takes free text.
+ * question with options takes one option ID or the user's own text; one
+ * without takes free text.
  */
 final class Questionnaire
 {
@@ -104,12 +105,6 @@ final class Questionnaire
                 continue;
             }
 
-            if ($question['options'] !== [] && ! \in_array($value, array_column($question['options'], 'id'), true)) {
-                $errors["answers.{$id}"][] = 'Choose one of the offered options.';
-
-                continue;
-            }
-
             $result[$id] = mb_substr($value, 0, 2000);
         }
 
@@ -132,15 +127,11 @@ final class Questionnaire
 
         foreach ($questionnaire['questions'] as $question) {
             $answer = $answers[$question['id']] ?? null;
-            $label = $answer;
+            $option = array_find($question['options'], static fn (array $option) => $option['id'] === $answer);
+            $own = $answer !== null && $question['options'] !== [] && $option === null;
 
-            foreach ($question['options'] as $option) {
-                if ($option['id'] === $answer) {
-                    $label = $option['label'];
-                }
-            }
-
-            $lines[] = ['id' => $question['id'], 'question' => $question['title'], 'answer' => $label, 'skipped' => $answer === null];
+            $lines[] = ['id' => $question['id'], 'question' => $question['title'], 'answer' => $option['label'] ?? $answer, 'skipped' => $answer === null]
+                + ($own ? ['own_answer' => true] : []);
         }
 
         return json_encode(['answers' => $lines], JSON_UNESCAPED_UNICODE) ?: '{}';

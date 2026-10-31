@@ -21,7 +21,7 @@ final class AskQuestionsTool implements AiToolInterface
 
     public function description(): string
     {
-        return 'Asks the user one to '.Questionnaire::MAX_QUESTIONS.' questions when the task cannot be done well without their input. Offer options where possible. Use sparingly.';
+        return 'Asks the user one to '.Questionnaire::MAX_QUESTIONS.' questions when the task cannot be done well without their input. Offer options where possible; the user may still answer in their own words (`own_answer`). Use sparingly.';
     }
 
     public function inputSchema(): array
