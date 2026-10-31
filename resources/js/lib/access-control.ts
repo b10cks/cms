@@ -125,29 +125,44 @@ export const spaceSettingsNavigationItems: NavigationAccessItem[] = [
 
 export const teamNavigationItems: NavigationAccessItem[] = [
   {
-    label: 'labels.teams.tabs.people',
-    icon: 'lucide:users',
-    routeName: 'team',
+    label: 'labels.teamWorkspace.nav.overview',
+    icon: 'lucide:layout-dashboard',
+    routeName: 'team-overview',
   },
   {
-    label: 'labels.teams.tabs.roles',
+    label: 'labels.teamWorkspace.nav.people',
+    icon: 'lucide:users',
+    routeName: 'team-people',
+  },
+  {
+    label: 'labels.teamWorkspace.nav.spaces',
+    icon: 'lucide:box',
+    routeName: 'team-spaces',
+  },
+  {
+    label: 'labels.teamWorkspace.nav.roles',
     icon: 'lucide:shield',
     routeName: 'team-roles',
   },
   {
-    label: 'labels.teams.tabs.saml',
+    label: 'labels.teamWorkspace.nav.security',
     icon: 'lucide:key-round',
     routeName: 'team-saml',
   },
   {
-    label: 'labels.teams.tabs.settings',
-    icon: 'lucide:settings',
-    routeName: 'team-settings',
-  },
-  {
-    label: 'labels.teams.tabs.ai',
+    label: 'labels.teamWorkspace.nav.ai',
     icon: 'lucide:sparkles',
     routeName: 'team-ai',
+  },
+  {
+    label: 'labels.teamWorkspace.nav.activity',
+    icon: 'lucide:activity',
+    routeName: 'team-activity',
+  },
+  {
+    label: 'labels.teamWorkspace.nav.settings',
+    icon: 'lucide:settings',
+    routeName: 'team-settings',
   },
 ]
 
@@ -309,9 +324,13 @@ export const routeAccessRequirements: Record<AppRouteName, RouteAccessRequiremen
   'space-settings-migrations': { abilities: 'migrations.view' },
   'space-settings-shares': { abilities: 'asset_shares.view' },
   'space-settings-plugins': { abilities: 'field_plugins.manage' },
-  team: {
+  team: { abilities: 'team.view' },
+  'team-overview': { abilities: 'team.view' },
+  'team-people': {
     abilities: { anyOf: ['team.members.view', 'team.invites.view'] },
   },
+  'team-spaces': { abilities: 'team.view' },
+  'team-activity': { abilities: 'team.audit.view' },
   'team-roles': { abilities: 'team.roles.manage' },
   'team-saml': { abilities: 'team.saml.manage' },
   'team-settings': { abilities: 'team.update' },

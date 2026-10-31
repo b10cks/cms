@@ -2974,6 +2974,201 @@
         "delete": "Team löschen"
       }
     },
+    "teamWorkspace": {
+      "nav": {
+        "overview": "Übersicht",
+        "people": "Personen",
+        "spaces": "Spaces",
+        "roles": "Rollen",
+        "security": "Sicherheit",
+        "ai": "KI",
+        "activity": "Aktivität",
+        "settings": "Einstellungen"
+      },
+      "switcher": {
+        "label": "Team wechseln",
+        "search": "Teams durchsuchen",
+        "recent": "Zuletzt",
+        "allTeams": "Alle Teams",
+        "noMatches": "Kein Team passt zur Suche.",
+        "newSubTeam": "Neues Unterteam"
+      },
+      "overview": {
+        "subTeam": "Unterteam"
+      },
+      "kpis": {
+        "members": "Mitglieder",
+        "membersDetail": "{count} in den letzten 30 Tagen aktiv",
+        "spaces": "Spaces",
+        "spacesDetail": "{count} mit veröffentlichten Inhalten",
+        "pendingInvites": "Offene Einladungen",
+        "pendingDetail": "{count} älter als 7 Tage",
+        "expiring": "Ablaufender Zugriff",
+        "expiringDetail": "Innerhalb von 14 Tagen",
+        "sso": "Single Sign-on",
+        "ssoOn": "An",
+        "ssoOff": "Aus",
+        "ssoOnDetail": "SAML-Login ist aktiv",
+        "ssoDisabledDetail": "SAML-Login ist eingerichtet, aber ausgeschaltet",
+        "ssoNotSetUp": "Für dieses Team nicht eingerichtet"
+      },
+      "structure": {
+        "title": "Struktur",
+        "teams": "{count} Teams | {count} Team | {count} Teams",
+        "people": "{count} Personen | {count} Person | {count} Personen",
+        "hint": "Zieh ein Team auf ein anderes, um es zu verschieben",
+        "chart": "Diagramm",
+        "list": "Liste",
+        "published": "Hat veröffentlichte Inhalte",
+        "unpublished": "Noch nichts veröffentlicht"
+      },
+      "attention": {
+        "title": "Braucht Aufmerksamkeit",
+        "empty": "Gerade gibt es nichts zu tun.",
+        "open": "Öffnen",
+        "types": {
+          "expiring_access": {
+            "title": "Zugriff endet für {count} Personen | Zugriff endet für {count} Person | Zugriff endet für {count} Personen",
+            "action": "Prüfen"
+          },
+          "stale_invites": {
+            "title": "{count} Einladungen warten seit über 7 Tagen | {count} Einladung wartet seit über 7 Tagen | {count} Einladungen warten seit über 7 Tagen",
+            "action": "Prüfen"
+          },
+          "saml_certificate_expiring": {
+            "title": "SAML-Zertifikat läuft heute ab | SAML-Zertifikat läuft morgen ab | SAML-Zertifikat läuft in {count} Tagen ab",
+            "action": "Öffnen"
+          },
+          "teams_without_owner": {
+            "title": "{count} Teams ohne Eigentümer | {count} Team ohne Eigentümer | {count} Teams ohne Eigentümer",
+            "action": "Zuweisen"
+          }
+        }
+      },
+      "activity": {
+        "title": "Aktivität",
+        "description": "Änderungen an Mitgliedschaften, Rollen und Einstellungen in diesem Team, seinen Unterteams und deren Spaces.",
+        "viewAll": "Alle anzeigen",
+        "empty": "Noch keine Aktivität.",
+        "system": "System",
+        "someone": "Jemand",
+        "deleted": "(gelöscht)",
+        "actions": {
+          "member_added": "{actor} hat {member} als {role} zu {subject} hinzugefügt",
+          "member_removed": "{actor} hat {member} aus {subject} entfernt",
+          "member_expired": "{actor} hat den abgelaufenen Zugriff von {member} auf {subject} entfernt",
+          "member_role_changed": "{actor} hat {member} in {subject} von {from} zu {to} geändert",
+          "member_expiry_changed": "{actor} hat den Zugriff von {member} auf {subject} bis {date} befristet",
+          "member_expiry_cleared": "{actor} hat die Befristung von {member} in {subject} aufgehoben",
+          "team_created": "{actor} hat {subject} erstellt",
+          "team_updated": "{actor} hat {subject} geändert",
+          "team_moved": "{actor} hat {subject} unter {target} verschoben",
+          "team_deleted": "{actor} hat {subject} gelöscht",
+          "fallback": "{actor}: {action} in {subject}"
+        }
+      },
+      "move": {
+        "title": "{team} unter {target} verschieben?",
+        "loading": "Änderungen werden geprüft",
+        "previewError": "Die Änderungen konnten nicht geladen werden. Versuch es noch einmal.",
+        "nothingChanges": "Niemand bekommt oder verliert geerbten Zugriff.",
+        "gains": "{count} Personen bekommen geerbten Zugriff | {count} Person bekommt geerbten Zugriff | {count} Personen bekommen geerbten Zugriff",
+        "losses": "{count} Personen verlieren geerbten Zugriff | {count} Person verliert geerbten Zugriff | {count} Personen verlieren geerbten Zugriff",
+        "changes": "{count} Personen erhalten eine andere geerbte Rolle | {count} Person erhält eine andere geerbte Rolle | {count} Personen erhalten eine andere geerbte Rolle",
+        "roleVia": "{role} über {team}",
+        "roleChange": "{from} zu {to} über {team}",
+        "customRoles": "Eigene Rollen",
+        "starts": "Gilt neu",
+        "stops": "Entfällt",
+        "definedIn": "aus {team}",
+        "inUse": "{count} Zuweisungen behalten sie | {count} Zuweisung behält sie | {count} Zuweisungen behalten sie",
+        "directKept": "Keine direkten Space-Rollen betroffen. | {count} direkte Space-Rolle bleibt unverändert. | {count} direkte Space-Rollen bleiben unverändert.",
+        "confirm": "Team verschieben",
+        "success": "Team verschoben"
+      },
+      "expiry": {
+        "title": "Zugriffsende",
+        "description": "{name} verliert den Zugriff am Ende des gewählten Tages.",
+        "label": "Zugriff bis",
+        "inviteHint": "Leer lassen für Zugriff ohne Enddatum. Die Person verliert den Zugriff am Ende des gewählten Tages.",
+        "clear": "Kein Enddatum",
+        "saved": "Zugriffsende gespeichert",
+        "action": "Zugriffsende festlegen"
+      },
+      "access": {
+        "allSpaces": "Noch keine Spaces | Alle Spaces | Alle {count} Spaces",
+        "mixed": "Alle {count} Spaces, dazu {direct} direkt",
+        "direct": {
+          "one": "{role} in {name}",
+          "many": "{roles}"
+        },
+        "pending": "{role} in {name}",
+        "inherited": "{role} über {team}",
+        "spaceDirect": "Direkt",
+        "spaceMixed": "Direkt, dazu {role} über {team}",
+        "until": "Bis {date}",
+        "sources": {
+          "team": "Über eine Teamrolle",
+          "direct": "Direkt",
+          "mixed": "Teamrolle und direkt",
+          "pending": "Einladung offen"
+        }
+      },
+      "people": {
+        "description": "Alle mit Zugriff auf dieses Team oder seine Spaces, und woher der Zugriff kommt.",
+        "columns": {
+          "name": "Name",
+          "teamRole": "Teamrolle",
+          "access": "Zugriff",
+          "source": "Herkunft",
+          "lastActive": "Zuletzt aktiv"
+        },
+        "pending": "Offen",
+        "noRole": "Keine Teamrolle",
+        "invited": "Eingeladen {time}",
+        "never": "Nie",
+        "expiring": "Läuft ab",
+        "list": "Liste",
+        "matrix": "Zugriffsmatrix",
+        "menu": "Aktionen für {name}",
+        "sources": {
+          "invite": "Einladung",
+          "saml": "SAML",
+          "owner": "Ersteller",
+          "direct": "Direkt hinzugefügt"
+        }
+      },
+      "matrix": {
+        "filter": "Nach Team filtern",
+        "allTeams": "Alle Teams",
+        "person": "Person",
+        "empty": "Dieses Team hat noch keine Spaces.",
+        "inherited": "{role} aus der Teamrolle in {team}",
+        "edit": "Rolle von {name} in {space} ändern",
+        "add": "{name} eine direkte Rolle in {space} geben",
+        "addTitle": "Direkte Rolle",
+        "removeDirect": "Direkte Rolle entfernen",
+        "legendInherited": "Über eine Teamrolle",
+        "legendDirect": "Direkte Rolle",
+        "saved": "Zugriff aktualisiert",
+        "reasons": {
+          "no_permission": "Du darfst in diesem Space keine Personen verwalten.",
+          "outranks": "Diese Person hat eine höhere Rolle als du."
+        }
+      },
+      "spaces": {
+        "description": "Spaces dieses Teams und seiner Unterteams.",
+        "columns": {
+          "name": "Space",
+          "team": "Team",
+          "content": "Inhalte"
+        },
+        "empty": "Noch keine Spaces."
+      },
+      "toast": {
+        "error": "Etwas ist schiefgelaufen: {error}"
+      }
+    },
     "teamMembers": {
       "title": "Team-Mitglieder",
       "description": "Hier erscheinen alle Personen, die ihre Einladung bereits angenommen haben.",

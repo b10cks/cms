@@ -67,6 +67,8 @@ export interface CreateInvitePayload {
   language?: string
   message?: string | null
   expires_in_days?: number
+  /** `YYYY-MM-DD`; the access the invite grants ends with this day. */
+  access_until?: string | null
 }
 
 export interface AcceptInvitePayload {

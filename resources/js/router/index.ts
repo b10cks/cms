@@ -102,48 +102,72 @@ const routes: RouteRecordRaw[] = [
       },
       {
         path: ':team',
-        name: 'team',
         component: () => import('~/pages/teams/[team].vue'),
-      },
-      {
-        path: ':team/people',
-        name: 'team-people',
-        component: () => import('~/pages/teams/[team].vue'),
-      },
-      {
-        path: ':team/roles',
-        name: 'team-roles',
-        component: () => import('~/pages/teams/[team].vue'),
-      },
-      {
-        path: ':team/saml',
-        name: 'team-saml',
-        component: () => import('~/pages/teams/[team].vue'),
-      },
-      {
-        path: ':team/settings',
-        name: 'team-settings',
-        component: () => import('~/pages/teams/[team].vue'),
-      },
-      {
-        path: ':team/ai',
-        name: 'team-ai',
-        component: () => import('~/pages/teams/[team].vue'),
-      },
-      {
-        path: ':team/ai/skills/:skillId',
-        name: 'team-ai-skill',
-        component: () => import('~/pages/teams/ai-skill.vue'),
-      },
-      {
-        path: ':team/ai/documents/:documentId',
-        name: 'team-ai-document',
-        component: () => import('~/pages/teams/ai-document.vue'),
-      },
-      {
-        path: ':team/ai/glossaries/:glossaryId',
-        name: 'team-ai-glossary',
-        component: () => import('~/pages/teams/ai-glossary.vue'),
+        children: [
+          {
+            path: '',
+            name: 'team',
+            redirect: (to) => ({ name: 'team-overview', params: to.params }),
+          },
+          {
+            path: 'overview',
+            name: 'team-overview',
+            component: () => import('~/pages/teams/[team]/overview.vue'),
+          },
+          {
+            path: 'people',
+            name: 'team-people',
+            component: () => import('~/pages/teams/[team]/people.vue'),
+          },
+          {
+            path: 'spaces',
+            name: 'team-spaces',
+            component: () => import('~/pages/teams/[team]/spaces.vue'),
+          },
+          {
+            path: 'roles',
+            name: 'team-roles',
+            component: () => import('~/pages/teams/[team]/roles.vue'),
+          },
+          {
+            path: 'saml',
+            name: 'team-saml',
+            component: () => import('~/pages/teams/[team]/security.vue'),
+          },
+          {
+            path: 'ai',
+            name: 'team-ai',
+            component: () => import('~/pages/teams/[team]/ai.vue'),
+          },
+          {
+            path: 'activity',
+            name: 'team-activity',
+            component: () => import('~/pages/teams/[team]/activity.vue'),
+          },
+          {
+            path: 'settings',
+            name: 'team-settings',
+            component: () => import('~/pages/teams/[team]/settings.vue'),
+          },
+          {
+            path: 'ai/skills/:skillId',
+            name: 'team-ai-skill',
+            component: () => import('~/pages/teams/ai-skill.vue'),
+            meta: { settingsNav: 'team-ai' },
+          },
+          {
+            path: 'ai/documents/:documentId',
+            name: 'team-ai-document',
+            component: () => import('~/pages/teams/ai-document.vue'),
+            meta: { settingsNav: 'team-ai' },
+          },
+          {
+            path: 'ai/glossaries/:glossaryId',
+            name: 'team-ai-glossary',
+            component: () => import('~/pages/teams/ai-glossary.vue'),
+            meta: { settingsNav: 'team-ai' },
+          },
+        ],
       },
     ],
   },

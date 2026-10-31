@@ -60,6 +60,12 @@ export const queryKeys = {
       all: () => [...queryKeys.teams.detail(teamId), 'roles'] as const,
       space: () => [...queryKeys.teams.detail(teamId), 'roles', 'space'] as const,
     }),
+    overview: (teamId: MaybeRef<string>) =>
+      [...queryKeys.teams.detail(teamId), 'overview'] as const,
+    accessMatrix: (teamId: MaybeRef<string>, filterTeamId: MaybeRef<string | null> = null) =>
+      [...queryKeys.teams.detail(teamId), 'access-matrix', filterTeamId] as const,
+    auditLogs: (teamId: MaybeRef<string>, params: unknown = {}) =>
+      [...queryKeys.teams.detail(teamId), 'audit-logs', params] as const,
   },
   provider: {
     all: () => ['provider'] as const,

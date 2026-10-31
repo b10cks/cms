@@ -34,7 +34,11 @@ class TeamMovePreviewService
         $changes = $after
             ->intersectByKeys($before)
             ->filter(fn (array $entry, string $userId) => $entry['role'] !== $before[$userId]['role'])
-            ->map(fn (array $entry, string $userId) => [...$entry, 'previous_role' => $before[$userId]['role']])
+            ->map(fn (array $entry, string $userId) => [
+                ...$entry,
+                'previous_role' => $before[$userId]['role'],
+                'previous_role_name' => $before[$userId]['role_name'],
+            ])
             ->values();
 
         $oldRoles = $this->customRoles($oldChain);
@@ -78,7 +82,7 @@ class TeamMovePreviewService
             ->join('teams', 'teams.id', '=', 'team_user.team_id')
             ->join('roles', 'roles.id', '=', 'team_user.role_id')
             ->whereIn('team_user.team_id', $chain)
-            ->select('users.*', 'roles.key as role_key', 'roles.level as role_level', 'teams.id as via_id', 'teams.name as via_name')
+            ->select('users.*', 'roles.key as role_key', 'roles.name as role_name', 'roles.level as role_level', 'teams.id as via_id', 'teams.name as via_name')
             ->get()
             ->groupBy('id')
             ->map(fn (Collection $rows) => $rows
@@ -90,6 +94,7 @@ class TeamMovePreviewService
                 'email' => $user->email,
                 'avatar' => $user->avatar_url,
                 'role' => $user->role_key,
+                'role_name' => $user->role_name,
                 'via' => ['id' => $user->via_id, 'name' => $user->via_name],
             ]);
     }

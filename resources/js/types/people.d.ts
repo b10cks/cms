@@ -2,7 +2,7 @@ type PersonKind = 'member' | 'invite'
 
 type PersonState = 'active' | 'pending' | 'expired'
 
-type PersonSegment = 'all' | 'members' | 'pending'
+type PersonSegment = 'all' | 'members' | 'pending' | 'expiring'
 
 interface PersonUser {
   id: string
@@ -21,6 +21,7 @@ interface PersonSpaceMembership {
   }
   role: string | null
   joined_at: string
+  expires_at: string | null
 }
 
 interface PersonResource {
@@ -37,7 +38,14 @@ interface PersonResource {
   membership_origin: 'team' | 'space' | 'inherited' | null
   /** The ancestor team an inherited role comes from. */
   inherited_from: { id: string; name: string } | null
+  /** On space lists: the team role that reaches this space. */
+  inherited_role: string | null
   space_memberships: PersonSpaceMembership[]
+  /** How the membership came about (`invite`, `owner`, `saml`, `direct`). */
+  source: string | null
+  last_active_at: string | null
+  /** When the access ends; `expires_at` is the invite link's own expiry. */
+  access_expires_at: string | null
   joined_at: string | null
   invited_at: string | null
   expires_at: string | null
@@ -47,6 +55,7 @@ interface PersonResource {
 interface PeopleCounts {
   members: number
   pending: number
+  expiring: number
   total: number
 }
 

@@ -217,6 +217,7 @@ declare global {
   const useTableKeyboard: typeof import('./resources/js/composables/useTableKeyboard').useTableKeyboard
   const useTableQueryState: typeof import('./resources/js/composables/useTableQueryState').useTableQueryState
   const useTeamTypes: typeof import('./resources/js/composables/useTeamTypes').useTeamTypes
+  const useTeamWorkspace: typeof import('./resources/js/composables/useTeamWorkspace').useTeamWorkspace
   const useTeams: typeof import('./resources/js/composables/useTeams').useTeams
   const useTemplateRef: typeof import('vue').useTemplateRef
   const useTokens: typeof import('./resources/js/composables/useTokens').useTokens
@@ -545,6 +546,7 @@ declare module 'vue' {
     readonly useTableKeyboard: UnwrapRef<typeof import('./resources/js/composables/useTableKeyboard')['useTableKeyboard']>
     readonly useTableQueryState: UnwrapRef<typeof import('./resources/js/composables/useTableQueryState')['useTableQueryState']>
     readonly useTeamTypes: UnwrapRef<typeof import('./resources/js/composables/useTeamTypes')['useTeamTypes']>
+    readonly useTeamWorkspace: UnwrapRef<typeof import('./resources/js/composables/useTeamWorkspace')['useTeamWorkspace']>
     readonly useTeams: UnwrapRef<typeof import('./resources/js/composables/useTeams')['useTeams']>
     readonly useTemplateRef: UnwrapRef<typeof import('vue')['useTemplateRef']>
     readonly useTokens: UnwrapRef<typeof import('./resources/js/composables/useTokens')['useTokens']>

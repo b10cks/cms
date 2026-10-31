@@ -2960,6 +2960,201 @@
         "delete": "Ekibi sil"
       }
     },
+    "teamWorkspace": {
+      "nav": {
+        "overview": "Genel bakış",
+        "people": "Kişiler",
+        "spaces": "Alanlar",
+        "roles": "Roller",
+        "security": "Güvenlik",
+        "ai": "Yapay zekâ",
+        "activity": "Etkinlik",
+        "settings": "Ayarlar"
+      },
+      "switcher": {
+        "label": "Ekip değiştir",
+        "search": "Ekiplerde ara",
+        "recent": "Son kullanılanlar",
+        "allTeams": "Tüm ekipler",
+        "noMatches": "Aramayla eşleşen ekip yok.",
+        "newSubTeam": "Yeni alt ekip"
+      },
+      "overview": {
+        "subTeam": "Alt ekip"
+      },
+      "kpis": {
+        "members": "Üyeler",
+        "membersDetail": "Son 30 günde {count} aktif",
+        "spaces": "Alanlar",
+        "spacesDetail": "{count} alanda yayımlanmış içerik var",
+        "pendingInvites": "Bekleyen davetler",
+        "pendingDetail": "{count} tanesi 7 günden eski",
+        "expiring": "Sona eren erişim",
+        "expiringDetail": "14 gün içinde",
+        "sso": "Tek oturum açma",
+        "ssoOn": "Açık",
+        "ssoOff": "Kapalı",
+        "ssoOnDetail": "SAML girişi etkin",
+        "ssoDisabledDetail": "SAML ayarlı ama kapalı",
+        "ssoNotSetUp": "Bu ekip için ayarlanmadı"
+      },
+      "structure": {
+        "title": "Yapı",
+        "teams": "{count} ekip | {count} ekip | {count} ekip",
+        "people": "{count} kişi | {count} kişi | {count} kişi",
+        "hint": "Taşımak için bir ekibi başka bir ekibin üzerine sürükleyin",
+        "chart": "Şema",
+        "list": "Liste",
+        "published": "Yayımlanmış içerik var",
+        "unpublished": "Henüz yayımlanmış bir şey yok"
+      },
+      "attention": {
+        "title": "İlgilenilmesi gerekenler",
+        "empty": "Şu an ilgilenilecek bir şey yok.",
+        "open": "Aç",
+        "types": {
+          "expiring_access": {
+            "title": "{count} kişinin erişimi sona eriyor | {count} kişinin erişimi sona eriyor | {count} kişinin erişimi sona eriyor",
+            "action": "İncele"
+          },
+          "stale_invites": {
+            "title": "{count} davet 7 günden uzun süredir bekliyor | {count} davet 7 günden uzun süredir bekliyor | {count} davet 7 günden uzun süredir bekliyor",
+            "action": "İncele"
+          },
+          "saml_certificate_expiring": {
+            "title": "SAML sertifikası bugün sona eriyor | SAML sertifikası yarın sona eriyor | SAML sertifikası {count} gün içinde sona eriyor",
+            "action": "Aç"
+          },
+          "teams_without_owner": {
+            "title": "Sahibi olmayan {count} ekip | Sahibi olmayan {count} ekip | Sahibi olmayan {count} ekip",
+            "action": "Ata"
+          }
+        }
+      },
+      "activity": {
+        "title": "Etkinlik",
+        "description": "Bu ekipte, alt ekiplerinde ve alanlarında üyelik, rol ve ayar değişiklikleri.",
+        "viewAll": "Tümünü gör",
+        "empty": "Henüz etkinlik yok.",
+        "system": "Sistem",
+        "someone": "Biri",
+        "deleted": "(silindi)",
+        "actions": {
+          "member_added": "{actor}, {member} kişisini {subject} içine {role} olarak ekledi",
+          "member_removed": "{actor}, {member} kişisini {subject} içinden çıkardı",
+          "member_expired": "{actor}, {member} kişisinin {subject} için süresi dolan erişimini kaldırdı",
+          "member_role_changed": "{actor}, {subject} içinde {member} kişisini {from} rolünden {to} rolüne geçirdi",
+          "member_expiry_changed": "{actor}, {member} kişisinin {subject} erişimini {date} tarihine kadar sınırladı",
+          "member_expiry_cleared": "{actor}, {member} kişisinin {subject} erişim bitiş tarihini kaldırdı",
+          "team_created": "{actor}, {subject} ekibini oluşturdu",
+          "team_updated": "{actor}, {subject} ekibini güncelledi",
+          "team_moved": "{actor}, {subject} ekibini {target} altına taşıdı",
+          "team_deleted": "{actor}, {subject} ekibini sildi",
+          "fallback": "{actor}: {subject} içinde {action}"
+        }
+      },
+      "move": {
+        "title": "{team} ekibi {target} altına taşınsın mı?",
+        "loading": "Nelerin değişeceği kontrol ediliyor",
+        "previewError": "Değişiklikler yüklenemedi. Tekrar deneyin.",
+        "nothingChanges": "Kimse devralınan erişim kazanmıyor veya kaybetmiyor.",
+        "gains": "{count} kişi devralınan erişim kazanıyor | {count} kişi devralınan erişim kazanıyor | {count} kişi devralınan erişim kazanıyor",
+        "losses": "{count} kişi devralınan erişimini kaybediyor | {count} kişi devralınan erişimini kaybediyor | {count} kişi devralınan erişimini kaybediyor",
+        "changes": "{count} kişinin devralınan rolü değişiyor | {count} kişinin devralınan rolü değişiyor | {count} kişinin devralınan rolü değişiyor",
+        "roleVia": "{team} üzerinden {role}",
+        "roleChange": "{team} üzerinden {from} yerine {to}",
+        "customRoles": "Özel roller",
+        "starts": "Geçerli olur",
+        "stops": "Geçerliliğini yitirir",
+        "definedIn": "kaynak: {team}",
+        "inUse": "{count} atama bu rolü korur | {count} atama bu rolü korur | {count} atama bu rolü korur",
+        "directKept": "Korunacak doğrudan alan rolü yok. | {count} doğrudan alan rolü olduğu gibi kalır. | {count} doğrudan alan rolü olduğu gibi kalır.",
+        "confirm": "Ekibi taşı",
+        "success": "Ekip taşındı"
+      },
+      "expiry": {
+        "title": "Erişim sonu",
+        "description": "{name}, seçilen günün sonunda erişimini kaybeder.",
+        "label": "Erişim bitişi",
+        "inviteHint": "Süresiz erişim için boş bırakın. Kişi, seçilen günün sonunda erişimini kaybeder.",
+        "clear": "Bitiş tarihi yok",
+        "saved": "Erişim sonu kaydedildi",
+        "action": "Erişim sonunu belirle"
+      },
+      "access": {
+        "allSpaces": "Henüz alan yok | Tüm alanlar | Tüm {count} alan",
+        "mixed": "Tüm {count} alan, ayrıca {direct} doğrudan",
+        "direct": {
+          "one": "{name} içinde {role}",
+          "many": "{roles}"
+        },
+        "pending": "{name} içinde {role}",
+        "inherited": "{team} üzerinden {role}",
+        "spaceDirect": "Doğrudan",
+        "spaceMixed": "Doğrudan, ayrıca {team} üzerinden {role}",
+        "until": "{date} tarihine kadar",
+        "sources": {
+          "team": "Ekip rolü üzerinden",
+          "direct": "Doğrudan",
+          "mixed": "Ekip rolü ve doğrudan",
+          "pending": "Davet bekliyor"
+        }
+      },
+      "people": {
+        "description": "Bu ekibe veya alanlarına erişimi olan herkes ve erişimin nereden geldiği.",
+        "columns": {
+          "name": "Ad",
+          "teamRole": "Ekip rolü",
+          "access": "Erişim",
+          "source": "Kaynak",
+          "lastActive": "Son etkinlik"
+        },
+        "pending": "Bekliyor",
+        "noRole": "Ekip rolü yok",
+        "invited": "Davet edildi {time}",
+        "never": "Hiç",
+        "expiring": "Sona eriyor",
+        "list": "Liste",
+        "matrix": "Erişim matrisi",
+        "menu": "{name} için işlemler",
+        "sources": {
+          "invite": "Davet",
+          "saml": "SAML",
+          "owner": "Oluşturan",
+          "direct": "Doğrudan eklendi"
+        }
+      },
+      "matrix": {
+        "filter": "Ekibe göre filtrele",
+        "allTeams": "Tüm ekipler",
+        "person": "Kişi",
+        "empty": "Bu ekibin henüz alanı yok.",
+        "inherited": "{team} ekip rolünden {role}",
+        "edit": "{name} kişisinin {space} içindeki rolünü değiştir",
+        "add": "{name} kişisine {space} içinde doğrudan rol ver",
+        "addTitle": "Doğrudan rol",
+        "removeDirect": "Doğrudan rolü kaldır",
+        "legendInherited": "Ekip rolü üzerinden",
+        "legendDirect": "Doğrudan rol",
+        "saved": "Erişim güncellendi",
+        "reasons": {
+          "no_permission": "Bu alandaki kişileri yönetemezsiniz.",
+          "outranks": "Bu kişinin rolü sizinkinden yüksek."
+        }
+      },
+      "spaces": {
+        "description": "Bu ekibin ve alt ekiplerinin alanları.",
+        "columns": {
+          "name": "Alan",
+          "team": "Ekip",
+          "content": "İçerik"
+        },
+        "empty": "Henüz alan yok."
+      },
+      "toast": {
+        "error": "Bir sorun oluştu: {error}"
+      }
+    },
     "teamMembers": {
       "title": "Ekip Üyeleri",
       "description": "Davetlerini zaten kabul etmiş herkes burada görünür.",

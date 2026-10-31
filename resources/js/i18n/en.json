@@ -2960,6 +2960,201 @@
         "delete": "Delete team"
       }
     },
+    "teamWorkspace": {
+      "nav": {
+        "overview": "Overview",
+        "people": "People",
+        "spaces": "Spaces",
+        "roles": "Roles",
+        "security": "Security",
+        "ai": "AI",
+        "activity": "Activity",
+        "settings": "Settings"
+      },
+      "switcher": {
+        "label": "Switch team",
+        "search": "Search teams",
+        "recent": "Recent",
+        "allTeams": "All teams",
+        "noMatches": "No team matches your search.",
+        "newSubTeam": "New sub-team"
+      },
+      "overview": {
+        "subTeam": "Sub-team"
+      },
+      "kpis": {
+        "members": "Members",
+        "membersDetail": "{count} active in the last 30 days",
+        "spaces": "Spaces",
+        "spacesDetail": "{count} with published content",
+        "pendingInvites": "Pending invites",
+        "pendingDetail": "{count} older than 7 days",
+        "expiring": "Expiring access",
+        "expiringDetail": "Within 14 days",
+        "sso": "Single sign-on",
+        "ssoOn": "On",
+        "ssoOff": "Off",
+        "ssoOnDetail": "SAML login is enabled",
+        "ssoDisabledDetail": "SAML login is configured but turned off",
+        "ssoNotSetUp": "Not set up for this team"
+      },
+      "structure": {
+        "title": "Structure",
+        "teams": "{count} teams | {count} team | {count} teams",
+        "people": "{count} people | {count} person | {count} people",
+        "hint": "Drag a team onto another to move it",
+        "chart": "Chart",
+        "list": "List",
+        "published": "Has published content",
+        "unpublished": "Nothing published yet"
+      },
+      "attention": {
+        "title": "Needs attention",
+        "empty": "Nothing needs your attention.",
+        "open": "Open",
+        "types": {
+          "expiring_access": {
+            "title": "Access ends for {count} people | Access ends for {count} person | Access ends for {count} people",
+            "action": "Review"
+          },
+          "stale_invites": {
+            "title": "{count} invites waiting over 7 days | {count} invite waiting over 7 days | {count} invites waiting over 7 days",
+            "action": "Review"
+          },
+          "saml_certificate_expiring": {
+            "title": "SAML certificate expires today | SAML certificate expires tomorrow | SAML certificate expires in {count} days",
+            "action": "Open"
+          },
+          "teams_without_owner": {
+            "title": "{count} teams without an owner | {count} team without an owner | {count} teams without an owner",
+            "action": "Assign"
+          }
+        }
+      },
+      "activity": {
+        "title": "Activity",
+        "description": "Membership, role and settings changes in this team, its sub-teams and their spaces.",
+        "viewAll": "View all",
+        "empty": "No activity yet.",
+        "system": "System",
+        "someone": "Someone",
+        "deleted": "(deleted)",
+        "actions": {
+          "member_added": "{actor} added {member} as {role} to {subject}",
+          "member_removed": "{actor} removed {member} from {subject}",
+          "member_expired": "{actor} removed expired access for {member} on {subject}",
+          "member_role_changed": "{actor} changed {member} from {from} to {to} on {subject}",
+          "member_expiry_changed": "{actor} set access for {member} on {subject} to end on {date}",
+          "member_expiry_cleared": "{actor} removed the end date for {member} on {subject}",
+          "team_created": "{actor} created {subject}",
+          "team_updated": "{actor} updated {subject}",
+          "team_moved": "{actor} moved {subject} under {target}",
+          "team_deleted": "{actor} deleted {subject}",
+          "fallback": "{actor}: {action} on {subject}"
+        }
+      },
+      "move": {
+        "title": "Move {team} under {target}?",
+        "loading": "Checking what changes",
+        "previewError": "The changes could not be loaded. Try again.",
+        "nothingChanges": "Nobody gains or loses inherited access.",
+        "gains": "{count} people gain inherited access | {count} person gains inherited access | {count} people gain inherited access",
+        "losses": "{count} people lose inherited access | {count} person loses inherited access | {count} people lose inherited access",
+        "changes": "{count} people get a different inherited role | {count} person gets a different inherited role | {count} people get a different inherited role",
+        "roleVia": "{role} via {team}",
+        "roleChange": "{from} to {to} via {team}",
+        "customRoles": "Custom roles",
+        "starts": "Starts",
+        "stops": "Stops",
+        "definedIn": "from {team}",
+        "inUse": "{count} assignments keep it | {count} assignment keeps it | {count} assignments keep it",
+        "directKept": "No direct space roles to keep. | {count} direct space role stays as it is. | {count} direct space roles stay as they are.",
+        "confirm": "Move team",
+        "success": "Team moved"
+      },
+      "expiry": {
+        "title": "Access end",
+        "description": "{name} loses access at the end of the chosen day.",
+        "label": "Access until",
+        "inviteHint": "Leave empty for access without an end date. The person loses access at the end of the chosen day.",
+        "clear": "No end date",
+        "saved": "Access end saved",
+        "action": "Set access end"
+      },
+      "access": {
+        "allSpaces": "No spaces yet | All spaces | All {count} spaces",
+        "mixed": "All {count} spaces, plus {direct} direct",
+        "direct": {
+          "one": "{role} on {name}",
+          "many": "{roles}"
+        },
+        "pending": "{role} on {name}",
+        "inherited": "{role} via {team}",
+        "spaceDirect": "Direct",
+        "spaceMixed": "Direct, plus {role} via {team}",
+        "until": "Until {date}",
+        "sources": {
+          "team": "From a team role",
+          "direct": "Direct",
+          "mixed": "Team role and direct",
+          "pending": "Invitation pending"
+        }
+      },
+      "people": {
+        "description": "Everyone with access to this team or its spaces, with where the access comes from.",
+        "columns": {
+          "name": "Name",
+          "teamRole": "Team role",
+          "access": "Access",
+          "source": "Source",
+          "lastActive": "Last active"
+        },
+        "pending": "Pending",
+        "noRole": "No team role",
+        "invited": "Invited {time}",
+        "never": "Never",
+        "expiring": "Expiring",
+        "list": "List",
+        "matrix": "Access matrix",
+        "menu": "Actions for {name}",
+        "sources": {
+          "invite": "Invite",
+          "saml": "SAML",
+          "owner": "Creator",
+          "direct": "Added directly"
+        }
+      },
+      "matrix": {
+        "filter": "Filter by team",
+        "allTeams": "All teams",
+        "person": "Person",
+        "empty": "This team has no spaces yet.",
+        "inherited": "{role} from the {team} team role",
+        "edit": "Change the role of {name} in {space}",
+        "add": "Give {name} a direct role in {space}",
+        "addTitle": "Direct role",
+        "removeDirect": "Remove direct role",
+        "legendInherited": "From a team role",
+        "legendDirect": "Direct role",
+        "saved": "Access updated",
+        "reasons": {
+          "no_permission": "You can't manage people in this space.",
+          "outranks": "This person has a higher role than you."
+        }
+      },
+      "spaces": {
+        "description": "Spaces of this team and its sub-teams.",
+        "columns": {
+          "name": "Space",
+          "team": "Team",
+          "content": "Content"
+        },
+        "empty": "No spaces yet."
+      },
+      "toast": {
+        "error": "Something went wrong: {error}"
+      }
+    },
     "teamMembers": {
       "title": "Team Members",
       "description": "Everyone who has already accepted their invitation appears here.",

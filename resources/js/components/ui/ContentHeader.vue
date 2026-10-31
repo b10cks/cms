@@ -26,6 +26,7 @@ withDefaults(
         <div class="min-w-0">
           <div class="flex items-center gap-2">
             <h1 class="truncate text-2xl font-bold text-primary">{{ header }}</h1>
+            <slot name="after-header" />
             <TooltipIcon v-if="description">
               <span class="block max-w-sm">{{ description }}</span>
             </TooltipIcon>

@@ -2960,6 +2960,201 @@
         "delete": "Supprimer l'équipe"
       }
     },
+    "teamWorkspace": {
+      "nav": {
+        "overview": "Vue d'ensemble",
+        "people": "Personnes",
+        "spaces": "Espaces",
+        "roles": "Rôles",
+        "security": "Sécurité",
+        "ai": "IA",
+        "activity": "Activité",
+        "settings": "Paramètres"
+      },
+      "switcher": {
+        "label": "Changer d'équipe",
+        "search": "Rechercher des équipes",
+        "recent": "Récentes",
+        "allTeams": "Toutes les équipes",
+        "noMatches": "Aucune équipe ne correspond à la recherche.",
+        "newSubTeam": "Nouvelle sous-équipe"
+      },
+      "overview": {
+        "subTeam": "Sous-équipe"
+      },
+      "kpis": {
+        "members": "Membres",
+        "membersDetail": "{count} actifs ces 30 derniers jours",
+        "spaces": "Espaces",
+        "spacesDetail": "{count} avec du contenu publié",
+        "pendingInvites": "Invitations en attente",
+        "pendingDetail": "{count} de plus de 7 jours",
+        "expiring": "Accès arrivant à échéance",
+        "expiringDetail": "Dans les 14 jours",
+        "sso": "Authentification unique",
+        "ssoOn": "Activée",
+        "ssoOff": "Désactivée",
+        "ssoOnDetail": "La connexion SAML est active",
+        "ssoDisabledDetail": "SAML est configuré mais désactivé",
+        "ssoNotSetUp": "Non configurée pour cette équipe"
+      },
+      "structure": {
+        "title": "Structure",
+        "teams": "{count} équipe | {count} équipe | {count} équipes",
+        "people": "{count} personne | {count} personne | {count} personnes",
+        "hint": "Faites glisser une équipe sur une autre pour la déplacer",
+        "chart": "Organigramme",
+        "list": "Liste",
+        "published": "Contient du contenu publié",
+        "unpublished": "Rien de publié pour l'instant"
+      },
+      "attention": {
+        "title": "À traiter",
+        "empty": "Rien à traiter pour le moment.",
+        "open": "Ouvrir",
+        "types": {
+          "expiring_access": {
+            "title": "L'accès prend fin pour {count} personne | L'accès prend fin pour {count} personne | L'accès prend fin pour {count} personnes",
+            "action": "Vérifier"
+          },
+          "stale_invites": {
+            "title": "{count} invitation en attente depuis plus de 7 jours | {count} invitation en attente depuis plus de 7 jours | {count} invitations en attente depuis plus de 7 jours",
+            "action": "Vérifier"
+          },
+          "saml_certificate_expiring": {
+            "title": "Le certificat SAML expire aujourd'hui | Le certificat SAML expire demain | Le certificat SAML expire dans {count} jours",
+            "action": "Ouvrir"
+          },
+          "teams_without_owner": {
+            "title": "{count} équipe sans propriétaire | {count} équipe sans propriétaire | {count} équipes sans propriétaire",
+            "action": "Attribuer"
+          }
+        }
+      },
+      "activity": {
+        "title": "Activité",
+        "description": "Changements de membres, de rôles et de paramètres dans cette équipe, ses sous-équipes et leurs espaces.",
+        "viewAll": "Tout afficher",
+        "empty": "Aucune activité pour l'instant.",
+        "system": "Système",
+        "someone": "Quelqu'un",
+        "deleted": "(supprimé)",
+        "actions": {
+          "member_added": "{actor} a ajouté {member} comme {role} à {subject}",
+          "member_removed": "{actor} a retiré {member} de {subject}",
+          "member_expired": "{actor} a retiré l'accès expiré de {member} à {subject}",
+          "member_role_changed": "{actor} a changé {member} de {from} à {to} dans {subject}",
+          "member_expiry_changed": "{actor} a fixé la fin de l'accès de {member} à {subject} au {date}",
+          "member_expiry_cleared": "{actor} a retiré la date de fin de {member} dans {subject}",
+          "team_created": "{actor} a créé {subject}",
+          "team_updated": "{actor} a modifié {subject}",
+          "team_moved": "{actor} a déplacé {subject} sous {target}",
+          "team_deleted": "{actor} a supprimé {subject}",
+          "fallback": "{actor} : {action} dans {subject}"
+        }
+      },
+      "move": {
+        "title": "Déplacer {team} sous {target} ?",
+        "loading": "Vérification des changements",
+        "previewError": "Impossible de charger les changements. Réessayez.",
+        "nothingChanges": "Personne ne gagne ni ne perd d'accès hérité.",
+        "gains": "{count} personne obtient un accès hérité | {count} personne obtient un accès hérité | {count} personnes obtiennent un accès hérité",
+        "losses": "{count} personne perd son accès hérité | {count} personne perd son accès hérité | {count} personnes perdent leur accès hérité",
+        "changes": "{count} personne reçoit un autre rôle hérité | {count} personne reçoit un autre rôle hérité | {count} personnes reçoivent un autre rôle hérité",
+        "roleVia": "{role} via {team}",
+        "roleChange": "de {from} à {to} via {team}",
+        "customRoles": "Rôles personnalisés",
+        "starts": "S'applique",
+        "stops": "Ne s'applique plus",
+        "definedIn": "de {team}",
+        "inUse": "{count} attribution le conserve | {count} attribution le conserve | {count} attributions le conservent",
+        "directKept": "Aucun rôle direct d'espace à conserver. | {count} rôle direct d'espace reste inchangé. | {count} rôles directs d'espace restent inchangés.",
+        "confirm": "Déplacer l'équipe",
+        "success": "Équipe déplacée"
+      },
+      "expiry": {
+        "title": "Fin de l'accès",
+        "description": "{name} perd l'accès à la fin du jour choisi.",
+        "label": "Accès jusqu'au",
+        "inviteHint": "Laissez vide pour un accès sans date de fin. La personne perd l'accès à la fin du jour choisi.",
+        "clear": "Pas de date de fin",
+        "saved": "Fin de l'accès enregistrée",
+        "action": "Définir la fin de l'accès"
+      },
+      "access": {
+        "allSpaces": "Aucun espace pour l'instant | Tous les espaces | Les {count} espaces",
+        "mixed": "Les {count} espaces, plus {direct} en direct",
+        "direct": {
+          "one": "{role} dans {name}",
+          "many": "{roles}"
+        },
+        "pending": "{role} dans {name}",
+        "inherited": "{role} via {team}",
+        "spaceDirect": "Direct",
+        "spaceMixed": "Direct, plus {role} via {team}",
+        "until": "Jusqu'au {date}",
+        "sources": {
+          "team": "Via un rôle d'équipe",
+          "direct": "Direct",
+          "mixed": "Rôle d'équipe et direct",
+          "pending": "Invitation en attente"
+        }
+      },
+      "people": {
+        "description": "Toutes les personnes ayant accès à cette équipe ou à ses espaces, et l'origine de cet accès.",
+        "columns": {
+          "name": "Nom",
+          "teamRole": "Rôle d'équipe",
+          "access": "Accès",
+          "source": "Origine",
+          "lastActive": "Dernière activité"
+        },
+        "pending": "En attente",
+        "noRole": "Aucun rôle d'équipe",
+        "invited": "Invité {time}",
+        "never": "Jamais",
+        "expiring": "Échéance proche",
+        "list": "Liste",
+        "matrix": "Matrice d'accès",
+        "menu": "Actions pour {name}",
+        "sources": {
+          "invite": "Invitation",
+          "saml": "SAML",
+          "owner": "Créateur",
+          "direct": "Ajouté directement"
+        }
+      },
+      "matrix": {
+        "filter": "Filtrer par équipe",
+        "allTeams": "Toutes les équipes",
+        "person": "Personne",
+        "empty": "Cette équipe n'a pas encore d'espaces.",
+        "inherited": "{role} via le rôle d'équipe dans {team}",
+        "edit": "Changer le rôle de {name} dans {space}",
+        "add": "Donner à {name} un rôle direct dans {space}",
+        "addTitle": "Rôle direct",
+        "removeDirect": "Retirer le rôle direct",
+        "legendInherited": "Via un rôle d'équipe",
+        "legendDirect": "Rôle direct",
+        "saved": "Accès mis à jour",
+        "reasons": {
+          "no_permission": "Vous ne pouvez pas gérer les personnes de cet espace.",
+          "outranks": "Cette personne a un rôle plus élevé que le vôtre."
+        }
+      },
+      "spaces": {
+        "description": "Espaces de cette équipe et de ses sous-équipes.",
+        "columns": {
+          "name": "Espace",
+          "team": "Équipe",
+          "content": "Contenu"
+        },
+        "empty": "Aucun espace pour l'instant."
+      },
+      "toast": {
+        "error": "Une erreur s'est produite : {error}"
+      }
+    },
     "teamMembers": {
       "title": "Membres de l'équipe",
       "description": "Toutes les personnes ayant déjà accepté leur invitation apparaissent ici.",

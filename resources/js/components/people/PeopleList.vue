@@ -24,7 +24,15 @@ import {
 import TableEmptyRow from '~/components/ui/TableEmptyRow.vue'
 import TableLoadingRow from '~/components/ui/TableLoadingRow.vue'
 import TablePaginationFooter from '~/components/ui/TablePaginationFooter.vue'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '~/components/ui/dropdown-menu'
 import { SimpleTooltip } from '~/components/ui/tooltip'
+import { ACCESS_SOURCE_ICONS, summarizeAccess } from '~/lib/people-access'
 import type { RoleCatalogEntry } from '~/types/authorization'
 
 const props = withDefaults(
@@ -39,11 +47,20 @@ const props = withDefaults(
     availableRoles?: RoleCatalogEntry[]
     resourceType: 'space' | 'team'
     canManageInvites?: boolean
+    /** Roles of the other scope (space roles on a team, team roles on a space), only to name them. */
+    otherRoles?: RoleCatalogEntry[]
+    /** Team or space name, for pending invites ("Editor on Campaigns"). */
+    resourceName?: string
+    /** Spaces a team role reaches. */
+    spaceCount?: number
   }>(),
   {
     sortBy: () => ({ column: 'firstname', direction: 'asc' as const }),
     availableRoles: () => [],
     canManageInvites: false,
+    otherRoles: () => [],
+    resourceName: '',
+    spaceCount: 0,
   }
 )
 
@@ -52,6 +69,7 @@ const emit = defineEmits<{
   removeMember: [userId: string]
   resendInvite: [inviteId: string]
   deleteInvite: [inviteId: string]
+  setExpiry: [person: PersonResource]
   'update:currentPage': [page: number]
   'update:perPage': [perPage: number]
   'update:sortBy': [sort: { column: string; direction: 'asc' | 'desc' }]
@@ -59,7 +77,7 @@ const emit = defineEmits<{
 
 const { t } = useI18n()
 const { alert } = useAlertDialog()
-const { formatDateTime, formatRelativeTime } = useFormat()
+const { formatDate, formatDateTime, formatRelativeTime } = useFormat()
 
 const editingRole = ref<string | null>(null)
 const selected = ref<Map<string, PersonResource>>(new Map())
@@ -67,16 +85,36 @@ const selected = ref<Map<string, PersonResource>>(new Map())
 const roleName = (role: string | null) =>
   role ? (props.availableRoles.find((entry) => entry.key === role)?.name ?? role) : null
 
-const stateVariant = (state: PersonState): 'warning' | 'destructive' | 'success' => {
-  switch (state) {
-    case 'pending':
-      return 'warning'
-    case 'expired':
-      return 'destructive'
-    default:
-      return 'success'
+const anyRoleName = (role: string | null) =>
+  role
+    ? ([...props.availableRoles, ...props.otherRoles].find((entry) => entry.key === role)?.name ?? role)
+    : ''
+
+const access = (person: PersonResource) => {
+  const summary = summarizeAccess(person, {
+    resourceType: props.resourceType,
+    resourceName: props.resourceName,
+    spaceCount: props.spaceCount,
+    roleName: anyRoleName,
+  })
+  return {
+    icon: ACCESS_SOURCE_ICONS[summary.source],
+    source: t(`labels.teamWorkspace.access.sources.${summary.source}`),
+    label: t(`labels.teamWorkspace.access.${summary.key}`, summary.params, Number(summary.params.count ?? 1)),
   }
 }
+
+/** Only a person's own (direct) membership carries an end date that can be edited here. */
+const hasDirectMembership = (person: PersonResource) =>
+  person.kind === 'member' &&
+  person.membership_origin === (props.resourceType === 'team' ? 'team' : 'space')
+
+const isExpiringSoon = (date: string) =>
+  new Date(date).getTime() - Date.now() < 14 * 24 * 60 * 60 * 1000
+
+const SOURCES = ['invite', 'saml', 'owner', 'direct']
+const sourceLabel = (source: string | null) =>
+  source && SOURCES.includes(source) ? t(`labels.teamWorkspace.people.sources.${source}`) : ''
 
 const expiresInDays = (expiresAt: string | null) => {
   if (!expiresAt) return 0
@@ -276,18 +314,19 @@ const handleBulkDelete = async () => {
               column="firstname"
               @update:model-value="(value) => value && emit('update:sortBy', value)"
             >
-              {{ $t('labels.people.columns.member') }}
+              {{ $t('labels.teamWorkspace.people.columns.name') }}
             </TableSortableHead>
-            <TableHead>{{ $t('labels.people.columns.role') }}</TableHead>
-            <TableHead>{{ $t('labels.people.columns.status') }}</TableHead>
-            <TableSortableHead
-              :model-value="sortBy"
-              column="joined_at"
-              @update:model-value="(value) => value && emit('update:sortBy', value)"
-            >
-              {{ $t('labels.people.columns.joined') }}
-            </TableSortableHead>
-            <TableHead class="w-24" />
+            <TableHead>
+              {{
+                resourceType === 'team'
+                  ? $t('labels.teamWorkspace.people.columns.teamRole')
+                  : $t('labels.people.columns.role')
+              }}
+            </TableHead>
+            <TableHead>{{ $t('labels.teamWorkspace.people.columns.access') }}</TableHead>
+            <TableHead>{{ $t('labels.teamWorkspace.people.columns.source') }}</TableHead>
+            <TableHead>{{ $t('labels.teamWorkspace.people.columns.lastActive') }}</TableHead>
+            <TableHead class="w-12" />
           </TableRow>
         </TableHeader>
         <TableBody
@@ -299,11 +338,11 @@ const handleBulkDelete = async () => {
         >
           <TableLoadingRow
             v-if="isLoading"
-            :colspan="6"
+            :colspan="7"
           />
           <TableEmptyRow
             v-else-if="!people || people.length === 0"
-            :colspan="6"
+            :colspan="7"
             :icon="UsersIcon"
             :label="$t('labels.people.empty')"
           />
@@ -332,60 +371,17 @@ const handleBulkDelete = async () => {
                   <Avatar
                     :name="person.user?.name ?? person.email"
                     :avatar="person.user?.avatar"
-                    size="sm"
-                    :class="person.kind === 'invite' ? 'opacity-60 grayscale' : ''"
+                    :class="['size-8 rounded-full', person.kind === 'invite' ? 'opacity-60 grayscale' : '']"
                   />
                   <div class="min-w-0">
-                    <div class="truncate font-medium">
+                    <div class="truncate font-medium text-primary">
                       {{ person.user?.name ?? person.email }}
                     </div>
-                    <div class="text-muted-foreground truncate text-sm">
-                      <template v-if="person.kind === 'invite'">
-                        {{ $t('labels.people.pendingInvite') }}
-                      </template>
-                      <template v-else>
-                        {{ person.email }}
-                      </template>
-                    </div>
                     <div
-                      v-if="resourceType === 'team' && person.membership_origin === 'inherited'"
-                      class="mt-1 flex flex-wrap items-center gap-1"
+                      v-if="person.user"
+                      class="truncate text-sm text-muted"
                     >
-                      <Badge
-                        variant="secondary"
-                        size="sm"
-                      >
-                        {{ $t('labels.teamMembers.inherited') }}
-                      </Badge>
-                      <span class="text-muted-foreground text-xs">
-                        {{ person.inherited_from?.name }}
-                      </span>
-                    </div>
-                    <div
-                      v-if="
-                        resourceType === 'team' &&
-                        person.membership_origin !== 'team' &&
-                        person.space_memberships.length > 0
-                      "
-                      class="mt-1 flex flex-wrap items-center gap-1"
-                    >
-                      <Badge
-                        variant="secondary"
-                        size="sm"
-                      >
-                        {{
-                          person.membership_origin === 'space'
-                            ? $t('labels.teamMembers.spaceOnly')
-                            : $t('labels.teamMembers.sourceSpaces')
-                        }}
-                      </Badge>
-                      <span class="text-muted-foreground text-xs">
-                        {{
-                          person.space_memberships
-                            .map((membership) => membership.space.name)
-                            .join(', ')
-                        }}
-                      </span>
+                      {{ person.email }}
                     </div>
                   </div>
                 </div>
@@ -394,11 +390,13 @@ const handleBulkDelete = async () => {
               <TableCell>
                 <div
                   v-if="editingRole === person.id"
-                  class="w-32"
+                  class="w-36"
                 >
                   <Select
                     :model-value="person.role ?? undefined"
+                    default-open
                     @update:model-value="(value) => handleRoleChange(person, value as string)"
+                    @update:open="(open) => !open && (editingRole = null)"
                   >
                     <SelectTrigger class="h-8">
                       <SelectValue :placeholder="$t('labels.people.assignRole')" />
@@ -414,131 +412,158 @@ const handleBulkDelete = async () => {
                     </SelectContent>
                   </Select>
                 </div>
-                <button
-                  v-else-if="person.kind === 'member' && person.can_assign_role"
-                  type="button"
-                  class="cursor-pointer rounded-md focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-                  :aria-label="$t('labels.people.tooltip.editRole')"
-                  @click="editingRole = person.id"
-                >
-                  <Badge
-                    variant="secondary"
-                    size="sm"
-                  >
-                    {{ roleName(person.role) ?? $t('labels.people.assignRole') }}
-                  </Badge>
-                </button>
                 <Badge
-                  v-else-if="person.role || person.kind === 'member'"
-                  variant="secondary"
+                  v-else-if="person.kind === 'invite'"
+                  variant="warning"
                   size="sm"
                 >
-                  {{ roleName(person.role) ?? $t('labels.people.assignRole') }}
+                  {{ $t('labels.teamWorkspace.people.pending') }}
+                </Badge>
+                <Badge
+                  v-else-if="person.role"
+                  type="outline"
+                  size="sm"
+                >
+                  {{ roleName(person.role) }}
+                </Badge>
+                <Badge
+                  v-else-if="person.membership_origin === 'inherited' && person.inherited_role"
+                  type="outline"
+                  size="sm"
+                  class="border-dashed text-muted!"
+                >
+                  {{ anyRoleName(person.inherited_role) }}
                 </Badge>
                 <span
                   v-else
-                  class="text-muted-foreground text-sm"
+                  class="text-sm text-muted"
                 >
-                  {{ roleName(person.role) ?? '—' }}
+                  {{ $t('labels.teamWorkspace.people.noRole') }}
                 </span>
               </TableCell>
 
               <TableCell>
-                <Badge
-                  :variant="stateVariant(person.state)"
-                  size="sm"
-                >
-                  {{ $t(`labels.people.state.${person.state}`) }}
-                </Badge>
+                <div class="flex min-w-0 items-center gap-2 text-sm">
+                  <SimpleTooltip :tooltip="access(person).source">
+                    <Icon
+                      :name="access(person).icon"
+                      class="shrink-0 text-muted"
+                      :aria-label="access(person).source"
+                    />
+                  </SimpleTooltip>
+                  <span class="truncate">{{ access(person).label }}</span>
+                  <SimpleTooltip
+                    v-if="person.access_expires_at"
+                    :tooltip="formatDateTime(person.access_expires_at)"
+                  >
+                    <Badge
+                      :variant="isExpiringSoon(person.access_expires_at) ? 'warning' : 'secondary'"
+                      size="sm"
+                      class="shrink-0 gap-1"
+                    >
+                      <Icon name="lucide:clock" />
+                      {{ $t('labels.teamWorkspace.access.until', { date: formatDate(person.access_expires_at) }) }}
+                    </Badge>
+                  </SimpleTooltip>
+                </div>
               </TableCell>
 
-              <TableCell class="text-muted-foreground text-sm">
-                <template v-if="person.kind === 'member' && person.joined_at">
-                  <SimpleTooltip :tooltip="formatDateTime(person.joined_at)">
-                    {{ formatRelativeTime(person.joined_at) }}
-                  </SimpleTooltip>
-                </template>
-                <template v-else-if="person.kind === 'invite'">
-                  <SimpleTooltip
-                    v-if="person.state === 'pending' && person.expires_at"
-                    :tooltip="formatDateTime(person.expires_at)"
-                  >
-                    {{ $t('labels.invites.tooltip.expiresInDays', expiresInDays(person.expires_at)) }}
-                  </SimpleTooltip>
-                  <SimpleTooltip
-                    v-else-if="person.invited_at"
-                    :tooltip="formatDateTime(person.invited_at)"
-                  >
-                    {{ formatRelativeTime(person.invited_at) }}
-                  </SimpleTooltip>
+              <TableCell class="text-sm text-muted">
+                {{ sourceLabel(person.source) }}
+              </TableCell>
+
+              <TableCell class="text-sm text-muted">
+                <SimpleTooltip
+                  v-if="person.kind === 'invite' && person.invited_at"
+                  :tooltip="
+                    person.state === 'expired' || !person.expires_at
+                      ? formatDateTime(person.invited_at)
+                      : $t('labels.invites.tooltip.expiresInDays', expiresInDays(person.expires_at))
+                  "
+                >
+                  {{
+                    person.state === 'expired'
+                      ? $t('labels.people.state.expired')
+                      : $t('labels.teamWorkspace.people.invited', {
+                          time: formatRelativeTime(person.invited_at),
+                        })
+                  }}
+                </SimpleTooltip>
+                <SimpleTooltip
+                  v-else-if="person.last_active_at"
+                  :tooltip="formatDateTime(person.last_active_at)"
+                >
+                  {{ formatRelativeTime(person.last_active_at) }}
+                </SimpleTooltip>
+                <template v-else-if="person.kind === 'member'">
+                  {{ $t('labels.teamWorkspace.people.never') }}
                 </template>
               </TableCell>
 
               <TableCell class="text-right">
-                <div class="flex justify-end gap-1">
-                  <template v-if="person.kind === 'member'">
-                    <SimpleTooltip
-                      v-if="person.can_assign_role"
-                      :tooltip="$t('labels.people.tooltip.editRole')"
+                <DropdownMenu
+                  v-if="
+                    person.kind === 'member'
+                      ? person.can_assign_role || person.can_remove
+                      : canManageInvites
+                  "
+                >
+                  <DropdownMenuTrigger as-child>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      :aria-label="
+                        $t('labels.teamWorkspace.people.menu', {
+                          name: person.user?.name ?? person.email,
+                        })
+                      "
                     >
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        :aria-label="$t('labels.people.tooltip.editRole')"
-                        @click="editingRole = person.id"
+                      <Icon name="lucide:ellipsis" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <template v-if="person.kind === 'member'">
+                      <DropdownMenuItem
+                        v-if="person.can_assign_role"
+                        @select="editingRole = person.id"
                       >
                         <Icon name="lucide:shield" />
-                      </Button>
-                    </SimpleTooltip>
-                    <SimpleTooltip
-                      v-if="person.can_remove"
-                      :tooltip="$t('labels.people.tooltip.remove')"
-                    >
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        :aria-label="$t('labels.people.tooltip.remove')"
-                        @click="handleRemoveMember(person)"
+                        {{ $t('labels.people.tooltip.editRole') }}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        v-if="person.can_remove && hasDirectMembership(person)"
+                        @select="emit('setExpiry', person)"
                       >
-                        <Icon
-                          name="lucide:user-minus"
+                        <Icon name="lucide:clock" />
+                        {{ $t('labels.teamWorkspace.expiry.action') }}
+                      </DropdownMenuItem>
+                      <template v-if="person.can_remove">
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
                           class="text-destructive"
-                        />
-                      </Button>
-                    </SimpleTooltip>
-                  </template>
-                  <template v-else>
-                    <SimpleTooltip
-                      v-if="canManageInvites"
-                      :tooltip="$t('labels.invites.tooltip.resend')"
-                    >
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        :aria-label="$t('labels.invites.tooltip.resend')"
-                        @click="handleResendInvite(person)"
-                      >
+                          @select="handleRemoveMember(person)"
+                        >
+                          <Icon name="lucide:user-minus" />
+                          {{ $t('labels.people.tooltip.remove') }}
+                        </DropdownMenuItem>
+                      </template>
+                    </template>
+                    <template v-else>
+                      <DropdownMenuItem @select="handleResendInvite(person)">
                         <Icon name="lucide:send" />
-                      </Button>
-                    </SimpleTooltip>
-                    <SimpleTooltip
-                      v-if="canManageInvites"
-                      :tooltip="$t('labels.invites.tooltip.delete')"
-                    >
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        :aria-label="$t('labels.invites.tooltip.delete')"
-                        @click="handleDeleteInvite(person)"
+                        {{ $t('labels.invites.tooltip.resend') }}
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        class="text-destructive"
+                        @select="handleDeleteInvite(person)"
                       >
-                        <Icon
-                          name="lucide:trash-2"
-                          class="text-destructive"
-                        />
-                      </Button>
-                    </SimpleTooltip>
-                  </template>
-                </div>
+                        <Icon name="lucide:trash-2" />
+                        {{ $t('labels.invites.tooltip.delete') }}
+                      </DropdownMenuItem>
+                    </template>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </TableCell>
             </TableRow>
           </template>

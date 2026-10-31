@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import Icon from '~/components/Icon.vue'
+import AccessUntilField from '~/components/people/AccessUntilField.vue'
 import { Button } from '~/components/ui/button'
 import { Dialog, DialogContent, DialogFooter, DialogHeaderCombined } from '~/components/ui/dialog'
 import { InputField, SelectField, TextField } from '~/components/ui/form'
@@ -26,6 +27,7 @@ const emptyForm = (): CreateInvitePayload => ({
   language: locale.value,
   message: '',
   expires_in_days: 7,
+  access_until: null,
 })
 
 const formData = ref<CreateInvitePayload>(emptyForm())
@@ -131,6 +133,12 @@ const roleOptions = computed(() =>
             }))
           "
           required
+        />
+
+        <AccessUntilField
+          v-model="formData.access_until"
+          :label="$t('labels.teamWorkspace.expiry.label')"
+          :description="$t('labels.teamWorkspace.expiry.inviteHint')"
         />
 
         <DialogFooter>
