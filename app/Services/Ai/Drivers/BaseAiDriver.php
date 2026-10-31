@@ -2,9 +2,11 @@
 
 namespace App\Services\Ai\Drivers;
 
+use App\Enums\AiReasoningEffort;
 use App\Services\Ai\Contracts\AiDriverInterface;
 use App\Services\Ai\Dto\AiModelDto;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Str;
 
 abstract class BaseAiDriver implements AiDriverInterface
 {
@@ -60,10 +62,16 @@ abstract class BaseAiDriver implements AiDriverInterface
         return $this->config['enabled'] ?? false;
     }
 
+    /** Bump the version when {@see AiModelDto} changes shape: cached DTOs would miss the new properties. */
+    public static function modelCacheKey(string $driver): string
+    {
+        return "ai.models.v2.{$driver}";
+    }
+
     public function getModels(): array
     {
         return Cache::remember(
-            "ai.models.{$this->getName()}",
+            self::modelCacheKey($this->getName()),
             $this->modelCacheTtl,
             fn () => $this->fetchModels()
         );
@@ -237,7 +245,29 @@ abstract class BaseAiDriver implements AiDriverInterface
             $params['response_format'] = ['type' => 'json_object'];
         }
 
+        if (($effort = AiReasoningEffort::tryFrom((string) ($options['reasoning'] ?? ''))) !== null) {
+            $params = [...$params, ...$this->reasoningParams($effort)];
+        }
+
         return $params;
+    }
+
+    /**
+     * The provider parameters for a reasoning level the run already resolved
+     * against the model. Providers without a reasoning switch send nothing.
+     *
+     * @return array<string, mixed>
+     */
+    protected function reasoningParams(AiReasoningEffort $effort): array
+    {
+        return [];
+    }
+
+    /** Whether the model cannot switch reasoning off, see `ai.reasoning` in config/ai.php. */
+    protected function reasoningRequired(string $openRouterStyleId): bool
+    {
+        return Str::is(config('ai.reasoning.required', []), $openRouterStyleId)
+            && ! Str::is(config('ai.reasoning.optional', []), $openRouterStyleId);
     }
 
     /**

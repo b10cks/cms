@@ -2,6 +2,7 @@
 
 namespace App\Models\Management;
 
+use App\Enums\AiReasoningEffort;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -18,6 +19,7 @@ class SpaceAiConfig extends GlobalModel
         'system_prompt',
         'temperature',
         'max_tokens',
+        'reasoning_effort',
         'is_default',
     ];
 
@@ -25,6 +27,7 @@ class SpaceAiConfig extends GlobalModel
         'temperature' => 'decimal:2',
         'max_tokens' => 'integer',
         'is_default' => 'boolean',
+        'reasoning_effort' => AiReasoningEffort::class,
     ];
 
     public function space(): BelongsTo

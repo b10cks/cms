@@ -2,6 +2,7 @@
 
 namespace App\Services\Ai\Run;
 
+use App\Enums\AiReasoningEffort;
 use App\Models\Management\Space;
 use App\Models\Management\SpaceAiConfig;
 use App\Models\Space\AiAttachment;
@@ -23,6 +24,7 @@ final readonly class StartRun
      * @param  array{type: string, ids: list<string>}|null  $targets  confirmed bulk selection; write tools may touch only these
      * @param  float|null  $maxUsd  USD cap for this run, replacing the configured one (schedules)
      * @param  bool  $opensThread  a user-started run without `conversationId` opens a new chat thread
+     * @param  AiReasoningEffort|null  $reasoningEffort  the user's pick; null uses the config's level
      */
     public function __construct(
         public Space $space,
@@ -40,5 +42,6 @@ final readonly class StartRun
         public ?array $targets = null,
         public ?float $maxUsd = null,
         public bool $opensThread = false,
+        public ?AiReasoningEffort $reasoningEffort = null,
     ) {}
 }

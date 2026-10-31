@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Models\Space\Comment;
+use App\Services\Ai\ModelRegistry;
 use App\Observers\Space\CommentObserver;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Events\LocaleUpdated;
@@ -36,6 +37,10 @@ class AppServiceProvider extends ServiceProvider
         if (str_starts_with(strtolower((string) config('app.url')), 'https://')) {
             \URL::forceScheme('https');
         }
+
+        // One registry per request or job: its drivers and model lookup map
+        // are built once, then reused by every config row and run.
+        $this->app->scoped(ModelRegistry::class);
     }
 
     /**

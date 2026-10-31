@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Mgmt\Ai;
 
+use App\Enums\AiReasoningEffort;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Management\SpaceAiConfigCollection;
 use App\Http\Resources\Management\SpaceAiConfigResource;
@@ -11,6 +12,7 @@ use App\Services\Ai\ModelRegistry;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Validation\Rule;
 
 class SpaceAiConfigController extends Controller
 {
@@ -43,6 +45,7 @@ class SpaceAiConfigController extends Controller
             'system_prompt' => ['nullable', 'string', 'max:10000'],
             'temperature' => ['sometimes', 'numeric', 'min:0', 'max:2'],
             'max_tokens' => ['sometimes', 'integer', 'min:256', 'max:200000'],
+            'reasoning_effort' => ['sometimes', 'nullable', Rule::enum(AiReasoningEffort::class)],
             'is_default' => ['sometimes', 'boolean'],
         ]);
 
@@ -102,6 +105,7 @@ class SpaceAiConfigController extends Controller
             'system_prompt' => ['nullable', 'string', 'max:10000'],
             'temperature' => ['sometimes', 'numeric', 'min:0', 'max:2'],
             'max_tokens' => ['sometimes', 'integer', 'min:256', 'max:200000'],
+            'reasoning_effort' => ['sometimes', 'nullable', Rule::enum(AiReasoningEffort::class)],
             'is_default' => ['sometimes', 'boolean'],
         ]);
 

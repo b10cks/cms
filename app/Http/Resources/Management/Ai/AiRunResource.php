@@ -17,6 +17,7 @@ class AiRunResource extends JsonResource
             'surface' => $this->surface,
             'skill' => $this->skill,
             'model' => $this->model,
+            'reasoning_effort' => $this->reasoning_effort?->value,
             'state' => $this->state->value,
             'mode' => $this->mode,
             'partial' => $this->partial,

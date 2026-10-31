@@ -17,6 +17,9 @@ readonly class AiModelDto
         public bool $supportsTools = true,
         public bool $supportsVision = false,
         public bool $supportsJsonMode = false,
+        public bool $supportsReasoning = false,
+        /** The model always reasons; "off" is sent as "low". */
+        public bool $reasoningRequired = false,
     ) {}
 
     public function getFullId(): string
@@ -40,6 +43,8 @@ readonly class AiModelDto
             'supports_tools' => $this->supportsTools,
             'supports_vision' => $this->supportsVision,
             'supports_json_mode' => $this->supportsJsonMode,
+            'supports_reasoning' => $this->supportsReasoning,
+            'reasoning_required' => $this->reasoningRequired,
         ];
     }
 }

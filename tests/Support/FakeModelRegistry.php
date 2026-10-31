@@ -7,12 +7,14 @@ use App\Services\Ai\Contracts\AiDriverInterface;
 use App\Services\Ai\Dto\AiModelDto;
 use App\Services\Ai\ModelRegistry;
 
-/** Hands every space the fake driver; models are vision-capable unless told otherwise. */
+/** Hands every space the fake driver; models are vision-capable and cannot reason unless told otherwise. */
 class FakeModelRegistry extends ModelRegistry
 {
     public function __construct(
         public AiDriverInterface $driver,
         public bool $vision = true,
+        public bool $reasoning = false,
+        public bool $reasoningRequired = false,
     ) {}
 
     public function getDriver(string $name): ?AiDriverInterface
@@ -32,6 +34,6 @@ class FakeModelRegistry extends ModelRegistry
 
     public function findModelForConfig(?string $driver, ?string $model): ?AiModelDto
     {
-        return new AiModelDto(id: (string) $model, name: (string) $model, driver: (string) $driver, capabilities: ['text', 'vision'], supportsVision: $this->vision);
+        return new AiModelDto(id: (string) $model, name: (string) $model, driver: (string) $driver, capabilities: ['text', 'vision'], supportsVision: $this->vision, supportsReasoning: $this->reasoning, reasoningRequired: $this->reasoningRequired);
     }
 }
