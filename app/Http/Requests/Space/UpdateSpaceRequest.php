@@ -6,6 +6,7 @@ use App\Models\Management\SpaceSettings;
 use App\Services\Space\SpaceI18nSettingsService;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Arr;
 use Illuminate\Validation\Rule;
 
 class UpdateSpaceRequest extends FormRequest
@@ -13,7 +14,8 @@ class UpdateSpaceRequest extends FormRequest
     /**
      * Settings written only through their own, more strictly gated endpoint.
      */
-    private const SEPARATELY_GATED_SETTINGS = ['ai'];
+    /** Settings paths owned by `PATCH ai-settings`, which requires `ai.manage`. */
+    private const SEPARATELY_GATED_SETTINGS = ['ai.enabled', 'ai.model', 'ai.favourites'];
 
     protected ?array $normalizedSettings = null;
 
@@ -173,10 +175,10 @@ class UpdateSpaceRequest extends FormRequest
         $current = $space?->settings?->toArray() ?? [];
 
         foreach (self::SEPARATELY_GATED_SETTINGS as $gated) {
-            unset($settings[$gated]);
+            Arr::forget($settings, $gated);
 
-            if (\array_key_exists($gated, $current)) {
-                $settings[$gated] = $current[$gated];
+            if (Arr::has($current, $gated)) {
+                Arr::set($settings, $gated, Arr::get($current, $gated));
             }
         }
 
