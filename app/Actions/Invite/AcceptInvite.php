@@ -4,6 +4,8 @@ namespace App\Actions\Invite;
 
 use App\Enums\MembershipSource;
 use App\Models\Management\Invite;
+use App\Models\Management\Space;
+use App\Models\Management\Team;
 use App\Models\User;
 use App\Services\Auth\AuthorizationService;
 use App\Services\Auth\MembershipService;
@@ -44,10 +46,20 @@ class AcceptInvite
     {
         if ($invite->space_id) {
             $this->membershipService->assignSpaceRole($invite->space, $user, $invite->role);
+            $this->carryAccessExpiry($invite, $invite->space, $user);
             $this->authorizationService->invalidateSpace($invite->space);
         } elseif ($invite->team_id) {
             $this->membershipService->assignTeamRole($invite->team, $user, $invite->role, MembershipSource::Invite);
+            $this->carryAccessExpiry($invite, $invite->team, $user);
             $this->authorizationService->invalidateTeamTree($invite->team);
+        }
+    }
+
+    /** An invite with an "access until" date hands it on to the membership it creates. */
+    private function carryAccessExpiry(Invite $invite, Team|Space $entity, User $user): void
+    {
+        if ($invite->access_expires_at) {
+            $this->membershipService->setMembershipExpiry($entity, $user, $invite->access_expires_at);
         }
     }
 

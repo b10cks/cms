@@ -33,6 +33,13 @@ class Kernel extends ConsoleKernel
             ->withoutOverlapping()
             ->runInBackground();
 
+        // End memberships and invites whose "access until" date has passed.
+        $schedule->command('memberships:expire')
+            ->everyFiveMinutes()
+            ->onOneServer()
+            ->withoutOverlapping()
+            ->runInBackground();
+
         $schedule->command('automations:run-scheduled')
             ->everyMinute()
             ->onOneServer()

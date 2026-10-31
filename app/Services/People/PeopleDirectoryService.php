@@ -6,6 +6,7 @@ use App\Models\Management\Invite;
 use App\Models\Management\Space;
 use App\Models\Management\Team;
 use App\Models\User;
+use App\Services\Auth\RoleService;
 use App\Services\Space\SpaceMemberDirectoryService;
 use App\Services\Team\TeamMemberDirectoryService;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -22,9 +23,13 @@ use Illuminate\Support\Collection;
  */
 class PeopleDirectoryService
 {
+    /** Members whose access ends within this many days make up the "expiring" segment. */
+    public const EXPIRING_DAYS = 14;
+
     public function __construct(
         private readonly SpaceMemberDirectoryService $spaceMembers,
         private readonly TeamMemberDirectoryService $teamMembers,
+        private readonly RoleService $roles,
     ) {}
 
     /**
@@ -32,13 +37,81 @@ class PeopleDirectoryService
      */
     public function paginateForSpace(Space $space, array $params = []): array
     {
-        $members = $this->spaceMembers->members($space)
-            ->map(fn (User $member) => $this->normalizeMember($member, 'space'));
+        $inherited = $this->inheritedTeamRoles($space);
+
+        $direct = $this->spaceMembers->members($space)
+            ->map(fn (User $member) => [
+                ...$this->normalizeMember($member, 'space'),
+                'membership_origin' => 'space',
+                'inherited_from' => $inherited->get($member->id)?->via,
+                'inherited_role' => $inherited->get($member->id)?->role_key,
+            ]);
+
+        // Team roles reach every space of the team, so those people have
+        // access here without a row of their own. Listed, not editable here.
+        $members = $direct->concat($inherited
+            ->reject(fn (object $row) => $direct->contains('user_id', $row->user->id))
+            ->map(fn (object $row) => [
+                ...$this->normalizeMember($row->user, 'space'),
+                'role' => null,
+                'can_assign_role' => false,
+                'can_remove' => false,
+                'membership_origin' => 'inherited',
+                'inherited_from' => $row->via,
+                'inherited_role' => $row->role_key,
+            ])
+            ->values());
 
         $invites = $this->invitesFor('space_id', $space->id)
             ->map(fn (Invite $invite) => $this->normalizeInvite($invite));
 
         return $this->assemble($members->concat($invites), $params);
+    }
+
+    /**
+     * Strongest team role per user over the space's team chain, nearest team
+     * winning ties.
+     *
+     * @return Collection<string, object{user: User, role_key: string, via: array{id: string, name: string}}>
+     */
+    private function inheritedTeamRoles(Space $space): Collection
+    {
+        if (! $space->team) {
+            return collect();
+        }
+
+        $chain = $this->roles->ancestorTeamIds($space->team);
+        $distance = array_flip($chain);
+
+        return User::query()
+            ->join('team_user', 'team_user.user_id', '=', 'users.id')
+            ->join('teams', 'teams.id', '=', 'team_user.team_id')
+            ->join('roles', 'roles.id', '=', 'team_user.role_id')
+            ->whereIn('team_user.team_id', $chain)
+            ->select(
+                'users.*',
+                'roles.key as role_key',
+                'roles.level as role_level',
+                'teams.id as via_team_id',
+                'teams.name as via_team_name',
+                'team_user.created_at as joined_at',
+                'team_user.source as membership_source',
+            )
+            ->get()
+            ->groupBy('id')
+            ->map(function (Collection $rows) use ($distance) {
+                /** @var User $user */
+                $user = $rows
+                    ->sort(fn (User $a, User $b) => [(int) $b->role_level, $distance[$a->via_team_id]]
+                        <=> [(int) $a->role_level, $distance[$b->via_team_id]])
+                    ->first();
+
+                return (object) [
+                    'user' => $user,
+                    'role_key' => $user->role_key,
+                    'via' => ['id' => $user->via_team_id, 'name' => $user->via_team_name],
+                ];
+            });
     }
 
     /**
@@ -75,15 +148,21 @@ class PeopleDirectoryService
                     $this->parseFilterValue($email),
                 )));
 
+        $expiringBefore = now()->addDays(self::EXPIRING_DAYS);
+        $isExpiring = fn (array $row) => $row['access_expires_at'] !== null
+            && Carbon::parse($row['access_expires_at'])->lte($expiringBefore);
+
         $counts = [
             'members' => $rows->where('kind', 'member')->count(),
             'pending' => $rows->where('kind', 'invite')->count(),
+            'expiring' => $rows->filter($isExpiring)->count(),
         ];
         $counts['total'] = $counts['members'] + $counts['pending'];
 
         $rows = match ($params['segment'] ?? 'all') {
             'members' => $rows->where('kind', 'member'),
             'pending' => $rows->where('kind', 'invite'),
+            'expiring' => $rows->filter($isExpiring),
             default => $rows,
         };
 
@@ -135,6 +214,8 @@ class PeopleDirectoryService
     private function normalizeMember(User $member, string $scope): array
     {
         $joinedAt = $member->joined_at ? Carbon::parse($member->joined_at) : null;
+        // Pivot columns only some directory queries select.
+        $extra = $member->getAttributes();
 
         return [
             'kind' => 'member',
@@ -159,7 +240,13 @@ class PeopleDirectoryService
             'can_remove' => (bool) ($member->can_remove ?? true),
             'membership_origin' => $scope === 'team' ? ($member->membership_origin ?? 'team') : null,
             'inherited_from' => $scope === 'team' ? ($member->inherited_from ?? null) : null,
+            'inherited_role' => null,
             'space_memberships' => $scope === 'team' ? ($member->space_memberships ?? []) : [],
+            'source' => $extra['membership_source'] ?? null,
+            'last_active_at' => $member->last_login_at?->toIso8601String(),
+            'access_expires_at' => isset($extra['access_expires_at'])
+                ? Carbon::parse($extra['access_expires_at'])->toIso8601String()
+                : null,
             'joined_at' => $joinedAt?->toIso8601String(),
             'invited_at' => null,
             'expires_at' => null,
@@ -187,7 +274,11 @@ class PeopleDirectoryService
             'can_remove' => false,
             'membership_origin' => null,
             'inherited_from' => null,
+            'inherited_role' => null,
             'space_memberships' => [],
+            'source' => 'invite',
+            'last_active_at' => null,
+            'access_expires_at' => $invite->access_expires_at?->toIso8601String(),
             'joined_at' => null,
             'invited_at' => $invite->created_at?->toIso8601String(),
             'expires_at' => $invite->expires_at?->toIso8601String(),

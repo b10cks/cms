@@ -65,6 +65,7 @@ class CreateInvite
             'token' => Str::random(32),
             'message' => $data['message'] ?? null,
             'expires_at' => $data['expires_at'],
+            'access_expires_at' => $data['access_expires_at'] ?? null,
         ]);
 
         $this->sendNotification($invite->loadMissing(['roleDefinition', 'team', 'space', 'inviter', 'invitee']));
