@@ -70,6 +70,7 @@ export const queryKeys = {
   provider: {
     all: () => ['provider'] as const,
     stats: (params: unknown = {}) => ['provider', 'stats', params] as const,
+    metrics: (range: ProviderMetricsRange) => ['provider', 'metrics', range] as const,
     notes: () => ['provider', 'notes'] as const,
     notesList: (params: unknown = {}) => ['provider', 'notes', 'list', params] as const,
   },

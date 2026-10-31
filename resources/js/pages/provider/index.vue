@@ -1,166 +1,603 @@
 <script setup lang="ts">
-import StatsCard from '~/components/stats/StatsCard.vue'
+import { useFullscreen } from '@vueuse/core'
+import { toast } from 'vue-sonner'
+
+import Icon from '~/components/Icon.vue'
+import StatTile from '~/components/stats/StatTile.vue'
+import { Button } from '~/components/ui/button'
+import ContentHeader from '~/components/ui/ContentHeader.vue'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '~/components/ui/dropdown-menu'
 import { SelectField } from '~/components/ui/form'
+import { Panel } from '~/components/ui/panel'
 import { Skeleton } from '~/components/ui/skeleton'
+import { downloadPng, printElement } from '~/lib/export-element'
+import { runtimeConfig } from '~/lib/runtime-config'
 
-const { formatNumber } = useFormat()
+// Charts stay out of the route chunk; tiles paint first.
+const TrendChart = defineAsyncComponent(() => import('~/components/stats/TrendChart.vue'))
+const StackedBarChart = defineAsyncComponent(() => import('~/components/stats/StackedBarChart.vue'))
+const DistributionList = defineAsyncComponent(
+  () => import('~/components/stats/DistributionList.vue')
+)
+const ProviderRetentionGrid = defineAsyncComponent(
+  () => import('~/components/provider/ProviderRetentionGrid.vue')
+)
+
 const { t } = useI18n()
-const { useProviderStatsQuery } = useProvider()
+const { formatCurrency, formatDateTime, formatFileSize, formatNumber } = useFormat()
+const { useProviderMetricsQuery } = useProvider()
 
-useSeoMeta({
-  title: t('labels.provider.dashboard.title'),
+useSeoMeta({ title: computed(() => t('providerDashboard.title')) })
+
+const billing = runtimeConfig.public.features.billing
+const range = ref<ProviderMetricsRange>('12m')
+const { data, isLoading, isFetching, error } = useProviderMetricsQuery(range)
+
+const root = ref<HTMLElement | null>(null)
+const { isFullscreen: presenting, enter: present, exit: stopPresenting } = useFullscreen(root)
+const exporting = ref(false)
+
+const month = (key: string, format = 'MMM YYYY') => formatDateTime(`${key}-01`, format)
+const periods = computed(() => (data.value?.months ?? []).map((key) => month(key)))
+const span = computed(() => {
+  const months = data.value?.months ?? []
+  return months.length
+    ? t('providerDashboard.span', { from: month(months[0]), to: month(months.at(-1) ?? months[0]) })
+    : ''
 })
 
-const dateRange = ref('thisMonth')
+const compact = (value: number) =>
+  formatNumber(value, 0, { notation: 'compact', maximumFractionDigits: 1 })
+const money = (currency: string) => (value: number) =>
+  formatCurrency(value, currency, {
+    notation: 'compact',
+    maximumFractionDigits: Math.abs(value) < 1000 ? 0 : 1,
+  })
+const eur = money('EUR')
+const usd = money('USD')
+const percent = (fraction: number) => `${formatNumber(fraction * 100, fraction < 0.1 ? 1 : 0)}%`
 
-const dateRangeValues = computed(() => {
-  const now = new Date()
-  const endDate = new Date()
-  let startDate: Date
+type Change = { value: number; label: string; title?: string; inverse?: boolean }
+type ChangeKind = 'relative' | 'absolute' | 'points'
 
-  switch (dateRange.value) {
-    case 'last7':
-      startDate = new Date(now)
-      startDate.setDate(now.getDate() - 7)
-      break
-    case 'last30':
-      startDate = new Date(now)
-      startDate.setDate(now.getDate() - 30)
-      break
-    case 'last90':
-      startDate = new Date(now)
-      startDate.setDate(now.getDate() - 90)
-      break
-    case 'thisYear':
-      startDate = new Date(now.getFullYear(), 0, 1)
-      break
-    case 'thisMonth':
-    default:
-      startDate = new Date(now.getFullYear(), now.getMonth(), 1)
-      break
+/** The change from `base` to `value`: in percent, in the unit, or in percentage points. */
+const changeOf = (
+  value: number | null,
+  base: number | null,
+  kind: ChangeKind,
+  format: (value: number) => string = compact
+): { value: number; label: string } | null => {
+  if (value === null || base === null) return null
+  if (kind === 'points') {
+    const points = (value - base) * 100
+    return { value: points, label: `${formatNumber(Math.abs(points), 1)}pp` }
   }
+  if (kind === 'absolute') return { value: value - base, label: format(Math.abs(value - base)) }
+  if (base === 0) return null
+  const ratio = (value - base) / Math.abs(base)
+  return { value: ratio, label: percent(Math.abs(ratio)) }
+}
 
+interface Tile {
+  key: string
+  label: string
+  value: string | null
+  detail?: string
+  change?: Change
+  series?: Array<number | null>
+  format?: (value: number) => string
+  color?: string
+}
+
+interface TileSpec {
+  key: string
+  metric: ProviderMetric
+  format: (value: number) => string
+  detail: string
+  kind?: ChangeKind
+  color?: string
+  /** A fall is the good direction (churn). */
+  inverse?: boolean
+}
+
+/** A tile from a metric: month-over-month in the change slot, year-over-year in the detail line. */
+const tile = ({
+  key,
+  metric,
+  format,
+  detail,
+  kind = 'relative',
+  color,
+  inverse,
+}: TileSpec): Tile => {
+  const mom = changeOf(metric.current, metric.previous, kind, format)
+  const yoy = changeOf(metric.current, metric.year_ago, kind, format)
   return {
-    start_date: startDate.toISOString(),
-    end_date: endDate.toISOString(),
+    key,
+    label: t(`providerDashboard.tiles.${key}`),
+    value: metric.current === null ? '–' : format(metric.current),
+    detail: yoy
+      ? `${detail}, ${t('providerDashboard.change.yoy', { change: `${yoy.value < 0 ? '−' : '+'}${yoy.label}` })}`
+      : detail,
+    change: mom ? { ...mom, inverse, title: t('providerDashboard.change.mom') } : undefined,
+    series: metric.series,
+    format,
+    color,
   }
+}
+
+/** Placeholder tiles keep their labels while loading so the grid holds still. */
+const loading = (keys: string[]): Tile[] =>
+  keys.map((key) => ({ key, label: t(`providerDashboard.tiles.${key}`), value: null }))
+
+const revenueTiles = computed(() => {
+  const revenue = data.value?.revenue
+  if (!revenue) return loading(['mrr', 'net_new_mrr', 'paying_spaces', 'arpa', 'revenue_churn'])
+  const last = revenue.movement.new.length - 1
+  return [
+    tile({
+      key: 'mrr',
+      metric: revenue.mrr,
+      format: eur,
+      detail: t('providerDashboard.details.arr', { value: eur(revenue.arr) }),
+    }),
+    tile({
+      key: 'net_new_mrr',
+      metric: revenue.net_new_mrr,
+      format: eur,
+      detail: t('providerDashboard.details.movement', {
+        new: eur(revenue.movement.new[last] ?? 0),
+        expansion: eur(revenue.movement.expansion[last] ?? 0),
+        churn: eur(Math.abs(revenue.movement.churn[last] ?? 0)),
+      }),
+    }),
+    tile({
+      key: 'paying_spaces',
+      metric: revenue.paying_spaces,
+      format: compact,
+      kind: 'absolute',
+      detail: t(
+        'providerDashboard.details.teams',
+        { count: compact(revenue.paying_teams.current ?? 0) },
+        revenue.paying_teams.current ?? 0
+      ),
+    }),
+    tile({
+      key: 'arpa',
+      metric: revenue.arpa,
+      format: eur,
+      detail: t('providerDashboard.details.per_team'),
+    }),
+    tile({
+      key: 'revenue_churn',
+      metric: revenue.revenue_churn,
+      format: percent,
+      kind: 'points',
+      color: 'var(--series-2)',
+      inverse: true,
+      detail: t('providerDashboard.details.churn', {
+        rate: percent(revenue.logo_churn.current ?? 0),
+      }),
+    }),
+  ]
 })
 
-const { data: stats, isLoading, error } = useProviderStatsQuery(dateRangeValues)
+const growthTiles = computed(() => {
+  const growth = data.value?.growth
+  if (!growth) return loading(['new_users', 'new_spaces', 'new_teams', 'activation'])
+  const thisMonth = t('providerDashboard.details.this_month')
+  return [
+    tile({ key: 'new_users', metric: growth.new_users, format: compact, detail: thisMonth }),
+    tile({
+      key: 'new_spaces',
+      metric: growth.new_spaces,
+      format: compact,
+      detail: thisMonth,
+      color: 'var(--series-2)',
+    }),
+    tile({
+      key: 'new_teams',
+      metric: growth.new_teams,
+      format: compact,
+      detail: thisMonth,
+      color: 'var(--series-3)',
+    }),
+    tile({
+      key: 'activation',
+      metric: growth.activation,
+      format: percent,
+      kind: 'points',
+      detail: t('providerDashboard.details.activation'),
+    }),
+  ]
+})
 
-const cards = computed(() => {
-  if (!stats.value) {
-    return []
-  }
+const engagementTiles = computed(() => {
+  const engagement = data.value?.engagement
+  if (!engagement)
+    return loading(['weekly_active_editors', 'entries_published', 'api_requests', 'traffic'])
+  return [
+    tile({
+      key: 'weekly_active_editors',
+      metric: engagement.weekly_active_editors,
+      format: compact,
+      detail: t('providerDashboard.details.editors'),
+    }),
+    tile({
+      key: 'entries_published',
+      metric: engagement.entries_published,
+      format: compact,
+      detail: t('providerDashboard.details.this_month'),
+    }),
+    tile({
+      key: 'api_requests',
+      metric: engagement.api_requests,
+      format: compact,
+      detail: t('providerDashboard.details.api'),
+    }),
+    tile({
+      key: 'traffic',
+      metric: engagement.traffic_bytes,
+      format: formatFileSize,
+      detail: t('providerDashboard.details.traffic'),
+    }),
+  ]
+})
 
+const aiTiles = computed(() => {
+  const ai = data.value?.ai
+  if (!ai) return loading(['ai_revenue', 'model_spend', 'ai_margin', 'spaces_using_ai'])
+  return [
+    tile({
+      key: 'ai_revenue',
+      metric: ai.revenue_usd,
+      format: usd,
+      detail: t('providerDashboard.details.ai_revenue'),
+    }),
+    tile({
+      key: 'model_spend',
+      metric: ai.spend_usd,
+      format: usd,
+      color: 'var(--series-2)',
+      detail: t('providerDashboard.details.spend'),
+    }),
+    tile({
+      key: 'ai_margin',
+      metric: ai.margin,
+      format: percent,
+      kind: 'points',
+      color: 'var(--series-3)',
+      detail: t('providerDashboard.details.margin'),
+    }),
+    tile({
+      key: 'spaces_using_ai',
+      metric: ai.spaces_using_ai,
+      format: percent,
+      kind: 'points',
+      detail: t('providerDashboard.details.using_ai', {
+        count: compact(ai.spaces_using_ai_count.current ?? 0),
+        total: compact(data.value?.revenue?.paying_spaces.current ?? 0),
+      }),
+    }),
+  ]
+})
+
+const movementSeries = computed(() => {
+  const movement = data.value?.revenue?.movement
   return [
     {
-      key: 'teams',
-      title: t('labels.provider.dashboard.cards.teams'),
-      icon: 'lucide:users-round',
-      total: stats.value.summary.teams.total,
-      new: stats.value.summary.teams.new,
+      key: 'new',
+      label: t('providerDashboard.series.new'),
+      color: 'var(--series-1)',
+      values: movement?.new ?? [],
     },
     {
-      key: 'spaces',
-      title: t('labels.provider.dashboard.cards.spaces'),
-      icon: 'lucide:boxes',
-      total: stats.value.summary.spaces.total,
-      new: stats.value.summary.spaces.new,
+      key: 'expansion',
+      label: t('providerDashboard.series.expansion'),
+      color: 'var(--series-3)',
+      values: movement?.expansion ?? [],
     },
     {
-      key: 'users',
-      title: t('labels.provider.dashboard.cards.users'),
-      icon: 'lucide:user-round',
-      total: stats.value.summary.users.total,
-      new: stats.value.summary.users.new,
+      key: 'churn',
+      label: t('providerDashboard.series.churn'),
+      color: 'var(--series-2)',
+      values: movement?.churn ?? [],
     },
   ]
 })
+
+const values = (metric: ProviderMetric | undefined) =>
+  (metric?.series ?? []).map((value) => value ?? 0)
+
+const signUpSeries = computed(() => {
+  const growth = data.value?.growth
+  return [
+    {
+      key: 'users',
+      label: t('providerDashboard.series.users'),
+      color: 'var(--series-1)',
+      values: values(growth?.new_users),
+    },
+    {
+      key: 'spaces',
+      label: t('providerDashboard.series.spaces'),
+      color: 'var(--series-2)',
+      values: values(growth?.new_spaces),
+    },
+    {
+      key: 'teams',
+      label: t('providerDashboard.series.teams'),
+      color: 'var(--series-3)',
+      values: values(growth?.new_teams),
+    },
+  ]
+})
+
+const aiSeries = computed(() => [
+  {
+    key: 'revenue',
+    label: t('providerDashboard.series.ai_revenue'),
+    color: 'var(--series-1)',
+    values: values(data.value?.ai?.revenue_usd),
+  },
+  {
+    key: 'spend',
+    label: t('providerDashboard.series.spend'),
+    color: 'var(--series-2)',
+    values: values(data.value?.ai?.spend_usd),
+  },
+])
+
+const plans = computed(() =>
+  (data.value?.revenue?.by_plan ?? []).map((plan) => ({ name: plan.name, count: plan.mrr }))
+)
+
+const cohorts = computed(() =>
+  (data.value?.revenue?.retention ?? []).map((cohort) => ({
+    label: month(cohort.month, 'MMM YY'),
+    values: cohort.values,
+  }))
+)
+
+async function exportPng() {
+  if (!root.value) return
+  exporting.value = true
+  try {
+    await downloadPng(root.value, `b10cks-dashboard-${data.value?.months.at(-1) ?? 'export'}`)
+  } catch {
+    toast.error(t('providerDashboard.actions.export_failed'))
+  } finally {
+    exporting.value = false
+  }
+}
+
+function exportPdf() {
+  if (root.value) printElement(root.value)
+}
 </script>
 
 <template>
-  <div class="content-grid mx-auto w-full py-8 bg-b">
-    <div class="space-y-6">
-      <div>
-        <h1 class="text-2xl font-bold text-primary">
-          {{ t('labels.provider.dashboard.title') }}
-        </h1>
-        <p class="text-muted">
-          {{ t('labels.provider.dashboard.description') }}
-        </p>
-      </div>
-
-      <div class="flex items-center justify-between">
-        <div class="ml-auto flex space-x-4">
+  <div
+    ref="root"
+    class="content-grid w-full bg-background pb-10 [&:fullscreen]:overflow-y-auto [&:fullscreen]:px-10"
+  >
+    <ContentHeader :header="t('providerDashboard.title')">
+      <template #actions>
+        <span
+          v-if="presenting"
+          class="flex items-center gap-4 text-sm text-muted tabular-nums"
+        >
+          {{ span }}
+          <Button
+            variant="outline"
+            size="sm"
+            data-export-hidden
+            @click="stopPresenting"
+          >
+            <Icon name="lucide:x" />
+            {{ t('providerDashboard.actions.exit') }}
+          </Button>
+        </span>
+        <div
+          v-else
+          class="flex items-center gap-2"
+          data-export-hidden
+        >
           <SelectField
-            name="providerDateRange"
-            v-model="dateRange"
-            :placeholder="t('dashboard.filters.date_range')"
+            v-model="range"
+            name="providerRange"
             :options="[
-              { value: 'last7', label: t('dashboard.filters.last_7_days') },
-              { value: 'last30', label: t('dashboard.filters.last_30_days') },
-              { value: 'last90', label: t('dashboard.filters.last_90_days') },
-              { value: 'thisMonth', label: t('dashboard.filters.this_month') },
-              { value: 'thisYear', label: t('dashboard.filters.this_year') },
+              { value: '12m', label: t('providerDashboard.range.12m') },
+              { value: 'ytd', label: t('providerDashboard.range.ytd') },
+              { value: '6m', label: t('providerDashboard.range.6m') },
+              { value: '24m', label: t('providerDashboard.range.24m') },
             ]"
           />
-        </div>
-      </div>
-
-      <div
-        v-if="isLoading"
-        aria-hidden="true"
-        class="space-y-6"
-      >
-        <Skeleton class="h-7 w-40" />
-        <div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-          <Skeleton
-            v-for="index in 3"
-            :key="index"
-            class="h-[138px] rounded-xl"
-          />
-        </div>
-      </div>
-
-      <div
-        v-else-if="error"
-        class="p-8 text-center"
-      >
-        <p class="text-destructive">{{ error.message }}</p>
-      </div>
-
-      <div
-        v-else-if="!stats"
-        class="p-8 text-center"
-      >
-        <p class="text-muted">{{ t('dashboard.no_data') }}</p>
-      </div>
-
-      <template v-else>
-        <h2 class="text-lg font-semibold text-primary">
-          {{ t('labels.provider.dashboard.sections.summary') }}
-        </h2>
-        <div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-          <StatsCard
-            v-for="card in cards"
-            :key="card.key"
-            :title="card.title"
-            :icon="card.icon"
-            :delta="formatNumber(card.new)"
-            :show-delta="card.new > 0"
+          <DropdownMenu>
+            <DropdownMenuTrigger as-child>
+              <Button
+                variant="outline"
+                :loading="exporting"
+                :disabled="!data"
+              >
+                <Icon name="lucide:download" />
+                {{ t('providerDashboard.actions.export') }}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem @select="exportPng">
+                <Icon name="lucide:image" />
+                {{ t('providerDashboard.actions.png') }}
+              </DropdownMenuItem>
+              <DropdownMenuItem @select="exportPdf">
+                <Icon name="lucide:file-text" />
+                {{ t('providerDashboard.actions.pdf') }}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <Button
+            variant="primary"
+            :disabled="!data"
+            @click="present"
           >
-            <template #value>
-              <div class="text-3xl font-bold text-primary leading-none">
-                {{ formatNumber(card.total) }}
-              </div>
-            </template>
-            <p class="text-sm text-muted">
-              {{ t('labels.provider.dashboard.cards.total') }}
-            </p>
-          </StatsCard>
+            <Icon name="lucide:maximize" />
+            {{ t('providerDashboard.actions.present') }}
+          </Button>
         </div>
       </template>
+    </ContentHeader>
+
+    <div
+      class="mt-6 grid gap-8 transition-opacity duration-100"
+      :class="isFetching && !isLoading && 'opacity-60'"
+    >
+      <p
+        v-if="error && !data"
+        class="rounded-xl border border-destructive/30 bg-destructive/8 px-5 py-4 text-primary"
+      >
+        {{ error.message }}
+      </p>
+
+      <section
+        v-if="billing"
+        class="grid gap-4"
+      >
+        <h2 class="text-panel font-semibold text-primary select-none">
+          {{ t('providerDashboard.sections.revenue') }}
+        </h2>
+        <dl class="grid grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-5">
+          <StatTile
+            v-for="item in revenueTiles"
+            v-bind="item"
+            :key="item.key"
+            :periods="periods"
+          />
+        </dl>
+        <div class="grid grid-cols-1 gap-4 lg:grid-cols-3">
+          <Panel
+            :title="t('providerDashboard.panels.mrr_movement')"
+            class="lg:col-span-2"
+          >
+            <StackedBarChart
+              v-if="data"
+              :periods="periods"
+              :series="movementSeries"
+              :format="eur"
+              :height="208"
+            />
+            <Skeleton
+              v-else
+              class="h-[268px] w-full"
+            />
+          </Panel>
+          <Panel :title="t('providerDashboard.panels.revenue_by_plan')">
+            <DistributionList
+              v-if="data"
+              :items="plans"
+              :format="eur"
+            />
+            <Skeleton
+              v-else
+              class="h-[268px] w-full"
+            />
+          </Panel>
+        </div>
+      </section>
+
+      <section class="grid gap-4">
+        <h2 class="text-panel font-semibold text-primary select-none">
+          {{ t('providerDashboard.sections.growth') }}
+        </h2>
+        <dl class="grid grid-cols-2 gap-4 xl:grid-cols-4">
+          <StatTile
+            v-for="item in growthTiles"
+            v-bind="item"
+            :key="item.key"
+            :periods="periods"
+          />
+        </dl>
+        <div class="grid grid-cols-1 gap-4 lg:grid-cols-3">
+          <Panel
+            :title="t('providerDashboard.panels.sign_ups')"
+            :class="billing ? 'lg:col-span-2' : 'lg:col-span-3'"
+          >
+            <TrendChart
+              v-if="data"
+              :periods="periods"
+              :series="signUpSeries"
+              :format="compact"
+              :height="208"
+            />
+            <Skeleton
+              v-else
+              class="h-[268px] w-full"
+            />
+          </Panel>
+          <Panel
+            v-if="billing"
+            :title="t('providerDashboard.panels.retention')"
+            :meta="t('providerDashboard.panels.retention_meta')"
+          >
+            <ProviderRetentionGrid
+              v-if="data"
+              :cohorts="cohorts"
+            />
+            <Skeleton
+              v-else
+              class="h-[268px] w-full"
+            />
+          </Panel>
+        </div>
+      </section>
+
+      <section class="grid gap-4">
+        <h2 class="text-panel font-semibold text-primary select-none">
+          {{ t('providerDashboard.sections.engagement') }}
+        </h2>
+        <dl class="grid grid-cols-2 gap-4 xl:grid-cols-4">
+          <StatTile
+            v-for="item in engagementTiles"
+            v-bind="item"
+            :key="item.key"
+            :periods="periods"
+          />
+        </dl>
+      </section>
+
+      <section
+        v-if="billing"
+        class="grid gap-4"
+      >
+        <h2 class="text-panel font-semibold text-primary select-none">
+          {{ t('providerDashboard.sections.ai') }}
+        </h2>
+        <dl class="grid grid-cols-2 gap-4 xl:grid-cols-4">
+          <StatTile
+            v-for="item in aiTiles"
+            v-bind="item"
+            :key="item.key"
+            :periods="periods"
+          />
+        </dl>
+        <Panel :title="t('providerDashboard.panels.ai')">
+          <TrendChart
+            v-if="data"
+            :periods="periods"
+            :series="aiSeries"
+            :format="usd"
+            :height="176"
+          />
+          <Skeleton
+            v-else
+            class="h-[236px] w-full"
+          />
+        </Panel>
+      </section>
     </div>
   </div>
 </template>

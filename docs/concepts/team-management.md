@@ -76,6 +76,17 @@ In the matrix, columns are spaces and can be filtered to one child team. An empt
 
 Self-hosted (`EditionGate::billingEnabled()` false) hides Revenue and AI. Growth and Engagement stay.
 
+Definitions as built (`ProviderMetricsService`, `GET provider/metrics?range=6m|12m|24m|ytd`, cached 15 minutes):
+
+- **MRR** is the sum of paid periods running at the end of each month: LemonSqueezy-backed, price above zero, a yearly price divided by 12, counted from the end of a trial. An account is the top-level team, so a new client space of an agency is expansion, not a new account.
+- **Revenue churn** is contraction plus lost MRR over last month's MRR. **Logo churn** is the share of last month's paying accounts that pay nothing now.
+- **Activation** is the share of spaces created in a month that publish within 14 days. Spaces younger than 14 days have no verdict yet, so the tile shows the latest month that has one.
+- **Weekly active editors** are the distinct people who created or published a content version in the last 7 days of the month (up to today in the current one).
+- **API requests and traffic** come from the CloudFront hourly tables, traffic including asset package downloads, as on the space dashboard.
+- **AI revenue** is the AI credit paid plans include (`quotas.aiCredit`, USD a month). There is no separate AI price. **Model spend** is the cost of every AI run in every space, free spaces included. The current month's margin weighs spend so far against the share of the month that has passed.
+- Flows compare month to date with the same days of last month and of the month a year ago. Stocks compare with the value at the end of those months.
+- Per-space DB figures (publishes, editors, AI runs) are rolled up hourly by `provider:collect-activity` into `space_activity_daily` and `editor_activity_daily`. The first run, or `--full`, backfills each space's history.
+
 ## What changes in the backend
 
 - `AuthorizationService`: root write abilities require an active elevation, stored per user with an expiry and a reason. Reads stay unconditional.

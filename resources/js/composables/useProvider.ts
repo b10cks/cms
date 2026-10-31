@@ -20,6 +20,15 @@ export function useProvider() {
     })
   }
 
+  const useProviderMetricsQuery = (range: MaybeRef<ProviderMetricsRange>) => {
+    return useQuery({
+      queryKey: computed(() => queryKeys.provider.metrics(toValue(range))),
+      queryFn: async () => (await api.provider.getMetrics(toValue(range))).data,
+      enabled: computed(() => !!toValue(isAuthenticated)),
+      placeholderData: keepPreviousData,
+    })
+  }
+
   const useProviderNotesQuery = (
     params: MaybeRef<Record<string, unknown>> = {},
     enabled: MaybeRef<boolean> = true
@@ -91,6 +100,7 @@ export function useProvider() {
 
   return {
     useProviderStatsQuery,
+    useProviderMetricsQuery,
     useProviderNotesQuery,
     useCreateProviderNoteMutation,
     useUpdateProviderNoteMutation,

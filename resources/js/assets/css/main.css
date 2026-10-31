@@ -695,3 +695,27 @@
     transition: none !important;
   }
 }
+
+/* printElement() (lib/export-element.ts): print one section, nothing around it. */
+@media print {
+  html[data-printing] body * {
+    visibility: hidden;
+  }
+
+  html[data-printing] [data-print-root],
+  html[data-printing] [data-print-root] * {
+    visibility: visible;
+  }
+
+  html[data-printing] [data-print-root] {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    print-color-adjust: exact;
+  }
+
+  html[data-printing] [data-print-root] [data-export-hidden] {
+    display: none;
+  }
+}
