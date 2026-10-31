@@ -166,4 +166,14 @@ class Team extends GlobalModel
     {
         return $this->hasOne(TeamSamlProvider::class, 'team_id', 'id');
     }
+
+    public function domains(): HasMany
+    {
+        return $this->hasMany(TeamDomain::class, 'team_id', 'id');
+    }
+
+    public function joinRequests(): HasMany
+    {
+        return $this->hasMany(TeamJoinRequest::class, 'team_id', 'id');
+    }
 }

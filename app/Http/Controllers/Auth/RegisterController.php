@@ -4,10 +4,12 @@ namespace App\Http\Controllers\Auth;
 
 use App\Actions\Invite\AcceptInvite;
 use App\Actions\User\CreateUser;
+use App\Exceptions\SsoRequiredException;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\RegisterRequest;
 use App\Models\Management\Invite;
 use App\Notifications\User\VerifyEmailNotification;
+use App\Services\Team\TeamDomainService;
 use App\Support\EditionGate;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\JsonResponse;
@@ -25,12 +27,22 @@ class RegisterController extends Controller
 
     private const VERIFICATION_CACHE_TTL = 3600;
 
-    public function __invoke(RegisterRequest $request, CreateUser $createUser, AcceptInvite $acceptInvite): JsonResponse
+    public function __invoke(
+        RegisterRequest $request,
+        CreateUser $createUser,
+        AcceptInvite $acceptInvite,
+        TeamDomainService $domains,
+    ): JsonResponse
     {
         if (! $request->filled('invite_id') && ! EditionGate::registrationOpen()) {
             return response()->json([
                 'message' => __('auth.registration_closed'),
             ], 403);
+        }
+
+        // A password account would sidestep the team's SSO requirement.
+        if ($ssoTeam = $domains->ssoRequiredTeam($request->string('email')->toString())) {
+            throw new SsoRequiredException($ssoTeam);
         }
 
         try {
@@ -66,6 +78,8 @@ class RegisterController extends Controller
             if (! $user->email_verified_at) {
                 $this->sendVerificationEmail($user);
             }
+
+            $domains->joinThroughDomain($user);
 
             Auth::guard('web')->login($user);
             if ($request->hasSession()) {

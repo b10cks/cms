@@ -113,11 +113,14 @@ use App\Http\Controllers\Mgmt\TeamInviteController;
 use App\Http\Controllers\Mgmt\TeamInviteResendController;
 use App\Http\Controllers\Mgmt\TeamMemberController;
 use App\Http\Controllers\Mgmt\TeamPeopleController;
+use App\Http\Controllers\Mgmt\TeamDomainController;
+use App\Http\Controllers\Mgmt\TeamJoinRequestController;
 use App\Http\Controllers\Mgmt\TeamSamlProviderController;
 use App\Http\Controllers\Mgmt\TeamUserController;
 use App\Http\Controllers\Mgmt\User\UserAvatarController;
 use App\Http\Controllers\Mgmt\User\UserController;
 use App\Http\Controllers\Mgmt\User\UserInviteController;
+use App\Http\Controllers\Mgmt\User\UserJoinRequestController;
 use App\Http\Controllers\Mgmt\User\UserPasswordController;
 use App\Http\Controllers\Mgmt\User\UserSettingsController;
 use App\Http\Controllers\Mgmt\User\UserSocialLinkController;
@@ -167,6 +170,13 @@ Route::group(['prefix' => 'users'], function () {
         Route::post('/invites/{invite}/decline', [UserInviteController::class, 'decline'])
             ->middleware('throttle:crucial')
             ->name('users.me.invites.decline');
+
+        Route::get('/join-requests', [UserJoinRequestController::class, 'index'])->name('users.me.join-requests.index');
+        Route::post('/join-requests', [UserJoinRequestController::class, 'store'])
+            ->middleware('throttle:crucial')
+            ->name('users.me.join-requests.store');
+        Route::delete('/join-requests/{joinRequest}', [UserJoinRequestController::class, 'destroy'])
+            ->name('users.me.join-requests.destroy');
 
         Route::group(['prefix' => 'notifications'], function () {
             Route::get('/', [NotificationController::class, 'index'])->name('users.me.notifications.index');
@@ -275,6 +285,18 @@ Route::group(['prefix' => 'teams/{team}'], function () use ($aiKnowledgeRoutes) 
     Route::get('saml-provider', [TeamSamlProviderController::class, 'show'])->name('teams.saml-provider.show');
     Route::put('saml-provider', [TeamSamlProviderController::class, 'upsert'])->name('teams.saml-provider.upsert');
     Route::delete('saml-provider', [TeamSamlProviderController::class, 'destroy'])->name('teams.saml-provider.destroy');
+
+    Route::get('domains', [TeamDomainController::class, 'index'])->name('teams.domains.index');
+    Route::post('domains', [TeamDomainController::class, 'store'])->name('teams.domains.store');
+    Route::patch('domains/{domain}', [TeamDomainController::class, 'update'])->name('teams.domains.update');
+    Route::delete('domains/{domain}', [TeamDomainController::class, 'destroy'])->name('teams.domains.destroy');
+    Route::post('domains/{domain}/verify', [TeamDomainController::class, 'verify'])
+        ->middleware('throttle:crucial')
+        ->name('teams.domains.verify');
+
+    Route::get('join-requests', [TeamJoinRequestController::class, 'index'])->name('teams.join-requests.index');
+    Route::post('join-requests/{joinRequest}/approve', [TeamJoinRequestController::class, 'approve'])->name('teams.join-requests.approve');
+    Route::post('join-requests/{joinRequest}/decline', [TeamJoinRequestController::class, 'decline'])->name('teams.join-requests.decline');
 
     Route::apiResource('blueprints', SpaceBlueprintController::class);
 

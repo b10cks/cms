@@ -4,9 +4,11 @@ namespace App\Providers;
 
 use App\Events\User\PasswordChanged;
 use App\Events\User\UserDeleted;
+use App\Listeners\User\JoinTeamThroughDomain;
 use App\Listeners\User\NotifyPasswordChanged;
 use App\Listeners\User\NotifyUserDeleted;
 use Illuminate\Auth\Events\Registered;
+use Illuminate\Auth\Events\Verified;
 use Illuminate\Auth\Listeners\SendEmailVerificationNotification;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
 
@@ -20,6 +22,9 @@ class EventServiceProvider extends ServiceProvider
     protected $listen = [
         Registered::class => [
             SendEmailVerificationNotification::class,
+        ],
+        Verified::class => [
+            JoinTeamThroughDomain::class,
         ],
         UserDeleted::class => [
             NotifyUserDeleted::class,
