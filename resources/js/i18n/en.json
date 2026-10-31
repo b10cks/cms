@@ -2960,6 +2960,253 @@
         "delete": "Delete team"
       }
     },
+    "teamWorkspace": {
+      "nav": {
+        "overview": "Overview",
+        "people": "People",
+        "spaces": "Spaces",
+        "roles": "Roles",
+        "security": "Security",
+        "ai": "AI",
+        "activity": "Activity",
+        "settings": "Settings"
+      },
+      "switcher": {
+        "label": "Switch team",
+        "search": "Search teams",
+        "recent": "Recent",
+        "allTeams": "All teams",
+        "noMatches": "No team matches your search.",
+        "newSubTeam": "New sub-team"
+      },
+      "overview": {
+        "subTeam": "Sub-team"
+      },
+      "kpis": {
+        "members": "Members",
+        "membersDetail": "{count} active in the last 30 days",
+        "spaces": "Spaces",
+        "spacesDetail": "{count} with published content",
+        "pendingInvites": "Pending invites",
+        "pendingDetail": "{count} older than 7 days",
+        "expiring": "Expiring access",
+        "expiringDetail": "Within 14 days",
+        "sso": "Single sign-on",
+        "ssoOn": "On",
+        "ssoOff": "Off",
+        "ssoOnDetail": "SAML login is enabled",
+        "ssoDisabledDetail": "SAML login is configured but turned off",
+        "ssoNotSetUp": "Not set up for this team"
+      },
+      "structure": {
+        "title": "Structure",
+        "teams": "{count} teams | {count} team | {count} teams",
+        "people": "{count} people | {count} person | {count} people",
+        "hint": "Drag a team onto another to move it",
+        "chart": "Chart",
+        "list": "List",
+        "published": "Has published content",
+        "unpublished": "Nothing published yet"
+      },
+      "attention": {
+        "title": "Needs attention",
+        "empty": "Nothing needs your attention.",
+        "open": "Open",
+        "types": {
+          "expiring_access": {
+            "title": "Access ends for {count} people | Access ends for {count} person | Access ends for {count} people",
+            "action": "Review"
+          },
+          "stale_invites": {
+            "title": "{count} invites waiting over 7 days | {count} invite waiting over 7 days | {count} invites waiting over 7 days",
+            "action": "Review"
+          },
+          "saml_certificate_expiring": {
+            "title": "SAML certificate expires today | SAML certificate expires tomorrow | SAML certificate expires in {count} days",
+            "action": "Open"
+          },
+          "teams_without_owner": {
+            "title": "{count} teams without an owner | {count} team without an owner | {count} teams without an owner",
+            "action": "Assign"
+          }
+        }
+      },
+      "activity": {
+        "title": "Activity",
+        "description": "Membership, role and settings changes in this team, its sub-teams and their spaces.",
+        "viewAll": "View all",
+        "empty": "No activity yet.",
+        "system": "System",
+        "someone": "Someone",
+        "deleted": "(deleted)",
+        "actions": {
+          "member_added": "{actor} added {member} as {role} to {subject}",
+          "member_removed": "{actor} removed {member} from {subject}",
+          "member_expired": "{actor} removed expired access for {member} on {subject}",
+          "member_role_changed": "{actor} changed {member} from {from} to {to} on {subject}",
+          "member_expiry_changed": "{actor} set access for {member} on {subject} to end on {date}",
+          "member_expiry_cleared": "{actor} removed the end date for {member} on {subject}",
+          "team_created": "{actor} created {subject}",
+          "team_updated": "{actor} updated {subject}",
+          "team_moved": "{actor} moved {subject} under {target}",
+          "team_deleted": "{actor} deleted {subject}",
+          "fallback": "{actor}: {action} on {subject}"
+        }
+      },
+      "move": {
+        "title": "Move {team} under {target}?",
+        "loading": "Checking what changes",
+        "previewError": "The changes could not be loaded. Try again.",
+        "nothingChanges": "Nobody gains or loses inherited access.",
+        "gains": "{count} people gain inherited access | {count} person gains inherited access | {count} people gain inherited access",
+        "losses": "{count} people lose inherited access | {count} person loses inherited access | {count} people lose inherited access",
+        "changes": "{count} people get a different inherited role | {count} person gets a different inherited role | {count} people get a different inherited role",
+        "roleVia": "{role} via {team}",
+        "roleChange": "{from} to {to} via {team}",
+        "customRoles": "Custom roles",
+        "starts": "Starts",
+        "stops": "Stops",
+        "definedIn": "from {team}",
+        "inUse": "{count} assignments keep it | {count} assignment keeps it | {count} assignments keep it",
+        "directKept": "No direct space roles to keep. | {count} direct space role stays as it is. | {count} direct space roles stay as they are.",
+        "confirm": "Move team",
+        "success": "Team moved"
+      },
+      "expiry": {
+        "title": "Access end",
+        "description": "{name} loses access at the end of the chosen day.",
+        "label": "Access until",
+        "inviteHint": "Leave empty for access without an end date. The person loses access at the end of the chosen day.",
+        "clear": "No end date",
+        "saved": "Access end saved",
+        "action": "Set access end"
+      },
+      "access": {
+        "allSpaces": "No spaces yet | All spaces | All {count} spaces",
+        "mixed": "All {count} spaces, plus {direct} direct",
+        "direct": {
+          "one": "{role} on {name}",
+          "many": "{roles}"
+        },
+        "pending": "{role} on {name}",
+        "inherited": "{role} via {team}",
+        "spaceDirect": "Direct",
+        "spaceMixed": "Direct, plus {role} via {team}",
+        "until": "Until {date}",
+        "sources": {
+          "team": "From a team role",
+          "direct": "Direct",
+          "mixed": "Team role and direct",
+          "pending": "Invitation pending"
+        }
+      },
+      "people": {
+        "description": "Everyone with access to this team or its spaces, with where the access comes from.",
+        "columns": {
+          "name": "Name",
+          "teamRole": "Team role",
+          "access": "Access",
+          "source": "Source",
+          "lastActive": "Last active"
+        },
+        "pending": "Pending",
+        "noRole": "No team role",
+        "invited": "Invited {time}",
+        "never": "Never",
+        "expiring": "Expiring",
+        "list": "List",
+        "matrix": "Access matrix",
+        "menu": "Actions for {name}",
+        "sources": {
+          "invite": "Invite",
+          "saml": "SAML",
+          "owner": "Creator",
+          "direct": "Added directly"
+        }
+      },
+      "matrix": {
+        "filter": "Filter by team",
+        "allTeams": "All teams",
+        "person": "Person",
+        "empty": "This team has no spaces yet.",
+        "inherited": "{role} from the {team} team role",
+        "edit": "Change the role of {name} in {space}",
+        "add": "Give {name} a direct role in {space}",
+        "addTitle": "Direct role",
+        "removeDirect": "Remove direct role",
+        "legendInherited": "From a team role",
+        "legendDirect": "Direct role",
+        "saved": "Access updated",
+        "reasons": {
+          "no_permission": "You can't manage people in this space.",
+          "outranks": "This person has a higher role than you."
+        }
+      },
+      "spaces": {
+        "description": "Spaces of this team and its sub-teams.",
+        "columns": {
+          "name": "Space",
+          "team": "Team",
+          "content": "Content"
+        },
+        "empty": "No spaces yet."
+      },
+      "toast": {
+        "error": "Something went wrong: {error}"
+      }
+    },
+    "teamsDashboard": {
+      "instance": "Instance",
+      "providerConsole": "Provider console",
+      "search": "Search teams",
+      "noMatches": "No team matches your search.",
+      "showMore": "Show {count} more",
+      "treeMeta": "{count} teams | {count} team | {count} teams",
+      "tiles": {
+        "teams": "Teams",
+        "topTeams": "{count} top-level teams | {count} top-level team | {count} top-level teams",
+        "people": "People",
+        "active": "{count} active in the last 30 days",
+        "spaces": "Spaces",
+        "sso": "Single sign-on",
+        "ssoDetail": "Teams with SAML, of {count}",
+        "attention": "Needs attention",
+        "attentionDetail": "{owners} without owner, {invites} invites waiting",
+        "sinceLastMonth": "Since last month"
+      },
+      "segments": {
+        "all": "All",
+        "nested": "With sub-teams",
+        "sso": "Single sign-on",
+        "attention": "Needs attention"
+      },
+      "sort": {
+        "label": "Sort teams",
+        "name": "Name",
+        "people": "People",
+        "spaces": "Spaces",
+        "edited": "Last edited"
+      },
+      "views": {
+        "cards": "Cards",
+        "tree": "Tree"
+      },
+      "card": {
+        "people": "People",
+        "spaces": "Spaces",
+        "subTeams": "Sub-teams",
+        "sso": "SSO",
+        "ssoHint": "Members sign in through the team’s identity provider",
+        "actions": "Actions for {name}",
+        "settings": "Settings",
+        "moreTeams": "+{count} more",
+        "withoutOwner": "{count} without owner | {count} without owner | {count} without owner",
+        "edited": "Edited {time}"
+      },
+      "personal": {
+        "title": "Personal teams"
+      }
+    },
     "teamMembers": {
       "title": "Team Members",
       "description": "Everyone who has already accepted their invitation appears here.",
@@ -5562,6 +5809,216 @@
       "deleteConfirmation": "Are you sure you want to delete this entry?"
     }
   },
+  "providerConsole": {
+    "badge": "Provider console",
+    "elevateFirst": "Elevate to use this action",
+    "never": "Never",
+    "reason": "Reason",
+    "flags": {
+      "no_owner": "No owner",
+      "trial_ended": "Trial ended",
+      "payment_failed": "Payment failed"
+    },
+    "actions": {
+      "impersonate": "Sign in as",
+      "signOut": "Sign out everywhere",
+      "transfer": "Transfer ownership",
+      "suspend": "Suspend",
+      "restore": "Restore"
+    },
+    "tenants": {
+      "title": "Tenants",
+      "description": "Every team on this instance with its spaces, people, monthly revenue and sign-in setup. Open a team to look at it as root.",
+      "createTopLevel": "Top-level team",
+      "search": "Search teams",
+      "empty": "No teams match.",
+      "open": "Open",
+      "ssoOff": "Off",
+      "segments": {
+        "all": "All",
+        "paying": "Paying",
+        "trial": "Trial",
+        "flagged": "Flagged"
+      },
+      "columns": {
+        "team": "Team",
+        "type": "Type",
+        "spaces": "Spaces",
+        "people": "People",
+        "mrr": "MRR",
+        "sso": "SSO",
+        "lastActive": "Last active"
+      }
+    },
+    "users": {
+      "title": "Users",
+      "description": "Every account on this instance. Open a user to see their memberships and to act on the account.",
+      "search": "Search name or email",
+      "empty": "No users match.",
+      "segments": {
+        "all": "All",
+        "active": "Active 30d",
+        "suspended": "Suspended",
+        "root": "Root"
+      },
+      "status": {
+        "active": "Active",
+        "suspended": "Suspended",
+        "root": "Root"
+      },
+      "signIn": {
+        "password": "Password",
+        "2fa": "2FA",
+        "saml": "SAML"
+      },
+      "columns": {
+        "name": "Name",
+        "teams": "Teams",
+        "signIn": "Sign-in",
+        "status": "Status",
+        "lastActive": "Last active"
+      },
+      "sheet": {
+        "teams": "Teams",
+        "sessions": "Sessions",
+        "tokens": "Tokens",
+        "memberships": "Memberships",
+        "noMemberships": "No team or space memberships.",
+        "activity": "Recent activity",
+        "noActivity": "No recorded activity.",
+        "onlyOwner": "Only owner",
+        "teamRole": "Team role",
+        "spaceRole": "Direct space role",
+        "elevateHint": "These actions change someone else's account. Elevate first.",
+        "suspendedSince": "Suspended {time} by {by}."
+      },
+      "toasts": {
+        "suspended": "User suspended",
+        "restored": "User restored",
+        "signedOut": "All sessions ended",
+        "transferred": "Ownership transferred",
+        "failed": "That did not work: {error}"
+      }
+    },
+    "impersonate": {
+      "title": "Sign in as {name}",
+      "description": "You see the app exactly as {name} does. Password changes and token minting stay blocked. The session ends after 1 hour.",
+      "reasonPlaceholder": "Ticket number or why you need this",
+      "submit": "Sign in as {name}"
+    },
+    "suspend": {
+      "title": "Suspend {name}?",
+      "description": "Login is blocked, {sessions} end and {tokens} are revoked. Memberships and content stay, so restoring loses nothing.",
+      "allSessions": "all sessions",
+      "sessions": "no sessions | 1 session | {count} sessions",
+      "tokens": "no personal access tokens | 1 personal access token | {count} personal access tokens",
+      "soleOwner": "{name} is the only owner of {team}. Pick a new owner or the team is flagged.",
+      "newOwner": "New owner",
+      "leaveFlagged": "Leave flagged",
+      "reasonPlaceholder": "Why the account is suspended",
+      "submit": "Suspend"
+    },
+    "restore": {
+      "title": "Restore account",
+      "message": "{name} can sign in again. Sessions and tokens that ended with the suspension stay ended."
+    },
+    "signOut": {
+      "title": "Sign out everywhere",
+      "message": "End every browser session of {name}? Personal access tokens keep working."
+    },
+    "transfer": {
+      "title": "Transfer ownership",
+      "description": "The new owner gets the owner role, {name} becomes an admin of the team.",
+      "team": "Team",
+      "newOwner": "New owner",
+      "noCandidates": "No other active member",
+      "submit": "Transfer"
+    },
+    "usage": {
+      "title": "Usage",
+      "description": "Per top-level team, child teams included: plan revenue, AI spend from closed billing periods, and storage and traffic as a share of the plan quotas. API requests have no quota.",
+      "empty": "No usage for this month.",
+      "unlimited": "No quota",
+      "storageFlag": "Storage {percent}%",
+      "columns": {
+        "team": "Team",
+        "revenue": "Plan revenue",
+        "aiSpend": "AI spend",
+        "storage": "Storage",
+        "apiRequests": "API requests",
+        "traffic": "Traffic",
+        "flags": "Flags"
+      }
+    },
+    "audit": {
+      "title": "Audit",
+      "description": "Every root action on this instance: elevations, impersonations, suspensions, sign-outs and ownership transfers.",
+      "empty": "No root actions recorded yet.",
+      "allActions": "All actions",
+      "system": "System",
+      "columns": {
+        "time": "Time",
+        "actor": "Root user",
+        "action": "Action",
+        "detail": "Detail"
+      },
+      "actions": {
+        "elevation_started": "Elevated",
+        "elevation_ended": "Ended elevation",
+        "impersonation_started": "Signed in as user",
+        "impersonation_ended": "Returned from user",
+        "user_suspended": "Suspended user",
+        "user_restored": "Restored user",
+        "user_signed_out": "Signed user out everywhere",
+        "team_ownership_transferred": "Transferred ownership"
+      }
+    },
+    "health": {
+      "title": "Health",
+      "description": "Queue depth, failed jobs and whether space databases answer. The database check opens a random sample of spaces and is cached for 10 minutes.",
+      "queued": "Queued jobs",
+      "connection": "Connection {name}",
+      "failedJobs": "Failed jobs",
+      "last24h": "Last 24 hours",
+      "spaceDatabases": "Space databases",
+      "sampled": "Sample of {total} spaces",
+      "queues": "Queues",
+      "queue": "Queue",
+      "size": "Waiting",
+      "unknown": "Unknown",
+      "checkedAt": "Checked {time}",
+      "recheck": "Check again",
+      "allReachable": "All {count} sampled databases answered."
+    }
+  },
+  "rootAccess": {
+    "elevate": {
+      "title": "Elevate to root",
+      "description": "You get every action on this instance for the chosen time. The reason goes into the instance audit.",
+      "reason": "Reason",
+      "reasonPlaceholder": "Ticket #4821: restore owner access",
+      "duration": "Duration",
+      "minutes": "{count} minutes",
+      "submit": "Elevate"
+    },
+    "banner": {
+      "viewing": {
+        "team": "You're viewing this team as root. It's read only until you elevate.",
+        "space": "You're viewing this space as root. It's read only until you elevate."
+      },
+      "elevate": "Elevate",
+      "backToTenants": "Back to tenants",
+      "elevatedUntil": "Elevated until {time}.",
+      "endNow": "End now",
+      "signedInAs": "Signed in as {name}.",
+      "endsAt": "Ends at {time}. Password and token changes are blocked.",
+      "return": "Return to your account"
+    },
+    "toasts": {
+      "elevated": "Elevated. Root actions are unlocked.",
+      "failed": "That did not work: {error}"
+    }
+  },
   "shortcuts": {
     "title": "Keyboard shortcuts",
     "description": "Everything bound right now. The list follows what is on screen.",
@@ -5649,6 +6106,73 @@
     },
     "dialog": {
       "submit": "Confirm this dialog"
+    }
+  },
+  "providerDashboard": {
+    "title": "Dashboard",
+    "span": "{from} to {to}",
+    "range": {
+      "6m": "Last 6 months",
+      "12m": "Last 12 months",
+      "24m": "Last 24 months",
+      "ytd": "Year to date"
+    },
+    "actions": {
+      "export": "Export",
+      "png": "PNG image",
+      "pdf": "PDF",
+      "present": "Present",
+      "exit": "Exit",
+      "export_failed": "The export failed. Try again."
+    },
+    "sections": {
+      "revenue": "Revenue",
+      "growth": "Growth",
+      "engagement": "Engagement and delivery"
+    },
+    "tiles": {
+      "mrr": "MRR",
+      "net_new_mrr": "Net new MRR",
+      "paying_spaces": "Paying spaces",
+      "arpa": "ARPA",
+      "revenue_churn": "Revenue churn",
+      "new_users": "New users",
+      "new_spaces": "New spaces",
+      "new_teams": "New teams",
+      "api_requests": "API requests",
+      "traffic": "Traffic served"
+    },
+    "details": {
+      "arr": "ARR {value}",
+      "movement": "New {new}, expansion {expansion}, churn {churn}",
+      "teams": "Across {count} team | Across {count} teams",
+      "per_team": "Per paying team",
+      "churn": "Monthly, logo churn {rate}",
+      "this_month": "This month",
+      "api": "Delivery API, this month",
+      "traffic": "CDN, this month"
+    },
+    "change": {
+      "mom": "Compared with last month",
+      "yoy": "{change} on last year"
+    },
+    "panels": {
+      "mrr_movement": "MRR movement",
+      "revenue_by_plan": "Revenue by plan",
+      "sign_ups": "Sign-ups",
+      "retention": "Revenue retention",
+      "retention_meta": "by start month"
+    },
+    "series": {
+      "new": "New",
+      "expansion": "Expansion",
+      "churn": "Churn",
+      "users": "Users",
+      "spaces": "Spaces",
+      "teams": "Teams"
+    },
+    "retention": {
+      "month": "M{n}"
     }
   }
 }

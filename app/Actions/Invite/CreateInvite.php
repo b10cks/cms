@@ -39,7 +39,7 @@ class CreateInvite
             ? $this->roleService->resolveSpaceRole($data['role'], $team)
             : $this->roleService->resolveTeamRole($data['role']);
 
-        if ($inviter instanceof User && ! $inviter->is_root) {
+        if ($inviter instanceof User && ! $inviter->isElevatedRoot()) {
             $space
                 ? $this->guard->ensureCanAssignSpaceRole($inviter, $space, $role)
                 : $this->guard->ensureCanAssignTeamRole($inviter, $team, $role);
@@ -65,6 +65,7 @@ class CreateInvite
             'token' => Str::random(32),
             'message' => $data['message'] ?? null,
             'expires_at' => $data['expires_at'],
+            'access_expires_at' => $data['access_expires_at'] ?? null,
         ]);
 
         $this->sendNotification($invite->loadMissing(['roleDefinition', 'team', 'space', 'inviter', 'invitee']));

@@ -33,6 +33,13 @@ class Kernel extends ConsoleKernel
             ->withoutOverlapping()
             ->runInBackground();
 
+        // End memberships and invites whose "access until" date has passed.
+        $schedule->command('memberships:expire')
+            ->everyFiveMinutes()
+            ->onOneServer()
+            ->withoutOverlapping()
+            ->runInBackground();
+
         $schedule->command('automations:run-scheduled')
             ->everyMinute()
             ->onOneServer()
@@ -82,6 +89,7 @@ class Kernel extends ConsoleKernel
             ->onOneServer()
             ->withoutOverlapping()
             ->runInBackground();
+
 
         // Delete expired asset download packages (transfers-disk archive +
         // row); shares rebuild their package on the next download.

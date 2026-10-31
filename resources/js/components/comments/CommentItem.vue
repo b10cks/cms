@@ -6,6 +6,7 @@ import { Button } from '~/components/ui/button'
 import { Emoji, EmojiPicker } from '~/components/ui/emoji'
 import { TextField } from '~/components/ui/form'
 import type { CommentResource } from '~/types/comments'
+import { hasRootWriteAccess } from '~/lib/access-control'
 
 const props = defineProps<{
   comment: CommentResource
@@ -36,10 +37,10 @@ const spaceId = inject<string>('spaceId', '')
 const { useAccessControl } = useAuthorization()
 const { authorization, hasAbility } = useAccessControl(computed(() => ({ space_id: spaceId })))
 
-// Mirrors CommentPolicy::resolve — root users, or the author with comments.resolve_own.
+// Mirrors CommentPolicy::resolve — elevated root, or the author with comments.resolve_own.
 const canResolve = computed(
   () =>
-    authorization.value?.is_root ||
+    hasRootWriteAccess(authorization.value) ||
     (props.comment.author.id === currentUser.value?.id && hasAbility('comments.resolve_own'))
 )
 

@@ -60,12 +60,29 @@ export const queryKeys = {
       all: () => [...queryKeys.teams.detail(teamId), 'roles'] as const,
       space: () => [...queryKeys.teams.detail(teamId), 'roles', 'space'] as const,
     }),
+    overview: (teamId: MaybeRef<string>) =>
+      [...queryKeys.teams.detail(teamId), 'overview'] as const,
+    accessMatrix: (teamId: MaybeRef<string>, filterTeamId: MaybeRef<string | null> = null) =>
+      [...queryKeys.teams.detail(teamId), 'access-matrix', filterTeamId] as const,
+    auditLogs: (teamId: MaybeRef<string>, params: unknown = {}) =>
+      [...queryKeys.teams.detail(teamId), 'audit-logs', params] as const,
   },
   provider: {
     all: () => ['provider'] as const,
     stats: (params: unknown = {}) => ['provider', 'stats', params] as const,
+    metrics: (range: ProviderMetricsRange) => ['provider', 'metrics', range] as const,
     notes: () => ['provider', 'notes'] as const,
     notesList: (params: unknown = {}) => ['provider', 'notes', 'list', params] as const,
+  },
+  providerConsole: {
+    all: () => ['provider-console'] as const,
+    tenants: () => ['provider-console', 'tenants'] as const,
+    users: () => ['provider-console', 'users'] as const,
+    userList: (params: unknown = {}) => ['provider-console', 'users', 'list', params] as const,
+    user: (id: MaybeRef<string>) => ['provider-console', 'users', 'detail', id] as const,
+    usage: (month: MaybeRef<string>) => ['provider-console', 'usage', month] as const,
+    health: () => ['provider-console', 'health'] as const,
+    audit: (params: unknown = {}) => ['provider-console', 'audit', params] as const,
   },
   redirects: spaceEntityKeys('redirects'),
   assets: (spaceId: MaybeRef<string>) => {

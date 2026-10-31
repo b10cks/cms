@@ -77,6 +77,7 @@ use App\Http\Controllers\Mgmt\IconDataImportController;
 use App\Http\Controllers\Mgmt\MigrationController;
 use App\Http\Controllers\Mgmt\NotificationController;
 use App\Http\Controllers\Mgmt\PlanProposalController;
+use App\Http\Controllers\Mgmt\Provider\ProviderMetricsController;
 use App\Http\Controllers\Mgmt\Provider\ProviderNoteController;
 use App\Http\Controllers\Mgmt\Provider\ProviderStatsController;
 use App\Http\Controllers\Mgmt\RedirectController;
@@ -113,7 +114,15 @@ use App\Http\Controllers\Mgmt\TeamInviteController;
 use App\Http\Controllers\Mgmt\TeamInviteResendController;
 use App\Http\Controllers\Mgmt\TeamMemberController;
 use App\Http\Controllers\Mgmt\TeamPeopleController;
+use App\Http\Controllers\Mgmt\TeamOverviewController;
+use App\Http\Controllers\Mgmt\TeamsDashboardController;
+use App\Http\Controllers\Mgmt\TeamAccessMatrixController;
+use App\Http\Controllers\Mgmt\TeamAuditLogController;
+use App\Http\Controllers\Mgmt\MembershipExpiryController;
 use App\Http\Controllers\Mgmt\TeamSamlProviderController;
+use App\Http\Controllers\Mgmt\Provider\ProviderConsoleController;
+use App\Http\Controllers\Mgmt\Provider\ProviderUserController;
+use App\Http\Controllers\Mgmt\Root\RootElevationController;
 use App\Http\Controllers\Mgmt\TeamUserController;
 use App\Http\Controllers\Mgmt\User\UserAvatarController;
 use App\Http\Controllers\Mgmt\User\UserController;
@@ -182,7 +191,31 @@ Route::group(['prefix' => 'users'], function () {
 });
 
 Route::get('authorization', AuthorizationController::class)->name('authorization.show');
+
+// Root elevation: reads stay unconditional for root, writes need a running elevation.
+Route::group(['prefix' => 'root/elevation', 'middleware' => ['not-impersonating']], function () {
+    Route::get('/', [RootElevationController::class, 'show'])->name('root.elevation.show');
+    Route::post('/', [RootElevationController::class, 'store'])->middleware('throttle:crucial')->name('root.elevation.store');
+    Route::delete('/', [RootElevationController::class, 'destroy'])->name('root.elevation.destroy');
+});
+
+// Provider console. Root-only; the user actions also need an elevation (form requests).
+Route::group(['prefix' => 'provider', 'middleware' => ['root', 'not-impersonating']], function () {
+    Route::get('tenants', [ProviderConsoleController::class, 'tenants'])->name('provider.tenants');
+    Route::get('usage', [ProviderConsoleController::class, 'usage'])->name('provider.usage');
+    Route::get('health', [ProviderConsoleController::class, 'health'])->name('provider.health');
+    Route::get('audit', [ProviderConsoleController::class, 'audit'])->name('provider.audit');
+    Route::get('users', [ProviderUserController::class, 'index'])->name('provider.users.index');
+    Route::get('users/{user}', [ProviderUserController::class, 'show'])->name('provider.users.show');
+    Route::group(['middleware' => ['throttle:crucial']], function () {
+        Route::post('users/{user}/suspend', [ProviderUserController::class, 'suspend'])->name('provider.users.suspend');
+        Route::post('users/{user}/restore', [ProviderUserController::class, 'restore'])->name('provider.users.restore');
+        Route::post('users/{user}/sign-out', [ProviderUserController::class, 'signOut'])->name('provider.users.sign-out');
+        Route::post('users/{user}/transfer-ownership', [ProviderUserController::class, 'transferOwnership'])->name('provider.users.transfer-ownership');
+    });
+});
 Route::get('provider/stats', ProviderStatsController::class)->name('provider.stats');
+Route::get('provider/metrics', ProviderMetricsController::class)->name('provider.metrics');
 Route::apiResource('provider/notes', ProviderNoteController::class)
     ->parameters(['notes' => 'providerNote']);
 
@@ -198,6 +231,7 @@ Route::group(['prefix' => 'ai'], function () {
 });
 
 Route::get('teams/hierarchy', TeamHierarchyController::class)->name('teams.hierarchy');
+Route::get('teams/dashboard', TeamsDashboardController::class)->name('teams.dashboard');
 Route::apiResource('teams', TeamController::class);
 
 Route::get('space-blueprints', AvailableSpaceBlueprintController::class)
@@ -253,6 +287,11 @@ Route::group(['prefix' => 'teams/{team}'], function () use ($aiKnowledgeRoutes) 
     Route::delete('avatar', [TeamAvatarController::class, 'destroy'])->name('teams.avatar.destroy');
 
     Route::get('people', [TeamPeopleController::class, 'index'])->name('teams.people.index');
+    Route::get('overview', [TeamOverviewController::class, 'show'])->name('teams.overview');
+    Route::get('move-preview', [TeamOverviewController::class, 'movePreview'])->name('teams.move-preview');
+    Route::get('access-matrix', TeamAccessMatrixController::class)->name('teams.access-matrix');
+    Route::get('audit-logs', [TeamAuditLogController::class, 'index'])->name('teams.audit-logs.index');
+    Route::put('users/{user}/expiry', [MembershipExpiryController::class, 'team'])->name('teams.users.expiry');
 
     Route::get('members', [TeamMemberController::class, 'index'])->name('teams.members.index');
     Route::get('users', [TeamMemberController::class, 'index'])->name('teams.users.index');
@@ -337,6 +376,8 @@ Route::group(['prefix' => 'spaces/{space}', 'middleware' => 'space.member'], fun
     Route::get('people', [SpacePeopleController::class, 'index'])->name('spaces.people.index');
 
     Route::get('members', [SpaceMemberController::class, 'index'])->name('spaces.members.index');
+    Route::post('members', [SpaceMemberController::class, 'store'])->name('spaces.members.store');
+    Route::put('members/{user}/expiry', [MembershipExpiryController::class, 'space'])->name('spaces.members.expiry');
     Route::patch('members/{user}', [SpaceMemberController::class, 'update'])->name('spaces.members.update');
     Route::delete('members/{user}', [SpaceMemberController::class, 'destroy'])->name('spaces.members.destroy');
 

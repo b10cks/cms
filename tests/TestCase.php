@@ -61,6 +61,18 @@ abstract class TestCase extends BaseTestCase
         $this->actingAs($this->user);
     }
 
+    /** Gives a root user a running elevation, which root writes require. */
+    protected function elevate(User $user, int $minutes = 30): User
+    {
+        $user->elevations()->create([
+            'reason' => 'Test elevation',
+            'expires_at' => now()->addMinutes($minutes),
+        ]);
+        $user->forgetElevation();
+
+        return $user;
+    }
+
     protected function assignSpaceRole(Space $space, User $user, string $roleKey): void
     {
         app(MembershipService::class)->assignSpaceRole($space, $user, $roleKey);

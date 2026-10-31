@@ -13,7 +13,8 @@ use Illuminate\Validation\ValidationException;
  * Guards membership mutations against privilege escalation and orphaned
  * resources. Levels come from the role catalog (100–300 for system roles);
  * an actor may never grant a role above their own effective level, nor
- * modify a member who outranks them.
+ * modify a member who outranks them. Root outranks everyone only while
+ * elevated; otherwise their own memberships count like anyone else's.
  */
 class MembershipGuard
 {
@@ -24,7 +25,7 @@ class MembershipGuard
 
     public function effectiveTeamLevel(User $actor, Team $team): int
     {
-        if ($actor->is_root) {
+        if ($actor->isElevatedRoot()) {
             return PHP_INT_MAX;
         }
 
@@ -38,7 +39,7 @@ class MembershipGuard
 
     public function effectiveSpaceLevel(User $actor, Space $space): int
     {
-        if ($actor->is_root) {
+        if ($actor->isElevatedRoot()) {
             return PHP_INT_MAX;
         }
 

@@ -12,6 +12,8 @@ const spaceId = computed(() => route.params.space as string)
 const { useAuthorizationQuery, useAccessControl } = useAuthorization()
 const { data: authorization } = useAuthorizationQuery(computed(() => ({ space_id: spaceId.value })))
 const access = useAccessControl(computed(() => ({ space_id: spaceId.value })))
+const { useSpaceQuery } = useSpaces()
+const { data: space } = useSpaceQuery(spaceId)
 
 const canViewPeople = computed(() =>
   access.hasAnyAbility([
@@ -55,7 +57,9 @@ const inviteDialogOpen = ref(false)
       v-if="canViewPeople"
       resource-type="space"
       :resource-id="spaceId"
+      :resource-name="space?.name ?? ''"
       :available-roles="availableRoles"
+      :other-roles="authorization?.roles.team ?? []"
       :can-manage-invites="canManageInvites"
     />
 

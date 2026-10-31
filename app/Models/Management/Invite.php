@@ -29,6 +29,7 @@ use Illuminate\Support\Carbon;
  * @property string $token
  * @property Carbon $expires_at
  * @property Carbon|null $accepted_at
+ * @property Carbon|null $access_expires_at
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property-read User $inviter
@@ -80,6 +81,7 @@ class Invite extends GlobalModel
         'expires_at' => 'datetime',
         'accepted_at' => 'datetime',
         'declined_at' => 'datetime',
+        'access_expires_at' => 'datetime',
     ];
 
     protected function message(): Attribute

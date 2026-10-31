@@ -36,7 +36,7 @@ class SpaceBlueprintPolicy
             return true;
         }
 
-        return $this->hasBlueprintTeamRole($user, $blueprint, self::VIEW_ROLES);
+        return $user->is_root || $this->hasBlueprintTeamRole($user, $blueprint, self::VIEW_ROLES);
     }
 
     /**
@@ -46,10 +46,10 @@ class SpaceBlueprintPolicy
     public function create(User $user, ?Team $team = null): bool
     {
         if ($team === null) {
-            return $user->is_root;
+            return $user->isElevatedRoot();
         }
 
-        return $user->is_root || $this->hasAnyTeamRole($user, $team, self::MANAGE_ROLES);
+        return $user->isElevatedRoot() || $this->hasAnyTeamRole($user, $team, self::MANAGE_ROLES);
     }
 
     public function update(User $user, SpaceBlueprint $blueprint): bool
@@ -65,11 +65,12 @@ class SpaceBlueprintPolicy
     /**
      * Team roles are inherited downward, so a role on any ancestor of the
      * owning team counts. A blueprint without a team is root-only, as is one
-     * whose team has been deleted.
+     * whose team has been deleted. Root reads are handled in view(); here root
+     * counts only while elevated.
      */
     private function hasBlueprintTeamRole(User $user, SpaceBlueprint $blueprint, array $roleKeys): bool
     {
-        if ($user->is_root) {
+        if ($user->isElevatedRoot()) {
             return true;
         }
 

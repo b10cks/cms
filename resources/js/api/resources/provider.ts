@@ -14,6 +14,10 @@ export class Provider extends BaseResource<
     })
   }
 
+  public async getMetrics(range: ProviderMetricsRange): Promise<ApiResponse<ProviderMetrics>> {
+    return this.client.get<ApiResponse<ProviderMetrics>>('/mgmt/v1/provider/metrics', { range })
+  }
+
   public async listNotes(
     params: BaseQueryParams = {}
   ): Promise<ApiCollectionResponse<ProviderNote>> {

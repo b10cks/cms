@@ -65,7 +65,7 @@ class SpaceMemberDirectoryService
             ->join('space_user', 'space_user.user_id', '=', 'users.id')
             ->leftJoin('roles', 'roles.id', '=', 'space_user.role_id')
             ->where('space_user.space_id', $space->id)
-            ->select('users.*', 'roles.key as role_key', 'space_user.created_at as joined_at');
+            ->select('users.*', 'roles.key as role_key', 'space_user.created_at as joined_at', 'space_user.expires_at as access_expires_at');
     }
 
     private function decorate(User $member): User

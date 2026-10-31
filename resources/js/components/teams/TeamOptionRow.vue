@@ -1,6 +1,7 @@
 <script setup lang="ts">
+import Icon from '~/components/Icon.vue'
 import { Badge } from '~/components/ui/badge'
-import IconName from '~/components/ui/IconName.vue'
+import HighlightedText from '~/components/ui/HighlightedText.vue'
 
 withDefaults(
   defineProps<{
@@ -12,6 +13,8 @@ withDefaults(
     depth?: number
     /** Trigger layout: no indent, badge sits next to the name. */
     compact?: boolean
+    /** Matched characters of the name, from a fuzzy search. */
+    highlight?: number[]
   }>(),
   {
     icon: null,
@@ -19,6 +22,7 @@ withDefaults(
     type: null,
     depth: 0,
     compact: false,
+    highlight: undefined,
   }
 )
 </script>
@@ -28,11 +32,12 @@ withDefaults(
     v-if="compact"
     class="flex min-w-0 items-center gap-2 pr-2"
   >
-    <IconName
-      :name="name"
-      :color="color"
-      :icon="icon ?? 'users'"
+    <Icon
+      :name="`lucide:${icon ?? 'users'}`"
+      :style="{ color: color ?? undefined }"
+      class="shrink-0"
     />
+    <span class="truncate">{{ name }}</span>
     <Badge
       v-if="type"
       variant="surface"
@@ -44,17 +49,23 @@ withDefaults(
 
   <div
     v-else
-    class="flex w-full items-center justify-between gap-2"
+    class="flex w-full min-w-0 items-center justify-between gap-2"
   >
     <div
       class="flex min-w-0 items-center gap-2"
       :style="{ paddingLeft: `${depth * 16}px` }"
     >
-      <IconName
-        :name="name"
-        :color="color"
-        :icon="icon ?? 'users'"
+      <Icon
+        :name="`lucide:${icon ?? 'users'}`"
+        :style="{ color: color ?? undefined }"
+        class="shrink-0"
       />
+      <span class="truncate">
+        <HighlightedText
+          :text="name"
+          :highlight="highlight"
+        />
+      </span>
     </div>
     <Badge
       v-if="type"

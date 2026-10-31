@@ -7,6 +7,8 @@ use App\Http\Resources\Management\RoleResource;
 use App\Models\Management\Space;
 use App\Models\Management\Team;
 use App\Services\Auth\AuthorizationService;
+use App\Services\Auth\ImpersonationService;
+use App\Services\Auth\RootElevationService;
 use App\Services\Auth\RoleService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -17,6 +19,8 @@ class AuthorizationController extends Controller
         Request $request,
         AuthorizationService $authorizationService,
         RoleService $roleService,
+        RootElevationService $elevations,
+        ImpersonationService $impersonations,
     ): JsonResponse {
         $user = $request->user();
         $team = $request->filled('team_id') ? Team::query()->findOrFail($request->string('team_id')) : null;
@@ -35,9 +39,19 @@ class AuthorizationController extends Controller
         $contextTeam = $team ?? $space?->team;
         $graph = $authorizationService->graphForUser($user);
 
+        $impersonation = $impersonations->currentFor($request, $user);
+
         $payload = [
             'user_id' => $user->id,
-            'is_root' => $user->is_root,
+            ...$elevations->state($user),
+            'impersonation' => $impersonation ? [
+                'impersonator' => $impersonation->impersonator ? [
+                    'id' => $impersonation->impersonator->id,
+                    'name' => trim($impersonation->impersonator->name) ?: $impersonation->impersonator->email,
+                ] : null,
+                'reason' => $impersonation->reason,
+                'expires_at' => $impersonation->expires_at->toIso8601String(),
+            ] : null,
             'teams' => $request->filled('team_id') || $request->filled('space_id')
                 ? []
                 : Team::query()

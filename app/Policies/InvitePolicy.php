@@ -33,7 +33,7 @@ class InvitePolicy
 
     public function delete(User $user, Invite $invite): bool
     {
-        if ($user->is_root) {
+        if ($user->isElevatedRoot()) {
             return true;
         }
 
@@ -42,7 +42,7 @@ class InvitePolicy
 
     public function resend(User $user, Invite $invite): bool
     {
-        if ($user->is_root) {
+        if ($user->isElevatedRoot()) {
             return true;
         }
 

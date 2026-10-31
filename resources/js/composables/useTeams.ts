@@ -94,6 +94,8 @@ export function useTeams() {
       onSuccess: (data) => {
         queryClient.invalidateQueries({ queryKey: queryKeys.teams.lists() })
         queryClient.invalidateQueries({ queryKey: queryKeys.teams.hierarchy() })
+        // Ancestors' overviews list the new team in their structure.
+        queryClient.invalidateQueries({ queryKey: queryKeys.teams.details() })
         queryClient.invalidateQueries({ queryKey: queryKeys.authorization.all() })
         toast.success(t('composables.teams.createSuccess', { name: data.name }) as string)
       },

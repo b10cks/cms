@@ -125,29 +125,44 @@ export const spaceSettingsNavigationItems: NavigationAccessItem[] = [
 
 export const teamNavigationItems: NavigationAccessItem[] = [
   {
-    label: 'labels.teams.tabs.people',
-    icon: 'lucide:users',
-    routeName: 'team',
+    label: 'labels.teamWorkspace.nav.overview',
+    icon: 'lucide:layout-dashboard',
+    routeName: 'team-overview',
   },
   {
-    label: 'labels.teams.tabs.roles',
+    label: 'labels.teamWorkspace.nav.people',
+    icon: 'lucide:users',
+    routeName: 'team-people',
+  },
+  {
+    label: 'labels.teamWorkspace.nav.spaces',
+    icon: 'lucide:box',
+    routeName: 'team-spaces',
+  },
+  {
+    label: 'labels.teamWorkspace.nav.roles',
     icon: 'lucide:shield',
     routeName: 'team-roles',
   },
   {
-    label: 'labels.teams.tabs.saml',
+    label: 'labels.teamWorkspace.nav.security',
     icon: 'lucide:key-round',
     routeName: 'team-saml',
   },
   {
-    label: 'labels.teams.tabs.settings',
-    icon: 'lucide:settings',
-    routeName: 'team-settings',
-  },
-  {
-    label: 'labels.teams.tabs.ai',
+    label: 'labels.teamWorkspace.nav.ai',
     icon: 'lucide:sparkles',
     routeName: 'team-ai',
+  },
+  {
+    label: 'labels.teamWorkspace.nav.activity',
+    icon: 'lucide:activity',
+    routeName: 'team-activity',
+  },
+  {
+    label: 'labels.teamWorkspace.nav.settings',
+    icon: 'lucide:settings',
+    routeName: 'team-settings',
   },
 ]
 
@@ -156,6 +171,31 @@ export const providerNavigationItems: NavigationAccessItem[] = [
     label: 'labels.provider.dashboard.title',
     icon: 'lucide:layout-dashboard',
     routeName: 'provider-dashboard',
+  },
+  {
+    label: 'providerConsole.tenants.title',
+    icon: 'lucide:globe',
+    routeName: 'provider-tenants',
+  },
+  {
+    label: 'providerConsole.users.title',
+    icon: 'lucide:users',
+    routeName: 'provider-users',
+  },
+  {
+    label: 'providerConsole.usage.title',
+    icon: 'lucide:activity',
+    routeName: 'provider-usage',
+  },
+  {
+    label: 'providerConsole.audit.title',
+    icon: 'lucide:scroll-text',
+    routeName: 'provider-audit',
+  },
+  {
+    label: 'providerConsole.health.title',
+    icon: 'lucide:heart-pulse',
+    routeName: 'provider-health',
   },
   {
     label: 'labels.provider.notes.title',
@@ -254,13 +294,27 @@ export const actionAccessRequirements: Record<string, RouteAccessRequirement> = 
   },
 }
 
+function isRootContext({ authorization }: AccessEvaluationContext): boolean {
+  return Boolean(authorization?.is_root)
+}
+
+/**
+ * Root powers that are not abilities (top-level teams, team types, system
+ * blueprints, other people's comments) need a running elevation, like every
+ * other root write.
+ */
+export function hasRootWriteAccess(authorization?: AuthorizationPayload | null): boolean {
+  return Boolean(authorization?.is_root && authorization.is_elevated)
+}
+
 export const routeAccessRequirements: Record<AppRouteName, RouteAccessRequirement> = {
-  'provider-dashboard': {
-    check: ({ authorization }) => Boolean(authorization?.is_root),
-  },
-  'provider-notes': {
-    check: ({ authorization }) => Boolean(authorization?.is_root),
-  },
+  'provider-dashboard': { check: isRootContext },
+  'provider-tenants': { check: isRootContext },
+  'provider-users': { check: isRootContext },
+  'provider-usage': { check: isRootContext },
+  'provider-audit': { check: isRootContext },
+  'provider-health': { check: isRootContext },
+  'provider-notes': { check: isRootContext },
   space: { abilities: 'space.view' },
   'space-onboarding': { abilities: 'space.view' },
   'space-content-index': { abilities: 'content.view' },
@@ -309,9 +363,13 @@ export const routeAccessRequirements: Record<AppRouteName, RouteAccessRequiremen
   'space-settings-migrations': { abilities: 'migrations.view' },
   'space-settings-shares': { abilities: 'asset_shares.view' },
   'space-settings-plugins': { abilities: 'field_plugins.manage' },
-  team: {
+  team: { abilities: 'team.view' },
+  'team-overview': { abilities: 'team.view' },
+  'team-people': {
     abilities: { anyOf: ['team.members.view', 'team.invites.view'] },
   },
+  'team-spaces': { abilities: 'team.view' },
+  'team-activity': { abilities: 'team.audit.view' },
   'team-roles': { abilities: 'team.roles.manage' },
   'team-saml': { abilities: 'team.saml.manage' },
   'team-settings': { abilities: 'team.update' },
@@ -349,10 +407,8 @@ export function hasAbilityRequirement(
     return true
   }
 
-  if (authorization?.is_root) {
-    return true
-  }
-
+  // No root shortcut: the server already answers root with every read ability,
+  // and with write abilities only while elevated.
   const abilities = getAbilitySet(authorization)
 
   if (typeof requirement === 'string') {
@@ -378,10 +434,6 @@ export function canAccessRequirement(
   context: AccessEvaluationContext
 ): boolean {
   if (!requirement) {
-    return true
-  }
-
-  if (context.authorization?.is_root) {
     return true
   }
 

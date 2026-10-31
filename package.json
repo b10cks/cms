@@ -55,6 +55,7 @@
     "dayjs": "^1.11.23",
     "diff": "^9.0.0",
     "dompurify": "^3.4.17",
+    "html-to-image": "^1.11.13",
     "laravel-echo": "^2.6.3",
     "leaflet": "^1.9.4",
     "marked": "^18.1.2",

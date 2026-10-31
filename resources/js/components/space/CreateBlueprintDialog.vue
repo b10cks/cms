@@ -9,6 +9,7 @@ import { CheckboxField, TextField } from '~/components/ui/form'
 import IconNameField from '~/components/ui/IconNameField.vue'
 import { useSpaceBlueprints } from '~/composables/useSpaceBlueprints'
 import { useTeams } from '~/composables/useTeams'
+import { hasRootWriteAccess } from '~/lib/access-control'
 
 const open = defineModel<boolean>('open')
 
@@ -32,7 +33,8 @@ const access = useAccessControl()
 const { data: teamsResponse } = useTeamsQuery(computed(() => ({ per_page: 100 })))
 const { mutateAsync: createBlueprint, isPending } = useCreateSpaceBlueprintMutation()
 
-const isRootUser = computed(() => access.authorization.value?.is_root ?? false)
+// System blueprints are a root write, so they need a running elevation.
+const isRootUser = computed(() => hasRootWriteAccess(access.authorization.value))
 
 const SNAPSHOT_TABLES = [
   'blocks',

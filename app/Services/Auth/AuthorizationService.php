@@ -20,18 +20,28 @@ class AuthorizationService
         private readonly RoleService $roleService,
     ) {}
 
+    /**
+     * Root reads are unconditional: a root user sees every team and space and
+     * gets every read ability ({@see isReadAbility()}) on top of their own
+     * memberships. Write abilities beyond their memberships need a running
+     * elevation ({@see User::isElevatedRoot()}).
+     */
     public function abilitiesForTeam(User $user, Team $team): array
     {
-        if ($user->is_root) {
+        if ($user->isElevatedRoot()) {
             return config('authorization.team_abilities', []);
         }
 
-        return $this->graphForUser($user)['teams'][$team->id]['abilities'] ?? [];
+        $abilities = $this->graphForUser($user)['teams'][$team->id]['abilities'] ?? [];
+
+        return $user->is_root
+            ? $this->mergeAbilities($abilities, $this->readAbilities('authorization.team_abilities'))
+            : $abilities;
     }
 
     public function teamRoleKeysForTeam(User $user, Team $team): array
     {
-        if ($user->is_root) {
+        if ($user->isElevatedRoot()) {
             return array_keys(config('authorization.roles.team', []));
         }
 
@@ -40,16 +50,20 @@ class AuthorizationService
 
     public function abilitiesForSpace(User $user, Space $space): array
     {
-        if ($user->is_root) {
+        if ($user->isElevatedRoot()) {
             return config('authorization.space_abilities', []);
         }
 
-        return $this->graphForUser($user)['spaces'][$space->id]['abilities'] ?? [];
+        $abilities = $this->graphForUser($user)['spaces'][$space->id]['abilities'] ?? [];
+
+        return $user->is_root
+            ? $this->mergeAbilities($abilities, $this->readAbilities('authorization.space_abilities'))
+            : $abilities;
     }
 
     public function teamRoleKeysForSpace(User $user, Space $space): array
     {
-        if ($user->is_root) {
+        if ($user->isElevatedRoot()) {
             return array_keys(config('authorization.roles.team', []));
         }
 
@@ -58,7 +72,7 @@ class AuthorizationService
 
     public function spaceRoleKeyForSpace(User $user, Space $space): ?string
     {
-        if ($user->is_root) {
+        if ($user->isElevatedRoot()) {
             return null;
         }
 
@@ -67,20 +81,31 @@ class AuthorizationService
 
     public function canInTeam(User $user, Team $team, string $ability): bool
     {
-        return $user->is_root || in_array($ability, $this->abilitiesForTeam($user, $team), true);
+        return in_array($ability, $this->abilitiesForTeam($user, $team), true);
     }
 
     public function canInSpace(User $user, Space $space, string $ability): bool
     {
-        return $user->is_root || in_array($ability, $this->abilitiesForSpace($user, $space), true);
+        return in_array($ability, $this->abilitiesForSpace($user, $space), true);
     }
 
+    /**
+     * A read ability only lets its holder look: every `*.view` ability
+     * (including `content.history.view` and `audit_logs.view`). Everything
+     * else, `comments.react` included, changes state.
+     */
+    public static function isReadAbility(string $ability): bool
+    {
+        return str_ends_with($ability, '.view');
+    }
+
+    /**
+     * The graph holds the user's own memberships only. Root status and
+     * elevation are applied on top at lookup time and never cached, so an
+     * elevation takes effect and lapses on the spot.
+     */
     public function graphForUser(User $user): array
     {
-        if ($user->is_root) {
-            return $this->rootGraph($user);
-        }
-
         return $this->graphs[$user->id] ??= Cache::remember(
             $this->cacheKey($user->id),
             now()->addSeconds((int) config('authorization.cache_ttl_seconds', 3600)),
@@ -216,14 +241,13 @@ class AuthorizationService
         return config('authorization.cache_key_prefix', 'authz:user:').$userId.':v1';
     }
 
-    private function rootGraph(User $user): array
+    /** @return array<int, string> */
+    private function readAbilities(string $configKey): array
     {
-        return [
-            'user_id' => $user->id,
-            'is_root' => true,
-            'teams' => [],
-            'spaces' => [],
-        ];
+        return array_values(array_filter(
+            config($configKey, []),
+            fn (string $ability) => self::isReadAbility($ability),
+        ));
     }
 
     private function buildGraph(User $user): array
@@ -249,7 +273,7 @@ class AuthorizationService
 
         $graph = [
             'user_id' => $user->id,
-            'is_root' => false,
+            'is_root' => (bool) $user->is_root,
             'teams' => [],
             'spaces' => [],
         ];

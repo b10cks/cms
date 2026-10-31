@@ -3,8 +3,8 @@ import Icon from '~/components/Icon.vue'
 
 /**
  * The one way a change is shown: an arrow and the signed amount, green when it rises and red
- * when it falls. Zero renders nothing, or a muted "0" with `showZero`. `label` is the formatted
- * absolute amount.
+ * when it falls, or the other way round with `inverse` (churn, where falling is good). Zero
+ * renders nothing, or a muted "0" with `showZero`. `label` is the formatted absolute amount.
  */
 const props = defineProps<{
   /** Signed raw change; only its sign is read. */
@@ -12,6 +12,7 @@ const props = defineProps<{
   label: string
   title?: string
   showZero?: boolean
+  inverse?: boolean
 }>()
 
 const rising = computed(() => props.value > 0)
@@ -26,7 +27,7 @@ const rising = computed(() => props.value > 0)
   <span
     v-else-if="value !== 0"
     class="inline-flex items-center gap-0.5 text-sm font-semibold tabular-nums"
-    :class="rising ? 'text-success' : 'text-destructive'"
+    :class="rising !== inverse ? 'text-success' : 'text-destructive'"
     :title="title"
   >
     <Icon

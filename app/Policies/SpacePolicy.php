@@ -24,7 +24,7 @@ class SpacePolicy
 
     public function create(User $user): bool
     {
-        return $user->is_root || $this->authorization()->accessibleTeamIds($user) !== [];
+        return $user->isElevatedRoot() || $this->authorization()->accessibleTeamIds($user) !== [];
     }
 
     public function update(User $user, Space $space): bool

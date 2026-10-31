@@ -9,6 +9,7 @@ use App\Http\Middleware\CacheDataApi;
 use App\Http\Middleware\EncryptCookies;
 use App\Http\Middleware\EnsureEmailIsVerified;
 use App\Http\Middleware\EnsureRevision;
+use App\Http\Middleware\EnsureRoot;
 use App\Http\Middleware\EnsureSpaceMembership;
 use App\Http\Middleware\HandleManagementCors;
 use App\Http\Middleware\PreventDuringImpersonation;
@@ -36,7 +37,6 @@ use Illuminate\Routing\Middleware\ThrottleRequests;
 use Illuminate\Session\Middleware\AuthenticateSession;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
-use Laravel\Sanctum\Http\Middleware\AuthenticateSession as SanctumAuthenticateSession;
 use Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful;
 
 class Kernel extends HttpKernel
@@ -76,13 +76,14 @@ class Kernel extends HttpKernel
         ],
 
         'mgmt' => [
+            // Runs the session check configured as
+            // `sanctum.middleware.authenticate_session` (AuthenticateSession):
+            // it binds each session to the password hash it was created under,
+            // so changing a password logs out every other browser, and to the
+            // user's session epoch, so "sign out everywhere" and suspension end
+            // every session. Running it inside the stateful pipeline covers the
+            // stateful auth routes (2FA, broadcasting) too.
             EnsureFrontendRequestsAreStateful::class,
-            // Binds each session to the password hash it was created under, so
-            // changing a password logs out every other browser that holds a
-            // session — the point of changing it when you suspect someone else
-            // is in the account. Sessions predating this simply adopt the
-            // current hash on their next request rather than being dropped.
-            SanctumAuthenticateSession::class,
             ThrottleRequests::class.':mgmt',
             AcceptHeader::class,
             SubstituteBindings::class,
@@ -124,6 +125,7 @@ class Kernel extends HttpKernel
         'throttle' => ThrottleRequests::class,
         'verified' => EnsureEmailIsVerified::class,
         'revision' => EnsureRevision::class,
+        'root' => EnsureRoot::class,
         'space.member' => EnsureSpaceMembership::class,
         '2fa' => RequireTotpVerification::class,
         'stateful' => EnsureFrontendRequestsAreStateful::class,

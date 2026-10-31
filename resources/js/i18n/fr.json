@@ -2960,6 +2960,253 @@
         "delete": "Supprimer l'équipe"
       }
     },
+    "teamWorkspace": {
+      "nav": {
+        "overview": "Vue d'ensemble",
+        "people": "Personnes",
+        "spaces": "Espaces",
+        "roles": "Rôles",
+        "security": "Sécurité",
+        "ai": "IA",
+        "activity": "Activité",
+        "settings": "Paramètres"
+      },
+      "switcher": {
+        "label": "Changer d'équipe",
+        "search": "Rechercher des équipes",
+        "recent": "Récentes",
+        "allTeams": "Toutes les équipes",
+        "noMatches": "Aucune équipe ne correspond à la recherche.",
+        "newSubTeam": "Nouvelle sous-équipe"
+      },
+      "overview": {
+        "subTeam": "Sous-équipe"
+      },
+      "kpis": {
+        "members": "Membres",
+        "membersDetail": "{count} actifs ces 30 derniers jours",
+        "spaces": "Espaces",
+        "spacesDetail": "{count} avec du contenu publié",
+        "pendingInvites": "Invitations en attente",
+        "pendingDetail": "{count} de plus de 7 jours",
+        "expiring": "Accès arrivant à échéance",
+        "expiringDetail": "Dans les 14 jours",
+        "sso": "Authentification unique",
+        "ssoOn": "Activée",
+        "ssoOff": "Désactivée",
+        "ssoOnDetail": "La connexion SAML est active",
+        "ssoDisabledDetail": "SAML est configuré mais désactivé",
+        "ssoNotSetUp": "Non configurée pour cette équipe"
+      },
+      "structure": {
+        "title": "Structure",
+        "teams": "{count} équipe | {count} équipe | {count} équipes",
+        "people": "{count} personne | {count} personne | {count} personnes",
+        "hint": "Faites glisser une équipe sur une autre pour la déplacer",
+        "chart": "Organigramme",
+        "list": "Liste",
+        "published": "Contient du contenu publié",
+        "unpublished": "Rien de publié pour l'instant"
+      },
+      "attention": {
+        "title": "À traiter",
+        "empty": "Rien à traiter pour le moment.",
+        "open": "Ouvrir",
+        "types": {
+          "expiring_access": {
+            "title": "L'accès prend fin pour {count} personne | L'accès prend fin pour {count} personne | L'accès prend fin pour {count} personnes",
+            "action": "Vérifier"
+          },
+          "stale_invites": {
+            "title": "{count} invitation en attente depuis plus de 7 jours | {count} invitation en attente depuis plus de 7 jours | {count} invitations en attente depuis plus de 7 jours",
+            "action": "Vérifier"
+          },
+          "saml_certificate_expiring": {
+            "title": "Le certificat SAML expire aujourd'hui | Le certificat SAML expire demain | Le certificat SAML expire dans {count} jours",
+            "action": "Ouvrir"
+          },
+          "teams_without_owner": {
+            "title": "{count} équipe sans propriétaire | {count} équipe sans propriétaire | {count} équipes sans propriétaire",
+            "action": "Attribuer"
+          }
+        }
+      },
+      "activity": {
+        "title": "Activité",
+        "description": "Changements de membres, de rôles et de paramètres dans cette équipe, ses sous-équipes et leurs espaces.",
+        "viewAll": "Tout afficher",
+        "empty": "Aucune activité pour l'instant.",
+        "system": "Système",
+        "someone": "Quelqu'un",
+        "deleted": "(supprimé)",
+        "actions": {
+          "member_added": "{actor} a ajouté {member} comme {role} à {subject}",
+          "member_removed": "{actor} a retiré {member} de {subject}",
+          "member_expired": "{actor} a retiré l'accès expiré de {member} à {subject}",
+          "member_role_changed": "{actor} a changé {member} de {from} à {to} dans {subject}",
+          "member_expiry_changed": "{actor} a fixé la fin de l'accès de {member} à {subject} au {date}",
+          "member_expiry_cleared": "{actor} a retiré la date de fin de {member} dans {subject}",
+          "team_created": "{actor} a créé {subject}",
+          "team_updated": "{actor} a modifié {subject}",
+          "team_moved": "{actor} a déplacé {subject} sous {target}",
+          "team_deleted": "{actor} a supprimé {subject}",
+          "fallback": "{actor} : {action} dans {subject}"
+        }
+      },
+      "move": {
+        "title": "Déplacer {team} sous {target} ?",
+        "loading": "Vérification des changements",
+        "previewError": "Impossible de charger les changements. Réessayez.",
+        "nothingChanges": "Personne ne gagne ni ne perd d'accès hérité.",
+        "gains": "{count} personne obtient un accès hérité | {count} personne obtient un accès hérité | {count} personnes obtiennent un accès hérité",
+        "losses": "{count} personne perd son accès hérité | {count} personne perd son accès hérité | {count} personnes perdent leur accès hérité",
+        "changes": "{count} personne reçoit un autre rôle hérité | {count} personne reçoit un autre rôle hérité | {count} personnes reçoivent un autre rôle hérité",
+        "roleVia": "{role} via {team}",
+        "roleChange": "de {from} à {to} via {team}",
+        "customRoles": "Rôles personnalisés",
+        "starts": "S'applique",
+        "stops": "Ne s'applique plus",
+        "definedIn": "de {team}",
+        "inUse": "{count} attribution le conserve | {count} attribution le conserve | {count} attributions le conservent",
+        "directKept": "Aucun rôle direct d'espace à conserver. | {count} rôle direct d'espace reste inchangé. | {count} rôles directs d'espace restent inchangés.",
+        "confirm": "Déplacer l'équipe",
+        "success": "Équipe déplacée"
+      },
+      "expiry": {
+        "title": "Fin de l'accès",
+        "description": "{name} perd l'accès à la fin du jour choisi.",
+        "label": "Accès jusqu'au",
+        "inviteHint": "Laissez vide pour un accès sans date de fin. La personne perd l'accès à la fin du jour choisi.",
+        "clear": "Pas de date de fin",
+        "saved": "Fin de l'accès enregistrée",
+        "action": "Définir la fin de l'accès"
+      },
+      "access": {
+        "allSpaces": "Aucun espace pour l'instant | Tous les espaces | Les {count} espaces",
+        "mixed": "Les {count} espaces, plus {direct} en direct",
+        "direct": {
+          "one": "{role} dans {name}",
+          "many": "{roles}"
+        },
+        "pending": "{role} dans {name}",
+        "inherited": "{role} via {team}",
+        "spaceDirect": "Direct",
+        "spaceMixed": "Direct, plus {role} via {team}",
+        "until": "Jusqu'au {date}",
+        "sources": {
+          "team": "Via un rôle d'équipe",
+          "direct": "Direct",
+          "mixed": "Rôle d'équipe et direct",
+          "pending": "Invitation en attente"
+        }
+      },
+      "people": {
+        "description": "Toutes les personnes ayant accès à cette équipe ou à ses espaces, et l'origine de cet accès.",
+        "columns": {
+          "name": "Nom",
+          "teamRole": "Rôle d'équipe",
+          "access": "Accès",
+          "source": "Origine",
+          "lastActive": "Dernière activité"
+        },
+        "pending": "En attente",
+        "noRole": "Aucun rôle d'équipe",
+        "invited": "Invité {time}",
+        "never": "Jamais",
+        "expiring": "Échéance proche",
+        "list": "Liste",
+        "matrix": "Matrice d'accès",
+        "menu": "Actions pour {name}",
+        "sources": {
+          "invite": "Invitation",
+          "saml": "SAML",
+          "owner": "Créateur",
+          "direct": "Ajouté directement"
+        }
+      },
+      "matrix": {
+        "filter": "Filtrer par équipe",
+        "allTeams": "Toutes les équipes",
+        "person": "Personne",
+        "empty": "Cette équipe n'a pas encore d'espaces.",
+        "inherited": "{role} via le rôle d'équipe dans {team}",
+        "edit": "Changer le rôle de {name} dans {space}",
+        "add": "Donner à {name} un rôle direct dans {space}",
+        "addTitle": "Rôle direct",
+        "removeDirect": "Retirer le rôle direct",
+        "legendInherited": "Via un rôle d'équipe",
+        "legendDirect": "Rôle direct",
+        "saved": "Accès mis à jour",
+        "reasons": {
+          "no_permission": "Vous ne pouvez pas gérer les personnes de cet espace.",
+          "outranks": "Cette personne a un rôle plus élevé que le vôtre."
+        }
+      },
+      "spaces": {
+        "description": "Espaces de cette équipe et de ses sous-équipes.",
+        "columns": {
+          "name": "Espace",
+          "team": "Équipe",
+          "content": "Contenu"
+        },
+        "empty": "Aucun espace pour l'instant."
+      },
+      "toast": {
+        "error": "Une erreur s'est produite : {error}"
+      }
+    },
+    "teamsDashboard": {
+      "instance": "Instance",
+      "providerConsole": "Console fournisseur",
+      "search": "Rechercher des équipes",
+      "noMatches": "Aucune équipe ne correspond à la recherche.",
+      "showMore": "Afficher {count} de plus",
+      "treeMeta": "{count} équipes | {count} équipe | {count} équipes",
+      "tiles": {
+        "teams": "Équipes",
+        "topTeams": "{count} équipes principales | {count} équipe principale | {count} équipes principales",
+        "people": "Personnes",
+        "active": "{count} actives ces 30 derniers jours",
+        "spaces": "Espaces",
+        "sso": "Authentification unique",
+        "ssoDetail": "Équipes avec SAML, sur {count}",
+        "attention": "À traiter",
+        "attentionDetail": "{owners} sans propriétaire, {invites} invitations en attente",
+        "sinceLastMonth": "Depuis le mois dernier"
+      },
+      "segments": {
+        "all": "Toutes",
+        "nested": "Avec sous-équipes",
+        "sso": "Authentification unique",
+        "attention": "À traiter"
+      },
+      "sort": {
+        "label": "Trier les équipes",
+        "name": "Nom",
+        "people": "Personnes",
+        "spaces": "Espaces",
+        "edited": "Dernière modification"
+      },
+      "views": {
+        "cards": "Cartes",
+        "tree": "Arborescence"
+      },
+      "card": {
+        "people": "Personnes",
+        "spaces": "Espaces",
+        "subTeams": "Sous-équipes",
+        "sso": "SSO",
+        "ssoHint": "Les membres se connectent via le fournisseur d’identité de l’équipe",
+        "actions": "Actions pour {name}",
+        "settings": "Paramètres",
+        "moreTeams": "+{count} de plus",
+        "withoutOwner": "{count} sans propriétaire | {count} sans propriétaire | {count} sans propriétaire",
+        "edited": "Modifié {time}"
+      },
+      "personal": {
+        "title": "Équipes personnelles"
+      }
+    },
     "teamMembers": {
       "title": "Membres de l'équipe",
       "description": "Toutes les personnes ayant déjà accepté leur invitation apparaissent ici.",
@@ -5562,6 +5809,216 @@
       "deleteConfirmation": "Êtes-vous sûr de vouloir supprimer cette entrée ?"
     }
   },
+  "providerConsole": {
+    "badge": "Console fournisseur",
+    "elevateFirst": "Élevez vos droits pour utiliser cette action",
+    "never": "Jamais",
+    "reason": "Motif",
+    "flags": {
+      "no_owner": "Sans propriétaire",
+      "trial_ended": "Essai terminé",
+      "payment_failed": "Paiement échoué"
+    },
+    "actions": {
+      "impersonate": "Se connecter en tant que",
+      "signOut": "Déconnecter partout",
+      "transfer": "Transférer la propriété",
+      "suspend": "Suspendre",
+      "restore": "Rétablir"
+    },
+    "tenants": {
+      "title": "Clients",
+      "description": "Toutes les équipes de cette instance avec leurs espaces, personnes, revenu mensuel et mode de connexion. Ouvrez une équipe pour la consulter en tant que root.",
+      "createTopLevel": "Équipe de premier niveau",
+      "search": "Rechercher des équipes",
+      "empty": "Aucune équipe ne correspond.",
+      "open": "Ouvrir",
+      "ssoOff": "Désactivé",
+      "segments": {
+        "all": "Toutes",
+        "paying": "Payantes",
+        "trial": "Essai",
+        "flagged": "Signalées"
+      },
+      "columns": {
+        "team": "Équipe",
+        "type": "Type",
+        "spaces": "Espaces",
+        "people": "Personnes",
+        "mrr": "MRR",
+        "sso": "SSO",
+        "lastActive": "Dernière activité"
+      }
+    },
+    "users": {
+      "title": "Utilisateurs",
+      "description": "Tous les comptes de cette instance. Ouvrez un utilisateur pour voir ses adhésions et agir sur le compte.",
+      "search": "Rechercher un nom ou un e-mail",
+      "empty": "Aucun utilisateur ne correspond.",
+      "segments": {
+        "all": "Tous",
+        "active": "Actifs 30 j",
+        "suspended": "Suspendus",
+        "root": "Root"
+      },
+      "status": {
+        "active": "Actif",
+        "suspended": "Suspendu",
+        "root": "Root"
+      },
+      "signIn": {
+        "password": "Mot de passe",
+        "2fa": "2FA",
+        "saml": "SAML"
+      },
+      "columns": {
+        "name": "Nom",
+        "teams": "Équipes",
+        "signIn": "Connexion",
+        "status": "Statut",
+        "lastActive": "Dernière activité"
+      },
+      "sheet": {
+        "teams": "Équipes",
+        "sessions": "Sessions",
+        "tokens": "Jetons",
+        "memberships": "Adhésions",
+        "noMemberships": "Aucune adhésion à une équipe ou un espace.",
+        "activity": "Activité récente",
+        "noActivity": "Aucune activité enregistrée.",
+        "onlyOwner": "Seul propriétaire",
+        "teamRole": "Rôle d'équipe",
+        "spaceRole": "Rôle direct dans l'espace",
+        "elevateHint": "Ces actions modifient le compte de quelqu'un d'autre. Élevez d'abord vos droits.",
+        "suspendedSince": "Suspendu {time} par {by}."
+      },
+      "toasts": {
+        "suspended": "Utilisateur suspendu",
+        "restored": "Utilisateur rétabli",
+        "signedOut": "Toutes les sessions sont terminées",
+        "transferred": "Propriété transférée",
+        "failed": "Cela n'a pas fonctionné : {error}"
+      }
+    },
+    "impersonate": {
+      "title": "Se connecter en tant que {name}",
+      "description": "Vous voyez l'application exactement comme {name}. Les changements de mot de passe et la création de jetons restent bloqués. La session se termine après 1 heure.",
+      "reasonPlaceholder": "Numéro de ticket ou raison",
+      "submit": "Se connecter en tant que {name}"
+    },
+    "suspend": {
+      "title": "Suspendre {name} ?",
+      "description": "La connexion est bloquée, {sessions} prennent fin et {tokens} sont révoqués. Les adhésions et le contenu restent, le rétablissement ne perd donc rien.",
+      "allSessions": "toutes les sessions",
+      "sessions": "aucune session | 1 session | {count} sessions",
+      "tokens": "aucun jeton d'accès personnel | 1 jeton d'accès personnel | {count} jetons d'accès personnels",
+      "soleOwner": "{name} est le seul propriétaire de {team}. Choisissez un nouveau propriétaire, sinon l'équipe sera signalée.",
+      "newOwner": "Nouveau propriétaire",
+      "leaveFlagged": "Laisser signalée",
+      "reasonPlaceholder": "Pourquoi le compte est suspendu",
+      "submit": "Suspendre"
+    },
+    "restore": {
+      "title": "Rétablir le compte",
+      "message": "{name} pourra se reconnecter. Les sessions et jetons terminés par la suspension restent terminés."
+    },
+    "signOut": {
+      "title": "Déconnecter partout",
+      "message": "Terminer toutes les sessions de navigateur de {name} ? Les jetons d'accès personnels continuent de fonctionner."
+    },
+    "transfer": {
+      "title": "Transférer la propriété",
+      "description": "Le nouveau propriétaire reçoit le rôle de propriétaire, {name} devient administrateur de l'équipe.",
+      "team": "Équipe",
+      "newOwner": "Nouveau propriétaire",
+      "noCandidates": "Aucun autre membre actif",
+      "submit": "Transférer"
+    },
+    "usage": {
+      "title": "Utilisation",
+      "description": "Par équipe de premier niveau, sous-équipes comprises : revenu du plan, dépenses IA des périodes de facturation clôturées, ainsi que stockage et trafic en part des quotas du plan. Les requêtes API n'ont pas de quota.",
+      "empty": "Aucune utilisation ce mois-ci.",
+      "unlimited": "Pas de quota",
+      "storageFlag": "Stockage {percent} %",
+      "columns": {
+        "team": "Équipe",
+        "revenue": "Revenu du plan",
+        "aiSpend": "Dépenses IA",
+        "storage": "Stockage",
+        "apiRequests": "Requêtes API",
+        "traffic": "Trafic",
+        "flags": "Alertes"
+      }
+    },
+    "audit": {
+      "title": "Audit",
+      "description": "Chaque action root sur cette instance : élévations, connexions en tant qu'autre utilisateur, suspensions, déconnexions et transferts de propriété.",
+      "empty": "Aucune action root enregistrée pour l'instant.",
+      "allActions": "Toutes les actions",
+      "system": "Système",
+      "columns": {
+        "time": "Heure",
+        "actor": "Utilisateur root",
+        "action": "Action",
+        "detail": "Détail"
+      },
+      "actions": {
+        "elevation_started": "Droits élevés",
+        "elevation_ended": "Élévation terminée",
+        "impersonation_started": "Connecté en tant qu'utilisateur",
+        "impersonation_ended": "Retour depuis l'utilisateur",
+        "user_suspended": "Utilisateur suspendu",
+        "user_restored": "Utilisateur rétabli",
+        "user_signed_out": "Utilisateur déconnecté partout",
+        "team_ownership_transferred": "Propriété transférée"
+      }
+    },
+    "health": {
+      "title": "Santé",
+      "description": "Profondeur des files, tâches échouées et réponse des bases de données des espaces. Le contrôle ouvre un échantillon aléatoire d'espaces et reste en cache 10 minutes.",
+      "queued": "Tâches en attente",
+      "connection": "Connexion {name}",
+      "failedJobs": "Tâches échouées",
+      "last24h": "Dernières 24 heures",
+      "spaceDatabases": "Bases de données des espaces",
+      "sampled": "Échantillon de {total} espaces",
+      "queues": "Files",
+      "queue": "File",
+      "size": "En attente",
+      "unknown": "Inconnu",
+      "checkedAt": "Vérifié {time}",
+      "recheck": "Vérifier à nouveau",
+      "allReachable": "Les {count} bases de l'échantillon ont répondu."
+    }
+  },
+  "rootAccess": {
+    "elevate": {
+      "title": "Élever en root",
+      "description": "Vous disposez de toutes les actions sur cette instance pendant la durée choisie. Le motif est consigné dans l'audit de l'instance.",
+      "reason": "Motif",
+      "reasonPlaceholder": "Ticket #4821 : rétablir l'accès du propriétaire",
+      "duration": "Durée",
+      "minutes": "{count} minutes",
+      "submit": "Élever"
+    },
+    "banner": {
+      "viewing": {
+        "team": "Vous consultez cette équipe en tant que root. Elle est en lecture seule jusqu'à ce que vous éleviez vos droits.",
+        "space": "Vous consultez cet espace en tant que root. Il est en lecture seule jusqu'à ce que vous éleviez vos droits."
+      },
+      "elevate": "Élever",
+      "backToTenants": "Retour aux clients",
+      "elevatedUntil": "Élevé jusqu'à {time}.",
+      "endNow": "Terminer maintenant",
+      "signedInAs": "Connecté en tant que {name}.",
+      "endsAt": "Se termine à {time}. Les changements de mot de passe et de jetons sont bloqués.",
+      "return": "Revenir à votre compte"
+    },
+    "toasts": {
+      "elevated": "Droits élevés. Les actions root sont débloquées.",
+      "failed": "Cela n'a pas fonctionné : {error}"
+    }
+  },
   "shortcuts": {
     "title": "Raccourcis clavier",
     "description": "Tout ce qui est actuellement lié. La liste suit ce qui est affiché à l'écran.",
@@ -5649,6 +6106,73 @@
     },
     "dialog": {
       "submit": "Confirmer cette boîte de dialogue"
+    }
+  },
+  "providerDashboard": {
+    "title": "Tableau de bord",
+    "span": "{from} à {to}",
+    "range": {
+      "6m": "6 derniers mois",
+      "12m": "12 derniers mois",
+      "24m": "24 derniers mois",
+      "ytd": "Depuis le début de l’année"
+    },
+    "actions": {
+      "export": "Exporter",
+      "png": "Image PNG",
+      "pdf": "PDF",
+      "present": "Présenter",
+      "exit": "Quitter",
+      "export_failed": "L’export a échoué. Réessayez."
+    },
+    "sections": {
+      "revenue": "Revenus",
+      "growth": "Croissance",
+      "engagement": "Utilisation et diffusion"
+    },
+    "tiles": {
+      "mrr": "MRR",
+      "net_new_mrr": "MRR net nouveau",
+      "paying_spaces": "Espaces payants",
+      "arpa": "ARPA",
+      "revenue_churn": "Attrition des revenus",
+      "new_users": "Nouveaux utilisateurs",
+      "new_spaces": "Nouveaux espaces",
+      "new_teams": "Nouvelles équipes",
+      "api_requests": "Requêtes API",
+      "traffic": "Trafic servi"
+    },
+    "details": {
+      "arr": "ARR {value}",
+      "movement": "Nouveau {new}, expansion {expansion}, attrition {churn}",
+      "teams": "Sur {count} équipe | Sur {count} équipes",
+      "per_team": "Par équipe payante",
+      "churn": "Mensuelle, attrition clients {rate}",
+      "this_month": "Ce mois-ci",
+      "api": "Delivery API, ce mois-ci",
+      "traffic": "CDN, ce mois-ci"
+    },
+    "change": {
+      "mom": "Par rapport au mois dernier",
+      "yoy": "{change} sur un an"
+    },
+    "panels": {
+      "mrr_movement": "Mouvement du MRR",
+      "revenue_by_plan": "Revenus par offre",
+      "sign_ups": "Inscriptions",
+      "retention": "Rétention des revenus",
+      "retention_meta": "par mois de départ"
+    },
+    "series": {
+      "new": "Nouveau",
+      "expansion": "Expansion",
+      "churn": "Attrition",
+      "users": "Utilisateurs",
+      "spaces": "Espaces",
+      "teams": "Équipes"
+    },
+    "retention": {
+      "month": "M{n}"
     }
   }
 }

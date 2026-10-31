@@ -161,6 +161,30 @@
                     "Impersonate"
                 ],
                 "operationId": "post_impersonate",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "userId": {
+                                        "type": "string"
+                                    },
+                                    "reason": {
+                                        "type": "string",
+                                        "minLength": 3,
+                                        "maxLength": 500
+                                    }
+                                },
+                                "required": [
+                                    "userId",
+                                    "reason"
+                                ]
+                            }
+                        }
+                    }
+                },
                 "responses": {
                     "200": {
                         "description": "Successful response"
@@ -169,15 +193,15 @@
                 "security": []
             },
             "delete": {
-                "summary": "Delete impersonate",
-                "description": "",
+                "summary": "Ending an impersonation needs no elevation: the operator must always be",
+                "description": "Ending an impersonation needs no elevation: the operator must always be\nable to get back to their own account, even after the elevation lapsed.",
                 "tags": [
                     "Impersonate"
                 ],
                 "operationId": "delete_impersonate",
                 "responses": {
-                    "200": {
-                        "description": "Successful response"
+                    "204": {
+                        "description": "Resource deleted successfully"
                     }
                 },
                 "security": []

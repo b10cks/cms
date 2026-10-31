@@ -43,8 +43,12 @@ use App\Policies\SpaceMigrationPolicy;
 use App\Policies\SpacePolicy;
 use App\Policies\TeamPolicy;
 use App\Policies\TokenPolicy;
+use App\Auth\ActiveUserProvider;
+use App\Models\User;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
+use Illuminate\Support\Facades\Auth;
 use Laravel\Sanctum\PersonalAccessToken;
+use Laravel\Sanctum\Sanctum;
 
 class AuthServiceProvider extends ServiceProvider
 {
@@ -87,5 +91,15 @@ class AuthServiceProvider extends ServiceProvider
     /**
      * Register any authentication / authorization services.
      */
-    public function boot(): void {}
+    public function boot(): void
+    {
+        Auth::provider('active-eloquent', fn ($app, array $config) => new ActiveUserProvider($app['hash'], $config['model']));
+
+        // Personal access tokens of a suspended user stop working at once,
+        // including impersonation tokens issued for them.
+        Sanctum::authenticateAccessTokensUsing(
+            fn (PersonalAccessToken $token, bool $isValid): bool => $isValid
+                && ! ($token->tokenable instanceof User && $token->tokenable->isSuspended()),
+        );
+    }
 }

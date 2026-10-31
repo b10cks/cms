@@ -64,3 +64,14 @@ Settled 2026-10-27. Concept: "Threads" in `docs/concepts/native-ai-integration.m
   - A turn reads: prompt bubble, work log, answered questions (muted question, answer below), the answer with a hover copy button, sources. The work log and sources are one muted line with a chevron ("Worked for 14s, 4 steps", "2 sources") that opens into an indented list on a hairline.
   - The empty thread is one muted line centered above the composer. The thread header shows the thread's tokens as a muted label; the breakdown is in its tooltip, cost only on metered spaces.
 - AI settings (Skills, Knowledge, Schedules) have three nav entries. Each page has the title with the primary action top right; lists are one table with a type or source column. Glossary detail looks like a data source: one column per language, headed by the language name, not the locale code.
+
+## Team area and provider console
+
+Settled 2026-10-31. Concept: `docs/concepts/team-management.md`.
+
+- The team area and the provider console (`/provider`) use the settings-style left nav (same look as space settings). No header tabs. The hierarchy tree is not a sidebar any more; it lives in the team switcher.
+- Team switcher keeps the look of the old Select: input-styled trigger with the team icon, name and type badge, items with `py-1.5 pl-2 pr-8`, the active row in the accent fill, a check on the current team, 16px indent per level. Inside sits the content tree search: matches plus their ancestor chain in tree order, ancestors muted, matched characters highlighted, a "1 of 3" counter, ↑/↓ walk the matches. Settled 2026-10-31 after the avatar-chip popover was called a regression. Rejected: a breadcrumb path (B) and a breadcrumb with scoped popovers (C), both crowd the header on deep hierarchies.
+- The teams start page (`/teams`) is a dashboard: `StatTile` row across every reachable team, then one card per top team (a wash in the team color, the large team mark, People, Spaces and Sub-teams figures, sub-team chips, member stack, owner and invite signals). Teams without a color take a stable palette color from their id. Personal teams without sub-teams are listed compactly below the cards, not as cards. A Tree view lists every team indented.
+- Team Overview: KPI row of `StatTile`s, then the structure panel (org chart of teams with their spaces as leaves, drag a team onto another to move it, confirm lists who gains and loses access), then "Needs attention" and "Activity" side by side.
+- Access is drawn the same everywhere: inherited (from a team role) is a dashed outline in muted ink, direct is the solid field fill. The People page has a list view and an access matrix (people by spaces).
+- Root context always shows a banner under the header: neutral while viewing (team actions disabled), warning while elevated, AI purple while impersonating.

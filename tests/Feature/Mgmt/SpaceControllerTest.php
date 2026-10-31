@@ -39,7 +39,7 @@ class SpaceControllerTest extends TestCase
         $this->user = User::factory()->create();
         $this->admin = User::factory()->create();
         $this->owner = User::factory()->create();
-        $this->rootUser = User::factory()->create(['is_root' => true]);
+        $this->rootUser = $this->elevate(User::factory()->create(['is_root' => true]));
 
         // Create a test space
         $this->space = Space::factory()->withLive()->create();
