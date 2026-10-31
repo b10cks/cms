@@ -102,9 +102,8 @@ class AssetUsageService
     /**
      * One row per referenced asset on each version that can still go live.
      *
-     * The version lookup runs on the multi-valued `asset_ids` index, and the
-     * pointer checks on the `contents` version-pointer indexes, so neither
-     * scans a table.
+     * The version lookup scans the space's versions; the pointer checks run on
+     * the `contents` version-pointer indexes.
      *
      * @param  list<string>  $assetIds
      * @return list<array{asset: string, content: string, trashed: bool, current: bool, published: bool, pending: bool}>

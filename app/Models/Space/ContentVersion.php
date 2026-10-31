@@ -147,9 +147,8 @@ class ContentVersion extends SpaceModel
     }
 
     /**
-     * Versions whose `asset_ids` contain any of the given asset ids. On MySQL
-     * this matches the multi-valued index on `asset_ids->'$'`; the bare column
-     * or `JSON_CONTAINS` would scan the table instead.
+     * Versions whose `asset_ids` contain any of the given asset ids. Scans the
+     * space's versions; on MySQL `json_overlaps` checks all ids in one pass.
      *
      * @param  Builder<self>  $query
      * @param  list<string>  $assetIds

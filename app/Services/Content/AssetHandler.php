@@ -15,8 +15,9 @@ class AssetHandler
 
     /**
      * Ids of the assets a content payload references. Only ULID strings are
-     * kept: asset keys are ULIDs, and the multi-valued index on
-     * `content_versions.asset_ids` rejects longer values, which would fail the save.
+     * kept: asset keys are ULIDs, and spaces that still carry the old
+     * multi-valued index on `content_versions.asset_ids` reject longer values,
+     * which would fail the save.
      *
      * @return list<string>
      */
