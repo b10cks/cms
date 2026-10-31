@@ -5015,6 +5015,74 @@
         "tooMany": "Up to {max} files per message.",
         "uploadFailed": "Could not upload {name}: {error}"
       }
+    },
+    "teamDomains": {
+      "title": "Domains",
+      "description": "Verify the email domains your organisation owns. People who sign in with a matching address can ask to join, join automatically, or must use your SSO.",
+      "add": "Add domain",
+      "verify": "Verify",
+      "empty": "No domains yet.",
+      "fields": {
+        "domain": "Domain",
+        "domainPlaceholder": "example.com",
+        "domainHint": "Public mail providers such as gmail.com cannot be added.",
+        "txtHost": "TXT record host",
+        "txtValue": "TXT record value"
+      },
+      "columns": {
+        "domain": "Domain",
+        "status": "Status",
+        "policy": "When someone signs in",
+        "defaultRole": "Default role"
+      },
+      "status": {
+        "verified": "Verified",
+        "pending": "Not verified"
+      },
+      "policies": {
+        "request": "Request to join",
+        "auto_join": "Join automatically",
+        "require_sso": "Require SSO"
+      },
+      "txtInstructions": "Add this TXT record at your DNS provider, then press Verify. DNS changes can take a while to show up.",
+      "removeConfirm": {
+        "title": "Remove domain",
+        "message": "Remove {domain}? People on this domain will no longer be able to request to join, and SSO stops being required for them.",
+        "confirm": "Remove"
+      },
+      "toast": {
+        "failed": "That did not work: {error}",
+        "verified": "{domain} is verified."
+      },
+      "requests": {
+        "title": "Join requests",
+        "description": "People on your verified domains who asked to join this team.",
+        "empty": "No open requests.",
+        "approve": "Approve",
+        "decline": "Decline",
+        "columns": {
+          "person": "Person",
+          "domain": "Domain",
+          "requested": "Requested",
+          "role": "Role"
+        },
+        "declineConfirm": {
+          "title": "Decline request",
+          "message": "Decline the request from {name}? They cannot send another one."
+        }
+      },
+      "join": {
+        "title": "Join {team}",
+        "description": "Your email address on {domain} lets you ask to join this team.",
+        "pending": "Request sent. A team owner will review it.",
+        "declined": "The team declined your request. Ask an owner for an invite.",
+        "request": "Request to join",
+        "cancel": "Cancel request"
+      },
+      "login": {
+        "ssoRequired": "Your organisation requires single sign-on for this email address.",
+        "continueWithSso": "Continue with SSO"
+      }
     }
   },
   "alertDialog": {

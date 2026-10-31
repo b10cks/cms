@@ -2,6 +2,7 @@
 import Logo from '~/assets/logo.svg'
 import Markdown from '~/components/Markdown.vue'
 import SocialLoginButtons from '~/components/SocialLoginButtons.vue'
+import SsoRequiredAlert from '~/components/teams/SsoRequiredAlert.vue'
 import { Alert } from '~/components/ui/alert'
 import { Button } from '~/components/ui/button'
 import { InputField } from '~/components/ui/form'
@@ -12,7 +13,7 @@ import { InviteStatus } from '~/types/invites.d'
 
 const route = useRoute()
 const router = useRouter()
-const { register } = useAuth()
+const { register, error, ssoUrl } = useAuth()
 const { selectTeam } = useGlobalTeam()
 const { usePublicInviteQuery } = useInvites()
 const { t } = useI18n()
@@ -186,6 +187,11 @@ const handleSignup = async () => {
       >
         {{ $t('labels.login.registrationClosed') }}
       </Alert>
+      <SsoRequiredAlert
+        v-if="ssoUrl"
+        :url="ssoUrl"
+        :message="error"
+      />
     </div>
     <form
       v-if="!registrationClosed"

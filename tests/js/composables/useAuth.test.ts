@@ -232,6 +232,26 @@ describe('login', () => {
     expect(auth.error.value).toBe('These credentials do not match.')
   })
 
+  it('exposes the team SSO URL when the domain requires SSO, and clears it on retry', async () => {
+    post.mockRejectedValueOnce(
+      apiError(403, {
+        error_code: 'SSO_REQUIRED',
+        message: 'Sign in with Acme SSO instead.',
+        sso_url: 'https://cms.test/auth/v1/saml/team-1/redirect',
+      })
+    )
+
+    await auth.login({ email: 'ada@acme.test', password: 'x' })
+
+    expect(auth.error.value).toBe('Sign in with Acme SSO instead.')
+    expect(auth.ssoUrl.value).toBe('https://cms.test/auth/v1/saml/team-1/redirect')
+
+    post.mockRejectedValueOnce(apiError(422, { message: 'Nope.' }))
+    await auth.login({ email: 'ada@b10cks.test', password: 'x' })
+
+    expect(auth.ssoUrl.value).toBeNull()
+  })
+
   it('falls back to generic copy for a bare failure', async () => {
     post.mockRejectedValue({})
 

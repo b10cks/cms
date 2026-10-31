@@ -7,6 +7,8 @@ import Icon from '~/components/Icon.vue'
 import CreateInviteDialog from '~/components/invites/CreateInviteDialog.vue'
 import PeopleManager from '~/components/people/PeopleManager.vue'
 import TeamDetailsSettings from '~/components/teams/TeamDetailsSettings.vue'
+import TeamDomainsSettings from '~/components/teams/TeamDomainsSettings.vue'
+import TeamJoinRequests from '~/components/teams/TeamJoinRequests.vue'
 import TeamRoleDialog from '~/components/teams/TeamRoleDialog.vue'
 import TeamRolesList from '~/components/teams/TeamRolesList.vue'
 import TeamSamlProviderSettings from '~/components/teams/TeamSamlProviderSettings.vue'
@@ -72,6 +74,8 @@ const selectedRole = ref<RoleCatalogEntry | null>(null)
 const canViewMembers = computed(() => access.hasAbility('team.members.view'))
 const canViewInvites = computed(() => access.hasAbility('team.invites.view'))
 const canManageInvites = computed(() => access.hasAbility('team.invites.manage'))
+const canManageMembers = computed(() => access.hasAbility('team.members.manage'))
+const canManageDomains = computed(() => access.hasAbility('team.domains.manage'))
 const canManageRoles = computed(() => access.canAccessRoute('team-roles'))
 const canManageSaml = computed(() => access.canAccessRoute('team-saml'))
 const canManageSettings = computed(() => access.canAccessRoute('team-settings'))
@@ -479,6 +483,20 @@ const navigateBack = () => {
               @delete="handleDeleteSamlProvider"
             />
             <TeamSamlProviderSkeleton v-else />
+            <div
+              v-if="canManageDomains || canManageMembers"
+              class="divide-y divide-border border-t border-border pt-8"
+            >
+              <TeamDomainsSettings
+                v-if="canManageDomains"
+                :team-id="teamId"
+                :sso-enabled="samlProviderResponse?.data?.enabled ?? false"
+              />
+              <TeamJoinRequests
+                v-if="canManageMembers"
+                :team-id="teamId"
+              />
+            </div>
           </template>
         </div>
       </div>

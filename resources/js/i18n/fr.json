@@ -5015,6 +5015,74 @@
         "tooMany": "Up to {max} files per message.",
         "uploadFailed": "Could not upload {name}: {error}"
       }
+    },
+    "teamDomains": {
+      "title": "Domaines",
+      "description": "Vérifiez les domaines e-mail de votre organisation. Les personnes qui se connectent avec une adresse correspondante peuvent demander à rejoindre l'équipe, la rejoindre automatiquement ou doivent utiliser votre SSO.",
+      "add": "Ajouter un domaine",
+      "verify": "Vérifier",
+      "empty": "Aucun domaine pour le moment.",
+      "fields": {
+        "domain": "Domaine",
+        "domainPlaceholder": "exemple.fr",
+        "domainHint": "Les fournisseurs de messagerie publics comme gmail.com ne peuvent pas être ajoutés.",
+        "txtHost": "Hôte de l’enregistrement TXT",
+        "txtValue": "Valeur de l’enregistrement TXT"
+      },
+      "columns": {
+        "domain": "Domaine",
+        "status": "Statut",
+        "policy": "À la connexion",
+        "defaultRole": "Rôle par défaut"
+      },
+      "status": {
+        "verified": "Vérifié",
+        "pending": "Non vérifié"
+      },
+      "policies": {
+        "request": "Demander à rejoindre",
+        "auto_join": "Rejoindre automatiquement",
+        "require_sso": "Exiger le SSO"
+      },
+      "txtInstructions": "Ajoutez cet enregistrement TXT chez votre fournisseur DNS, puis cliquez sur Vérifier. Les changements DNS peuvent mettre un moment à apparaître.",
+      "removeConfirm": {
+        "title": "Retirer le domaine",
+        "message": "Retirer {domain} ? Les personnes de ce domaine ne pourront plus demander à rejoindre l’équipe et le SSO ne leur sera plus imposé.",
+        "confirm": "Retirer"
+      },
+      "toast": {
+        "failed": "Cela n’a pas fonctionné : {error}",
+        "verified": "{domain} est vérifié."
+      },
+      "requests": {
+        "title": "Demandes d’adhésion",
+        "description": "Personnes de vos domaines vérifiés qui ont demandé à rejoindre cette équipe.",
+        "empty": "Aucune demande en attente.",
+        "approve": "Accepter",
+        "decline": "Refuser",
+        "columns": {
+          "person": "Personne",
+          "domain": "Domaine",
+          "requested": "Demandé",
+          "role": "Rôle"
+        },
+        "declineConfirm": {
+          "title": "Refuser la demande",
+          "message": "Refuser la demande de {name} ? Cette personne ne pourra pas en envoyer une autre."
+        }
+      },
+      "join": {
+        "title": "Rejoindre {team}",
+        "description": "Votre adresse e-mail sur {domain} vous permet de demander à rejoindre cette équipe.",
+        "pending": "Demande envoyée. Un propriétaire de l’équipe va l’examiner.",
+        "declined": "L’équipe a refusé votre demande. Demandez une invitation à un propriétaire.",
+        "request": "Demander à rejoindre",
+        "cancel": "Annuler la demande"
+      },
+      "login": {
+        "ssoRequired": "Votre organisation exige l’authentification unique pour cette adresse e-mail.",
+        "continueWithSso": "Continuer avec le SSO"
+      }
     }
   },
   "alertDialog": {

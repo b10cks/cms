@@ -5031,6 +5031,74 @@
         "tooMany": "Höchstens {max} Dateien pro Nachricht.",
         "uploadFailed": "{name} konnte nicht hochgeladen werden: {error}"
       }
+    },
+    "teamDomains": {
+      "title": "Domains",
+      "description": "Bestätige die E-Mail-Domains deiner Organisation. Wer sich mit einer passenden Adresse anmeldet, kann den Beitritt anfragen, tritt automatisch bei oder muss euer SSO nutzen.",
+      "add": "Domain hinzufügen",
+      "verify": "Prüfen",
+      "empty": "Noch keine Domains.",
+      "fields": {
+        "domain": "Domain",
+        "domainPlaceholder": "beispiel.de",
+        "domainHint": "Öffentliche Mail-Anbieter wie gmail.com können nicht hinzugefügt werden.",
+        "txtHost": "Host des TXT-Eintrags",
+        "txtValue": "Wert des TXT-Eintrags"
+      },
+      "columns": {
+        "domain": "Domain",
+        "status": "Status",
+        "policy": "Bei der Anmeldung",
+        "defaultRole": "Standardrolle"
+      },
+      "status": {
+        "verified": "Bestätigt",
+        "pending": "Nicht bestätigt"
+      },
+      "policies": {
+        "request": "Beitritt anfragen",
+        "auto_join": "Automatisch beitreten",
+        "require_sso": "SSO erzwingen"
+      },
+      "txtInstructions": "Lege diesen TXT-Eintrag bei deinem DNS-Anbieter an und klicke dann auf Prüfen. DNS-Änderungen können eine Weile dauern.",
+      "removeConfirm": {
+        "title": "Domain entfernen",
+        "message": "{domain} entfernen? Personen mit dieser Domain können dann keinen Beitritt mehr anfragen, und SSO ist für sie nicht mehr Pflicht.",
+        "confirm": "Entfernen"
+      },
+      "toast": {
+        "failed": "Das hat nicht geklappt: {error}",
+        "verified": "{domain} ist bestätigt."
+      },
+      "requests": {
+        "title": "Beitrittsanfragen",
+        "description": "Personen mit euren bestätigten Domains, die diesem Team beitreten möchten.",
+        "empty": "Keine offenen Anfragen.",
+        "approve": "Annehmen",
+        "decline": "Ablehnen",
+        "columns": {
+          "person": "Person",
+          "domain": "Domain",
+          "requested": "Angefragt",
+          "role": "Rolle"
+        },
+        "declineConfirm": {
+          "title": "Anfrage ablehnen",
+          "message": "Die Anfrage von {name} ablehnen? Eine neue Anfrage ist dann nicht möglich."
+        }
+      },
+      "join": {
+        "title": "{team} beitreten",
+        "description": "Mit deiner E-Mail-Adresse bei {domain} kannst du den Beitritt zu diesem Team anfragen.",
+        "pending": "Anfrage gesendet. Ein Team-Owner prüft sie.",
+        "declined": "Das Team hat deine Anfrage abgelehnt. Bitte einen Owner um eine Einladung.",
+        "request": "Beitritt anfragen",
+        "cancel": "Anfrage zurückziehen"
+      },
+      "login": {
+        "ssoRequired": "Deine Organisation verlangt Single Sign-on für diese E-Mail-Adresse.",
+        "continueWithSso": "Weiter mit SSO"
+      }
     }
   },
   "alertDialog": {
