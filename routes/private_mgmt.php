@@ -115,6 +115,7 @@ use App\Http\Controllers\Mgmt\TeamInviteResendController;
 use App\Http\Controllers\Mgmt\TeamMemberController;
 use App\Http\Controllers\Mgmt\TeamPeopleController;
 use App\Http\Controllers\Mgmt\TeamOverviewController;
+use App\Http\Controllers\Mgmt\TeamsDashboardController;
 use App\Http\Controllers\Mgmt\TeamAccessMatrixController;
 use App\Http\Controllers\Mgmt\TeamAuditLogController;
 use App\Http\Controllers\Mgmt\MembershipExpiryController;
@@ -240,6 +241,7 @@ Route::group(['prefix' => 'ai'], function () {
 });
 
 Route::get('teams/hierarchy', TeamHierarchyController::class)->name('teams.hierarchy');
+Route::get('teams/dashboard', TeamsDashboardController::class)->name('teams.dashboard');
 Route::apiResource('teams', TeamController::class);
 
 Route::get('space-blueprints', AvailableSpaceBlueprintController::class)

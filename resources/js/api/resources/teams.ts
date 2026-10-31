@@ -8,6 +8,7 @@ import type {
   TeamAuditEntry,
   TeamMovePreview,
   TeamOverview,
+  TeamsDashboard,
 } from '~/types/team-workspace'
 import type {
   CreateTeamPayload,
@@ -120,6 +121,10 @@ export class Teams extends BaseResource<
 
   public async deleteSamlProvider(teamId: string): Promise<void> {
     return this.client.delete(`/mgmt/v1/teams/${teamId}/saml-provider`)
+  }
+
+  public async getDashboard(): Promise<ApiResponse<TeamsDashboard>> {
+    return this.client.get<ApiResponse<TeamsDashboard>>('/mgmt/v1/teams/dashboard')
   }
 
   public async getOverview(teamId: string): Promise<ApiResponse<TeamOverview>> {

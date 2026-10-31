@@ -3173,6 +3173,58 @@
         "error": "Etwas ist schiefgelaufen: {error}"
       }
     },
+    "teamsDashboard": {
+      "instance": "Instanz",
+      "providerConsole": "Provider-Konsole",
+      "search": "Teams suchen",
+      "noMatches": "Kein Team passt zur Suche.",
+      "showMore": "{count} weitere anzeigen",
+      "treeMeta": "{count} Teams | {count} Team | {count} Teams",
+      "tiles": {
+        "teams": "Teams",
+        "topTeams": "{count} Hauptteams | {count} Hauptteam | {count} Hauptteams",
+        "people": "Personen",
+        "active": "{count} aktiv in den letzten 30 Tagen",
+        "spaces": "Spaces",
+        "sso": "Single Sign-on",
+        "ssoDetail": "Teams mit SAML, von {count}",
+        "attention": "Braucht Aufmerksamkeit",
+        "attentionDetail": "{owners} ohne Owner, {invites} offene Einladungen",
+        "sinceLastMonth": "Seit letztem Monat"
+      },
+      "segments": {
+        "all": "Alle",
+        "nested": "Mit Unterteams",
+        "sso": "Single Sign-on",
+        "attention": "Braucht Aufmerksamkeit"
+      },
+      "sort": {
+        "label": "Teams sortieren",
+        "name": "Name",
+        "people": "Personen",
+        "spaces": "Spaces",
+        "edited": "Zuletzt bearbeitet"
+      },
+      "views": {
+        "cards": "Karten",
+        "tree": "Baum"
+      },
+      "card": {
+        "people": "Personen",
+        "spaces": "Spaces",
+        "subTeams": "Unterteams",
+        "sso": "SSO",
+        "ssoHint": "Mitglieder melden sich über den Identity Provider des Teams an",
+        "actions": "Aktionen für {name}",
+        "settings": "Einstellungen",
+        "moreTeams": "+{count} weitere",
+        "withoutOwner": "{count} ohne Owner | {count} ohne Owner | {count} ohne Owner",
+        "edited": "Bearbeitet {time}"
+      },
+      "personal": {
+        "title": "Persönliche Teams"
+      }
+    },
     "teamMembers": {
       "title": "Team-Mitglieder",
       "description": "Hier erscheinen alle Personen, die ihre Einladung bereits angenommen haben.",

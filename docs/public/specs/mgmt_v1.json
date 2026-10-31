@@ -790,6 +790,158 @@
                 ]
             }
         },
+        "/mgmt/v1/users/me/join-requests": {
+            "get": {
+                "summary": "List join requests",
+                "description": "",
+                "tags": [
+                    "Join Requests"
+                ],
+                "operationId": "get_users_me_join_requests",
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "description": "Paginated resource collection",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "description": "Collection of resources",
+                                            "items": {
+                                                "$ref": "#/components/schemas/JoinableTeamResource"
+                                            }
+                                        },
+                                        "links": {
+                                            "type": "object",
+                                            "description": "Pagination links",
+                                            "properties": {
+                                                "first": {
+                                                    "type": "string",
+                                                    "format": "uri",
+                                                    "description": "URL to the first page"
+                                                },
+                                                "last": {
+                                                    "type": "string",
+                                                    "format": "uri",
+                                                    "description": "URL to the last page"
+                                                },
+                                                "prev": {
+                                                    "type": "string",
+                                                    "format": "uri",
+                                                    "nullable": true,
+                                                    "description": "URL to the previous page"
+                                                },
+                                                "next": {
+                                                    "type": "string",
+                                                    "format": "uri",
+                                                    "nullable": true,
+                                                    "description": "URL to the next page"
+                                                }
+                                            }
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "description": "Pagination metadata",
+                                            "properties": {
+                                                "current_page": {
+                                                    "type": "integer",
+                                                    "description": "Current page number"
+                                                },
+                                                "from": {
+                                                    "type": "integer",
+                                                    "nullable": true,
+                                                    "description": "Index of first item on current page"
+                                                },
+                                                "last_page": {
+                                                    "type": "integer",
+                                                    "description": "Total number of pages"
+                                                },
+                                                "per_page": {
+                                                    "type": "integer",
+                                                    "description": "Number of items per page"
+                                                },
+                                                "to": {
+                                                    "type": "integer",
+                                                    "nullable": true,
+                                                    "description": "Index of last item on current page"
+                                                },
+                                                "total": {
+                                                    "type": "integer",
+                                                    "description": "Total number of items"
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "links",
+                                        "meta"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "summary": "Create join requests",
+                "description": "",
+                "tags": [
+                    "Join Requests"
+                ],
+                "operationId": "post_users_me_join_requests",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/mgmt/v1/users/me/join-requests/{joinRequest}": {
+            "delete": {
+                "summary": "Delete join request",
+                "description": "",
+                "tags": [
+                    "Join Requests"
+                ],
+                "operationId": "delete_users_me_join_requests_by_joinRequest",
+                "parameters": [
+                    {
+                        "name": "joinRequest",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "The joinRequest identifier"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/mgmt/v1/users/me/notifications": {
             "get": {
                 "summary": "List notifications",
@@ -1095,6 +1247,584 @@
                 ]
             }
         },
+        "/mgmt/v1/root/elevation": {
+            "get": {
+                "summary": "List elevation",
+                "description": "",
+                "tags": [
+                    "Root"
+                ],
+                "operationId": "get_root_elevation",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "summary": "Create elevation",
+                "description": "",
+                "tags": [
+                    "Root"
+                ],
+                "operationId": "post_root_elevation",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "reason": {
+                                        "type": "string",
+                                        "minLength": 3,
+                                        "maxLength": 500
+                                    },
+                                    "duration": {
+                                        "type": "integer",
+                                        "enum": [
+                                            "15",
+                                            "30",
+                                            "60"
+                                        ]
+                                    }
+                                },
+                                "required": [
+                                    "reason"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "summary": "Delete elevation",
+                "description": "",
+                "tags": [
+                    "Root"
+                ],
+                "operationId": "delete_root_elevation",
+                "responses": {
+                    "204": {
+                        "description": "Resource deleted successfully"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/mgmt/v1/provider/tenants": {
+            "get": {
+                "summary": "List tenants",
+                "description": "",
+                "tags": [
+                    "Provider"
+                ],
+                "operationId": "get_provider_tenants",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/mgmt/v1/provider/usage": {
+            "get": {
+                "summary": "List usage",
+                "description": "",
+                "tags": [
+                    "Provider"
+                ],
+                "operationId": "get_provider_usage",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/mgmt/v1/provider/health": {
+            "get": {
+                "summary": "List health",
+                "description": "",
+                "tags": [
+                    "Provider"
+                ],
+                "operationId": "get_provider_health",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/mgmt/v1/provider/audit": {
+            "get": {
+                "summary": "List audit",
+                "description": "",
+                "tags": [
+                    "Provider"
+                ],
+                "operationId": "get_provider_audit",
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "description": "Paginated resource collection",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "description": "Collection of resources",
+                                            "items": {
+                                                "$ref": "#/components/schemas/InstanceAuditResource"
+                                            }
+                                        },
+                                        "links": {
+                                            "type": "object",
+                                            "description": "Pagination links",
+                                            "properties": {
+                                                "first": {
+                                                    "type": "string",
+                                                    "format": "uri",
+                                                    "description": "URL to the first page"
+                                                },
+                                                "last": {
+                                                    "type": "string",
+                                                    "format": "uri",
+                                                    "description": "URL to the last page"
+                                                },
+                                                "prev": {
+                                                    "type": "string",
+                                                    "format": "uri",
+                                                    "nullable": true,
+                                                    "description": "URL to the previous page"
+                                                },
+                                                "next": {
+                                                    "type": "string",
+                                                    "format": "uri",
+                                                    "nullable": true,
+                                                    "description": "URL to the next page"
+                                                }
+                                            }
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "description": "Pagination metadata",
+                                            "properties": {
+                                                "current_page": {
+                                                    "type": "integer",
+                                                    "description": "Current page number"
+                                                },
+                                                "from": {
+                                                    "type": "integer",
+                                                    "nullable": true,
+                                                    "description": "Index of first item on current page"
+                                                },
+                                                "last_page": {
+                                                    "type": "integer",
+                                                    "description": "Total number of pages"
+                                                },
+                                                "per_page": {
+                                                    "type": "integer",
+                                                    "description": "Number of items per page"
+                                                },
+                                                "to": {
+                                                    "type": "integer",
+                                                    "nullable": true,
+                                                    "description": "Index of last item on current page"
+                                                },
+                                                "total": {
+                                                    "type": "integer",
+                                                    "description": "Total number of items"
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "links",
+                                        "meta"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/mgmt/v1/provider/users": {
+            "get": {
+                "summary": "List users",
+                "description": "",
+                "tags": [
+                    "Provider"
+                ],
+                "operationId": "get_provider_users",
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "description": "Paginated resource collection",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "description": "Collection of resources",
+                                            "items": {
+                                                "$ref": "#/components/schemas/ProviderUserResource"
+                                            }
+                                        },
+                                        "links": {
+                                            "type": "object",
+                                            "description": "Pagination links",
+                                            "properties": {
+                                                "first": {
+                                                    "type": "string",
+                                                    "format": "uri",
+                                                    "description": "URL to the first page"
+                                                },
+                                                "last": {
+                                                    "type": "string",
+                                                    "format": "uri",
+                                                    "description": "URL to the last page"
+                                                },
+                                                "prev": {
+                                                    "type": "string",
+                                                    "format": "uri",
+                                                    "nullable": true,
+                                                    "description": "URL to the previous page"
+                                                },
+                                                "next": {
+                                                    "type": "string",
+                                                    "format": "uri",
+                                                    "nullable": true,
+                                                    "description": "URL to the next page"
+                                                }
+                                            }
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "description": "Pagination metadata",
+                                            "properties": {
+                                                "current_page": {
+                                                    "type": "integer",
+                                                    "description": "Current page number"
+                                                },
+                                                "from": {
+                                                    "type": "integer",
+                                                    "nullable": true,
+                                                    "description": "Index of first item on current page"
+                                                },
+                                                "last_page": {
+                                                    "type": "integer",
+                                                    "description": "Total number of pages"
+                                                },
+                                                "per_page": {
+                                                    "type": "integer",
+                                                    "description": "Number of items per page"
+                                                },
+                                                "to": {
+                                                    "type": "integer",
+                                                    "nullable": true,
+                                                    "description": "Index of last item on current page"
+                                                },
+                                                "total": {
+                                                    "type": "integer",
+                                                    "description": "Total number of items"
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "links",
+                                        "meta"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/mgmt/v1/provider/users/{user}": {
+            "get": {
+                "summary": "Get a single user",
+                "description": "",
+                "tags": [
+                    "Provider"
+                ],
+                "operationId": "get_provider_users_by_user",
+                "parameters": [
+                    {
+                        "name": "user",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "The user identifier"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/mgmt/v1/provider/users/{user}/suspend": {
+            "post": {
+                "summary": "Create suspend",
+                "description": "",
+                "tags": [
+                    "Provider"
+                ],
+                "operationId": "post_provider_users_by_user_suspend",
+                "parameters": [
+                    {
+                        "name": "user",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "The user identifier"
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "reason": {
+                                        "type": "string",
+                                        "minLength": 3,
+                                        "maxLength": 500
+                                    },
+                                    "replacement_owners": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        }
+                                    }
+                                },
+                                "required": [
+                                    "reason"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/mgmt/v1/provider/users/{user}/restore": {
+            "post": {
+                "summary": "Create restore",
+                "description": "",
+                "tags": [
+                    "Provider"
+                ],
+                "operationId": "post_provider_users_by_user_restore",
+                "parameters": [
+                    {
+                        "name": "user",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "The user identifier"
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": []
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/mgmt/v1/provider/users/{user}/sign-out": {
+            "post": {
+                "summary": "Create sign out",
+                "description": "",
+                "tags": [
+                    "Provider"
+                ],
+                "operationId": "post_provider_users_by_user_sign_out",
+                "parameters": [
+                    {
+                        "name": "user",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "The user identifier"
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": []
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/mgmt/v1/provider/users/{user}/transfer-ownership": {
+            "post": {
+                "summary": "Create transfer ownership",
+                "description": "",
+                "tags": [
+                    "Provider"
+                ],
+                "operationId": "post_provider_users_by_user_transfer_ownership",
+                "parameters": [
+                    {
+                        "name": "user",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "The user identifier"
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "team_id": {
+                                        "type": "string"
+                                    },
+                                    "new_owner_id": {
+                                        "type": "string"
+                                    }
+                                },
+                                "required": [
+                                    "team_id",
+                                    "new_owner_id"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/mgmt/v1/provider/stats": {
             "get": {
                 "summary": "List stats",
@@ -1103,6 +1833,42 @@
                     "Provider"
                 ],
                 "operationId": "get_provider_stats",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/mgmt/v1/provider/metrics": {
+            "get": {
+                "summary": "Root-only monthly instance metrics for the provider dashboard, cached for 15 minutes",
+                "description": "Root-only monthly instance metrics for the provider dashboard, cached for 15 minutes.",
+                "tags": [
+                    "Provider"
+                ],
+                "operationId": "get_provider_metrics",
+                "parameters": [
+                    {
+                        "name": "range",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "6m",
+                                "12m",
+                                "24m",
+                                "ytd"
+                            ]
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Successful response"
@@ -4016,6 +4782,274 @@
                 ]
             }
         },
+        "/mgmt/v1/teams/{team}/overview": {
+            "get": {
+                "summary": "List overview",
+                "description": "",
+                "tags": [
+                    "Overview"
+                ],
+                "operationId": "get_teams_by_team_overview",
+                "parameters": [
+                    {
+                        "name": "team",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "The team identifier"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/mgmt/v1/teams/{team}/move-preview": {
+            "get": {
+                "summary": "What a move to `parent_id` would change",
+                "description": "What a move to `parent_id` would change. Authorized like the move itself\n(TeamController::update): update on the team, createChild on the target,\nand the top level is root-only.",
+                "tags": [
+                    "Move Preview"
+                ],
+                "operationId": "get_teams_by_team_move_preview",
+                "parameters": [
+                    {
+                        "name": "team",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "The team identifier"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/mgmt/v1/teams/{team}/access-matrix": {
+            "get": {
+                "summary": "List access matrix",
+                "description": "",
+                "tags": [
+                    "Access Matrix"
+                ],
+                "operationId": "get_teams_by_team_access_matrix",
+                "parameters": [
+                    {
+                        "name": "team",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "The team identifier"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/mgmt/v1/teams/{team}/audit-logs": {
+            "get": {
+                "summary": "List audit logs",
+                "description": "",
+                "tags": [
+                    "Audit Logs"
+                ],
+                "operationId": "get_teams_by_team_audit_logs",
+                "parameters": [
+                    {
+                        "name": "team",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "The team identifier"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "description": "Paginated resource collection",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "description": "Collection of resources",
+                                            "items": {
+                                                "$ref": "#/components/schemas/TeamAuditLogResource"
+                                            }
+                                        },
+                                        "links": {
+                                            "type": "object",
+                                            "description": "Pagination links",
+                                            "properties": {
+                                                "first": {
+                                                    "type": "string",
+                                                    "format": "uri",
+                                                    "description": "URL to the first page"
+                                                },
+                                                "last": {
+                                                    "type": "string",
+                                                    "format": "uri",
+                                                    "description": "URL to the last page"
+                                                },
+                                                "prev": {
+                                                    "type": "string",
+                                                    "format": "uri",
+                                                    "nullable": true,
+                                                    "description": "URL to the previous page"
+                                                },
+                                                "next": {
+                                                    "type": "string",
+                                                    "format": "uri",
+                                                    "nullable": true,
+                                                    "description": "URL to the next page"
+                                                }
+                                            }
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "description": "Pagination metadata",
+                                            "properties": {
+                                                "current_page": {
+                                                    "type": "integer",
+                                                    "description": "Current page number"
+                                                },
+                                                "from": {
+                                                    "type": "integer",
+                                                    "nullable": true,
+                                                    "description": "Index of first item on current page"
+                                                },
+                                                "last_page": {
+                                                    "type": "integer",
+                                                    "description": "Total number of pages"
+                                                },
+                                                "per_page": {
+                                                    "type": "integer",
+                                                    "description": "Number of items per page"
+                                                },
+                                                "to": {
+                                                    "type": "integer",
+                                                    "nullable": true,
+                                                    "description": "Index of last item on current page"
+                                                },
+                                                "total": {
+                                                    "type": "integer",
+                                                    "description": "Total number of items"
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "links",
+                                        "meta"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/mgmt/v1/teams/{team}/users/{user}/expiry": {
+            "put": {
+                "summary": "Update expiry",
+                "description": "",
+                "tags": [
+                    "Expiry"
+                ],
+                "operationId": "put_teams_by_team_users_by_user_expiry",
+                "parameters": [
+                    {
+                        "name": "team",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "The team identifier"
+                    },
+                    {
+                        "name": "user",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "The user identifier"
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "access_until": {
+                                        "type": "string",
+                                        "nullable": true
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/mgmt/v1/teams/{team}/members": {
             "get": {
                 "summary": "List members",
@@ -4697,6 +5731,10 @@
                                         "minimum": 1,
                                         "maximum": 90,
                                         "nullable": true
+                                    },
+                                    "access_until": {
+                                        "type": "string",
+                                        "nullable": true
                                     }
                                 },
                                 "required": [
@@ -5039,6 +6077,571 @@
                 "responses": {
                     "200": {
                         "description": "Successful response"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/mgmt/v1/teams/{team}/domains": {
+            "get": {
+                "summary": "List domains",
+                "description": "",
+                "tags": [
+                    "Domains"
+                ],
+                "operationId": "get_teams_by_team_domains",
+                "parameters": [
+                    {
+                        "name": "team",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "The team identifier"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "description": "Paginated resource collection",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "description": "Collection of resources",
+                                            "items": {
+                                                "$ref": "#/components/schemas/TeamDomainResource"
+                                            }
+                                        },
+                                        "links": {
+                                            "type": "object",
+                                            "description": "Pagination links",
+                                            "properties": {
+                                                "first": {
+                                                    "type": "string",
+                                                    "format": "uri",
+                                                    "description": "URL to the first page"
+                                                },
+                                                "last": {
+                                                    "type": "string",
+                                                    "format": "uri",
+                                                    "description": "URL to the last page"
+                                                },
+                                                "prev": {
+                                                    "type": "string",
+                                                    "format": "uri",
+                                                    "nullable": true,
+                                                    "description": "URL to the previous page"
+                                                },
+                                                "next": {
+                                                    "type": "string",
+                                                    "format": "uri",
+                                                    "nullable": true,
+                                                    "description": "URL to the next page"
+                                                }
+                                            }
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "description": "Pagination metadata",
+                                            "properties": {
+                                                "current_page": {
+                                                    "type": "integer",
+                                                    "description": "Current page number"
+                                                },
+                                                "from": {
+                                                    "type": "integer",
+                                                    "nullable": true,
+                                                    "description": "Index of first item on current page"
+                                                },
+                                                "last_page": {
+                                                    "type": "integer",
+                                                    "description": "Total number of pages"
+                                                },
+                                                "per_page": {
+                                                    "type": "integer",
+                                                    "description": "Number of items per page"
+                                                },
+                                                "to": {
+                                                    "type": "integer",
+                                                    "nullable": true,
+                                                    "description": "Index of last item on current page"
+                                                },
+                                                "total": {
+                                                    "type": "integer",
+                                                    "description": "Total number of items"
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "links",
+                                        "meta"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "summary": "Create domains",
+                "description": "",
+                "tags": [
+                    "Domains"
+                ],
+                "operationId": "post_teams_by_team_domains",
+                "parameters": [
+                    {
+                        "name": "team",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "The team identifier"
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "domain": {
+                                        "type": "string",
+                                        "maxLength": 255
+                                    }
+                                },
+                                "required": [
+                                    "domain"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/mgmt/v1/teams/{team}/domains/{domain}": {
+            "patch": {
+                "summary": "Update domain",
+                "description": "",
+                "tags": [
+                    "Domains"
+                ],
+                "operationId": "patch_teams_by_team_domains_by_domain",
+                "parameters": [
+                    {
+                        "name": "team",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "The team identifier"
+                    },
+                    {
+                        "name": "domain",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "The domain identifier"
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "policy": {
+                                        "type": "string",
+                                        "enum": [
+                                            "request",
+                                            "auto_join",
+                                            "require_sso"
+                                        ]
+                                    },
+                                    "default_role": {
+                                        "type": "string",
+                                        "enum": [
+                                            "admin",
+                                            "member"
+                                        ]
+                                    }
+                                },
+                                "required": [
+                                    "policy",
+                                    "default_role"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/TeamDomainResource"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "summary": "Delete domain",
+                "description": "",
+                "tags": [
+                    "Domains"
+                ],
+                "operationId": "delete_teams_by_team_domains_by_domain",
+                "parameters": [
+                    {
+                        "name": "team",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "The team identifier"
+                    },
+                    {
+                        "name": "domain",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "The domain identifier"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/mgmt/v1/teams/{team}/domains/{domain}/verify": {
+            "post": {
+                "summary": "Create verify",
+                "description": "",
+                "tags": [
+                    "Domains"
+                ],
+                "operationId": "post_teams_by_team_domains_by_domain_verify",
+                "parameters": [
+                    {
+                        "name": "team",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "The team identifier"
+                    },
+                    {
+                        "name": "domain",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "The domain identifier"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/TeamDomainResource"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/mgmt/v1/teams/{team}/join-requests": {
+            "get": {
+                "summary": "List join requests",
+                "description": "",
+                "tags": [
+                    "Join Requests"
+                ],
+                "operationId": "get_teams_by_team_join_requests",
+                "parameters": [
+                    {
+                        "name": "team",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "The team identifier"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "description": "Paginated resource collection",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "description": "Collection of resources",
+                                            "items": {
+                                                "$ref": "#/components/schemas/TeamJoinRequestResource"
+                                            }
+                                        },
+                                        "links": {
+                                            "type": "object",
+                                            "description": "Pagination links",
+                                            "properties": {
+                                                "first": {
+                                                    "type": "string",
+                                                    "format": "uri",
+                                                    "description": "URL to the first page"
+                                                },
+                                                "last": {
+                                                    "type": "string",
+                                                    "format": "uri",
+                                                    "description": "URL to the last page"
+                                                },
+                                                "prev": {
+                                                    "type": "string",
+                                                    "format": "uri",
+                                                    "nullable": true,
+                                                    "description": "URL to the previous page"
+                                                },
+                                                "next": {
+                                                    "type": "string",
+                                                    "format": "uri",
+                                                    "nullable": true,
+                                                    "description": "URL to the next page"
+                                                }
+                                            }
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "description": "Pagination metadata",
+                                            "properties": {
+                                                "current_page": {
+                                                    "type": "integer",
+                                                    "description": "Current page number"
+                                                },
+                                                "from": {
+                                                    "type": "integer",
+                                                    "nullable": true,
+                                                    "description": "Index of first item on current page"
+                                                },
+                                                "last_page": {
+                                                    "type": "integer",
+                                                    "description": "Total number of pages"
+                                                },
+                                                "per_page": {
+                                                    "type": "integer",
+                                                    "description": "Number of items per page"
+                                                },
+                                                "to": {
+                                                    "type": "integer",
+                                                    "nullable": true,
+                                                    "description": "Index of last item on current page"
+                                                },
+                                                "total": {
+                                                    "type": "integer",
+                                                    "description": "Total number of items"
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "links",
+                                        "meta"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/mgmt/v1/teams/{team}/join-requests/{joinRequest}/approve": {
+            "post": {
+                "summary": "Create approve",
+                "description": "",
+                "tags": [
+                    "Join Requests"
+                ],
+                "operationId": "post_teams_by_team_join_requests_by_joinRequest_approve",
+                "parameters": [
+                    {
+                        "name": "team",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "The team identifier"
+                    },
+                    {
+                        "name": "joinRequest",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "The joinRequest identifier"
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "role": {
+                                        "type": "string",
+                                        "enum": [
+                                            "owner",
+                                            "admin",
+                                            "member"
+                                        ],
+                                        "nullable": true
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/TeamJoinRequestResource"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/mgmt/v1/teams/{team}/join-requests/{joinRequest}/decline": {
+            "post": {
+                "summary": "Create decline",
+                "description": "",
+                "tags": [
+                    "Join Requests"
+                ],
+                "operationId": "post_teams_by_team_join_requests_by_joinRequest_decline",
+                "parameters": [
+                    {
+                        "name": "team",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "The team identifier"
+                    },
+                    {
+                        "name": "joinRequest",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "The joinRequest identifier"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/TeamJoinRequestResource"
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [
@@ -10435,6 +12038,10 @@
                                         "minimum": 1,
                                         "maximum": 90,
                                         "nullable": true
+                                    },
+                                    "access_until": {
+                                        "type": "string",
+                                        "nullable": true
                                     }
                                 },
                                 "required": [
@@ -10767,6 +12374,94 @@
                                 }
                             }
                         }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "summary": "Give someone from the space's organisation a direct role here (the",
+                "description": "Give someone from the space's organisation a direct role here (the\naccess matrix \"+\"). Anyone else has to be invited, so a user id alone\nnever reaches across tenants.",
+                "tags": [
+                    "Members"
+                ],
+                "operationId": "post_spaces_by_space_members",
+                "parameters": [
+                    {
+                        "name": "space",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "The space identifier"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/mgmt/v1/spaces/{space}/members/{user}/expiry": {
+            "put": {
+                "summary": "Update expiry",
+                "description": "",
+                "tags": [
+                    "Members"
+                ],
+                "operationId": "put_spaces_by_space_members_by_user_expiry",
+                "parameters": [
+                    {
+                        "name": "space",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "The space identifier"
+                    },
+                    {
+                        "name": "user",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "The user identifier"
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "access_until": {
+                                        "type": "string",
+                                        "nullable": true
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
                     }
                 },
                 "security": [
@@ -24628,6 +26323,9 @@
                     "expires_at": {
                         "nullable": true
                     },
+                    "access_expires_at": {
+                        "nullable": true
+                    },
                     "accepted_at": {
                         "nullable": true
                     },
@@ -24639,6 +26337,31 @@
                     },
                     "updated_at": {
                         "nullable": true
+                    }
+                }
+            },
+            "JoinableTeamResource": {
+                "type": "object",
+                "properties": {
+                    "team": {
+                        "type": "object",
+                        "properties": {
+                            "id": {
+                                "type": "string"
+                            },
+                            "name": {
+                                "type": "string"
+                            },
+                            "avatar": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "domain": {
+                        "type": "string"
+                    },
+                    "request": {
+                        "type": "string"
                     }
                 }
             },
@@ -24659,6 +26382,80 @@
                     },
                     "created_at": {
                         "nullable": true
+                    }
+                }
+            },
+            "InstanceAuditResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "action": {
+                        "type": "string"
+                    },
+                    "actor": {
+                        "type": "string"
+                    },
+                    "entity_type": {
+                        "type": "string"
+                    },
+                    "entity_id": {
+                        "type": "string"
+                    },
+                    "metadata": {
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "nullable": true
+                    }
+                }
+            },
+            "ProviderUserResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "email": {
+                        "type": "string"
+                    },
+                    "avatar": {
+                        "type": "string"
+                    },
+                    "initials": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "nullable": true
+                    },
+                    "is_root": {
+                        "type": "string"
+                    },
+                    "suspended_at": {
+                        "nullable": true
+                    },
+                    "suspension_reason": {
+                        "type": "string"
+                    },
+                    "last_login_at": {
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "nullable": true
+                    },
+                    "teams_count": {
+                        "nullable": true
+                    },
+                    "first_team": {
+                        "type": "object",
+                        "nullable": true
+                    },
+                    "sign_in": {
+                        "type": "string"
                     }
                 }
             },
@@ -25023,7 +26820,19 @@
                     "inherited_from": {
                         "nullable": true
                     },
+                    "inherited_role": {
+                        "nullable": true
+                    },
                     "space_memberships": {
+                        "nullable": true
+                    },
+                    "source": {
+                        "nullable": true
+                    },
+                    "last_active_at": {
+                        "nullable": true
+                    },
+                    "access_expires_at": {
                         "nullable": true
                     },
                     "joined_at": {
@@ -25036,6 +26845,60 @@
                         "nullable": true
                     },
                     "created_at": {
+                        "nullable": true
+                    }
+                }
+            },
+            "TeamAuditLogResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "action": {
+                        "type": "string"
+                    },
+                    "created_at": {
+                        "nullable": true
+                    },
+                    "actor": {
+                        "type": "string"
+                    },
+                    "subject": {
+                        "type": "object",
+                        "properties": {
+                            "type": {
+                                "type": "string"
+                            },
+                            "id": {
+                                "type": "string"
+                            },
+                            "name": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "member": {
+                        "type": "string"
+                    },
+                    "old_values": {
+                        "nullable": true
+                    },
+                    "new_values": {
+                        "nullable": true
+                    },
+                    "parents": {
+                        "type": "object",
+                        "properties": {
+                            "from": {
+                                "type": "string"
+                            },
+                            "to": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "reason": {
                         "nullable": true
                     }
                 }
@@ -25116,6 +26979,72 @@
                     },
                     "joined_at": {
                         "type": "string"
+                    },
+                    "created_at": {
+                        "nullable": true
+                    }
+                }
+            },
+            "TeamDomainResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "team_id": {
+                        "type": "string"
+                    },
+                    "domain": {
+                        "type": "string"
+                    },
+                    "display_domain": {
+                        "type": "string"
+                    },
+                    "txt_record": {
+                        "type": "string"
+                    },
+                    "verified_at": {
+                        "nullable": true
+                    },
+                    "policy": {
+                        "type": "string"
+                    },
+                    "default_role": {
+                        "type": "string"
+                    },
+                    "created_at": {
+                        "nullable": true
+                    },
+                    "updated_at": {
+                        "nullable": true
+                    }
+                }
+            },
+            "TeamJoinRequestResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "team_id": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "type": "string"
+                    },
+                    "user": {
+                        "type": "string"
+                    },
+                    "domain": {
+                        "type": "object",
+                        "nullable": true
+                    },
+                    "default_role": {
+                        "type": "object",
+                        "nullable": true
+                    },
+                    "decided_at": {
+                        "nullable": true
                     },
                     "created_at": {
                         "nullable": true

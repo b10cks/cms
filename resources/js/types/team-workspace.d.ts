@@ -136,3 +136,42 @@ export interface AccessMatrix {
   spaces: AccessMatrixSpace[]
   people: AccessMatrixPerson[]
 }
+
+export interface TeamsDashboardSummary {
+  teams: number
+  teams_series: number[]
+  people: number
+  active_people: number
+  spaces: number
+  spaces_series: number[]
+  pending_invites: number
+  sso_teams: number
+  teams_without_owner: number
+}
+
+export interface TeamsDashboardCard {
+  id: string
+  name: string
+  description: string | null
+  icon: string | null
+  color: string | null
+  avatar: string | null
+  type: string | null
+  created_at: string | null
+  people_count: number
+  spaces_count: number
+  sub_team_count: number
+  pending_invites: number
+  teams_without_owner: number
+  sso: boolean
+  content_updated_at: string | null
+  people: { id: string; name: string; avatar: string | null }[]
+  children: { id: string; name: string; icon: string | null; color: string | null; avatar: string | null }[]
+  can_update: boolean
+  can_delete: boolean
+}
+
+export interface TeamsDashboard {
+  summary: TeamsDashboardSummary
+  teams: TeamsDashboardCard[]
+}

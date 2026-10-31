@@ -3159,6 +3159,58 @@
         "error": "Something went wrong: {error}"
       }
     },
+    "teamsDashboard": {
+      "instance": "Instance",
+      "providerConsole": "Provider console",
+      "search": "Search teams",
+      "noMatches": "No team matches your search.",
+      "showMore": "Show {count} more",
+      "treeMeta": "{count} teams | {count} team | {count} teams",
+      "tiles": {
+        "teams": "Teams",
+        "topTeams": "{count} top-level teams | {count} top-level team | {count} top-level teams",
+        "people": "People",
+        "active": "{count} active in the last 30 days",
+        "spaces": "Spaces",
+        "sso": "Single sign-on",
+        "ssoDetail": "Teams with SAML, of {count}",
+        "attention": "Needs attention",
+        "attentionDetail": "{owners} without owner, {invites} invites waiting",
+        "sinceLastMonth": "Since last month"
+      },
+      "segments": {
+        "all": "All",
+        "nested": "With sub-teams",
+        "sso": "Single sign-on",
+        "attention": "Needs attention"
+      },
+      "sort": {
+        "label": "Sort teams",
+        "name": "Name",
+        "people": "People",
+        "spaces": "Spaces",
+        "edited": "Last edited"
+      },
+      "views": {
+        "cards": "Cards",
+        "tree": "Tree"
+      },
+      "card": {
+        "people": "People",
+        "spaces": "Spaces",
+        "subTeams": "Sub-teams",
+        "sso": "SSO",
+        "ssoHint": "Members sign in through the team’s identity provider",
+        "actions": "Actions for {name}",
+        "settings": "Settings",
+        "moreTeams": "+{count} more",
+        "withoutOwner": "{count} without owner | {count} without owner | {count} without owner",
+        "edited": "Edited {time}"
+      },
+      "personal": {
+        "title": "Personal teams"
+      }
+    },
     "teamMembers": {
       "title": "Team Members",
       "description": "Everyone who has already accepted their invitation appears here.",

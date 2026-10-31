@@ -3159,6 +3159,58 @@
         "error": "Algo salió mal: {error}"
       }
     },
+    "teamsDashboard": {
+      "instance": "Instancia",
+      "providerConsole": "Consola del proveedor",
+      "search": "Buscar equipos",
+      "noMatches": "Ningún equipo coincide con la búsqueda.",
+      "showMore": "Mostrar {count} más",
+      "treeMeta": "{count} equipos | {count} equipo | {count} equipos",
+      "tiles": {
+        "teams": "Equipos",
+        "topTeams": "{count} equipos principales | {count} equipo principal | {count} equipos principales",
+        "people": "Personas",
+        "active": "{count} activas en los últimos 30 días",
+        "spaces": "Espacios",
+        "sso": "Inicio de sesión único",
+        "ssoDetail": "Equipos con SAML, de {count}",
+        "attention": "Requiere atención",
+        "attentionDetail": "{owners} sin propietario, {invites} invitaciones pendientes",
+        "sinceLastMonth": "Desde el mes pasado"
+      },
+      "segments": {
+        "all": "Todos",
+        "nested": "Con subequipos",
+        "sso": "Inicio de sesión único",
+        "attention": "Requiere atención"
+      },
+      "sort": {
+        "label": "Ordenar equipos",
+        "name": "Nombre",
+        "people": "Personas",
+        "spaces": "Espacios",
+        "edited": "Última edición"
+      },
+      "views": {
+        "cards": "Tarjetas",
+        "tree": "Árbol"
+      },
+      "card": {
+        "people": "Personas",
+        "spaces": "Espacios",
+        "subTeams": "Subequipos",
+        "sso": "SSO",
+        "ssoHint": "Los miembros inician sesión con el proveedor de identidad del equipo",
+        "actions": "Acciones para {name}",
+        "settings": "Ajustes",
+        "moreTeams": "+{count} más",
+        "withoutOwner": "{count} sin propietario | {count} sin propietario | {count} sin propietario",
+        "edited": "Editado {time}"
+      },
+      "personal": {
+        "title": "Equipos personales"
+      }
+    },
     "teamMembers": {
       "title": "Miembros del Equipo",
       "description": "Todos los que ya han aceptado su invitación aparecen aquí.",

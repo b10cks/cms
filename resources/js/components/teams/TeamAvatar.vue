@@ -8,7 +8,7 @@ const props = withDefaults(
     name: string
     avatar?: string | null
     color?: string | null
-    size?: 'sm' | 'md' | 'lg'
+    size?: 'sm' | 'md' | 'lg' | 'xl'
   }>(),
   {
     avatar: null,
@@ -21,6 +21,7 @@ const sizes = {
   sm: { box: 'size-5 rounded text-[0.625rem]', px: 20 },
   md: { box: 'size-6 rounded-md text-[0.6875rem]', px: 24 },
   lg: { box: 'size-10 rounded-lg text-base', px: 40 },
+  xl: { box: 'size-16 rounded-xl text-2xl', px: 64 },
 }
 
 const initial = computed(() => props.name.trim().charAt(0).toUpperCase())

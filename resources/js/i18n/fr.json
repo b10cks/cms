@@ -3159,6 +3159,58 @@
         "error": "Une erreur s'est produite : {error}"
       }
     },
+    "teamsDashboard": {
+      "instance": "Instance",
+      "providerConsole": "Console fournisseur",
+      "search": "Rechercher des équipes",
+      "noMatches": "Aucune équipe ne correspond à la recherche.",
+      "showMore": "Afficher {count} de plus",
+      "treeMeta": "{count} équipes | {count} équipe | {count} équipes",
+      "tiles": {
+        "teams": "Équipes",
+        "topTeams": "{count} équipes principales | {count} équipe principale | {count} équipes principales",
+        "people": "Personnes",
+        "active": "{count} actives ces 30 derniers jours",
+        "spaces": "Espaces",
+        "sso": "Authentification unique",
+        "ssoDetail": "Équipes avec SAML, sur {count}",
+        "attention": "À traiter",
+        "attentionDetail": "{owners} sans propriétaire, {invites} invitations en attente",
+        "sinceLastMonth": "Depuis le mois dernier"
+      },
+      "segments": {
+        "all": "Toutes",
+        "nested": "Avec sous-équipes",
+        "sso": "Authentification unique",
+        "attention": "À traiter"
+      },
+      "sort": {
+        "label": "Trier les équipes",
+        "name": "Nom",
+        "people": "Personnes",
+        "spaces": "Espaces",
+        "edited": "Dernière modification"
+      },
+      "views": {
+        "cards": "Cartes",
+        "tree": "Arborescence"
+      },
+      "card": {
+        "people": "Personnes",
+        "spaces": "Espaces",
+        "subTeams": "Sous-équipes",
+        "sso": "SSO",
+        "ssoHint": "Les membres se connectent via le fournisseur d’identité de l’équipe",
+        "actions": "Actions pour {name}",
+        "settings": "Paramètres",
+        "moreTeams": "+{count} de plus",
+        "withoutOwner": "{count} sans propriétaire | {count} sans propriétaire | {count} sans propriétaire",
+        "edited": "Modifié {time}"
+      },
+      "personal": {
+        "title": "Équipes personnelles"
+      }
+    },
     "teamMembers": {
       "title": "Membres de l'équipe",
       "description": "Toutes les personnes ayant déjà accepté leur invitation apparaissent ici.",

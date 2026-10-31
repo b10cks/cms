@@ -3159,6 +3159,58 @@
         "error": "Bir sorun oluştu: {error}"
       }
     },
+    "teamsDashboard": {
+      "instance": "Örnek",
+      "providerConsole": "Sağlayıcı konsolu",
+      "search": "Ekip ara",
+      "noMatches": "Aramayla eşleşen ekip yok.",
+      "showMore": "{count} tane daha göster",
+      "treeMeta": "{count} ekip | {count} ekip | {count} ekip",
+      "tiles": {
+        "teams": "Ekipler",
+        "topTeams": "{count} ana ekip | {count} ana ekip | {count} ana ekip",
+        "people": "Kişiler",
+        "active": "Son 30 günde {count} aktif",
+        "spaces": "Alanlar",
+        "sso": "Tek oturum açma",
+        "ssoDetail": "SAML kullanan ekipler, {count} içinden",
+        "attention": "İlgi bekliyor",
+        "attentionDetail": "{owners} sahipsiz, {invites} bekleyen davet",
+        "sinceLastMonth": "Geçen aydan beri"
+      },
+      "segments": {
+        "all": "Tümü",
+        "nested": "Alt ekipli",
+        "sso": "Tek oturum açma",
+        "attention": "İlgi bekliyor"
+      },
+      "sort": {
+        "label": "Ekipleri sırala",
+        "name": "Ad",
+        "people": "Kişiler",
+        "spaces": "Alanlar",
+        "edited": "Son düzenleme"
+      },
+      "views": {
+        "cards": "Kartlar",
+        "tree": "Ağaç"
+      },
+      "card": {
+        "people": "Kişiler",
+        "spaces": "Alanlar",
+        "subTeams": "Alt ekipler",
+        "sso": "SSO",
+        "ssoHint": "Üyeler ekibin kimlik sağlayıcısıyla oturum açar",
+        "actions": "{name} için işlemler",
+        "settings": "Ayarlar",
+        "moreTeams": "+{count} daha",
+        "withoutOwner": "{count} sahipsiz | {count} sahipsiz | {count} sahipsiz",
+        "edited": "{time} düzenlendi"
+      },
+      "personal": {
+        "title": "Kişisel ekipler"
+      }
+    },
     "teamMembers": {
       "title": "Ekip Üyeleri",
       "description": "Davetlerini zaten kabul etmiş herkes burada görünür.",

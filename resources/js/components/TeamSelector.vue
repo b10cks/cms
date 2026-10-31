@@ -2,22 +2,23 @@
 import { useStorage } from '@vueuse/core'
 
 import Icon from '~/components/Icon.vue'
-import TeamAvatar from '~/components/teams/TeamAvatar.vue'
-import HighlightedText from '~/components/ui/HighlightedText.vue'
+import TeamOptionRow from '~/components/teams/TeamOptionRow.vue'
 import { Popover, PopoverContent, PopoverTrigger } from '~/components/ui/popover'
 import { Spinner } from '~/components/ui/spinner'
 import { isClient } from '~/lib/env'
 import { flattenTeamHierarchy } from '~/lib/team-hierarchy'
-import { pushRecentTeam, searchTeams } from '~/lib/team-switcher'
+import { filterTeamTree, pushRecentTeam } from '~/lib/team-switcher'
 import { cn } from '~/lib/utils'
 import type { TeamResource } from '~/types/teams'
 
 /**
- * The team switcher: a search popover with recent teams and the nested team
- * tree. Inside the team area it follows and changes the route's team; on the
- * start page it changes the globally selected team.
+ * The team switcher: looks like a Select, opens a popover with a fuzzy search
+ * that filters the team tree like the content tree does (matches plus their
+ * ancestors, ↑/↓ walk the matches), recent teams and the nested tree. Inside
+ * the team area it follows and changes the route's team; on the start page it
+ * changes the globally selected team.
  */
-withDefaults(defineProps<{ size?: 'sm' | 'md' }>(), { size: 'md' })
+const props = withDefaults(defineProps<{ size?: 'sm' | 'md' }>(), { size: 'md' })
 
 const { t } = useI18n()
 const route = useRoute()
@@ -48,12 +49,12 @@ interface SwitcherOption {
   team: TeamResource
   depth: number
   indices?: number[]
-  group: 'match' | 'recent' | 'tree'
+  group: 'match' | 'context' | 'recent' | 'tree'
 }
 
-const matches = computed<SwitcherOption[]>(() =>
-  searchTeams(query.value, tree.value).map((match) => ({ ...match, group: 'match' as const }))
-)
+const isSearching = computed(() => query.value.trim().length > 0)
+
+const filtered = computed(() => filterTeamTree(query.value, tree.value))
 
 const recent = computed<SwitcherOption[]>(() =>
   recentIds.value
@@ -64,18 +65,29 @@ const recent = computed<SwitcherOption[]>(() =>
     .map((team) => ({ team, depth: 0, group: 'recent' as const }))
 )
 
-const isSearching = computed(() => query.value.trim().length > 0)
-
 const options = computed<SwitcherOption[]>(() =>
   isSearching.value
-    ? matches.value
+    ? filtered.value.rows.map((row) => ({
+        team: row.team,
+        depth: row.depth,
+        indices: row.indices,
+        group: row.isMatch ? ('match' as const) : ('context' as const),
+      }))
     : [...recent.value, ...tree.value.map((entry) => ({ ...entry, group: 'tree' as const }))]
 )
+
+/** Rows the keyboard visits: while searching only the matches, like the content tree. */
+const navigable = computed(() =>
+  options.value.flatMap((option, index) => (option.group === 'context' ? [] : [index]))
+)
+
+const matchCount = computed(() => navigable.value.length)
 
 const optionId = (index: number) => `${listId}-option-${index}`
 
 watch(query, () => {
-  activeIndex.value = 0
+  activeIndex.value = isSearching.value ? Math.max(filtered.value.best, 0) : 0
+  nextTick(scrollActiveIntoView)
 })
 
 watch(open, (isOpen) => {
@@ -93,9 +105,11 @@ const scrollActiveIntoView = () => {
 }
 
 const moveActive = (direction: 1 | -1) => {
-  const total = options.value.length
-  if (total === 0) return
-  activeIndex.value = (activeIndex.value + direction + total) % total
+  const indices = navigable.value
+  if (indices.length === 0) return
+  const position = indices.indexOf(activeIndex.value)
+  const next = position === -1 ? 0 : (position + direction + indices.length) % indices.length
+  activeIndex.value = indices[next]
   nextTick(scrollActiveIntoView)
 }
 
@@ -145,8 +159,10 @@ const createSubTeam = () => {
   })
 }
 
-const parentName = (team: TeamResource) =>
-  team.parent_id ? (byId.value.get(team.parent_id)?.name ?? '') : ''
+const sizeClasses = {
+  sm: 'h-8! text-sm',
+  md: 'h-10',
+}
 </script>
 
 <template>
@@ -156,45 +172,52 @@ const parentName = (team: TeamResource) =>
       :aria-label="t('labels.teamWorkspace.switcher.label')"
       :class="
         cn(
-          'flex max-w-72 min-w-0 cursor-pointer items-center gap-2 rounded-lg bg-sidebar-accent/60 px-2 transition-colors duration-200 hover:bg-sidebar-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none data-[state=open]:bg-sidebar-accent',
-          size === 'sm' ? 'h-8 text-sm' : 'h-10'
+          'flex w-full cursor-pointer items-center justify-between gap-2 rounded-md border border-input-border bg-input py-2 pr-2 pl-3 text-start text-sm font-semibold whitespace-nowrap shadow-sm ring-offset-background focus:ring-1 focus:ring-ring focus:outline-none disabled:cursor-not-allowed disabled:opacity-50',
+          sizeClasses[props.size]
         )
       "
     >
-      <template v-if="isLoading">
+      <div
+        v-if="isLoading"
+        class="flex items-center gap-2"
+      >
         <Spinner class="shrink-0" />
         <span>{{ t('labels.loading') }}</span>
-      </template>
-      <template v-else-if="currentTeam">
-        <TeamAvatar
-          :name="currentTeam.name"
-          :avatar="currentTeam.avatar"
-          :color="currentTeam.color"
-          size="sm"
-        />
-        <span class="truncate font-semibold text-primary">{{ currentTeam.name }}</span>
-      </template>
-      <template v-else>
+      </div>
+      <TeamOptionRow
+        v-else-if="currentTeam"
+        compact
+        :name="currentTeam.name"
+        :icon="currentTeam.icon"
+        :color="currentTeam.color"
+        :type="currentTeam.type"
+      />
+      <div
+        v-else
+        class="flex items-center gap-2"
+      >
         <Icon
           name="lucide:users"
           class="shrink-0"
         />
         <span>{{ t('labels.teams.selectPlaceholder') }}</span>
-      </template>
+      </div>
       <Icon
-        name="lucide:chevrons-up-down"
-        class="size-4 shrink-0 text-muted"
+        name="lucide:chevron-down"
+        size="1rem"
+        class="shrink-0 text-muted"
       />
     </PopoverTrigger>
 
     <PopoverContent
       align="start"
-      class="flex max-h-[min(32rem,var(--reka-popover-content-available-height))] w-80 flex-col p-0"
+      :side-offset="4"
+      class="flex max-h-[min(28rem,var(--reka-popover-content-available-height))]! w-80 min-w-(--reka-popover-trigger-width) flex-col p-1!"
     >
-      <div class="flex items-center gap-2 border-b border-border px-3">
+      <div class="mb-1 flex shrink-0 items-center gap-2 rounded-md border border-border bg-background py-1 pr-2 pl-2 shadow-sm">
         <Icon
           name="lucide:search"
-          class="size-4 shrink-0 text-muted"
+          class="shrink-0 text-muted"
         />
         <input
           v-model="query"
@@ -206,103 +229,92 @@ const parentName = (team: TeamResource) =>
           :aria-activedescendant="options.length ? optionId(activeIndex) : undefined"
           :aria-label="t('labels.teamWorkspace.switcher.search')"
           :placeholder="t('labels.teamWorkspace.switcher.search')"
-          class="h-10 w-full bg-transparent text-sm text-primary outline-none placeholder:text-muted"
+          class="h-6 min-w-0 flex-1 bg-transparent text-sm text-primary outline-none placeholder:text-muted"
           @keydown="onKeydown"
         >
+        <span
+          v-if="isSearching"
+          aria-live="polite"
+          :class="['shrink-0 text-sm tabular-nums', matchCount > 0 ? 'text-muted' : 'text-destructive']"
+        >
+          {{
+            matchCount > 0
+              ? t('labels.contentTree.search.matches', {
+                current: Math.max(navigable.indexOf(activeIndex), 0) + 1,
+                total: matchCount,
+              })
+              : t('labels.contentTree.search.noMatches')
+          }}
+        </span>
       </div>
 
       <div
         :id="listId"
         role="listbox"
         :aria-label="t('labels.teamWorkspace.switcher.label')"
-        class="min-h-0 flex-1 overflow-y-auto p-1.5"
+        class="min-h-0 flex-1 overflow-y-auto"
       >
-        <p
-          v-if="isSearching && options.length === 0"
-          class="px-2 py-3 text-sm text-muted"
-        >
-          {{ t('labels.teamWorkspace.switcher.noMatches') }}
-        </p>
-
         <template
           v-for="(option, index) in options"
           :key="`${option.group}-${option.team.id}`"
         >
           <div
             v-if="!isSearching && index === 0 && option.group === 'recent'"
-            class="px-2 pt-1.5 pb-1 text-sm text-muted"
+            class="px-2 py-1.5 text-sm font-semibold text-muted"
             role="presentation"
           >
             {{ t('labels.teamWorkspace.switcher.recent') }}
           </div>
           <div
-            v-if="!isSearching && option.group === 'tree' && options[index - 1]?.group !== 'tree'"
-            :class="['px-2 pb-1 text-sm text-muted', index > 0 ? 'mt-1.5 border-t border-border pt-2.5' : 'pt-1.5']"
+            v-if="!isSearching && option.group === 'tree' && index > 0 && options[index - 1]?.group !== 'tree'"
+            class="-mx-1 my-1 h-px bg-border"
             role="presentation"
-          >
-            {{ t('labels.teamWorkspace.switcher.allTeams') }}
-          </div>
+          />
           <div
             :id="optionId(index)"
             role="option"
-            :aria-selected="index === activeIndex"
+            :aria-selected="option.team.id === currentTeam?.id"
+            :aria-disabled="option.group === 'context' ? undefined : false"
             :class="[
-              'flex h-8 cursor-pointer items-center gap-2 rounded-md pr-2 text-sm',
-              index === activeIndex ? 'bg-tree-hover' : '',
-              option.team.id === currentTeam?.id && option.group !== 'recent'
-                ? 'font-semibold text-primary'
+              'relative flex w-full cursor-pointer items-center rounded-sm py-1.5 pr-8 pl-2 text-sm outline-none select-none',
+              index === activeIndex
+                ? 'bg-accent text-accent-foreground [&_.text-info]:text-accent-foreground [&_.text-info]:underline'
                 : '',
+              option.group === 'context' && index !== activeIndex ? 'text-muted' : '',
             ]"
-            :style="{ paddingLeft: `${0.5 + option.depth}rem` }"
             @mouseenter="activeIndex = index"
             @mousedown.prevent
             @click="choose(option.team)"
           >
-            <TeamAvatar
-              :name="option.team.name"
-              :avatar="option.team.avatar"
-              :color="option.team.color"
-              size="sm"
-            />
-            <span class="min-w-0 flex-1 truncate">
-              <HighlightedText
-                :text="option.team.name"
-                :highlight="option.indices"
-              />
-            </span>
             <span
-              v-if="option.group === 'recent'"
-              class="shrink-0 truncate text-sm text-muted"
-            >
-              {{ parentName(option.team) }}
-            </span>
-            <span
-              v-else
-              class="shrink-0 text-sm text-muted tabular-nums"
-            >
-              {{ t('labels.teams.spaceCount', { count: option.team.spaces_count ?? 0 }) }}
-            </span>
-            <Icon
               v-if="option.team.id === currentTeam?.id && option.group !== 'recent'"
-              name="lucide:check"
-              class="size-4 shrink-0 text-primary"
+              class="absolute right-2 flex items-center justify-center"
+            >
+              <Icon name="lucide:check" />
+            </span>
+            <TeamOptionRow
+              :name="option.team.name"
+              :icon="option.team.icon"
+              :color="option.team.color"
+              :type="option.team.type"
+              :depth="option.group === 'recent' ? 0 : option.depth"
+              :highlight="option.indices"
             />
           </div>
         </template>
       </div>
 
-      <button
-        v-if="canCreateSubTeam"
-        type="button"
-        class="flex h-10 shrink-0 cursor-pointer items-center gap-2 border-t border-border px-3 text-sm text-muted transition-colors hover:bg-tree-hover hover:text-primary focus-visible:bg-tree-hover focus-visible:outline-none"
-        @click="createSubTeam"
-      >
-        <Icon
-          name="lucide:plus"
-          class="size-4"
-        />
-        {{ t('labels.teamWorkspace.switcher.newSubTeam') }}
-      </button>
+      <template v-if="canCreateSubTeam">
+        <div class="-mx-1 my-1 h-px shrink-0 bg-border" />
+        <button
+          type="button"
+          class="flex w-full shrink-0 cursor-pointer items-center gap-2 rounded-sm py-1.5 pr-8 pl-2 text-sm text-muted outline-none select-none hover:bg-accent hover:text-accent-foreground focus-visible:bg-accent focus-visible:text-accent-foreground"
+          @click="createSubTeam"
+        >
+          <Icon name="lucide:plus" />
+          {{ t('labels.teamWorkspace.switcher.newSubTeam') }}
+        </button>
+      </template>
     </PopoverContent>
   </Popover>
 </template>

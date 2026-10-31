@@ -3159,6 +3159,58 @@
         "error": "Что-то пошло не так: {error}"
       }
     },
+    "teamsDashboard": {
+      "instance": "Инстанс",
+      "providerConsole": "Консоль провайдера",
+      "search": "Поиск команд",
+      "noMatches": "Ни одна команда не найдена.",
+      "showMore": "Показать ещё {count}",
+      "treeMeta": "Команд: {count} | Команда: {count} | Команд: {count}",
+      "tiles": {
+        "teams": "Команды",
+        "topTeams": "Основных команд: {count} | Основная команда: {count} | Основных команд: {count}",
+        "people": "Люди",
+        "active": "Активны за 30 дней: {count}",
+        "spaces": "Пространства",
+        "sso": "Единый вход",
+        "ssoDetail": "Команды с SAML из {count}",
+        "attention": "Требует внимания",
+        "attentionDetail": "Без владельца: {owners}, ожидают приглашения: {invites}",
+        "sinceLastMonth": "С прошлого месяца"
+      },
+      "segments": {
+        "all": "Все",
+        "nested": "С подкомандами",
+        "sso": "Единый вход",
+        "attention": "Требует внимания"
+      },
+      "sort": {
+        "label": "Сортировка команд",
+        "name": "Название",
+        "people": "Люди",
+        "spaces": "Пространства",
+        "edited": "Последнее изменение"
+      },
+      "views": {
+        "cards": "Карточки",
+        "tree": "Дерево"
+      },
+      "card": {
+        "people": "Люди",
+        "spaces": "Пространства",
+        "subTeams": "Подкоманды",
+        "sso": "SSO",
+        "ssoHint": "Участники входят через провайдер идентификации команды",
+        "actions": "Действия для {name}",
+        "settings": "Настройки",
+        "moreTeams": "Ещё {count}",
+        "withoutOwner": "Без владельца: {count} | Без владельца: {count} | Без владельца: {count}",
+        "edited": "Изменено {time}"
+      },
+      "personal": {
+        "title": "Личные команды"
+      }
+    },
     "teamMembers": {
       "title": "Участники команды",
       "description": "Здесь появляются все, кто уже принял приглашение.",

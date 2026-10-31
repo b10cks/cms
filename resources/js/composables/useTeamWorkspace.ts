@@ -18,6 +18,13 @@ export function useTeamWorkspace() {
   const isEnabled = (teamId: MaybeRef<string>, enabled: MaybeRef<boolean>) =>
     computed(() => !!toValue(isAuthenticated) && !!toValue(teamId) && toValue(enabled))
 
+  /** The teams start page; lives under the list key so team changes refresh it. */
+  const useTeamsDashboardQuery = () =>
+    useQuery({
+      queryKey: [...queryKeys.teams.lists(), 'dashboard'] as const,
+      queryFn: async () => (await api.teams.getDashboard()).data,
+    })
+
   const useTeamOverviewQuery = (teamId: MaybeRef<string>, enabled: MaybeRef<boolean> = true) =>
     useQuery({
       queryKey: computed(() => queryKeys.teams.overview(teamId)),
@@ -150,6 +157,7 @@ export function useTeamWorkspace() {
     })
 
   return {
+    useTeamsDashboardQuery,
     useTeamOverviewQuery,
     useTeamMovePreviewQuery,
     useTeamAuditLogsQuery,

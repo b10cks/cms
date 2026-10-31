@@ -6,33 +6,62 @@
 import { fuzzyMatch, prepareFuzzyQuery, prepareFuzzyTarget } from '~/lib/fuzzy-match'
 import type { HierarchicalTeam, TeamTreeEntry } from '~/lib/team-hierarchy'
 
-export interface TeamSearchMatch<T extends HierarchicalTeam> {
+export interface TeamFilterRow<T extends HierarchicalTeam> {
   team: T
   depth: number
-  score: number
-  indices: number[]
+  /** Matched characters of the name; absent on ancestor rows shown for context. */
+  indices?: number[]
+  isMatch: boolean
+}
+
+export interface TeamFilterResult<T extends HierarchicalTeam> {
+  rows: TeamFilterRow<T>[]
+  /** Row index of the best-scoring match, the entry point for the keyboard. */
+  best: number
 }
 
 /**
- * Teams whose name fuzzy-matches the query, best match first. Ties keep tree
- * order, so a parent comes before a child with the same score.
+ * Filters the tree like the content tree search: every team whose name
+ * fuzzy-matches the query, plus the ancestor chain that puts it in context,
+ * in tree order. A blank query returns no rows.
  */
-export function searchTeams<T extends HierarchicalTeam>(
+export function filterTeamTree<T extends HierarchicalTeam>(
   query: string,
   entries: readonly TeamTreeEntry<T>[]
-): TeamSearchMatch<T>[] {
+): TeamFilterResult<T> {
   const normalized = prepareFuzzyQuery(query)
-  if (!normalized) return []
+  if (!normalized) return { rows: [], best: -1 }
 
-  const matches: (TeamSearchMatch<T> & { order: number })[] = []
-  entries.forEach(({ team, depth }, order) => {
+  const parentOf = new Map(entries.map(({ team }) => [team.id, team.parent_id ?? null]))
+  const matches = new Map<string, { score: number; indices: number[] }>()
+  for (const { team } of entries) {
     const match = fuzzyMatch(normalized, prepareFuzzyTarget(team.name))
-    if (match) matches.push({ team, depth, score: match.score, indices: match.indices, order })
-  })
+    if (match) matches.set(team.id, match)
+  }
 
-  return matches
-    .sort((a, b) => b.score - a.score || a.order - b.order)
-    .map(({ order: _order, ...match }) => match)
+  const visible = new Set(matches.keys())
+  for (const id of matches.keys()) {
+    let parentId = parentOf.get(id) ?? null
+    while (parentId && !visible.has(parentId)) {
+      visible.add(parentId)
+      parentId = parentOf.get(parentId) ?? null
+    }
+  }
+
+  let best = -1
+  let bestScore = -Infinity
+  const rows: TeamFilterRow<T>[] = []
+  for (const { team, depth } of entries) {
+    if (!visible.has(team.id)) continue
+    const match = matches.get(team.id)
+    if (match && match.score > bestScore) {
+      bestScore = match.score
+      best = rows.length
+    }
+    rows.push({ team, depth, indices: match?.indices, isMatch: !!match })
+  }
+
+  return { rows, best }
 }
 
 export const RECENT_TEAMS_LIMIT = 5

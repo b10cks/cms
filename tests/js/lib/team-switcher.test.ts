@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import { flattenTeamHierarchy } from '~/lib/team-hierarchy'
-import { canMoveTeam, nestTeams, pushRecentTeam, searchTeams } from '~/lib/team-switcher'
+import { canMoveTeam, filterTeamTree, nestTeams, pushRecentTeam } from '~/lib/team-switcher'
 
 const teams = flattenTeamHierarchy([
   { id: 'n', name: 'Northwind Studio', parent_id: null },
@@ -10,19 +10,22 @@ const teams = flattenTeamHierarchy([
   { id: 'f', name: 'Fjord Bank', parent_id: 'n' },
 ])
 
-describe('searchTeams', () => {
-  it('ranks word-start matches above scattered ones and reports the matched characters', () => {
-    const matches = searchTeams('hr', teams)
+describe('filterTeamTree', () => {
+  it('keeps matches with their ancestor chain in tree order and starts at the best match', () => {
+    const { rows, best } = filterTeamTree('hr', teams)
 
-    expect(matches[0].team.id).toBe('r')
-    expect(matches.map((match) => match.team.id)).not.toContain('f')
-    expect(matches[0].indices).toEqual([0, 6])
-    expect(matches[0].depth).toBe(2)
+    expect(rows.map((row) => [row.team.id, row.isMatch])).toEqual([
+      ['n', false],
+      ['h', true],
+      ['r', true],
+    ])
+    expect(rows[best].team.id).toBe('r')
+    expect(rows[best].indices).toEqual([0, 6])
+    expect(rows.map((row) => row.team.id)).not.toContain('f')
   })
 
-  it('keeps tree order between equal scores and returns nothing for a blank query', () => {
-    expect(searchTeams('helio', teams).map((match) => match.team.id)).toEqual(['h', 'r'])
-    expect(searchTeams('  ', teams)).toEqual([])
+  it('returns nothing for a blank query', () => {
+    expect(filterTeamTree('  ', teams)).toEqual({ rows: [], best: -1 })
   })
 })
 

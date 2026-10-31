@@ -15,6 +15,7 @@ declare global {
   const TABLE_ROW_ATTR: typeof import('./resources/js/composables/useTableKeyboard').TABLE_ROW_ATTR
   const TEAM_TYPE_KEYS: typeof import('./resources/js/composables/useTeamTypes').TEAM_TYPE_KEYS
   const buildShareUrl: typeof import('./resources/js/composables/useAssetShares').buildShareUrl
+  const clipboardItemBlocks: typeof import('./resources/js/composables/useGlobalClipboard').clipboardItemBlocks
   const computed: typeof import('vue').computed
   const createAccessEvaluationContext: typeof import('./resources/js/composables/useAuthorization').createAccessEvaluationContext
   const createApp: typeof import('vue').createApp
@@ -191,9 +192,11 @@ declare global {
   const usePlans: typeof import('./resources/js/composables/usePlans').usePlans
   const usePresence: typeof import('./resources/js/composables/usePresence').usePresence
   const useProvider: typeof import('./resources/js/composables/useProvider').useProvider
+  const useProviderConsole: typeof import('./resources/js/composables/useProviderConsole').useProviderConsole
   const usePublicShare: typeof import('./resources/js/composables/usePublicShare').usePublicShare
   const useRedirects: typeof import('./resources/js/composables/useRedirects').useRedirects
   const useReleases: typeof import('./resources/js/composables/useReleases').useReleases
+  const useRootAccess: typeof import('./resources/js/composables/useRootAccess').useRootAccess
   const useRoute: typeof import('vue-router').useRoute
   const useRoutePreload: typeof import('./resources/js/composables/useRoutePreload').useRoutePreload
   const useRouter: typeof import('vue-router').useRouter
@@ -346,6 +349,7 @@ declare module 'vue' {
     readonly TABLE_ROW_ATTR: UnwrapRef<typeof import('./resources/js/composables/useTableKeyboard')['TABLE_ROW_ATTR']>
     readonly TEAM_TYPE_KEYS: UnwrapRef<typeof import('./resources/js/composables/useTeamTypes')['TEAM_TYPE_KEYS']>
     readonly buildShareUrl: UnwrapRef<typeof import('./resources/js/composables/useAssetShares')['buildShareUrl']>
+    readonly clipboardItemBlocks: UnwrapRef<typeof import('./resources/js/composables/useGlobalClipboard')['clipboardItemBlocks']>
     readonly computed: UnwrapRef<typeof import('vue')['computed']>
     readonly createAccessEvaluationContext: UnwrapRef<typeof import('./resources/js/composables/useAuthorization')['createAccessEvaluationContext']>
     readonly createApp: UnwrapRef<typeof import('vue')['createApp']>
@@ -522,9 +526,11 @@ declare module 'vue' {
     readonly usePlans: UnwrapRef<typeof import('./resources/js/composables/usePlans')['usePlans']>
     readonly usePresence: UnwrapRef<typeof import('./resources/js/composables/usePresence')['usePresence']>
     readonly useProvider: UnwrapRef<typeof import('./resources/js/composables/useProvider')['useProvider']>
+    readonly useProviderConsole: UnwrapRef<typeof import('./resources/js/composables/useProviderConsole')['useProviderConsole']>
     readonly usePublicShare: UnwrapRef<typeof import('./resources/js/composables/usePublicShare')['usePublicShare']>
     readonly useRedirects: UnwrapRef<typeof import('./resources/js/composables/useRedirects')['useRedirects']>
     readonly useReleases: UnwrapRef<typeof import('./resources/js/composables/useReleases')['useReleases']>
+    readonly useRootAccess: UnwrapRef<typeof import('./resources/js/composables/useRootAccess')['useRootAccess']>
     readonly useRoute: UnwrapRef<typeof import('vue-router')['useRoute']>
     readonly useRoutePreload: UnwrapRef<typeof import('./resources/js/composables/useRoutePreload')['useRoutePreload']>
     readonly useRouter: UnwrapRef<typeof import('vue-router')['useRouter']>
