@@ -61,3 +61,13 @@ Settled 2026-10-27. Concept: "Threads" in `docs/concepts/native-ai-integration.m
   - Composer: one rounded-2xl surface with a hairline outline and soft shadow; the config picker on the left of the footer, attach and the round send button on the right. The config picker trigger is a ghost label with a small chevron; its list shows name, model in muted text below, and a check.
   - Skills are not shown up front; `/` opens them.
 - AI settings (Skills, Knowledge, Schedules) have three nav entries. Each page has the title with the primary action top right; lists are one table with a type or source column. Glossary detail looks like a data source: one column per language, headed by the language name, not the locale code.
+
+## Team area and provider console
+
+Settled 2026-10-31. Concept: `docs/concepts/team-management.md`.
+
+- The team area and the provider console (`/provider`) use the settings-style left nav (same look as space settings). No header tabs. The hierarchy tree is not a sidebar any more; it lives in the team switcher.
+- Team switcher is a search popover (variant A): avatar and name trigger, fuzzy search with `lib/fuzzy-match` and `HighlightedText` like the content tree, recent teams, then the nested tree with space counts. Rejected: a breadcrumb path (B) and a breadcrumb with scoped popovers (C), both crowd the header on deep hierarchies.
+- Team Overview: KPI row of `StatTile`s, then the structure panel (org chart of teams with their spaces as leaves, drag a team onto another to move it, confirm lists who gains and loses access), then "Needs attention" and "Activity" side by side.
+- Access is drawn the same everywhere: inherited (from a team role) is a dashed outline in muted ink, direct is the solid field fill. The People page has a list view and an access matrix (people by spaces).
+- Root context always shows a banner under the header: neutral while viewing (team actions disabled), warning while elevated, AI purple while impersonating.
