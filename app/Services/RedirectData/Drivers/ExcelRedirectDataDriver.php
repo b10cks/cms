@@ -7,11 +7,13 @@ use App\Models\Management\Space;
 use App\Services\ImportExport\WritesXlsxDownload;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Enumerable;
+use App\Services\ImportExport\ReadsSpreadsheetHeaders;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use Symfony\Component\HttpFoundation\Response;
 
 class ExcelRedirectDataDriver extends BaseRedirectDataDriver
 {
+    use ReadsSpreadsheetHeaders;
     use WritesXlsxDownload;
 
     private const HEADERS = ['id', 'external_id', 'source', 'target', 'status_code'];
@@ -65,10 +67,7 @@ class ExcelRedirectDataDriver extends BaseRedirectDataDriver
         }
 
         try {
-            $spreadsheet = IOFactory::load($file->getRealPath());
-            $sheet = $spreadsheet->getActiveSheet();
-            $rows = $sheet->toArray();
-            $headers = array_map('trim', $rows[0] ?? []);
+            $headers = $this->spreadsheetHeaders($file->getRealPath());
 
             if (!in_array('source', $headers, true) || !in_array('target', $headers, true)) {
                 $errors[] = 'Excel must contain both "source" and "target" columns';
