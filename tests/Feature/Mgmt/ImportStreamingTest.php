@@ -126,6 +126,51 @@ class ImportStreamingTest extends TestCase
     }
 
     #[Test]
+    public function a_filename_several_assets_share_is_reported_instead_of_changing_one_of_them(): void
+    {
+        $first = Asset::factory()->create(['filename' => 'hero.jpg']);
+        $second = Asset::factory()->create(['filename' => 'hero.jpg']);
+        $before = [$first->data, $second->data];
+
+        $response = $this->stream('assets/import', [
+            'file' => UploadedFile::fake()->createWithContent('assets.csv', "filename,photographer\nhero.jpg,Jane\n"),
+        ]);
+
+        $this->assertStringContainsString('Several assets', $this->doneData($response)['errors'][0]['message']);
+        $this->assertSame($before, [$first->refresh()->data, $second->refresh()->data]);
+    }
+
+    #[Test]
+    public function a_malformed_asset_csv_row_is_a_row_error_and_blank_lines_are_skipped(): void
+    {
+        $assets = Asset::factory()->count(2)->create();
+        $csv = "id,photographer\n{$assets[0]->id},Jane,extra\n\n{$assets[1]->id},Jane\n";
+
+        $result = $this->doneData($this->stream('assets/import', [
+            'file' => $this->assetCsvContent($csv),
+        ]));
+
+        $this->assertSame(1, $result['summary']['total_success']);
+        $this->assertSame([['row' => 1, 'message' => 'Row has 3 columns, expected 2']], $result['errors']);
+        $this->assertSame([], $result['ignored_fields']);
+    }
+
+    #[Test]
+    public function a_malformed_redirect_csv_row_is_a_row_error_and_blocks_deletions(): void
+    {
+        $stale = Redirect::query()->create(['source' => '/stale', 'target' => '/x', 'status_code' => 301]);
+
+        $result = $this->doneData($this->stream('redirects/import', [
+            'file' => UploadedFile::fake()->createWithContent('redirects.csv', "source,target,status_code\n/new,/y\n/ok,/z,301\n"),
+            'import_mode' => 'replacement',
+        ]));
+
+        $this->assertSame(1, $result['summary']['total_success']);
+        $this->assertSame('Row has 2 columns, expected 3', $result['errors'][0]['message']);
+        $this->assertNotNull($stale->fresh());
+    }
+
+    #[Test]
     public function a_failed_validation_is_an_error_event_on_a_stream_and_a_422_otherwise(): void
     {
         $file = fn (): UploadedFile => UploadedFile::fake()->createWithContent('assets.csv', "photographer\nJane\n");
@@ -257,10 +302,13 @@ class ImportStreamingTest extends TestCase
     /** @param  list<array{string, string}>  $rows */
     private function assetCsv(array $rows): UploadedFile
     {
+        return $this->assetCsvContent("id,photographer\n".implode("\n", array_map(static fn (array $row): string => implode(',', $row), $rows))."\n");
+    }
+
+    private function assetCsvContent(string $csv): UploadedFile
+    {
         $this->space->settings = [...$this->space->settings->toArray(), 'asset_fields' => [['key' => 'photographer']]];
         $this->space->save();
-
-        $csv = "id,photographer\n".implode("\n", array_map(static fn (array $row): string => implode(',', $row), $rows))."\n";
 
         return UploadedFile::fake()->createWithContent('assets.csv', $csv);
     }

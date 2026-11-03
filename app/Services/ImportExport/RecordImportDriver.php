@@ -53,7 +53,7 @@ abstract class RecordImportDriver extends BaseImportExportDriver
                 return new ImportResult([], [], [], [['message' => 'File is empty']]);
             }
 
-            $this->ignoredFields = $this->detectIgnoredFields(array_keys($rows[0] ?? []));
+            $this->ignoredFields = $this->detectIgnoredFields(array_keys($this->firstWellFormedRow($rows)));
 
             // Chunked: one transaction and one batched lookup per chunk
             // instead of a per-row SELECT inside one giant transaction. Rows
@@ -99,6 +99,12 @@ abstract class RecordImportDriver extends BaseImportExportDriver
     protected function importRow(int $rowNumber, array $rowData, array &$lookup): void
     {
         $naturalKey = $this->naturalKeyColumn();
+
+        if (isset($rowData[self::MALFORMED_ROW])) {
+            $this->errors[] = ['row' => $rowNumber + 1, 'message' => $rowData[self::MALFORMED_ROW]];
+
+            return;
+        }
 
         try {
             $payload = $this->normalizeRow($rowData);

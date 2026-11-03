@@ -39,6 +39,7 @@ abstract class BaseAssetDataDriver extends BaseImportExportDriver implements Ass
         array $languages
     ): \Generator {
         $this->resetState();
+        $this->effectiveFieldsByFolder = [];
 
         try {
             $validFieldKeys = array_column($assetFields, 'key');
@@ -60,7 +61,7 @@ abstract class BaseAssetDataDriver extends BaseImportExportDriver implements Ass
             foreach (LazyCollection::make(fn () => $rows)->chunk(static::IMPORT_CHUNK_SIZE) as $chunk) {
                 if ($processed === 0) {
                     $this->ignoredFields = $this->detectIgnoredFields(
-                        array_keys($chunk->first()),
+                        array_keys($this->firstWellFormedRow($chunk)),
                         $validFieldKeys,
                         $validLanguageCodes
                     );
@@ -105,10 +106,26 @@ abstract class BaseAssetDataDriver extends BaseImportExportDriver implements Ass
         array &$lookup
     ): void {
         try {
+            if (isset($rowData[self::MALFORMED_ROW])) {
+                $this->errors[] = ['row' => $rowNumber + 1, 'message' => $rowData[self::MALFORMED_ROW]];
+
+                return;
+            }
+
             if (empty($rowData['id']) && empty($rowData['filename'])) {
                 $this->errors[] = [
                     'row' => $rowNumber + 1,
                     'message' => 'Missing both id and filename - cannot identify asset',
+                ];
+
+                return;
+            }
+
+            if (empty($rowData['id']) && isset($lookup['ambiguous'][mb_strtolower((string) $rowData['filename'])])) {
+                $this->errors[] = [
+                    'row' => $rowNumber + 1,
+                    'id' => $rowData['filename'],
+                    'message' => 'Several assets have this filename. Add an id column to choose one.',
                 ];
 
                 return;
@@ -193,11 +210,11 @@ abstract class BaseAssetDataDriver extends BaseImportExportDriver implements Ass
 
     /**
      * One query per chunk instead of one per row. Keys are lowercased to match
-     * the database's case-insensitive collation; with duplicate filenames the
-     * oldest asset wins.
+     * the database's case-insensitive collation. A filename several assets share
+     * is marked ambiguous, so a row without an id cannot change the wrong one.
      *
      * @param  array<int, array<string, mixed>>  $rows
-     * @return array{id: array<string, Asset>, filename: array<string, Asset>}
+     * @return array{id: array<string, Asset>, filename: array<string, Asset>, ambiguous: array<string, true>}
      */
     protected function prefetchAssets(array $rows): array
     {
@@ -213,24 +230,26 @@ abstract class BaseAssetDataDriver extends BaseImportExportDriver implements Ass
         }
 
         $assets = Asset::query()
-            ->where(fn ($query) => $query
-                ->whereIn('id', $ids)
-                // `filename` has no index, so only scan for it when a row needs it.
-                ->when($filenames !== [], fn ($query) => $query->orWhereIn('filename', $filenames)))
-            ->orderBy('id')
+            ->where(fn ($query) => $query->whereIn('id', $ids)->orWhereIn('filename', $filenames))
             ->get();
 
-        $lookup = ['id' => [], 'filename' => []];
+        $lookup = ['id' => [], 'filename' => [], 'ambiguous' => []];
 
         foreach ($assets as $asset) {
+            $filename = mb_strtolower((string) $asset->filename);
+
+            if (isset($lookup['filename'][$filename])) {
+                $lookup['ambiguous'][$filename] = true;
+            }
+
             $lookup['id'][mb_strtolower($asset->id)] = $asset;
-            $lookup['filename'][mb_strtolower((string) $asset->filename)] ??= $asset;
+            $lookup['filename'][$filename] = $asset;
         }
 
         return $lookup;
     }
 
-    /** @param  array{id: array<string, Asset>, filename: array<string, Asset>}  $lookup */
+    /** @param  array{id: array<string, Asset>, filename: array<string, Asset>, ambiguous: array<string, true>}  $lookup */
     protected function findAsset(array $rowData, array $lookup): ?Asset
     {
         if (! empty($rowData['id'])) {

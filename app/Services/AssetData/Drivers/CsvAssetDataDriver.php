@@ -49,13 +49,7 @@ class CsvAssetDataDriver extends BaseAssetDataDriver
         }
 
         try {
-            while (($row = fgetcsv($handle, escape: '')) !== false) {
-                $combined = array_combine($headers, $row);
-
-                if ($combined !== false) {
-                    yield $combined;
-                }
-            }
+            yield from $this->csvRows($handle, $headers, escape: '');
         } finally {
             fclose($handle);
         }
