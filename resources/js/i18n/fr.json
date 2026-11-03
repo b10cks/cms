@@ -2,6 +2,7 @@
   "labels": {
     "importDialog": {
       "preparing": "Envoi et préparation du fichier…",
+      "moreRows": "{count} autres non affichés. Les totaux ci-dessus les incluent.",
       "progress": "{processed} lignes traitées sur {total}"
     },
     "loading": "Un instant...",

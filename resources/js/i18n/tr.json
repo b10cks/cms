@@ -2,6 +2,7 @@
   "labels": {
     "importDialog": {
       "preparing": "Dosya yükleniyor ve hazırlanıyor…",
+      "moreRows": "{count} tane daha gösterilmiyor. Yukarıdaki toplamlara dahildir.",
       "progress": "{total} satırdan {processed} tanesi işlendi"
     },
     "loading": "Bir saniye...",

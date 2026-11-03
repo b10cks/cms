@@ -2,6 +2,7 @@
   "labels": {
     "importDialog": {
       "preparing": "Загрузка и подготовка файла…",
+      "moreRows": "Ещё {count} не показано. Итоги выше их учитывают.",
       "progress": "Обработано строк: {processed} из {total}"
     },
     "loading": "Минуточку...",

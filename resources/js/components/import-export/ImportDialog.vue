@@ -52,6 +52,9 @@ const props = withDefaults(
   }
 )
 
+/** Summary lists stop here: a large file can report tens of thousands of rows. */
+const MAX_SUMMARY_ROWS = 200
+
 const emit = defineEmits<{
   /** Fired when the dialog clears itself, so wrappers can reset extra options. */
   reset: []
@@ -72,6 +75,11 @@ const progress = ref<ImportProgress | null>(null)
 
 const showSummary = computed(() => importResult.value !== null)
 const activeMode = computed(() => props.modes?.find((mode) => mode.value === importMode.value))
+const summaryChanges = computed(() => importResult.value?.changes.slice(0, MAX_SUMMARY_ROWS) ?? [])
+const summaryDeleted = computed(() => importResult.value?.deleted?.slice(0, MAX_SUMMARY_ROWS) ?? [])
+const summaryErrors = computed(() => importResult.value?.errors.slice(0, MAX_SUMMARY_ROWS) ?? [])
+const hiddenRows = (total: number) =>
+  t('labels.importDialog.moreRows', { count: total - MAX_SUMMARY_ROWS })
 const progressPercent = computed(() =>
   progress.value && progress.value.total > 0
     ? (progress.value.processed / progress.value.total) * 100
@@ -295,7 +303,7 @@ const toggleExpanded = (key: string) => {
               <h3 class="font-medium text-foreground">{{ labels.changesTitle }}</h3>
               <div class="space-y-2">
                 <div
-                  v-for="item in importResult.changes"
+                  v-for="item in summaryChanges"
                   :key="itemKey(item)"
                   class="rounded-lg border"
                 >
@@ -333,6 +341,12 @@ const toggleExpanded = (key: string) => {
                   </div>
                 </div>
               </div>
+              <p
+                v-if="importResult.changes.length > MAX_SUMMARY_ROWS"
+                class="text-xs text-muted-foreground"
+              >
+                {{ hiddenRows(importResult.changes.length) }}
+              </p>
             </div>
 
             <div
@@ -342,7 +356,7 @@ const toggleExpanded = (key: string) => {
               <h3 class="font-medium text-foreground">{{ labels.deletedTitle }}</h3>
               <div :class="deletedVariant === 'tags' ? 'flex flex-wrap gap-2' : 'flex flex-col gap-1'">
                 <span
-                  v-for="(item, index) in importResult.deleted"
+                  v-for="(item, index) in summaryDeleted"
                   :key="`deleted-${index}`"
                   :class="
                     deletedVariant === 'tags'
@@ -353,6 +367,12 @@ const toggleExpanded = (key: string) => {
                   {{ deletedLabel(item) }}
                 </span>
               </div>
+              <p
+                v-if="importResult.deleted.length > MAX_SUMMARY_ROWS"
+                class="text-xs text-muted-foreground"
+              >
+                {{ hiddenRows(importResult.deleted.length) }}
+              </p>
             </div>
 
             <div
@@ -378,7 +398,7 @@ const toggleExpanded = (key: string) => {
               <h3 class="font-medium text-foreground">{{ labels.errorsTitle }}</h3>
               <div class="space-y-2">
                 <div
-                  v-for="(error, index) in importResult.errors"
+                  v-for="(error, index) in summaryErrors"
                   :key="`${index}-${error.message}`"
                   class="rounded-md bg-destructive/10 p-3 text-sm text-destructive"
                 >
@@ -386,6 +406,12 @@ const toggleExpanded = (key: string) => {
                   <div v-if="errorBody(error)">{{ errorBody(error) }}</div>
                 </div>
               </div>
+              <p
+                v-if="importResult.errors.length > MAX_SUMMARY_ROWS"
+                class="text-xs text-muted-foreground"
+              >
+                {{ hiddenRows(importResult.errors.length) }}
+              </p>
             </div>
           </div>
         </ScrollArea>

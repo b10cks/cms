@@ -194,6 +194,18 @@ describe('errors', () => {
     expect(text()).toContain('100 of 250 rows processed')
   })
 
+  it('caps long summary lists and says how many rows it left out', async () => {
+    const errors = Array.from({ length: 250 }, (_, index) => ({ row: index + 1, message: 'Asset not found' }))
+    await mountDialog({ submit: vi.fn().mockResolvedValue({ ...result, errors }) })
+
+    await chooseFile()
+    await click('Import')
+    await flushPromises()
+
+    expect(text().match(/Asset not found/g)).toHaveLength(200)
+    expect(text()).toContain('50 more not shown')
+  })
+
   it('refuses to submit without a file', async () => {
     const submit = vi.fn()
     await mountDialog({ submit })
