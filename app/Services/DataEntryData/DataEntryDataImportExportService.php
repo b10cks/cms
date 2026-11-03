@@ -53,17 +53,18 @@ class DataEntryDataImportExportService extends ImportExportService
         return $driver->export($space, $dataSource, $entries);
     }
 
+    /** @return \Generator<int, array{processed: int, total: int}, mixed, ImportResult> */
     public function importEntries(
         Space $space,
         DataSource $dataSource,
         UploadedFile $file,
         ImportExportFormat $format,
         RedirectImportMode $mode = RedirectImportMode::Addition,
-    ): ImportResult {
+    ): \Generator {
         $driver = $this->getDriver($format);
 
         $this->ensureImportIsValid(fn (): array => $driver->validate($file));
 
-        return $driver->import($space, $dataSource, $file, $mode);
+        return yield from $driver->import($space, $dataSource, $file, $mode);
     }
 }

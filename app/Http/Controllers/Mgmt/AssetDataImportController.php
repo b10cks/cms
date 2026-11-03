@@ -3,52 +3,29 @@
 namespace App\Http\Controllers\Mgmt;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Mgmt\Concerns\RespondsWithImportRun;
 use App\Http\Requests\Asset\ImportAssetDataRequest;
 use App\Models\Management\Space;
 use App\Services\AssetData\AssetDataExportImportService;
-use App\Services\ImportExport\Exceptions\ImportValidationException;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\Log;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class AssetDataImportController extends Controller
 {
+    use RespondsWithImportRun;
+
     public function __invoke(
         ImportAssetDataRequest $request,
         Space $space,
         AssetDataExportImportService $service
-    ): JsonResponse {
+    ): JsonResponse|StreamedResponse {
         $this->authorizeSpace($space, 'assets.manage');
 
-        try {
-            $format = $request->getAssetDataFormat();
-            $file = $request->file('file');
-
-            $result = $service->importAssets($space, $file, $format);
-
-            return response()->json($result->toArray());
-
-        } catch (ImportValidationException $e) {
-            return response()->json([
-                'message' => $e->getMessage(),
-                'errors' => [],
-            ], 422);
-        } catch (\InvalidArgumentException $e) {
-            return response()->json([
-                'message' => $e->getMessage(),
-                'errors' => [],
-            ], 422);
-
-        } catch (\Throwable $e) {
-            Log::error('Asset data import failed', [
-                'space_id' => $space->id,
-                'file' => $request->file('file')->getClientOriginalName(),
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-            ]);
-
-            return response()->json([
-                'message' => 'Failed to import asset data: ' . $e->getMessage(),
-            ], 500);
-        }
+        return $this->importResponse(
+            $request,
+            'asset data',
+            fn () => $service->importAssets($space, $request->file('file'), $request->getAssetDataFormat()),
+            ['space_id' => $space->id],
+        );
     }
 }

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Mgmt\Ai;
 
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\Mgmt\Concerns\ResolvesAiOwner;
+use App\Http\Controllers\Mgmt\Concerns\RespondsWithImportRun;
 use App\Http\Requests\Ai\ImportAiGlossaryRequest;
 use App\Http\Requests\Ai\SaveAiGlossaryRequest;
 use App\Http\Requests\Ai\SaveAiGlossaryTermRequest;
@@ -14,16 +15,19 @@ use App\Models\Management\Space;
 use App\Models\Management\Team;
 use App\Services\Ai\Knowledge\AiLayers;
 use App\Services\Ai\Knowledge\GlossaryTransfer;
+use App\Services\ImportExport\ImportRun;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Validation\Rule;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /** Glossaries and their terms, with CSV, XLSX and TBX import and export. */
 class AiGlossaryController extends Controller
 {
     use ResolvesAiOwner;
+    use RespondsWithImportRun;
 
     /** `?inherited=1` adds the glossaries of the owning and ancestor teams, read-only for this owner. */
     public function index(Request $request, AiLayers $layers): AnonymousResourceCollection
@@ -103,11 +107,16 @@ class AiGlossaryController extends Controller
         return response()->json(null, 204);
     }
 
-    public function import(ImportAiGlossaryRequest $request, Space|Team|string $owner, string $glossary, GlossaryTransfer $transfer): JsonResponse
+    public function import(ImportAiGlossaryRequest $request, Space|Team|string $owner, string $glossary, GlossaryTransfer $transfer): JsonResponse|StreamedResponse
     {
         $model = $this->findGlossary($request, $glossary, 'manage');
+        $run = $transfer->import($model, $request->file('file'));
 
-        return response()->json(['data' => $transfer->import($model, $request->file('file'))->toArray()]);
+        if ($this->wantsImportStream($request)) {
+            return $this->streamImport($run, 'glossary terms', ['glossary_id' => $model->id]);
+        }
+
+        return response()->json(['data' => ImportRun::drain($run)->toArray()]);
     }
 
     public function export(Request $request, Space|Team|string $owner, string $glossary, GlossaryTransfer $transfer): Response

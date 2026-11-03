@@ -26,11 +26,12 @@ abstract class BaseDataEntryDataDriver extends RecordImportDriver implements Dat
 
     abstract public function export(Space $space, DataSource $dataSource, Enumerable $entries): Response;
 
-    public function import(Space $space, DataSource $dataSource, UploadedFile $file, RedirectImportMode $mode = RedirectImportMode::Addition): ImportResult
+    /** @return \Generator<int, array{processed: int, total: int}, mixed, ImportResult> */
+    public function import(Space $space, DataSource $dataSource, UploadedFile $file, RedirectImportMode $mode = RedirectImportMode::Addition): \Generator
     {
         $this->dataSource = $dataSource;
 
-        return $this->runImport($space, $file, $mode);
+        return yield from $this->runImport($space, $file, $mode);
     }
 
     protected function importableColumns(): array

@@ -28,11 +28,19 @@ class IconDataImportService
      */
     private const MAX_ICONS = 5000;
 
+    private const CHUNK_SIZE = 50;
+
     public function __construct(
         private readonly IconSvgParser $parser,
     ) {}
 
-    public function importIcons(Space $space, UploadedFile $file, IconImportMode $mode): ImportResult
+    /**
+     * All or nothing: one transaction spans the file, so a failed replacement
+     * keeps the old icons. Broadcasts stay muted per chunk, never across a yield.
+     *
+     * @return \Generator<int, array{processed: int, total: int}, mixed, ImportResult>
+     */
+    public function importIcons(Space $space, UploadedFile $file, IconImportMode $mode): \Generator
     {
         $data = $this->decode($file);
 
@@ -46,51 +54,84 @@ class IconDataImportService
         $deleted = [];
         $errors = [];
 
-        (new Icon())->getConnection()->transaction(function () use (
-            $iconSet, $defaultWidth, $defaultHeight, $tagsByName, $mode,
-            &$successes, &$changes, &$deleted, &$errors,
-        ): void {
+        $total = \count($iconSet);
+        $processed = 0;
+        $connection = (new Icon())->getConnection();
+        $committed = false;
+
+        $connection->beginTransaction();
+
+        try {
             if ($mode === IconImportMode::Replacement) {
-                $deleted = $this->pruneExistingIcons();
+                $deleted = Icon::withoutBroadcasts(fn (): array => $this->pruneExistingIcons());
             }
 
-            foreach ($iconSet as $sourceName => $definition) {
-                try {
-                    $prepared = $this->prepareIcon(
-                        (string) $sourceName,
-                        \is_array($definition) ? $definition : [],
-                        $defaultWidth,
-                        $defaultHeight,
-                        $tagsByName,
-                    );
-                } catch (\Throwable $e) {
-                    $errors[] = ['id' => (string) $sourceName, 'message' => $e->getMessage()];
+            yield ['processed' => $processed, 'total' => $total];
 
-                    continue;
-                }
+            foreach (array_chunk($iconSet, self::CHUNK_SIZE, preserve_keys: true) as $chunk) {
+                Icon::withoutBroadcasts(function () use (
+                    $chunk, $defaultWidth, $defaultHeight, $tagsByName, $mode,
+                    &$successes, &$changes, &$errors,
+                ): void {
+                    $prepared = [];
 
-                // In replacement mode everything was just pruned, so always insert.
-                $existing = $mode === IconImportMode::Addition
-                    ? Icon::query()->where('key', $prepared['key'])->first()
-                    : null;
-
-                if ($existing) {
-                    $diff = $this->applyUpdate($existing, $prepared);
-                    if ($diff !== []) {
-                        $changes[] = ['id' => $existing->id, 'key' => $existing->key, 'changes' => $diff];
-                    } else {
-                        $successes[] = ['id' => $existing->id, 'key' => $existing->key];
+                    foreach ($chunk as $sourceName => $definition) {
+                        try {
+                            $prepared[] = $this->prepareIcon(
+                                (string) $sourceName,
+                                \is_array($definition) ? $definition : [],
+                                $defaultWidth,
+                                $defaultHeight,
+                                $tagsByName,
+                            );
+                        } catch (\Throwable $e) {
+                            $errors[] = ['id' => (string) $sourceName, 'message' => $e->getMessage()];
+                        }
                     }
 
-                    continue;
-                }
+                    // In replacement mode everything was just pruned, so always insert.
+                    $existingByKey = $mode === IconImportMode::Addition
+                        ? Icon::query()->whereIn('key', array_column($prepared, 'key'))->get()->keyBy('key')->all()
+                        : [];
 
-                $icon = new Icon();
-                $icon->fill($prepared);
-                $icon->save();
-                $successes[] = ['id' => $icon->id, 'key' => $icon->key];
+                    foreach ($prepared as $icon) {
+                        $existing = $existingByKey[$icon['key']] ?? null;
+
+                        if ($existing) {
+                            $diff = $this->applyUpdate($existing, $icon);
+                            if ($diff !== []) {
+                                $changes[] = ['id' => $existing->id, 'key' => $existing->key, 'changes' => $diff];
+                            } else {
+                                $successes[] = ['id' => $existing->id, 'key' => $existing->key];
+                            }
+
+                            continue;
+                        }
+
+                        $created = new Icon();
+                        $created->fill($icon);
+                        $created->save();
+                        $existingByKey[$created->key] = $created;
+                        $successes[] = ['id' => $created->id, 'key' => $created->key];
+                    }
+                });
+
+                $processed += \count($chunk);
+
+                yield ['processed' => $processed, 'total' => $total];
             }
-        });
+
+            $connection->commit();
+            $committed = true;
+        } finally {
+            if (! $committed) {
+                $connection->rollBack();
+            }
+        }
+
+        if ($successes !== [] || $changes !== [] || $deleted !== []) {
+            Icon::broadcastBulkChange($space);
+        }
 
         return new ImportResult(
             successes: $successes,

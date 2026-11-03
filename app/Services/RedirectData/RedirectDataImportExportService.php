@@ -54,16 +54,17 @@ class RedirectDataImportExportService extends ImportExportService
         return $driver->export($space, $query->cursor());
     }
 
+    /** @return \Generator<int, array{processed: int, total: int}, mixed, ImportResult> */
     public function importRedirects(
         Space $space,
         UploadedFile $file,
         ImportExportFormat $format,
         RedirectImportMode $mode = RedirectImportMode::Addition,
-    ): ImportResult {
+    ): \Generator {
         $driver = $this->getDriver($format);
 
         $this->ensureImportIsValid(fn (): array => $driver->validate($file));
 
-        return $driver->import($space, $file, $mode);
+        return yield from $driver->import($space, $file, $mode);
     }
 }

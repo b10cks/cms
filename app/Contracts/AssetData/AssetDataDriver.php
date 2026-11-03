@@ -17,12 +17,13 @@ interface AssetDataDriver extends ImportExportDriver
         array $languages
     ): Response;
 
+    /** @return \Generator<int, array{processed: int, total: int}, mixed, ImportResult> */
     public function import(
         Space $space,
         UploadedFile $file,
         array $assetFields,
         array $languages
-    ): ImportResult;
+    ): \Generator;
 
     public function validate(
         UploadedFile $file,

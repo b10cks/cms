@@ -12,6 +12,9 @@ abstract class BaseImportExportDriver
 {
     use BuildsExportFilename;
 
+    /** Rows per transaction. Progress is reported between chunks, so this also bounds the silence on a stream. */
+    protected const IMPORT_CHUNK_SIZE = 100;
+
     protected array $successes = [];
 
     protected array $changes = [];

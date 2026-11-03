@@ -26,6 +26,8 @@ class GlossaryTransfer
 
     public const FORMATS = ['csv', 'xlsx', 'tbx'];
 
+    private const IMPORT_CHUNK_SIZE = 100;
+
     private const BASE_COLUMNS = ['source_locale', 'term', 'case_sensitive', 'do_not_translate', 'forbidden', 'note'];
 
     public function export(AiGlossary $glossary, string $format): Response
@@ -57,7 +59,8 @@ class GlossaryTransfer
             : $this->xlsxDownload($headings, $rows, $filename);
     }
 
-    public function import(AiGlossary $glossary, UploadedFile $file): ImportResult
+    /** @return \Generator<int, array{processed: int, total: int}, mixed, ImportResult> */
+    public function import(AiGlossary $glossary, UploadedFile $file): \Generator
     {
         $extension = strtolower($file->getClientOriginalExtension());
         $rows = match ($extension) {
@@ -70,31 +73,45 @@ class GlossaryTransfer
         $successes = [];
         $errors = [];
 
-        foreach ($rows as $index => $row) {
-            $term = trim((string) ($row['term'] ?? ''));
-            $locale = trim((string) ($row['source_locale'] ?? ''));
+        $total = \count($rows);
+        $processed = 0;
+        $connection = (new AiGlossaryTerm())->getConnection();
 
-            if ($term === '' || $locale === '') {
-                $errors[] = ['row' => $index + 1, 'message' => 'A term and its source locale are required.'];
+        yield ['processed' => $processed, 'total' => $total];
 
-                continue;
-            }
+        foreach (array_chunk($rows, self::IMPORT_CHUNK_SIZE, preserve_keys: true) as $chunk) {
+            $connection->transaction(function () use ($chunk, $glossary, &$existing, &$successes, &$errors): void {
+                foreach ($chunk as $index => $row) {
+                    $term = trim((string) ($row['term'] ?? ''));
+                    $locale = trim((string) ($row['source_locale'] ?? ''));
 
-            $attributes = [
-                'source_locale' => $locale,
-                'term' => mb_substr($term, 0, 255),
-                'translations' => array_filter($row['translations'] ?? [], fn ($value) => \is_string($value) && trim($value) !== ''),
-                'case_sensitive' => (bool) ($row['case_sensitive'] ?? false),
-                'do_not_translate' => (bool) ($row['do_not_translate'] ?? false),
-                'forbidden' => array_values(array_filter($row['forbidden'] ?? [], fn ($value) => \is_string($value) && trim($value) !== '')),
-                'note' => ($row['note'] ?? '') !== '' ? $row['note'] : null,
-            ];
+                    if ($term === '' || $locale === '') {
+                        $errors[] = ['row' => $index + 1, 'message' => 'A term and its source locale are required.'];
 
-            $key = strtolower($locale).'|'.mb_strtolower($attributes['term']);
-            $model = $existing[$key] ?? new AiGlossaryTerm(['glossary_id' => $glossary->id]);
-            $model->fill($attributes)->save();
-            $existing[$key] = $model;
-            $successes[] = ['row' => $index + 1, 'term' => $model->term];
+                        continue;
+                    }
+
+                    $attributes = [
+                        'source_locale' => $locale,
+                        'term' => mb_substr($term, 0, 255),
+                        'translations' => array_filter($row['translations'] ?? [], fn ($value) => \is_string($value) && trim($value) !== ''),
+                        'case_sensitive' => (bool) ($row['case_sensitive'] ?? false),
+                        'do_not_translate' => (bool) ($row['do_not_translate'] ?? false),
+                        'forbidden' => array_values(array_filter($row['forbidden'] ?? [], fn ($value) => \is_string($value) && trim($value) !== '')),
+                        'note' => ($row['note'] ?? '') !== '' ? $row['note'] : null,
+                    ];
+
+                    $key = strtolower($locale).'|'.mb_strtolower($attributes['term']);
+                    $model = $existing[$key] ?? new AiGlossaryTerm(['glossary_id' => $glossary->id]);
+                    $model->fill($attributes)->save();
+                    $existing[$key] = $model;
+                    $successes[] = ['row' => $index + 1, 'term' => $model->term];
+                }
+            });
+
+            $processed += \count($chunk);
+
+            yield ['processed' => $processed, 'total' => $total];
         }
 
         return new ImportResult(successes: $successes, errors: $errors);

@@ -54,7 +54,7 @@ Standard REST verbs apply (`GET` list/show, `POST` create, `PATCH` update, `DELE
 | `POST …/contents/{content}/move` | Re-parent/reorder |
 | `POST …/contents/bulk-create` | Create many entries at once |
 | `POST …/contents/tree-operations` | Apply staged tree changes (the Canvas's apply) |
-| `POST …/contents/import` / `export` | Content import/export (`export` takes `fields` and `languages` comma lists, and `grid=1` for the Mass Edit selection; `import` with `Accept: text/event-stream` streams `{processed, total}` progress and ends with the result, needed for large files) |
+| `POST …/contents/import` / `export` | Content import/export (`export` takes `fields` and `languages` comma lists, and `grid=1` for the Mass Edit selection; `import` streams progress with `Accept: text/event-stream`, see [Streaming imports](#streaming-imports)) |
 | `GET …/mass-edit/fields` | Translatable fields aggregated across all block schemas, incl. nested blocks |
 | `GET …/mass-edit/rows` | Paginated translation units for the selected `fields` / `languages`, filterable |
 | `PATCH …/mass-edit/rows` | Write a delta of edited cells, keyed by unit id ([Mass Edit](../ui/mass-edit.md)) |
@@ -66,7 +66,7 @@ Create/update releases, `POST …/commit` and `POST …/cancel` them, schedule v
 
 ### Assets
 
-Upload, `POST …/assets/{asset}/replace-file`, `POST`/`DELETE …/assets/{asset}/poster` (custom poster/thumbnail for any non-image asset; deleting restores a video's generated frames), restore versions, import/export metadata, manage folders and tags (including `POST …/asset-tags/{tag}/assign`).
+Upload, `POST …/assets/{asset}/replace-file`, `POST`/`DELETE …/assets/{asset}/poster` (custom poster/thumbnail for any non-image asset; deleting restores a video's generated frames), restore versions, import/export metadata ([streamable](#streaming-imports)), manage folders and tags (including `POST …/asset-tags/{tag}/assign`).
 
 ### AI endpoints
 
@@ -74,9 +74,16 @@ Streaming endpoints for content generation and translation (`POST …/translate/
 
 ### Operations
 
-Search reindex (`POST …/search/reindex`), redirects import/export and stat resets, icon import, backups, migrations, subscription management, audit logs, presence endpoints for collaboration.
+Search reindex (`POST …/search/reindex`), redirects import/export and stat resets, icon import ([both streamable](#streaming-imports)), backups, migrations, subscription management, audit logs, presence endpoints for collaboration.
 
-## Reference
+### Streaming imports
+
+Asset metadata, redirects, data entries, icons, content translations and glossary terms all import through `POST …/import` with a multipart `file`.
+
+Send `Accept: text/event-stream` for large files. The response is server-sent events: `status` events whose `message` is JSON `{processed, total}`, then a `done` event carrying the result in `data`, or an `error` event with `message`. A file that fails validation is an `error` event on a stream and a 422 otherwise.
+
+Without that header the result is one JSON response, which has to finish within the request time limit (30 seconds through the CDN).
+
 
 The complete, always-current endpoint list with request/response schemas is the generated OpenAPI spec — see [Generated OpenAPI specs](openapi.md). Generate it on your instance with:
 

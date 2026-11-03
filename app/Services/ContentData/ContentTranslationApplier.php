@@ -6,6 +6,7 @@ use App\Actions\Content\CreateContent;
 use App\Actions\Content\PublishContent;
 use App\Actions\Content\UpdateContent;
 use App\DTOs\ImportExport\ImportResult;
+use App\Services\ImportExport\ImportRun;
 use App\Enums\ContentTranslationImportMode;
 use App\Events\Space\ContentsChanged;
 use App\Models\Management\Space;
@@ -61,13 +62,7 @@ class ContentTranslationApplier
         bool $allowSourceEdits = false,
         bool $applyEmpty = false,
     ): ImportResult {
-        $run = $this->applyIncrementally($space, $documents, $mode, $createMissing, $owner, $allowSourceEdits, $applyEmpty);
-
-        foreach ($run as $_) {
-            // Drain: progress only matters to streaming callers.
-        }
-
-        return $run->getReturn();
+        return ImportRun::drain($this->applyIncrementally($space, $documents, $mode, $createMissing, $owner, $allowSourceEdits, $applyEmpty));
     }
 
     /**
