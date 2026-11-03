@@ -95,9 +95,24 @@ const onImport = async (event: Event) => {
   input.value = ''
   if (!file) return
 
-  const { data } = await importTerms({ glossaryId: props.glossaryId, file })
-  if (data.summary.total_errors > 0) {
-    toast.warning(t('components.aiSettings.glossaries.importErrors', { count: data.summary.total_errors }))
+  const progressToast = toast.loading(t('labels.importDialog.preparing'))
+
+  try {
+    const { summary } = await importTerms({
+      glossaryId: props.glossaryId,
+      file,
+      onProgress: ({ processed, total }) => {
+        if (total > 0) {
+          toast.loading(t('labels.importDialog.progress', { processed, total }), { id: progressToast })
+        }
+      },
+    })
+
+    if (summary.total_errors > 0) {
+      toast.warning(t('components.aiSettings.glossaries.importErrors', { count: summary.total_errors }))
+    }
+  } finally {
+    toast.dismiss(progressToast)
   }
 }
 

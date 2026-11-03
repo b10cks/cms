@@ -1,5 +1,9 @@
 {
   "labels": {
+    "importDialog": {
+      "preparing": "Envoi et préparation du fichier…",
+      "progress": "{processed} lignes traitées sur {total}"
+    },
     "loading": "Un instant...",
     "never": "Jamais",
     "notifications": {

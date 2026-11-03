@@ -15,6 +15,7 @@ import type {
   ImportDialogLabels,
   ImportDialogMode,
   ImportDialogResult,
+  ImportDialogSubmit,
   ImportError,
   ImportProgress,
 } from '~/types/import-export'
@@ -25,10 +26,9 @@ const props = withDefaults(
     accept: string
     labels: ImportDialogLabels
     /** Runs the feature mutation; its resolved value drives the summary step. */
-    submit: (file: File, mode: TMode) => Promise<ImportDialogResult<TItem, TDeleted>>
+    submit: ImportDialogSubmit<ImportDialogResult<TItem, TDeleted>, TMode>
     pending: boolean
-    /** Live progress of a streaming import, shown while it runs. */
-    progress?: ImportProgress | null
+    /** Overrides the generic "x of y rows" text. */
     progressLabel?: (progress: ImportProgress) => string
     /** Strategy tiles. Omit for importers that take no mode. */
     modes?: ImportDialogMode<TMode>[]
@@ -42,8 +42,7 @@ const props = withDefaults(
     contentClass?: string
   }>(),
   {
-    progress: null,
-    progressLabel: (progress: ImportProgress) => `${progress.processed} / ${progress.total}`,
+    progressLabel: undefined,
     modes: undefined,
     deletedLabel: undefined,
     deletedVariant: 'list',
@@ -60,6 +59,8 @@ const emit = defineEmits<{
 
 const open = defineModel<boolean>('open', { default: false })
 
+const { t } = useI18n()
+
 const defaultMode = () => props.modes?.[0]?.value as TMode
 
 const selectedFile = ref<File | null>(null)
@@ -67,14 +68,27 @@ const importMode = ref(defaultMode()) as Ref<TMode>
 const errorMessage = ref('')
 const importResult = ref(null) as Ref<ImportDialogResult<TItem, TDeleted> | null>
 const expanded = ref<Set<string>>(new Set())
+const progress = ref<ImportProgress | null>(null)
 
 const showSummary = computed(() => importResult.value !== null)
 const activeMode = computed(() => props.modes?.find((mode) => mode.value === importMode.value))
 const progressPercent = computed(() =>
-  props.progress && props.progress.total > 0
-    ? (props.progress.processed / props.progress.total) * 100
+  progress.value && progress.value.total > 0
+    ? (progress.value.processed / progress.value.total) * 100
     : 0
 )
+const progressText = computed(() => {
+  if (!progress.value || progress.value.total === 0) {
+    return t('labels.importDialog.preparing')
+  }
+
+  return props.progressLabel
+    ? props.progressLabel(progress.value)
+    : t('labels.importDialog.progress', {
+        processed: progress.value.processed,
+        total: progress.value.total,
+      })
+})
 
 const handleImport = async () => {
   if (!selectedFile.value) {
@@ -86,9 +100,13 @@ const handleImport = async () => {
   importResult.value = null
 
   try {
-    importResult.value = await props.submit(selectedFile.value, importMode.value)
+    importResult.value = await props.submit(selectedFile.value, importMode.value, (value) => {
+      progress.value = value
+    })
   } catch (error) {
     errorMessage.value = error instanceof Error ? error.message : props.labels.fallbackError
+  } finally {
+    progress.value = null
   }
 }
 
@@ -178,11 +196,14 @@ const toggleExpanded = (key: string) => {
           <slot name="options" />
 
           <div
-            v-if="pending && progress"
+            v-if="pending"
             class="space-y-1.5"
           >
-            <Progress :model-value="progressPercent" />
-            <p class="text-xs tabular-nums text-muted-foreground">{{ progressLabel(progress) }}</p>
+            <Progress
+              :model-value="progressPercent"
+              :class="progressPercent === 0 && 'animate-pulse'"
+            />
+            <p class="text-xs tabular-nums text-muted-foreground">{{ progressText }}</p>
           </div>
 
           <div

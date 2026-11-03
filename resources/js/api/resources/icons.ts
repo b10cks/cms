@@ -1,5 +1,6 @@
-import { requestImportJson } from '~/lib/import-export'
+import { requestImportStream } from '~/lib/import-export'
 import { xhrUpload } from '~/lib/xhr-upload'
+import type { ImportProgress } from '~/types/import-export'
 
 import type { ApiClient } from '../client'
 import { BaseResource } from './base-resource'
@@ -76,13 +77,15 @@ export class Icons extends BaseResource<
    */
   public async importData(
     file: File,
-    mode: IconImportMode = 'addition'
+    mode: IconImportMode = 'addition',
+    onProgress?: (progress: ImportProgress) => void
   ): Promise<IconDataImportResult> {
-    return requestImportJson<IconDataImportResult>({
+    return requestImportStream<IconDataImportResult>({
       client: this.client,
       endpoint: `${this.basePath}/import`,
       file,
       extraFields: { import_mode: mode },
+      onProgress,
     })
   }
 }

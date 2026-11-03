@@ -1,5 +1,8 @@
 import type { AiResolvedSkill, AiScope } from './ai'
 
+import { requestImportStream } from '~/lib/import-export'
+import type { ImportProgress } from '~/types/import-export'
+
 import type { ApiClient } from '../client'
 
 /** Skills, knowledge and glossaries live on a space or a team. */
@@ -218,14 +221,17 @@ export class AiKnowledge {
     return this.client.delete(`${this.base}/glossaries/${glossaryId}/terms/${termId}`)
   }
 
-  public importTerms(glossaryId: string, file: File) {
-    const form = new FormData()
-    form.append('file', file)
-
-    return this.client.post<{ data: AiImportSummary }>(
-      `${this.base}/glossaries/${glossaryId}/import`,
-      form
-    )
+  public importTerms(
+    glossaryId: string,
+    file: File,
+    onProgress?: (progress: ImportProgress) => void
+  ) {
+    return requestImportStream<AiImportSummary>({
+      client: this.client,
+      endpoint: `${this.base}/glossaries/${glossaryId}/import`,
+      file,
+      onProgress,
+    })
   }
 
   public exportUrl(glossaryId: string, format: AiGlossaryExportFormat) {

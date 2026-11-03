@@ -1,7 +1,11 @@
 <script setup lang="ts">
 import ImportDialog from '~/components/import-export/ImportDialog.vue'
 import type { DataEntryImportMode, DataEntryImportResult } from '~/types/data-sources'
-import type { ImportDialogLabels, ImportDialogMode } from '~/types/import-export'
+import type {
+  ImportDialogLabels,
+  ImportDialogMode,
+  ImportDialogSubmit,
+} from '~/types/import-export'
 
 const props = defineProps<{
   spaceId: string
@@ -53,8 +57,11 @@ const modes = computed<ImportDialogMode<DataEntryImportMode>[]>(() => [
 
 const emptyValue = computed(() => t('labels.dataEntries.importDialog.emptyValue'))
 
-const submit = (file: File, mode: DataEntryImportMode): Promise<DataEntryImportResult> =>
-  importMutation.mutateAsync({ file, mode })
+const submit: ImportDialogSubmit<DataEntryImportResult, DataEntryImportMode> = (
+  file,
+  mode,
+  onProgress
+) => importMutation.mutateAsync({ file, mode, onProgress })
 </script>
 
 <template>

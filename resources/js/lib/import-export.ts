@@ -62,7 +62,7 @@ interface ImportRequest {
 
 async function postImport(
   { client, endpoint, file, extraFields }: ImportRequest,
-  headers: Record<string, string> = {}
+  headers: Record<string, string>
 ): Promise<Response> {
   if (typeof window === 'undefined') {
     throw new Error('Import is only available in the browser')
@@ -91,20 +91,10 @@ async function postImport(
   })
 }
 
-export async function requestImportJson<T>(request: ImportRequest): Promise<T> {
-  const response = await postImport(request)
-
-  if (!response.ok) {
-    throw new Error(await parseErrorMessage(response, 'Import failed'))
-  }
-
-  return response.json() as Promise<T>
-}
-
 /**
  * Import over server-sent events: the endpoint reports `{processed, total}` while it
- * works and sends the result with the final `done` event. Used where a large file
- * outlives a plain request's time limit.
+ * works and sends the result with the final `done` event, so a large file can outlive
+ * a plain request's time limit.
  */
 export async function requestImportStream<T>(
   request: ImportRequest & { onProgress?: (progress: ImportProgress) => void }

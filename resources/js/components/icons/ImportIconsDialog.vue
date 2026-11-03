@@ -1,6 +1,10 @@
 <script setup lang="ts">
 import ImportDialog from '~/components/import-export/ImportDialog.vue'
-import type { ImportDialogLabels, ImportDialogMode } from '~/types/import-export'
+import type {
+  ImportDialogLabels,
+  ImportDialogMode,
+  ImportDialogSubmit,
+} from '~/types/import-export'
 
 const props = defineProps<{
   spaceId: string
@@ -50,8 +54,8 @@ const modes = computed<ImportDialogMode<IconImportMode>[]>(() => [
   },
 ])
 
-const submit = (file: File, mode: IconImportMode): Promise<IconDataImportResult> =>
-  importMutation.mutateAsync({ file, mode })
+const submit: ImportDialogSubmit<IconDataImportResult, IconImportMode> = (file, mode, onProgress) =>
+  importMutation.mutateAsync({ file, mode, onProgress })
 </script>
 
 <template>

@@ -1,4 +1,5 @@
-import { requestExportBlob, requestImportJson } from '~/lib/import-export'
+import { requestExportBlob, requestImportStream } from '~/lib/import-export'
+import type { ImportProgress } from '~/types/import-export'
 
 import type { ApiClient } from '../client'
 import { BaseResource } from './base-resource'
@@ -34,12 +35,17 @@ export class Redirects extends BaseResource<
     })
   }
 
-  public async importData(file: File, mode: RedirectImportMode = 'addition'): Promise<RedirectDataImportResult> {
-    return requestImportJson<RedirectDataImportResult>({
+  public async importData(
+    file: File,
+    mode: RedirectImportMode = 'addition',
+    onProgress?: (progress: ImportProgress) => void
+  ): Promise<RedirectDataImportResult> {
+    return requestImportStream<RedirectDataImportResult>({
       client: this.client,
       endpoint: `${this.basePath}/import`,
       file,
       extraFields: { import_mode: mode },
+      onProgress,
     })
   }
 }

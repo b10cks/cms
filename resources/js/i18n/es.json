@@ -1,5 +1,9 @@
 {
   "labels": {
+    "importDialog": {
+      "preparing": "Subiendo y preparando el archivo…",
+      "progress": "{processed} de {total} filas procesadas"
+    },
     "loading": "Un momento...",
     "never": "Nunca",
     "notifications": {

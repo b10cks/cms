@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import ImportDialog from '~/components/import-export/ImportDialog.vue'
-import type { ImportDialogLabels } from '~/types/import-export'
+import type { ImportDialogLabels, ImportDialogSubmit } from '~/types/import-export'
 
 const props = defineProps<{
   spaceId: string
@@ -32,7 +32,8 @@ const labels = computed<ImportDialogLabels>(() => ({
 
 const emptyValue = computed(() => t('labels.assets.importDialog.emptyValue'))
 
-const submit = (file: File): Promise<AssetDataImportResult> => importMutation.mutateAsync(file)
+const submit: ImportDialogSubmit<AssetDataImportResult> = (file, _mode, onProgress) =>
+  importMutation.mutateAsync({ file, onProgress })
 </script>
 
 <template>

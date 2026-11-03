@@ -1,5 +1,9 @@
 {
   "labels": {
+    "importDialog": {
+      "preparing": "Datei wird hochgeladen und vorbereitet…",
+      "progress": "{processed} von {total} Zeilen verarbeitet"
+    },
     "notifications": {
       "url": {
         "email_verified": "Deine E-Mail-Adresse wurde erfolgreich bestätigt.",

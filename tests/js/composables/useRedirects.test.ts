@@ -356,7 +356,7 @@ describe('useImportRedirectsMutation', () => {
 
     await importAll.mutateAsync({ file, mode: 'replacement' })
 
-    expect(importData).toHaveBeenCalledWith(file, 'replacement')
+    expect(importData).toHaveBeenCalledWith(file, 'replacement', undefined)
     expect(invalidate).toHaveBeenCalledWith({ queryKey: keys.lists() })
     expect(success).toHaveBeenCalledWith('Redirects imported successfully')
   })

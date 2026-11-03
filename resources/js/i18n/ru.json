@@ -1,5 +1,9 @@
 {
   "labels": {
+    "importDialog": {
+      "preparing": "Загрузка и подготовка файла…",
+      "progress": "Обработано строк: {processed} из {total}"
+    },
     "loading": "Минуточку...",
     "never": "Никогда",
     "notifications": {

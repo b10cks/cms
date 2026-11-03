@@ -570,9 +570,9 @@ describe('export and import', () => {
     const { importAssets } = mutations()
     const invalidate = spyInvalidate()
 
-    await importAssets.mutateAsync(file)
+    await importAssets.mutateAsync({ file })
 
-    expect(assets.importData).toHaveBeenCalledWith(file)
+    expect(assets.importData).toHaveBeenCalledWith(file, undefined)
     expect(invalidatedKeys(invalidate)).toEqual([queryKeys.assets(SPACE).lists()])
     expect(success).toHaveBeenCalledWith('Assets imported successfully')
   })
@@ -580,7 +580,7 @@ describe('export and import', () => {
   it('reports an import failure', async () => {
     assets.importData.mockRejectedValue(new Error('bad json'))
 
-    await expect(mutations().importAssets.mutateAsync(new File(['x'], 'x.json'))).rejects.toThrow(
+    await expect(mutations().importAssets.mutateAsync({ file: new File(['x'], 'x.json') })).rejects.toThrow(
       'bad json'
     )
     expect(failure).toHaveBeenCalledWith('Failed to import assets: bad json')

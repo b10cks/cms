@@ -501,7 +501,7 @@ describe('useImportDataEntriesMutation', () => {
 
     await importAll.mutateAsync({ file, mode: 'replacement' })
 
-    expect(importEntries).toHaveBeenCalledWith(SOURCE, file, 'replacement')
+    expect(importEntries).toHaveBeenCalledWith(SOURCE, file, 'replacement', undefined)
     expect(invalidate).toHaveBeenCalledWith({ queryKey: keys.lists() })
     expect(invalidate).toHaveBeenCalledWith({ queryKey: sourceKeys.detail(SOURCE) })
     expect(success).toHaveBeenCalledWith('Data entries imported successfully')

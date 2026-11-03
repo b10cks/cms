@@ -9,6 +9,7 @@ import type {
   AiSkillPayload,
 } from '~/api/resources/ai-knowledge'
 import { toastError } from '~/lib/toast-error'
+import type { ImportProgress } from '~/types/import-export'
 
 /**
  * Queries and mutations for the skills, knowledge documents and glossaries of
@@ -152,7 +153,15 @@ export function useAiKnowledge(owner: MaybeRefOrGetter<AiOwner>) {
       ),
     useImportTermsMutation: () =>
       mutation(
-        ({ glossaryId, file }: { glossaryId: string; file: File }) => resource().importTerms(glossaryId, file),
+        ({
+          glossaryId,
+          file,
+          onProgress,
+        }: {
+          glossaryId: string
+          file: File
+          onProgress?: (progress: ImportProgress) => void
+        }) => resource().importTerms(glossaryId, file, onProgress),
         'composables.aiKnowledge.imported',
         'composables.aiKnowledge.importError'
       ),
