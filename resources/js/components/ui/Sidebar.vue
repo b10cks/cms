@@ -134,7 +134,8 @@ const availableLocales = locales
     ]"
   >
     <div class="flex min-h-0 flex-1 flex-col overflow-y-auto">
-      <div
+      <nav
+        :aria-label="t('labels.mainNavigation')"
         :class="[
           'relative flex w-full min-w-0 flex-col transition-[gap] duration-200 ease-butter',
           isExtendedSidebar ? 'gap-1' : 'gap-2',
@@ -156,15 +157,16 @@ const availableLocales = locales
           class="group/nav relative flex w-full"
         >
           <SimpleTooltip
-            class="w-full"
             :tooltip="menuLabel(m.label)"
             :disabled="isExtendedSidebar"
             side="right"
+            as-child
           >
             <RouterLink
               :to="buildLink(m.routeName)"
+              :aria-label="menuLabel(m.label)"
               :class="[
-                'icon-anim flex w-full flex-col items-center justify-center rounded-lg text-center transition-[padding,gap,background-color,color] duration-200 ease-butter hover:bg-sidebar-accent',
+                'icon-anim flex w-full flex-col items-center justify-center rounded-lg text-center transition-[padding,gap,background-color,color] duration-200 ease-butter hover:bg-sidebar-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none focus-visible:ring-inset',
                 isExtendedSidebar ? 'gap-1 p-2' : 'gap-0 p-1.5',
               ]"
               active-class="text-sidebar-accent-foreground bg-sidebar-accent"
@@ -210,7 +212,7 @@ const availableLocales = locales
             />
           </button>
         </div>
-      </div>
+      </nav>
     </div>
     <div class="flex flex-col items-center gap-2">
       <DropdownMenu>

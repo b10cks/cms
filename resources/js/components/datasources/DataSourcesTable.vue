@@ -222,19 +222,22 @@ const confirmDelete = async () => {
                 >
               </TableCell>
               <TableCell>
-                <SimpleTooltip
-                  class="flex items-center gap-2"
-                  :tooltip="$t('labels.datasets.copySlugTooltip')"
-                >
+                <div class="flex items-center gap-2">
                   <span class="font-mono">{{ dataSource.slug }}</span>
-                  <button
-                    class="cursor-pointer text-muted hover:text-primary"
-                    :aria-label="$t('labels.datasets.copySlugTooltip')"
-                    @click.stop="copySlug(dataSource.slug)"
+                  <SimpleTooltip
+                    :tooltip="$t('labels.datasets.copySlugTooltip')"
+                    as-child
                   >
-                    <Icon name="lucide:copy" />
-                  </button>
-                </SimpleTooltip>
+                    <button
+                      type="button"
+                      class="cursor-pointer text-muted hover:text-primary"
+                      :aria-label="$t('labels.datasets.copySlugTooltip')"
+                      @click.stop="copySlug(dataSource.slug)"
+                    >
+                      <Icon name="lucide:copy" />
+                    </button>
+                  </SimpleTooltip>
+                </div>
               </TableCell>
               <TableCell class="max-w-75 truncate">{{ dataSource.description || '-' }}</TableCell>
               <TableCell>

@@ -376,12 +376,13 @@ const removeAllOutOfSchemaKeys = (): void => {
         {{ currentBlock?.name || currentBlock?.slug }}
       </h2>
       <SimpleTooltip
+        v-if="!props.readOnly"
         class="ml-auto flex"
         side="bottom"
         :tooltip="$t('labels.blockTemplates.createFromBlock')"
+        as-child
       >
         <Button
-          v-if="!props.readOnly"
           size="xs"
           variant="ghost"
           :aria-label="$t('labels.blockTemplates.createFromBlock')"

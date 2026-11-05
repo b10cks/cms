@@ -103,14 +103,15 @@ const togglePreview = () => {
     </div>
 
     <SimpleTooltip
+      v-if="showPreviewToggle"
       :tooltip="
         settings.content.showPreview
           ? $t('actions.content.modes.toField')
           : $t('actions.content.modes.toVisual')
       "
+      as-child
     >
       <Button
-        v-if="showPreviewToggle"
         variant="ghost"
         size="toolbar"
         :aria-label="

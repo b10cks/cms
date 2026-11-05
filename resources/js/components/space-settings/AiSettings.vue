@@ -214,6 +214,7 @@ const handleDeleteConfig = async (config: SpaceAiConfig) => {
             <SimpleTooltip
               v-if="aiUsage?.available"
               :tooltip="$t('actions.refresh')"
+              as-child
             >
               <Button
                 variant="ghost"
@@ -480,6 +481,7 @@ const handleDeleteConfig = async (config: SpaceAiConfig) => {
               <SimpleTooltip
                 v-if="canManageAi"
                 :tooltip="$t('actions.edit')"
+                as-child
               >
                 <Button
                   variant="ghost"
@@ -498,19 +500,25 @@ const handleDeleteConfig = async (config: SpaceAiConfig) => {
                     ? $t('components.aiSettings.cannotDeleteLast')
                     : $t('actions.delete')
                 "
+                as-child
               >
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  :disabled="isDeleting || (aiConfigs && aiConfigs.length === 1)"
-                  @click="handleDeleteConfig(config)"
+                <span
+                  :tabindex="isDeleting || (aiConfigs && aiConfigs.length === 1) ? 0 : undefined"
+                  class="inline-flex"
                 >
-                  <Icon
-                    name="lucide:trash-2"
-                    class="h-4 w-4"
-                  />
-                  <span class="sr-only">{{ $t('actions.delete') }}</span>
-                </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    :disabled="isDeleting || (aiConfigs && aiConfigs.length === 1)"
+                    @click="handleDeleteConfig(config)"
+                  >
+                    <Icon
+                      name="lucide:trash-2"
+                      class="h-4 w-4"
+                    />
+                    <span class="sr-only">{{ $t('actions.delete') }}</span>
+                  </Button>
+                </span>
               </SimpleTooltip>
             </div>
           </div>

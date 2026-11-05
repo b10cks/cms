@@ -66,6 +66,7 @@ const copy = async () => {
       <SimpleTooltip
         v-if="!isPending"
         :tooltip="String(copied ? $t('actions.copied') : $t('actions.copy'))"
+        as-child
       >
         <Button
           type="button"

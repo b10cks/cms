@@ -43,6 +43,7 @@ const emits = defineEmits<DialogContentEmits & { close: [open: boolean] }>()
           :tooltip="$t('actions.close')"
           class="absolute left-1 top-1 z-20"
           shortcut="Esc"
+          as-child
         >
           <Button
             size="icon"

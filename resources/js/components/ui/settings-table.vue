@@ -147,6 +147,13 @@ const updateSelectValue = (item: TItem, key: string, value: unknown) => {
 const getColumnOptions = (column: ColumnDefinition<TItem>, item: TItem) => {
   return typeof column.options === 'function' ? column.options(item) : (column.options ?? [])
 }
+
+/** Names a cell by its column and its row, the row being the first column holding text. */
+const cellLabel = (column: ColumnDefinition<TItem>, item: TItem): string => {
+  const rowColumn = props.columns.find((candidate) => typeof item[candidate.key] === 'string' && item[candidate.key])
+  const rowName = rowColumn && rowColumn.key !== column.key ? item[rowColumn.key] : null
+  return rowName ? `${column.label}, ${rowName}` : column.label
+}
 </script>
 
 <template>
@@ -193,6 +200,7 @@ const getColumnOptions = (column: ColumnDefinition<TItem>, item: TItem) => {
             <Switch
               v-else-if="column.type === 'switch'"
               v-model="item[column.key] as boolean"
+              :aria-label="cellLabel(column, item)"
               :disabled="column.readonly || !canEdit"
             />
             <Select
@@ -201,7 +209,7 @@ const getColumnOptions = (column: ColumnDefinition<TItem>, item: TItem) => {
               :disabled="column.readonly || !canEdit"
               @update:model-value="(value) => updateSelectValue(item, column.key, value)"
             >
-              <SelectTrigger>
+              <SelectTrigger :aria-label="cellLabel(column, item)">
                 <SelectValue :placeholder="column.placeholder || $t('common.select')" />
               </SelectTrigger>
               <SelectContent>
@@ -218,6 +226,7 @@ const getColumnOptions = (column: ColumnDefinition<TItem>, item: TItem) => {
             <Input
               v-else
               v-model="item[column.key] as string"
+              :aria-label="cellLabel(column, item)"
               :name="column.key"
               :placeholder="column.placeholder"
               :disabled="column.readonly || !canEdit"
@@ -261,6 +270,7 @@ const getColumnOptions = (column: ColumnDefinition<TItem>, item: TItem) => {
             <Switch
               v-else-if="column.type === 'switch'"
               v-model="newItem[column.key] as boolean"
+              :aria-label="column.label"
               :disabled="column.readonly || !canEdit"
             />
             <Select
@@ -269,7 +279,7 @@ const getColumnOptions = (column: ColumnDefinition<TItem>, item: TItem) => {
               :disabled="column.readonly || !canEdit"
               @update:model-value="(value) => updateSelectValue(newItem, column.key, value)"
             >
-              <SelectTrigger>
+              <SelectTrigger :aria-label="column.label">
                 <SelectValue :placeholder="column.placeholder || $t('common.select')" />
               </SelectTrigger>
               <SelectContent>
@@ -286,6 +296,7 @@ const getColumnOptions = (column: ColumnDefinition<TItem>, item: TItem) => {
             <Input
               v-else
               v-model="newItem[column.key] as string"
+              :aria-label="column.label"
               :placeholder="column.placeholder"
               :disabled="!canEdit"
               @keydown.enter="addItem"

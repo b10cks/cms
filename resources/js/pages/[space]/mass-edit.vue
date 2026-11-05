@@ -806,6 +806,7 @@ const exportFilters = computed(() => ({
                       v-else
                       :model-value="cellValue(row, language)"
                       rows="1"
+                      :aria-label="`${row.document.name}, ${row.unit.label}, ${language}`"
                       class="min-h-9 w-full resize-y text-sm"
                       :class="{ 'ring-1 ring-amber-500': isCellDirty(row, language) }"
                       :disabled="isTranslating || isPreparingTranslation || !canManageContent"

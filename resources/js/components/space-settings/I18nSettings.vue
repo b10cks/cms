@@ -221,6 +221,7 @@ const saveSettings = async () => {
     >
       <Input
         v-model="defaultLanguage"
+        :aria-label="$t('labels.settings.i18n.defaultLanguage')"
         :placeholder="$t('labels.settings.i18n.defaultLanguagePlaceholder')"
       />
       <p

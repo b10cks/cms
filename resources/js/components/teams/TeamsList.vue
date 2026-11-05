@@ -367,6 +367,7 @@ const handleBulkDelete = async () => {
                   <SimpleTooltip
                     v-if="team.can_update"
                     :tooltip="$t('labels.teams.tooltip.edit')"
+                    as-child
                   >
                     <Button
                       size="icon"
@@ -380,6 +381,7 @@ const handleBulkDelete = async () => {
                   <SimpleTooltip
                     v-if="team.can_delete"
                     :tooltip="$t('labels.teams.tooltip.delete')"
+                    as-child
                   >
                     <Button
                       size="icon"

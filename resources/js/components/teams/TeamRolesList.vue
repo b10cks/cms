@@ -312,6 +312,7 @@ const handleSortChange = (value: { column: string; direction: 'asc' | 'desc' }) 
                       ? $t('labels.teamRoles.actions.view')
                       : $t('labels.teamRoles.actions.edit')
                   "
+                  as-child
                 >
                   <Button
                     size="icon"
@@ -329,6 +330,7 @@ const handleSortChange = (value: { column: string; direction: 'asc' | 'desc' }) 
                 <SimpleTooltip
                   v-if="!role.is_read_only"
                   :tooltip="$t('labels.teamRoles.actions.delete')"
+                  as-child
                 >
                   <Button
                     size="icon"
