@@ -12,7 +12,6 @@ use Illuminate\Http\UploadedFile;
 use Laravel\Mcp\Request;
 use Laravel\Mcp\Response;
 use Laravel\Mcp\Server\Tool;
-use Laravel\Sanctum\PersonalAccessToken;
 
 class MgmtCallTool extends Tool
 {
@@ -118,9 +117,10 @@ class MgmtCallTool extends Tool
             return Response::error($e->getMessage());
         }
 
-        [$bearerToken, $transient] = $this->resolveCredential($httpRequest, $operation, $arguments);
+        $caller = $httpRequest->user() ?? auth()->user();
+        $bearerToken = $this->resolveBearerToken($httpRequest, $operation, $arguments, $caller !== null);
 
-        if ($bearerToken === null) {
+        if ($bearerToken === null && $caller === null) {
             array_map(fn (UploadedFile $file) => @unlink($file->getPathname()), $files);
 
             return Response::error('This MCP request is not authenticated.');
@@ -133,7 +133,6 @@ class MgmtCallTool extends Tool
                 $result = $this->dispatcher->dispatch($operation['method'], $uri, $query, $payload ?? [], $bearerToken, $files);
             }
         } finally {
-            $transient?->delete();
             array_map(fn (UploadedFile $file) => @unlink($file->getPathname()), $files);
         }
 
@@ -200,44 +199,37 @@ class MgmtCallTool extends Tool
     }
 
     /**
-     * Decide which credential the sub-request runs under.
+     * The bearer token the sub-request carries, if any.
      *
-     * The sub-request is built with Request::create() and carries no cookies,
-     * so a session-authenticated caller has no bearer token of their own. They
-     * must still act as themselves: falling back to the configured MCP token
-     * would run every operation available to them as that token's owner, across
-     * every space it can reach. The shared token stays confined to the stdio
-     * transport, which has no user to act as.
+     * A signed-in caller needs none: the sub-request runs in the same
+     * application, where the auth guard keeps the caller it already resolved
+     * and the dispatcher hands over the caller's session. Falling back to the
+     * configured MCP token would instead run every operation as that token's
+     * owner, across every space it can reach, so the shared token stays
+     * confined to the stdio transport, which has no user to act as.
      *
      * @param  array<string, mixed>  $operation
      * @param  array<string, mixed>  $arguments
-     * @return array{0: string|null, 1: PersonalAccessToken|null}
      */
-    private function resolveCredential(HttpRequest $httpRequest, array $operation, array $arguments): array
+    private function resolveBearerToken(HttpRequest $httpRequest, array $operation, array $arguments, bool $signedIn): ?string
     {
         if (isset($operation['authArg'])) {
             $override = $arguments[$operation['authArg']] ?? null;
 
             if (is_string($override) && $override !== '') {
-                return [$override, null];
+                return $override;
             }
         }
 
         if ($bearerToken = $httpRequest->bearerToken()) {
-            return [$bearerToken, null];
+            return $bearerToken;
         }
 
-        if ($user = ($httpRequest->user() ?? auth()->user())) {
-            $token = $user->createToken('mcp-internal', ['*'], now()->addMinute());
-
-            return [$token->plainTextToken, $token->accessToken];
+        if (! $signedIn && app()->runningInConsole()) {
+            return config('services.b10cks_mcp.token') ?: null;
         }
 
-        if (app()->runningInConsole()) {
-            return [config('services.b10cks_mcp.token') ?: null, null];
-        }
-
-        return [null, null];
+        return null;
     }
 
     /**

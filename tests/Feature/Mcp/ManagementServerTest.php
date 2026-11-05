@@ -19,6 +19,7 @@ use App\Models\Space\Content;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Queue;
+use Laravel\Sanctum\PersonalAccessToken;
 use Laravel\Sanctum\Sanctum;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
@@ -230,6 +231,26 @@ class ManagementServerTest extends TestCase
             'blockId' => "{$block->id}/versions",
         ])
             ->assertHasErrors(['Invalid path argument: blockId']);
+    }
+
+    #[Test]
+    public function a_signed_in_caller_runs_operations_without_minting_a_token()
+    {
+        $minted = 0;
+        PersonalAccessToken::created(function () use (&$minted) {
+            $minted++;
+        });
+
+        Block::factory()->create(['slug' => 'heroBanner', 'name' => 'Hero Banner']);
+
+        ManagementServer::tool(MgmtCallTool::class, [
+            'operation' => 'blocks.list',
+            'spaceId' => $this->space->id,
+        ])
+            ->assertOk()
+            ->assertSee('heroBanner');
+
+        $this->assertSame(0, $minted);
     }
 
     #[Test]
