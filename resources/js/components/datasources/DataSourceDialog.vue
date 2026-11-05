@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { Label } from 'reka-ui'
 import { computed, ref, watch } from 'vue'
 
 import Icon from '~/components/Icon.vue'
@@ -9,7 +8,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeaderCombined } from '~/com
 import { CheckboxField, InputField, TextField } from '~/components/ui/form'
 import ArrayInputField from '~/components/ui/form/ArrayInputField.vue'
 import type { ColumnDefinition } from '~/components/ui/form/ArrayInputField.vue'
-import { RadioGroup, RadioGroupItem } from '~/components/ui/radio-group'
+import { RadioCard, RadioCardGroup } from '~/components/ui/radio-group'
 import { useDataSources } from '~/composables/useDataSources'
 import type {
   CreateDataSourcePayload,
@@ -410,36 +409,20 @@ const handleDimensionAdd = (item: Record<string, unknown>) => {
                 {{ $t('labels.datasets.valueMode.description') }}
               </div>
             </div>
-            <RadioGroup
+            <RadioCardGroup
               v-model="valueMode"
               :disabled="isProcessing"
-              class="grid gap-2 sm:grid-cols-2"
+              :columns="2"
             >
-              <Label
+              <RadioCard
                 v-for="mode in valueModes"
                 :key="mode.value"
-                :for="`value-mode-${mode.value}`"
-                :class="[
-                  'bg-surface rounded-xl flex cursor-pointer items-start gap-2.5 p-3 transition-colors',
-                  valueMode === mode.value ? 'ring ring-ring' : '',
-                ]"
-              >
-                <RadioGroupItem
-                  :id="`value-mode-${mode.value}`"
-                  :value="mode.value"
-                  class="mt-0.5"
-                />
-                <div class="min-w-0 flex-1">
-                  <div class="flex items-center gap-1.5 text-sm font-semibold text-primary">
-                    <Icon :name="mode.icon" />
-                    {{ $t(`labels.datasets.valueMode.${mode.value}.title`) }}
-                  </div>
-                  <div class="text-sm text-muted">
-                    {{ $t(`labels.datasets.valueMode.${mode.value}.description`) }}
-                  </div>
-                </div>
-              </Label>
-            </RadioGroup>
+                :value="mode.value"
+                :icon="mode.icon"
+                :title="$t(`labels.datasets.valueMode.${mode.value}.title`)"
+                :description="$t(`labels.datasets.valueMode.${mode.value}.description`)"
+              />
+            </RadioCardGroup>
           </div>
 
           <ArrayInputField

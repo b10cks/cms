@@ -43,6 +43,7 @@ import type {
 
 const route = useRoute()
 const { t } = useI18n()
+
 const spaceId = computed(() => route.params.space as string)
 
 const { useAccessControl } = useAuthorization()
@@ -654,6 +655,7 @@ const exportFilters = computed(() => ({
               variant="primary"
               :primary-action="() => handleSave('draft')"
               :disabled="dirtyCount === 0"
+              :menu-disabled="dirtyCount === 0"
               :has-menu="canPublishContent"
               :loading="saveMutation.isPending.value"
             >
@@ -675,11 +677,11 @@ const exportFilters = computed(() => ({
       </ContentHeader>
       <div class="space-y-2 pb-8">
         <AiRunFindings :findings="translationFindings" />
-        <div class="flex flex-wrap items-center gap-2">
+        <div class="flex flex-wrap items-start gap-2">
           <ComboboxField
             v-model="selectedFieldKeys"
             name="fields"
-            class="min-w-72"
+            class="w-auto! min-w-72 flex-1 basis-72"
             :options="fieldOptions"
             :filter-fn="fieldOptionFilter"
             placeholder="labels.massEdit.fieldsPlaceholder"
@@ -704,16 +706,20 @@ const exportFilters = computed(() => ({
           </ComboboxField>
 
           <DropdownMenu>
-            <DropdownMenuTrigger as-child>
-              <Button variant="outline">
-                <Icon name="lucide:languages" />
-                {{ $t('labels.massEdit.languages') }}
-                <Badge
-                  v-if="selectedLanguages.length"
-                  size="sm"
-                  >{{ selectedLanguages.length }}</Badge
-                >
-              </Button>
+            <DropdownMenuTrigger
+              class="flex h-9 shrink-0 cursor-pointer items-center gap-2 rounded-lg border border-input-border bg-input pr-2 pl-3 text-sm font-medium whitespace-nowrap text-primary shadow-sm transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none data-[state=open]:ring-2 data-[state=open]:ring-ring"
+            >
+              <Icon
+                name="lucide:languages"
+                class="text-muted"
+              />
+              {{ $t('labels.massEdit.languages') }}
+              <span class="text-input-muted tabular-nums">{{ selectedLanguages.length }}</span>
+              <Icon
+                name="lucide:chevron-down"
+                size="1rem"
+                class="text-muted"
+              />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start">
               <DropdownMenuCheckboxItem
@@ -730,7 +736,7 @@ const exportFilters = computed(() => ({
           <SearchFilter
             v-model="filters"
             :filterable-fields="filterableFields"
-            class="ml-auto lg:min-w-xs 2xl:min-w-md"
+            class="w-auto! min-w-64 flex-1 basis-64"
           />
         </div>
 

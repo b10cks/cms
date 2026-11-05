@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { Label } from 'reka-ui'
 
 import type { AiResolvedSkill } from '~/api/resources/ai'
 import Icon from '~/components/Icon.vue'
@@ -13,7 +12,7 @@ import {
   DialogTitle,
 } from '~/components/ui/dialog'
 import { TextField } from '~/components/ui/form'
-import { RadioGroup, RadioGroupItem } from '~/components/ui/radio-group'
+import { RadioCard, RadioCardGroup } from '~/components/ui/radio-group'
 import { Switch } from '~/components/ui/switch'
 import { openDock } from '~/lib/aiDock'
 import type { AiOperationKind, AiOperationScope } from '~/lib/aiOperations'
@@ -129,30 +128,20 @@ const start = () => {
           </label>
         </div>
 
-        <RadioGroup
+        <RadioCardGroup
           v-if="kinds.length > 1"
           v-model="kind"
-          class="grid gap-2 sm:grid-cols-2"
+          :columns="2"
           :aria-label="$t('components.aiOperations.start.kind')"
         >
-          <Label
+          <RadioCard
             v-for="option in kinds"
             :key="option"
-            :for="`ai-operation-kind-${option}`"
-            class="flex cursor-pointer items-start gap-2.5 rounded-xl bg-surface p-3 transition-colors"
-            :class="kind === option && 'ring ring-ring'"
-          >
-            <RadioGroupItem
-              :id="`ai-operation-kind-${option}`"
-              :value="option"
-              class="mt-0.5"
-            />
-            <div class="min-w-0 flex-1">
-              <div class="text-sm font-semibold text-primary">{{ $t(`components.aiOperations.kinds.${option}.title`) }}</div>
-              <div class="text-sm text-muted">{{ $t(`components.aiOperations.kinds.${option}.description`) }}</div>
-            </div>
-          </Label>
-        </RadioGroup>
+            :value="option"
+            :title="$t(`components.aiOperations.kinds.${option}.title`)"
+            :description="$t(`components.aiOperations.kinds.${option}.description`)"
+          />
+        </RadioCardGroup>
 
         <div
           v-if="skills?.length"

@@ -11,7 +11,8 @@ export const buttonVariants = cva(
           'bg-button text-secondary-foreground shadow-xs hover:bg-button-hover active:bg-button-active data-[state=open]:bg-button-hover',
         input:
           'bg-input text-secondary-foreground shadow-xs inset-ring inset-ring-border-strong hover:bg-secondary-hover active:bg-secondary-active data-[state=open]:bg-secondary-hover',
-        primary: 'bg-primary text-primary-foreground shadow-xs hover:bg-primary/90 active:bg-primary/80',
+        primary:
+          'bg-primary text-primary-foreground shadow-xs hover:bg-primary/90 active:bg-primary/80 disabled:bg-button disabled:text-secondary-foreground',
         accent: 'bg-accent-fill text-white shadow-xs hover:bg-accent-fill-hover active:bg-accent-fill-hover',
         destructive:
           'bg-destructive-background/20 text-destructive-ink shadow-xs hover:bg-destructive-background/30 active:bg-destructive-background/40',

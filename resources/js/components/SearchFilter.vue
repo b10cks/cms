@@ -596,7 +596,7 @@ defineExpose({ clearAllFilters })
     class="relative w-full"
   >
     <div
-      class="flex min-h-9 flex-wrap items-center gap-2 rounded-md border border-input-border bg-input py-1 pr-2 pl-2 text-primary shadow-sm transition-colors placeholder:text-muted focus-within:ring-1 focus-within:ring-ring focus-within:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+      class="flex min-h-9 flex-wrap items-center gap-2 rounded-lg border border-input-border bg-input py-0.5 pr-2 pl-2 text-primary shadow-sm transition-colors focus-within:ring-2 focus-within:ring-ring focus-within:outline-none"
     >
       <!-- Applied Filters as Badges; the one being edited is represented by the pending badge -->
       <template
@@ -636,7 +636,7 @@ defineExpose({ clearAllFilters })
           type="text"
           role="combobox"
           data-shortcut-search
-          class="w-full border-none bg-transparent p-1 text-sm font-semibold text-primary focus:outline-none"
+          class="w-full border-none bg-transparent p-1 text-sm text-primary placeholder:text-input-muted focus:outline-none"
           :placeholder="String(placeholder)"
           :aria-label="String(placeholder)"
           :aria-expanded="dropdownOpen"

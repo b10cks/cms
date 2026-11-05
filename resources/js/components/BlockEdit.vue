@@ -3,7 +3,7 @@ import ImagePickerField from '~/components/assets/ImagePickerField.vue'
 import SchemaEditor from '~/components/blocks/SchemaEditor.vue'
 import { FormField, InputField, TextField } from '~/components/ui/form'
 import IconNameField from '~/components/ui/IconNameField.vue'
-import { RadioGroup, RadioGroupItem } from '~/components/ui/radio-group'
+import { RadioCard, RadioCardGroup } from '~/components/ui/radio-group'
 
 import ComboboxField from './ui/form/ComboboxField.vue'
 
@@ -23,6 +23,13 @@ const props = withDefaults(
     readonly: false,
   }
 )
+
+const blockTypeIcons: Record<BlockResource['type'], string> = {
+  nestable: 'lucide:layers',
+  root: 'lucide:file',
+  universal: 'lucide:shapes',
+  single: 'lucide:settings-2',
+}
 
 const seedBlock = (source: BlockResource): BlockResource => ({
   ...source,
@@ -78,12 +85,6 @@ const slugPattern = computed({
   },
 })
 
-const handleTypeChange = (type: 'root' | 'nestable' | 'single' | 'universal') => {
-  if (!props.readonly) {
-    editableBlock.value.type = type
-  }
-}
-
 /**
  * Re-seeds the editor from a server response. The backend rewrites `schema`
  * and `settings` on write, so a saved block never serialises identically to
@@ -127,35 +128,21 @@ defineExpose({ editableBlock, reset })
       :label="$t('labels.blocks.fields.type')"
     >
       <template #default="{ id }">
-        <RadioGroup
+        <RadioCardGroup
           :id="id"
           v-model="editableBlock.type"
           :disabled="readonly"
           name="type"
         >
-          <div
-            v-for="type in ['nestable', 'root', 'universal', 'single']"
+          <RadioCard
+            v-for="(icon, type) in blockTypeIcons"
             :key="type"
-            :class="[
-              'flex cursor-pointer gap-3 rounded-lg border px-3 py-2 text-left',
-              editableBlock.type === type ? 'border-border bg-input' : 'border-border',
-            ]"
-            tabindex="-1"
-            @click="() => handleTypeChange(type)"
-          >
-            <RadioGroupItem
-              :value="type"
-              :disabled="readonly"
-              class="mt-0.5"
-            />
-            <div>
-              <h4 class="font-semibold text-primary">
-                {{ $t(`labels.blocks.types.${type}.label`) }}
-              </h4>
-              <p class="text-sm">{{ $t(`labels.blocks.types.${type}.description`) }}</p>
-            </div>
-          </div>
-        </RadioGroup>
+            :value="type"
+            :icon="icon"
+            :title="$t(`labels.blocks.types.${type}.label`)"
+            :description="$t(`labels.blocks.types.${type}.description`)"
+          />
+        </RadioCardGroup>
       </template>
     </FormField>
 
