@@ -186,6 +186,38 @@ class ImpersonationTest extends TestCase
      * Guards and the default guard outlive a request inside a test, while in
      * production each request resolves the user from its session again.
      */
+    #[Test]
+    public function the_mcp_server_keeps_an_impersonated_session_impersonated(): void
+    {
+        $root = $this->elevate(User::factory()->create(['is_root' => true]));
+        $target = User::factory()->create();
+        $this->withHeader('Referer', 'http://localhost/');
+
+        $this->actingAs($root)
+            ->postJson(route('auth.impersonate.store'), ['userId' => $target->id, 'reason' => 'Ticket #13'])
+            ->assertOk();
+
+        $this->freshRequest();
+        $this->postJson(route('mcp.mgmt'), [
+            'jsonrpc' => '2.0',
+            'id' => 1,
+            'method' => 'tools/call',
+            'params' => [
+                'name' => 'b10cks_mgmt_call',
+                'arguments' => [
+                    'operation' => 'users.updatePassword',
+                    'payload' => [
+                        'old_password' => 'password',
+                        'password' => 'taken-over-123',
+                        'password_confirmation' => 'taken-over-123',
+                    ],
+                ],
+            ],
+        ])->assertOk();
+
+        $this->assertTrue(\Hash::check('password', $target->fresh()->password));
+    }
+
     private function freshRequest(): void
     {
         config(['auth.defaults.guard' => 'web']);

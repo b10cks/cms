@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Mcp\Support;
 
+use Illuminate\Contracts\Http\Kernel as HttpKernel;
 use Illuminate\Foundation\Application;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
@@ -52,13 +53,23 @@ class InternalRequestDispatcher
 
         $originalRequest = $this->app->bound('request') ? $this->app['request'] : null;
 
+        // The sub-request runs as the outer caller (the auth guard keeps its
+        // resolved user), so it also needs the caller's session: that is where
+        // a browser impersonation is recorded, and without it
+        // `not-impersonating` routes would let the operator through.
+        if ($originalRequest?->hasSession()) {
+            $request->setLaravelSession($originalRequest->session());
+        }
+
         try {
             // Deliberately no $kernel->terminate(): it would fire application
             // terminating callbacks (afterResponse jobs, …) mid-request and
             // again at the outer request's terminate. Terminable middleware in
             // the sub-request stack is skipped as a consequence — none of the
             // mgmt group's middleware is terminable.
-            $response = $this->app->handle($request);
+            // The kernel, not Application::handle(), which copies the request
+            // through createFromBase() and drops the session set above.
+            $response = $this->app->make(HttpKernel::class)->handle($request);
         } finally {
             if ($originalRequest !== null) {
                 $this->app->instance('request', $originalRequest);
