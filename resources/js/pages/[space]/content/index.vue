@@ -6,6 +6,7 @@ import Icon from '~/components/Icon.vue'
 import ExportContentTranslationsDialog from '~/components/content/ExportContentTranslationsDialog.vue'
 import ImportContentTranslationsDialog from '~/components/content/ImportContentTranslationsDialog.vue'
 import { Button } from '~/components/ui/button'
+import QueryErrorState from '~/components/ui/QueryErrorState.vue'
 import { getActionAccessRequirement } from '~/lib/access-control'
 
 const route = useRoute()
@@ -19,11 +20,13 @@ const canAccessCanvas = computed(() =>
 const canViewContent = computed(() => access.hasAbility('content.view'))
 const canManageContent = computed(() => access.hasAbility('content.manage'))
 
+const createRootContent = inject<() => void>('createRootContent', () => {})
+
 const exportDialogOpen = ref(false)
 const importDialogOpen = ref(false)
 
 const { useContentMenuQuery, getRootItems } = useContentMenu(spaceId)
-const { data } = useContentMenuQuery(canViewContent)
+const { data, isError, isFetching, refetch } = useContentMenuQuery(canViewContent)
 
 useSeoMeta({
   title: computed(() => t('labels.contents.title')),
@@ -34,7 +37,16 @@ const rootItems = computed(() => getRootItems(data.value) || [])
 
 <template>
   <div class="flex h-full grow bg-background p-6">
-    <div class="grow flex justify-center flex-col text-center">
+    <QueryErrorState
+      v-if="isError && !data"
+      class="m-auto"
+      :retrying="isFetching"
+      @retry="refetch()"
+    />
+    <div
+      v-else-if="data"
+      class="grow flex justify-center flex-col text-center"
+    >
       <ContentsIcon class="mx-auto mb-6 w-32 text-muted" />
       <template v-if="rootItems.length === 0">
         <h3 class="mb-2 text-xl font-bold">{{ $t('labels.contents.emptyTitle') }}</h3>
@@ -45,6 +57,14 @@ const rootItems = computed(() => getRootItems(data.value) || [])
         <p class="mb-6 text-muted">{{ $t('labels.contents.managerDescription') }}</p>
       </template>
       <div class="flex flex-wrap items-center justify-center gap-2">
+        <Button
+          v-if="canManageContent && rootItems.length === 0"
+          variant="primary"
+          @click="createRootContent"
+        >
+          <Icon name="lucide:plus" />
+          {{ $t('labels.contents.createContent') }}
+        </Button>
         <Button
           v-if="canAccessCanvas"
           :as="RouterLink"

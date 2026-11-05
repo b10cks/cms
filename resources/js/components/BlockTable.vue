@@ -6,6 +6,7 @@ import BlocksIcon from '~/assets/images/blocks.svg?component'
 import CreateBlockDialog from '~/components/blocks/CreateBlockDialog.vue'
 import Icon from '~/components/Icon.vue'
 import SearchFilter from '~/components/SearchFilter.vue'
+import QueryErrorState from '~/components/ui/QueryErrorState.vue'
 import { Badge } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
 import ContentHeader from '~/components/ui/ContentHeader.vue'
@@ -73,6 +74,8 @@ const {
   data: blocks,
   isLoading: isLoadingBlocks,
   isFetching: isFetchingBlocks,
+  isError: isBlocksError,
+  refetch: refetchBlocks,
 } = useBlocksQuery(queryParams)
 const { mutate: deleteBlock } = useDeleteBlockMutation()
 
@@ -265,6 +268,15 @@ const typeColor = (type: 'root' | 'nestable' | 'single' | 'universal') => {
                 v-if="isLoading"
                 :colspan="6"
               />
+              <TableRow v-else-if="isBlocksError && !blocks">
+                <TableCell :colspan="6">
+                  <QueryErrorState
+                    flush
+                    :retrying="isFetchingBlocks"
+                    @retry="refetchBlocks()"
+                  />
+                </TableCell>
+              </TableRow>
               <TableEmptyRow
                 v-else-if="blocks?.meta?.total === 0"
                 :icon="BlocksIcon"

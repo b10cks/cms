@@ -586,6 +586,8 @@ onMounted(() => {
 onBeforeUnmount(() => {
   document.removeEventListener('mousedown', handleClickOutside)
 })
+
+defineExpose({ clearAllFilters })
 </script>
 
 <template>

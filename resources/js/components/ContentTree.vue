@@ -2108,7 +2108,8 @@ const handleKeydown = (event: KeyboardEvent) => {
 
 // --- Type-to-search (JetBrains-style speed search) ---
 
-const searchOpen = ref(false)
+const openedOnPending = route.query.status === 'pending'
+const searchOpen = ref(openedOnPending)
 const searchQuery = ref('')
 const activeMatchIndex = ref(0)
 const searchInputRef = ref<HTMLInputElement | null>(null)
@@ -2123,7 +2124,12 @@ type ContentSearchMatch = {
 // --- Status filter: narrow the tree to entries with something to publish ---
 // Lives in the search panel and is cleared when the search closes.
 
-const statusFilterActive = ref(false)
+// The dashboard's drafts link opens the tree on the pending entries.
+const statusFilterActive = ref(openedOnPending)
+if (openedOnPending) {
+  const { status: _status, ...query } = route.query
+  void router.replace({ query })
+}
 const pendingItems = computed(() => flatItems.value.filter(hasPendingChanges))
 
 const toggleStatusFilter = () => {
@@ -2686,6 +2692,8 @@ onBeforeUnmount(() => {
   itemCleanupMap.clear()
   titleRefMap.clear()
 })
+
+defineExpose({ initCreate })
 </script>
 
 <template>

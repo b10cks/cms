@@ -3,6 +3,7 @@ import type { AiOwner } from '~/api/resources/ai-knowledge'
 import type { AiScope } from '~/api/resources/ai'
 import { Badge } from '~/components/ui/badge'
 import { Panel } from '~/components/ui/panel'
+import QueryErrorState from '~/components/ui/QueryErrorState.vue'
 import { Switch } from '~/components/ui/switch'
 import {
   Table,
@@ -30,8 +31,10 @@ const props = defineProps<{
 const { t } = useI18n()
 const router = useRouter()
 const knowledge = useAiKnowledge(() => props.owner)
-const { data: documents, isLoading: isLoadingDocuments } = knowledge.useDocumentsQuery()
-const { data: glossaries, isLoading: isLoadingGlossaries } = knowledge.useGlossariesQuery()
+const documentsQuery = knowledge.useDocumentsQuery()
+const glossariesQuery = knowledge.useGlossariesQuery()
+const { data: documents, isLoading: isLoadingDocuments } = documentsQuery
+const { data: glossaries, isLoading: isLoadingGlossaries } = glossariesQuery
 const { mutate: updateDocument } = knowledge.useUpdateDocumentMutation()
 const { mutate: updateGlossary } = knowledge.useUpdateGlossaryMutation()
 
@@ -102,6 +105,21 @@ const rows = computed<KnowledgeRow[]>(() => {
 
 const isLoading = computed(() => isLoadingDocuments.value || isLoadingGlossaries.value)
 
+// Rows from the source that loaded stay; the failed one is named above them.
+const failedDocuments = computed(() => documentsQuery.isError.value && !documents.value)
+const failedGlossaries = computed(() => glossariesQuery.isError.value && !glossaries.value)
+const loadFailure = computed(() => {
+  if (failedDocuments.value && failedGlossaries.value) return t('components.aiSettings.knowledge.loadFailed')
+  if (failedDocuments.value) return t('components.aiSettings.knowledge.loadFailedDocuments')
+  if (failedGlossaries.value) return t('components.aiSettings.knowledge.loadFailedGlossaries')
+  return null
+})
+const isRetrying = computed(() => documentsQuery.isFetching.value || glossariesQuery.isFetching.value)
+const retryLoad = () => {
+  if (failedDocuments.value) documentsQuery.refetch()
+  if (failedGlossaries.value) glossariesQuery.refetch()
+}
+
 const linkFor = (row: KnowledgeRow) =>
   row.kind === 'glossary' ? routes.value.glossary(row.id) : routes.value.document(row.id)
 
@@ -129,6 +147,17 @@ const toggle = (row: KnowledgeRow, enabled: boolean) => {
     >
       <slot name="actions" />
     </template>
+    <div
+      v-if="loadFailure"
+      class="border-b border-border px-5 py-3"
+    >
+      <QueryErrorState
+        flush
+        :title="loadFailure"
+        :retrying="isRetrying"
+        @retry="retryLoad"
+      />
+    </div>
     <Table>
       <TableHeader>
         <TableRow>
@@ -200,7 +229,7 @@ const toggle = (row: KnowledgeRow, enabled: boolean) => {
             </TableCell>
           </TableRow>
           <TableEmpty
-            v-if="rows.length === 0"
+            v-if="rows.length === 0 && !loadFailure"
             :colspan="5"
           >
             {{ $t('components.aiSettings.knowledge.empty') }}

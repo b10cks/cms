@@ -1,5 +1,7 @@
 {
   "labels": {
+    "mainNavigation": "Основная навигация",
+    "queryError": "Не удалось загрузить. Ничего не изменилось, можно повторить попытку.",
     "importDialog": {
       "preparing": "Загрузка и подготовка файла…",
       "moreRows": "Ещё {count} не показано. Итоги выше их учитывают.",
@@ -576,6 +578,9 @@
       "assetsCount": "{current} из {max} активов",
       "noAssetsFound": "Активы не найдены",
       "noAssetsFoundDescription": "Ваша библиотека активов пуста. Загрузите первый актив, чтобы начать.",
+      "noSearchResults": "Нет активов, соответствующих запросу.",
+      "browse": "Просмотреть папки",
+      "clearSearch": "Очистить поиск",
       "asset": "Актив",
       "assets": "Активы",
       "showing": "Показано {from}–{to} из {total} активов",
@@ -1052,8 +1057,8 @@
         "persistWithRemoteDrafts": "Это также сохранит несохранённые изменения от {names}. Продолжить?",
         "persistWithRemoteDraftsTitle": "Включить изменения от других?"
       },
-      "emptyTitle": "Контент не выбран",
-      "emptyDescription": "Начните с создания первой страницы контента",
+      "emptyTitle": "Контента пока нет",
+      "emptyDescription": "Создайте первую запись, чтобы начать.",
       "managerTitle": "Менеджер контента",
       "managerDescription": "Выберите элемент в меню контента, чтобы отредактировать или создать новый контент.",
       "paste": {
@@ -4907,6 +4912,9 @@
         "notFound": "This skill does not exist or was deleted."
       },
       "knowledge": {
+        "loadFailed": "Не удалось загрузить базу знаний. Список может быть неполным.",
+        "loadFailedDocuments": "Не удалось загрузить документы. Показаны только глоссарии.",
+        "loadFailedGlossaries": "Не удалось загрузить глоссарии. Показаны только документы.",
         "title": "Knowledge",
         "description": "Style guides are always followed. Documents are searched when a task needs them. Glossaries set the terms the AI must use, keep untranslated or avoid.",
         "editorHint": "Write markdown or upload a PDF or Word file. Runs use the published revision.",
@@ -5007,6 +5015,7 @@
       "noConfigs": "Нет доступных конфигураций"
     },
     "flattenedLocalization": {
+      "missing": "Отсутствует",
       "translate": "Перевести с помощью ИИ",
       "translating": "Перевод...",
       "translationProgress": "Переведено {applied} из {total} полей...",
@@ -6108,7 +6117,10 @@
   },
   "messages": {
     "preview": {
-      "noContent": "Контент не выбран. Выберите элемент контента для предпросмотра.",
+      "noUrl": "Нет URL предпросмотра",
+      "noEnvironmentSelected": "Для этого предпросмотра не выбрано окружение. Выберите его значком шестерёнки выше или [задайте окружение по умолчанию в настройках пространства]({url}).",
+      "badEnvironmentUrl": "У этого окружения нет корректного URL http или https. [Исправьте его в настройках пространства]({url}).",
+      "noSlug": "У этой записи пока нет URL для предпросмотра. Задайте slug или сначала сохраните её.",
       "noEnvironments": "Среды недоступны. [Настройте среды в настройках пространства]({url}), чтобы просматривать контент."
     },
     "deleteTokenConfirm": "Вы уверены, что хотите удалить токен '{name}'? Это действие нельзя отменить.",

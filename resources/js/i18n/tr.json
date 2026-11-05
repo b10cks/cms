@@ -1,5 +1,7 @@
 {
   "labels": {
+    "mainNavigation": "Ana gezinme",
+    "queryError": "Bu yüklenemedi. Hiçbir şey değişmedi, yeniden deneyebilirsiniz.",
     "importDialog": {
       "preparing": "Dosya yükleniyor ve hazırlanıyor…",
       "moreRows": "{count} tane daha gösterilmiyor. Yukarıdaki toplamlara dahildir.",
@@ -576,6 +578,9 @@
       "assetsCount": "{max} varlıktan {current} tanesi",
       "noAssetsFound": "Varlık bulunamadı",
       "noAssetsFoundDescription": "Varlık kitaplığınız boş. Başlamak için ilk varlığınızı yükleyin.",
+      "noSearchResults": "Aramanızla eşleşen varlık yok.",
+      "browse": "Klasörlere göz at",
+      "clearSearch": "Aramayı temizle",
       "asset": "Varlık",
       "assets": "Varlıklar",
       "showing": "Toplam {total} varlığın {from} ila {to} arası gösteriliyor",
@@ -1052,8 +1057,8 @@
         "persistWithRemoteDrafts": "Bu aynı zamanda {names} tarafından kaydedilmemiş değişiklikleri de kalıcı hale getirecektir. Devam edilsin mi?",
         "persistWithRemoteDraftsTitle": "Başkalarının değişiklikleri dahil edilsin mi?"
       },
-      "emptyTitle": "İçerik Seçilmedi",
-      "emptyDescription": "İlk içerik sayfanızı oluşturarak başlayın",
+      "emptyTitle": "Henüz içerik yok",
+      "emptyDescription": "Başlamak için ilk girdinizi oluşturun.",
       "managerTitle": "İçerik Yöneticisi",
       "managerDescription": "Düzenlemek veya yeni içerik oluşturmak için içerik menüsünden bir öğe seçin.",
       "paste": {
@@ -4907,6 +4912,9 @@
         "notFound": "This skill does not exist or was deleted."
       },
       "knowledge": {
+        "loadFailed": "Bilgi yüklenemedi. Liste eksik olabilir.",
+        "loadFailedDocuments": "Belgeler yüklenemedi. Yalnızca sözlükler listeleniyor.",
+        "loadFailedGlossaries": "Sözlükler yüklenemedi. Yalnızca belgeler listeleniyor.",
         "title": "Knowledge",
         "description": "Style guides are always followed. Documents are searched when a task needs them. Glossaries set the terms the AI must use, keep untranslated or avoid.",
         "editorHint": "Write markdown or upload a PDF or Word file. Runs use the published revision.",
@@ -5007,6 +5015,7 @@
       "noConfigs": "Yapılandırma mevcut değil"
     },
     "flattenedLocalization": {
+      "missing": "Eksik",
       "translate": "Yapay Zeka ile Çevir",
       "translating": "Çevriliyor…",
       "translationProgress": "{total} alandan {applied} kadarı çevrildi…",
@@ -6108,7 +6117,10 @@
   },
   "messages": {
     "preview": {
-      "noContent": "İçerik seçilmedi. Önizlemek için bir içerik öğesi seçin.",
+      "noUrl": "Önizleme URL'si yok",
+      "noEnvironmentSelected": "Bu önizleme için ortam seçilmedi. Yukarıdaki dişli simgesiyle birini seçin veya [alan ayarlarında varsayılan belirleyin]({url}).",
+      "badEnvironmentUrl": "Bu ortamın geçerli bir http veya https URL'si yok. [Alan ayarlarında düzeltin]({url}).",
+      "noSlug": "Bu girdinin henüz önizlenecek URL'si yok. Bir slug verin veya önce kaydedin.",
       "noEnvironments": "Ortam mevcut değil. İçeriği önizlemek için [çalışma alanı ayarlarında ortam kurun]({url})."
     },
     "deleteTokenConfirm": "'{name}' belirtecini silmek istediğinize emin misiniz? Bu işlem geri alınamaz.",

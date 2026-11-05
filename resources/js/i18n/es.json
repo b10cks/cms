@@ -1,5 +1,7 @@
 {
   "labels": {
+    "mainNavigation": "Navegación principal",
+    "queryError": "No se ha podido cargar. No ha cambiado nada, puedes volver a intentarlo.",
     "importDialog": {
       "preparing": "Subiendo y preparando el archivo…",
       "moreRows": "{count} más sin mostrar. Los totales de arriba los incluyen.",
@@ -576,6 +578,9 @@
       "assetsCount": "{current} de {max} activos",
       "noAssetsFound": "No se han encontrado activos",
       "noAssetsFoundDescription": "Tu biblioteca de activos está vacía. Sube tu primer activo para empezar.",
+      "noSearchResults": "Ningún activo coincide con tu búsqueda.",
+      "browse": "Explorar carpetas",
+      "clearSearch": "Borrar búsqueda",
       "asset": "Activo",
       "assets": "Activos",
       "showing": "Mostrando {from} a {to} de {total} activos",
@@ -1052,8 +1057,8 @@
         "persistWithRemoteDrafts": "Esto también guardará los cambios no guardados de {names}. ¿Continuar?",
         "persistWithRemoteDraftsTitle": "¿Incluir cambios de otras personas?"
       },
-      "emptyTitle": "Sin contenido seleccionado",
-      "emptyDescription": "Empieza creando tu primera página de contenido",
+      "emptyTitle": "Aún no hay contenido",
+      "emptyDescription": "Crea tu primera entrada para empezar.",
       "managerTitle": "Gestor de contenido",
       "managerDescription": "Selecciona un elemento del menú de contenido para editarlo o crear contenido nuevo.",
       "paste": {
@@ -4907,6 +4912,9 @@
         "notFound": "This skill does not exist or was deleted."
       },
       "knowledge": {
+        "loadFailed": "No se ha podido cargar el conocimiento. Puede que la lista esté incompleta.",
+        "loadFailedDocuments": "No se han podido cargar los documentos. Solo se muestran los glosarios.",
+        "loadFailedGlossaries": "No se han podido cargar los glosarios. Solo se muestran los documentos.",
         "title": "Knowledge",
         "description": "Style guides are always followed. Documents are searched when a task needs them. Glossaries set the terms the AI must use, keep untranslated or avoid.",
         "editorHint": "Write markdown or upload a PDF or Word file. Runs use the published revision.",
@@ -5007,6 +5015,7 @@
       "noConfigs": "No hay configuraciones disponibles"
     },
     "flattenedLocalization": {
+      "missing": "Falta",
       "translate": "Traducir con IA",
       "translating": "Traduciendo...",
       "translationProgress": "{applied} de {total} campos traducidos...",
@@ -6108,7 +6117,10 @@
   },
   "messages": {
     "preview": {
-      "noContent": "No hay contenido seleccionado. Seleccione un elemento de contenido para obtener una vista previa.",
+      "noUrl": "Sin URL de vista previa",
+      "noEnvironmentSelected": "No hay ningún entorno seleccionado para esta vista previa. Elige uno con el icono de engranaje de arriba o [establece uno predeterminado en los ajustes del espacio]({url}).",
+      "badEnvironmentUrl": "Este entorno no tiene una URL http o https válida. [Corrígela en los ajustes del espacio]({url}).",
+      "noSlug": "Esta entrada aún no tiene una URL para previsualizar. Asígnale un slug o guárdala primero.",
       "noEnvironments": "No hay entornos disponibles. [Configure entornos en la configuración del espacio]({url}) para obtener una vista previa del contenido."
     },
     "deleteTokenConfirm": "¿Está seguro de que desea eliminar el token '{name}'? Esta acción no se puede deshacer.",

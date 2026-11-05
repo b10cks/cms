@@ -104,12 +104,12 @@ const tabs = computed(() => ({
   list: {
     icon: 'lucide:blocks',
     label: $t('labels.blocks.title'),
-    count: blocks.value?.data.length || 0,
+    count: blocks.value?.data.length,
   },
   tags: {
     icon: 'lucide:tag',
     label: $t('labels.blockTags.title'),
-    count: blockTags.value?.data.length || 0,
+    count: blockTags.value?.data.length,
   },
 }))
 </script>
@@ -128,6 +128,7 @@ const tabs = computed(() => ({
           <Icon :name="icon" />
           <span>{{ label }}</span>
           <Badge
+            v-if="count !== undefined"
             class="ml-auto"
             size="xs"
             variant="surface"

@@ -1,5 +1,7 @@
 {
   "labels": {
+    "mainNavigation": "Main navigation",
+    "queryError": "This could not be loaded. Nothing has changed, you can try again.",
     "importDialog": {
       "preparing": "Uploading and preparing file…",
       "moreRows": "{count} more not shown. The totals above include them.",
@@ -576,6 +578,9 @@
       "assetsCount": "{current} of {max} assets",
       "noAssetsFound": "No Assets found",
       "noAssetsFoundDescription": "Your asset library is empty. Upload your first asset to get started.",
+      "noSearchResults": "No assets match your search.",
+      "browse": "Browse folders",
+      "clearSearch": "Clear search",
       "asset": "Asset",
       "assets": "Assets",
       "showing": "Showing {from} to {to} of {total} assets",
@@ -1052,8 +1057,8 @@
         "persistWithRemoteDrafts": "This will also persist unsaved changes from {names}. Continue?",
         "persistWithRemoteDraftsTitle": "Include changes from others?"
       },
-      "emptyTitle": "No Content Selected",
-      "emptyDescription": "Start by creating your first content page",
+      "emptyTitle": "No content yet",
+      "emptyDescription": "Create your first entry to get started.",
       "managerTitle": "Content Manager",
       "managerDescription": "Select an item from the content menu to edit or create new content.",
       "paste": {
@@ -4907,6 +4912,9 @@
         "notFound": "This skill does not exist or was deleted."
       },
       "knowledge": {
+        "loadFailed": "Knowledge could not be loaded. The list may be incomplete.",
+        "loadFailedDocuments": "Documents could not be loaded. Only glossaries are listed.",
+        "loadFailedGlossaries": "Glossaries could not be loaded. Only documents are listed.",
         "title": "Knowledge",
         "description": "Style guides are always followed. Documents are searched when a task needs them. Glossaries set the terms the AI must use, keep untranslated or avoid.",
         "editorHint": "Write markdown or upload a PDF or Word file. Runs use the published revision.",
@@ -5007,6 +5015,7 @@
       "noConfigs": "No configurations available"
     },
     "flattenedLocalization": {
+      "missing": "Missing",
       "translate": "AI Translate",
       "translating": "Translating...",
       "translationProgress": "{applied} of {total} fields translated...",
@@ -6108,7 +6117,10 @@
   },
   "messages": {
     "preview": {
-      "noContent": "No content selected. Select a content item to preview.",
+      "noUrl": "No preview URL",
+      "noEnvironmentSelected": "No environment is selected for this preview. Pick one with the gear icon above, or [set a default in space settings]({url}).",
+      "badEnvironmentUrl": "This environment has no valid http or https URL. [Fix it in space settings]({url}).",
+      "noSlug": "This entry has no URL to preview yet. Give it a slug or save it first.",
       "noEnvironments": "No environments available. [Setup environments in space settings]({url}) to preview content."
     },
     "deleteTokenConfirm": "Are you sure you want to delete the token '{name}'? This action cannot be undone.",

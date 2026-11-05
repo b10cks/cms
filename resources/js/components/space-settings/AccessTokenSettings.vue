@@ -21,6 +21,7 @@ import TableLoadingRow from '~/components/ui/TableLoadingRow.vue'
 const props = defineProps<{ space: SpaceResource }>()
 
 const { $t } = useI18n()
+const { alert } = useAlertDialog()
 const { formatNumber, formatDateTime } = useFormat()
 const { useTokensQuery, useCreateTokenMutation, useDeleteTokenMutation } = useTokens(props.space.id)
 const { data: tokens, isLoading: isLoadingTokens } = useTokensQuery()
@@ -45,8 +46,13 @@ const generateToken = async () => {
   }
 }
 
-const removeToken = (id: string) => {
-  deleteToken(id)
+const removeToken = async (token: { id: string; name: string }) => {
+  const confirmed = await alert.confirm($t('messages.deleteTokenConfirm', { name: token.name }), {
+    title: $t('actions.delete'),
+    confirmLabel: $t('actions.delete'),
+    variant: 'destructive',
+  })
+  if (confirmed) deleteToken(token.id)
 }
 
 const copyToken = (token: string) => {
@@ -141,7 +147,7 @@ const copyToken = (token: string) => {
                   <Button
                     variant="destructive"
                     size="icon"
-                    @click="removeToken(token.id)"
+                    @click="removeToken(token)"
                   >
                     <Icon name="lucide:trash-2" />
                     <span class="sr-only">{{ $t('actions.delete') }}</span>

@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import type { RouteLocationRaw } from 'vue-router'
+
 import ChangeIndicator from '~/components/stats/ChangeIndicator.vue'
 import TrendSparkline from '~/components/stats/TrendSparkline.vue'
 import { Skeleton } from '~/components/ui/skeleton'
@@ -15,6 +17,8 @@ const props = defineProps<{
   /** `null` while loading. */
   value: string | null
   detail?: string
+  /** Makes the detail a link to the work it counts. */
+  detailTo?: RouteLocationRaw
   change?: { value: number; label: string; title?: string; inverse?: boolean }
   /** One value per period; `null` where the period has none, drawn as a gap. */
   series?: Array<number | null>
@@ -73,7 +77,14 @@ const readout = computed(() => {
       </template>
     </dd>
     <dd class="h-5 truncate text-sm text-muted tabular-nums">
-      {{ value === null ? '' : detail }}
+      <RouterLink
+        v-if="value !== null && detailTo"
+        :to="detailTo"
+        class="rounded-sm underline decoration-border-strong underline-offset-2 hover:text-primary focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none focus-visible:ring-inset"
+      >
+        {{ detail }}
+      </RouterLink>
+      <template v-else>{{ value === null ? '' : detail }}</template>
     </dd>
     <dd
       v-if="series"

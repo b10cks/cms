@@ -132,6 +132,14 @@ const baseSrc = computed(() => {
 const currentEnvironmentUrl = computed(() => effectiveEnvironment.value?.url)
 const availableEnvironments = computed(() => currentSpace.value?.settings.environments ?? [])
 
+// Says why there is nothing to show. An entry is always open on this page, so the cause is setup.
+const blockedReason = computed(() => {
+  if (availableEnvironments.value.length === 0) return 'noEnvironments'
+  if (!effectiveEnvironment.value) return 'noEnvironmentSelected'
+  if (!effectiveEnvironment.value.url || !isSafeFrameUrl(effectiveEnvironment.value.url)) return 'badEnvironmentUrl'
+  return 'noSlug'
+})
+
 const src = computed(() => {
   const timestamp = props.updatedAt ? new Date(props.updatedAt).getTime() : Date.now()
 
@@ -453,7 +461,7 @@ const handleMouseMove = (event: MouseEvent) => {
 </script>
 
 <template>
-  <div class="flex flex-1 grow flex-col bg-elevated">
+  <div class="flex min-w-0 flex-1 grow flex-col bg-elevated">
     <div
       ref="containerRef"
       :class="['flex grow flex-col relative', mode === 'mobile' ? 'mx-auto my-4' : '']"
@@ -480,12 +488,13 @@ const handleMouseMove = (event: MouseEvent) => {
               size="sm"
             />
           </SimpleTooltip>
-          <p class="truncate text-sm">{{ baseSrc || 'about:blank' }}</p>
+          <p class="truncate text-sm">{{ baseSrc || $t('messages.preview.noUrl') }}</p>
           <div class="ml-auto flex items-center gap-3">
             <SimpleTooltip
               class="flex"
               side="bottom"
               :tooltip="$t('labels.preview.openExternal')"
+              as-child
             >
               <button
                 :class="['shrink-0 cursor-pointer', src || 'invisible']"
@@ -499,6 +508,7 @@ const handleMouseMove = (event: MouseEvent) => {
               class="flex"
               side="bottom"
               :tooltip="$t('labels.preview.copyLink')"
+              as-child
             >
               <button
                 :class="['shrink-0 cursor-pointer', src || 'invisible']"
@@ -513,6 +523,7 @@ const handleMouseMove = (event: MouseEvent) => {
               class="flex"
               side="bottom"
               :tooltip="$t('labels.preview.mode')"
+              as-child
             >
               <button
                 class="shrink-0 cursor-pointer"
@@ -587,16 +598,14 @@ const handleMouseMove = (event: MouseEvent) => {
           class="flex grow items-center justify-center"
         >
           <Markdown
-            class="mx-auto text-center text-sm text-balance text-muted"
+            class="mx-auto text-center text-sm text-balance text-muted [&_a]:text-primary [&_a]:underline"
             :content="
-              availableEnvironments.length > 0
-                ? $t('messages.preview.noContent')
-                : $t('messages.preview.noEnvironments', {
-                    url: $router.resolve({
-                      name: 'space-settings-configuration',
-                      params: { space: currentSpace?.id },
-                    }).href,
-                  })
+              $t(`messages.preview.${blockedReason}`, {
+                url: $router.resolve({
+                  name: 'space-settings-configuration',
+                  params: { space: currentSpace?.id },
+                }).href,
+              })
             "
           />
         </div>

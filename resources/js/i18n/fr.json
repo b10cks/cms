@@ -1,5 +1,7 @@
 {
   "labels": {
+    "mainNavigation": "Navigation principale",
+    "queryError": "Impossible de charger cet élément. Rien n'a été modifié, vous pouvez réessayer.",
     "importDialog": {
       "preparing": "Envoi et préparation du fichier…",
       "moreRows": "{count} autres non affichés. Les totaux ci-dessus les incluent.",
@@ -576,6 +578,9 @@
       "assetsCount": "{current} actif sur {max}",
       "noAssetsFound": "Aucun actif trouvé",
       "noAssetsFoundDescription": "Votre bibliothèque d'actifs est vide. Téléchargez votre premier actif pour commencer.",
+      "noSearchResults": "Aucun actif ne correspond à votre recherche.",
+      "browse": "Parcourir les dossiers",
+      "clearSearch": "Effacer la recherche",
       "asset": "Actif",
       "assets": "Actifs",
       "showing": "Affichage de {from} à {to} sur {total} actifs",
@@ -1052,8 +1057,8 @@
         "persistWithRemoteDrafts": "Cela enregistrera également les modifications non sauvegardées de {names}. Continuer ?",
         "persistWithRemoteDraftsTitle": "Inclure les modifications des autres ?"
       },
-      "emptyTitle": "Aucun contenu sélectionné",
-      "emptyDescription": "Commencez par créer votre première page de contenu",
+      "emptyTitle": "Pas encore de contenu",
+      "emptyDescription": "Créez votre première entrée pour commencer.",
       "managerTitle": "Gestionnaire de contenu",
       "managerDescription": "Sélectionnez un élément dans le menu de contenu pour le modifier ou créer un nouveau contenu.",
       "paste": {
@@ -4907,6 +4912,9 @@
         "notFound": "This skill does not exist or was deleted."
       },
       "knowledge": {
+        "loadFailed": "Les connaissances n'ont pas pu être chargées. La liste est peut-être incomplète.",
+        "loadFailedDocuments": "Les documents n'ont pas pu être chargés. Seuls les glossaires sont listés.",
+        "loadFailedGlossaries": "Les glossaires n'ont pas pu être chargés. Seuls les documents sont listés.",
         "title": "Knowledge",
         "description": "Style guides are always followed. Documents are searched when a task needs them. Glossaries set the terms the AI must use, keep untranslated or avoid.",
         "editorHint": "Write markdown or upload a PDF or Word file. Runs use the published revision.",
@@ -5007,6 +5015,7 @@
       "noConfigs": "Aucune configuration disponible"
     },
     "flattenedLocalization": {
+      "missing": "Manquant",
       "translate": "Traduction IA",
       "translating": "Traduction en cours…",
       "translationProgress": "{applied} sur {total} champs traduits…",
@@ -6108,7 +6117,10 @@
   },
   "messages": {
     "preview": {
-      "noContent": "Aucun contenu sélectionné. Sélectionnez un élément de contenu à prévisualiser.",
+      "noUrl": "Aucune URL d'aperçu",
+      "noEnvironmentSelected": "Aucun environnement n'est sélectionné pour cet aperçu. Choisissez-en un avec l'icône d'engrenage ci-dessus ou [définissez-en un par défaut dans les paramètres de l'espace]({url}).",
+      "badEnvironmentUrl": "Cet environnement n'a pas d'URL http ou https valide. [Corrigez-la dans les paramètres de l'espace]({url}).",
+      "noSlug": "Cette entrée n'a pas encore d'URL à prévisualiser. Donnez-lui un slug ou enregistrez-la d'abord.",
       "noEnvironments": "Aucun environnement disponible. [Configurez des environnements dans les paramètres de l'espace]({url}) pour prévisualiser le contenu."
     },
     "deleteTokenConfirm": "Êtes-vous sûr de vouloir supprimer le jeton « {name} » ? Cette action est irréversible.",

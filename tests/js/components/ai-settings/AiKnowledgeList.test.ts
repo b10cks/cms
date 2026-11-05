@@ -6,7 +6,9 @@ import { createMemoryHistory, createRouter } from 'vue-router'
 const AiKnowledgeList = (await import('~/components/ai-settings/AiKnowledgeList.vue')).default
 const { queryKeys } = await import('~/composables/useQueryClient')
 
-vi.mock('~/api', () => ({ api: { aiKnowledge: () => ({ documents: vi.fn(), glossaries: vi.fn() }) } }))
+const documents = vi.fn()
+const glossaries = vi.fn()
+vi.mock('~/api', () => ({ api: { aiKnowledge: () => ({ documents, glossaries }) } }))
 
 const owner = { kind: 'space' as const, id: 'space-1' }
 
@@ -41,6 +43,25 @@ describe('AiKnowledgeList', () => {
     expect(wrapper.text()).toContain('Acme Group')
     expect(wrapper.find('a').attributes('href')).toContain('/g/space-1/g-1')
     expect(wrapper.find('[role="switch"]').attributes('disabled')).toBeDefined()
+    wrapper.unmount()
+  })
+
+  it('names a failed source instead of calling the list empty', async () => {
+    documents.mockResolvedValue({ data: [] })
+    glossaries.mockRejectedValue(new Error('Server Error'))
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    const router = createRouter({ history: createMemoryHistory(), routes: [{ path: '/', component: { template: '<p />' } }] })
+    await router.push('/')
+
+    const wrapper = mount(AiKnowledgeList, {
+      attachTo: document.body,
+      props: { owner, canManage: true },
+      global: { plugins: [router, [VueQueryPlugin, { queryClient }]], stubs: { Icon: true } },
+    })
+    await flushPromises()
+
+    expect(wrapper.find('[role="alert"]').text()).toContain('Glossaries could not be loaded')
+    expect(wrapper.text()).not.toContain('No knowledge yet')
     wrapper.unmount()
   })
 })

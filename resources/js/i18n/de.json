@@ -1,5 +1,7 @@
 {
   "labels": {
+    "mainNavigation": "Hauptnavigation",
+    "queryError": "Das konnte nicht geladen werden. Es wurde nichts geändert, du kannst es erneut versuchen.",
     "importDialog": {
       "preparing": "Datei wird hochgeladen und vorbereitet…",
       "moreRows": "{count} weitere nicht angezeigt. Die Summen oben enthalten sie.",
@@ -585,6 +587,9 @@
       "assetsCount": "{current} von {max} Assets",
       "noAssetsFound": "Keine Assets gefunden",
       "noAssetsFoundDescription": "Deine Asset-Bibliothek ist leer. Lade dein erstes Asset hoch zum Starten.",
+      "noSearchResults": "Keine Assets passen zu deiner Suche.",
+      "browse": "Ordner durchsuchen",
+      "clearSearch": "Suche zurücksetzen",
       "asset": "Asset",
       "assets": "Assets",
       "showing": "Zeige {from} bis {to} von {total} Assets",
@@ -1061,8 +1066,8 @@
         "persistWithRemoteDrafts": "Dabei werden auch ungespeicherte Änderungen von {names} gespeichert. Fortfahren?",
         "persistWithRemoteDraftsTitle": "Änderungen anderer einbeziehen?"
       },
-      "emptyTitle": "Kein Inhalt ausgewählt",
-      "emptyDescription": "Erstelle zunächst deine erste Inhaltsseite",
+      "emptyTitle": "Noch kein Inhalt",
+      "emptyDescription": "Erstelle deinen ersten Eintrag, um loszulegen.",
       "managerTitle": "Inhalts-Manager",
       "managerDescription": "Wähle ein Element aus dem Inhaltsmenü aus, um es zu bearbeiten oder neuen Inhalt zu erstellen.",
       "paste": {
@@ -4854,6 +4859,7 @@
       }
     },
     "flattenedLocalization": {
+      "missing": "Fehlt",
       "translate": "KI-Übersetzen",
       "translating": "Wird übersetzt...",
       "translationProgress": "{applied} von {total} Feldern übersetzt...",
@@ -4958,6 +4964,9 @@
         "notFound": "Diesen Skill gibt es nicht oder er wurde gelöscht."
       },
       "knowledge": {
+        "loadFailed": "Wissen konnte nicht geladen werden. Die Liste ist eventuell unvollständig.",
+        "loadFailedDocuments": "Dokumente konnten nicht geladen werden. Nur Glossare sind aufgeführt.",
+        "loadFailedGlossaries": "Glossare konnten nicht geladen werden. Nur Dokumente sind aufgeführt.",
         "title": "Wissen",
         "description": "Styleguides werden immer befolgt. Dokumente werden durchsucht, wenn eine Aufgabe sie braucht. Glossare legen fest, welche Begriffe die KI verwenden, unübersetzt lassen oder vermeiden muss.",
         "editorHint": "Schreibe Markdown oder lade eine PDF- oder Word-Datei hoch. Läufe nutzen die veröffentlichte Revision.",
@@ -6124,7 +6133,10 @@
   },
   "messages": {
     "preview": {
-      "noContent": "Kein Inhalt ausgewählt. Wähle einen Inhalt zum Anzeigen aus.",
+      "noUrl": "Keine Vorschau-URL",
+      "noEnvironmentSelected": "Für diese Vorschau ist keine Umgebung ausgewählt. Wähle oben über das Zahnrad eine aus oder [lege in den Space-Einstellungen einen Standard fest]({url}).",
+      "badEnvironmentUrl": "Diese Umgebung hat keine gültige http- oder https-URL. [In den Space-Einstellungen korrigieren]({url}).",
+      "noSlug": "Dieser Eintrag hat noch keine URL für die Vorschau. Vergib einen Slug oder speichere ihn zuerst.",
       "noEnvironments": "Keine Umgebungen verfügbar. [Konfiguriere Umgebungen in den Space-Einstellungen]({url}) um Inhalte anzuzeigen."
     },
     "deleteTokenConfirm": "Bist du sicher, dass du den Token '{name}' löschen möchtest? Diese Aktion kann nicht rückgängig gemacht werden.",
