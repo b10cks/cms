@@ -247,12 +247,6 @@ export const spaceNavigationItems: NavigationAccessItem[] = [
   },
   {
     group: 'library',
-    label: 'labels.navigation.blocks',
-    icon: 'lucide:blocks',
-    routeName: 'space-blocks-index',
-  },
-  {
-    group: 'library',
     label: 'labels.navigation.assets',
     icon: 'lucide:images',
     routeName: 'space-assets-index',
@@ -270,10 +264,16 @@ export const spaceNavigationItems: NavigationAccessItem[] = [
     routeName: 'space-datasources',
   },
   {
-    group: 'system',
+    group: 'library',
     label: 'labels.navigation.redirects',
     icon: 'lucide:split',
     routeName: 'space-redirects',
+  },
+  {
+    group: 'system',
+    label: 'labels.navigation.blocks',
+    icon: 'lucide:blocks',
+    routeName: 'space-blocks-index',
   },
   {
     group: 'system',

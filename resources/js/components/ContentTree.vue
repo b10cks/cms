@@ -2730,7 +2730,7 @@ defineExpose({ initCreate })
   <aside
     ref="treeContainerRef"
     data-content-tree
-    class="relative flex h-full min-h-0 flex-col overflow-hidden bg-sidebar text-sidebar-foreground"
+    class="relative flex h-full min-h-0 flex-col overflow-hidden bg-sidebar"
     @keydown.capture="handleTreeKeydownCapture"
   >
     <div class="shrink-0 px-2 pt-2">

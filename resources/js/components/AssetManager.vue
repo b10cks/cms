@@ -85,7 +85,7 @@ watch(selectedCollection, (collectionId) => {
     <div class="flex min-h-0 flex-1 overflow-hidden">
       <div
         v-if="isWide"
-        class="flex h-full min-h-0 w-xs shrink-0 flex-col overflow-hidden bg-surface p-2"
+        class="flex h-full min-h-0 w-xs shrink-0 flex-col overflow-hidden bg-sidebar p-2"
       >
         <ScrollArea class="min-h-0 flex-1 overflow-y-auto">
           <AssetLibraryNav
