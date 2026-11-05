@@ -3,6 +3,11 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.11.5-00c931f0] — 2026-11-5
+
+- 🔒 Dump the space database in space backups, not the management database
+- 🚑️ Drop the multi-valued asset_ids index that crashes Aurora
+
 ## [v2026.10.31-6852a93a] — 2026-10-31
 
 - ♿️ Move editor blocks from a focusable grip with the arrow keys
