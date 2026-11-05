@@ -30,10 +30,10 @@ Route::get('/auth/v1/social/{provider}/callback', [SocialLoginController::class,
     ->middleware('throttle:login')
     ->name('auth.social.callback');
 Route::get('/auth/v1/social/{provider}/link', [SocialLoginController::class, 'linkRedirect'])
-    ->middleware(['auth', 'throttle:login'])
+    ->middleware(['auth', 'not-impersonating', 'throttle:login'])
     ->name('auth.social.link.redirect');
 Route::get('/auth/v1/social/{provider}/link/callback', [SocialLoginController::class, 'linkCallback'])
-    ->middleware(['auth', 'throttle:login'])
+    ->middleware(['auth', 'not-impersonating', 'throttle:login'])
     ->name('auth.social.link.callback');
 Route::get('/auth/v1/saml/{team}/redirect', [SamlLoginController::class, 'redirect'])
     ->middleware('throttle:login')
