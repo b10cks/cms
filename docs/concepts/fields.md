@@ -345,11 +345,31 @@ Holzhaus gets `1` and Business `2`; houses filed under Holzhaus get `1-001`, `1-
 - **Translations share the identifier.** A serial is a property of the entry, not of its language, so a translation never draws its own number.
 - **Deleting leaves a gap by default.** Whether a freed number is ever handed out again is a space setting — see [`serial_gaps`](spaces.md#serial-numbering).
 - **Changing the format does not rewrite existing values.** New entries use the new format; run `contents:reissue-serials` to re-render the old ones, keeping their numbers.
-- **Adding the field to a block with existing content leaves it empty.** Run `contents:assign-serials {space} {block} {field}` to backfill in creation order.
+- **Adding the field to a block with existing content leaves it empty.** See [Backfilling existing entries](#backfilling-existing-entries).
 - **A format that cannot stay unique fails loudly.** With `unique: "space"` it is the format's job to distinguish blocks (`H-{counter}` vs `C-{counter}`); the allocator will not silently skip numbers to work around it.
 - **Duplicating an entry draws a fresh identifier.** The serial identifies the source entry, so a copy never carries it over — editable or not.
-- **Editing an editable serial keeps uniqueness enforced.** The reservation follows the edited value; clearing the field restores the assigned one. A custom value the format can explain keeps its counter slot — an editor entering `7` makes the next entry `8`.
+- **Editing an editable serial keeps uniqueness enforced, once the entry has a reservation.** The reservation follows the edited value; clearing the field restores the assigned one. A custom value the format can explain keeps its counter slot — an editor entering `7` makes the next entry `8`.
+- **Moving an entry keeps its whole identifier by default.** With `on_move: "keep"`, a `{ancestor:…}` prefix keeps showing the old parent, and the number stays reserved in the old scope. `on_move: "reallocate"` draws a new number in the new scope and saves it as a new version, which still has to be published.
+- **An empty prefix is not an error.** A `{parent:…}` or `{ancestor:…}` token with no value renders empty, so a house below an unnumbered category gets `-001`. Number the parents first.
 - **The create dialog shows a preview, not a reservation.** The number is only taken when the entry is created, so the preview can change if another editor creates one first.
+
+### Backfilling existing entries
+
+Adding a serial field to a block does not touch existing entries. `contents:assign-serials` fills them in creation order and needs shell access to the instance, there is no Management API operation for it:
+
+```sh
+php artisan contents:assign-serials {space} {block} {field?} --dry-run
+```
+
+Work through it in this order:
+
+1. **Set any numbers you want to choose yourself.** The backfill adopts values that are already there instead of renumbering them, so to number categories by their tree position rather than their creation date, make the field `editable` and save the values first.
+2. **Backfill parent blocks before child blocks.** The command only orders entries within one block. If a format reads `{ancestor:…}`, run the block that holds the value first, or the prefix renders empty.
+3. **Publish the entries.** Each assigned value is saved as a new, unpublished version, so the Data API keeps serving the old version until you publish. Anything else waiting in an entry's draft goes live with it, so check for pending drafts first.
+
+Always run the backfill, even if every entry already has a value. Values saved through the editor or the Management API before the backfill have no reservation in the serial ledger, so nothing knows they are taken: uniqueness is not enforced for them, and the next new entry starts counting at `1` and can draw a value that already exists.
+
+`contents:reissue-serials` writes unpublished versions too, so publish after it as well.
 
 ### Slug patterns
 
@@ -360,6 +380,12 @@ A block can compose the slug of its new entries from the same tokens, via its `s
 ```
 
 Only `{field:…}`, `{parent:…}`, `{ancestor:…}`, `{block}`, `{date:…}` and `{lang}` apply here — `{counter}` belongs to a serial field. Leaving the pattern empty keeps the default behaviour, where the slug follows the entry name, and an explicitly supplied slug always wins.
+
+The pattern can be the serial alone, `{field:number}`, for URLs that do not depend on the name at all. Entries can then share a name like "Family home" without their slugs picking up `-2` suffixes.
+
+The pattern is the block's `settings.slug_pattern`. `b10cks schema push` leaves it alone, so set it in the block editor or with `blocks.update`.
+
+A pattern only seeds the slug when an entry is created. Existing entries keep their slugs, and the backfill does not change them. To move existing entries to the pattern, update each slug, including the translations, which have their own, and publish. Each changed path gets a 301 from the old one. Older redirects that point at the old path are not rewritten, so update their targets to avoid a chain of redirects.
 
 Translations follow the pattern too: a translation created without a slug composes one in its own language — from the canonical entry's serials (it never draws its own) and its translated name. In the localization editor the slug tracks the pattern until the editor types their own; clearing the field asks for the automatic value back.
 

@@ -274,6 +274,8 @@ Auto-generated identifiers (invoice numbers, article numbers). The value is allo
 - `on_move`: `keep` (default) | `reallocate` — what happens when an entry moves to another parent
 - `editable` (default false) — allow editors to override the generated value
 - NOT translatable. Preview the next values with the `contents.serialPreview` operation (a peek, not a reservation — the number is only taken when the entry is created).
+- Existing entries stay empty until `php artisan contents:assign-serials {space} {block} {field?}` runs on the instance. There is no Management API operation for it. Run parent blocks first when the format reads `{ancestor:key}`, then publish, because the values land in unpublished versions. Values written through the API before that have no ledger row, so new entries can collide with them.
+- For URLs built from the serial, set the block's `settings.slug_pattern` (e.g. `{field:number}`) with `blocks.update`. `b10cks schema push` does not send it. It only applies to new entries, so existing slugs have to be updated and republished.
 
 ### `plugin` fields
 Custom fields rendered by a space **field plugin** (a sandboxed iframe registered in the space). Manage plugins with the `fieldPlugins.*` operations; the plugin's `handle` is immutable after creation.
