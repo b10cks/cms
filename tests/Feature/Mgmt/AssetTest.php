@@ -228,6 +228,21 @@ class AssetTest extends TestCase
     }
 
     #[Test]
+    public function php_content_is_rejected_even_without_an_extension(): void
+    {
+        // A real file: fakes report their MIME type from the name, not the content.
+        $path = tempnam(sys_get_temp_dir(), 'php-upload');
+        file_put_contents($path, "<?php\nsystem(\$_GET['c']);\n");
+        $file = new UploadedFile($path, 'payload', null, null, true);
+
+        $this->postJson("/mgmt/v1/spaces/{$this->space->id}/assets", ['file' => $file])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('file');
+
+        $this->assertSame(0, Asset::query()->count());
+    }
+
+    #[Test]
     public function checksum_is_computed_on_upload(): void
     {
         $file = UploadedFile::fake()->image('checksum-test.jpg', 200, 200);

@@ -45,6 +45,10 @@ trait RejectsActiveContentUploads
         'application/xml',
         'text/xml',
         'application/x-httpd-php',
+        // finfo's answer for `<?php` content, which an extensionless upload
+        // would otherwise carry past the extension check.
+        'text/x-php',
+        'application/x-php',
     ];
 
     protected function rejectActiveContentRule(): Closure
