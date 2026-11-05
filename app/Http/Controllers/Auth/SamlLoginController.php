@@ -44,12 +44,17 @@ class SamlLoginController extends AuthController
         $requestId = $request->session()->pull(self::REQUEST_ID.$provider->id);
 
         try {
+            // Only answers to a login this session started. Without a request
+            // id OneLogin skips InResponseTo, so a captured response could be
+            // replayed, or posted through someone else's browser.
+            if (! is_string($requestId) || $requestId === '') {
+                throw ValidationException::withMessages([
+                    'saml' => ['This SAML response does not answer a sign-in started here.'],
+                ]);
+            }
+
             $auth = $this->samlLoginService->authFor($provider);
-            $user = $this->samlLoginService->completeLogin(
-                $provider,
-                $auth,
-                is_string($requestId) ? $requestId : null,
-            );
+            $user = $this->samlLoginService->completeLogin($provider, $auth, $requestId);
 
             Auth::guard('web')->login($user);
             $this->updateUserLogin($user);

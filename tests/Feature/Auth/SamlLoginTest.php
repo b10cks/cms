@@ -81,7 +81,7 @@ class SamlLoginTest extends TestCase
         app(SamlLoginService::class)->completeLogin(
             $provider,
             $this->assertion('victim@corp.test'),
-            null,
+            'request-1',
         );
     }
 
@@ -98,7 +98,7 @@ class SamlLoginTest extends TestCase
         $user = app(SamlLoginService::class)->completeLogin(
             $this->provider($team),
             $this->assertion('member@corp.test'),
-            null,
+            'request-1',
         );
 
         $this->assertTrue($user->is($member));
@@ -119,7 +119,7 @@ class SamlLoginTest extends TestCase
         $user = app(SamlLoginService::class)->completeLogin(
             $provider,
             $this->assertion('owner@corp.test'),
-            null,
+            'request-1',
         );
 
         $this->assertTrue($user->is($owner));
@@ -142,7 +142,7 @@ class SamlLoginTest extends TestCase
         app(SamlLoginService::class)->completeLogin(
             $this->provider($team),
             $this->assertion('stranger@corp.test'),
-            null,
+            'request-1',
         );
     }
 
@@ -159,7 +159,7 @@ class SamlLoginTest extends TestCase
         $user = app(SamlLoginService::class)->completeLogin(
             $this->provider($team, allowJit: true),
             $this->assertion('newcomer@corp.test'),
-            null,
+            'request-1',
         );
 
         $this->assertSame("saml:{$team->id}", $user->source);
@@ -168,6 +168,29 @@ class SamlLoginTest extends TestCase
             'user_id' => $user->id,
             'source' => MembershipSource::Saml->value,
         ]);
+    }
+
+    /**
+     * Without a pending AuthnRequest, OneLogin skips the InResponseTo check,
+     * so a captured response could be replayed, or posted through a victim's
+     * browser to sign it into the attacker's account.
+     */
+    #[Test]
+    public function an_unsolicited_response_is_refused(): void
+    {
+        $owner = User::factory()->create();
+        $team = app(TeamService::class)->createTeam(['name' => 'Corp'], $owner);
+        $this->provider($team);
+
+        $service = Mockery::mock(SamlLoginService::class);
+        $service->shouldReceive('authFor')->andReturn($this->assertion($owner->email));
+        $service->shouldReceive('completeLogin')->andReturn($owner);
+        $this->app->instance(SamlLoginService::class, $service);
+
+        $this->post(route('auth.saml.acs', $team), ['SAMLResponse' => 'captured'])
+            ->assertRedirectContains('saml_error=1');
+
+        $this->assertGuest('web');
     }
 
     protected function tearDown(): void

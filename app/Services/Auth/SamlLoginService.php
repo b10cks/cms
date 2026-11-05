@@ -96,7 +96,7 @@ class SamlLoginService
         ];
     }
 
-    public function completeLogin(TeamSamlProvider $provider, Auth $auth, ?string $requestId): User
+    public function completeLogin(TeamSamlProvider $provider, Auth $auth, string $requestId): User
     {
         $auth->processResponse($requestId);
 
