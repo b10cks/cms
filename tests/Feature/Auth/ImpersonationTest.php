@@ -153,6 +153,9 @@ class ImpersonationTest extends TestCase
 
         // Blocked while impersonating, as before.
         $this->postJson(route('mgmt.users.me.password'), [])->assertForbidden();
+        // A social login linked now would outlive the impersonation.
+        $this->get(route('auth.social.link.redirect', 'github'))->assertForbidden();
+        $this->get(route('auth.social.link.callback', 'github'))->assertForbidden();
 
         $this->deleteJson(route('auth.impersonate.destroy'))->assertNoContent();
 

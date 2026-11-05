@@ -444,7 +444,8 @@ class RunSpaceMigration extends QueuedJob
             $targetId = $existing ? $existing->id : (string) Str::ulid();
 
             // Build target path with target space/asset IDs
-            $targetPath = "{$targetSpace->id}/{$targetId}/{$row['filename']}.{$row['extension']}";
+            $filename = Asset::purifyRow(['filename' => $row['filename']])['filename'];
+            $targetPath = "{$targetSpace->id}/{$targetId}/{$filename}.{$row['extension']}";
 
             // Update metadata thumbnail paths to point to target space/asset
             $metadata = $this->rewriteAssetMetadataPaths($row['metadata'], $row['id'], $targetId, $sourceSpace->id, $targetSpace->id);
@@ -456,7 +457,7 @@ class RunSpaceMigration extends QueuedJob
 
             $data = Asset::purifyRow([
                 'external_id' => $externalId,
-                'filename' => $row['filename'],
+                'filename' => $filename,
                 'extension' => $row['extension'],
                 'mime_type' => $row['mime_type'],
                 'path' => $targetPath,

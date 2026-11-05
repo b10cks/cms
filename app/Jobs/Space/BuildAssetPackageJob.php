@@ -207,7 +207,10 @@ class BuildAssetPackageJob extends QueuedJob
      */
     private function uniqueEntryName(Asset $asset, array &$usedNames): string
     {
-        $base = trim((string) $asset->filename) !== '' ? $asset->filename : $asset->id;
+        // basename(): rows written before filenames were cleaned may still
+        // carry `../`, and this name becomes a local path.
+        $base = basename(str_replace('\\', '/', trim((string) $asset->filename)));
+        $base = $base !== '' && $base !== '.' && $base !== '..' ? $base : $asset->id;
         $extension = trim((string) $asset->extension);
         $suffix = $extension !== '' ? ".{$extension}" : '';
 

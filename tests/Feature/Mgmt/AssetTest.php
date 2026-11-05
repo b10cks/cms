@@ -634,6 +634,28 @@ class AssetTest extends TestCase
     }
 
     #[Test]
+    public function clients_cannot_set_the_thumbnail_paths_the_server_owns(): void
+    {
+        $asset = Asset::factory()->create([
+            'storage_id' => $this->storage->id,
+            'metadata' => ['thumbnails' => [['path' => 'own/frame.jpg']]],
+        ]);
+
+        $this->patchJson("/mgmt/v1/spaces/{$this->space->id}/assets/{$asset->id}", [
+            'metadata' => [
+                'description' => 'Updated',
+                'thumbnails' => [['path' => 'other-space/other-asset/file.jpg']],
+                'generated_thumbnails' => [['path' => 'other-space/other-asset/file.jpg']],
+            ],
+        ])->assertOk();
+
+        $metadata = $asset->fresh()->metadata;
+        $this->assertSame('Updated', $metadata['description']);
+        $this->assertSame([['path' => 'own/frame.jpg']], $metadata['thumbnails']);
+        $this->assertArrayNotHasKey('generated_thumbnails', $metadata);
+    }
+
+    #[Test]
     public function editing_an_asset_shown_by_published_content_bumps_the_delivery_revision(): void
     {
         $asset = Asset::factory()->create([

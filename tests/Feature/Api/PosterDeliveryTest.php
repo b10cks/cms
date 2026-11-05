@@ -290,6 +290,20 @@ class PosterDeliveryTest extends TestCase
     }
 
     #[Test]
+    public function it_never_serves_a_poster_path_outside_the_assets_own_directory(): void
+    {
+        $asset = $this->createVideoAsset(0);
+        $foreign = 'other-space/other-asset/secret.jpg';
+        app(StorageService::class)->getDefaultStorage($this->space)
+            ->put($foreign, (string) UploadedFile::fake()->image('secret.jpg', 40, 30)->get());
+
+        $asset->metadata = [...$asset->metadata, 'thumbnails' => [['path' => $foreign]]];
+        $asset->save();
+
+        $this->get($this->posterUrl($asset))->assertNotFound();
+    }
+
+    #[Test]
     public function it_serves_a_specific_frame(): void
     {
         $asset = $this->createVideoAsset(3);

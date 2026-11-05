@@ -100,9 +100,9 @@ class AcceptInvite
         }
 
         // Without a token the email match is the only proof, so the address
-        // has to actually be verified — otherwise registering under someone
-        // else's address would be enough to claim their invitations.
-        if ($token === null && ! $user->hasVerifiedEmail()) {
+        // has to be proven by mail. Otherwise registering under someone else's
+        // address, or having a team IdP assert it, would claim their invitations.
+        if ($token === null && ! $user->ownsVerifiedEmail()) {
             throw ValidationException::withMessages([
                 'invite' => 'Verify your email address before accepting this invitation.',
             ]);

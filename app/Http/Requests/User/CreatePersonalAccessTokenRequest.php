@@ -15,8 +15,10 @@ class CreatePersonalAccessTokenRequest extends FormRequest
     {
         return [
             'name' => 'required|string|max:100',
+            // Personal access tokens act with the owner's full permissions;
+            // nothing enforces narrower abilities, so refuse to store them.
             'abilities' => 'nullable|array',
-            'abilities.*' => 'string|max:100',
+            'abilities.*' => 'string|in:*',
             'expires_at' => 'nullable|date|after:now',
         ];
     }

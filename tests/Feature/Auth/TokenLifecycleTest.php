@@ -89,6 +89,23 @@ class TokenLifecycleTest extends TestCase
     }
 
     #[Test]
+    public function a_token_cannot_be_scoped_to_abilities_nothing_enforces(): void
+    {
+        $user = User::factory()->create(['password' => Hash::make('correct-horse')])->fresh();
+
+        $this->actingAs($user)
+            ->withHeader('x-password-confirmation', 'correct-horse')
+            ->postJson(route('mgmt.users.me.tokens.store'), [
+                'name' => 'read only',
+                'abilities' => ['content.view'],
+            ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('abilities.0');
+
+        $this->assertSame(0, $user->tokens()->count());
+    }
+
+    #[Test]
     public function minting_a_token_requires_the_second_factor_when_one_is_enrolled(): void
     {
         $user = User::factory()->create([

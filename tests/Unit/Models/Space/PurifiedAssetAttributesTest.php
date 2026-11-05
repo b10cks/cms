@@ -40,6 +40,28 @@ class PurifiedAssetAttributesTest extends TestCase
     }
 
     #[Test]
+    public function asset_filename_never_keeps_a_path_separator(): void
+    {
+        $asset = new Asset(['filename' => '../../public/shell']);
+        $this->assertSame('..-..-public-shell', $asset->getAttributes()['filename']);
+
+        $this->assertSame('a-b', Asset::purifyRow(['filename' => 'a\\b'])['filename']);
+    }
+
+    #[Test]
+    public function an_asset_owns_only_storage_keys_inside_its_own_directory(): void
+    {
+        $asset = new Asset;
+        $asset->id = 'asset1';
+
+        $this->assertTrue($asset->ownsStoragePath('spaceA', 'spaceA/asset1/frame.jpg'));
+        $this->assertFalse($asset->ownsStoragePath('spaceA', 'spaceB/other/frame.jpg'));
+        $this->assertFalse($asset->ownsStoragePath('spaceA', 'spaceA/asset1/../../spaceB/other/frame.jpg'));
+        $this->assertFalse($asset->ownsStoragePath('spaceA', 'spaceA/asset10/frame.jpg'));
+        $this->assertFalse($asset->ownsStoragePath('spaceA', null));
+    }
+
+    #[Test]
     public function folder_name_and_description_are_purified_on_write_and_read_as_stored(): void
     {
         $folder = AssetFolder::factory()->create([

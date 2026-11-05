@@ -157,9 +157,41 @@ class Asset extends SpaceModel
         }
     }
 
+    /**
+     * Metadata keys only the server writes. Their paths name storage keys, so
+     * client input must never set them.
+     */
+    public const SERVER_METADATA_KEYS = ['thumbnails', 'generated_thumbnails'];
+
+    /**
+     * The filename is part of storage keys and package entry paths, so it
+     * never keeps a path separator, whichever writer sets it.
+     */
     protected function filename(): Attribute
     {
-        return $this->makeWritePurifiedAttribute('removeAll');
+        return Attribute::set(function (?string $value): ?string {
+            $clean = $this->purifyValue($value, 'removeAll');
+
+            return $clean === null ? null : str_replace(['/', '\\'], '-', $clean);
+        });
+    }
+
+    /**
+     * Whether `$path` is a storage key inside this asset's own directory.
+     * Stored paths and metadata are not trusted to name keys: on a shared
+     * bucket a foreign key reads or deletes another space's files.
+     */
+    public function ownsStoragePath(string $spaceId, mixed $path): bool
+    {
+        if (! is_string($path) || str_contains($path, '\\')) {
+            return false;
+        }
+
+        if (array_intersect(explode('/', $path), ['..', '.']) !== []) {
+            return false;
+        }
+
+        return str_starts_with($path, "{$spaceId}/{$this->id}/");
     }
 
     public function storage(): BelongsTo

@@ -56,12 +56,22 @@ class DatabaseConnectionResolverTest extends TestCase
     }
 
     #[Test]
+    public function a_saved_connection_without_a_database_never_falls_back_to_the_main_one(): void
+    {
+        $connection = SpaceConnection::factory()->mysql()->create(['config' => ['username' => 'space_user']]);
+
+        $this->expectException(\RuntimeException::class);
+
+        $this->resolver->resolve($connection);
+    }
+
+    #[Test]
     public function it_falls_back_to_empty_array_for_missing_default_config(): void
     {
         // Arrange
         $connection = SpaceConnection::factory()->create([
             'driver' => 'missing-driver',
-            'config' => ['custom' => 'config']
+            'config' => ['custom' => 'config', 'database' => 'space_db']
         ]);
 
         // Act
@@ -71,6 +81,7 @@ class DatabaseConnectionResolverTest extends TestCase
         $this->assertEquals([
             'driver' => 'missing-driver',
             'custom' => 'config',
+            'database' => 'space_db',
             'name' => $connection->id
         ], $config);
     }

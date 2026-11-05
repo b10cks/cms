@@ -5,6 +5,7 @@ namespace App\Http\Requests\Asset;
 use App\Http\Requests\Traits\ExternalIdValidation;
 use App\Http\Requests\Traits\RejectsActiveContentUploads;
 use App\Models\Space\Asset;
+use Illuminate\Support\Arr;
 use App\Models\Space\AssetFolder;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -48,6 +49,10 @@ class StoreAssetRequest extends FormRequest
         $this->mergeDecodedJsonInput('metadata');
         $this->mergeDecodedJsonInput('data');
         $this->mergeDecodedJsonInput('tags');
+
+        if (is_array($this->input('metadata'))) {
+            $this->merge(['metadata' => Arr::except($this->input('metadata'), Asset::SERVER_METADATA_KEYS)]);
+        }
     }
 
     private function mergeDecodedJsonInput(string $key): void

@@ -85,7 +85,7 @@ class ImageController extends Controller
             return $this->notFound();
         }
 
-        $thumbnails = $this->posterThumbnails($source->asset);
+        $thumbnails = $this->posterThumbnails($source->asset, $space);
 
         // Video and audio legitimately expose their generated frames; every
         // other type only carries a poster once one was explicitly uploaded —
@@ -167,11 +167,11 @@ class ImageController extends Controller
     /**
      * @return array<int, array<string, mixed>>
      */
-    private function posterThumbnails(Asset $asset): array
+    private function posterThumbnails(Asset $asset, string $spaceId): array
     {
         return array_values(array_filter(
             (array) ($asset->metadata['thumbnails'] ?? []),
-            static fn ($thumb): bool => is_array($thumb) && ! empty($thumb['path']),
+            static fn ($thumb): bool => is_array($thumb) && $asset->ownsStoragePath($spaceId, $thumb['path'] ?? null),
         ));
     }
 

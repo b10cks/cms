@@ -7,6 +7,7 @@ use App\Models\Management\Space;
 use App\Models\Management\Team;
 use App\Models\System\AuditLog;
 use App\Models\User;
+use App\Services\Auth\MembershipGuard;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
 use PHPUnit\Framework\Attributes\Test;
@@ -75,6 +76,15 @@ class TeamMembershipHardeningTest extends TestCase
             ->deleteJson(route('mgmt.teams.members.destroy', [$team, $owner]))
             ->assertUnprocessable()
             ->assertJsonValidationErrors('user');
+
+        // A second owner lifts the last-owner rule, so only the rank check is left.
+        $this->assignTeamRole($team, User::factory()->create(), 'owner');
+
+        $this->actingAs($admin)
+            ->postJson(route('mgmt.teams.users.store', $team), ['user_id' => $owner->id, 'role' => 'member'])
+            ->assertUnprocessable();
+
+        $this->assertSame('owner', app(MembershipGuard::class)->memberTeamRole($team, $owner)?->key);
     }
 
     #[Test]
@@ -304,6 +314,40 @@ class TeamMembershipHardeningTest extends TestCase
             ->assertJsonPath('data.status', 'accepted');
 
         $this->assertTrue($team->users()->where('users.id', $invitee->id)->exists());
+    }
+
+    #[Test]
+    public function an_account_verified_by_a_team_idp_needs_the_mailed_token(): void
+    {
+        $inviter = User::factory()->create();
+        $team = Team::factory()->create();
+        $this->assignTeamRole($team, $inviter, 'owner');
+        $samlUser = User::factory()->create([
+            'email' => 'invitee@example.com',
+            'email_verified_at' => now(),
+            'source' => 'saml:01otherteam',
+        ]);
+
+        $invite = Invite::factory()->create([
+            'team_id' => $team->id,
+            'space_id' => null,
+            'invited_by' => $inviter->id,
+            'email' => 'invitee@example.com',
+            'expires_at' => now()->addDay(),
+        ]);
+
+        $this->actingAs($samlUser)
+            ->getJson(route('mgmt.users.me.invites.index'))
+            ->assertOk()
+            ->assertJsonCount(0, 'data');
+
+        $this->actingAs($samlUser)
+            ->postJson(route('mgmt.users.me.invites.accept', $invite))
+            ->assertUnprocessable();
+
+        $this->actingAs($samlUser)
+            ->postJson(route('mgmt.users.me.invites.accept', $invite), ['token' => $invite->token])
+            ->assertOk();
     }
 
     // ── Audit trail ───────────────────────────────────────────────────────
