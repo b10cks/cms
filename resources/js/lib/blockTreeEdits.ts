@@ -1,3 +1,5 @@
+import { ref, type Ref } from 'vue'
+
 import type { ContentBlockOperationPayload } from '~/composables/useContentLiveCollaboration'
 import type { ContentTreeItem } from '~/composables/useContentTree'
 import { isSameJsonValue } from '~/lib/contentEditorState'
@@ -9,6 +11,12 @@ import type { BlockAction, FieldPath } from '~/utils/preview-bridge'
  * (BLOCK_ACTION, BLOCK_MOVE) and planned here without touching the tree. The
  * content page applies a plan the same way BlocksBlock applies its own edits.
  */
+
+/** Rows of a blocks list this deep open in the editor column instead of expanding. */
+export const DRILL_IN_DEPTH = 2
+
+/** The accordion value of a block's row. */
+export const blockRowValue = (id: string): string => `content-${id}`
 
 /** Where a block sits: at `index` in the blocks list `parent[field]`. */
 export interface BlockSlot {
@@ -36,6 +44,25 @@ export interface ListEdit {
   next: ContentTreeItem[]
   operation: ListOperation
 }
+
+/**
+ * Shared by every blocks field of one editor column, and kept when the column
+ * switches to another item, so going back finds the list as it was left.
+ */
+export interface BlockListViewState {
+  /** Accordion values of the rows expanded inline, across all lists. */
+  openItems: Ref<string[]>
+  /** The item last opened from a row; its row takes focus again on the way back. */
+  returnTo: Ref<string | null>
+  /** The tab open in each item, by item id. */
+  activePages: Map<string, number>
+}
+
+export const createBlockListView = (): BlockListViewState => ({
+  openItems: ref([]),
+  returnTo: ref(null),
+  activePages: new Map(),
+})
 
 /** Open the block picker of the list at `path` (joined with dots) at `index`. */
 export interface BlockPickerRequest {

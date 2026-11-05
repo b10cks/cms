@@ -14,7 +14,7 @@ import {
 import { PulseDot } from '~/components/ui/pulse-dot'
 import { SimpleTooltip } from '~/components/ui/tooltip'
 import { findHiddenBlockIds } from '~/lib/blockTreeEdits'
-import { buildPreviewUrl, resolveLocaleSegments } from '~/lib/preview-url'
+import { buildPreviewUrl, resolveEnvironment, resolveLocaleSegments } from '~/lib/preview-url'
 import {
   collectAssetIds,
   collectLinkIds,
@@ -80,15 +80,12 @@ const injectedContent = inject<Ref<ContentResource | null>>('content', ref(null)
 const previewBridge = shallowRef<PreviewBridge | null>(null)
 let readyFallbackTimer: ReturnType<typeof setTimeout> | undefined
 
-const effectiveEnvironment = computed<SpaceEnvironment | null>(() => {
-  const userEnv = settings.value.content.environment as SpaceEnvironment | null
-  if (userEnv) return userEnv
-
-  const defaultName = currentSpace.value?.settings.default_environment
-  if (!defaultName) return null
-
-  return currentSpace.value?.settings.environments?.find((e) => e.name === defaultName) ?? null
-})
+const effectiveEnvironment = computed(() =>
+  resolveEnvironment(
+    settings.value.content.environment as SpaceEnvironment | null,
+    currentSpace.value?.settings
+  )
+)
 
 const availableSegments = computed<string[]>(() => {
   const languageIso = injectedContent.value?.language_iso
@@ -541,7 +538,7 @@ const handleMouseMove = (event: MouseEvent) => {
                   :tooltip="$t('labels.preview.siteLocale')"
                 >
                   <Icon name="lucide:globe" />
-                  <span class="text-xs font-semibold">/{{ activeSegment }}</span>
+                  <span class="text-sm font-semibold">/{{ activeSegment }}</span>
                 </SimpleTooltip>
               </DropdownMenuTrigger>
               <DropdownMenuContent>
@@ -554,7 +551,7 @@ const handleMouseMove = (event: MouseEvent) => {
                     @select="switchSiteLocale(segment)"
                   >
                     <span class="font-semibold text-primary">{{ siteLocaleLabel(segment) }}</span>
-                    <span class="text-xs text-primary/60">/{{ segment }}</span>
+                    <span class="text-sm text-primary/60">/{{ segment }}</span>
                   </DropdownMenuRadioItem>
                 </DropdownMenuRadioGroup>
               </DropdownMenuContent>
@@ -576,7 +573,7 @@ const handleMouseMove = (event: MouseEvent) => {
                     @select="switchEnvironment(env)"
                   >
                     <span class="font-semibold text-primary">{{ env.name }}</span>
-                    <span class="text-xs text-primary/60">{{ env.url }}</span>
+                    <span class="text-sm text-primary/60">{{ env.url }}</span>
                   </DropdownMenuRadioItem>
                 </DropdownMenuRadioGroup>
               </DropdownMenuContent>
@@ -625,7 +622,7 @@ const handleMouseMove = (event: MouseEvent) => {
         class="absolute -right-4 bottom-0 translate-x-full whitespace-nowrap pointer-events-none"
       >
         <div
-          class="text-xs font-semibold text-muted origin-left"
+          class="text-sm font-semibold text-muted origin-left"
           :style="{ transform: 'rotate(-90deg)' }"
         >
           {{ Math.floor(mobileWidth) }} px

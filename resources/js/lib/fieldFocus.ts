@@ -1,5 +1,6 @@
+/** Controls a field can be focused on. The comment button beside a label is not the field. */
 const FOCUSABLE =
-  'input:not([tabindex="-1"]), textarea:not([tabindex="-1"]), select:not([tabindex="-1"]), button:not([tabindex="-1"]), [contenteditable="true"], [tabindex]:not([tabindex="-1"])'
+  'input:not([tabindex="-1"]), textarea:not([tabindex="-1"]), select:not([tabindex="-1"]), button:not([tabindex="-1"]):not([data-field-side-action]), [contenteditable="true"], [tabindex]:not([tabindex="-1"]):not([data-field-side-action])'
 
 /**
  * The rendered container of the field at `path` (`content.body.0.title`), or
@@ -48,4 +49,13 @@ export function focusField(path: string): void {
     validationTarget?.querySelector<HTMLElement>(FOCUSABLE) ||
     container.querySelector<HTMLElement>(FOCUSABLE)
   focusable?.focus()
+}
+
+/**
+ * Center `element` now and again once rows above it have finished expanding,
+ * which moves it after the first scroll.
+ */
+export function scrollIntoViewAfterExpand(element: Element | null | undefined): void {
+  element?.scrollIntoView({ block: 'center' })
+  setTimeout(() => element?.scrollIntoView({ block: 'center' }), 300)
 }

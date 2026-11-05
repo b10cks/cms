@@ -13,6 +13,21 @@ const trimSegment = (segment: string): string => segment.trim().replace(/^\/+|\/
  *
  * Segments are returned WITHOUT surrounding slashes; `''` means "no prefix".
  */
+/** The environment in use: the user's pick, else the space default, else the first one. */
+export function resolveEnvironment(
+  selected: SpaceEnvironment | null | undefined,
+  settings: SpaceSettings | null | undefined
+): SpaceEnvironment | null {
+  if (selected) return selected
+
+  const environments = settings?.environments ?? []
+  return (
+    environments.find((environment) => environment.name === settings?.default_environment) ??
+    environments[0] ??
+    null
+  )
+}
+
 export function resolveLocaleSegments(
   languageIso: string | null | undefined,
   settings: SpaceSettings | null | undefined
