@@ -10,15 +10,18 @@ use App\Models\Space\AiGlossarySuggestion;
 use App\Models\Space\Content;
 use App\Models\User;
 use App\Services\Ai\Changesets\FieldPath;
+use App\Services\Ai\Knowledge\Concepts\GlossaryConcepts;
+use App\Services\Ai\Knowledge\GlossaryConcept;
 use App\Services\Ai\Knowledge\GlossaryMatcher;
+use App\Services\Ai\Knowledge\GlossaryWording;
 use App\Services\Ai\Knowledge\KnowledgeResolver;
 use App\Services\Ai\Threads\AiThreads;
 use Illuminate\Support\Collection;
 
 /**
  * The learning loop. When an editor changes AI output, before accepting it or
- * after accepting and before publishing, the AI text and the kept text go to
- * a small model call that extracts candidate glossary terms. Candidates the
+ * after it is in the draft and before publishing, the AI text and the kept text
+ * go to a small model call that extracts candidate glossary terms. Candidates the
  * space's glossaries already know are dropped; the rest wait in the space's
  * suggestions thread.
  *
@@ -55,8 +58,9 @@ class EditLearning
     }
 
     /**
-     * Accepted AI items of a just-published entry whose value an editor
-     * changed in between. Each item is compared once.
+     * AI writes of a just-published entry whose value a person changed in
+     * between. Only the newest write of a field counts ({@see supersede()}), so a
+     * later AI text is never read as someone's choice. Each item is compared once.
      */
     public function fromPublish(Space $space, Content $content, ?User $user): void
     {
@@ -95,8 +99,29 @@ class EditLearning
     }
 
     /**
+     * A newer AI write of the same field replaces what an earlier one would
+     * teach: the field then differs from the earlier text, and no person changed it.
+     *
+     * @param  Collection<int, AiChangesetItem>  $written
+     */
+    public function supersede(Collection $written): void
+    {
+        foreach ($written->filter(fn (AiChangesetItem $item) => $item->path !== null) as $item) {
+            AiChangesetItem::query()
+                ->where('target_type', $item->target_type)
+                ->where('target_id', $item->target_id)
+                ->where('path', $item->path)
+                ->where('status', AiChangesetItemStatus::Accepted->value)
+                ->whereNull('learned_at')
+                ->whereKeyNot($item->id)
+                ->update(['learned_at' => now()]);
+        }
+    }
+
+    /**
      * Store the model's candidates that no resolved glossary term and no open
-     * suggestion already covers.
+     * suggestion already covers. A wording or note over its limit drops its candidate,
+     * because cutting it could change what it means.
      *
      * @param  list<array<string, mixed>>  $candidates
      * @param  list<Edit>  $edits
@@ -105,7 +130,10 @@ class EditLearning
     public function suggest(Space $space, ?string $actorId, ?string $runId, array $candidates, array $edits): int
     {
         $known = [
-            ...array_map(fn ($term) => [$term->term, $term->sourceLocale], $this->knowledge->glossaryTerms($space)),
+            ...array_merge(...array_map(
+                static fn (GlossaryConcept $concept) => array_map(static fn (GlossaryWording $language) => [$language->name(), $language->locale], array_values($concept->languages)),
+                $this->knowledge->glossaryConcepts($space),
+            )),
             ...AiGlossarySuggestion::query()
                 ->where('space_id', $space->id)
                 ->where('status', AiGlossarySuggestion::STATUS_PENDING)
@@ -119,8 +147,11 @@ class EditLearning
         foreach ($candidates as $candidate) {
             $term = trim((string) ($candidate['term'] ?? ''));
             $locale = trim((string) ($candidate['source_locale'] ?? ''));
+            $note = \is_string($candidate['note'] ?? null) ? trim($candidate['note']) : null;
+            $translations = array_filter((array) ($candidate['translations'] ?? []), fn ($value) => \is_string($value) && trim($value) !== '');
+            $forbidden = array_values(array_filter((array) ($candidate['forbidden'] ?? []), fn ($value) => \is_string($value) && trim($value) !== ''));
 
-            if ($term === '' || $locale === '' || mb_strlen($term) > 255 || $this->isKnown($known, $term, $locale)) {
+            if ($term === '' || $locale === '' || AiGlossarySuggestion::hasOverlongWording([$term, ...array_values($translations), ...$forbidden]) || mb_strlen($note ?? '') > GlossaryConcepts::NOTE_LIMIT || $this->isKnown($known, $term, $locale)) {
                 continue;
             }
 
@@ -130,9 +161,9 @@ class EditLearning
                 'actor_id' => $actorId,
                 'source_locale' => $locale,
                 'term' => $term,
-                'translations' => array_filter((array) ($candidate['translations'] ?? []), fn ($value) => \is_string($value) && trim($value) !== '') ?: null,
-                'forbidden' => array_values(array_filter((array) ($candidate['forbidden'] ?? []), fn ($value) => \is_string($value) && trim($value) !== '')) ?: null,
-                'note' => \is_string($candidate['note'] ?? null) ? $candidate['note'] : null,
+                'translations' => $translations ?: null,
+                'forbidden' => $forbidden ?: null,
+                'note' => $note,
                 'evidence' => $this->evidenceFor($term, $candidate, $edits),
                 'status' => AiGlossarySuggestion::STATUS_PENDING,
             ]);

@@ -3,122 +3,215 @@
 namespace App\Services\Ai\Knowledge;
 
 use App\DTOs\ImportExport\ImportResult;
+use App\Exceptions\GlossaryConceptConflict;
 use App\Models\Management\AiGlossary;
-use App\Models\Management\AiGlossaryTerm;
+use App\Models\Management\Space;
+use App\Models\User;
+use App\Services\Ai\Knowledge\Concepts\ConceptRow;
+use App\Services\Ai\Knowledge\Concepts\GlossaryConceptRows;
+use App\Services\Ai\Knowledge\Concepts\GlossaryConcepts;
+use App\Services\Ai\Knowledge\Sheet\GlossarySheetExport;
+use App\Services\Ai\Knowledge\Sheet\GlossarySheetImport;
+use App\Services\Ai\Knowledge\Sheet\GlossarySheetReader;
+use App\Services\Ai\Knowledge\Sheet\GlossarySheetWorkbook;
 use App\Services\ImportExport\WritesCsvDownload;
-use App\Services\ImportExport\WritesXlsxDownload;
+use App\Services\System\AuditService;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
- * Glossary import and export as CSV, XLSX and TBX. Spreadsheet columns:
- * source_locale, term, case_sensitive, do_not_translate, forbidden (separated
- * by `|`), note, then one `translation:<locale>` column per locale. Imports
- * upsert by source locale and term.
+ * Glossary import and export. CSV and XLSX use the format b10cks sets, see
+ * {@see GlossarySheetImport} and docs/guides/glossary-sheet.md. A TBX entry is one row,
+ * read as {@see fromTbx()} says. A
+ * sheet whose header holds `source_locale` is the older format, with `forbidden`
+ * separated by `|` and one `translation:<locale>` column per locale. Both are read into
+ * the same row input and go through the writer.
+ *
+ * @phpstan-import-type ConceptInput from GlossaryConcepts
  */
 class GlossaryTransfer
 {
     use WritesCsvDownload;
-    use WritesXlsxDownload;
 
     public const FORMATS = ['csv', 'xlsx', 'tbx'];
 
-    private const IMPORT_CHUNK_SIZE = 100;
+    public const TEMPLATE_FORMATS = ['csv', 'xlsx'];
 
-    private const BASE_COLUMNS = ['source_locale', 'term', 'case_sensitive', 'do_not_translate', 'forbidden', 'note'];
+    private const PROGRESS_EVERY = 100;
 
-    public function export(AiGlossary $glossary, string $format): Response
+    private const OLD_FORMAT_COLUMN = 'source_locale';
+
+    private const MAX_WORDING_LENGTH = 255;
+
+    /** Excel reads a CSV as the local code page unless it starts with this. */
+    private const BOM = "\xEF\xBB\xBF";
+
+    public function __construct(private readonly AuditService $audit) {}
+
+    public function export(AiGlossary $glossary, string $format, bool $template = false): Response
     {
-        $terms = $glossary->terms()->orderBy('source_locale')->orderBy('term')->get();
-        $filename = Str::slug($glossary->name ?: 'glossary').'.'.$format;
+        $name = Str::slug($glossary->name ?: 'glossary').($template ? '-template' : '');
+        $filename = "{$name}.{$format}";
 
         if ($format === 'tbx') {
-            return response($this->toTbx($terms->all()), 200, [
+            return response($this->toTbx((new GlossaryConceptRows)->all($glossary, null)), 200, [
                 'Content-Type' => 'application/x-tbx+xml',
                 'Content-Disposition' => "attachment; filename=\"{$filename}\"",
             ]);
         }
 
-        $locales = $terms->flatMap(fn (AiGlossaryTerm $term) => array_keys($term->translations ?? []))->unique()->sort()->values()->all();
-        $headings = [...self::BASE_COLUMNS, ...array_map(fn (string $locale) => "translation:{$locale}", $locales)];
-        $rows = $terms->map(fn (AiGlossaryTerm $term) => [
-            $term->source_locale,
-            $term->term,
-            $term->case_sensitive ? '1' : '0',
-            $term->do_not_translate ? '1' : '0',
-            implode('|', $term->forbidden ?? []),
-            (string) $term->note,
-            ...array_map(fn (string $locale) => $term->translations[$locale] ?? '', $locales),
-        ]);
+        $space = $glossary->space_id !== null ? Space::query()->find($glossary->space_id) : null;
+        $sheet = new GlossarySheetExport($glossary, $space);
 
-        return $format === 'csv'
-            ? $this->csvDownload($headings, $rows, $filename)
-            : $this->xlsxDownload($headings, $rows, $filename);
+        if ($template) {
+            $locales = $sheet->templateLocales();
+            $headings = GlossarySheetExport::headingsFor($locales);
+            $rows = [GlossarySheetExport::exampleRow($locales)];
+        } else {
+            $headings = $sheet->headings();
+            $rows = $sheet->rows();
+        }
+
+        if ($format === 'csv') {
+            $headings[0] = self::BOM.$headings[0];
+
+            return $this->csvDownload($headings, $rows, $filename, escape: '');
+        }
+
+        return new StreamedResponse(
+            static fn () => (new GlossarySheetWorkbook)->save($headings, $rows, 'php://output'),
+            200,
+            [
+                'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                'Content-Disposition' => "attachment; filename=\"{$filename}\"",
+            ],
+        );
     }
 
     /** @return \Generator<int, array{processed: int, total: int}, mixed, ImportResult> */
-    public function import(AiGlossary $glossary, UploadedFile $file): \Generator
+    public function import(AiGlossary $glossary, UploadedFile $file, ?User $user = null): \Generator
     {
         $extension = strtolower($file->getClientOriginalExtension());
-        $rows = match ($extension) {
-            'tbx', 'xml' => $this->fromTbx((string) file_get_contents($file->getRealPath())),
-            'csv', 'xlsx' => $this->fromSpreadsheet($file->getRealPath()),
+
+        if (\in_array($extension, ['csv', 'xlsx'], true)) {
+            $sheet = GlossarySheetReader::read($file->getRealPath(), $extension);
+            $headers = array_map(static fn (string $header) => strtolower($header), $sheet['headers']);
+
+            if (! \in_array(self::OLD_FORMAT_COLUMN, $headers, true)) {
+                return yield from (new GlossarySheetImport($glossary, $file, $sheet, $user, $this->audit))->run();
+            }
+
+            unset($sheet);
+        }
+
+        return yield from match ($extension) {
+            'tbx', 'xml' => $this->importEntries($glossary, $this->fromTbx((string) file_get_contents($file->getRealPath()))),
+            'csv', 'xlsx' => $this->importEntries($glossary, $this->fromSpreadsheet($file->getRealPath())),
             default => throw ValidationException::withMessages(['file' => ['Use a CSV, XLSX or TBX file.']]),
         };
+    }
 
-        $existing = $glossary->terms()->get()->keyBy(fn (AiGlossaryTerm $term) => GlossaryTerm::fromModel($term)->key());
+    /**
+     * Applies file rows through the writer. A file row updates the row {@see matchingRow()}
+     * finds, and a refused row becomes a row error.
+     *
+     * @param  list<ConceptInput|array{error: string}>  $entries
+     * @return \Generator<int, array{processed: int, total: int}, mixed, ImportResult>
+     */
+    private function importEntries(AiGlossary $glossary, array $entries): \Generator
+    {
+        $total = \count($entries);
         $successes = [];
         $errors = [];
 
-        $total = \count($rows);
-        $processed = 0;
-        $connection = (new AiGlossaryTerm())->getConnection();
+        yield ['processed' => 0, 'total' => $total];
 
-        yield ['processed' => $processed, 'total' => $total];
+        $concepts = GlossaryConcepts::open($glossary);
 
-        foreach (array_chunk($rows, self::IMPORT_CHUNK_SIZE, preserve_keys: true) as $chunk) {
-            $connection->transaction(function () use ($chunk, $glossary, &$existing, &$successes, &$errors): void {
-                foreach ($chunk as $index => $row) {
-                    $term = trim((string) ($row['term'] ?? ''));
-                    $locale = trim((string) ($row['source_locale'] ?? ''));
+        foreach ($entries as $index => $entry) {
+            $refused = $entry['error'] ?? self::tooLong($entry);
 
-                    if ($term === '' || $locale === '') {
-                        $errors[] = ['row' => $index + 1, 'message' => 'A term and its source locale are required.'];
+            if ($refused !== null) {
+                $errors[] = ['row' => $index + 1, 'message' => $refused];
 
-                        continue;
-                    }
+                continue;
+            }
 
-                    $attributes = [
-                        'source_locale' => $locale,
-                        'term' => mb_substr($term, 0, 255),
-                        'translations' => array_filter($row['translations'] ?? [], fn ($value) => \is_string($value) && trim($value) !== ''),
-                        'case_sensitive' => (bool) ($row['case_sensitive'] ?? false),
-                        'do_not_translate' => (bool) ($row['do_not_translate'] ?? false),
-                        'forbidden' => array_values(array_filter($row['forbidden'] ?? [], fn ($value) => \is_string($value) && trim($value) !== '')),
-                        'note' => ($row['note'] ?? '') !== '' ? $row['note'] : null,
-                    ];
+            $wordings = array_filter(array_map(static fn (array $values) => $values['use'] ?? $values['avoid'][0] ?? null, $entry['languages'] ?? []));
+            $rowId = self::matchingRow($concepts, $wordings);
 
-                    $key = strtolower($locale).'|'.mb_strtolower($attributes['term']);
-                    $model = $existing[$key] ?? new AiGlossaryTerm(['glossary_id' => $glossary->id]);
-                    $model->fill($attributes)->save();
-                    $existing[$key] = $model;
-                    $successes[] = ['row' => $index + 1, 'term' => $model->term];
-                }
-            });
+            try {
+                $rowId !== null ? $concepts->update($rowId, $entry) : $concepts->create($entry);
+                $successes[] = ['row' => $index + 1, 'term' => reset($wordings)];
+            } catch (GlossaryConceptConflict $conflict) {
+                $errors[] = ['row' => $index + 1, 'message' => $conflict->getMessage()];
+            }
 
-            $processed += \count($chunk);
-
-            yield ['processed' => $processed, 'total' => $total];
+            if (($index + 1) % self::PROGRESS_EVERY === 0) {
+                yield ['processed' => $index + 1, 'total' => $total];
+            }
         }
+
+        try {
+            $concepts->commit();
+        } catch (GlossaryConceptConflict $conflict) {
+            throw ValidationException::withMessages(['file' => [$conflict->getMessage()]]);
+        }
+
+        yield ['processed' => $total, 'total' => $total];
 
         return new ImportResult(successes: $successes, errors: $errors);
     }
 
     /**
-     * @return list<array<string, mixed>>
+     * The row a file row updates. Its first language decides. Another language finds a
+     * row only if that row has no wording in the first language, because the update would
+     * replace wording the file never named. Otherwise the file row is new, and the writer
+     * refuses the wording it shares with that row.
+     *
+     * @param  array<string, string>  $wordings  by language, the file row's first language first
+     */
+    private static function matchingRow(GlossaryConcepts $concepts, array $wordings): ?string
+    {
+        $first = GlossaryMatcher::normalizeLocale((string) array_key_first($wordings));
+
+        foreach ($wordings as $locale => $wording) {
+            $id = $concepts->rowIdForWording((string) $locale, $wording);
+
+            if ($id !== null && (GlossaryMatcher::normalizeLocale((string) $locale) === $first || ! isset($concepts->rowFacts($id)['terms'][$first]))) {
+                return $id;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * The file row's wording over the limit a person's edit has, as a message.
+     *
+     * @param  ConceptInput  $entry
+     */
+    private static function tooLong(array $entry): ?string
+    {
+        foreach ($entry['languages'] ?? [] as $code => $language) {
+            foreach ([$language['use'] ?? null, ...$language['avoid'] ?? [], ...$language['also'] ?? []] as $wording) {
+                if ($wording !== null && mb_strlen($wording) > self::MAX_WORDING_LENGTH) {
+                    return "A wording in {$code} is longer than ".self::MAX_WORDING_LENGTH.' characters: '.mb_substr($wording, 0, 40).'…';
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * The older term format.
+     *
+     * @return list<ConceptInput|array{error: string}>
      */
     private function fromSpreadsheet(string $path): array
     {
@@ -144,15 +237,20 @@ class GlossaryTransfer
                 }
             }
 
-            return $row;
+            if (($row['term'] ?? '') === '' || ($row['source_locale'] ?? '') === '') {
+                return ['error' => 'A term and its source locale are required.'];
+            }
+
+            return LegacyGlossaryRows::input($row);
         }, array_filter($sheet, fn (array $cells) => array_filter($cells, fn ($value) => trim((string) $value) !== '') !== [])));
     }
 
     /**
      * TBX v2 (martif/termEntry/langSet/tig) and v3 (conceptEntry/langSec/termSec).
-     * The first language section is the source; deprecated terms are forbidden variants.
+     * In each language the first preferred term is Use, deprecated terms are Avoid and
+     * admitted terms and any further preferred term are Also written as.
      *
-     * @return list<array<string, mixed>>
+     * @return list<ConceptInput>
      */
     private function fromTbx(string $xml): array
     {
@@ -162,15 +260,22 @@ class GlossaryTransfer
         }
 
         $xpath = new \DOMXPath($dom);
-        $rows = [];
+        $entries = [];
 
         foreach ($xpath->query('//*[local-name()="conceptEntry" or local-name()="termEntry"]') ?: [] as $entry) {
-            $row = ['translations' => [], 'forbidden' => []];
-            $note = $xpath->query('./*[local-name()="descrip" or local-name()="note"]', $entry)?->item(0)?->textContent;
-            $row['note'] = $note !== null ? trim($note) : '';
-            $row['do_not_translate'] = $xpath->query('.//*[local-name()="termNote" and @type="b10cks:doNotTranslate"]', $entry)?->length > 0;
+            $row = ['languages' => []];
+            $note = trim((string) $xpath->query('./*[local-name()="descrip" or local-name()="note"]', $entry)?->item(0)?->textContent);
+
+            if ($note !== '') {
+                $row['note'] = $note;
+            }
+
+            if ($xpath->query('.//*[local-name()="termNote" and @type="b10cks:doNotTranslate"]', $entry)?->length > 0) {
+                $row['keep_exact'] = true;
+            }
 
             foreach ($xpath->query('./*[local-name()="langSec" or local-name()="langSet"]', $entry) ?: [] as $langSec) {
+                // A section without a language reaches the writer, which makes it a row error.
                 $locale = $langSec->getAttributeNS('http://www.w3.org/XML/1998/namespace', 'lang') ?: $langSec->getAttribute('xml:lang');
 
                 foreach ($xpath->query('./*[local-name()="termSec" or local-name()="tig" or local-name()="ntig"]', $langSec) ?: [] as $termSec) {
@@ -182,26 +287,25 @@ class GlossaryTransfer
                     }
 
                     if (str_starts_with($status, 'deprecated') || str_starts_with($status, 'superseded')) {
-                        $row['forbidden'][] = $term;
-                    } elseif (! isset($row['term'])) {
-                        $row['term'] = $term;
-                        $row['source_locale'] = $locale;
-                    } elseif ($locale !== $row['source_locale'] && ! isset($row['translations'][$locale])) {
-                        $row['translations'][$locale] = $term;
+                        $row['languages'][$locale]['avoid'][] = $term;
+                    } elseif (str_starts_with($status, 'admitted') || isset($row['languages'][$locale]['use'])) {
+                        $row['languages'][$locale]['also'][] = $term;
+                    } else {
+                        $row['languages'][$locale]['use'] = $term;
                     }
                 }
             }
 
-            $rows[] = $row;
+            $entries[] = $row;
         }
 
-        return $rows;
+        return $entries;
     }
 
     /**
-     * @param  list<AiGlossaryTerm>  $terms
+     * @param  iterable<ConceptRow>  $rows
      */
-    private function toTbx(array $terms): string
+    private function toTbx(iterable $rows): string
     {
         $dom = new \DOMDocument('1.0', 'UTF-8');
         $dom->formatOutput = true;
@@ -211,42 +315,51 @@ class GlossaryTransfer
         $tbx->setAttribute('style', 'dca');
         $body = $tbx->appendChild($dom->createElementNS($ns, 'text'))->appendChild($dom->createElementNS($ns, 'body'));
 
-        $termSec = function (\DOMElement $langSec, string $term, ?string $status = null) use ($dom, $ns): void {
+        $termSec = function (\DOMElement $langSec, string $term, string $status) use ($dom, $ns): \DOMElement {
             $sec = $langSec->appendChild($dom->createElementNS($ns, 'termSec'));
             $sec->appendChild($dom->createElementNS($ns, 'term'))->appendChild($dom->createTextNode($term));
-            if ($status !== null) {
-                $note = $sec->appendChild($dom->createElementNS($ns, 'termNote'));
-                $note->setAttribute('type', 'administrativeStatus');
-                $note->appendChild($dom->createTextNode($status));
-            }
+            $note = $sec->appendChild($dom->createElementNS($ns, 'termNote'));
+            $note->setAttribute('type', 'administrativeStatus');
+            $note->appendChild($dom->createTextNode($status));
+
+            return $sec;
         };
 
-        foreach ($terms as $term) {
+        foreach ($rows as $row) {
             $entry = $body->appendChild($dom->createElementNS($ns, 'conceptEntry'));
-            $entry->setAttribute('id', $term->id);
+            $entry->setAttribute('id', $row->id);
 
-            if ($term->note) {
+            if ($row->note) {
                 $descrip = $entry->appendChild($dom->createElementNS($ns, 'descrip'));
                 $descrip->setAttribute('type', 'definition');
-                $descrip->appendChild($dom->createTextNode($term->note));
+                $descrip->appendChild($dom->createTextNode($row->note));
             }
 
-            $source = $entry->appendChild($dom->createElementNS($ns, 'langSec'));
-            $source->setAttributeNS('http://www.w3.org/XML/1998/namespace', 'xml:lang', $term->source_locale);
-            $termSec($source, $term->term, 'preferredTerm-admn-sts');
-            if ($term->do_not_translate) {
-                $note = $source->lastChild->appendChild($dom->createElementNS($ns, 'termNote'));
-                $note->setAttribute('type', 'b10cks:doNotTranslate');
-                $note->appendChild($dom->createTextNode('true'));
-            }
-            foreach ($term->forbidden ?? [] as $variant) {
-                $termSec($source, $variant, 'deprecatedTerm-admn-sts');
-            }
+            $first = null;
 
-            foreach ($term->translations ?? [] as $locale => $translation) {
+            foreach ($row->languages as $locale => $language) {
                 $langSec = $entry->appendChild($dom->createElementNS($ns, 'langSec'));
                 $langSec->setAttributeNS('http://www.w3.org/XML/1998/namespace', 'xml:lang', (string) $locale);
-                $termSec($langSec, $translation);
+
+                if ($language['use'] !== null) {
+                    $sec = $termSec($langSec, $language['use'], 'preferredTerm-admn-sts');
+                    $first ??= $sec;
+                }
+
+                foreach ($language['avoid'] as $variant) {
+                    $sec = $termSec($langSec, $variant, 'deprecatedTerm-admn-sts');
+                    $first ??= $sec;
+                }
+
+                foreach ($language['also'] as $also) {
+                    $termSec($langSec, $also, 'admittedTerm-admn-sts');
+                }
+            }
+
+            if ($row->keepExact && $first !== null) {
+                $note = $first->appendChild($dom->createElementNS($ns, 'termNote'));
+                $note->setAttribute('type', 'b10cks:doNotTranslate');
+                $note->appendChild($dom->createTextNode('true'));
             }
         }
 

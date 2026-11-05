@@ -6,7 +6,7 @@ use App\Models\Management\Space;
 use App\Models\User;
 use App\Services\Ai\Run\ToolError;
 
-/** A kind of entry the AI can propose changes to: content, data entries, assets. */
+/** A kind of entry the AI can change: content, data entries, assets, blocks. */
 interface ChangeTarget
 {
     /** Space ability needed to read the target. */

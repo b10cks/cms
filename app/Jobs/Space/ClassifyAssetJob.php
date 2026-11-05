@@ -78,7 +78,7 @@ class ClassifyAssetJob extends QueuedJob
 
             try {
                 $config = $service->resolveVisionConfig($this->space, $this->configId);
-                $outcome = $service->classify($this->space, $actor, $asset, $this->languages, $config, $this->overwrite, $this->altContext, $this->decorative, $this->highDetail);
+                $outcome = $service->classify($this->space, $actor, $asset, $this->languages, $config, $this->overwrite, $this->altContext, $this->decorative, $this->highDetail, $this->runId);
                 $this->record($outcome);
             } catch (AiServiceException $e) {
                 if (! \in_array($e->reason, [

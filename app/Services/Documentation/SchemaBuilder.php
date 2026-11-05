@@ -31,6 +31,12 @@ class SchemaBuilder
             $this->schemas[$schemaName] = $this->resourceParser->parse($resourceClass);
         }
 
+        foreach (config('docs.schema_catalogs', []) as $catalog) {
+            foreach (require $catalog as $name => $shape) {
+                $this->schemas[$name] = SchemaShape::expand($shape);
+            }
+        }
+
         // Add common schemas
         $this->schemas['PaginatedResponse'] = $this->buildPaginationSchema();
         $this->schemas['Error'] = $this->buildErrorSchema();

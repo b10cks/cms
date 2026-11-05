@@ -4,7 +4,8 @@ namespace App\Services\Ai\Run;
 
 /**
  * Checks a decoded value against the JSON schema subset skills use: `type`,
- * `properties`, `required`, `items`, `enum` and `additionalProperties: false`.
+ * `properties`, `required`, `items`, `enum`, `maxLength` and
+ * `additionalProperties: false`.
  */
 final class OutputSchema
 {
@@ -22,6 +23,10 @@ final class OutputSchema
 
         if (isset($schema['enum']) && \is_array($schema['enum']) && ! \in_array($value, $schema['enum'], true)) {
             return ["{$path} must be one of ".implode(', ', array_map('json_encode', $schema['enum'])).'.'];
+        }
+
+        if (\is_string($value) && isset($schema['maxLength']) && mb_strlen($value) > $schema['maxLength']) {
+            return ["{$path} must be at most {$schema['maxLength']} characters."];
         }
 
         $errors = [];

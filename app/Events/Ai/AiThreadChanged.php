@@ -4,12 +4,14 @@ namespace App\Events\Ai;
 
 use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
+use Illuminate\Contracts\Events\ShouldDispatchAfterCommit;
 
 /**
  * A thread's status or activity may have changed. The thread ID only; clients
- * refetch through the authorised endpoints.
+ * refetch through the authorised endpoints. Sent after the commit: a broadcast
+ * is a network call, and writes of a run hold the run's row lock.
  */
-class AiThreadChanged implements ShouldBroadcastNow
+class AiThreadChanged implements ShouldBroadcastNow, ShouldDispatchAfterCommit
 {
     public function __construct(
         public readonly string $spaceId,

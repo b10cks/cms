@@ -4,6 +4,7 @@ namespace App\Services\Ai\Drivers;
 
 use App\Services\Ai\Dto\AiModelDto;
 use App\Services\Ai\Exceptions\ProviderCallFailed;
+use App\Services\Ai\Exceptions\ProviderFailure;
 use App\Services\Ai\Run\RunOptions;
 use App\Services\Ai\Run\TextDelta;
 use App\Services\Ai\Run\ToolCall;
@@ -102,14 +103,19 @@ class BedrockDriver extends BaseAiDriver
         $calls = [];
         $inputTokens = 0;
         $outputTokens = 0;
+        $stopped = false;
+        $opened = false;
 
         try {
             $response = $this->getClient()->invokeModelWithResponseStream([
+                '@retries' => 0,
                 'modelId' => $modelId,
                 'contentType' => 'application/json',
                 'accept' => 'application/json',
                 'body' => json_encode($body),
             ]);
+
+            $opened = true;
 
             foreach ($response->get('body') as $event) {
                 $chunk = json_decode($event['chunk']['bytes'], true);
@@ -140,10 +146,17 @@ class BedrockDriver extends BaseAiDriver
                     case 'message_delta':
                         $outputTokens = (int) ($chunk['usage']['output_tokens'] ?? $outputTokens);
                         break;
+                    case 'message_stop':
+                        $stopped = true;
+                        break;
                 }
             }
         } catch (\Throwable $e) {
-            throw new ProviderCallFailed("bedrock call failed: {$e->getMessage()}", previous: $e);
+            throw new ProviderCallFailed("bedrock call failed: {$e->getMessage()}", ProviderFailure::classify($e, $opened, new TurnUsage($inputTokens, $outputTokens)), $e);
+        }
+
+        if (! $stopped) {
+            throw new ProviderCallFailed('bedrock stream ended before the response finished.', ProviderFailure::truncated(new TurnUsage($inputTokens, $outputTokens)));
         }
 
         ksort($calls);

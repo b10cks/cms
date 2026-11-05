@@ -67,4 +67,33 @@ class SpaceDatabaseMigratorTest extends TestCase
         DB::purge('space_file');
         File::deleteDirectory(dirname($database));
     }
+
+    #[Test]
+    public function applied_operation_and_review_migrations_missing_from_the_ledger_are_recorded_by_their_columns(): void
+    {
+        $database = storage_path('app/testing/space-migrator/proofs.sqlite');
+        File::ensureDirectoryExists(dirname($database));
+        File::delete($database);
+        touch($database);
+        config(['database.connections.space_file' => ['driver' => 'sqlite', 'database' => $database, 'prefix' => '']]);
+        $connection = SpaceConnection::forceCreate([
+            'name' => 'internal',
+            'space_id' => Space::factory()->create()->id,
+            'driver' => 'sqlite',
+            'config' => ['database' => $database],
+        ]);
+        $migrator = app(SpaceDatabaseMigrator::class);
+        $migrator->migrate($connection);
+        $applied = ['0000_00_00_000021_add_review_to_ai_changeset_items', '0000_00_00_000021_create_ai_operations_tables'];
+
+        // The schema is there, the ledger lost the rows: running them again would fail on existing tables.
+        DB::connection('space_file')->table('migrations')->whereIn('migration', $applied)->delete();
+        $migrator->migrate($connection);
+
+        $this->assertTrue($migrator->isInitialized($connection));
+        $this->assertSame($applied, DB::connection('space_file')->table('migrations')->whereIn('migration', $applied)->orderBy('migration')->pluck('migration')->all());
+
+        DB::purge('space_file');
+        File::deleteDirectory(dirname($database));
+    }
 }

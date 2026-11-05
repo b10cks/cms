@@ -4,12 +4,15 @@ namespace App\Events\Ai;
 
 use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
+use Illuminate\Contracts\Events\ShouldDispatchAfterCommit;
 
 /**
  * A background run stored new events. Carries IDs only (Reverb drops messages
- * over 10KB); the client fetches `GET /runs/{run}/events?after={seq}`.
+ * over 10KB); the client fetches `GET /runs/{run}/events?after={seq}`. Sent after
+ * the commit: a broadcast is a network call, and writes of a run hold the run's
+ * row lock.
  */
-class AiRunEventsAvailable implements ShouldBroadcastNow
+class AiRunEventsAvailable implements ShouldBroadcastNow, ShouldDispatchAfterCommit
 {
     public function __construct(
         public readonly string $actorId,

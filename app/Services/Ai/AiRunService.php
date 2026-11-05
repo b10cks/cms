@@ -17,21 +17,29 @@ use App\Models\Space\AiMessage;
 use App\Models\Space\AiRun;
 use App\Models\Space\AiRunEvent;
 use App\Models\User;
+use App\Services\Ai\Assets\InspectionImages;
 use App\Services\Ai\Changesets\ChangesetRecorder;
 use App\Services\Ai\Concerns\InteractsWithAiDriver;
 use App\Services\Ai\Contracts\AiDriverInterface;
 use App\Services\Ai\Contracts\ProposesChanges;
+use App\Services\Ai\Contracts\ProvidesImages;
 use App\Services\Ai\Contracts\ProvidesSources;
+use App\Services\Ai\Contracts\ReportsOutcomes;
 use App\Services\Ai\Exceptions\AiServiceException;
 use App\Services\Ai\Exceptions\ProviderCallFailed;
 use App\Services\Ai\Knowledge\GlossaryChecker;
-use App\Services\Ai\Knowledge\GlossaryTerm;
+use App\Services\Ai\Knowledge\GlossaryConcept;
+use App\Services\Ai\Knowledge\KnowledgeResolver;
+use App\Services\Ai\Operations\OperationContext;
+use App\Services\Ai\Operations\OperationTools;
 use App\Services\Ai\Run\ContextBuilder;
 use App\Services\Ai\Run\OutputSchema;
+use App\Services\Ai\Run\ProviderRetry;
 use App\Services\Ai\Run\Questionnaire;
 use App\Services\Ai\Run\RunBusy;
 use App\Services\Ai\Run\RunEvent;
 use App\Services\Ai\Run\RunEventType;
+use App\Services\Ai\Run\RunLease;
 use App\Services\Ai\Run\RunOptions;
 use App\Services\Ai\Run\RunToolFactory;
 use App\Services\Ai\Run\StartRun;
@@ -41,16 +49,18 @@ use App\Services\Ai\Run\ToolError;
 use App\Services\Ai\Run\ToolSet;
 use App\Services\Ai\Run\Transcript;
 use App\Services\Ai\Run\TurnResult;
+use App\Services\Ai\Run\TurnUsage;
 use App\Services\Ai\Skills\SkillManifest;
 use App\Services\Ai\Support\JsonExtractor;
 use App\Services\Ai\Threads\AiThreads;
 use App\Services\Ai\Tools\AskQuestionsTool;
+use App\Services\Ai\Tools\InspectAssetsTool;
 use App\Services\Auth\AuthorizationService;
+use Closure;
 use Generator;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
@@ -60,8 +70,16 @@ use Illuminate\Support\Str;
  * results, and stops on completion, a questionnaire, a guard or a deadline.
  *
  * The same advance() runs inline (SSE) and in {@see RunAgentJob}; only the
- * event transport differs. All run state lives on the AiRun row, none in this
- * service, so it is safe as an Octane singleton.
+ * event transport differs. Whoever advances a run holds its {@see RunLease}.
+ * All run state lives on the AiRun row, none in this service, so it is safe as
+ * an Octane singleton.
+ *
+ * Every write of the loop goes through {@see fenced()}, so a worker that lost its
+ * lease writes nothing, whenever it wakes up. Nothing yields inside a fence.
+ *
+ * A background run that hits a transient provider failure waits for its
+ * {@see ProviderRetry} instead of failing. Inline runs fail, since their caller
+ * is waiting and can try again itself.
  */
 class AiRunService
 {
@@ -79,6 +97,13 @@ class AiRunService
 
     private const TRANSLATE_SURFACE = 'translate';
 
+    /**
+     * Tools that read files, maybe over the network, and write nothing. They run
+     * before the fence that stores their result. Every other tool runs inside
+     * it, so a new tool that writes is fenced without asking for it.
+     */
+    private const READ_BEFORE_FENCE = [InspectAssetsTool::NAME];
+
     public function __construct(
         protected ModelRegistry $registry,
         private readonly ContextBuilder $context,
@@ -86,6 +111,7 @@ class AiRunService
         private readonly AuthorizationService $auth,
         private readonly GlossaryChecker $checker,
         private readonly AiThreads $threads,
+        private readonly KnowledgeResolver $knowledge,
     ) {}
 
     /**
@@ -130,6 +156,7 @@ class AiRunService
             'space_id' => $start->space->id,
             'actor_id' => $start->actor->id,
             'conversation_id' => $conversationId,
+            'operation_id' => $start->operation['id'] ?? null,
             'idempotency_key' => $start->idempotencyKey,
             'surface' => $start->surface,
             'skill' => $manifest?->name,
@@ -149,6 +176,9 @@ class AiRunService
                 'corrections' => 0,
                 'title' => Str::limit(trim((string) strtok($start->prompt, "\n")), 120, ''),
                 'targets' => $start->targets,
+                'operation' => $start->operation,
+                'translation' => $start->translation,
+                ...($start->assets !== null ? ['plan' => ['assets' => $start->assets]] : []),
             ],
             'input' => $built['input'],
             'transcript' => $built['transcript']->toArray(),
@@ -198,11 +228,15 @@ class AiRunService
      */
     public function advance(AiRun $run, ?float $deadline = null): Generator
     {
-        $lock = Cache::lock("ai-run:{$run->id}", 300);
+        // A slice without a deadline runs to completion, however long that takes.
+        $inline = $run->mode === AiRun::MODE_INLINE && $deadline !== null;
+        $lease = RunLease::acquire($run, (int) config($inline ? 'ai.runs.inline_lease_seconds' : 'ai.runs.lease_seconds'));
 
-        if (! $lock->get()) {
+        if ($lease === null) {
             throw new RunBusy;
         }
+
+        $run->lease = $lease;
 
         try {
             $run->refresh();
@@ -215,9 +249,30 @@ class AiRunService
             $actor = $run->actor;
             $transcript = $run->transcriptObject();
             $tools = $this->tools->make($run, $space, $actor);
+            if ($operation = OperationContext::forRun($run)) {
+                $tools = OperationTools::adjust($operation, $tools);
+            }
 
             if ($run->steps === 0 && $run->event_seq === 0) {
                 yield $this->emit($run, RunEventType::RunStarted, ['skill' => $run->skill, 'surface' => $run->surface, 'conversation_id' => $run->conversation_id]);
+            }
+
+            if ($run->interruptions >= (int) config('ai.runs.max_interruptions')) {
+                yield from $this->fail($run, $transcript, 'background_failed', 'The background run kept losing its worker.');
+
+                return self::OUTCOME_DONE;
+            }
+
+            // Before tool calls a dead worker left pending: a cancelled or revoked run repeats nothing.
+            if (($stop = $this->guard($run, $space, $actor)) && ! $stop['partial']) {
+                yield from $this->stop($run, $transcript, $stop, $space);
+
+                return self::OUTCOME_DONE;
+            }
+
+            // Whoever woke the run early spends nothing. The scheduled job or the recovery sweep comes back.
+            if (ProviderRetry::isWaiting($run)) {
+                return self::OUTCOME_YIELDED;
             }
 
             while (true) {
@@ -225,9 +280,14 @@ class AiRunService
                 // here, without repeating the provider call.
                 $pending = $transcript->pendingToolCalls();
                 if ($pending !== []) {
-                    $paused = yield from $this->runTools($run, $transcript, $tools, $pending);
+                    $paused = yield from $this->runTools($run, $transcript, $tools, $pending, $operation);
                     if ($paused) {
                         return self::OUTCOME_PAUSED;
+                    }
+
+                    // Images the turn's tools attached follow all of its tool results.
+                    if (InspectionImages::append($transcript, $tools)) {
+                        $this->checkpoint($run, $transcript);
                     }
 
                     continue;
@@ -248,10 +308,13 @@ class AiRunService
                 }
 
                 if ($deadline !== null && microtime(true) >= $deadline) {
-                    yield from $this->handOver($run, $transcript);
+                    yield from $this->handOver($run, $transcript, $lease);
 
                     return self::OUTCOME_YIELDED;
                 }
+
+                $this->noteLostImages($run, $transcript);
+                $transcript = InspectionImages::compact($transcript);
 
                 try {
                     $turn = yield from $this->turn($run, $this->driverFor($run, $space), $transcript, $tools);
@@ -260,13 +323,18 @@ class AiRunService
 
                     return self::OUTCOME_DONE;
                 } catch (ProviderCallFailed $e) {
-                    yield from $this->fail($run, $transcript, 'provider_error', 'The AI provider returned an error.', $e);
+                    // A worker that took over meanwhile owns the run; this failure is dropped.
+                    $lease->heartbeat();
 
-                    return self::OUTCOME_DONE;
+                    return yield from $this->providerFailed($run, $transcript, $lease, $e);
                 }
 
+                // A worker that took over meanwhile owns the transcript; this response is dropped.
+                $lease->heartbeat();
+
                 $run->steps++;
-                $this->recordUsage($run, $turn);
+                $this->recordUsage($run, $turn->usage);
+                ProviderRetry::answered($run);
                 yield $this->emit($run, RunEventType::Usage, $this->usagePayload($run));
                 $transcript->appendAssistant($turn->text, $turn->toolCalls);
                 $this->checkpoint($run, $transcript);
@@ -279,7 +347,8 @@ class AiRunService
                 }
             }
         } finally {
-            $lock->release();
+            $run->lease = null;
+            $lease->release();
         }
     }
 
@@ -332,21 +401,26 @@ class AiRunService
         }
 
         $run->forceFill(['cancel_requested' => true])->save();
-        $lock = Cache::lock("ai-run:{$run->id}", 300);
+        $lease = RunLease::acquire($run, (int) config('ai.runs.inline_lease_seconds'));
 
-        if (! $lock->get()) {
+        if ($lease === null) {
             return;
         }
+
+        $run->lease = $lease;
 
         try {
             $run->refresh();
             if (! $run->isFinished()) {
-                $this->finish($run, AiRunState::Cancelled);
-                $this->emit($run, RunEventType::Error, ['reason' => 'cancelled', 'message' => 'The run was cancelled.']);
-                $run->save();
+                $this->fenced($run, function () use ($run) {
+                    $this->finish($run, AiRunState::Cancelled);
+                    $this->emit($run, RunEventType::Error, ['reason' => 'cancelled', 'message' => 'The run was cancelled.']);
+                    $run->save();
+                });
             }
         } finally {
-            $lock->release();
+            $run->lease = null;
+            $lease->release();
         }
     }
 
@@ -385,6 +459,8 @@ class AiRunService
         $buffer = '';
 
         foreach ($turn as $delta) {
+            $run->lease?->heartbeat();
+
             if (! $delta instanceof TextDelta || $delta->text === '') {
                 continue;
             }
@@ -410,10 +486,55 @@ class AiRunService
     }
 
     /**
+     * Keep what the failed call reported, then wait for a retry or fail. The
+     * transcript is not touched for a retry: the same request goes out again.
+     *
+     * @return Generator<int, RunEvent, mixed, string>
+     */
+    private function providerFailed(AiRun $run, Transcript $transcript, RunLease $lease, ProviderCallFailed $e): Generator
+    {
+        $failure = $e->failure;
+        $background = $run->mode === AiRun::MODE_BACKGROUND;
+
+        if ($failure->usage !== null) {
+            $this->recordUsage($run, $failure->usage);
+        }
+        ProviderRetry::note($run, $failure);
+        $retryAt = $background ? ProviderRetry::schedule($run, $failure) : null;
+
+        if ($retryAt === null) {
+            yield from $background && $failure->kind->isTransient()
+                ? $this->fail($run, $transcript, 'provider_unavailable', 'The AI provider stayed unavailable. Retries used: '.ProviderRetry::attempts($run).'.', $e)
+                : $this->fail($run, $transcript, 'provider_error', 'The AI provider returned an error.', $e);
+
+            return self::OUTCOME_DONE;
+        }
+
+        // Stored first: from here on any worker must honor the backoff.
+        $this->store($run);
+        $retry = ProviderRetry::state($run);
+        Log::warning('Retrying an AI run after a provider failure', ['run' => $run->id, 'retry_at' => $retry['not_before'], 'failure' => $retry['failure'], 'exception' => $e->getMessage()]);
+        yield $this->emit($run, RunEventType::ProviderRetryScheduled, [
+            'attempt' => $retry['attempts'],
+            'max_attempts' => (int) config('ai.runs.provider_retries.max_attempts'),
+            'retry_at' => $retry['not_before'],
+            'failure' => $retry['failure'],
+            'possibly_billed' => $failure->kind->possiblyBilled(),
+            'unconfirmed_calls' => $retry['unconfirmed_calls'],
+        ]);
+
+        $run->lease = null;
+        $lease->release();
+        RunAgentJob::dispatch($run->space_id, $run->id)->delay($retryAt);
+
+        return self::OUTCOME_YIELDED;
+    }
+
+    /**
      * @param  list<ToolCall>  $calls
      * @return Generator<int, RunEvent, mixed, bool> true when the run paused for input
      */
-    private function runTools(AiRun $run, Transcript $transcript, ToolSet $tools, array $calls): Generator
+    private function runTools(AiRun $run, Transcript $transcript, ToolSet $tools, array $calls, ?OperationContext $operation): Generator
     {
         foreach ($calls as $call) {
             if ($call->name === AskQuestionsTool::NAME && $tools->has(AskQuestionsTool::NAME)) {
@@ -427,20 +548,32 @@ class AiRunService
 
                 $run->questionnaire = ['tool_call_id' => $call->id, ...$questionnaire];
                 $run->state = AiRunState::AwaitingInput;
+                $this->rememberLostImages($run, $tools);
                 $this->checkpoint($run, $transcript);
                 $this->threads->changed($run->space_id, $run->conversation_id, activity: false);
                 yield $this->emit($run, RunEventType::Questionnaire, ['questionnaire' => $questionnaire]);
-                $run->save();
+                $this->store($run);
 
                 return true;
             }
 
             yield $this->emit($run, RunEventType::ToolStarted, ['id' => $call->id, 'name' => $call->name]);
-            $result = $tools->execute($call);
-            $transcript->appendToolResult($call, $result);
-            $this->checkpoint($run, $transcript);
-
             $tool = $tools->get($call->name);
+            $result = \in_array($call->name, self::READ_BEFORE_FENCE, true) ? $tools->execute($call) : null;
+
+            // What the tool wrote, its accounting and its result in the transcript commit
+            // together: a crash or a lost lease leaves none of them, and a replay repeats the call.
+            $result = $this->fenced($run, function () use ($run, $transcript, $tools, $tool, $call, $operation, $result) {
+                $result ??= $tools->execute($call);
+                if ($tool instanceof ReportsOutcomes) {
+                    $operation?->account($tool->takeOutcomes());
+                }
+                $transcript->appendToolResult($call, $result);
+                $this->checkpoint($run, $transcript);
+
+                return $result;
+            });
+
             if ($tool instanceof ProvidesSources) {
                 foreach ($tool->takeSources() as $source) {
                     $this->rememberSource($run, $source);
@@ -461,6 +594,41 @@ class AiRunService
         }
 
         return false;
+    }
+
+    /**
+     * A run that pauses for questions drops the images its turn's tools
+     * attached: they cannot follow the tool results yet. Remember which
+     * assets they showed, so the resumed run is told to look again.
+     */
+    private function rememberLostImages(AiRun $run, ToolSet $tools): void
+    {
+        $assets = [];
+        foreach ($tools->names() as $name) {
+            $tool = $tools->get($name);
+            if ($tool instanceof ProvidesImages) {
+                array_push($assets, ...array_filter(array_column($tool->takeImages(), 'asset_id')));
+            }
+        }
+
+        if ($assets !== []) {
+            $run->setup = [...$run->setup, 'reinspect' => array_values(array_unique([...($run->setup['reinspect'] ?? []), ...$assets]))];
+        }
+    }
+
+    /** Before the next provider call, once every tool result is in: tell the model which images it did not get to see. */
+    private function noteLostImages(AiRun $run, Transcript $transcript): void
+    {
+        $assets = $run->setup['reinspect'] ?? [];
+        if ($assets === []) {
+            return;
+        }
+
+        $setup = $run->setup;
+        unset($setup['reinspect']);
+        $run->setup = $setup;
+        $transcript->appendUser('The run paused for questions before the images of these assets were shown: '.implode(', ', $assets).'. Inspect them again to see them.');
+        $this->checkpoint($run, $transcript);
     }
 
     /**
@@ -506,34 +674,41 @@ class AiRunService
             yield $this->emit($run, RunEventType::GlossaryFindings, ['findings' => $findings]);
         }
 
-        if ($run->surface === self::SELECTION_SURFACE && trim($text) !== '') {
-            yield $this->emit($run, RunEventType::Proposal, ['proposal' => $this->proposeSelection($run, $text)]);
-        }
+        $events = $this->fenced($run, function () use ($run, $transcript, $text, $data, $findings, $partial) {
+            $events = [];
+            if ($run->surface === self::SELECTION_SURFACE && trim($text) !== '') {
+                $events[] = $this->emit($run, RunEventType::Proposal, ['proposal' => $this->proposeSelection($run, $text)]);
+            }
 
-        if ($run->surface === self::TRANSLATE_SURFACE && \is_array($data)) {
-            $this->recordTranslations($run, $data);
-        }
+            if ($run->surface === self::TRANSLATE_SURFACE && \is_array($data)) {
+                $this->recordTranslations($run, $data);
+            }
 
-        $run->result = ['text' => $text, 'data' => $data, 'glossary_findings' => $findings];
-        $run->partial = $partial;
-        $this->finish($run, AiRunState::Completed);
-        $this->checkpoint($run, $transcript);
+            $run->result = ['text' => $text, 'data' => $data, 'glossary_findings' => $findings];
+            $run->partial = $partial;
+            $this->finish($run, AiRunState::Completed);
+            $this->checkpoint($run, $transcript);
 
-        if ($run->conversation_id !== null) {
-            AiMessage::create([
-                'conversation_id' => $run->conversation_id,
-                'run_id' => $run->id,
-                'role' => 'assistant',
-                'content' => $text,
+            if ($run->conversation_id !== null) {
+                AiMessage::create([
+                    'conversation_id' => $run->conversation_id,
+                    'run_id' => $run->id,
+                    'role' => 'assistant',
+                    'content' => $text,
+                ]);
+            }
+
+            $events[] = $this->emit($run, RunEventType::Completed, [
+                'result' => $run->result,
+                'partial' => $partial,
+                'usage' => $this->usagePayload($run),
             ]);
-        }
+            $run->save();
 
-        yield $this->emit($run, RunEventType::Completed, [
-            'result' => $run->result,
-            'partial' => $partial,
-            'usage' => $this->usagePayload($run),
-        ]);
-        $run->save();
+            return $events;
+        });
+
+        yield from $events;
 
         return true;
     }
@@ -552,7 +727,8 @@ class AiRunService
         }
 
         $budget = $run->setup['budget'];
-        $elapsed = $run->started_at ? $run->started_at->diffInSeconds(now()) : 0;
+        // Waiting for a provider to come back is not work the run did.
+        $elapsed = $run->started_at ? $run->started_at->diffInSeconds(now()) - ProviderRetry::waitedSeconds($run) : 0;
 
         return match (true) {
             $run->steps >= (int) $budget['max_steps'] => ['reason' => 'max_steps', 'partial' => true],
@@ -578,14 +754,18 @@ class AiRunService
         }
 
         $state = $stop['reason'] === 'cancelled' ? AiRunState::Cancelled : AiRunState::Failed;
-        $run->error = $stop['reason'];
-        $this->finish($run, $state);
-        $this->checkpoint($run, $transcript);
-        yield $this->emit($run, RunEventType::Error, [
-            'reason' => $stop['reason'],
-            'message' => $state === AiRunState::Cancelled ? 'The run was cancelled.' : 'You no longer have access to this space.',
-        ]);
-        $run->save();
+        yield $this->fenced($run, function () use ($run, $transcript, $stop, $state) {
+            $run->error = $stop['reason'];
+            $this->finish($run, $state);
+            $this->checkpoint($run, $transcript);
+            $event = $this->emit($run, RunEventType::Error, [
+                'reason' => $stop['reason'],
+                'message' => $state === AiRunState::Cancelled ? 'The run was cancelled.' : 'You no longer have access to this space.',
+            ]);
+            $run->save();
+
+            return $event;
+        });
     }
 
     /**
@@ -593,7 +773,7 @@ class AiRunService
      *
      * @return Generator<int, RunEvent, mixed, void>
      */
-    private function handOver(AiRun $run, Transcript $transcript): Generator
+    private function handOver(AiRun $run, Transcript $transcript, RunLease $lease): Generator
     {
         $wasInline = $run->mode === AiRun::MODE_INLINE;
         $run->mode = AiRun::MODE_BACKGROUND;
@@ -601,14 +781,20 @@ class AiRunService
 
         if ($wasInline) {
             yield $this->emit($run, RunEventType::MovedToBackground, []);
-            $run->save();
+            $this->store($run);
         }
 
-        // Delayed so the inline request releases the run lock first.
-        RunAgentJob::dispatch($run->space_id, $run->id)->delay(now()->addSeconds(2));
+        // Released first, so the next slice finds the run free however fast it starts.
+        // Dying in between leaves a free run for the recovery sweep.
+        $run->lease = null;
+        $lease->release();
+        RunAgentJob::dispatch($run->space_id, $run->id);
     }
 
     /**
+     * Fail the run. A caller outside the loop, like a failed job or stream, has
+     * to own the run first: while another worker holds it, nothing happens.
+     *
      * @return Generator<int, RunEvent, mixed, void>
      */
     public function fail(AiRun $run, ?Transcript $transcript, string $reason, string $message, ?\Throwable $e = null): Generator
@@ -619,11 +805,39 @@ class AiRunService
             Log::error('AI run failed', ['run' => $run->id, 'ref' => $ref, 'reason' => $reason, 'exception' => $e]);
         }
 
-        $run->error = $e !== null ? "{$reason}: {$ref}" : $reason;
-        $this->finish($run, AiRunState::Failed);
-        $this->checkpoint($run, $transcript ?? $run->transcriptObject());
-        yield $this->emit($run, RunEventType::Error, ['reason' => $reason, 'message' => $e !== null ? "{$message} (ref: {$ref})" : $message]);
-        $run->save();
+        $write = function () use ($run, $transcript, $reason, $message, $e, $ref) {
+            $run->error = $e !== null ? "{$reason}: {$ref}" : $reason;
+            $this->finish($run, AiRunState::Failed);
+            $this->checkpoint($run, $transcript ?? $run->transcriptObject());
+            $event = $this->emit($run, RunEventType::Error, ['reason' => $reason, 'message' => $e !== null ? "{$message} (ref: {$ref})" : $message]);
+            $run->save();
+
+            return $event;
+        };
+
+        if ($run->lease !== null) {
+            yield $this->fenced($run, $write);
+
+            return;
+        }
+
+        $lease = RunLease::acquire($run, (int) config('ai.runs.inline_lease_seconds'));
+        if ($lease === null) {
+            return;
+        }
+
+        $run->lease = $lease;
+
+        try {
+            $event = $run->refresh()->isFinished() ? null : $this->fenced($run, $write);
+        } finally {
+            $run->lease = null;
+            $lease->release();
+        }
+
+        if ($event !== null) {
+            yield $event;
+        }
     }
 
     private function finish(AiRun $run, AiRunState $state): void
@@ -633,7 +847,7 @@ class AiRunService
         $this->threads->changed($run->space_id, $run->conversation_id);
 
         if (($run->setup['driver'] ?? null) === 'openrouter' && ! empty($run->setup['generations'])) {
-            ReconcileAiRunCostJob::dispatch($run->space_id, $run->id)->delay(now()->addSeconds(30));
+            ReconcileAiRunCostJob::dispatch($run->space_id, $run->id)->delay(now()->addSeconds(30))->afterCommit();
         }
     }
 
@@ -779,7 +993,26 @@ class AiRunService
     private function checkpoint(AiRun $run, Transcript $transcript): void
     {
         $run->transcript = $transcript->toArray();
-        $run->save();
+        $this->store($run);
+    }
+
+    private function store(AiRun $run): void
+    {
+        $this->fenced($run, fn () => $run->save());
+    }
+
+    /**
+     * One transaction for `$write`, under the lease when this process advances
+     * the run. {@see answer()} holds none: its state claim is its own guard.
+     *
+     * @template T
+     *
+     * @param  Closure(): T  $write
+     * @return T
+     */
+    private function fenced(AiRun $run, Closure $write): mixed
+    {
+        return $run->lease !== null ? $run->lease->fence($write) : $run->getConnection()->transaction($write);
     }
 
     /**
@@ -794,17 +1027,19 @@ class AiRunService
         $event = new RunEvent($run->id, $run->event_seq, $type, $payload);
 
         if ($run->mode === AiRun::MODE_BACKGROUND) {
-            AiRunEvent::create(['run_id' => $run->id, 'seq' => $event->seq, 'type' => $type->value, 'payload' => $payload]);
-            AiRun::query()->whereKey($run->id)->update(['event_seq' => $run->event_seq]);
+            // Together: a stored event above the counter would fail the worker that recovers this run.
+            $this->fenced($run, function () use ($run, $event, $type, $payload) {
+                AiRunEvent::create(['run_id' => $run->id, 'seq' => $event->seq, 'type' => $type->value, 'payload' => $payload]);
+                AiRun::query()->whereKey($run->id)->update(['event_seq' => $run->event_seq]);
+            });
             broadcast(new AiRunEventsAvailable($run->actor_id, $run->id, $event->seq, $type->value));
         }
 
         return $event;
     }
 
-    private function recordUsage(AiRun $run, TurnResult $turn): void
+    private function recordUsage(AiRun $run, TurnUsage $usage): void
     {
-        $usage = $turn->usage;
         $run->input_tokens += $usage->inputTokens;
         $run->output_tokens += $usage->outputTokens;
         $run->cached_tokens += $usage->cachedTokens;
@@ -843,19 +1078,24 @@ class AiRunService
     {
         $glossary = $run->setup['glossary'] ?? null;
 
-        if (! $glossary || ($glossary['terms'] ?? []) === []) {
+        // An answer across languages has no one language to check it in. Its caller checks each value.
+        if (! $glossary || isset($glossary['output_locales'])) {
             return [];
         }
 
+        $terms = isset($run->setup['policy']['id'])
+            ? $this->knowledge->policy($run->space, $run)->concepts
+            : GlossaryConcept::listFromFrozen($glossary['concepts'] ?? $glossary['terms'] ?? []);
+
         $output = $data !== null ? implode("\n", array_filter(Arr::flatten($data), 'is_string')) : $text;
 
-        return $this->checker->check(
+        return GlossaryChecker::blocking($this->checker->check(
             (string) $glossary['source'],
             $output,
             (string) $glossary['source_locale'],
             (string) $glossary['target_locale'],
-            array_map(fn (array $term) => GlossaryTerm::fromArray($term), $glossary['terms']),
-        );
+            $terms,
+        ));
     }
 
     private function driverFor(AiRun $run, Space $space): AiDriverInterface

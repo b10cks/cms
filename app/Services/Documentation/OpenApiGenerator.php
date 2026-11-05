@@ -496,6 +496,10 @@ class OpenApiGenerator
      */
     protected function convertSchemaToRef(array $schema): array
     {
+        foreach ($this->collectSchemaRefs($schema) as $schemaName) {
+            $this->trackSchemaUsage($schemaName);
+        }
+
         if (isset($schema['$ref'])) {
             $this->trackSchemaUsageFromRef($schema['$ref']);
             unset($schema['x-resource-class']);

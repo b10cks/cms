@@ -13,7 +13,6 @@ use App\Mcp\Tools\ReadSkillTool;
 use App\Mcp\Tools\SearchContentTool;
 use App\Mcp\Tools\SearchKnowledgeTool;
 use App\Models\Management\AiGlossary;
-use App\Models\Management\AiGlossaryTerm;
 use App\Models\Management\AiKnowledgeDocument;
 use App\Models\Management\AiSkill;
 use App\Models\Management\Space;
@@ -24,11 +23,13 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 use Tests\Traits\SpaceTestingTrait;
+use Tests\Traits\WritesGlossaryRows;
 
 class AiMcpToolsTest extends TestCase
 {
     use RefreshDatabase;
     use SpaceTestingTrait;
+    use WritesGlossaryRows;
 
     protected User $user;
 
@@ -83,10 +84,7 @@ class AiMcpToolsTest extends TestCase
     public function lookup_glossary_returns_the_required_wording_for_the_target_locale(): void
     {
         $glossary = AiGlossary::create([...AiGlossary::ownerAttributes($this->space), 'name' => 'Brand']);
-        AiGlossaryTerm::create([
-            'glossary_id' => $glossary->id, 'source_locale' => 'en', 'term' => 'Dashboard',
-            'translations' => ['de' => 'Übersicht'],
-        ]);
+        $this->glossaryRow($glossary, ['en' => 'Dashboard', 'de' => 'Übersicht']);
 
         ManagementServer::actingAs($this->user)->tool(LookupGlossaryTool::class, [
             'spaceId' => $this->space->id, 'text' => 'Open the Dashboard.', 'source_locale' => 'en', 'target_locale' => 'de',
@@ -126,11 +124,33 @@ class AiMcpToolsTest extends TestCase
             'payload' => ['file' => ['filename' => 'terms.csv', 'content_base64' => base64_encode($csv)]],
         ])->assertOk();
 
-        $this->assertEqualsCanonicalizing(['Checkout', 'b10cks'], $glossary->terms()->pluck('term')->all());
+        $this->assertEqualsCanonicalizing(['Checkout', 'b10cks'], $glossary->terms()->pluck('preferred')->all());
 
         ManagementServer::actingAs($this->user)->tool(MgmtCallTool::class, [
             ...$args,
             'payload' => ['file' => ['filename' => 'big.csv', 'content_base64' => str_repeat('A', 14_000_000)]],
         ])->assertHasErrors(['exceeds the upload limit of 10240 KB']);
+    }
+
+    #[Test]
+    public function glossary_sheets_import_and_export_through_the_registry(): void
+    {
+        $this->assignSpaceRole($this->space, $this->user, 'owner');
+        $glossary = AiGlossary::create([...AiGlossary::ownerAttributes($this->space), 'name' => 'Shop', 'enabled' => true]);
+        $args = ['spaceId' => $this->space->id, 'id' => $glossary->id];
+
+        ManagementServer::actingAs($this->user)->tool(MgmtCallTool::class, [
+            ...$args,
+            'operation' => 'ai.glossaries.import',
+            'payload' => ['file' => ['filename' => 'sheet.csv', 'content_base64' => base64_encode("concept,term:en,keep_exact\ncart,Cart,no\nbad,Bad,maybe\n")]],
+        ])->assertOk()->assertSee('"added": 1')->assertSee('"column": "keep_exact"');
+
+        $this->assertSame('cart', $glossary->terms()->where('preferred', 'Cart')->firstOrFail()->concept->key);
+
+        ManagementServer::actingAs($this->user)->tool(MgmtCallTool::class, [
+            ...$args,
+            'operation' => 'ai.glossaries.export',
+            'params' => ['format' => 'csv', 'template' => 1],
+        ])->assertOk()->assertSee('shop-template.csv');
     }
 }

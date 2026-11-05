@@ -12,6 +12,8 @@ use Illuminate\Support\Str;
 
 class AssetMetadataFieldResolver
 {
+    public const DEFAULT_LANGUAGE_KEY = '_default';
+
     /**
      * @var array<string, AssetFolder>
      */
@@ -110,19 +112,30 @@ class AssetMetadataFieldResolver
         return $this->getEffectiveClassificationFieldsForFolder($space, $asset->folder_id);
     }
 
+    /**
+     * Keys asset field data is stored under: `_default` for the space's
+     * default language, then the code of every further language.
+     *
+     * @return list<string>
+     */
+    public function languageKeys(Space $space): array
+    {
+        return array_values(array_unique(array_merge(
+            [self::DEFAULT_LANGUAGE_KEY],
+            array_values(array_filter(array_map(
+                fn (array $language): ?string => \is_string($language['code'] ?? null) && $language['code'] !== '' ? $language['code'] : null,
+                $space->settings->languages ?? []
+            )))
+        )));
+    }
+
     public function sanitizeFieldData(
         Space $space,
         AssetFolder|string|null $folder,
         array $fieldData
     ): array {
         $allowedFieldKeys = array_column($this->getEffectiveFieldsForFolder($space, $folder), 'key');
-        $allowedLanguages = array_merge(
-            ['_default'],
-            array_values(array_filter(array_map(
-                fn (array $language): ?string => $language['code'] ?? null,
-                $space->settings->languages ?? []
-            )))
-        );
+        $allowedLanguages = $this->languageKeys($space);
 
         $sanitized = [];
 

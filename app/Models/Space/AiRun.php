@@ -6,6 +6,7 @@ use App\Enums\AiReasoningEffort;
 use App\Enums\AiRunState;
 use App\Models\Management\Space;
 use App\Models\User;
+use App\Services\Ai\Run\RunLease;
 use App\Services\Ai\Run\Transcript;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -20,6 +21,7 @@ use Illuminate\Support\Carbon;
  * @property string $space_id
  * @property string $actor_id
  * @property string|null $conversation_id
+ * @property string|null $operation_id
  * @property string|null $idempotency_key
  * @property string $surface
  * @property string|null $skill
@@ -42,6 +44,11 @@ use Illuminate\Support\Carbon;
  * @property int $cached_tokens
  * @property float $cost_usd
  * @property int $event_seq
+ * @property string|null $lease_owner
+ * @property Carbon|null $lease_expires_at
+ * @property int $interruptions
+ * @property float $counted_cost_usd
+ * @property Carbon|null $cost_confirmed_at
  * @property Carbon|null $started_at
  * @property Carbon|null $finished_at
  */
@@ -53,10 +60,14 @@ class AiRun extends SpaceDatabaseModel
 
     public const MODE_BACKGROUND = 'background';
 
+    /** The lease this process advances the run under, for the loop's checkpoints. Never persisted. */
+    public ?RunLease $lease = null;
+
     protected $fillable = [
         'space_id',
         'actor_id',
         'conversation_id',
+        'operation_id',
         'idempotency_key',
         'surface',
         'skill',
@@ -79,6 +90,7 @@ class AiRun extends SpaceDatabaseModel
         'cached_tokens',
         'cost_usd',
         'event_seq',
+        'cost_confirmed_at',
         'started_at',
         'finished_at',
     ];
@@ -99,6 +111,10 @@ class AiRun extends SpaceDatabaseModel
         'cached_tokens' => 'integer',
         'cost_usd' => 'float',
         'event_seq' => 'integer',
+        'lease_expires_at' => 'datetime',
+        'interruptions' => 'integer',
+        'counted_cost_usd' => 'float',
+        'cost_confirmed_at' => 'datetime',
         'started_at' => 'datetime',
         'finished_at' => 'datetime',
     ];
@@ -118,6 +134,12 @@ class AiRun extends SpaceDatabaseModel
         return $this->belongsTo(AiConversation::class, 'conversation_id');
     }
 
+    /** The operation this run is a planning or batch run of. */
+    public function operation(): BelongsTo
+    {
+        return $this->belongsTo(AiOperation::class, 'operation_id');
+    }
+
     public function events(): HasMany
     {
         return $this->hasMany(AiRunEvent::class, 'run_id');
@@ -126,6 +148,12 @@ class AiRun extends SpaceDatabaseModel
     public function transcriptObject(): Transcript
     {
         return Transcript::fromArray($this->transcript ?? []);
+    }
+
+    /** A worker holds this run right now, or died too recently to tell. */
+    public function isLeased(): bool
+    {
+        return $this->lease_owner !== null && $this->lease_expires_at?->isFuture();
     }
 
     public function isFinished(): bool

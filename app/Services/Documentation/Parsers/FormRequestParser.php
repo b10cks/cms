@@ -3,6 +3,7 @@
 namespace App\Services\Documentation\Parsers;
 
 use App\Models\Settings;
+use App\Services\Documentation\SchemaShape;
 use App\Services\Documentation\TypeInferencer;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rules\Enum;
@@ -41,19 +42,54 @@ class FormRequestParser
                 }
             }
 
-            $schema = $this->buildSchemaFromRules($rules);
+            $schema = $this->applyDocAnnotations($this->buildSchemaFromRules($rules), $reflection->getDocComment() ?: '');
 
-            return [
-                'required' => true,
-                'content' => [
-                    'application/json' => [
-                        'schema' => $schema,
-                    ],
-                ],
-            ];
+            $content = ['application/json' => ['schema' => $schema]];
+
+            if (str_contains($reflection->getDocComment() ?: '', '@requestMultipart')) {
+                $content = $this->withMultipartUpload($schema);
+            }
+
+            return ['required' => true, 'content' => $content];
         } catch (\Throwable $e) {
             return [];
         }
+    }
+
+    /**
+     * Replace properties that validation rules cannot describe, like an object
+     * keyed by item ID (rules only see `*`).
+     *
+     * Format: `@requestProperty field shape=@SchemaName description text`
+     */
+    protected function applyDocAnnotations(array $schema, string $docComment): array
+    {
+        if (preg_match_all('/@requestProperty[ \t]+(\w+)[ \t]+shape=(\S+)(?:[ \t]+(.+))?$/m', $docComment, $matches, PREG_SET_ORDER)) {
+            foreach ($matches as $match) {
+                $token = $match[2].(isset($match[3]) ? ' -- '.trim($match[3]) : '');
+                $schema['properties'][$match[1]] = SchemaShape::expand($token);
+            }
+        }
+
+        return $schema;
+    }
+
+    /**
+     * An endpoint taking text or a file: JSON has no `file`, multipart sends the
+     * same fields next to a binary one.
+     *
+     * @return array<string, array{schema: array<string, mixed>}>
+     */
+    protected function withMultipartUpload(array $schema): array
+    {
+        $json = $schema;
+        unset($json['properties']['file']);
+        $json['required'] = array_values(array_diff($json['required'] ?? [], ['file']));
+
+        $multipart = $schema;
+        $multipart['properties']['file'] = ['type' => 'string', 'format' => 'binary'];
+
+        return ['application/json' => ['schema' => $json], 'multipart/form-data' => ['schema' => $multipart]];
     }
 
     /**
@@ -444,7 +480,8 @@ class FormRequestParser
 
     protected function isRequiredRuleSet(array $ruleArray): bool
     {
-        return in_array('required', $ruleArray, true) && ! in_array('nullable', $ruleArray, true);
+        return in_array('present', $ruleArray, true)
+            || (in_array('required', $ruleArray, true) && ! in_array('nullable', $ruleArray, true));
     }
 
     protected function joinPath(string $path, string $segment): string

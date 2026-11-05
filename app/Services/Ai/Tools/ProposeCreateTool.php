@@ -6,6 +6,7 @@ use App\Models\Space\AiChangesetItem;
 use App\Models\Space\Block;
 use App\Models\Space\Content;
 use App\Services\Ai\Changesets\BlockTarget;
+use App\Services\Ai\Contracts\ReportsOutcomes;
 use App\Services\Ai\Run\ToolError;
 use App\Services\Content\ContentHierarchyValidator;
 use App\Services\Content\ContentI18nValidator;
@@ -13,9 +14,17 @@ use App\Services\Content\Schema\ContentSchemaValidator;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
-/** Proposes a new content entry or block; validated like a create, stored for review. */
-class ProposeCreateTool extends ProposalTool
+/**
+ * Creates a new content entry as an unpublished draft, validated like a create.
+ * A new block definition waits as a proposal for a person: blocks have no draft. A
+ * content entry in a language other than the default is always a translation: it
+ * joins the family of `translation_of` in that language, resolved in code like
+ * `propose_translation`.
+ */
+class ProposeCreateTool extends ProposalTool implements ReportsOutcomes
 {
+    use ProposesTranslations;
+
     public const NAME = 'propose_create';
 
     public function name(): string
@@ -25,10 +34,12 @@ class ProposeCreateTool extends ProposalTool
 
     public function description(): string
     {
-        return 'Proposes a new content entry, or with target_type block a new block definition. Nothing is created until an editor accepts it. '
+        return 'Creates a new content entry as an unpublished draft right away. With target_type block it proposes a new block definition instead, which an editor must accept. '
             .'Content: use a block slug from get_block_list and the field keys of its schema; nested blocks need an `id` (any unique string) and a `block` slug. '
             .'Block: name, slug (starts with a lowercase letter, letters and numbers only, unique), type (root, nestable, single or universal), optional description, icon, color (#rrggbb) and schema, '
-            .'an object of field definitions by field key, each with at least `type` and `name`. Read an existing block with get_entry to see the format.';
+            .'an object of field definitions by field key, each with at least `type` and `name`. Read an existing block with get_entry to see the format. '
+            .'A translation of an existing entry: pass translation_of (the source entry ID), language, the translated name and `content` as unit ID => translated text, '
+            .'with unit IDs from get_translation_task (a root text field\'s unit ID is its field key). Without translation_of, entries are created in the default language.';
     }
 
     public function inputSchema(): array
@@ -47,6 +58,9 @@ class ProposeCreateTool extends ProposalTool
                 'icon' => ['type' => 'string', 'description' => 'Block: optional icon name.'],
                 'color' => ['type' => 'string', 'description' => 'Block: optional #rrggbb color.'],
                 'schema' => ['type' => 'object', 'description' => 'Block: field definitions keyed by field key.'],
+                'translation_of' => ['type' => 'string', 'description' => 'Content: ID of the entry this is a translation of.'],
+                'language' => ['type' => 'string', 'description' => 'Content: the translation\'s locale. Needs translation_of.'],
+                'source_version_id' => ['type' => 'string', 'description' => 'Content translation: the source version_id get_translation_task returned.'],
             ],
             'required' => ['name'],
         ];
@@ -91,7 +105,31 @@ class ProposeCreateTool extends ProposalTool
     /** @param  array<string, mixed>  $input */
     private function content(array $input): mixed
     {
-        $this->target(AiChangesetItem::TARGET_CONTENT);
+        $language = trim((string) ($input['language'] ?? ''));
+        $source = trim((string) ($input['translation_of'] ?? ''));
+
+        if ($source !== '') {
+            if ($language === '') {
+                throw new ToolError('Pass the language of the translation.');
+            }
+
+            return $this->proposeTranslation(
+                $source,
+                $language,
+                \is_array($input['content'] ?? null) ? $input['content'] : [],
+                trim((string) ($input['name'] ?? '')),
+                \is_string($input['slug'] ?? null) ? $input['slug'] : null,
+                \is_string($input['source_version_id'] ?? null) ? $input['source_version_id'] : null,
+                requirePins: false,
+                createOnly: true,
+            );
+        }
+
+        if ($language !== '' && strcasecmp($language, $this->space->settings->getDefaultLanguage()) !== 0) {
+            throw new ToolError("Entries in {$language} are translations: pass translation_of with the ID of the entry to translate, or use propose_translation.");
+        }
+
+        $this->ensureCanWriteContent();
         $this->ensureInScope(AiChangesetItem::TARGET_CONTENT, null);
 
         $name = trim((string) ($input['name'] ?? ''));
@@ -134,13 +172,13 @@ class ProposeCreateTool extends ProposalTool
             )));
         }
 
-        [$item] = $this->record([[
+        $write = $this->writeContent(fn () => $this->record([[
             'operation' => AiChangesetItem::OPERATION_CREATE,
             'target_type' => AiChangesetItem::TARGET_CONTENT,
             'target_label' => $name,
             'after' => [...$data, 'content' => $schema->content],
-        ]]);
+        ]]));
 
-        return ['proposed' => 1, 'item_ids' => [$item->id]];
+        return [...$this->writeResult($write), 'id' => $write['written']->first()?->target_id];
     }
 }

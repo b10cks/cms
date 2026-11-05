@@ -14,6 +14,7 @@ enum RunEventType: string
     case GlossaryFindings = 'glossary_findings';
     case Usage = 'usage';
     case MovedToBackground = 'moved_to_background';
+    case ProviderRetryScheduled = 'provider_retry_scheduled';
     case Completed = 'completed';
     case Error = 'error';
 

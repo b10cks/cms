@@ -9,9 +9,10 @@ use App\Models\Space\Content;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
+use Illuminate\Contracts\Events\ShouldDispatchAfterCommit;
 use Illuminate\Queue\SerializesModels;
 
-class ContentUpdated implements ShouldBroadcast
+class ContentUpdated implements ShouldBroadcast, ShouldDispatchAfterCommit
 {
     use InteractsWithSockets;
     use ResolvesBroadcastPayload;

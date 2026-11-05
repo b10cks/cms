@@ -54,6 +54,27 @@ class ContentTarget implements ChangeTarget
         return new TargetSnapshot($content, (string) $content->name, $version?->content ?? [], $version?->id);
     }
 
+    /**
+     * The entry as committed now, with its row locked. An agent's write runs in
+     * the transaction of its tool call, where a plain read can see the state from
+     * before someone's save and miss their change. Locking reads see the latest.
+     */
+    public function locked(string $id): ?TargetSnapshot
+    {
+        $content = Content::query()->with('block')->lockForUpdate()->find($id);
+
+        if (! $content) {
+            return null;
+        }
+
+        $version = $content->current_version_id !== null
+            ? ContentVersion::query()->sharedLock()->find($content->current_version_id)
+            : null;
+        $content->setRelation('current_version', $version);
+
+        return new TargetSnapshot($content, (string) $content->name, $version?->content ?? [], $version?->id);
+    }
+
     public function validate(Space $space, TargetSnapshot $snapshot, array $patches): array
     {
         /** @var Content $content */

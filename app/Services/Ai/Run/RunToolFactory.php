@@ -18,12 +18,19 @@ use App\Services\Ai\Skills\SkillResolver;
 use App\Services\Ai\Tools\AskQuestionsTool;
 use App\Services\Ai\Tools\AuthorizedTool;
 use App\Services\Ai\Tools\FindEntriesTool;
+use App\Services\Ai\Tools\FindTranslationWorkTool;
+use App\Services\Ai\Tools\GetAssetLibraryTool;
 use App\Services\Ai\Tools\GetBlockListTool;
 use App\Services\Ai\Tools\GetBlockSchemasTool;
 use App\Services\Ai\Tools\GetEntryTool;
 use App\Services\Ai\Tools\GetMentionedContentTool;
+use App\Services\Ai\Tools\GetTranslationTaskTool;
+use App\Services\Ai\Tools\InspectAssetsTool;
 use App\Services\Ai\Tools\LookupGlossaryTool;
+use App\Services\Ai\Tools\ProposeAssetChangesTool;
+use App\Services\Ai\Tools\ProposeAssetStructureTool;
 use App\Services\Ai\Tools\ProposeCreateTool;
+use App\Services\Ai\Tools\ProposeTranslationTool;
 use App\Services\Ai\Tools\ProposeUpdateTool;
 use App\Services\Ai\Tools\ReadKnowledgeTool;
 use App\Services\Ai\Tools\ReadSkillFileTool;
@@ -31,6 +38,10 @@ use App\Services\Ai\Tools\ReadSkillTool;
 use App\Services\Ai\Tools\SearchAssetsTool;
 use App\Services\Ai\Tools\SearchContentTool;
 use App\Services\Ai\Tools\SearchKnowledgeTool;
+use App\Services\Ai\Translation\TranslationDestinations;
+use App\Services\Ai\Translation\TranslationMemory;
+use App\Services\Ai\Translation\TranslationUnits;
+use App\Services\Ai\Translation\TranslationWork;
 use App\Services\Auth\AuthorizationService;
 use App\Services\Search\SearchService;
 use LogicException;
@@ -57,6 +68,13 @@ class RunToolFactory
         'find_entries',
         ProposeUpdateTool::NAME,
         ProposeCreateTool::NAME,
+        FindTranslationWorkTool::NAME,
+        GetTranslationTaskTool::NAME,
+        ProposeTranslationTool::NAME,
+        GetAssetLibraryTool::NAME,
+        InspectAssetsTool::NAME,
+        ProposeAssetStructureTool::NAME,
+        ProposeAssetChangesTool::NAME,
     ];
 
     public function __construct(
@@ -110,6 +128,7 @@ class RunToolFactory
         $catalog = [...($setup['catalog'] ?? []), ...($setup['skill'] ? [$setup['skill']['name'] => $setup['skill']] : [])];
         $loadSkill = fn (string $name) => isset($catalog[$name]) ? $this->skills->load($catalog[$name]) : null;
         $knowledge = $setup['knowledge'] ?? [];
+        $sources = fn () => $this->knowledge->referenceSources($run);
 
         $tools = array_map(fn (string $name): AiToolInterface => match ($name) {
             'get_block_list' => new AuthorizedTool(
@@ -119,15 +138,22 @@ class RunToolFactory
             'get_block_schemas' => new AuthorizedTool((new GetBlockSchemasTool)->setSpace($space), $can('content.view')),
             'search_assets' => new AuthorizedTool((new SearchAssetsTool)->setSpace($space), $can('assets.view')),
             'get_mentioned_content' => new AuthorizedTool((new GetMentionedContentTool)->setSpace($space), $can('content.view')),
-            'get_entry' => new GetEntryTool($this->targets, $this->auth, $space, $actor),
+            'get_entry' => new GetEntryTool($this->targets, $this->auth, $space, $actor, fn () => $this->knowledge->policy($space, $run)),
             'search_content' => new AuthorizedTool(new SearchContentTool($this->contentSearch, $space), $can('content.view')),
             'read_skill' => new ReadSkillTool($loadSkill),
             'read_skill_file' => new ReadSkillFileTool($loadSkill),
-            'search_knowledge' => new SearchKnowledgeTool($this->search, $knowledge),
-            'read_knowledge' => new ReadKnowledgeTool($knowledge),
-            'lookup_glossary' => new LookupGlossaryTool(fn () => $this->knowledge->glossaryTerms($space)),
+            'search_knowledge' => new SearchKnowledgeTool($this->search, $knowledge, $sources),
+            'read_knowledge' => new ReadKnowledgeTool($knowledge, $sources),
+            'lookup_glossary' => new LookupGlossaryTool(fn () => $this->knowledge->policy($space, $run)),
             AskQuestionsTool::NAME => new AskQuestionsTool,
             'find_entries' => new FindEntriesTool($this->scope, $this->targets, $this->auth, $space, $actor),
+            GetAssetLibraryTool::NAME => app(GetAssetLibraryTool::class, ['run' => $run ?? throw new LogicException('Asset tools need a run.'), 'space' => $space, 'actor' => $actor]),
+            InspectAssetsTool::NAME => app(InspectAssetsTool::class, ['run' => $run ?? throw new LogicException('Asset tools need a run.'), 'space' => $space, 'actor' => $actor]),
+            ProposeAssetStructureTool::NAME => app(ProposeAssetStructureTool::class, ['run' => $run ?? throw new LogicException('Asset tools need a run.'), 'space' => $space, 'actor' => $actor]),
+            ProposeAssetChangesTool::NAME => app(ProposeAssetChangesTool::class, ['run' => $run ?? throw new LogicException('Asset tools need a run.'), 'space' => $space, 'actor' => $actor]),
+            FindTranslationWorkTool::NAME => new FindTranslationWorkTool($run, $space, $actor, app(TranslationDestinations::class), app(TranslationWork::class), $this->auth),
+            GetTranslationTaskTool::NAME => new GetTranslationTaskTool($run, $space, $actor, app(TranslationDestinations::class), app(TranslationWork::class), app(TranslationMemory::class), $this->knowledge, $this->auth, app(TranslationUnits::class)),
+            ProposeTranslationTool::NAME => new ProposeTranslationTool($run ?? throw new LogicException('Proposals need a run.'), $space, $actor, $this->targets, $this->recorder, $this->auth),
             ProposeUpdateTool::NAME => new ProposeUpdateTool($run ?? throw new LogicException('Proposals need a run.'), $space, $actor, $this->targets, $this->recorder, $this->auth),
             ProposeCreateTool::NAME => new ProposeCreateTool($run ?? throw new LogicException('Proposals need a run.'), $space, $actor, $this->targets, $this->recorder, $this->auth),
         }, array_values(array_intersect($setup['tools'] ?? [], self::ALL)));

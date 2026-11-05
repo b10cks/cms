@@ -57,6 +57,11 @@ return [
         app_path('Http/Resources/User'),
     ],
 
+    // Named schemas in SchemaShape notation, for JSON an inferred resource cannot describe
+    'schema_catalogs' => [
+        app_path('Services/Documentation/Schemas/ai_content_operations.php'),
+    ],
+
     // Default response codes and descriptions
     'responses' => [
         '200' => 'Successful response',

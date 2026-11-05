@@ -5,19 +5,20 @@ namespace App\Services\Ai\Changesets;
 use App\Models\Management\Space;
 use App\Models\Space\Asset;
 use App\Models\User;
+use App\Services\Ai\Assets\AssetChangesetApplier;
+use App\Services\Ai\Assets\AssetFieldRules;
 use App\Services\Ai\Run\ToolError;
-use App\Services\Asset\AssetMetadataFieldResolver;
 
 /**
- * Assets. The document is `{fields: {<locale>: {<field>: text}}}`, the
+ * Assets. The document is `{fields: {<language>: {<field>: text}}}`, the
  * metadata fields of the space's asset settings; paths are
- * `fields.<locale>.<field>`.
+ * `fields.<language>.<field>` with the keys asset data is stored under
+ * (`_default` for the default language). Tag and folder changes are proposed
+ * with `propose_asset_changes` and applied by {@see AssetChangesetApplier}.
  */
 class AssetTarget implements ChangeTarget
 {
-    private const MAX_LENGTH = 2000;
-
-    public function __construct(private readonly AssetMetadataFieldResolver $fields) {}
+    public function __construct(private readonly AssetFieldRules $rules) {}
 
     public function viewAbility(): string
     {
@@ -46,19 +47,22 @@ class AssetTarget implements ChangeTarget
     {
         /** @var Asset $asset */
         $asset = $snapshot->model;
-        $keys = array_column($this->fields->getEffectiveClassificationFieldsForAsset($space, $asset), 'key');
-        $locales = $space->settings->getEnabledLanguages();
+        $fields = [];
         $problems = [];
 
         foreach ($patches as $path => $value) {
             $segments = explode('.', (string) $path);
 
-            if (\count($segments) !== 3 || $segments[0] !== 'fields' || ! \in_array($segments[1], $locales, true) || ! \in_array($segments[2], $keys, true)) {
-                $problems[] = "{$path}: use fields.<locale>.<field> with a locale of the space (".implode(', ', $locales).') and an asset field ('.implode(', ', $keys ?: ['none']).').';
-            } elseif ($value !== null && (! \is_string($value) || mb_strlen($value) > self::MAX_LENGTH)) {
-                $problems[] = "{$path}: must be text of at most ".self::MAX_LENGTH.' characters.';
+            if (\count($segments) !== 3 || $segments[0] !== 'fields') {
+                $problems[] = "{$path}: use fields.<language>.<field>.";
+
+                continue;
             }
+
+            $fields[$segments[1]][$segments[2]] = $value;
         }
+
+        $problems = [...$problems, ...$this->rules->problems($space, $asset->relationLoaded('folder') ? $asset->folder : $asset->folder_id, $fields)];
 
         if ($problems !== []) {
             throw new ToolError("The patch is invalid:\n- ".implode("\n- ", $problems));

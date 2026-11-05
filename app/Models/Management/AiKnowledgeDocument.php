@@ -5,13 +5,16 @@ namespace App\Models\Management;
 use App\Enums\AiKnowledgeType;
 use App\Enums\AiScope;
 use App\Models\Traits\HasAiScope;
+use App\Services\Ai\Knowledge\GlossaryMatcher;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
  * A style guide or reference document. Editors change the markdown draft;
- * publishing freezes it into a revision (chunked for references).
+ * publishing freezes it into a revision (chunked for references). Deleting one
+ * only hides it: the revisions stay for the policy snapshots that reference them.
  *
  * @property string $id
  * @property AiScope $scope
@@ -20,6 +23,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string $slug
  * @property string $title
  * @property AiKnowledgeType $type
+ * @property string|null $locale language it applies to; null applies to every language
  * @property bool $enabled
  * @property string $draft
  * @property string|null $published_revision_id
@@ -32,6 +36,7 @@ class AiKnowledgeDocument extends GlobalModel
 {
     use HasAiScope;
     use HasUlids;
+    use SoftDeletes;
 
     protected $fillable = [
         'scope',
@@ -40,6 +45,7 @@ class AiKnowledgeDocument extends GlobalModel
         'slug',
         'title',
         'type',
+        'locale',
         'enabled',
         'draft',
         'published_revision_id',
@@ -54,6 +60,11 @@ class AiKnowledgeDocument extends GlobalModel
         'type' => AiKnowledgeType::class,
         'enabled' => 'boolean',
     ];
+
+    public function setLocaleAttribute(?string $locale): void
+    {
+        $this->attributes['locale'] = $locale !== null && $locale !== '' ? GlossaryMatcher::normalizeLocale($locale) : null;
+    }
 
     public function revisions(): HasMany
     {

@@ -4,13 +4,15 @@ namespace App\Policies;
 
 use App\Models\Management\Space;
 use App\Models\Space\AiChangeset;
+use App\Models\Space\AiOperation;
 use App\Models\User;
 use App\Policies\Concerns\AuthorizesWithAbilities;
 
 /**
- * Inline changesets belong to the editor who ran them. Others follow their
- * thread's visibility; changesets from before threads stay open to the space's
- * members. Deciding on items is checked per target.
+ * Inline changesets belong to the editor who ran them. An operation's
+ * changeset follows the operation. Others follow their thread's visibility;
+ * changesets from before threads stay open to the space's members. Deciding
+ * on items is checked per target.
  */
 class AiChangesetPolicy
 {
@@ -24,6 +26,12 @@ class AiChangesetPolicy
 
         if ($changeset->inline) {
             return $changeset->actor_id === $user->id;
+        }
+
+        if ($changeset->operation_id !== null) {
+            $operation = AiOperation::query()->find($changeset->operation_id);
+
+            return $operation !== null && app(AiOperationPolicy::class)->view($user, $operation, $space);
         }
 
         $thread = $changeset->run?->conversation;

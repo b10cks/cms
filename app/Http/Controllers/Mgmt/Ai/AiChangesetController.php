@@ -21,11 +21,16 @@ use Illuminate\Http\Request;
  */
 class AiChangesetController extends Controller
 {
+    /**
+     * One changeset with the items the user may view: proposals, findings, flags, review state and evidence.
+     *
+     * @apiResponse 200 data:@AiChangesetResource
+     */
     public function show(Request $request, Space $space, string $changeset, ChangeTargets $targets, AuthorizationService $auth): AiChangesetResource
     {
         $model = $this->findChangeset($space, $changeset);
         $visible = array_filter(
-            ChangeTargets::PROPOSAL_TYPES,
+            ChangeTargets::REVIEW_TYPES,
             fn (string $type) => $auth->canInSpace($request->user(), $space, $targets->for($type)->viewAbility()),
         );
 
@@ -36,6 +41,14 @@ class AiChangesetController extends Controller
         return new AiChangesetResource($model);
     }
 
+    /**
+     * Apply open items, per item: proposals for assets, data entries and blocks, and content conflicts with `overwrite`. Content goes to its draft. This never publishes.
+     *
+     * Deterministic findings of an applied proposal need `overrides` with a reason. Content needs none.
+     *
+     * @apiResponse 200 @AiChangesetAccepted
+     * @apiResponse 422 @ValidationError `errors.overrides.<item>.<finding>` names a finding that needs a reason. Entries decided earlier in the request stay decided.
+     */
     public function accept(DecideAiChangesetRequest $request, Space $space, string $changeset, AcceptAiChangesetItems $action): JsonResponse
     {
         $model = $this->findChangeset($space, $changeset);
@@ -44,11 +57,16 @@ class AiChangesetController extends Controller
         // `toOthers()` reads the socket from the container's request, not from
         // this form request copy.
         request()->headers->remove('X-Socket-ID');
-        $result = $action->handle($model, $space, $request->user(), $request->itemIds(), $request->boolean('overwrite'), $request->editedValues());
+        $result = $action->handle($model, $space, $request->user(), $request->itemIds(), $request->boolean('overwrite'), $request->editedValues(), $request->boolean('bulk'), $request->overrides());
 
         return response()->json(['data' => new AiChangesetResource($model->refresh()), ...$result]);
     }
 
+    /**
+     * Reject proposals, per item.
+     *
+     * @apiResponse 200 @AiChangesetRejected
+     */
     public function reject(DecideAiChangesetRequest $request, Space $space, string $changeset, RejectAiChangesetItems $action): JsonResponse
     {
         $model = $this->findChangeset($space, $changeset);

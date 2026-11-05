@@ -6,6 +6,7 @@ use App\Models\Management\AiGlossary;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 
 /**
  * A glossary term the learning loop drew from an editor's correction of AI
@@ -24,8 +25,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string $status
  * @property string|null $glossary_id
  * @property string|null $decided_by_id
- * @property \Illuminate\Support\Carbon|null $decided_at
- * @property \Illuminate\Support\Carbon|null $created_at
+ * @property Carbon|null $decided_at
+ * @property Carbon|null $created_at
  */
 class AiGlossarySuggestion extends SpaceDatabaseModel
 {
@@ -36,6 +37,8 @@ class AiGlossarySuggestion extends SpaceDatabaseModel
     public const STATUS_ACCEPTED = 'accepted';
 
     public const STATUS_DISMISSED = 'dismissed';
+
+    public const WORDING_LIMIT = 255;
 
     protected $fillable = [
         'space_id',
@@ -59,6 +62,22 @@ class AiGlossarySuggestion extends SpaceDatabaseModel
         'evidence' => 'array',
         'decided_at' => 'datetime',
     ];
+
+    /**
+     * A wording over the limit is refused whole, because a shortened one is a different wording.
+     *
+     * @param  list<string>  $wordings
+     */
+    public static function hasOverlongWording(array $wordings): bool
+    {
+        foreach ($wordings as $wording) {
+            if (mb_strlen(trim($wording)) > self::WORDING_LIMIT) {
+                return true;
+            }
+        }
+
+        return false;
+    }
 
     public function actor(): BelongsTo
     {

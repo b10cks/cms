@@ -43,9 +43,12 @@ class InternalRequestDispatcher
         // Build on APP_URL, not the bare path: Request::create() would default
         // the host to localhost, which TrustHosts rejects outside local/testing.
         $url = rtrim(config('app.url'), '/').$uri;
-        $request = $files === []
-            ? Request::create($url, $method, $query, [], [], $server, $content)
-            : Request::create($url.($query !== [] ? '?'.http_build_query($query) : ''), $method, $payload ?? [], [], $files, $server);
+        $request = match (true) {
+            $method === 'GET' => Request::create($url, $method, $query, [], [], $server, $content),
+            // Parameters of a write would land in the body, where query readers do not look.
+            $files === [] => Request::create(self::withQuery($url, $query), $method, [], [], [], $server, $content),
+            default => Request::create(self::withQuery($url, $query), $method, $payload ?? [], [], $files, $server),
+        };
         // The outer /mcp/v1 request is already throttled; exempt the sub-request
         // so one tool call doesn't consume two mgmt rate-limit hits.
         $request->attributes->set('mcp-internal', true);
@@ -82,5 +85,11 @@ class InternalRequestDispatcher
             'contentType' => $response->headers->get('Content-Type'),
             'filename' => preg_match('/filename="?([^";]+)"?/', $disposition, $match) === 1 ? $match[1] : null,
         ];
+    }
+
+    /** @param  array<string, mixed>  $query */
+    private static function withQuery(string $url, array $query): string
+    {
+        return $url.($query !== [] ? '?'.http_build_query($query) : '');
     }
 }

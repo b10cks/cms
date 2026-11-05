@@ -3,17 +3,18 @@
 namespace App\Services\Ai\Tools;
 
 use App\Services\Ai\Contracts\AiToolInterface;
-use App\Services\Ai\Knowledge\GlossaryMatcher;
-use App\Services\Ai\Knowledge\GlossaryTerm;
+use App\Services\Ai\Knowledge\GlossaryBrief;
+use App\Services\Ai\Knowledge\GlossaryConcept;
+use App\Services\Ai\Knowledge\PolicySnapshot;
 use Closure;
 
-/** Glossary terms found in a text, with the required wording for a target locale. */
+/** The glossary rows a text activates, with what the agent must write and avoid. */
 final readonly class LookupGlossaryTool implements AiToolInterface
 {
     /**
-     * @param  Closure(): list<GlossaryTerm>  $terms
+     * @param  Closure(): (PolicySnapshot|list<GlossaryConcept>)  $policy
      */
-    public function __construct(private Closure $terms) {}
+    public function __construct(private Closure $policy) {}
 
     public function name(): string
     {
@@ -22,7 +23,8 @@ final readonly class LookupGlossaryTool implements AiToolInterface
 
     public function description(): string
     {
-        return 'Finds glossary terms in a text and returns the required wording for the target locale, terms that must stay untranslated and forbidden variants.';
+        return 'Finds glossary terms in a text and returns for each one a plain instruction, the required wording for the target locale, '
+            .'terms that keep their wording exactly (do_not_translate), wording never to use (forbidden, a * at the end covers longer forms) and its note.';
     }
 
     public function inputSchema(): array
@@ -40,26 +42,27 @@ final readonly class LookupGlossaryTool implements AiToolInterface
 
     public function execute(array $input): mixed
     {
+        $policy = ($this->policy)();
+        $policy = $policy instanceof PolicySnapshot ? $policy : PolicySnapshot::fromConcepts($policy);
+        $text = (string) ($input['text'] ?? '');
+        $source = $input['source_locale'] ?? null;
         $target = (string) ($input['target_locale'] ?? '');
-        $matches = GlossaryMatcher::for(($this->terms)())->match((string) ($input['text'] ?? ''), $input['source_locale'] ?? null);
 
-        return ['terms' => array_map(static fn (GlossaryTerm $term) => array_filter([
-            'term' => $term->term,
-            'required' => $target !== '' ? self::translation($term, $target) : null,
-            'do_not_translate' => $term->doNotTranslate ?: null,
-            'forbidden' => $term->forbidden ?: null,
-            'note' => $term->note,
-        ], static fn ($value) => $value !== null), $matches)];
-    }
+        return [
+            'terms' => array_map(static function (array $hit) use ($source, $target) {
+                $rule = GlossaryBrief::rule($hit, $source, $target);
 
-    private static function translation(GlossaryTerm $term, string $locale): ?string
-    {
-        foreach ($term->translations as $key => $value) {
-            if (GlossaryMatcher::sameLanguage((string) $key, $locale)) {
-                return $value;
-            }
-        }
-
-        return null;
+                return array_filter([
+                    'term' => $rule['term'],
+                    'instruction' => GlossaryBrief::instruction($rule),
+                    'avoided' => $rule['avoided'] ?: null,
+                    'required' => $rule['write'],
+                    'do_not_translate' => $rule['keep'] !== null ? true : null,
+                    'forbidden' => $rule['never'] ?: null,
+                    'note' => $rule['note'],
+                    'concept_id' => $hit['concept']->id,
+                ], static fn ($value) => $value !== null);
+            }, $policy->activate($text, $source, $target)),
+        ];
     }
 }

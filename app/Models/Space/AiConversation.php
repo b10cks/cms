@@ -4,6 +4,7 @@ namespace App\Models\Space;
 
 use App\Enums\AiChangesetItemStatus;
 use App\Enums\AiChangesetStatus;
+use App\Enums\AiOperationState;
 use App\Enums\AiRunState;
 use App\Enums\AiThreadKind;
 use App\Enums\AiThreadStatus;
@@ -89,8 +90,7 @@ class AiConversation extends SpaceDatabaseModel
     {
         $query->select('ai_conversations.*');
 
-        foreach (['needs_input' => self::awaitingInput(), 'needs_review' => null, 'running' => self::runsInState(AiRunState::Running)] as $alias => $sub) {
-            [$sql, $bindings] = $sub !== null ? self::existsSql($sub) : self::reviewSql();
+        foreach (['needs_input' => self::existsSql(self::awaitingInput()), 'needs_review' => self::reviewSql(), 'running' => self::runningSql()] as $alias => [$sql, $bindings]) {
             $query->selectRaw("{$sql} as {$alias}", $bindings);
         }
 
@@ -99,13 +99,19 @@ class AiConversation extends SpaceDatabaseModel
             ->orderByDesc('started_at')->orderByDesc('id')->limit(1);
         $query->addSelect(['latest_run_state' => $latest('state'), 'reasoning_effort' => $latest('reasoning_effort')]);
 
+        // An operation's changeset belongs to the thread through the operation: its batch runs have none.
         $entries = self::table('ai_changeset_items')
             ->selectRaw('count(distinct coalesce('.self::wrap('ai_changeset_items.target_id').', '.self::wrap('ai_changeset_items.id').'))')
             ->join('ai_changesets', 'ai_changesets.id', '=', 'ai_changeset_items.changeset_id')
-            ->join('ai_runs', 'ai_runs.id', '=', 'ai_changesets.run_id')
-            ->whereColumn('ai_runs.conversation_id', 'ai_conversations.id')
+            ->leftJoin('ai_runs', 'ai_runs.id', '=', 'ai_changesets.run_id')
+            ->leftJoin('ai_operations', 'ai_operations.id', '=', 'ai_changesets.operation_id')
+            ->where(fn (QueryBuilder $thread) => $thread
+                ->where(fn (QueryBuilder $run) => $run->whereNull('ai_changesets.operation_id')->whereColumn('ai_runs.conversation_id', 'ai_conversations.id'))
+                ->orWhereColumn('ai_operations.conversation_id', 'ai_conversations.id'))
             ->where('ai_changesets.inline', false)
-            ->whereIn('ai_changeset_items.status', self::OPEN_ITEMS);
+            ->where(fn (QueryBuilder $open) => $open
+                ->whereIn('ai_changeset_items.status', self::OPEN_ITEMS)
+                ->orWhere('ai_changeset_items.open_findings', '>', 0));
         $suggestions = self::pendingSuggestions()->selectRaw('count(*)');
         $query->selectRaw(
             '(case when '.self::wrap('ai_conversations.kind').' = ? then ('.$suggestions->toSql().') else ('.$entries->toSql().') end) as entry_count',
@@ -156,6 +162,22 @@ class AiConversation extends SpaceDatabaseModel
             ->where('ai_runs.state', $state->value);
     }
 
+    /**
+     * A running run in the thread, or a running operation: its batches run
+     * outside the thread.
+     *
+     * @return array{0: string, 1: list<mixed>}
+     */
+    private static function runningSql(): array
+    {
+        [$runs, $runBindings] = self::existsSql(self::runsInState(AiRunState::Running));
+        [$operations, $operationBindings] = self::existsSql(self::table('ai_operations')->selectRaw('1')
+            ->whereColumn('ai_operations.conversation_id', 'ai_conversations.id')
+            ->where('ai_operations.state', AiOperationState::Running->value));
+
+        return ["({$runs} or {$operations})", [...$runBindings, ...$operationBindings]];
+    }
+
     private static function awaitingInput(): QueryBuilder
     {
         return self::runsInState(AiRunState::AwaitingInput);
@@ -169,24 +191,37 @@ class AiConversation extends SpaceDatabaseModel
     }
 
     /**
-     * An open background changeset in the thread, or for the suggestions
-     * thread a pending suggestion of the space.
+     * A background changeset in the thread, its own or that of an operation the
+     * thread holds, that is open or still has flagged wording in a draft, or for
+     * the suggestions thread a pending suggestion of the space.
      *
      * @return array{0: string, 1: list<mixed>}
      */
     private static function reviewSql(): array
     {
+        $open = [AiChangesetStatus::Open->value, AiChangesetStatus::PartiallyApplied->value];
+        $needsYou = fn (QueryBuilder $changeset) => $changeset
+            ->whereIn('ai_changesets.status', $open)
+            ->orWhereExists(self::table('ai_changeset_items')->selectRaw('1')
+                ->whereColumn('ai_changeset_items.changeset_id', 'ai_changesets.id')
+                ->where('ai_changeset_items.open_findings', '>', 0));
         $changesets = self::table('ai_changesets')->selectRaw('1')
             ->join('ai_runs', 'ai_runs.id', '=', 'ai_changesets.run_id')
             ->whereColumn('ai_runs.conversation_id', 'ai_conversations.id')
+            ->whereNull('ai_changesets.operation_id')
             ->where('ai_changesets.inline', false)
-            ->whereIn('ai_changesets.status', [AiChangesetStatus::Open->value, AiChangesetStatus::PartiallyApplied->value]);
+            ->where($needsYou);
+        $operations = self::table('ai_changesets')->selectRaw('1')
+            ->join('ai_operations', 'ai_operations.id', '=', 'ai_changesets.operation_id')
+            ->whereColumn('ai_operations.conversation_id', 'ai_conversations.id')
+            ->where($needsYou);
         [$suggestions, $suggestionBindings] = self::existsSql(self::pendingSuggestions()->selectRaw('1'));
-        [$open, $openBindings] = self::existsSql($changesets);
+        [$runReview, $runBindings] = self::existsSql($changesets);
+        [$operationReview, $operationBindings] = self::existsSql($operations);
 
         return [
-            '(case when '.self::wrap('ai_conversations.kind')." = ? then {$suggestions} else {$open} end)",
-            [AiThreadKind::Suggestions->value, ...$suggestionBindings, ...$openBindings],
+            '(case when '.self::wrap('ai_conversations.kind')." = ? then {$suggestions} else ({$runReview} or {$operationReview}) end)",
+            [AiThreadKind::Suggestions->value, ...$suggestionBindings, ...$runBindings, ...$operationBindings],
         ];
     }
 

@@ -4,19 +4,26 @@ namespace Tests\Feature\Ai;
 
 use App\Actions\Ai\PublishAiSkill;
 use App\Enums\AiScope;
+use App\Models\Management\AiGlossary;
 use App\Models\Management\AiSkill;
 use App\Models\Management\Space;
 use App\Models\Management\Team;
 use App\Models\User;
+use App\Services\Ai\Run\ContextBuilder;
+use App\Services\Ai\Run\StartRun;
 use App\Services\Ai\Skills\SkillResolver;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\Sanctum;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
+use Tests\Traits\SpaceTestingTrait;
+use Tests\Traits\WritesGlossaryRows;
 
 class AiSkillResolutionTest extends TestCase
 {
     use RefreshDatabase;
+    use SpaceTestingTrait;
+    use WritesGlossaryRows;
 
     #[Test]
     public function nearer_layers_shadow_farther_ones_and_a_disabled_skill_falls_through(): void
@@ -75,6 +82,32 @@ class AiSkillResolutionTest extends TestCase
         $this->assertContains('rewrite', $this->getJson("/mgmt/v1/spaces/{$space->id}/ai/skills")->assertOk()->json('resolved.*.name'));
         $this->getJson("/mgmt/v1/spaces/{$space->id}/ai/knowledge")->assertOk();
         $this->getJson("/mgmt/v1/spaces/{$space->id}/ai/glossaries")->assertOk();
+    }
+
+    #[Test]
+    public function the_glossary_prompt_uses_only_the_requested_regions_wording(): void
+    {
+        $user = User::factory()->create();
+        $space = Space::factory()->create();
+        $this->setUpSpaceTesting($space);
+        $glossary = AiGlossary::create([
+            ...AiGlossary::ownerAttributes($space),
+            'name' => 'Colors',
+            'enabled' => true,
+        ]);
+        $this->glossaryRow($glossary, ['en' => 'color', 'de-AT' => 'Farbe AT', 'de-DE' => 'Farbe DE']);
+
+        $built = app(ContextBuilder::class)->build(new StartRun(
+            space: $space,
+            actor: $user,
+            surface: 'cmdk',
+            prompt: 'Translate color.',
+            context: ['source_locale' => 'en', 'target_locale' => 'de-DE'],
+        ), toolsAvailable: true);
+
+        $system = $built['transcript']->messages()[0]['content'];
+        $this->assertStringContainsString('write "Farbe DE" in de-DE', $system);
+        $this->assertStringNotContainsString('Farbe AT', $system);
     }
 
     private function skill(Space|Team $owner, User $user, string $body, string $name = 'rewrite', string $surface = 'selection'): AiSkill

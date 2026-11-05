@@ -6,6 +6,7 @@ use App\Enums\AiChangesetItemStatus;
 use App\Enums\AiChangesetStatus;
 use App\Models\Management\Space;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -17,6 +18,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string $id
  * @property string $space_id
  * @property string|null $run_id
+ * @property string|null $operation_id
  * @property string $actor_id
  * @property string $title
  * @property bool $inline
@@ -29,7 +31,7 @@ class AiChangeset extends SpaceDatabaseModel
 {
     use HasUlids;
 
-    protected $fillable = ['space_id', 'run_id', 'actor_id', 'title', 'inline', 'status', 'item_count', 'pending_count'];
+    protected $fillable = ['space_id', 'run_id', 'operation_id', 'actor_id', 'title', 'inline', 'status', 'item_count', 'pending_count'];
 
     protected $casts = [
         'inline' => 'boolean',
@@ -56,6 +58,25 @@ class AiChangeset extends SpaceDatabaseModel
     public function items(): HasMany
     {
         return $this->hasMany(AiChangesetItem::class, 'changeset_id');
+    }
+
+    /**
+     * The changeset a run writes into: its operation's, shared by all batch
+     * runs, or its own.
+     */
+    public function scopeOfRun(Builder $query, AiRun $run): void
+    {
+        $run->operation_id !== null
+            ? $query->where('operation_id', $run->operation_id)
+            : $query->where('run_id', $run->id);
+    }
+
+    /** Changesets other than the one the run writes into. */
+    public function scopeNotOfRun(Builder $query, AiRun $run): void
+    {
+        $run->operation_id !== null
+            ? $query->where(fn (Builder $other) => $other->whereNull('operation_id')->orWhere('operation_id', '!=', $run->operation_id))
+            : $query->where(fn (Builder $other) => $other->whereNull('run_id')->orWhere('run_id', '!=', $run->id));
     }
 
     /** Recount items and derive the status from them. */

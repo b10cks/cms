@@ -2,6 +2,7 @@
 
 namespace App\Services\Documentation\Parsers;
 
+use App\Services\Documentation\SchemaShape;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Http\Resources\Json\ResourceCollection;
 use PhpParser\Comment\Doc;
@@ -340,7 +341,7 @@ class ResourceParser
     /**
      * Build pagination schema with item schema
      */
-    protected function buildPaginationSchema(array $itemSchema, ?string $resourceClass = null): array
+    public function buildPaginationSchema(array $itemSchema, ?string $resourceClass = null): array
     {
         $wrap = $this->wrapperKey($resourceClass);
 
@@ -583,6 +584,7 @@ class ResourceParser
      * @resourceProperty field example=value description text
      * @resourceProperty field additionalProperties=true description text
      * @resourceProperty field items=SomeResource description text
+     * @resourceProperty field shape=@SchemaName? description text, see SchemaShape
      */
     protected function extractResourceMetadata(?string $docComment): array
     {
@@ -626,6 +628,18 @@ class ResourceParser
      */
     protected function applyPropertyMetadata(array $schema, array $metadata): array
     {
+        if (isset($metadata['shape']) && $metadata['shape'] !== '') {
+            $schema = SchemaShape::expand($metadata['shape']);
+
+            if (isset($metadata['description']) && $metadata['description'] !== '') {
+                $schema = isset($schema['$ref'])
+                    ? ['allOf' => [$schema], 'description' => $metadata['description']]
+                    : [...$schema, 'description' => $metadata['description']];
+            }
+
+            return $schema;
+        }
+
         if (isset($metadata['description']) && $metadata['description'] !== '') {
             $schema['description'] = $metadata['description'];
         }

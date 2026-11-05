@@ -2,13 +2,13 @@
 
 namespace App\Http\Controllers\Mgmt;
 
+use App\Enums\AiRunState;
+use App\Events\Space\DataSourceContentChanged;
 use App\Http\Controllers\Controller;
 use App\Models\Management\Space;
-use App\Events\Space\DataSourceContentChanged;
+use App\Models\Space\AiRun;
 use App\Models\Space\DataEntry;
 use App\Models\Space\DataSource;
-use App\Enums\AiRunState;
-use App\Models\Space\AiRun;
 use App\Services\Ai\AiRunService;
 use App\Services\Ai\Dto\StreamEvent;
 use App\Services\Ai\Exceptions\AiServiceException;
@@ -165,11 +165,12 @@ class DataEntryTranslationStreamController extends Controller
         $translated = 0;
         $skipped = 0;
         $processed = 0;
+        $findings = [];
         yield StreamEvent::status('Preparing translations...');
         yield $this->progress('preparing', $processed, $translated, $skipped, $total, $targetDimension);
 
         if ($total === 0) {
-            yield $this->summary($translated, $skipped, $processed, $total, $targetDimension, $sourceLocale);
+            yield $this->summary($translated, $skipped, $processed, $total, $targetDimension, $sourceLocale, $findings);
 
             return;
         }
@@ -191,6 +192,9 @@ class DataEntryTranslationStreamController extends Controller
             if (! is_array($decoded)) {
                 throw AiServiceException::noResult();
             }
+
+            // Told, never blocking: this translation saves directly and stays live.
+            $findings = array_values(array_unique([...$findings, ...($run->result['glossary_findings'] ?? [])], SORT_REGULAR));
 
             // Mute the per-entry broadcasts; one content-changed event after
             // the run stands in for the whole batch. The transaction runs on the
@@ -233,7 +237,7 @@ class DataEntryTranslationStreamController extends Controller
             broadcast(new DataSourceContentChanged($space->id, $dataSource->id))->toOthers();
         }
 
-        yield $this->summary($translated, $skipped, $processed, $total, $targetDimension, $sourceLocale);
+        yield $this->summary($translated, $skipped, $processed, $total, $targetDimension, $sourceLocale, $findings);
     }
 
     private function progress(string $stage, int $processed, int $translated, int $skipped, int $total, string $targetDimension): StreamEvent
@@ -248,7 +252,8 @@ class DataEntryTranslationStreamController extends Controller
         ], JSON_UNESCAPED_UNICODE));
     }
 
-    private function summary(int $translated, int $skipped, int $processed, int $total, string $targetDimension, string $sourceLocale): StreamEvent
+    /** @param  list<array<string, string>>  $findings  blocking glossary findings of the translated text */
+    private function summary(int $translated, int $skipped, int $processed, int $total, string $targetDimension, string $sourceLocale, array $findings): StreamEvent
     {
         return StreamEvent::done('', [
             'translated_count' => $translated,
@@ -258,6 +263,7 @@ class DataEntryTranslationStreamController extends Controller
             'target_dimension' => $targetDimension,
             'source_dimension' => 'default',
             'source_locale' => $sourceLocale,
+            'glossary_findings' => $findings,
         ]);
     }
 }
