@@ -34,6 +34,10 @@ class TeamUserController extends Controller
             'role' => 'nullable|string|max:50',
         ]);
 
+        // Role changes go through update(), which checks the member's rank.
+        // Upserting here would let an admin demote an owner.
+        abort_if($team->users()->where('users.id', $request->user_id)->exists(), 422, 'User is already a member of this team.');
+
         $this->guard->ensureCanAssignTeamRole($request->user(), $team, $request->role ?? 'member');
 
         try {

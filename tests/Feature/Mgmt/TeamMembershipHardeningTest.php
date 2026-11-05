@@ -7,6 +7,7 @@ use App\Models\Management\Space;
 use App\Models\Management\Team;
 use App\Models\System\AuditLog;
 use App\Models\User;
+use App\Services\Auth\MembershipGuard;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
 use PHPUnit\Framework\Attributes\Test;
@@ -75,6 +76,15 @@ class TeamMembershipHardeningTest extends TestCase
             ->deleteJson(route('mgmt.teams.members.destroy', [$team, $owner]))
             ->assertUnprocessable()
             ->assertJsonValidationErrors('user');
+
+        // A second owner lifts the last-owner rule, so only the rank check is left.
+        $this->assignTeamRole($team, User::factory()->create(), 'owner');
+
+        $this->actingAs($admin)
+            ->postJson(route('mgmt.teams.users.store', $team), ['user_id' => $owner->id, 'role' => 'member'])
+            ->assertUnprocessable();
+
+        $this->assertSame('owner', app(MembershipGuard::class)->memberTeamRole($team, $owner)?->key);
     }
 
     #[Test]
