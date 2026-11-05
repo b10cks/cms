@@ -15,7 +15,13 @@ There are two ways to connect:
 | **Built-in HTTP endpoint** (`/mcp/v1`) | Most setups — nothing to install, always in sync with your instance | An MCP client that supports streamable HTTP |
 | **Local stdio process** ([`@b10cks/mcp-server`](https://www.npmjs.com/package/@b10cks/mcp-server) via npm) | Clients without HTTP transport support, or air-gapped assistant setups | Node.js ≥ 20 |
 
-Both expose the identical tools and operations. The HTTP endpoint is served by the CMS itself, so it can never drift from the API version you're running.
+The HTTP endpoint uses the CMS's current operation registry. The separately versioned stdio package can support fewer operations. Discover the available operations through `b10cks_mgmt_operations` before calling them.
+
+For long-running translations, asset metadata and page metadata, use `ai.operations.*`. Create and review a frozen scope and plan before obtaining editor approval for the budget. The CMS prepares proposals; people accept draft changes and control publication. Read coverage from `counts.coverage`. Grouped questions can resume answered outputs without replacing completed work.
+
+`ai.glossaries.import` and `ai.glossaries.export` read and write the [glossary sheet](glossary-sheet.md), and `export` takes `template` for an empty one. `conceptRows`, `createConceptRow`, `updateConceptRow`, `deleteConceptRow` and `bulkConceptRows` edit a glossary per row and apply at once. `ai.teamGlossaries.*` offers the same for a team. `checkText` tries a text against saved wording without a provider call, in one glossary or with `scope: space` what a run in the space uses. Deterministic glossary overrides take written reasons, and edited proposals can require a semantic recheck before a second explicit accept.
+
+These operations use the same policies and validation as HTTP. An owner's token can approve plans and extend budgets, so the client must obtain editor approval before those calls. The sibling SDK and stdio package are separate integrations; this CMS change does not update them.
 
 ## Prerequisites
 
@@ -111,7 +117,7 @@ The server exposes nine tools and two resources:
 | `list_skills` | Lists the AI skills available in a space (space, team and built-in skills, after shadowing) |
 | `read_skill` | Loads one skill's full instructions and the names of its supporting files |
 | `search_knowledge` | Searches the space's published reference documents and returns short excerpts with their source |
-| `lookup_glossary` | Finds glossary terms in a text and returns the required wording for a target locale, terms to keep untranslated and forbidden variants |
+| `lookup_glossary` | Finds glossary terms in a text and returns a plain instruction, the required wording for a target locale, terms to keep exactly, wording never to use and the row's note |
 | `search_content` | Searches the space's published entries and returns short excerpts with entry ID, name and path |
 
 The five AI tools take a `spaceId` and run as the token's user, through the same skill and knowledge layers (space, owning team, ancestor teams, built-ins) that the in-app AI uses. They need the `space.view` ability on that space, and `search_content` also needs `content.view`. The local stdio server has no user, so these tools only work over the HTTP endpoint.

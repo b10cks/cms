@@ -14,7 +14,7 @@ The settings area has its own menu:
 | **Subscription** | Your plan and payment, on installations that bill ([guide](subscription.md)) |
 | **Usage** | How much of your allowances the current and past periods used |
 | **Configuration** | The four big configuration blocks: editor, languages, content, and media |
-| **AI** | Whether AI is on, which model it uses, how it should write, and what it costs |
+| **AI** | Whether AI is on, which model it uses, how it should write, what it costs, and the [skills and knowledge](ai-knowledge.md) it works from |
 | **People** | Who has access to the space and with which role |
 | **Backups** | Downloadable archives of the space |
 | **Migrations** | Copying content into another space on the same installation |
@@ -138,7 +138,7 @@ Everything here is the space-wide default. Individual folders in the media libra
 
 **AI model** picks which model does the work. The list shows each model's provider, how much text it can consider at once, and a token multiplier that tells you how expensive it is relative to the others, along with tags such as *Free*, *New*, or *Premium*. A cheap fast model is fine for translations. A stronger one earns its cost on long-form drafting.
 
-**AI instructions** is a free-text field where you describe how the AI should behave in this space: tone of voice, style rules, domain vocabulary, things it must never do. It is applied to every AI request in the space, which makes it the single most effective setting on this page. "Professional but approachable. Active voice. Never write in the first person. Always give a concrete example." beats correcting the same thing by hand fifty times.
+**AI instructions** is a free-text field where you describe how the AI should behave with this configuration: tone of voice, style rules, things it must never do. It applies to every AI request that uses the configuration. For rules that should hold whichever configuration is picked, use a [style guide](ai-knowledge.md#style-guides), and put vocabulary in a [glossary](ai-knowledge.md#glossaries), where it gets checked. "Professional but approachable. Active voice. Never write in the first person. Always give a concrete example." beats correcting the same thing by hand fifty times.
 
 **Temperature** is a slider from precise to creative. Low values make the model predictable and repetitive, which is what you want for translations and rewrites. Higher values make it more inventive, which suits brainstorming and headlines.
 
@@ -147,6 +147,8 @@ Everything here is the space-wide default. Individual folders in the media libra
 **AI configurations** let you save all of the above as named profiles, for example "Technical editor" with low temperature and strict instructions, next to "Marketing copy" with a livelier setting. One is marked as the default. Wherever AI can be triggered, you can pick a configuration for that specific job, which is how one space serves a documentation team and a campaign team without either compromising.
 
 **AI usage** shows what the current billing period has spent against your plan's allowance, updating live, with the date it resets. This is the one allowance that genuinely stops when it is used up, so it is worth glancing at.
+
+**Skills**, **Knowledge** and **Schedules** have their own entries in the menu. Skills are how the AI does a task, knowledge is style guides, documents and glossaries, and schedules run a skill on a timetable. [Skills, knowledge and glossary](ai-knowledge.md) explains each one and when to use which.
 
 ## People
 

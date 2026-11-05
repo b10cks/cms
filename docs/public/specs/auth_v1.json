@@ -627,6 +627,27 @@
                     "Email"
                 ],
                 "operationId": "get_email_verify_by_id_by_hash",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "The id identifier"
+                    },
+                    {
+                        "name": "hash",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "The hash identifier"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Successful response"

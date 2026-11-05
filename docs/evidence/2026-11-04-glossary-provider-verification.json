@@ -1,0 +1,572 @@
+{
+    "model": "openai/gpt-6-luna",
+    "synthetic_only": true,
+    "method": "Actual OpenRouterDriver + actual skill instructions + GlossaryBrief/Checker; manual harness, not full CMS run loop.",
+    "price_per_token": {
+        "prompt": "0.0000001",
+        "completion": "0.0000005"
+    },
+    "max_generations": 18,
+    "budget_usd": 0.1,
+    "calls": [
+        {
+            "generation_id": "gen-1793830228-slWE6UOsDhB1iwS74l1E",
+            "input_tokens": 537,
+            "output_tokens": 27,
+            "estimated_cost_usd": 6.72e-5,
+            "seconds": 1.626,
+            "confirmed_cost_usd": 6.72e-5
+        },
+        {
+            "generation_id": "gen-1793830230-HXPuJoREm9Finj4af1yk",
+            "input_tokens": 648,
+            "output_tokens": 27,
+            "estimated_cost_usd": 7.83e-5,
+            "seconds": 2.469,
+            "confirmed_cost_usd": 7.83e-5
+        },
+        {
+            "generation_id": "gen-1793830233-6bF82o4H0pVjKB2Ye4Tr",
+            "input_tokens": 156,
+            "output_tokens": 19,
+            "estimated_cost_usd": 2.51e-5,
+            "seconds": 1.208,
+            "confirmed_cost_usd": 2.51e-5
+        },
+        {
+            "generation_id": "gen-1793830234-qP71H32FOwh6l7B9u8k6",
+            "input_tokens": 252,
+            "output_tokens": 21,
+            "estimated_cost_usd": 3.57e-5,
+            "seconds": 1.32,
+            "confirmed_cost_usd": 3.57e-5
+        },
+        {
+            "generation_id": "gen-1793830235-s5QtGjbj6xy0TLUI2sGW",
+            "input_tokens": 625,
+            "output_tokens": 86,
+            "estimated_cost_usd": 0.00010549999999999999,
+            "seconds": 1.792,
+            "confirmed_cost_usd": 0.0001055
+        },
+        {
+            "generation_id": "gen-1793830237-UzvcUHpSaNtZhZhg0hSA",
+            "input_tokens": 722,
+            "output_tokens": 77,
+            "estimated_cost_usd": 0.0001107,
+            "seconds": 1.803,
+            "confirmed_cost_usd": 0.0001107
+        },
+        {
+            "generation_id": "gen-1793830239-YJ6hsx1Mr3d0gIyLbz8Q",
+            "input_tokens": 539,
+            "output_tokens": 22,
+            "estimated_cost_usd": 6.489999999999999e-5,
+            "seconds": 1.741,
+            "confirmed_cost_usd": 6.49e-5
+        },
+        {
+            "generation_id": "gen-1793830240-Djg84QFw4Vc0am6UvAKu",
+            "input_tokens": 610,
+            "output_tokens": 22,
+            "estimated_cost_usd": 7.2e-5,
+            "seconds": 0.996,
+            "confirmed_cost_usd": 7.2e-5
+        },
+        {
+            "generation_id": "gen-1793830241-wyIx6JoisobZhqO4qo2P",
+            "input_tokens": 530,
+            "output_tokens": 17,
+            "estimated_cost_usd": 6.15e-5,
+            "seconds": 1.088,
+            "confirmed_cost_usd": 6.15e-5
+        },
+        {
+            "generation_id": "gen-1793830242-hSGrbGT3nsMdd7pFcmu0",
+            "input_tokens": 530,
+            "output_tokens": 17,
+            "estimated_cost_usd": 6.15e-5,
+            "seconds": 0.94,
+            "confirmed_cost_usd": 6.15e-5
+        },
+        {
+            "generation_id": "gen-1793830243-S4ztXkUWK0ENNyt06DRu",
+            "input_tokens": 512,
+            "output_tokens": 59,
+            "estimated_cost_usd": 8.07e-5,
+            "seconds": 1.734,
+            "confirmed_cost_usd": 8.07e-5
+        },
+        {
+            "generation_id": "gen-1793830245-pxkNMx4kzZ4E9duXDNki",
+            "input_tokens": 661,
+            "output_tokens": 49,
+            "estimated_cost_usd": 9.059999999999999e-5,
+            "seconds": 1.479,
+            "confirmed_cost_usd": 9.06e-5
+        },
+        {
+            "generation_id": "gen-1793830307-4wjn9CRzJhvhBGXns2bt",
+            "input_tokens": 156,
+            "output_tokens": 20,
+            "estimated_cost_usd": 2.56e-5,
+            "seconds": 1.191,
+            "confirmed_cost_usd": 2.56e-5
+        },
+        {
+            "generation_id": "gen-1793830308-nRplKDSIEXxGd17VUJoe",
+            "input_tokens": 293,
+            "output_tokens": 18,
+            "estimated_cost_usd": 3.8299999999999996e-5,
+            "seconds": 1.029,
+            "confirmed_cost_usd": 3.83e-5
+        },
+        {
+            "generation_id": "gen-1793830309-BrWDOpcillf5dXwifJpC",
+            "input_tokens": 632,
+            "output_tokens": 92,
+            "estimated_cost_usd": 0.0001092,
+            "seconds": 1.459,
+            "confirmed_cost_usd": 0.0001092
+        },
+        {
+            "generation_id": "gen-1793830311-LoHg8rHORsA3qgtzqzSY",
+            "input_tokens": 769,
+            "output_tokens": 82,
+            "estimated_cost_usd": 0.00011789999999999999,
+            "seconds": 1.582,
+            "confirmed_cost_usd": 0.0001179
+        },
+        {
+            "case": "cms_image_classification",
+            "generation_id": "gen-1793831071-WZEkZcOpYH41dBIn2hyf",
+            "input_tokens": 984,
+            "output_tokens": 34,
+            "estimated_cost_usd": 0.00011539999999999999,
+            "seconds": 1.48,
+            "confirmed_cost_usd": 0.0001154
+        },
+        {
+            "case": "cms_german_rewrite",
+            "generation_id": "gen-1793831073-gqQFBU4BhHxp9BRWPALJ",
+            "input_tokens": 659,
+            "output_tokens": 16,
+            "estimated_cost_usd": 7.390000000000001e-5,
+            "seconds": 1.754,
+            "confirmed_cost_usd": 7.39e-5
+        }
+    ],
+    "cases": [
+        {
+            "id": "translation",
+            "source": "en",
+            "target": "de",
+            "source_text": "Your NovaTrail dealer can help you open your cart.",
+            "baseline": {
+                "valid_json_shape": true,
+                "findings": [
+                    {
+                        "type": "missing_term",
+                        "term": "dealer",
+                        "expected": "Fachpartner"
+                    },
+                    {
+                        "type": "forbidden_variant",
+                        "term": "Fachpartner",
+                        "expected": "Fachpartner",
+                        "found": "Händler"
+                    }
+                ],
+                "blocking": [
+                    {
+                        "type": "forbidden_variant",
+                        "term": "Fachpartner",
+                        "expected": "Fachpartner",
+                        "found": "Händler"
+                    }
+                ],
+                "output": {
+                    "summary": "Ihr NovaTrail-Händler kann Ihnen dabei helfen, Ihren Warenkorb zu öffnen."
+                },
+                "call": 0
+            },
+            "guided": {
+                "valid_json_shape": true,
+                "findings": [],
+                "blocking": [],
+                "output": {
+                    "summary": "Ihr NovaTrail-Fachpartner kann Ihnen helfen, Ihren Warenkorb zu öffnen."
+                },
+                "call": 1
+            },
+            "guidance": "Terms found in the source (en). Follow each line.\n- \"dealer\": write \"Fachpartner\" in de; never use \"Händler*\"\n- \"cart\": write \"Warenkorb\" in de; never use \"Einkaufskorb\"\n- \"NovaTrail\": keep exactly as \"NovaTrail\"\n\nAlso never write in de: \"klimaneutral*\", \"Becher\" (write \"Trinkgefäß\"), \"Tasse\" (write \"Trinkgefäß\"). A * covers longer forms."
+        },
+        {
+            "id": "copywriting",
+            "source": "de",
+            "target": "de",
+            "source_text": "Unser NovaTrail Händler bietet klimaneutrale Stühle für Ihr Büro.",
+            "baseline": {
+                "valid_json_shape": true,
+                "findings": [
+                    {
+                        "type": "forbidden_variant",
+                        "term": "Fachpartner",
+                        "expected": "Fachpartner",
+                        "found": "Händler"
+                    },
+                    {
+                        "type": "forbidden_variant",
+                        "term": "klimaneutral*",
+                        "found": "klimaneutrale"
+                    }
+                ],
+                "blocking": [
+                    {
+                        "type": "forbidden_variant",
+                        "term": "Fachpartner",
+                        "expected": "Fachpartner",
+                        "found": "Händler"
+                    },
+                    {
+                        "type": "forbidden_variant",
+                        "term": "klimaneutral*",
+                        "found": "klimaneutrale"
+                    }
+                ],
+                "output": "Unser NovaTrail-Händler bietet klimaneutrale Bürostühle an.",
+                "call": 2
+            },
+            "guided": {
+                "valid_json_shape": true,
+                "findings": [],
+                "blocking": [],
+                "output": "Unser NovaTrail Fachpartner bietet umweltfreundliche Stühle für Ihr Büro an.",
+                "call": 3
+            },
+            "guidance": "Terms found in the source (de). Follow each line.\n- \"Händler\": never use; write \"Fachpartner\"\n- \"NovaTrail\": keep exactly as \"NovaTrail\"\n- \"klimaneutrale\": never use\n\nAlso never write in de: \"Becher\" (write \"Trinkgefäß\"), \"Einkaufskorb\" (write \"Warenkorb\"), \"Tasse\" (write \"Trinkgefäß\")."
+        },
+        {
+            "id": "seo",
+            "source": "de",
+            "target": "de",
+            "source_text": "NovaTrail Händler beraten zum Kauf von Bürostühlen. Termine können online gebucht werden.",
+            "baseline": {
+                "valid_json_shape": true,
+                "findings": [
+                    {
+                        "type": "forbidden_variant",
+                        "term": "Fachpartner",
+                        "expected": "Fachpartner",
+                        "found": "Händler"
+                    }
+                ],
+                "blocking": [
+                    {
+                        "type": "forbidden_variant",
+                        "term": "Fachpartner",
+                        "expected": "Fachpartner",
+                        "found": "Händler"
+                    }
+                ],
+                "output": {
+                    "title": "NovaTrail Händler: Bürostühle kaufen und beraten lassen",
+                    "description": "Lassen Sie sich von NovaTrail Händlern zu Bürostühlen beraten und buchen Sie Ihren Termin bequem online.",
+                    "ogTitle": "NovaTrail Händler – persönliche Beratung zu Bürostühlen",
+                    "ogDescription": "Finden Sie Beratung zum Kauf von Bürostühlen und buchen Sie Ihren Termin bei einem NovaTrail Händler online."
+                },
+                "call": 4
+            },
+            "guided": {
+                "valid_json_shape": true,
+                "findings": [],
+                "blocking": [],
+                "output": {
+                    "title": "NovaTrail Fachpartner für Bürostühle finden",
+                    "description": "Lassen Sie sich zu NovaTrail Bürostühlen beraten und buchen Sie Ihren Termin bequem online.",
+                    "ogTitle": "NovaTrail Fachpartner: Beratung zu Bürostühlen",
+                    "ogDescription": "Finden Sie persönliche Beratung zu NovaTrail Bürostühlen und buchen Sie Ihren Termin online."
+                },
+                "call": 5
+            },
+            "guidance": "Terms found in the source (de). Follow each line.\n- \"Händler\": never use; write \"Fachpartner\"\n- \"NovaTrail\": keep exactly as \"NovaTrail\"\n\nAlso never write in de: \"klimaneutral*\", \"Becher\" (write \"Trinkgefäß\"), \"Einkaufskorb\" (write \"Warenkorb\"), \"Tasse\" (write \"Trinkgefäß\"). A * covers longer forms."
+        },
+        {
+            "id": "regional",
+            "source": "de",
+            "target": "en-gb",
+            "source_text": "Der Aufzug bei NovaTrail ist im Erdgeschoss.",
+            "baseline": {
+                "valid_json_shape": true,
+                "findings": [],
+                "blocking": [],
+                "output": {
+                    "summary": "The lift at NovaTrail is on the ground floor."
+                },
+                "call": 6
+            },
+            "guided": {
+                "valid_json_shape": true,
+                "findings": [],
+                "blocking": [],
+                "output": {
+                    "summary": "The lift at NovaTrail is on the ground floor."
+                },
+                "call": 7
+            },
+            "guidance": "Terms found in the source (de). Follow each line.\n- \"NovaTrail\": keep exactly as \"NovaTrail\"\n- \"Aufzug\": write \"lift\" in en-gb\n\nAlso never write in en-gb: \"cup\" (write \"drinking vessel\"), \"mug\" (write \"drinking vessel\")."
+        },
+        {
+            "id": "missing_target",
+            "source": "en",
+            "target": "fr",
+            "source_text": "Open your cart.",
+            "baseline": {
+                "valid_json_shape": true,
+                "findings": [],
+                "blocking": [],
+                "output": {
+                    "summary": "Ouvrez votre panier."
+                },
+                "call": 8
+            },
+            "guided": {
+                "valid_json_shape": true,
+                "findings": [],
+                "blocking": [],
+                "output": {
+                    "summary": "Ouvrez votre panier."
+                },
+                "call": 9
+            },
+            "guidance": ""
+        },
+        {
+            "id": "image_metadata",
+            "source": "en",
+            "target": "en",
+            "source_text": "A blue cup.",
+            "baseline": {
+                "valid_json_shape": true,
+                "findings": [
+                    {
+                        "locale": "en",
+                        "type": "forbidden_variant",
+                        "term": "drinking vessel",
+                        "expected": "drinking vessel",
+                        "found": "mug"
+                    }
+                ],
+                "blocking": [
+                    {
+                        "locale": "en",
+                        "type": "forbidden_variant",
+                        "term": "drinking vessel",
+                        "expected": "drinking vessel",
+                        "found": "mug"
+                    }
+                ],
+                "output": {
+                    "en.alt": "A blue mug silhouette appears as a solid rectangle with a curved handle on a white background.",
+                    "de.alt": "Eine blaue Tassen-Silhouette erscheint als ausgefülltes Rechteck mit gebogenem Henkel auf weißem Hintergrund."
+                },
+                "call": 10
+            },
+            "guided": {
+                "valid_json_shape": true,
+                "findings": [],
+                "blocking": [],
+                "output": {
+                    "en.alt": "Blue drinking vessel icon with a rectangular body and a curved handle.",
+                    "de.alt": "Blaues Symbol eines Trinkgefäßes mit rechteckigem Körper und gebogenem Henkel."
+                },
+                "call": 11
+            },
+            "guidance": "Terms found in the source (en). Follow each line.\n- \"cup\": never use; write \"drinking vessel\"; never use \"mug\"\n\nAlso never write in en: \"lift\" (write \"elevator\").\n\nTerms found in the source (de). Follow each line.\n- \"Tasse\": never use; write \"Trinkgefäß\"; never use \"Becher\"\n\nAlso never write in de: \"klimaneutral*\", \"Becher\" (write \"Trinkgefäß\"), \"Einkaufskorb\" (write \"Warenkorb\"), \"Händler*\" (write \"Fachpartner\"), \"Tasse\" (write \"Trinkgefäß\"). A * covers longer forms."
+        },
+        {
+            "id": "environmental_note_copy",
+            "source": "de",
+            "target": "de",
+            "source_text": "Unser NovaTrail Händler bietet klimaneutrale Stühle für Ihr Büro.",
+            "baseline": {
+                "valid_json_shape": true,
+                "findings": [
+                    {
+                        "type": "forbidden_variant",
+                        "term": "Fachpartner",
+                        "expected": "Fachpartner",
+                        "found": "Händler"
+                    },
+                    {
+                        "type": "forbidden_variant",
+                        "term": "klimaneutral*",
+                        "found": "klimaneutrale"
+                    }
+                ],
+                "blocking": [
+                    {
+                        "type": "forbidden_variant",
+                        "term": "Fachpartner",
+                        "expected": "Fachpartner",
+                        "found": "Händler"
+                    },
+                    {
+                        "type": "forbidden_variant",
+                        "term": "klimaneutral*",
+                        "found": "klimaneutrale"
+                    }
+                ],
+                "output": "Unser NovaTrail-Händler bietet klimaneutrale Stühle für Ihr Büro.",
+                "call": 12
+            },
+            "guided": {
+                "valid_json_shape": true,
+                "findings": [],
+                "blocking": [],
+                "output": "Unser NovaTrail-Fachpartner bietet Stühle für Ihr Büro an.",
+                "call": 13
+            },
+            "guidance": "Terms found in the source (de). Follow each line.\n- \"Händler\": never use; write \"Fachpartner\"\n- \"NovaTrail\": keep exactly as \"NovaTrail\"\n- \"klimaneutrale\": never use; note: Do not replace environmental claims with other environmental claims. Omit them unless the page provides evidence.\nA note is for your judgment: it applies only where it says so, and nothing checks it.\n\nAlso never write in de: \"Becher\" (write \"Trinkgefäß\"), \"Einkaufskorb\" (write \"Warenkorb\"), \"Tasse\" (write \"Trinkgefäß\")."
+        },
+        {
+            "id": "environmental_note_seo",
+            "source": "de",
+            "target": "de",
+            "source_text": "NovaTrail Händler verkaufen klimaneutrale Bürostühle. Online-Termine sind möglich. Es liegen keine Umweltbelege vor.",
+            "baseline": {
+                "valid_json_shape": true,
+                "findings": [
+                    {
+                        "type": "forbidden_variant",
+                        "term": "Fachpartner",
+                        "expected": "Fachpartner",
+                        "found": "Händler"
+                    },
+                    {
+                        "type": "forbidden_variant",
+                        "term": "klimaneutral*",
+                        "found": "klimaneutrale"
+                    }
+                ],
+                "blocking": [
+                    {
+                        "type": "forbidden_variant",
+                        "term": "Fachpartner",
+                        "expected": "Fachpartner",
+                        "found": "Händler"
+                    },
+                    {
+                        "type": "forbidden_variant",
+                        "term": "klimaneutral*",
+                        "found": "klimaneutrale"
+                    }
+                ],
+                "output": {
+                    "title": "NovaTrail Händler für klimaneutrale Bürostühle",
+                    "description": "Finden Sie NovaTrail Händler und vereinbaren Sie online einen Termin. Entdecken Sie klimaneutrale Bürostühle direkt vor Ort.",
+                    "ogTitle": "NovaTrail Händler finden und online Termin buchen",
+                    "ogDescription": "Entdecken Sie klimaneutrale Bürostühle bei NovaTrail Händlern und vereinbaren Sie bequem online einen Termin."
+                },
+                "call": 14
+            },
+            "guided": {
+                "valid_json_shape": true,
+                "findings": [],
+                "blocking": [],
+                "output": {
+                    "title": "NovaTrail Fachpartner für Bürostühle",
+                    "description": "Entdecken Sie NovaTrail Bürostühle und vereinbaren Sie bequem einen Online-Termin bei einem Fachpartner.",
+                    "ogTitle": "NovaTrail Bürostühle: Online-Termin vereinbaren",
+                    "ogDescription": "Finden Sie einen NovaTrail Fachpartner und vereinbaren Sie Ihren Termin online – einfach und bequem."
+                },
+                "call": 15
+            },
+            "guidance": "Terms found in the source (de). Follow each line.\n- \"Händler\": never use; write \"Fachpartner\"\n- \"NovaTrail\": keep exactly as \"NovaTrail\"\n- \"klimaneutrale\": never use; note: Do not replace environmental claims with other environmental claims. Omit them unless the page provides evidence.\nA note is for your judgment: it applies only where it says so, and nothing checks it.\n\nAlso never write in de: \"Becher\" (write \"Trinkgefäß\"), \"Einkaufskorb\" (write \"Warenkorb\"), \"Tasse\" (write \"Trinkgefäß\")."
+        }
+    ],
+    "complete": true,
+    "estimated_total_usd": 0.0013340000000000001,
+    "confirmed_total_usd": 0.0013340000000000001,
+    "observations": [
+        "Eight paired cases, one generation per condition. Not a statistical quality estimate.",
+        "Six of eight baselines have blocking wording findings, zero of eight guided outputs do.",
+        "Without a note, guided copy replaces klimaneutral with umweltfreundlich, retaining an unsupported environmental claim despite zero wording findings.",
+        "With a short advisory note, guided copy and SEO remove environmental claims in these two samples. Semantic note compliance is not enforced by the checker.",
+        "Vision test explicitly supplies per-language glossary guidance and checks each output locale in the harness; it does not verify the pre-fix CMS classification integration.",
+        "Prompt/checker harness uses actual skill text, OpenRouterDriver, GlossaryBrief and GlossaryChecker, not AiRunService persistence/tool loop."
+    ],
+    "integrated": {
+        "cms_image_classification": {
+            "model_output": "{\"_default.alt\":\"A blue drinking vessel with a handle.\",\"de.alt\":\"Ein blaues Trinkgefäß mit Henkel.\"}",
+            "one_generation": true,
+            "saved_fields": {
+                "_default": {
+                    "alt": "A blue drinking vessel with a handle."
+                },
+                "de": {
+                    "alt": "Ein blaues Trinkgefäß mit Henkel."
+                }
+            },
+            "report": {
+                "run_id": null,
+                "asset_id": "01m6makvef9m9gsmt8fdpkvzcv",
+                "status": "complete",
+                "requested": [
+                    "_default.alt",
+                    "de.alt"
+                ],
+                "written": [
+                    "_default.alt",
+                    "de.alt"
+                ],
+                "kept": [],
+                "intentionally_empty": [],
+                "uninferable": [],
+                "rejected": [],
+                "missing": [],
+                "languages": {
+                    "_default": {
+                        "status": "complete",
+                        "open": []
+                    },
+                    "de": {
+                        "status": "complete",
+                        "open": []
+                    }
+                },
+                "tags": {
+                    "requested": false,
+                    "written": [],
+                    "unknown": [],
+                    "malformed": false,
+                    "taxonomy": {
+                        "shown": 0,
+                        "total": 0,
+                        "truncated": false
+                    }
+                }
+            },
+            "findings": [],
+            "per_language_prompt": true
+        },
+        "cms_german_rewrite": {
+            "model_output": "Unser NovaTrail Fachpartner bietet Stühle für Ihr Büro.",
+            "one_generation": true,
+            "run_locale": "de",
+            "findings": [],
+            "output": "Unser NovaTrail Fachpartner bietet Stühle für Ihr Büro."
+        }
+    },
+    "date": "2026-11-04",
+    "git_base": "c812e51a",
+    "working_tree": "Uncommitted glossary normalization and task-integration fixes",
+    "integrated_method": "Two isolated in-memory SQLite CMS tests used AiRunService and ClassifyAssetJob with the real OpenRouterDriver. Only model catalogue routing was supplied by a test registry; actual task generation, checks and persistence paths ran. These single-answer surfaces had tools disabled and one generation each.",
+    "scope": "18 total successful generations: eight paired prompt/checker cases and two CMS integration runs. Synthetic text and a programmatically drawn blue cup only. No customer data or existing database changes.",
+    "limitations": [
+        "One generation per condition, no statistical quality claim.",
+        "CMS spot checks exercise successful model compliance; refusal and correction paths are covered by deterministic fake-provider boundary tests.",
+        "No authenticated browser session or production-data migration was run.",
+        "New partial-result toast was unit-tested but not inspected in a browser."
+    ]
+}
