@@ -249,171 +249,173 @@ const toggleExpanded = (key: string) => {
         />
 
         <ScrollArea class="h-[28rem] w-full pr-4">
-          <div
+          <slot
             v-if="importResult"
-            class="space-y-6 p-1"
+            name="summary"
           >
-            <div
-              :class="[
-                'grid gap-4',
-                (importResult.summary.total_deleted ?? 0) > 0 ? 'md:grid-cols-4' : 'md:grid-cols-3',
-              ]"
-            >
-              <div class="rounded-lg border p-4">
-                <div class="text-sm font-medium text-muted-foreground">
-                  {{ labels.summarySuccess }}
-                </div>
-                <div class="text-2xl font-semibold text-foreground">
-                  {{ importResult.summary.total_success }}
-                </div>
-              </div>
-              <div class="rounded-lg border p-4">
-                <div class="text-sm font-medium text-muted-foreground">
-                  {{ labels.summaryChanges }}
-                </div>
-                <div class="text-2xl font-semibold text-foreground">
-                  {{ importResult.summary.total_changes }}
-                </div>
-              </div>
+            <div class="space-y-6 p-1">
               <div
-                v-if="(importResult.summary.total_deleted ?? 0) > 0"
-                class="rounded-lg border p-4"
+                :class="[
+                  'grid gap-4',
+                  (importResult.summary.total_deleted ?? 0) > 0 ? 'md:grid-cols-4' : 'md:grid-cols-3',
+                ]"
               >
-                <div class="text-sm font-medium text-muted-foreground">
-                  {{ labels.summaryDeleted }}
+                <div class="rounded-lg border p-4">
+                  <div class="text-sm font-medium text-muted-foreground">
+                    {{ labels.summarySuccess }}
+                  </div>
+                  <div class="text-2xl font-semibold text-foreground">
+                    {{ importResult.summary.total_success }}
+                  </div>
                 </div>
-                <div class="text-2xl font-semibold text-destructive">
-                  {{ importResult.summary.total_deleted }}
+                <div class="rounded-lg border p-4">
+                  <div class="text-sm font-medium text-muted-foreground">
+                    {{ labels.summaryChanges }}
+                  </div>
+                  <div class="text-2xl font-semibold text-foreground">
+                    {{ importResult.summary.total_changes }}
+                  </div>
                 </div>
-              </div>
-              <div class="rounded-lg border p-4">
-                <div class="text-sm font-medium text-muted-foreground">
-                  {{ labels.summaryErrors }}
-                </div>
-                <div class="text-2xl font-semibold text-foreground">
-                  {{ importResult.summary.total_errors }}
-                </div>
-              </div>
-            </div>
-
-            <div
-              v-if="importResult.changes.length > 0"
-              class="space-y-2"
-            >
-              <h3 class="font-medium text-foreground">{{ labels.changesTitle }}</h3>
-              <div class="space-y-2">
                 <div
-                  v-for="item in summaryChanges"
-                  :key="itemKey(item)"
-                  class="rounded-lg border"
+                  v-if="(importResult.summary.total_deleted ?? 0) > 0"
+                  class="rounded-lg border p-4"
                 >
-                  <button
-                    type="button"
-                    class="flex w-full items-center justify-between gap-4 p-3 text-left hover:bg-muted/40"
-                    @click="toggleExpanded(itemKey(item))"
-                  >
-                    <span class="font-medium text-foreground">
-                      <slot
-                        name="label"
-                        :item="item"
-                      />
-                    </span>
-                    <span class="flex items-center gap-2 text-xs text-muted-foreground">
-                      {{ changeCount(item) }}
-                      <Icon
-                        :name="
-                          expanded.has(itemKey(item))
-                            ? 'lucide:chevron-down'
-                            : 'lucide:chevron-right'
-                        "
-                        class="h-4 w-4"
-                      />
-                    </span>
-                  </button>
-                  <div
-                    v-if="expanded.has(itemKey(item))"
-                    class="border-t p-3"
-                  >
-                    <slot
-                      name="details"
-                      :item="item"
-                    />
+                  <div class="text-sm font-medium text-muted-foreground">
+                    {{ labels.summaryDeleted }}
+                  </div>
+                  <div class="text-2xl font-semibold text-destructive">
+                    {{ importResult.summary.total_deleted }}
+                  </div>
+                </div>
+                <div class="rounded-lg border p-4">
+                  <div class="text-sm font-medium text-muted-foreground">
+                    {{ labels.summaryErrors }}
+                  </div>
+                  <div class="text-2xl font-semibold text-foreground">
+                    {{ importResult.summary.total_errors }}
                   </div>
                 </div>
               </div>
-              <p
-                v-if="importResult.changes.length > MAX_SUMMARY_ROWS"
-                class="text-xs text-muted-foreground"
+
+              <div
+                v-if="importResult.changes.length > 0"
+                class="space-y-2"
               >
-                {{ hiddenRows(importResult.changes.length) }}
-              </p>
-            </div>
-
-            <div
-              v-if="deletedLabel && importResult.deleted?.length"
-              class="space-y-2"
-            >
-              <h3 class="font-medium text-foreground">{{ labels.deletedTitle }}</h3>
-              <div :class="deletedVariant === 'tags' ? 'flex flex-wrap gap-2' : 'flex flex-col gap-1'">
-                <span
-                  v-for="(item, index) in summaryDeleted"
-                  :key="`deleted-${index}`"
-                  :class="
-                    deletedVariant === 'tags'
-                      ? 'rounded-md bg-destructive/10 px-3 py-1 text-xs text-destructive'
-                      : 'rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive'
-                  "
+                <h3 class="font-medium text-foreground">{{ labels.changesTitle }}</h3>
+                <div class="space-y-2">
+                  <div
+                    v-for="item in summaryChanges"
+                    :key="itemKey(item)"
+                    class="rounded-lg border"
+                  >
+                    <button
+                      type="button"
+                      class="flex w-full items-center justify-between gap-4 p-3 text-left hover:bg-muted/40"
+                      @click="toggleExpanded(itemKey(item))"
+                    >
+                      <span class="font-medium text-foreground">
+                        <slot
+                          name="label"
+                          :item="item"
+                        />
+                      </span>
+                      <span class="flex items-center gap-2 text-xs text-muted-foreground">
+                        {{ changeCount(item) }}
+                        <Icon
+                          :name="
+                            expanded.has(itemKey(item))
+                              ? 'lucide:chevron-down'
+                              : 'lucide:chevron-right'
+                          "
+                          class="h-4 w-4"
+                        />
+                      </span>
+                    </button>
+                    <div
+                      v-if="expanded.has(itemKey(item))"
+                      class="border-t p-3"
+                    >
+                      <slot
+                        name="details"
+                        :item="item"
+                      />
+                    </div>
+                  </div>
+                </div>
+                <p
+                  v-if="importResult.changes.length > MAX_SUMMARY_ROWS"
+                  class="text-xs text-muted-foreground"
                 >
-                  {{ deletedLabel(item) }}
-                </span>
+                  {{ hiddenRows(importResult.changes.length) }}
+                </p>
               </div>
-              <p
-                v-if="importResult.deleted.length > MAX_SUMMARY_ROWS"
-                class="text-xs text-muted-foreground"
+
+              <div
+                v-if="deletedLabel && importResult.deleted?.length"
+                class="space-y-2"
               >
-                {{ hiddenRows(importResult.deleted.length) }}
-              </p>
-            </div>
-
-            <div
-              v-if="labels.ignoredFieldsTitle && importResult.ignored_fields?.length"
-              class="space-y-2"
-            >
-              <h3 class="font-medium text-foreground">{{ labels.ignoredFieldsTitle }}</h3>
-              <div class="flex flex-wrap gap-2">
-                <span
-                  v-for="field in importResult.ignored_fields"
-                  :key="field"
-                  class="rounded-full bg-muted px-3 py-1 text-xs text-muted-foreground"
+                <h3 class="font-medium text-foreground">{{ labels.deletedTitle }}</h3>
+                <div :class="deletedVariant === 'tags' ? 'flex flex-wrap gap-2' : 'flex flex-col gap-1'">
+                  <span
+                    v-for="(item, index) in summaryDeleted"
+                    :key="`deleted-${index}`"
+                    :class="
+                      deletedVariant === 'tags'
+                        ? 'rounded-md bg-destructive/10 px-3 py-1 text-xs text-destructive'
+                        : 'rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive'
+                    "
+                  >
+                    {{ deletedLabel(item) }}
+                  </span>
+                </div>
+                <p
+                  v-if="importResult.deleted.length > MAX_SUMMARY_ROWS"
+                  class="text-xs text-muted-foreground"
                 >
-                  {{ field }}
-                </span>
+                  {{ hiddenRows(importResult.deleted.length) }}
+                </p>
               </div>
-            </div>
 
-            <div
-              v-if="importResult.errors.length > 0"
-              class="space-y-2"
-            >
-              <h3 class="font-medium text-foreground">{{ labels.errorsTitle }}</h3>
-              <div class="space-y-2">
-                <div
-                  v-for="(error, index) in summaryErrors"
-                  :key="`${index}-${error.message}`"
-                  class="rounded-md bg-destructive/10 p-3 text-sm text-destructive"
-                >
-                  <div class="font-medium">{{ errorTitle(error, index) }}</div>
-                  <div v-if="errorBody(error)">{{ errorBody(error) }}</div>
+              <div
+                v-if="labels.ignoredFieldsTitle && importResult.ignored_fields?.length"
+                class="space-y-2"
+              >
+                <h3 class="font-medium text-foreground">{{ labels.ignoredFieldsTitle }}</h3>
+                <div class="flex flex-wrap gap-2">
+                  <span
+                    v-for="field in importResult.ignored_fields"
+                    :key="field"
+                    class="rounded-full bg-muted px-3 py-1 text-xs text-muted-foreground"
+                  >
+                    {{ field }}
+                  </span>
                 </div>
               </div>
-              <p
-                v-if="importResult.errors.length > MAX_SUMMARY_ROWS"
-                class="text-xs text-muted-foreground"
+
+              <div
+                v-if="importResult.errors.length > 0"
+                class="space-y-2"
               >
-                {{ hiddenRows(importResult.errors.length) }}
-              </p>
+                <h3 class="font-medium text-foreground">{{ labels.errorsTitle }}</h3>
+                <div class="space-y-2">
+                  <div
+                    v-for="(error, index) in summaryErrors"
+                    :key="`${index}-${error.message}`"
+                    class="rounded-md bg-destructive/10 p-3 text-sm text-destructive"
+                  >
+                    <div class="font-medium">{{ errorTitle(error, index) }}</div>
+                    <div v-if="errorBody(error)">{{ errorBody(error) }}</div>
+                  </div>
+                </div>
+                <p
+                  v-if="importResult.errors.length > MAX_SUMMARY_ROWS"
+                  class="text-xs text-muted-foreground"
+                >
+                  {{ hiddenRows(importResult.errors.length) }}
+                </p>
+              </div>
             </div>
-          </div>
+          </slot>
         </ScrollArea>
 
         <DialogFooter>

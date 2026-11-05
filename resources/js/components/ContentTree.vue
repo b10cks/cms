@@ -16,6 +16,7 @@ import { api } from '~/api'
 import CreateContentDialog from '~/components/content/CreateContentDialog.vue'
 import AiBulkDialog from '~/components/ai/AiBulkDialog.vue'
 import PublishDialog from '~/components/content/PublishDialog.vue'
+import { flagCountsLine } from '~/lib/aiContentFlags'
 import Icon from '~/components/Icon.vue'
 import NuxtImg from '~/components/NuxtImg.vue'
 import SpaceBadge from '~/components/space/SpaceBadge.vue'
@@ -1063,16 +1064,39 @@ const resolvePublishTargets = (targetId: string, withDescendants = false) => {
 
 const toIds = (items: FlatContentMenuItem[]) => items.map((item) => item.id)
 
+const { totals: flagTotalsOf, freshTotals: freshFlagTotals } = useContentFlags(() => props.spaceId)
+
+// Every write that can clear a flag reaches the menu, by a broadcast or this tab's own save.
+watch(data, (_, previous) => {
+  if (previous) queryClient.invalidateQueries({ queryKey: queryKeys.ai(props.spaceId).contentFlags() })
+})
+
+/** Figures of a row: the entry and its translations, which are no rows of their own. */
+const rowFlags = (item: FlatContentMenuItem) => {
+  const totals = flagTotalsOf([item.id, ...(item.i18n ?? []).map((translation) => translation.id)])
+  return totals.entries > 0 ? flagCountsLine(t, totals) : null
+}
+
+// Flags never block: the dialog names them and publishes on one more click.
 const executePublish = async (items: FlatContentMenuItem[]) => {
   if (items.length === 0) return
+
+  if ((await freshFlagTotals(toIds(items))).entries > 0) {
+    openPublishDialog(items, 'now')
+    return
+  }
 
   await bulkPublish({ ids: toIds(items) })
 }
 
 const executePublishWithChildren = async (items: FlatContentMenuItem[]) => {
   const count = items.length
+  const flagged = (await freshFlagTotals(toIds(items))).entries
   const confirmed = await alert.confirm(
-    t('labels.contentTree.confirmations.publishWithChildren', { count }, count) as string,
+    [
+      t('labels.contentTree.confirmations.publishWithChildren', { count }, count) as string,
+      ...(flagged > 0 ? [t('components.contentFlags.countSentence', { count: flagged }, flagged) as string] : []),
+    ].join('\n\n'),
     {
       title: t('labels.contentTree.confirmations.publishTitle') as string,
       confirmLabel: t('labels.contentTree.actions.publish') as string,
@@ -1080,7 +1104,7 @@ const executePublishWithChildren = async (items: FlatContentMenuItem[]) => {
   )
 
   if (confirmed) {
-    await executePublish(items)
+    await bulkPublish({ ids: toIds(items) })
   }
 }
 
@@ -2958,7 +2982,7 @@ onBeforeUnmount(() => {
               :name="item.value.name"
               :highlight="searchHighlightMap.get(item.value.id)"
               :disabled="!canManageContent"
-              class="w-full truncate text-left"
+              class="w-full min-w-6 truncate text-left"
               :save="(name) => renameContent(name, item.value.id)"
               @update="handleEditCancel"
               @edit-start="handleEditStart(item.value.id)"
@@ -2972,6 +2996,22 @@ onBeforeUnmount(() => {
                 size="sm"
                 :class="[isItemSelected(item.value.id) ? 'mr-4' : 'mr-1  group-hover:mr-4']"
               />
+              <SimpleTooltip
+                v-if="rowFlags(item.value)"
+                :tooltip="rowFlags(item.value) ?? ''"
+              >
+                <span
+                  role="img"
+                  class="flex shrink-0 text-warning-ink"
+                  :aria-label="rowFlags(item.value) ?? undefined"
+                  data-content-flag
+                >
+                  <Icon
+                    name="lucide:triangle-alert"
+                    size="14"
+                  />
+                </span>
+              </SimpleTooltip>
               <div
                 v-if="!item.value.pat"
                 class="h-2 w-2 rounded-full bg-text-muted"
@@ -3149,6 +3189,8 @@ onBeforeUnmount(() => {
       :open="publishDialogOpen"
       :loading="isPublishingAction"
       :publish-type="publishDialogType"
+      :space-id="spaceId"
+      :content-ids="publishDialogIds"
       @update:open="publishDialogOpen = $event"
       @publish="handlePublishDialog"
       @schedule="handleScheduleDialog"

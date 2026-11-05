@@ -62,6 +62,7 @@ import {
   isSameJsonValue,
   useEditorContentModel,
 } from '~/lib/contentEditorState'
+import { flagFieldTarget } from '~/lib/aiContentFlags'
 import { focusField } from '~/lib/fieldFocus'
 import type { ContentResource } from '~/types/contents'
 import type {
@@ -391,6 +392,8 @@ watch(
       const shouldReplace = !content.value || !persistedContent.value || !isDirty.value
 
       syncPersistedContent(newContent, shouldReplace ? 'replace' : 'preserve-local')
+      // A clean editor now shows the newest version, so a later save has nothing to conflict with.
+      if (shouldReplace) versionConflict.anchor(newContent.current_version_id)
       resetValidationState()
     }
   },
@@ -669,6 +672,18 @@ const selectField = async ({ itemId, path }: FieldSelectEvent) => {
   }
   focusField(`content.${target.fieldPath.join('.')}`)
 }
+
+/** A link from a publish warning names a stored field path (`?field=`): open it once the entry is here. */
+const handledFieldLink = ref<string | null>(null)
+watch(
+  [() => route.query.field, () => content.value?.id],
+  ([field, id]) => {
+    if (typeof field !== 'string' || !id || handledFieldLink.value === `${id}:${field}`) return
+    handledFieldLink.value = `${id}:${field}`
+    void nextTick(() => selectField(flagFieldTarget(field, id)))
+  },
+  { immediate: true }
+)
 
 /**
  * Apply a structural edit requested by the preview the way BlocksBlock applies

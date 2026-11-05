@@ -196,7 +196,19 @@ const handleSetAsCurrent = (versionId: string) => {
   setCurrentVersion(versionId)
 }
 
-const handlePublishVersion = (versionId: string) => {
+const { freshTotals: freshFlagTotals } = useContentFlags(() => props.spaceId)
+
+// Flags describe the draft, so only publishing the current version is warned about.
+const handlePublishVersion = async (versionId: string) => {
+  const flagged = versionId === props.content.current_version_id ? (await freshFlagTotals([props.content.id])).entries : 0
+  if (flagged > 0) {
+    const confirmed = await alert.confirm($t('components.contentFlags.countSentence', { count: flagged }, flagged), {
+      title: $t('components.contentFlags.confirmTitle'),
+      confirmLabel: $t('components.contentFlags.confirmPublish'),
+    })
+    if (!confirmed) return
+  }
+
   publishVersion(versionId)
 }
 

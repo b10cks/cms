@@ -1,0 +1,181 @@
+{
+  "errors": {
+    "generic": "Das hat nicht geklappt: {error}"
+  },
+  "inherited": "Dieses Glossar gehört einem Team und ist hier nur lesbar. Verwalte es im Team.",
+  "sheet": {
+    "action": "Tabelle importieren",
+    "title": "Tabelle importieren",
+    "description": "Wird sofort angewendet. Zeilen, die fehlen, bleiben unverändert, leere Zellen behalten ihren Wert und nichts wird entfernt.",
+    "formats": "CSV oder XLSX, bis 10 MB. TBX geht auch.",
+    "selectFile": "Wähle zuerst eine Datei aus.",
+    "failed": "Der Import hat nicht funktioniert.",
+    "submit": "Importieren",
+    "template": "Mit einer Vorlage beginnen:",
+    "summaryTitle": "Import abgeschlossen",
+    "summaryDescription": "Zeilen mit Fehlern bleiben, wie sie waren.",
+    "added": "Neu",
+    "updated": "Geändert",
+    "unchanged": "Unverändert",
+    "imported": "Importiert",
+    "errors": "Zeilenfehler",
+    "nothingChanged": "Nichts geändert. Die Datei entspricht dem Glossar.",
+    "allFailed": "Keine Zeile wurde angewendet. Korrigiere die Zeilen unten und lade die Datei erneut hoch.",
+    "unusedLocales": "Gespeichert, in diesem Space nicht verwendet: {locales}.",
+    "unknownColumns": "Diese Spalten wurden ignoriert: {columns}.",
+    "errorsTitle": "Zeilen zum Korrigieren",
+    "rowLabel": "Zeile {row}",
+    "copy": "Kopieren",
+    "copied": "Kopiert",
+    "download": "Als CSV herunterladen",
+    "moreErrors": "{count} weitere Zeilen stehen in der Kopie und im Download."
+  },
+  "editor": {
+    "title": "Begriffe",
+    "count": "{count} Begriff | {count} Begriffe",
+    "countFiltered": "{count} von {total} Begriffen",
+    "add": "Begriff hinzufügen",
+    "search": "Wortlaut suchen",
+    "loadFailed": "Die Begriffe konnten nicht geladen werden.",
+    "noPermission": "Deine Rolle darf dieses Glossar lesen, aber nicht ändern.",
+    "select": "{term} auswählen",
+    "selectPage": "Alle Begriffe dieser Seite auswählen",
+    "columns": {
+      "concept": "Begriff",
+      "fold": "Sprachen ohne Wortlaut einklappen",
+      "show": "{languages} anzeigen",
+      "showCount": "{count} weitere Sprachen anzeigen"
+    },
+    "cell": {
+      "missing": "Fehlt",
+      "ban": "Verbot",
+      "fallback": "Nutzt den Wortlaut aus {language}"
+    },
+    "marks": {
+      "filled": "Ausgefüllt",
+      "fallback": "Nutzt die Basissprache",
+      "missing": "Fehlt",
+      "removed": "Wird beim Speichern entfernt"
+    },
+    "coverage": {
+      "label": "Abdeckung pro Sprache. Eine Sprache anklicken, um ihre Lücken aufzulisten.",
+      "of": "{covered} von {total}",
+      "missing": "{count} fehlen"
+    },
+    "unused": "In diesem Space nicht verwendet",
+    "filters": {
+      "missing": "Nach fehlender Sprache filtern",
+      "all": "Alle Begriffe",
+      "missingIn": "Fehlt in {language}",
+      "clear": "Filter zurücksetzen"
+    },
+    "hints": {
+      "move": "Bewegen",
+      "open": "Öffnen",
+      "select": "Auswählen"
+    },
+    "empty": {
+      "title": "Dieses Glossar hat noch keine Begriffe",
+      "body": "Lege den ersten Begriff von Hand an oder hole deine Begriffe aus einer Tabelle. Jede Zeile ist eine Bedeutung über alle Sprachen.",
+      "readOnly": "Hier gibt es noch nichts zu sehen.",
+      "import": "Tabelle importieren"
+    },
+    "noResults": {
+      "title": "Kein Begriff passt zu dieser Ansicht",
+      "create": "„{wording}“ anlegen"
+    },
+    "bulk": {
+      "toolbar": "Ausgewählte Begriffe",
+      "selected": "{count} ausgewählt | {count} ausgewählt",
+      "deleteCount": "{count} Begriff löschen | {count} Begriffe löschen",
+      "confirmDelete": "{count} Begriff mit allen Sprachen löschen? Das lässt sich nicht rückgängig machen. | {count} Begriffe mit allen Sprachen löschen? Das lässt sich nicht rückgängig machen.",
+      "deleted": "{count} Begriff gelöscht | {count} Begriffe gelöscht"
+    },
+    "languages": {
+      "label": "Sprachen",
+      "add": "Sprache hinzufügen",
+      "addHint": "Ein Sprachcode wie de, fr oder de-AT.",
+      "invalid": "Das ist kein Sprachcode. Versuch es mit de, fr oder de-AT.",
+      "remove": "{language} entfernen",
+      "removedHint": "{language} wird beim Speichern entfernt.",
+      "undo": "Rückgängig"
+    },
+    "fields": {
+      "use": "Verwenden",
+      "useHint": "Der Wortlaut, den die KI schreibt.",
+      "avoid": "Vermeiden",
+      "avoidHint": "Wortlaut, den die KI nie schreiben darf. Mit * am Ende werden längere Formen mit erfasst, etwa klimaneutral*.",
+      "also": "Auch geschrieben als",
+      "alsoHint": "Andere Schreibweisen dieses Begriffs in einem Text, etwa gebeugte Formen.",
+      "note": "Notiz",
+      "noteHint": "Die KI liest das, wenn der Begriff vorkommt. Niemand prüft, ob sie sich daran hält, also halte es kurz.",
+      "noteTooLong": "Kürze diese Notiz auf {max} Zeichen, um sie zu speichern.",
+      "keepExact": "Exakt beibehalten",
+      "keepExactHint": "Für Namen wie Acme: Der Wortlaut bleibt wie geschrieben, auch in Groß- und Kleinschreibung. Beim Übersetzen bekommt eine Sprache mit eigenem Verwenden-Wortlaut diesen.",
+      "ban": "Verbot: Die KI darf das nie schreiben.",
+      "useAvoided": "Der Vermeiden-Eintrag \"{avoid}\" erfasst auch \"{wording}\", die KI würde dafür also markiert. Ändere einen von beiden.",
+      "wordingRequired": "Trage hier einen Wortlaut unter Verwenden oder Vermeiden ein, oder entferne diese Sprache.",
+      "noLanguage": "Trage zuerst in mindestens einer Sprache einen Wortlaut ein.",
+      "duplicate": "Ein anderer Begriff hat diesen Wortlaut schon in {language}:",
+      "duplicateOpen": "\"{term}\" öffnen",
+      "refused": "Nicht gespeichert. Der Hinweis steht beim Feld.",
+      "rowChanged": "Nicht gespeichert. Jemand anderes hat diesen Begriff gespeichert, während du ihn bearbeitet hast, und diese Fassung weicht ab bei: {fields}. Das Formular zeigt jetzt diese Fassung mit deinem Text. Speichere noch einmal, um diese Felder zu ersetzen.",
+      "rowChangedApart": "Nicht gespeichert. Jemand anderes hat diesen Begriff gespeichert, während du ihn bearbeitet hast. Das Formular zeigt jetzt diese Fassung mit deinem Text. Speichere noch einmal, um deinen Text zu ergänzen.",
+      "rowChangedUnread": "Nicht gespeichert. Jemand anderes hat diesen Begriff gespeichert, während du ihn bearbeitet hast, und diese Fassung konnte nicht geladen werden. Dein Text ist noch da. Versuche es noch einmal.",
+      "fallback": "Nutzt den Wortlaut \"{wording}\" aus {language}, bis diese Sprache einen eigenen hat."
+    },
+    "ai": {
+      "fill": "Wortlaut für {language} vorschlagen",
+      "filled": "Verwenden von der KI vorgeschlagen, noch nicht gespeichert",
+      "findingsTitle": "Dieser Vorschlag verstößt gegen das Glossar. Ändere ihn vor dem Speichern:"
+    },
+    "save": "Speichern",
+    "saveAndNext": "Speichern und weiter",
+    "saveAndAdd": "Speichern und noch eins",
+    "saved": "„{term}“ gespeichert",
+    "created": "„{term}“ hinzugefügt",
+    "deleted": "„{term}“ gelöscht",
+    "delete": "{term} löschen",
+    "confirmDelete": "„{term}“ mit allen Sprachen löschen? Das lässt sich nicht rückgängig machen.",
+    "unsaved": "Nicht gespeichert",
+    "previous": "Vorheriger Begriff",
+    "next": "Nächster Begriff",
+    "endOfList": "Das war der letzte Begriff in dieser Ansicht.",
+    "notFound": "Diesen Begriff gibt es nicht mehr. Vielleicht wurde er gelöscht.",
+    "key": "Tabellenschlüssel: {key}",
+    "sheetDescription": "Diesen Begriff bearbeiten. Speichern ändert, wonach sich neue KI-Läufe richten.",
+    "readOnlySheet": "Nur lesbar",
+    "tryText": {
+      "title": "Text ausprobieren",
+      "meta": "Kein KI-Aufruf, kostet nichts. Liest nur gespeicherte Wortlaute.",
+      "text": "Text",
+      "source": "Sprache des Textes",
+      "target": "Übersetzen nach",
+      "noTarget": "Keine Übersetzung",
+      "output": "Ausgabe prüfen (optional)",
+      "outputHint": "Füge ein, was die KI oder eine Person geschrieben hat, um zu sehen, was markiert würde.",
+      "empty": "Tippe oder füge einen Text ein, um zu sehen, welche Begriffe er enthält und was die KI gesagt bekäme.",
+      "found": "Im Text gefunden",
+      "findings": "Was markiert würde",
+      "flagged": "Im Entwurf markiert: {finding}",
+      "told": "Die KI bekommt gesagt: Das Glossar verwendet \"{expected}\" für \"{term}\". Eine gebeugte Form ist in Ordnung. Nichts wird markiert.",
+      "clean": "Nichts würde markiert.",
+      "terms": "Was die KI gesagt bekäme",
+      "noTerms": "Dieser Text enthält keinen Begriff.",
+      "summary": "{count} Begriff gefunden | {count} Begriffe gefunden",
+      "saveAndTry": "Speichern und ausprobieren",
+      "scope": "Prüfen gegen",
+      "scopeGlossary": "Nur dieses Glossar",
+      "scopeSpace": "Alles, was KI-Läufe in diesem Space nutzen",
+      "off": "Dieses Glossar ist ausgeschaltet, KI-Läufe nutzen es also nicht.",
+      "fromGlossary": "Aus {glossary}"
+    },
+    "noDefaultWording": "Noch kein Wortlaut in {missing}. Benannt nach dem Wortlaut in {language}.",
+    "readOnlyOwner": "Nur lesbar. Gehört zu {owner}.",
+    "scope": {
+      "space": "Speichern gilt für neue KI-Läufe in diesem Space. Laufende Läufe bleiben bei dem, womit sie begonnen haben.",
+      "team": "Speichern gilt für neue KI-Läufe in allen Spaces dieses Teams. Laufende Läufe bleiben bei dem, womit sie begonnen haben."
+    }
+  },
+  "inheritedFrom": "Dieses Glossar gehört zu {owner} und ist hier nur lesbar. Verwalte es dort. KI-Läufe hier nutzen es, solange es aktiv ist."
+}

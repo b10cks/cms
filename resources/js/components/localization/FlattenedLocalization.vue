@@ -5,6 +5,7 @@ import { toast } from 'vue-sonner'
 
 import type { SpaceAiConfig } from '~/api/resources/ai'
 import AiConfigMenuItems from '~/components/ai/AiConfigMenuItems.vue'
+import AiRunFindings from '~/components/ai/AiRunFindings.vue'
 import Icon from '~/components/Icon.vue'
 import MetaLocalization from '~/components/localization/MetaLocalization.vue'
 import { AvatarList } from '~/components/ui/avatar'
@@ -1477,6 +1478,10 @@ const removeAllOrphanedBlocks = (): void => {
         />
       </div>
     </div>
+    <AiRunFindings
+      :findings="translationRun.findings.value"
+      class="mb-4"
+    />
     <div class="grid gap-3">
       <div
         v-for="field in filteredFields"

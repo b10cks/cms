@@ -543,9 +543,18 @@ const commitPublish = async (payload: UpdateContentPayload) => {
     : await createAndPublishContent(payload)
 }
 
+const { freshTotals: freshFlagTotals } = useContentFlags(() => props.spaceId)
+
 const publishDirectly = async () => {
   if (!(await confirmRemoteDrafts())) return
   if (!(await guardSubmit({ revealOnFail: true }))) return
+
+  // Flags never block: the dialog names them and publishes on one more click.
+  if (props.content.id && (await freshFlagTotals([props.content.id])).entries > 0) {
+    publishType.value = 'now'
+    publishDialogOpen.value = true
+    return
+  }
 
   try {
     const nextContent = await commitPublish(mutationPayload.value)
@@ -864,6 +873,8 @@ const handleConfirmAssign = (versionIds: string[]) => {
       :open="publishDialogOpen"
       :loading="isPublishing || isScheduling"
       :publish-type="publishType"
+      :space-id="spaceId"
+      :content-ids="content.id ? [content.id] : []"
       @update:open="publishDialogOpen = $event"
       @publish="handlePublish"
       @schedule="handleSchedule"

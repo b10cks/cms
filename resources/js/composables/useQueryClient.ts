@@ -169,7 +169,19 @@ export const queryKeys = {
       threadList: (params: AiThreadListParams) => [...all(), 'threads', 'list', params] as const,
       threadLists: () => [...all(), 'threads', 'list'] as const,
       thread: (threadId: string) => [...all(), 'threads', 'detail', threadId] as const,
+      /** Under `threads`, so a decision on a conflict refetches the tree's marks too */
+      contentFlags: () => [...all(), 'threads', 'content-flags'] as const,
+      /** Under `threads`, so every thread decision refetches the review too */
+      operationReview: (operationId: string) => [...all(), 'threads', 'review', operationId] as const,
+      operationChanges: (operationId: string, page: number, perPage: number) => [...all(), 'threads', 'review', operationId, 'changes', page, perPage] as const,
+      operationEntryItems: (operationId: string, targetId: string) => [...all(), 'threads', 'review', operationId, 'entry', targetId] as const,
+      operationReviewItems: (operationId: string, group: string, individual: boolean) =>
+        [...all(), 'threads', 'review', operationId, 'items', group, individual] as const,
       schedules: () => [...all(), 'schedules'] as const,
+      operations: () => [...all(), 'operations'] as const,
+      operationList: (conversationId: string) => [...all(), 'operations', 'list', conversationId] as const,
+      operation: (operationId: string) => [...all(), 'operations', 'detail', operationId] as const,
+      operationItems: (operationId: string) => [...all(), 'operations', 'detail', operationId, 'items'] as const,
     }
   },
   /** Skills, knowledge and glossaries of a space or team. */
@@ -182,8 +194,7 @@ export const queryKeys = {
       documents: () => [...all(), 'knowledge'] as const,
       document: (id: string) => [...all(), 'knowledge', id] as const,
       glossaries: () => [...all(), 'glossaries'] as const,
-      terms: (glossaryId: string, search: string) =>
-        [...all(), 'glossaries', glossaryId, 'terms', search] as const,
+      glossaryConceptRows: (glossaryId: string) => [...all(), 'glossaries', glossaryId, 'concept-rows'] as const,
     }
   },
   migrations: spaceEntityKeys('migrations'),

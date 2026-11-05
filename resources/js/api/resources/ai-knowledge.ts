@@ -1,7 +1,8 @@
 import type { AiResolvedSkill, AiScope } from './ai'
 
+import type { AiGlossaryFinding } from '~/lib/aiRun'
 import { requestImportStream } from '~/lib/import-export'
-import type { ImportProgress } from '~/types/import-export'
+import type { ImportDialogResult, ImportProgress } from '~/types/import-export'
 
 import type { ApiClient } from '../client'
 
@@ -69,31 +70,171 @@ export interface AiGlossaryResource {
   id: string
   scope: AiScope
   owner_id: string
+  /** The space or team it belongs to. */
+  owner_name?: string | null
   name: string
   enabled: boolean
+  /** Rows, one per meaning. */
   terms_count?: number
   updated_at: string | null
 }
 
-export interface AiGlossaryTermResource {
-  id: string
-  source_locale: string
-  term: string
-  translations: Record<string, string>
-  case_sensitive: boolean
-  do_not_translate: boolean
-  forbidden: string[]
-  note: string | null
+export interface AiGlossarySheetImportWarning {
+  code: 'unused_locales'
+  locales: string[]
+  message: string
 }
 
-export type AiGlossaryTermPayload = Partial<Omit<AiGlossaryTermResource, 'id'>>
-
-export interface AiImportSummary {
-  summary: { total_success: number; total_errors: number }
-  errors: Array<{ row: number; message: string }>
+/**
+ * What a glossary import did. `added`, `updated`, `unchanged` and `warnings`
+ * come from a CSV or XLSX in the sheet format. TBX and the older term format count only successes.
+ */
+export type AiGlossarySheetImportResult = ImportDialogResult<never> & {
+  summary: { added?: number; updated?: number; unchanged?: number; total_success: number }
+  warnings?: AiGlossarySheetImportWarning[]
 }
 
 export type AiGlossaryExportFormat = 'csv' | 'xlsx' | 'tbx'
+
+export interface AiGlossaryConceptRowLanguage {
+  /** The wording to write. Null with `avoid` set is a ban in this language. */
+  use: string | null
+  /** Wording never to write. A `*` at the end covers longer forms. */
+  avoid: string[]
+  /** How a source may also spell the term. It counts as the term itself. */
+  also: string[]
+}
+
+/** `fallback`: a base language serves this locale (`de` serves `de-AT`). */
+export type AiGlossaryLocaleCoverage = 'own' | 'fallback' | 'missing'
+
+export interface AiGlossaryConceptRow {
+  id: string
+  key: string | null
+  /** The wording stays as written, in exact case. A target language's own `use` still wins. */
+  keep_exact: boolean
+  /** One per row. At most 200 characters on a write, longer older notes stay readable. */
+  note: string | null
+  languages: Record<string, AiGlossaryConceptRowLanguage>
+  coverage: Record<string, AiGlossaryLocaleCoverage>
+}
+
+export interface AiGlossaryAvailableLocale {
+  code: string
+  default: boolean
+  enabled: boolean
+  /** Stored, but no enabled language can use it. */
+  unused: boolean
+}
+
+export interface AiGlossaryFacet {
+  value: string
+  count: number
+}
+
+export interface AiGlossaryConceptRowsMeta extends LaravelMeta {
+  read_only: boolean
+  default_locale: string | null
+  available_locales: AiGlossaryAvailableLocale[]
+  /** The whole glossary, whatever the filters. */
+  facets: {
+    total: number
+    locales: AiGlossaryFacet[]
+    /** Rows the `missing` filter returns for each locale in use. */
+    missing: AiGlossaryFacet[]
+  }
+}
+
+export interface AiGlossaryConceptRowFilters {
+  search?: string
+  /** Rows with no term for this locale. A base language counts as a term for its regions. */
+  missing?: string
+  page?: number
+  per_page?: number
+}
+
+/** Omitted fields keep their value. A language needs `use` or `avoid`. */
+export interface AiGlossaryConceptLanguagePayload {
+  use?: string | null
+  avoid?: string[] | null
+  also?: string[] | null
+}
+
+/** Omitted fields and languages keep their value. A language goes only through `remove_languages`. */
+export interface AiGlossaryConceptPayload {
+  key?: string | null
+  keep_exact?: boolean
+  note?: string | null
+  languages?: Record<string, AiGlossaryConceptLanguagePayload>
+  remove_languages?: string[]
+  /** The row as it was read. A change to a field that moved since then is refused with `row_changed`. */
+  base?: Pick<AiGlossaryConceptRow, 'keep_exact' | 'note' | 'languages'>
+}
+
+export interface AiGlossaryConceptBulkPayload {
+  action: 'delete'
+  row_ids: string[]
+}
+
+/** The body of a 409 or 422 from a concept write. Nothing changed. */
+export interface AiGlossaryConceptConflict {
+  message: string
+  code: 'wording_conflict' | 'key_conflict' | 'term_required' | 'use_avoided' | 'last_language' | 'stale_glossary' | 'row_changed' | 'language_conflict' | 'language_invalid' | 'note_too_long'
+  locale?: string
+  wording?: string
+  /** On `use_avoided`: the Avoid entry that covers the wording. */
+  avoid?: string
+  key?: string
+  concept?: { id: string; key: string | null; term: string }
+  /** On `row_changed`: each field that moved. */
+  changes?: AiGlossaryConceptRowChange[]
+}
+
+export interface AiGlossaryConceptRowChange {
+  field: 'use' | 'avoid' | 'also' | 'note' | 'keep_exact'
+  locale: string | null
+}
+
+export interface AiGlossaryCheckPayload {
+  text: string
+  source_locale: string
+  /** `glossary` reads this one glossary. `space` reads what a run in this space uses. */
+  scope?: 'glossary' | 'space'
+  target_locale?: string
+  output?: string
+}
+
+export interface AiGlossaryCheckMatch {
+  /** UTF-16 code units, so `text.slice(start, end)` is the match. */
+  start: number
+  end: number
+  text: string
+}
+
+/** One activated row, with the fields the `lookup_glossary` tool returns. */
+export interface AiGlossaryCheckTerm {
+  /** The row's wording, or the Avoid wording the text used. */
+  term: string
+  /** The line the agent reads, as in the prompt. */
+  instruction: string
+  /** The text used only Avoid wording of this row. */
+  avoided?: boolean
+  required?: string
+  do_not_translate?: boolean
+  forbidden?: string[]
+  note?: string
+  concept_id?: string
+  glossary_id: string
+  glossary_name: string | null
+  row_id: string
+  matches: AiGlossaryCheckMatch[]
+}
+
+export interface AiGlossaryCheckResult {
+  terms: AiGlossaryCheckTerm[]
+  /** Null unless `output` was sent. */
+  findings: AiGlossaryFinding[] | null
+}
 
 export class AiKnowledge {
   private readonly base: string
@@ -196,29 +337,50 @@ export class AiKnowledge {
     return this.client.delete(`${this.base}/glossaries/${id}`)
   }
 
-  public terms(glossaryId: string, search: string) {
-    return this.client.get<{ data: AiGlossaryTermResource[] }>(
-      `${this.base}/glossaries/${glossaryId}/terms`,
-      { search: search || undefined, per_page: 200 }
+  public conceptRows(glossaryId: string, filters: AiGlossaryConceptRowFilters) {
+    return this.client.get<{ data: AiGlossaryConceptRow[]; meta: AiGlossaryConceptRowsMeta }>(
+      `${this.base}/glossaries/${glossaryId}/concept-rows`,
+      { ...filters }
     )
   }
 
-  public createTerm(glossaryId: string, payload: AiGlossaryTermPayload) {
-    return this.client.post<{ data: AiGlossaryTermResource }>(
-      `${this.base}/glossaries/${glossaryId}/terms`,
+  public conceptRow(glossaryId: string, rowId: string) {
+    return this.client.get<{ data: AiGlossaryConceptRow }>(
+      `${this.base}/glossaries/${glossaryId}/concept-rows/${encodeURIComponent(rowId)}`
+    )
+  }
+
+  public createConceptRow(glossaryId: string, payload: AiGlossaryConceptPayload) {
+    return this.client.post<{ data: AiGlossaryConceptRow }>(
+      `${this.base}/glossaries/${glossaryId}/concept-rows`,
       payload
     )
   }
 
-  public updateTerm(glossaryId: string, termId: string, payload: AiGlossaryTermPayload) {
-    return this.client.patch<{ data: AiGlossaryTermResource }>(
-      `${this.base}/glossaries/${glossaryId}/terms/${termId}`,
+  /** The returned row's id differs when a term gets its first concept. */
+  public updateConceptRow(glossaryId: string, rowId: string, payload: AiGlossaryConceptPayload) {
+    return this.client.patch<{ data: AiGlossaryConceptRow }>(
+      `${this.base}/glossaries/${glossaryId}/concept-rows/${encodeURIComponent(rowId)}`,
       payload
     )
   }
 
-  public deleteTerm(glossaryId: string, termId: string) {
-    return this.client.delete(`${this.base}/glossaries/${glossaryId}/terms/${termId}`)
+  public deleteConceptRow(glossaryId: string, rowId: string) {
+    return this.client.delete(`${this.base}/glossaries/${glossaryId}/concept-rows/${encodeURIComponent(rowId)}`)
+  }
+
+  public bulkConceptRows(glossaryId: string, payload: AiGlossaryConceptBulkPayload) {
+    return this.client.post<{ data: { deleted: number } }>(
+      `${this.base}/glossaries/${glossaryId}/concept-rows/bulk`,
+      payload
+    )
+  }
+
+  public checkGlossaryText(glossaryId: string, payload: AiGlossaryCheckPayload) {
+    return this.client.post<{ data: AiGlossaryCheckResult }>(
+      `${this.base}/glossaries/${glossaryId}/glossary-check`,
+      payload
+    )
   }
 
   public importTerms(
@@ -226,7 +388,7 @@ export class AiKnowledge {
     file: File,
     onProgress?: (progress: ImportProgress) => void
   ) {
-    return requestImportStream<AiImportSummary>({
+    return requestImportStream<AiGlossarySheetImportResult>({
       client: this.client,
       endpoint: `${this.base}/glossaries/${glossaryId}/import`,
       file,
@@ -234,7 +396,7 @@ export class AiKnowledge {
     })
   }
 
-  public exportUrl(glossaryId: string, format: AiGlossaryExportFormat) {
-    return `${this.client.getBaseUrl()}${this.base}/glossaries/${glossaryId}/export?format=${format}`
+  public exportUrl(glossaryId: string, format: AiGlossaryExportFormat, { template = false } = {}) {
+    return `${this.client.getBaseUrl()}${this.base}/glossaries/${glossaryId}/export?format=${format}${template ? '&template=1' : ''}`
   }
 }

@@ -6,6 +6,7 @@ import AssetBlock from '~/components/editor/AssetBlock.vue'
 import LinkEditor from '~/components/editor/LinkEditor.vue'
 import RobotsDirectiveEditor from '~/components/editor/RobotsDirectiveEditor.vue'
 import AiConfigMenuItems from '~/components/ai/AiConfigMenuItems.vue'
+import AiRunFindings from '~/components/ai/AiRunFindings.vue'
 import Icon from '~/components/Icon.vue'
 import SplitButton from '~/components/ui/button/SplitButton.vue'
 import { InputField, TextField } from '~/components/ui/form'
@@ -269,7 +270,7 @@ const generateMetaWithAI = async (
   const outcome = await metaRun.start<MetaTags>({
     surface: 'meta-tags',
     skill: 'meta-tags',
-    context: { language: currentLanguage.value, page: requestData },
+    context: { language: currentLanguage.value, source_locale: currentLanguage.value, page: requestData },
     config_id: configId,
   })
 
@@ -373,6 +374,8 @@ const updateCanonicalValue = (value: LinkValue | null): void => {
         </span>
       </div>
     </div>
+
+    <AiRunFindings :findings="metaRun.findings.value" />
 
     <InputField
       v-model="localValue.title"

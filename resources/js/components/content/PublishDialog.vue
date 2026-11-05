@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import ContentFlagsNotice from '~/components/ai/ContentFlagsNotice.vue'
 import { Button } from '~/components/ui/button'
 import { Dialog, DialogContent, DialogFooter, DialogHeaderCombined } from '~/components/ui/dialog'
 import { DateTimeFormField, InputField } from '~/components/ui/form'
@@ -9,6 +10,9 @@ const props = defineProps<{
   open: boolean
   loading?: boolean
   publishType: PublishType
+  /** Entries this publishes, so the dialog can name what AI flagged on them */
+  spaceId?: string
+  contentIds?: string[]
 }>()
 
 const emits = defineEmits<{
@@ -88,6 +92,12 @@ const resetForm = () => {
       />
 
       <div class="space-y-4">
+        <ContentFlagsNotice
+          v-if="open && spaceId && contentIds?.length"
+          :space-id="spaceId"
+          :content-ids="contentIds"
+          @leave="handleCancel"
+        />
         <InputField
           v-model="message"
           name="message"

@@ -3,6 +3,8 @@ export type ImportExportFormat = 'csv' | 'excel' | 'json' | 'xliff' | 'yaml'
 export interface ImportError {
   row?: number
   id?: string
+  /** The column the problem is in, for importers that know it. */
+  column?: string
   message: string
 }
 

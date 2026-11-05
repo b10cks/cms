@@ -7,6 +7,8 @@ import { toast } from 'vue-sonner'
 
 import DataEntriesIcon from '~/assets/images/data-entries.svg?component'
 import AiBulkDialog from '~/components/ai/AiBulkDialog.vue'
+import AiRunFindings from '~/components/ai/AiRunFindings.vue'
+import type { AiGlossaryFinding } from '~/lib/aiRun'
 import ExportDataEntriesDialog from '~/components/datasources/ExportDataEntriesDialog.vue'
 import ShapeValueFields from '~/components/datasources/ShapeValueFields.vue'
 import ImportDataEntriesDialog from '~/components/datasources/ImportDataEntriesDialog.vue'
@@ -412,6 +414,7 @@ const hasEntryPendingChanges = (entryId: string) => {
 
 const isDefaultSelected = computed(() => selectedDimension.value === 'default')
 
+const translationFindings = ref<AiGlossaryFinding[]>([])
 const translationProgress = ref<{
   processed: number
   translated: number
@@ -459,6 +462,7 @@ const handleTranslateMissingDimensions = async () => {
     { duration: Number.POSITIVE_INFINITY }
   )
 
+  translationFindings.value = []
   translationProgress.value = {
     processed: 0,
     translated: 0,
@@ -506,7 +510,10 @@ const handleTranslateMissingDimensions = async () => {
         processed_count: number
         total_candidates: number
         target_dimension: string
+        glossary_findings?: AiGlossaryFinding[]
       }
+
+      translationFindings.value = result?.glossary_findings ?? []
 
       translationProgress.value = result
         ? {
@@ -694,6 +701,7 @@ const handleTranslateMissingDimensions = async () => {
             </div>
           </div>
 
+          <AiRunFindings :findings="translationFindings" />
           <div
             v-if="translationProgress"
             class="rounded-md border border-input bg-elevated p-4"

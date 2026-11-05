@@ -1,0 +1,169 @@
+{
+  "outcomes": {
+    "open": "Wartet",
+    "written": "Im Entwurf",
+    "proposed": "Vorgeschlagen",
+    "conflict": "Konflikt",
+    "satisfied": "Bereits ausgefüllt",
+    "unchanged": "Bereits aktuell",
+    "intentionally_empty": "Bewusst leer gelassen",
+    "uninferable": "Nicht ermittelbar",
+    "refused": "Von der KI abgelehnt",
+    "blocked": "Braucht eine Antwort",
+    "invalid": "Vorschlag war ungültig",
+    "unfinished": "Nicht fertig geworden",
+    "skipped": "Übersprungen",
+    "failed": "Fehlgeschlagen"
+  },
+  "reasons": {
+    "has_value": "Es gibt schon einen Wert",
+    "has_tags": "Es gibt schon Tags",
+    "pending_review": "Ein anderer Vorschlag wartet noch auf Prüfung",
+    "field_not_available": "Dieses Feld gibt es im Ordner des Assets nicht",
+    "no_meta_field": "Dieser Eintrag hat kein Metadaten-Feld",
+    "locale_not_in_plan": "Die Sprache dieses Eintrags ist nicht im Plan",
+    "complete": "Es hat nichts gefehlt",
+    "awaiting_translation": "Wartet auf die Übersetzung, aus der es geschrieben wird",
+    "not_stored_on_translation": "Dieses Feld ist nicht übersetzbar, die Übersetzung kann es nicht speichern",
+    "block_not_in_translation": "Der Block mit diesem Feld fehlt in der Übersetzung",
+    "translation_not_in_plan": "Der Plan lässt die dafür nötige Übersetzungsarbeit aus",
+    "no_stable_path": "Dieser Block hat keine ID, das Feld lässt sich nicht ansprechen",
+    "unit_exceptions": "Jede Einheit hat ihr eigenes Ergebnis"
+  },
+  "targets": {
+    "tags": "Tags",
+    "folder": "Ordner",
+    "unit": "Einheit {unit}"
+  },
+  "metaKeys": {
+    "title": "Titel",
+    "description": "Beschreibung",
+    "ogTitle": "Social-Titel",
+    "ogDescription": "Social-Beschreibung"
+  },
+  "plan": {
+    "asset": {
+      "track": "Jeden Wert nachweisen",
+      "trackDescription": "Jedes Asset meldet, was mit jedem gewählten Wert passiert ist. So siehst du genau, was noch fehlt.",
+      "untracked": "Dieser Plan nennt keine Werte. Ergebnisse werden pro Asset gezählt und zeigen nicht, ob jedes Feld gefüllt wurde.",
+      "legend": "Jedes Asset soll am Ende haben",
+      "tags": "Tags",
+      "tagsRequired": "Nötig, weil dieser Plan Tags entfernt oder hinzufügt.",
+      "noFieldsPicked": "Wähle die Felder, die jedes Asset bekommen soll. Die Sprachen legst du unten fest."
+    },
+    "metadata": {
+      "track": "Seiten-Metadaten erzeugen",
+      "trackDescription": "Jeder Eintrag meldet, was mit jedem gewählten Wert passiert ist. Canonical-URLs, Robots-Einstellungen und Bilder bleiben unangetastet.",
+      "untracked": "Dieser Plan nennt keine bestimmten Werte. Ergebnisse werden pro Eintrag gezählt und zeigen nicht, ob jeder Wert geschrieben wurde.",
+      "keys": "Zu schreibende Werte",
+      "keysRequired": "Wähle mindestens einen Wert.",
+      "overwrite": "Werte, die ersetzt werden dürfen",
+      "overwriteHint": "Vorhandene Werte bleiben, solange du sie hier nicht wählst. Leere werden immer gefüllt.",
+      "overwriteNone": "Keine. Nur leere Werte werden gefüllt.",
+      "fields": "Metadaten-Felder",
+      "fieldsAll": "Alle Metadaten-Felder in diesem Umfang",
+      "fieldsHint": "Nichts gewählt: alle Metadaten-Felder dieser Einträge.",
+      "locales": "Einträge in diesen Sprachen",
+      "localesAll": "Alle Sprachen",
+      "localesHint": "Nichts gewählt: Einträge in jeder Sprache. Das filtert Einträge und übersetzt nichts.",
+      "defaultLanguage": "{name} (Standard)"
+    },
+    "linked": {
+      "track": "Auch Seiten-Metadaten erzeugen",
+      "trackDescription": "Jede Zielsprache bekommt zusätzlich die gewählten Werte, geschrieben aus ihrem übersetzten Entwurf, sobald dieser fertig ist. Canonical-URLs, Robots-Einstellungen und Bilder bleiben unangetastet.",
+      "untracked": "Metadaten-Felder werden wie anderer Text übersetzt.",
+      "locales": "Sprachen, in die geschrieben wird",
+      "localesAll": "Alle Zielsprachen",
+      "localesHint": "Nichts gewählt: alle Zielsprachen oben."
+    }
+  },
+  "ledger": {
+    "outputs": "Ergebnisse von {label}",
+    "summary": "{done} von {total} Ergebnissen nachgewiesen",
+    "summaryWith": "{done} von {total} Ergebnissen nachgewiesen. {others}",
+    "other": "{outcome}: {count}",
+    "units": "{written} geschrieben, {remaining} offen",
+    "remaining": "Noch offen: {units}",
+    "mayReplace": "Darf den vorhandenen Wert ersetzen",
+    "question": "Frage: {question}"
+  },
+  "outcome": {
+    "completedWithGaps": "Warteschlange abgearbeitet, aber einige gewünschte Ergebnisse fehlen"
+  },
+  "coverage": {
+    "title": "Gewünschte Ergebnisse",
+    "unverified": "Vollständigkeit nicht geprüft",
+    "unverifiedExplain": "Dieser Plan nennt keine bestimmten Ergebnisse, deshalb zählen Einträge als Ganzes. Ob jedes Feld gefüllt wurde, zeigen nur die Änderungen selbst.",
+    "counting": "Gewünschte Ergebnisse werden gezählt, sobald die Operation pausiert oder fertig ist.",
+    "complete": "Jedes gewünschte Ergebnis ist nachgewiesen",
+    "incomplete": {
+      "completed": "Nicht jedes gewünschte Ergebnis wurde erreicht",
+      "paused": "Pausiert, gewünschte Ergebnisse sind noch offen",
+      "cancelled": "Abgebrochen, gewünschte Ergebnisse sind noch offen"
+    },
+    "incompleteExplain": {
+      "completed": "Fertig heißt: Kein Eintrag steht mehr in der Warteschlange. Öffne die Einträge unten, um zu sehen, was warum fehlt.",
+      "other": "Öffne die Einträge unten, um zu sehen, was warum fehlt."
+    },
+    "entries": "{skipped} übersprungene und {failed} fehlgeschlagene Einträge zählen als fehlend.",
+    "questions": "{count} Ergebnis wartet auf eine Antwort. Die Frage steht unten. | {count} Ergebnisse warten auf eine Antwort. Die Fragen stehen unten.",
+    "publishing": "Es wird nichts veröffentlicht. Öffne einen Entwurf und veröffentliche ihn, wenn er passt. Über seinen Verlauf kommst du zurück.",
+    "proposalsWaiting": "{count} Asset- oder Datenänderung wartet auf dich. | {count} Asset- oder Datenänderungen warten auf dich."
+  },
+  "retry": {
+    "failure": {
+      "rate_limited": "Der KI-Anbieter begrenzt gerade die Anfragen.",
+      "unavailable": "Der KI-Anbieter ist vorübergehend nicht verfügbar.",
+      "connection": "Der KI-Anbieter ist gerade nicht erreichbar.",
+      "interrupted": "Die Antwort des KI-Anbieters wurde abgeschnitten.",
+      "generic": "Der Aufruf beim KI-Anbieter ist fehlgeschlagen."
+    },
+    "at": "Nächster Versuch um {time}.",
+    "now": "Nächster Versuch läuft.",
+    "attempt": "Versuch {attempt}.",
+    "attemptOf": "Versuch {attempt} von {max}.",
+    "retries": "Der Anbieter brauchte bisher {count} Wiederholung. | Der Anbieter brauchte bisher {count} Wiederholungen.",
+    "unconfirmed": "{count} unterbrochener Aufruf kann mehr gekostet haben als angezeigt. | {count} unterbrochene Aufrufe können mehr gekostet haben als angezeigt.",
+    "unconfirmedConfirmed": "Bekannte Kosten sind bestätigt, aber {count} unterbrochener Aufruf kann mehr gekostet haben. | Bekannte Kosten sind bestätigt, aber {count} unterbrochene Aufrufe können mehr gekostet haben."
+  },
+  "questions": {
+    "title": "Fragen",
+    "summary": "{questions} Frage zu {outputs} Ergebnissen | {questions} Fragen zu {outputs} Ergebnissen",
+    "state": {
+      "accepting": "Die übrige Arbeit ist fertig. Für diese Ergebnisse fehlt dem Agenten eine Tatsache, die er nicht feststellen konnte. Beantworte, was du weißt. Was du leer lässt, bleibt blockiert.",
+      "running": "Der Agent arbeitet noch den Rest ab, weitere Fragen sind möglich. Antworten kannst du, sobald er fertig ist.",
+      "paused": "Die Operation ist pausiert. Antworten kannst du, sobald die restliche Arbeit fertig ist.",
+      "cancelled": "Diese Operation wurde abgebrochen, die Fragen bleiben unbeantwortet."
+    },
+    "noQuestion": "Der Agent hat für diese Ergebnisse keine Frage festgehalten.",
+    "appliesTo": "{outputs} Ergebnis in {where} | {outputs} Ergebnisse in {where}",
+    "answerAll": "Deine Antwort",
+    "answerAllMany": "Deine Antwort für alle {count} Ergebnisse",
+    "answerOne": "Antwort nur für dieses Ergebnis",
+    "showEntries": "Einträge anzeigen",
+    "hideEntries": "Einträge ausblenden",
+    "untitled": "Eintrag ohne Titel",
+    "bounds": "Nur die beantworteten Ergebnisse laufen erneut, innerhalb des freigegebenen Plans und der verbleibenden {remaining} Budget. Eine Antwort gibt dem Agenten eine Tatsache. Sie erweitert weder den Plan, noch ersetzt sie andere Werte.",
+    "budgetSpent": "Das Budget ist aufgebraucht. Deine Antworten bleiben gespeichert, die Operation pausiert, bis du das Budget erhöhst.",
+    "send": "{count} Antwort senden und fortsetzen | {count} Antworten senden und fortsetzen",
+    "resuming": "{count} beantwortetes Ergebnis wartet auf die Ausführung. | {count} beantwortete Ergebnisse warten auf die Ausführung.",
+    "stale": "Einige Antworten wurden nicht übernommen, weil sich ihre Fragen geändert haben. Dein Text ist noch da. Prüfe ihn und sende ihn erneut.",
+    "duplicate": "Einige davon waren schon beantwortet, dafür hat sich nichts geändert.",
+    "closed": "Die Operation wartet nicht mehr auf Antworten. Dein Text ist noch da.",
+    "failed": "Die Antworten konnten nicht gesendet werden: {error}",
+    "answered": "Beantwortet ({count})",
+    "answeredBy": "{name}, {time}",
+    "answeredAt": "{time}",
+    "answeredOutputs": "{count} Ergebnis | {count} Ergebnisse",
+    "appliesToEntries": "{count} Eintrag | {count} Einträgen",
+    "sendNone": "Antworten senden und fortsetzen"
+  },
+  "changes": {
+    "fields": "Felder von {name}",
+    "conflicts": "{count} Konflikt | {count} Konflikte",
+    "flagged": "{count} markiert | {count} markiert",
+    "flaggedWording": "Markiert: {wording}",
+    "written": "{count} Feld geschrieben | {count} Felder geschrieben",
+    "history": "Verlauf"
+  }
+}

@@ -4988,36 +4988,15 @@
       "glossaries": {
         "description": "Begriffe, die die KI verwenden, unübersetzt lassen oder vermeiden muss. Abweichungen werden am Text markiert.",
         "create": "Neues Glossar",
-        "emptyTerms": "Keine Begriffe gefunden.",
         "confirmDelete": "Glossar {name} mit allen Begriffen löschen?",
-        "addTerm": "Begriff hinzufügen",
-        "editTerm": "Begriff bearbeiten",
-        "term": "Begriff",
-        "sourceLocale": "Sprache",
-        "translations": "Übersetzungen",
-        "translationsHint": "Eine pro Zeile, zum Beispiel en: checkout",
-        "forbidden": "Nie verwenden",
-        "forbiddenHint": "Kommagetrennte Varianten, die die KI nicht schreiben darf",
-        "note": "Notiz",
-        "doNotTranslate": "Unübersetzt lassen",
-        "caseSensitive": "Groß-/Kleinschreibung beachten",
-        "rules": "Regeln",
-        "import": "Importieren",
-        "importErrors": "{count} Zeilen konnten nicht importiert werden",
         "termCount": "{count} Begriff | {count} Begriffe",
-        "avoid": "Vermeiden: {terms}",
-        "editTermNamed": "{term} bearbeiten",
-        "deleteTermNamed": "{term} löschen",
-        "confirmDeleteTerm": "Den Begriff {term} löschen?",
         "notFound": "Glossar nicht gefunden",
-        "terms": "Begriffe",
-        "search": "Begriffe suchen",
         "exportLabel": "Exportieren",
         "delete": "Glossar löschen"
       },
       "schedules": {
         "title": "Zeitpläne",
-        "description": "Führt einen Skill nach Zeitplan über einen gespeicherten Bereich aus. Jeder Lauf handelt als die Person, die den Zeitplan zuletzt gespeichert hat, stoppt an seinem Budget und legt seine Vorschläge in den Posteingang.",
+        "description": "Führt einen Skill nach Zeitplan über einen gespeicherten Bereich aus. Jeder Lauf handelt als die Person, die den Zeitplan zuletzt gespeichert hat, und stoppt an seinem Budget. Inhalte landen in Entwürfen, andere Änderungen warten im Thread.",
         "add": "Zeitplan hinzufügen",
         "edit": "Zeitplan bearbeiten",
         "name": "Name",
@@ -5028,14 +5007,15 @@
         "cron": "Zeitplan",
         "cronHint": "Cron-Ausdruck in UTC: Minute, Stunde, Tag, Monat, Wochentag. 0 6 * * 1 läuft jeden Montag um 06:00.",
         "budget": "Budget",
-        "budgetHint": "Höchstbetrag in USD pro Lauf. Der Lauf stoppt dort und behält, was er vorgeschlagen hat.",
+        "budgetHint": "Höchstbetrag in USD pro Lauf. Der Lauf stoppt dort und behält, was er geschrieben hat.",
         "lastRun": "Letzter Lauf",
         "never": "Nie",
         "next": "Nächster: {time}",
         "runsAs": "läuft als {name}",
         "paused": {
           "access_revoked": "Pausiert: Die Person, als die er läuft, hat keinen Zugriff mehr. Speichern oder aktivieren, damit er als du läuft.",
-          "skill_unavailable": "Pausiert: Der Skill fehlt oder kann keine Änderungen mehr vorschlagen."
+          "skill_unavailable": "Pausiert: Der Skill fehlt oder kann keine Änderungen mehr vorschlagen.",
+          "scope_too_large": "Pausiert: Der Umfang ist größer geworden, als ein Zeitplan abdecken darf. Grenze die Filter ein, damit er wieder läuft."
         },
         "filters": {
           "block": "Block",
@@ -5120,10 +5100,13 @@
         "extract-glossary-terms": "Glossarbegriffe extrahieren",
         "find-untranslated": "Unübersetzte Einträge finden"
       },
+      "findingsTitle": "Verbotene Formulierungen im erstellten Text",
+      "dismissFindings": "Schließen",
       "findings": {
-        "missing_term": "Verwende „{expected}“ für „{term}“.",
-        "translated_do_not_translate": "Lass „{term}“ unübersetzt.",
-        "forbidden_variant": "„{found}“ ist nicht erlaubt, verwende „{expected}“."
+        "missing_term": "Hinweis: Das Glossar verwendet „{expected}“ für „{term}“. Eine gebeugte Form ist in Ordnung.",
+        "translated_do_not_translate": "„{expected}“ ist ein geschützter Name, verwende ihn genau so.",
+        "forbidden_variant": "„{found}“ ist nicht erlaubt, verwende „{expected}“.",
+        "forbidden_variant_bare": "„{found}“ ist nicht erlaubt."
       }
     },
     "aiChangeset": {
@@ -5143,7 +5126,7 @@
       "blockField": "Feld {key}",
       "blockFields": "Felder des neuen Blocks",
       "noBlockFields": "Keine Felder",
-      "partial": "Der Lauf wurde vorzeitig beendet ({reason}). Das sind die bisher vorgeschlagenen Änderungen.",
+      "partial": "Der Lauf wurde vorzeitig beendet ({reason}). Das sind seine bisherigen Änderungen.",
       "stoppedBy": {
         "max_usd": "Kostenlimit erreicht",
         "max_steps": "Schrittlimit erreicht",
@@ -5156,11 +5139,14 @@
         "data_entry": "Datensatz",
         "asset": "Asset",
         "block": "Block",
-        "selection": "Auswahl"
+        "selection": "Auswahl",
+        "asset_folder": "Asset-Ordner",
+        "asset_tag": "Asset-Tag"
       },
       "status": {
         "pending": "Offen",
         "accepted": "Übernommen",
+        "written": "Im Entwurf",
         "rejected": "Abgelehnt",
         "conflict": "Konflikt"
       },
@@ -5168,7 +5154,11 @@
         "read": "Beim Lesen durch die KI",
         "current": "Jetzt",
         "proposed": "KI-Vorschlag",
-        "currentIn": "Jetzt ({language})"
+        "currentIn": "Jetzt ({language})",
+        "source": "Quelle",
+        "sourceChange": "Quelle, seit der aktuellen Übersetzung geändert",
+        "currentTranslation": "Aktuelle Übersetzung",
+        "proposedTranslation": "KI-Übersetzung"
       },
       "acceptFailed": "Die Änderungen konnten nicht übernommen werden: {error}",
       "rejectFailed": "Die Änderungen konnten nicht abgelehnt werden: {error}",
@@ -5176,7 +5166,31 @@
       "discardEdit": "Bearbeitung verwerfen",
       "editLabel": "Bearbeiteter Vorschlag",
       "editedBeforeAccepting": "Vor dem Übernehmen bearbeitet",
-      "glossaryFindings": "Glossar-Hinweise"
+      "glossaryFindings": "Glossar-Hinweise",
+      "newFolder": "Neuer Ordner",
+      "newTag": "Neues Tag",
+      "assetFields": {
+        "tags": "Tags",
+        "folder": "Ordner"
+      },
+      "translationUnits": "Übersetzte Texte",
+      "unitReasons": {
+        "missing": "Fehlt",
+        "empty": "War leer",
+        "stale": "Quelle geändert",
+        "same_as_source": "Aus der Quelle kopiert"
+      },
+      "structureExamples": "Begründet mit {count} Asset | Begründet mit {count} Assets",
+      "tagChange": {
+        "add": "Fügt hinzu",
+        "remove": "Entfernt"
+      },
+      "libraryRoot": "Oberste Ebene der Mediathek",
+      "notesLabel": "Braucht deinen Blick",
+      "notes": {
+        "uncertain": "Die KI ist unsicher:",
+        "invalid": "Ließ sich nicht übernehmen:"
+      }
     },
     "aiCommand": {
       "ask": "KI fragen: {prompt}",
@@ -5185,7 +5199,6 @@
     "aiBulk": {
       "entry": "KI fragen",
       "title": "KI zu diesen Einträgen fragen",
-      "description": "Läuft im Hintergrund in einem Thread. Die Änderungen landen dort zur Prüfung, gespeichert wird erst, was du übernimmst.",
       "skills": "Skills",
       "task": "Was soll die KI tun?",
       "extraInstructions": "Zusätzliche Anweisungen (optional)",
@@ -5196,8 +5209,265 @@
       "more": "und {count} weitere",
       "preflightFailed": "Diese Aufgabe konnte nicht geschätzt werden.",
       "cancel": "Abbrechen",
-      "confirm": "Für {count} Einträge starten",
-      "failed": "Die Aufgabe konnte nicht gestartet werden: {error}"
+      "confirm": "Für {count} Eintrag starten | Für {count} Einträge starten",
+      "failed": "Die Aufgabe konnte nicht gestartet werden: {error}",
+      "descriptions": {
+        "content": "Läuft im Hintergrund in einem Thread. Änderungen landen sofort in den Entwürfen, veröffentlicht wird nichts.",
+        "assets": "Läuft im Hintergrund in einem Thread. Änderungen warten dort, bis du sie übernimmst.",
+        "data_entries": "Läuft im Hintergrund in einem Thread. Änderungen warten dort, bis du sie übernimmst."
+      },
+      "estimateUnknown": "Für dieses Modell nicht bekannt",
+      "estimateTiny": "Unter {amount}",
+      "plan": "Plan prüfen",
+      "planWhy": {
+        "entries": "Mehr als {count} Einträge passen, mehr als ein Lauf schafft. Darum siehst du zuerst Plan und Budget.",
+        "cost": "Geschätzt über {cap}, dem Maximum eines Laufs. Darum siehst du zuerst Plan und Budget."
+      }
+    },
+    "aiOperations": {
+      "entry": "KI-Vorgang",
+      "kinds": {
+        "translation": {
+          "title": "Übersetzung",
+          "description": "Fehlende Sprachfassungen, leere Felder und veraltete Übersetzungen ergänzen. Menschliche Änderungen bleiben.",
+          "placeholder": "Die Produktseiten ins Französische und Italienische übersetzen, Markennamen auf Englisch lassen."
+        },
+        "assets": {
+          "title": "Asset-Metadaten",
+          "description": "Bilder ansehen und Metadaten und Tags ergänzen. Neue Ordner oder Tags nur, wenn du sie freigibst.",
+          "placeholder": "Alt-Texte und Titel schreiben, Produkte nach Kategorie taggen."
+        },
+        "general": {
+          "title": "Beliebige Aufgabe",
+          "description": "Einen Skill oder eigene Anweisungen auf jeden Eintrag im Umfang anwenden.",
+          "placeholder": "Jede SEO-Beschreibung auf 155 Zeichen kürzen."
+        }
+      },
+      "start": {
+        "title": "KI-Vorgang starten",
+        "description": "Zählt die Einträge und öffnet einen Thread für den Plan. Ein KI-Entwurf verbraucht dein KI-Kontingent. Die Verarbeitung beginnt nach deiner Freigabe von Plan und Budget.",
+        "scope": "Umfang",
+        "selection": "{count} ausgewählter Eintrag | {count} ausgewählte Einträge",
+        "recursive": {
+          "content": "Alles darunter einschließen",
+          "asset": "Unterordner einschließen",
+          "data_entry": "Alles darunter einschließen"
+        },
+        "kind": "Was der Vorgang tut",
+        "outcome": "Was soll am Ende erreicht sein?",
+        "confirm": "Zählen und vorbereiten",
+        "tooLarge": "Dieser Umfang umfasst {count} Einträge. Ein Vorgang nimmt höchstens {limit}, also grenze ihn ein oder teile ihn auf.",
+        "empty": "In diesem Umfang lässt sich nichts bearbeiten."
+      },
+      "bulk": {
+        "truncated": "Mehr als {count} Einträge passen, mehr als ein Lauf schafft."
+      },
+      "counts": {
+        "total": "Einträge",
+        "supported": "Zu bearbeiten",
+        "estimate": "Schätzung",
+        "spent": "Ausgegeben",
+        "unsupported": "{count} Eintrag lässt sich nicht bearbeiten und wird übersprungen. | {count} Einträge lassen sich nicht bearbeiten und werden übersprungen.",
+        "groups": "Einträge nach Typ",
+        "moreGroups": "und {count} weiterer Typ | und {count} weitere Typen"
+      },
+      "scope": {
+        "folder": {
+          "recursive": "Der Ordner und alle Ordner darunter. Die Freigabe legt die Einträge fest; spätere Zugänge werden getrennt gemeldet.",
+          "flat": "Nur dieser Ordner. Die Freigabe legt die Einträge fest; spätere Zugänge werden getrennt gemeldet."
+        },
+        "selection": {
+          "recursive": "Die Auswahl und alles darunter. Die Freigabe legt die Einträge fest; spätere Zugänge werden getrennt gemeldet.",
+          "flat": "Nur die Auswahl. Die Freigabe legt die Einträge fest; spätere Zugänge werden getrennt gemeldet."
+        }
+      },
+      "draft": {
+        "noPlan": "Vor der Verarbeitung gibst du einen Plan frei. Die KI kann ihn anhand einer Stichprobe entwerfen, oder du schreibst ihn selbst.",
+        "draftWithAi": "Plan entwerfen",
+        "writeMyself": "Selbst schreiben",
+        "redraft": "Neu entwerfen",
+        "planning": "Der Plan entsteht anhand einer Stichprobe. Noch ändert sich nichts.",
+        "planAsks": "Die KI hat Fragen zum Plan. Beantworte sie unten.",
+        "planFailed": "Der Planentwurf ist fehlgeschlagen. Versuch es erneut oder schreib ihn selbst.",
+        "stale": "Der Plan hat sich geändert, seit du mit dem Bearbeiten begonnen hast.",
+        "loadPlan": "Neuen Plan anzeigen",
+        "save": "Plan speichern",
+        "discard": "Änderungen verwerfen",
+        "saveFirst": "Vor der Freigabe speichern.",
+        "approval": "Freigabe",
+        "approvalExplain": "Mit der Freigabe wird dieser Plan eingefroren und die Arbeit beginnt in kleinen Stapeln. Die Schätzung liegt bei {estimate}. Ist das Budget aufgebraucht, pausiert der Vorgang und wartet auf dich; von selbst wird nichts ausgegeben.",
+        "budget": "Budget in USD",
+        "budgetRange": "Zwischen 0,01 und 1.000",
+        "writesNotice": "Mit der Freigabe beginnt die Arbeit. Inhalte werden sofort in Entwürfe geschrieben und nichts wird veröffentlicht. Asset- und Datenänderungen warten auf dich.",
+        "approve": "Freigeben und {count} Einträge bearbeiten",
+        "scopeChanged": "Die Einträge haben sich seit der Zählung geändert: {added} hinzugekommen, {removed} entfernt. Die Freigabe legt die Einträge fest. Zähle sie neu, prüfe Zahlen und Plan und gib dann erneut frei. Es wurde nichts freigegeben und keine Stapelverarbeitung gestartet.",
+        "recount": "Umfang neu zählen",
+        "recounted": "Neu gezählt: {count} Einträge, vorher {before}. Prüfe Zahlen, Schätzung und Plan und gib dann erneut frei.",
+        "scopeTooLarge": "Der Umfang umfasst jetzt {count} Einträge, mehr als die {limit}, die eine Operation übernimmt. Es wurde nichts freigegeben. Brich diese Operation ab und starte eine mit kleinerem Umfang.",
+        "scopeEmpty": "Im Umfang sind keine Einträge mehr. Es wurde nichts freigegeben. Brich diese Operation ab.",
+        "cancel": "Operation abbrechen"
+      },
+      "plan": {
+        "summary": "Was die KI tun wird",
+        "locales": "Übersetzen nach",
+        "noLocales": "Dieser Space hat neben der Standardsprache keine Sprachen.",
+        "include": "Zu erledigen",
+        "includeKinds": {
+          "missing": {
+            "title": "Fehlende Übersetzungen",
+            "description": "Die Sprachfassung anlegen, wo eine Sprache noch keine hat."
+          },
+          "empty": {
+            "title": "Leere Felder",
+            "description": "Übersetzbare Felder füllen, die noch leer sind."
+          },
+          "stale": {
+            "title": "Veraltete Übersetzungen",
+            "description": "Felder aktualisieren, deren Quelle sich seit der Übersetzung geändert hat."
+          },
+          "same_as_source": {
+            "title": "Kopierter Quelltext",
+            "description": "Felder übersetzen, die noch den unübersetzten Quelltext enthalten."
+          }
+        },
+        "translationKeeps": "Nur betroffene Felder ändern sich. Andere Änderungen, Markup, Platzhalter und nicht übersetzte Felder bleiben, wie sie sind. Glossar und Übersetzungsspeicher gelten.",
+        "permissions": "Erlaubte Änderungen",
+        "permissionsDefault": "Standardmäßig füllt die KI nur leere Metadaten und fügt Tags hinzu.",
+        "permissionKinds": {
+          "overwrite": {
+            "title": "Vorhandene Werte ersetzen",
+            "description": "Metadaten neu schreiben, die schon einen Wert haben, etwa einen schwachen Alt-Text."
+          },
+          "remove_tags": {
+            "title": "Tags entfernen",
+            "description": "Tags abnehmen, die nicht zum Asset passen."
+          },
+          "move": {
+            "title": "Assets verschieben",
+            "description": "Assets in andere Ordner verschieben, auch in die geplanten. Eine Verschiebung und ihre Metadaten werden zusammen übernommen."
+          }
+        },
+        "rules": "Regeln",
+        "rule": "Regel {number}",
+        "noRules": "Keine zusätzlichen Regeln.",
+        "addRule": "Regel hinzufügen",
+        "removeRule": "Regel entfernen",
+        "options": "Einstellungen",
+        "overwriteFields": "Werte, die die KI ersetzen darf",
+        "overwriteFieldsHint": "Wähle die Felder, deren vorhandene Werte die KI ersetzen darf.",
+        "noFields": "Die Ordner in diesem Umfang haben keine Metadatenfelder.",
+        "languages": "Sprachen, in denen die KI schreibt",
+        "languagesHint": "Keine gewählt: Die KI schreibt alle Sprachen.",
+        "allLanguages": "Alle Sprachen",
+        "defaultLanguage": "{name} (Standard)"
+      },
+      "structure": {
+        "title": "Neue Ordner und Tags",
+        "explain": "Du gibst sie mit dem Plan frei. Die Stapel legen nichts anderes an, also entferne, was du nicht willst.",
+        "empty": "Keine neuen Ordner oder Tags. Die KI nutzt die vorhandenen.",
+        "needsMove": "Neue Ordner brauchen die Erlaubnis, Assets zu verschieben.",
+        "folders": "Geplante Ordner",
+        "tags": "Geplante Tags",
+        "folderName": "Ordnername",
+        "tagName": "Tag-Name",
+        "removeFolder": "Ordner {name} entfernen",
+        "removeTag": "Tag {name} entfernen",
+        "under": "In {path}"
+      },
+      "outcome": {
+        "draft": "Wartet auf einen freigegebenen Plan",
+        "running": "Läuft, Stapel {batch}",
+        "pausing": "Pausiert nach dem laufenden Stapel",
+        "paused": {
+          "budget": "Pausiert: Das Budget ist aufgebraucht",
+          "user": "Pausiert",
+          "access_revoked": "Pausiert: Du hast den Zugriff auf einige Einträge verloren",
+          "batch_failed": "Pausiert: Ein Stapel ist fehlgeschlagen",
+          "batch_cancelled": "Pausiert: Ein Stapel wurde abgebrochen"
+        },
+        "completed": "Fertig",
+        "completed_with_exceptions": "Fertig, {skipped} übersprungen und {failed} fehlgeschlagen",
+        "cancelled": "Abgebrochen",
+        "cancelled_partial": "Abgebrochen. {count} Eintrag wurde nicht bearbeitet. | Abgebrochen. {count} Einträge wurden nicht bearbeitet."
+      },
+      "progress": {
+        "label": "Bearbeitete Einträge",
+        "settled": "{done} von {total} Einträgen bearbeitet",
+        "inspect": "Einträge anzeigen: {status}",
+        "reasons": "Warum Einträge übersprungen wurden oder fehlschlugen"
+      },
+      "status": {
+        "pending": "Wartend",
+        "running": "In Arbeit",
+        "written": "Geschrieben",
+        "proposed": "Vorgeschlagen",
+        "conflict": "Konflikt",
+        "unchanged": "Unverändert",
+        "skipped": "Übersprungen",
+        "failed": "Fehlgeschlagen"
+      },
+      "reasons": {
+        "unsupported_file_type": "Dateityp lässt sich nicht bearbeiten",
+        "deleted": "Seit dem Einfrieren gelöscht",
+        "agent": "Die KI hat ihn so gelassen",
+        "not_processed": "Nach zwei Versuchen nicht bearbeitet",
+        "batch_failed": "Sein Stapel ist fehlgeschlagen"
+      },
+      "budget": {
+        "title": "Budget",
+        "spent": "{spent} von {max}",
+        "pausedExplain": "Setze eine neue Summe, um weiterzumachen. Die bisherige Arbeit bleibt erhalten.",
+        "newTotal": "Neue Summe in USD",
+        "extend": "Budget erhöhen",
+        "extendAndResume": "Erhöhen und fortsetzen"
+      },
+      "steer": {
+        "pause": "Pausieren",
+        "resume": "Fortsetzen",
+        "cancel": "Vorgang abbrechen",
+        "cancelTitle": "Diesen Vorgang abbrechen?",
+        "cancelConfirm": "{count} Eintrag wird nicht bearbeitet. Was geschrieben ist, bleibt im Entwurf, und Vorschläge bleiben offen. | {count} Einträge werden nicht bearbeitet. Was geschrieben ist, bleibt im Entwurf, und Vorschläge bleiben offen."
+      },
+      "sections": {
+        "plan": "Freigegebener Plan",
+        "ledger": "Alle {count} Einträge"
+      },
+      "ledger": {
+        "title": "Einträge",
+        "status": "Status",
+        "all": "Alle ({count})",
+        "empty": "Hier gibt es keine Einträge.",
+        "versionChanged": "Seit dem Einfrieren bearbeitet"
+      },
+      "arrivals": {
+        "check": "Nach neuen Einträgen suchen",
+        "found": "{count} Eintrag ist seit dem Einfrieren hinzugekommen. Er gehört nicht zu diesem Vorgang. | {count} Einträge sind seit dem Einfrieren hinzugekommen. Sie gehören nicht zu diesem Vorgang.",
+        "none": "Seit dem Einfrieren keine neuen Einträge."
+      },
+      "review": {
+        "title": "Was sich geändert hat",
+        "arriving": "Änderungen erscheinen hier, sobald Stapel fertig sind."
+      },
+      "pager": {
+        "label": "Seiten",
+        "previous": "Vorherige Seite",
+        "next": "Nächste Seite",
+        "position": "{page} von {last}"
+      },
+      "errors": {
+        "start": "Der Vorgang konnte nicht gestartet werden: {error}",
+        "plan": "Der Plan konnte nicht entworfen werden: {error}",
+        "save": "Der Plan konnte nicht gespeichert werden: {error}",
+        "approve": "Der Plan konnte nicht freigegeben werden: {error}",
+        "planChanged": "Der Plan hat sich geändert, seit du ihn angesehen hast. Prüfe ihn vor der Freigabe erneut.",
+        "concurrency": "In diesem Space laufen bereits so viele KI-Aufgaben wie erlaubt. Versuch es erneut, wenn eine fertig ist.",
+        "budgetSpent": "Das Budget ist aufgebraucht. Erhöhe es, um fortzufahren.",
+        "budget": "Das Budget konnte nicht erhöht werden: {error}",
+        "pause": "Konnte nicht pausieren: {error}",
+        "resume": "Konnte nicht fortsetzen: {error}",
+        "cancel": "Konnte nicht abbrechen: {error}",
+        "recount": "Der Umfang konnte nicht neu gezählt werden: {error}"
+      }
     },
     "aiThreads": {
       "title": "KI-Threads",
@@ -5211,7 +5481,7 @@
       "sharedWithSpace": "Mit dem Space geteilt",
       "empty": "Noch keine Threads. Frag die KI etwas, um einen zu starten.",
       "noMatches": "Kein Thread passt.",
-      "toReview": "{count} Eintrag zu prüfen | {count} Einträge zu prüfen",
+      "toReview": "{count} Eintrag braucht dich | {count} Einträge brauchen dich",
       "status": {
         "needs_input": "Antwort",
         "needs_review": "Prüfen",
@@ -5261,10 +5531,15 @@
       "answerFailed": "Die Antworten konnten nicht gesendet werden: {error}",
       "cancelFailed": "Die Aufgabe konnte nicht abgebrochen werden: {error}",
       "openFields": "{count} offenes Feld | {count} offene Felder",
+      "inDraft": "Im Entwurf",
+      "history": "Verlauf",
       "expandEntry": "Änderungen an {name} anzeigen",
       "collapseEntry": "Änderungen an {name} ausblenden",
       "summary": {
-        "counts": "{entries} Einträge, {open} offen, {accepted} übernommen, {rejected} abgelehnt",
+        "changed": "{count} Eintrag geändert | {count} Einträge geändert",
+        "conflicts": "{count} Konflikt | {count} Konflikte",
+        "flagged": "{count} markiert | {count} markiert",
+        "notPublished": "Es wird nichts veröffentlicht.",
         "findings": "{count} Glossar-Warnung | {count} Glossar-Warnungen"
       },
       "suggestions": {
@@ -5353,11 +5628,55 @@
       "thisPage": "Diese Seite",
       "other": "Weitere Threads",
       "disabled": "KI-Features sind in diesem Space ausgeschaltet.",
-      "enableInSettings": "In den KI-Einstellungen einschalten"
+      "enableInSettings": "In den KI-Einstellungen einschalten",
+      "review": {
+        "counts": "{open} Vorschlag wartet auf dich | {open} Vorschläge warten auf dich",
+        "structure": "Neue Ordner und Tags",
+        "created": "Neue Einträge ({target})",
+        "selectGroup": "{name} beim Übernehmen der Gruppen einschließen",
+        "groupMeta": "{open} von {total} offen",
+        "individual": "{count} zu prüfen | {count} zu prüfen",
+        "examples": "Beispiele",
+        "individualTitle": "Bleibt deiner Entscheidung überlassen",
+        "loading": "Änderungen werden geladen…",
+        "showMore": "Mehr anzeigen",
+        "showMoreEntries": "{count} weitere anzeigen",
+        "showAll": "Die Änderung anzeigen | Alle {count} Änderungen anzeigen",
+        "allTitle": "Alle Änderungen ({count})",
+        "acceptSelected": "{count} Änderung übernehmen | {count} Änderungen übernehmen",
+        "selectToAccept": "Gruppen zum Übernehmen auswählen",
+        "rejectSelected": "Auswahl ablehnen",
+        "individualTotal": "{count} Änderung wartet auf dich | {count} Änderungen warten auf dich",
+        "acceptedWithLeft": "{accepted} übernommen. {left} ließen sich nicht übernehmen und warten auf dich.",
+        "acceptQueued": "{count} Änderung wird im Hintergrund übernommen. Die Gruppe aktualisiert sich, sobald das erledigt ist. | {count} Änderungen werden im Hintergrund übernommen. Die Gruppen aktualisieren sich, sobald das erledigt ist.",
+        "rejectQueued": "{count} Änderung wird im Hintergrund abgelehnt. Die Gruppe aktualisiert sich, sobald das erledigt ist. | {count} Änderungen werden im Hintergrund abgelehnt. Die Gruppen aktualisieren sich, sobald das erledigt ist.",
+        "queued": {
+          "accept": "Wird im Hintergrund übernommen, {open} offen",
+          "reject": "Wird im Hintergrund abgelehnt, {open} offen"
+        }
+      }
     },
     "metaBlock": {
       "generate": "Mit KI erstellen",
       "generating": "Wird erstellt…"
+    },
+    "contentFlags": {
+      "conflicts": "{count} Konflikt | {count} Konflikte",
+      "flagged": "{count} markierte Formulierung | {count} markierte Formulierungen",
+      "title": "Die KI hat etwas zum Prüfen hinterlassen",
+      "flaggedRow": "Markiert: \"{wording}\" in {field}",
+      "flaggedRowNoField": "Markiert: \"{wording}\"",
+      "replacement": "Stattdessen \"{replacement}\" verwenden.",
+      "conflictRow": "Die Änderung einer Person in {field} wartet auf eine Entscheidung",
+      "conflictRowNoField": "Die Änderung einer Person wartet auf eine Entscheidung",
+      "open": "Öffnen",
+      "more": "und {count} weitere",
+      "proceed": "Du kannst trotzdem veröffentlichen.",
+      "countSentence": "{count} dieser Einträge hat eine markierte Formulierung oder einen Konflikt. | {count} dieser Einträge haben markierte Formulierungen oder Konflikte.",
+      "confirmTitle": "Mit Markierungen veröffentlichen?",
+      "releaseMessage": "Dieses Release enthält {count} Eintrag mit markierter Formulierung oder Konflikt. | Dieses Release enthält {count} Einträge mit markierten Formulierungen oder Konflikten.",
+      "confirmCommit": "Trotzdem committen",
+      "confirmPublish": "Trotzdem veröffentlichen"
     }
   },
   "alertDialog": {
@@ -5844,6 +6163,7 @@
       "classifyQueued": "{queued} Bild zur Klassifizierung eingereiht | {queued} Bilder zur Klassifizierung eingereiht",
       "classifyProgress": "{updated} aktualisiert, {pending} ausstehend, {skipped} übersprungen, {failed} fehlgeschlagen",
       "classifyProgressUnavailable": "Klassifizierungsfortschritt konnte nicht geladen werden",
+      "classifyOpen": "Bei {open} Bild sind Felder offen geblieben, zum Wiederholen erneut klassifizieren | Bei {open} Bildern sind Felder offen geblieben, zum Wiederholen erneut klassifizieren",
       "classifyNothing": "Nichts zu klassifizieren: alle passenden Felder haben bereits einen Wert.",
       "classifyFailed": "Klassifizierung konnte nicht gestartet werden"
     },

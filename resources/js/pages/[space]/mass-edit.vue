@@ -7,6 +7,7 @@ import ImportContentTranslationsDialog from '~/components/content/ImportContentT
 import type { FilterableField } from '~/components/SearchFilter.vue'
 import SearchFilter from '~/components/SearchFilter.vue'
 import AiConfigMenuItems from '~/components/ai/AiConfigMenuItems.vue'
+import AiRunFindings from '~/components/ai/AiRunFindings.vue'
 import { Badge } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
 import SplitButton from '~/components/ui/button/SplitButton.vue'
@@ -32,6 +33,7 @@ import TableEmptyRow from '~/components/ui/TableEmptyRow.vue'
 import TablePaginationFooter from '~/components/ui/TablePaginationFooter.vue'
 import { Textarea } from '~/components/ui/textarea'
 import { useMassEdit } from '~/composables/useMassEdit'
+import type { AiGlossaryFinding } from '~/lib/aiRun'
 import type {
   MassEditDocument,
   MassEditRowsParams,
@@ -377,12 +379,28 @@ const clearSavedEdits = (result: MassEditSaveResult) => {
   edits.value = unsaved
 }
 
+const { freshTotals: freshFlagTotals } = useContentFlags(spaceId)
+
 const handleSave = async (mode: 'draft' | 'publish' = 'draft') => {
   if (dirtyCount.value === 0) return
 
+  const documents = buildDocumentsPayload()
+  if (mode === 'publish') {
+    const flagged = (await freshFlagTotals(documents.map((document) => document.content_id))).entries
+    if (
+      flagged > 0 &&
+      !(await alert.confirm(t('components.contentFlags.countSentence', { count: flagged }, flagged) as string, {
+        title: t('components.contentFlags.confirmTitle') as string,
+        confirmLabel: t('components.contentFlags.confirmPublish') as string,
+      }))
+    ) {
+      return
+    }
+  }
+
   try {
     const result = await saveMutation.mutateAsync({
-      documents: buildDocumentsPayload(),
+      documents,
       mode,
       create_missing: true,
     })
@@ -399,6 +417,8 @@ const defaultAiConfig = computed(() => aiConfigs.value?.find((config) => config.
 const translationRun = useAiRun(spaceId)
 const isTranslating = translationRun.isActive
 const translationProgress = ref<{ language: string; applied: number; total: number } | null>(null)
+const translationFindings = ref<AiGlossaryFinding[]>([])
+const findingKey = ({ type, term, found }: AiGlossaryFinding) => `${type}:${term}:${found ?? ''}`
 
 const AI_KEY_SEPARATOR = '|'
 
@@ -459,6 +479,7 @@ const translateWithAI = async (configId: string | null = defaultAiConfig.value?.
   )
 
   let translatedTotal = 0
+  translationFindings.value = []
 
   try {
     // Translate the whole selection, not just the visible page — edits are kept across
@@ -529,6 +550,12 @@ const translateWithAI = async (configId: string | null = defaultAiConfig.value?.
             },
           }
         )
+
+        const seen = new Set(translationFindings.value.map(findingKey))
+        translationFindings.value = [
+          ...translationFindings.value,
+          ...(outcome.result?.glossary_findings ?? []).filter((finding) => !seen.has(findingKey(finding))),
+        ]
 
         if (outcome.status === 'completed' && outcome.result?.data) {
           applyEntries(
@@ -646,8 +673,8 @@ const exportFilters = computed(() => ({
           </div>
         </template>
       </ContentHeader>
-
       <div class="space-y-2 pb-8">
+        <AiRunFindings :findings="translationFindings" />
         <div class="flex flex-wrap items-center gap-2">
           <ComboboxField
             v-model="selectedFieldKeys"

@@ -8,7 +8,10 @@ import AiQuestionnaireForm from '~/components/ai/AiQuestionnaireForm.vue'
 import Icon from '~/components/Icon.vue'
 import { Button } from '~/components/ui/button'
 import { Textarea } from '~/components/ui/textarea'
+import { glossaryFindingText } from '~/lib/aiRun'
+import { normalizeLanguageIso } from '~/lib/content-i18n'
 import { aiSkillLabel } from '~/lib/aiSkills'
+import type { ContentResource } from '~/types/contents'
 
 const props = defineProps<{
   editor: Editor
@@ -19,6 +22,7 @@ const { t } = useI18n()
 const { showAiError } = useAiErrorToast()
 const { data: skills } = useAiSurfaceSkills(() => props.spaceId, 'selection')
 const run = useAiRun(() => props.spaceId)
+const content = inject<Ref<Pick<ContentResource, 'language_iso'> | null>>('content', ref(null))
 const { acceptMutation, rejectMutation } = useAiThreads(() => props.spaceId)
 
 interface Proposal {
@@ -49,11 +53,13 @@ const runSkill = async (skill: AiResolvedSkill) => {
   const doc = props.editor.state.doc
   const before = doc.textBetween(from, to, '\n')
   proposal.value = { skill, from, to, before }
+  const language = normalizeLanguageIso(content.value?.language_iso)
 
   const outcome = await run.start({
     surface: 'selection',
     skill: skill.name,
     context: {
+      ...(language ? { source_locale: language, target_locale: language } : {}),
       selection: before,
       surrounding: doc.textBetween(
         Math.max(0, from - SURROUNDING_CHARS),
@@ -156,7 +162,7 @@ const discard = () => {
             v-for="finding in run.findings.value"
             :key="`${finding.type}:${finding.term}:${finding.found ?? ''}`"
           >
-            {{ $t(`components.aiActions.findings.${finding.type}`, { term: finding.term, expected: finding.expected ?? '', found: finding.found ?? '' }) }}
+            {{ glossaryFindingText(finding, $t) }}
           </li>
         </ul>
       </template>

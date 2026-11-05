@@ -1,0 +1,20 @@
+{
+  "provenance": {
+    "title": "Knowledge used",
+    "writtenUnder": "Written under knowledge snapshot {id} | Written under knowledge snapshot {id}, with {count} term | Written under knowledge snapshot {id}, with {count} terms"
+  },
+  "overrides": {
+    "intro": "Correct the text, or say why each of these should stay.",
+    "placeholder": "Why this wording stays",
+    "missing": "Write a reason, or correct the text.",
+    "ofProposal": "Found in the proposed text. Your edit gets its own check.",
+    "groupHeld": "An edited change needs a correction or a reason first. Nothing else was accepted.",
+    "keptLabel": "Findings kept on purpose",
+    "kept": "Kept: {finding} Reason:"
+  },
+  "evidence": {
+    "image": "Based on the image, which reached the model.",
+    "metadata": "Based on existing text: {sources}",
+    "instruction": "Based on the request: \"{quote}\""
+  }
+}

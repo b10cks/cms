@@ -3,6 +3,7 @@ import type {
   AiGlossaryFinding,
   AiQuestionnaire,
   AiQuestionnaireAnswers,
+  AiProviderRetryNotice,
   AiRunEvent,
   AiRunRecord,
   AiProposal,
@@ -10,7 +11,7 @@ import type {
   AiSource,
   StartAiRunRequest,
 } from '~/lib/aiRun'
-import { aiRunUrl, readAiRunEvents, toAiRunEvent } from '~/lib/aiRun'
+import { aiRunUrl, readAiRunEvents, retryNoticeOfEvent, toAiRunEvent } from '~/lib/aiRun'
 import { ensureCsrfToken, getXsrfHeaders } from '~/lib/csrf'
 import { parseStreamErrorResponse } from '~/lib/sse'
 
@@ -69,6 +70,8 @@ export function useAiRun(spaceId: MaybeRefOrGetter<string>) {
   const sources = shallowRef<AiSource[]>([])
   const proposals = shallowRef<AiProposal[]>([])
   const error = shallowRef<AiRunError | null>(null)
+  /** A scheduled provider retry; once the run moves on, only its unconfirmed calls stay */
+  const providerRetry = shallowRef<AiProviderRetryNotice | null>(null)
 
   let lastSeq = 0
   /** The space the current run started in; its requests go there. */
@@ -96,6 +99,13 @@ export function useAiRun(spaceId: MaybeRefOrGetter<string>) {
     if (event.run_id) runId.value = event.run_id
 
     options.onEvent?.(event)
+
+    if (event.type === 'provider_retry_scheduled') {
+      providerRetry.value = retryNoticeOfEvent(event)
+    } else if (providerRetry.value?.retry_at && event.type !== 'usage') {
+      const { unconfirmed_calls: unconfirmed } = providerRetry.value
+      providerRetry.value = unconfirmed > 0 ? { ...providerRetry.value, retry_at: null } : null
+    }
 
     switch (event.type) {
       case 'run_started':
@@ -258,6 +268,7 @@ export function useAiRun(spaceId: MaybeRefOrGetter<string>) {
     sources.value = []
     proposals.value = []
     error.value = null
+    providerRetry.value = null
     lastSeq = 0
   }
 
@@ -334,6 +345,7 @@ export function useAiRun(spaceId: MaybeRefOrGetter<string>) {
     sources,
     proposals,
     error,
+    providerRetry: readonly(providerRetry),
     start,
     answer,
     cancel,

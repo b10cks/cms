@@ -352,11 +352,13 @@ export function useSpaceBroadcasts(spaceId: MaybeRef<string | null>) {
         invalidate(queryKeys.dataEntries(id, payload.id).all(), queryKeys.dataSources(id).lists())
       })
 
-      // AI threads: the thread ID only; lists and the thread refetch.
+      // AI threads: the thread ID only; lists, the thread and its operations refetch.
       echo.private(`spaces.${id}.ai`).listen('.ai_thread:changed', (payload: { thread_id?: string | null }) => {
         invalidate(
           queryKeys.ai(id).threadLists(),
-          ...(payload?.thread_id ? [queryKeys.ai(id).thread(payload.thread_id)] : [])
+          ...(payload?.thread_id
+            ? [queryKeys.ai(id).thread(payload.thread_id), queryKeys.ai(id).operationList(payload.thread_id)]
+            : [])
         )
       })
 
