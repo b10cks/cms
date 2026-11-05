@@ -26,7 +26,7 @@ class XliffAssetDataDriver extends BaseAssetDataDriver
             foreach ($languages as $language) {
                 $langCode = $language['code'];
 
-                echo "  <file source-language=\"en\" target-language=\"{$langCode}\" datatype=\"plaintext\">".PHP_EOL;
+                echo '  <file source-language="en" target-language="'.$this->escape($langCode).'" datatype="plaintext">'.PHP_EOL;
                 echo '    <body>'.PHP_EOL;
 
                 foreach ($assets as $asset) {
@@ -40,10 +40,10 @@ class XliffAssetDataDriver extends BaseAssetDataDriver
                         $source = $data['fields']['_default'][$key] ?? '';
                         $target = $data['fields'][$langCode][$key] ?? '';
 
-                        echo "      <trans-unit id=\"{$transUnitId}\">".PHP_EOL;
-                        echo '        <source>'.htmlspecialchars($source, ENT_XML1, 'UTF-8').'</source>'.PHP_EOL;
-                        echo '        <target>'.htmlspecialchars($target, ENT_XML1, 'UTF-8').'</target>'.PHP_EOL;
-                        echo "        <note>Asset: {$asset->filename}, Field: {$key}</note>".PHP_EOL;
+                        echo '      <trans-unit id="'.$this->escape($transUnitId).'">'.PHP_EOL;
+                        echo '        <source>'.$this->escape($source).'</source>'.PHP_EOL;
+                        echo '        <target>'.$this->escape($target).'</target>'.PHP_EOL;
+                        echo '        <note>'.$this->escape("Asset: {$asset->filename}, Field: {$key}").'</note>'.PHP_EOL;
                         echo '      </trans-unit>'.PHP_EOL;
                     }
                 }
@@ -149,5 +149,10 @@ class XliffAssetDataDriver extends BaseAssetDataDriver
     public function getFormat(): string
     {
         return ImportExportFormat::XLIFF->value;
+    }
+
+    private function escape(string $value): string
+    {
+        return htmlspecialchars($value, ENT_QUOTES | ENT_XML1, 'UTF-8');
     }
 }

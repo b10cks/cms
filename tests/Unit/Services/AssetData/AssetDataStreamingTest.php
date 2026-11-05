@@ -8,6 +8,7 @@ use App\Services\Asset\AssetMetadataFieldResolver;
 use App\Services\AssetData\DataMapper;
 use App\Services\AssetData\Drivers\CsvAssetDataDriver;
 use App\Services\AssetData\Drivers\JsonAssetDataDriver;
+use App\Services\AssetData\Drivers\XliffAssetDataDriver;
 use App\Services\AssetData\Drivers\YamlAssetDataDriver;
 use Illuminate\Http\UploadedFile;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -75,6 +76,30 @@ class AssetDataStreamingTest extends TestCase
 
         $this->assertSame('space-1', $document['space_id']);
         $this->assertSame('asset-1', $document['assets'][0]['id']);
+    }
+
+    #[Test]
+    public function the_xliff_export_escapes_names_it_echoes(): void
+    {
+        $space = new Space;
+        $space->setRawAttributes(['id' => 'space-1']);
+
+        $asset = new Asset;
+        $asset->setRawAttributes(['id' => 'asset-1', 'filename' => 'Tom & "Jerry".jpg', 'data' => null]);
+
+        $resolver = $this->createMock(AssetMetadataFieldResolver::class);
+        $resolver->method('getEffectiveFieldsForAsset')->willReturn([['key' => 'alt']]);
+
+        $driver = new XliffAssetDataDriver($this->createMock(DataMapper::class), $resolver);
+        $response = $driver->export($space, [$asset], [], [['code' => 'de']]);
+
+        ob_start();
+        $response->sendContent();
+        $content = ob_get_clean();
+
+        $dom = new \DOMDocument;
+        $this->assertTrue(@$dom->loadXML($content));
+        $this->assertSame('Asset: Tom & "Jerry".jpg, Field: alt', $dom->getElementsByTagName('note')->item(0)->textContent);
     }
 
     public static function streamedFormats(): iterable
