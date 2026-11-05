@@ -6,17 +6,28 @@ import GoogleIcon from '~/assets/icons/google.svg?component'
 import Icon from '~/components/Icon.vue'
 import { Alert } from '~/components/ui/alert'
 import { Button } from '~/components/ui/button'
+import { Dialog, DialogContent, DialogFooter, DialogHeaderCombined } from '~/components/ui/dialog'
+import { InputField } from '~/components/ui/form'
 import { SettingsSection } from '~/components/ui/settings-section'
+import type { StepUpCredential } from '~/api/resources/personal-access-tokens'
 import { useAlertDialog } from '~/composables/useAlertDialog'
 
 const route = useRoute()
 const router = useRouter()
 const { t } = useI18n()
 const { alert } = useAlertDialog()
-const { useSocialLinksQuery, useUnlinkSocialProviderMutation } = useUser()
+const { useSocialLinksQuery, useStartSocialLinkMutation, useUnlinkSocialProviderMutation } =
+  useUser()
 
 const { data: providers, isLoading } = useSocialLinksQuery()
+const { mutateAsync: startLink, isPending: isStarting } = useStartSocialLinkMutation()
 const { mutate: unlinkProvider, isPending: isUnlinking } = useUnlinkSocialProviderMutation()
+
+const linkingProvider = ref<string | null>(null)
+const showStepUpDialog = ref(false)
+const stepUpFactor = ref<StepUpCredential['factor']>('password')
+const stepUpValue = ref('')
+const stepUpError = ref<string | null>(null)
 
 const providerMeta: Record<string, { icon: Component; labelKey: string }> = {
   google: { icon: GoogleIcon, labelKey: 'labels.login.social.googleProvider' },
@@ -28,11 +39,37 @@ const providerLabel = (provider: string) => {
   return labelKey ? (t(labelKey) as string) : provider
 }
 
-const linkUrl = (url: string) => {
-  const params = new URLSearchParams()
-  params.set('return', route.fullPath.split('?')[0])
+/**
+ * A linked provider is a login that outlives a password change, so the API
+ * asks for the password or a TOTP code first (423) and then hands back a
+ * short-lived signed URL that starts the OAuth flow.
+ */
+const submitLink = async (provider: string, credential?: StepUpCredential) => {
+  linkingProvider.value = provider
 
-  return `${url}?${params.toString()}`
+  try {
+    const url = await startLink({
+      provider,
+      returnPath: route.fullPath.split('?')[0],
+      credential,
+    })
+    window.location.assign(url)
+  } catch (error: any) {
+    if (error?.status === 423) {
+      stepUpFactor.value = error?.data?.requires_2fa ? 'totp' : 'password'
+      stepUpValue.value = ''
+      stepUpError.value = null
+      showStepUpDialog.value = true
+    } else if (error?.status === 403 && showStepUpDialog.value) {
+      stepUpError.value = error?.message ?? null
+    }
+  }
+}
+
+const handleConfirmStepUp = async () => {
+  if (!linkingProvider.value || !stepUpValue.value || isStarting.value) return
+
+  await submitLink(linkingProvider.value, { factor: stepUpFactor.value, value: stepUpValue.value })
 }
 
 const handleUnlink = async (provider: string) => {
@@ -124,9 +161,9 @@ onMounted(() => {
         </Button>
         <Button
           v-else
-          as="a"
           variant="primary"
-          :href="linkUrl(provider.link_url)"
+          :loading="isStarting && linkingProvider === provider.provider"
+          @click="submitLink(provider.provider)"
         >
           <Icon name="lucide:link" />
           {{ $t('labels.account.social.link') }}
@@ -134,4 +171,54 @@ onMounted(() => {
       </div>
     </div>
   </SettingsSection>
+
+  <Dialog v-model:open="showStepUpDialog">
+    <DialogContent class="sm:max-w-md">
+      <DialogHeaderCombined
+        :title="$t('labels.account.apiTokens.stepUpTitle')"
+        :description="
+          stepUpFactor === 'totp'
+            ? $t('labels.account.social.stepUpTotpDescription')
+            : $t('labels.account.social.stepUpPasswordDescription')
+        "
+      />
+
+      <InputField
+        v-if="stepUpFactor === 'totp'"
+        v-model="stepUpValue"
+        name="social-step-up-code"
+        autocomplete="one-time-code"
+        inputmode="numeric"
+        :label="$t('labels.account.apiTokens.stepUpTotpLabel')"
+        :error="stepUpError ?? undefined"
+        @keyup.enter="handleConfirmStepUp"
+      />
+      <InputField
+        v-else
+        v-model="stepUpValue"
+        name="social-step-up-password"
+        type="password"
+        autocomplete="current-password"
+        :label="$t('labels.account.apiTokens.stepUpPasswordLabel')"
+        :error="stepUpError ?? undefined"
+        @keyup.enter="handleConfirmStepUp"
+      />
+
+      <DialogFooter>
+        <Button
+          variant="outline"
+          @click="showStepUpDialog = false"
+        >
+          {{ $t('actions.cancel') }}
+        </Button>
+        <Button
+          :loading="isStarting"
+          :disabled="!stepUpValue"
+          @click="handleConfirmStepUp"
+        >
+          {{ $t('labels.account.social.stepUpConfirm') }}
+        </Button>
+      </DialogFooter>
+    </DialogContent>
+  </Dialog>
 </template>

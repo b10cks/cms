@@ -2628,6 +2628,9 @@
         "linked": "Vinculado a esta cuenta",
         "notLinked": "Aún no vinculado",
         "link": "Vincular",
+        "stepUpTotpDescription": "Un perfil vinculado puede iniciar tu sesión incluso después de cambiar la contraseña, por eso vincularlo requiere tu segundo factor.",
+        "stepUpPasswordDescription": "Un perfil vinculado puede iniciar tu sesión incluso después de cambiar la contraseña, por eso vincularlo requiere tu contraseña.",
+        "stepUpConfirm": "Continuar",
         "unlink": "Desvincular",
         "unlinkConfirm": {
           "title": "Desvincular perfil social",

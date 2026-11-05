@@ -2628,6 +2628,9 @@
         "linked": "Bu hesaba bağlı",
         "notLinked": "Henüz bağlı değil",
         "link": "Bağla",
+        "stepUpTotpDescription": "Bağlı bir profil, şifrenizi değiştirdikten sonra bile oturum açabilir; bu yüzden bağlamak için ikinci faktörünüz gerekir.",
+        "stepUpPasswordDescription": "Bağlı bir profil, şifrenizi değiştirdikten sonra bile oturum açabilir; bu yüzden bağlamak için şifreniz gerekir.",
+        "stepUpConfirm": "Devam",
         "unlink": "Bağlantıyı kes",
         "unlinkConfirm": {
           "title": "Sosyal profil bağlantısını kes",

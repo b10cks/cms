@@ -248,7 +248,7 @@ describe('useChangePasswordMutation', () => {
 
 describe('useSocialLinksQuery', () => {
   const providers = [
-    { provider: 'github', label: 'GitHub', linked: true, link_url: '/auth/v1/social/github' },
+    { provider: 'github', label: 'GitHub', linked: true },
   ]
 
   it('serves the providers from a key nested under users.me', () => {

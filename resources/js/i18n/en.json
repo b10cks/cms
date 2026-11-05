@@ -2628,6 +2628,9 @@
         "linked": "Linked to this account",
         "notLinked": "Not linked yet",
         "link": "Link",
+        "stepUpTotpDescription": "A linked profile can sign you in even after you change your password, so linking one needs your second factor.",
+        "stepUpPasswordDescription": "A linked profile can sign you in even after you change your password, so linking one needs your password.",
+        "stepUpConfirm": "Continue",
         "unlink": "Unlink",
         "unlinkConfirm": {
           "title": "Unlink social profile",

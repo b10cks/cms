@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
 import { toast } from 'vue-sonner'
 
 import { api } from '~/api'
+import type { StepUpCredential } from '~/api/resources/personal-access-tokens'
 import type { ChangePasswordPayload } from '~/api/resources/users'
 import type { User } from '~/types/users'
 
@@ -82,6 +83,30 @@ export function useUser() {
     })
   }
 
+  /** Resolves to the signed URL that starts the provider's OAuth flow. */
+  const useStartSocialLinkMutation = () => {
+    return useMutation({
+      mutationFn: async ({
+        provider,
+        returnPath,
+        credential,
+      }: {
+        provider: string
+        returnPath: string
+        credential?: StepUpCredential
+      }) => {
+        const response = await api.users.startSocialLink(provider, returnPath, credential)
+        return response.data.url
+      },
+      onError: (error: Error & { status?: number }, { provider }) => {
+        // 423 asks for the step-up and 403 is a wrong credential. The caller prompts for both.
+        if (error.status === 423 || error.status === 403) return
+
+        toast.error(t('labels.account.social.toast.linkFailed', { provider }) as string)
+      },
+    })
+  }
+
   const useUnlinkSocialProviderMutation = () => {
     return useMutation({
       mutationFn: async (provider: string) => {
@@ -107,6 +132,7 @@ export function useUser() {
     useChangePasswordMutation,
     cacheUser,
     useSocialLinksQuery,
+    useStartSocialLinkMutation,
     useUnlinkSocialProviderMutation,
   }
 }

@@ -35,7 +35,7 @@ export interface StepUpCredential {
   value: string
 }
 
-const stepUpHeaders = (credential?: StepUpCredential): RequestOptions => {
+export const stepUpHeaders = (credential?: StepUpCredential): RequestOptions => {
   if (!credential) return {}
 
   return {

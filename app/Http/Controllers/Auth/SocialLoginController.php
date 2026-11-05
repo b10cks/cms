@@ -61,9 +61,19 @@ class SocialLoginController extends AuthController
             ->redirect();
     }
 
+    /**
+     * Only reachable through the short-lived URL that the step-up guarded
+     * `users.me.social-links.start` signs for this user. A linked provider is
+     * a login that survives a password change, so a borrowed session alone
+     * must not be able to add one.
+     */
     public function linkRedirect(Request $request, string $provider): RedirectResponse
     {
         abort_unless($this->isSupportedProvider($provider), 404);
+        abort_unless(
+            $request->hasValidSignature() && $request->query('user') === (string) $request->user()->id,
+            403
+        );
 
         $request->session()->put(
             self::LINK_RETURN_TO,

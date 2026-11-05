@@ -1,6 +1,7 @@
 import type { User } from '~/types/users'
 
 import { BaseResource } from './base-resource'
+import { stepUpHeaders, type StepUpCredential } from './personal-access-tokens'
 
 export interface UpdateUserPayload {
   firstname?: string
@@ -19,7 +20,6 @@ export interface UserSocialLinkProvider {
   label: string
   linked: boolean
   linked_at?: string | null
-  link_url: string
 }
 
 export class Users extends BaseResource<User, never, UpdateUserPayload, never> {
@@ -43,6 +43,19 @@ export class Users extends BaseResource<User, never, UpdateUserPayload, never> {
 
   public async socialLinks(): Promise<ApiResponse<UserSocialLinkProvider[]>> {
     return this.client.get<ApiResponse<UserSocialLinkProvider[]>>(`${this.basePath}/me/social-links`)
+  }
+
+  /** A short-lived URL that starts the provider's OAuth flow. Needs a step-up credential. */
+  public async startSocialLink(
+    provider: string,
+    returnPath: string,
+    credential?: StepUpCredential
+  ): Promise<ApiResponse<{ url: string }>> {
+    return this.client.post<ApiResponse<{ url: string }>>(
+      `${this.basePath}/me/social-links/${provider}`,
+      { return: returnPath },
+      stepUpHeaders(credential)
+    )
   }
 
   public async unlinkSocialProvider(provider: string): Promise<void> {

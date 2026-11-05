@@ -2628,6 +2628,9 @@
         "linked": "Lié à ce compte",
         "notLinked": "Pas encore lié",
         "link": "Lier",
+        "stepUpTotpDescription": "Un profil lié peut vous connecter même après un changement de mot de passe, c’est pourquoi le lier nécessite votre second facteur.",
+        "stepUpPasswordDescription": "Un profil lié peut vous connecter même après un changement de mot de passe, c’est pourquoi le lier nécessite votre mot de passe.",
+        "stepUpConfirm": "Continuer",
         "unlink": "Délier",
         "unlinkConfirm": {
           "title": "Délier le profil social",

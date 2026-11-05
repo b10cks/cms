@@ -2642,6 +2642,9 @@
         "linked": "Mit diesem Konto verknüpft",
         "notLinked": "Noch nicht verknüpft",
         "link": "Verknüpfen",
+        "stepUpTotpDescription": "Ein verknüpftes Profil kann dich auch nach einer Passwortänderung anmelden, darum brauchst du zum Verknüpfen deinen zweiten Faktor.",
+        "stepUpPasswordDescription": "Ein verknüpftes Profil kann dich auch nach einer Passwortänderung anmelden, darum brauchst du zum Verknüpfen dein Passwort.",
+        "stepUpConfirm": "Weiter",
         "unlink": "Trennen",
         "unlinkConfirm": {
           "title": "Social-Profil trennen",

@@ -144,6 +144,9 @@ Route::group(['prefix' => 'users'], function () {
 
         Route::get('/social-links', [UserSocialLinkController::class, 'index'])
             ->name('users.me.social-links.index');
+        Route::post('/social-links/{provider}', [UserSocialLinkController::class, 'start'])
+            ->middleware(['throttle:crucial', 'not-impersonating', '2fa'])
+            ->name('users.me.social-links.start');
         Route::delete('/social-links/{provider}', [UserSocialLinkController::class, 'destroy'])
             ->middleware(['throttle:crucial'])
             ->name('users.me.social-links.destroy');

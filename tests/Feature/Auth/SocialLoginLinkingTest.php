@@ -96,6 +96,37 @@ class SocialLoginLinkingTest extends TestCase
         $this->assertFalse(Auth::guard('web')->check());
     }
 
+    #[Test]
+    public function linking_a_provider_needs_a_step_up_and_a_url_signed_for_this_user(): void
+    {
+        config(['services.google.client_id' => 'id', 'services.google.client_secret' => 'secret']);
+        $user = User::factory()->create()->fresh();
+        $other = User::factory()->create()->fresh();
+
+        $driver = Mockery::mock();
+        $driver->shouldReceive('redirectUrl')->andReturnSelf();
+        $driver->shouldReceive('scopes')->andReturnSelf();
+        $driver->shouldReceive('redirect')->andReturn(redirect('https://accounts.google.test/o/oauth2'));
+        Socialite::shouldReceive('driver')->with('google')->andReturn($driver);
+
+        $this->actingAs($user)
+            ->get(route('auth.social.link.redirect', 'google'))
+            ->assertForbidden();
+
+        $this->actingAs($user)
+            ->postJson(route('mgmt.users.me.social-links.start', 'google'))
+            ->assertStatus(423);
+
+        $url = $this->actingAs($user)
+            ->withHeader('x-password-confirmation', 'password')
+            ->postJson(route('mgmt.users.me.social-links.start', 'google'), ['return' => '/account/settings/security'])
+            ->assertOk()
+            ->json('data.url');
+
+        $this->actingAs($other)->get($url)->assertForbidden();
+        $this->actingAs($user)->get($url)->assertRedirect('https://accounts.google.test/o/oauth2');
+    }
+
     protected function tearDown(): void
     {
         Mockery::close();
