@@ -142,7 +142,7 @@ const logout = () => {
                   as-child
                   :class="[
                     'w-full cursor-pointer',
-                    space.id === selectedSpaceId ? 'bg-accent text-accent-foreground' : '',
+                    space.id === selectedSpaceId ? 'bg-accent-fill text-accent-foreground' : '',
                   ]"
                 >
                   <RouterLink

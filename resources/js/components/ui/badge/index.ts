@@ -12,7 +12,7 @@ export const badgeVariants = cva(
         default: 'border-transparent bg-secondary text-secondary-foreground',
         ai: 'border-transparent bg-ai text-ai-foreground',
         destructive: 'border-transparent bg-destructive-background text-destructive-foreground',
-        accent: 'border-transparent bg-accent text-accent-foreground',
+        accent: 'border-transparent bg-accent-fill text-accent-foreground',
         warning: 'border-transparent bg-warning-background text-warning-foreground',
         info: 'border-transparent bg-info-background text-info-foreground',
         success: 'border-transparent bg-success-background text-success-foreground',
@@ -53,17 +53,17 @@ export const badgeVariants = cva(
       {
         variant: 'warning',
         type: 'outline',
-        class: '!border-warning-background text-warning-foreground',
+        class: '!border-warning-background text-warning-ink',
       },
       {
         variant: 'info',
         type: 'outline',
-        class: '!border-info-background text-info-foreground',
+        class: '!border-info-background text-info-ink',
       },
       {
         variant: 'success',
         type: 'outline',
-        class: '!border-success-background text-success-foreground',
+        class: '!border-success-background text-success-ink',
       },
       {
         variant: 'surface',

@@ -35,7 +35,7 @@ const label = computed(() =>
     />
     <span
       v-if="attention > 0"
-      class="pointer-events-none absolute -top-0.5 -right-0.5 flex min-w-4 items-center justify-center rounded-full bg-accent px-1 text-[10px] leading-4 font-semibold text-white"
+      class="pointer-events-none absolute -top-0.5 -right-0.5 flex min-w-4 items-center justify-center rounded-full bg-accent-fill px-1 text-[10px] leading-4 font-semibold text-white"
       aria-hidden="true"
     >
       {{ attention > 99 ? '99+' : attention }}

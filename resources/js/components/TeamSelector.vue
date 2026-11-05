@@ -278,7 +278,7 @@ const sizeClasses = {
             :class="[
               'relative flex w-full cursor-pointer items-center rounded-sm py-1.5 pr-8 pl-2 text-sm outline-none select-none',
               index === activeIndex
-                ? 'bg-accent text-accent-foreground [&_.text-info]:text-accent-foreground [&_.text-info]:underline'
+                ? 'bg-accent-fill text-accent-foreground [&_.text-info]:text-accent-foreground [&_.text-info]:underline'
                 : '',
               option.group === 'context' && index !== activeIndex ? 'text-muted' : '',
             ]"
@@ -308,7 +308,7 @@ const sizeClasses = {
         <div class="-mx-1 my-1 h-px shrink-0 bg-border" />
         <button
           type="button"
-          class="flex w-full shrink-0 cursor-pointer items-center gap-2 rounded-sm py-1.5 pr-8 pl-2 text-sm text-muted outline-none select-none hover:bg-accent hover:text-accent-foreground focus-visible:bg-accent focus-visible:text-accent-foreground"
+          class="flex w-full shrink-0 cursor-pointer items-center gap-2 rounded-sm py-1.5 pr-8 pl-2 text-sm text-muted outline-none select-none hover:bg-accent-fill hover:text-accent-foreground focus-visible:bg-accent-fill focus-visible:text-accent-foreground"
           @click="createSubTeam"
         >
           <Icon name="lucide:plus" />

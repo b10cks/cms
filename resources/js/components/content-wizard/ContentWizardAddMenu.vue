@@ -360,8 +360,8 @@ const panelPositionClass = computed(() => {
             type="button"
             tabindex="-1"
             :class="[
-              'flex w-full items-center gap-3 rounded px-2 py-1 text-left transition-colors hover:bg-accent',
-              index === activeIndex ? 'bg-accent text-accent-foreground' : '',
+              'flex w-full items-center gap-3 rounded px-2 py-1 text-left transition-colors hover:bg-accent-fill hover:text-accent-foreground',
+              index === activeIndex ? 'bg-accent-fill text-accent-foreground' : '',
               entry.isBack ? 'border-b border-border pb-1.5' : '',
             ]"
             @mouseenter="activeIndex = index"

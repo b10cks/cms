@@ -51,7 +51,7 @@ defineEmits<{
       <DateFieldInput
         v-else
         :part="item.part"
-        class="rounded px-0.5 tabular-nums outline-none focus:bg-accent focus:text-white data-[placeholder]:text-muted"
+        class="rounded px-0.5 tabular-nums outline-none focus:bg-accent-fill focus:text-white data-[placeholder]:text-muted"
       >
         {{ item.value }}
       </DateFieldInput>

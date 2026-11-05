@@ -73,7 +73,7 @@ const onMarkAllRead = () => {
       <BellIcon :size="16" />
       <span
         v-if="hasUnread"
-        class="absolute -top-0.5 -right-0.5 flex min-w-4 items-center justify-center rounded-full bg-accent px-1 text-[10px] leading-4 font-semibold text-white"
+        class="absolute -top-0.5 -right-0.5 flex min-w-4 items-center justify-center rounded-full bg-accent-fill px-1 text-[10px] leading-4 font-semibold text-white"
       >
         {{ badgeLabel }}
       </span>

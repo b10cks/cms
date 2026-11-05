@@ -200,7 +200,7 @@ const handleCardClick = (plan: PlanResource) => {
                 :class="[
                   'flex w-full cursor-pointer items-center justify-center rounded-md border py-2 text-sm font-semibold',
                   selectedPlanId === plan.id
-                    ? 'border-accent bg-accent text-accent-foreground'
+                    ? 'border-accent-fill bg-accent-fill text-accent-foreground'
                     : 'border-elevated',
                 ]"
               >
