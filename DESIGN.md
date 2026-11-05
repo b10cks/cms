@@ -11,6 +11,7 @@ Rules Mike settled for the CMS UI. Tokens live in `resources/js/assets/css/main.
 
 ## Type
 
+- The space and environment badge is 10px uppercase at line height 1, so its height follows its text and not the line around it.
 - Body is 15px (`text-base`). The smallest size for readable content is 13px (`text-sm`): labels, hints, table cells, chart axes. No `text-xs` or smaller outside badges.
 - Extra sizes only for page titles (`text-2xl`), panel and section titles (`text-panel`) and KPI figures (`text-figure`, 28px).
 - Figures: the value is semibold in the strongest ink, the label sits above it, 13px and muted.
@@ -20,6 +21,50 @@ Rules Mike settled for the CMS UI. Tokens live in `resources/js/assets/css/main.
 
 - A fill carrying white text is `bg-accent-fill` (blue-700, 4.5:1), hover `bg-accent-fill-hover`. `--accent` stays for rings, links and thin marks; blue-500 is only 3.0:1 under white.
 - Status as text on a plain surface uses the `-ink` tokens (`text-success-ink`, `text-info-ink`, `text-warning-ink`), outline badges included. The `-foreground` tokens are for filled badges.
+
+- Destructive as text is `text-destructive-ink`: field errors, the required mark, destructive buttons. `text-destructive` stays for icons and field edges. Settled 2026-11-05.
+
+## Controls
+
+Settled 2026-11-05.
+
+- Tabs: the active tab is `bg-tab-active` with `shadow-sm` on a `bg-secondary` track. In light that is a white card on gray-100 and must stay lighter than its track; a white track makes the active tab vanish. In dark the active tab goes one step up (gray-700), never down into a hole. Inactive text is `text-foreground`. Hover is the `bg-state-hover` wash. The entry editor's tab bar keeps the older dark look on purpose: the active tab sinks to `--background` on the track (`--editor-tab-active`, `--editor-tab-hover`). Light is the same as other tabs.
+- Fields use `border-input-border` (gray-200 light, gray-750 dark) with `shadow-sm` and no hover on the edge: inputs, textareas, comboboxes, selects, tags and date fields, and input groups. This is 1.7:1 on white and 1.15:1 on the dark fill, below 3:1. Mike chose it: a gray-400 and gray-500 field edge with a stronger hover was rated 1 and rejected on 2026-11-05. Do not bring it back.
+- Checkboxes, radios, the off switch and the outline toggle keep the 3:1 edge: `border-choice-border`, hover `border-choice-border-hover`. Fields never use these. Boxes and dividers that are not controls use `border-border` or `border-border-strong`.
+- A focused field is `ring-2` in `ring` outside its gray edge, with the edge left as it is. An open select or date trigger is the same. A field with an error keeps its red edge and focuses in red. `border-ring` plus `ring-1` was rejected along with the stronger edge. Buttons, checkboxes, radios and switches focus with a 2px `outline-ring` set off from the control, so the ring still shows on a blue fill.
+- Field fill text that is not the value (placeholder, read-only) is `text-input-muted`.
+- Every button at default size and every field is 36px with an 8px radius. 32px and 28px controls use 6px. Outline buttons draw their edge with `inset-ring`, so they measure the same as filled ones.
+- Ghost and outline hover are `bg-state-hover`, pressed and open are `bg-state-selected`, so they hold on any surface. Filled neutral buttons step through `--secondary-hover` and `--secondary-active`.
+- The default button is `bg-button`, which is `--secondary` everywhere except the app header. There, in light, it is white with the same `shadow-xs`, because gray-100 on the gray-100 bar has no edge (`--header-button`, 1.28:1 plus the shadow). Dark is unchanged. Other neutral fills on the header do not change with it; badges have their own token, see Data and navigation.
+- The divider in a split button is `current` at 20%, so it shows on any fill. Outline split buttons overlap by a pixel.
+- `SortSelect` is one field: the select and a `variant="input"` direction toggle share the field edge, shadow and 8px outer radius, joined by a single line. The focused or open half sits on top.
+
+## Overlays
+
+Settled 2026-11-05. Menus, selects, comboboxes, Cmd+K, popovers, tooltips, toasts, dialogs and sheets.
+
+- Everything that floats is `overlay-panel`: popover fill, `border-popover-border`, `shadow-overlay`, 8px radius. In dark mode the soft shadow vanishes, so `shadow-overlay` uses real black and the edge is one step past the fill (gray-700 on gray-800). Dialogs, confirm dialogs, popovers and tooltips use `border-overlay-edge` instead: the same in light, gray-950 in dark, so the hairline is darker than the fill. Mike asked for this on 2026-11-05. Menus, selects, comboboxes, sheets and Cmd+K keep `border-popover-border`. Muted text inside uses `--input-muted`, since `--muted` is 4.18:1 on the dark fill.
+- Every list row is `menu-row`, 32px and medium weight. Highlighted is the neutral `bg-state-selected` wash with the strongest ink, so a red Delete and colored block icons keep their color. Rejected: the solid blue highlight, it overrode both. The team switcher keeps its accent fill, settled above.
+- The wash is 1.24:1 in light and 1.35:1 in dark, so a keyboard user also gets a 1px `--ring` inset (3.66:1, 3.35:1). `lib/inputModality.ts` tells them apart, because `:focus-visible` also fires under the pointer in a menu. Cmd+K has no ring (`--menu-row-ring`): Mike rejected the blue border on its selected row, the wash alone marks it there. Other menus keep the ring.
+- Item icons are muted unless they carry a color, and go to the row's ink when highlighted. A destructive row is `text-destructive`; `menu-row` turns it into the ink, and `--destructive-foreground` on the wash (the ink is 3.48:1 there in dark). Separators are `bg-popover-border`, shortcuts are muted at normal tracking.
+- Every scrim is `bg-overlay` with no blur, dialogs and sheets included. Dialogs have a hairline and a 12px radius from `sm` up. Titles are `text-panel` in `text-primary`. Close is the 28px `overlay-close`, centered on the title line.
+- A select's list is at least as wide as its trigger.
+- Toasts are the popover surface with a neutral edge. Only the icon carries the status color: 16px lucide stroke in the `-ink` token, centered on the first line. Title is 13px medium in the strongest ink, description 13px regular in `--input-muted`. Action and close sit on the first line, 24px with a 6px radius; the action is the `state-selected` wash, close is last and muted, the wash on hover. Every toast has a close button. Rejected: filled toasts, the warning had low contrast; a wash, which turned the warning cream; the colored edge and the filled 20px icons, rated 5.
+
+## Data and navigation
+
+Settled 2026-11-05.
+
+- Badges: neutral badges (`default`, `secondary`, `surface`) have no border. Rejected: the `primary/10` hairline on them, and lifting `surface` a step in dark, so `surface` is `bg-surface` in both themes, type chips in tables included. `default` and `secondary` fill with `bg-badge`, which is `--secondary` except on the app header, where in light it is white (`--header-badge`, 1.28:1 on the bar, text 13.5:1) so Draft still reads. Dark is unchanged. Filled status badges reach AA in both themes: `--warning-background` is yellow-700 and `--info-background` blue-800 in light, the AI badge is `--ai-background`. Outline badges force `!text-*` and, where the sort order loses, `!bg-transparent`: Tailwind's order made `primary` invisible and `warning` filled.
+- A settings-style left nav is `nav-row`: 36px, 8px radius, medium, muted icon. Hover is `bg-state-hover`, the current page `bg-state-selected` with the strongest ink and the same weight, so nothing shifts.
+- Sortable headers reserve the caret's space and take keyboard focus. Pointing anywhere in the table header shows the muted caret of every sortable column, not only the hovered one; focus shows that column's. The active sort's caret is strongest ink. The header row stays 40px.
+- Pagination is ghost, with only the current page filled (`primary`).
+- A quiet icon action in a row is `row-action`: 28px, 6px radius, muted, the wash on hover. Block rows use it with no gap between actions, and sit on `bg-card`.
+- An image avatar that fails to load falls back to initials. Avatars carry an inset `primary/10` hairline.
+- Calendar: today is `text-info-ink` and semibold, hover is the `state-hover` wash, days outside the month are `text-muted` (never an opacity of it, that fails AA).
+- Stepper: upcoming is a `border-strong` inset ring with muted text, a finished step's line is `bg-success`.
+- The tree's pending dot uses `outline` with an offset, so its gap shows the row behind it. A ring offset painted a fixed color.
+- The tree search box is a field: `border-input-border`, `bg-input`, 32px, `border-ring` plus `ring-1` when focused.
 
 ## Failed and empty states
 
@@ -32,9 +77,39 @@ Rules Mike settled for the CMS UI. Tokens live in `resources/js/assets/css/main.
 - A tree row is one line. The name truncates, counts and actions keep their place.
 - From `md` up the content tree opens at 320px and can't go below 200px. Below `md` it opens at 120px and its width isn't saved.
 
+- The tree row menu runs in groups split by hairlines: View and Edit; Publish, Publish options (with message, with children, schedule, unpublish) and Add to release; Ask AI and Automations, the latter only when one applies; New sub item, Rename, Duplicate; Copy, Cut and Paste (in, after); Delete last.
+
 ## Sidebars
 
-- Every icon rail (the main app sidebar, the content editor's tab rail) uses the sidebar tokens: `bg-sidebar`, `text-sidebar-foreground`, hover `bg-sidebar-accent`, active `bg-sidebar-accent text-sidebar-accent-foreground`.
+- Every icon rail (the main app sidebar, the content editor's tab rail) uses the sidebar tokens: `bg-sidebar`, `text-sidebar-foreground`, hover `bg-sidebar-accent/60`, active `bg-sidebar-accent text-sidebar-accent-foreground`, so hover and active read apart (1.18:1 and 1.33:1 in light, 1.21:1 and 1.46:1 in dark). Settled 2026-11-05.
+- The collapsed rail's items are exactly 32px square, centered on x=28. Every trigger in it uses these tokens, never `bg-elevated`, which equals the rail in light.
+
+## Blocks block
+
+Settled 2026-11-05. The blocks field in the entry editor.
+
+- Every list has its own frame so depth reads at a glance: `bg-surface`, a hairline, with white rows on it. Depth 0 is `rounded-2xl px-2`. Nested lists are `rounded-xl px-1.5`, tighter so depth costs less width. Mike settled this on 2026-11-05 after frameless nested lists lost the distinction.
+- Depth counts lists in the current column. Rows at depth 0 and 1 expand inline. Rows from depth 2 show a chevron-right and open in the same column through the hash route, with the breadcrumbs to return. An opened item starts again at depth 0. An item with no id has no route, so it stays expandable.
+- Going back keeps the list as it was left: expanded rows stay expanded, each item keeps its tab, and the row you came from takes focus again.
+- A row that hides its fields says when something inside is wrong: one line under the title with the icon in `text-destructive`. Review validation issues opens the way to the field: focus only if it is on screen, otherwise through the hash route and the tab.
+- Adding from a row list that drills in opens the new item.
+- A row is two lines: the title bold in strong ink, the block type under it in 13px muted. Mike settled this on 2026-11-05 after a one-line row. Rejected: title and type on one line.
+- Row actions stay on the row on hover or focus-within: Hide/Show, Edit nested content, Copy, Cut, Delete, and the menu. Grip and arrow keys move a row. Rejected, Mike 2026-11-05: moving Copy, Cut and Delete into the menu.
+- Delete has no confirm. It shows a toast with Undo for 8s, which restores the item at its index through the same block operation path as other edits. The toast goes away with the list or when the entry changes. Undo refuses when the field has filled up meanwhile, and says so.
+- There is one add button: a 24px round plus, quiet at rest, accent with the insert line on hover or focus. Between rows it shows on hover or focus. At the end of a list, empty or not, it stays visible in a 28px spot of its own inside that list's frame, so it is clear which list it adds to. Paste is the same button beside it when the clipboard fits. Rejected, Mike 2026-11-05: a persistent outline button, a dashed empty-state button, and a tooltip naming the place.
+
+## Comments
+
+Settled 2026-11-05. Comments on an entry and its fields.
+
+- Two places: the Comments tab in the editor rail reads all of an entry's threads, the field popover comments beside the field. The popover opens to the left of the whole field, anchored to the field and not its small trigger, so it never covers the content being discussed. Where it doesn't fit there, below about 980px, it opens under the field. No other surface, and no anchors on rich text selections.
+- A thread in the tab starts with one muted line naming its place, the way the translation view names a field ("Hero 2, Header"). Pressing it goes back to the fields, opens the path, scrolls to the field and opens its popover. Rows at depth 0 and 1 expand, deeper ones open through the hash route. A thread that names only a block ("Hero 2") focuses that block's row. A thread on the whole entry names the entry in plain text, since there is nowhere to go. A block or field that is gone reads "This field no longer exists", and the thread reads on.
+- The tab has Open and Resolved tabs with thread counts, Open first. A resolved thread reads at full contrast, the tab is what separates it. In the popover, which mixes both, it says "Resolved". Counts stay hidden until known.
+- The field button sits in the label row, 28px, named after the field. With comments it stays visible with the count, in `text-warning-ink` while any is open. Without comments it shows on hover or focus within the field, and only for the innermost field, so a nested list doesn't light up every field in it.
+- A comment reads: one 13px row with avatar, name in medium and time in muted, then the body at 15px. No reaction row until there is a reaction. Actions are 28px icon buttons with labels at the end of that row, shown on hover or focus-within.
+- The composer is multi-line. Enter makes a new line, Cmd or Ctrl+Enter sends, the send button is always visible. A failed send, reply or edit keeps the text and the composer and says why under it, with no toast. Drafts are held by the entry page: a new comment by entry, item and field, a reply by its thread, an edit by its comment. They outlive closing the popover, a jump and switching tabs. Esc in a reply or edit does nothing, so it can't close the popover around them.
+- `@` opens a picker of everyone with access to the space (names and avatars only, no ability needed beyond reading the comments). A mention shows as a chip with the name and is stored as `@<user id>`, the format `MentionExtractor` reads. A person who is gone reads "Unknown person", never the id.
+- A failed read shows `QueryErrorState` with `flush`. An empty list is one muted line that says how to start.
 
 ## Forms
 
@@ -60,7 +135,7 @@ Settled 2026-10-22.
 Settled 2026-10-27. Concept: "Threads" in `docs/concepts/native-ai-integration.md`.
 
 - AI icons are the animated bot set, never lucide sparkles or wands (settled 2026-10-31): `ai:bot` for general entry points, `ai:bot-message` for asking, `ai:bot-star` for skills, generation and classification, `ai:bot-translate` for AI translation. Use them through `<Icon name="ai:…">`. They play on hover of any `icon-anim` ancestor; buttons and menu items already carry it.
-- Buttons that run AI are `variant="ai"`, split buttons included (settled 2026-10-31): a purple wash (`--ai-tint`, 10% light, 18% dark) with purple ink, a slightly stronger wash on hover. Dialog confirms that start an AI run use it too, in place of `primary`. Rejected: solid purple, it competes with Publish and the primary header action; a purple outline, the hairline vanishes at 28px in dark mode.
+- Buttons that run AI are `variant="ai"`, split buttons included (settled 2026-10-31): a purple wash (`--ai-tint`, 10% light, 18% dark) with purple ink (purple-700 in light, for AA on the hover wash), a slightly stronger wash on hover. Dialog confirms that start an AI run use it too, in place of `primary`. Rejected: solid purple, it competes with Publish and the primary header action; a purple outline, the hairline vanishes at 28px in dark mode.
 - Models (settled 2026-10-31, rejected: a searchable popover, too cramped for 400+ models):
   - Logos come from Lobe Icons through `<Icon :name="modelIcon(driver, model)">`: the model family's logo (Claude, Gemini), else the provider's, else `ai:bot`. Colour logos in AI settings and the model picker; mono logos in every compact picker and menu.
   - Capabilities are vision, reasoning and tool use, as small icons (`AiCapabilityIcons`). No context window or price in the UI.

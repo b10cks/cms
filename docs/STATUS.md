@@ -18,6 +18,16 @@ On `feat/ux-refinements`. Council rounds: Sol 8, 8.5, 9 (signed off); Opus visua
 
 Not done: Needs attention panel (needs an API), Cmd+K navigation, phone editor layout, 24px hit areas, focus ring, schema page reorder, and the settled rules Opus would reopen (Publish undo, badge floor, tooltip hints, empty thread wording).
 
+Uncommitted on top: comments redesign (location line and jump, Open and Resolved tabs, named field button, `@` picker, reading layout, failure handling). Rules in DESIGN.md "Comments". It adds one backend route, `GET contents/{content}/comments/mentionable`; `docs/public/specs/mgmt_v1.json` is not regenerated for it.
+
+## Editing bar 2027, 2026-11-05
+
+Committed on `feat/ux-refinements`, unpushed. Token repair, tables, tree and tree menu, Team Selector, Blocks block (frames, drill-in from depth 2, Undo, end and empty Add), comments (location and jump, Open and Resolved, @ picker, drafts, new `comments/mentionable` route). Council: Sol 8, 9, 8, 9 (signed off). Opus 7, 8, 8; conditional sign-off once the popover fix landed, not rerun after it. Autosave, Review changes, Work view and the asset list rework were deliberately not built.
+
+## UI kit polish, 2026-11-05
+
+Committed on `feat/ux-refinements`, unpushed. Three passes over the kit in both themes: controls (including the tab bar fix), overlays and feedback, data and navigation. Rules are in DESIGN.md under Controls, Overlays, and Data and navigation. Mike rated 36 pairs, all notes were applied, and he rated the 14 changed items 8 to 10 with no further notes.
+
 ## Merge review, 2026-11-05
 
 Not ready to deploy. One blocker and a list of should-fix items, none fixed yet:
@@ -46,7 +56,8 @@ No processes or delegates left by this run. Mike rotated the OpenRouter key. Eva
 
 ## Waiting on Mike
 
-- UX refinements: the accent-fill colour is the most visible change. Whether the Esc tooltip stays.
+- Autosave needs a decision; it changes the version model. The `comments/mentionable` route lets anyone who can read an entry's comments see names and avatars in that space: confirm.
+- Whether the tooltip that reappears after Esc closes a dialog stays.
 - Merge review: which findings to fix before merge.
 - `docs/milestones/reliable-ai-content-operations` and `docs/evidence`: keep on the merged version or leave them on the archive branch only.
 - Import branch: approve merging and releasing it. It fixes a live 504.
