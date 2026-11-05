@@ -521,7 +521,11 @@
       "copyLink": "Copiar enlace de vista previa",
       "openExternal": "Abrir en pestaña nueva",
       "mode": "Cambiar modo de vista previa",
-      "settings": "Ajustes de vista previa"
+      "settings": "Ajustes de vista previa",
+      "reload": "Recargar",
+      "environment": "Entorno",
+      "chooseEnvironment": "Elegir entorno",
+      "manageEnvironments": "Gestionar entornos"
     },
     "contentVersions": {
       "title": "Historial de versiones",
@@ -1038,6 +1042,29 @@
             "independent": "Independiente"
           },
           "effectiveMode": "Modo efectivo: {mode}"
+        },
+        "rows": {
+          "preview": "Vista previa",
+          "translations": "Traducciones",
+          "children": "Entradas hijas",
+          "cache": "Caché de entrega",
+          "previewShown": "Visible en la vista previa",
+          "previewHidden": "Oculta en la vista previa",
+          "modes": {
+            "overlay": "superpuesto",
+            "independent": "independiente"
+          },
+          "onDefaultLanguage": "Se define en el idioma predeterminado",
+          "anyType": "Cualquier tipo",
+          "typesAllowed": "{count} tipo permitido | {count} tipos permitidos",
+          "spaceOrder": "orden del espacio",
+          "manualOrder": "orden manual",
+          "sortedBy": "ordenado por {field}",
+          "hours": "{count} hora | {count} horas",
+          "minutes": "{count} minuto | {count} minutos",
+          "seconds": "{count} segundo | {count} segundos",
+          "tags": "{count} etiqueta | {count} etiquetas",
+          "notSet": "Sin definir"
         }
       },
       "tabs": {
@@ -1105,6 +1132,33 @@
         "errorsTitle": "Errores",
         "importError": "Error al importar",
         "progress": "{processed} de {total} entradas importadas"
+      },
+      "info": {
+        "publishing": "Publicación",
+        "status": "Estado",
+        "liveSince": "Publicada desde",
+        "notLive": "No publicada",
+        "firstPublished": "Primera publicación",
+        "pendingDraft": "Borrador pendiente",
+        "draft": "Borrador",
+        "lastPublish": "Última publicación",
+        "scheduled": "Programada",
+        "versions": "Versiones",
+        "relations": "Relaciones",
+        "parent": "Superior",
+        "languages": "Idiomas",
+        "comments": "Comentarios",
+        "commentsOpen": "{count} abierto | {count} abiertos",
+        "commentsNone": "Ninguno abierto",
+        "technical": "Técnico",
+        "type": "Tipo",
+        "address": "Dirección",
+        "id": "ID",
+        "created": "Creada",
+        "updated": "Actualizada",
+        "copyAddress": "Copiar dirección",
+        "copyId": "Copiar ID",
+        "copied": "Copiado al portapapeles"
       }
     },
     "contentTree": {
@@ -4046,7 +4100,25 @@
       "paramKeyPlaceholder": "ej. utm_source",
       "paramValuePlaceholder": "ej. newsletter",
       "anchorMissing": "Este elemento ya no existe en la página.",
-      "linkToPage": "Enlace a página"
+      "linkToPage": "Enlace a página",
+      "kinds": {
+        "internal": "Entrada",
+        "url": "URL",
+        "email": "Correo"
+      },
+      "chooseEntry": "Elige una entrada",
+      "searchEntries": "Buscar entradas",
+      "searchSections": "Buscar secciones",
+      "entries": "Entradas",
+      "sections": "Secciones",
+      "showSections": "Mostrar las secciones de {name}",
+      "back": "Volver a las entradas",
+      "noEntries": "Ninguna entrada coincide.",
+      "moreEntries": "{count} más, sigue escribiendo para acotar",
+      "noSections": "Esta entrada no tiene secciones.",
+      "noSectionsMatch": "Ninguna sección coincide.",
+      "newTab": "Abrir en una pestaña nueva",
+      "moreOptions": "Más opciones"
     },
     "common": {
       "is": "es",
@@ -4416,6 +4488,19 @@
       "stay": "Seguir editando",
       "discard": "Descartar cambios",
       "save": "Guardar y salir"
+    },
+    "assetField": {
+      "chooseImage": "Elige una imagen o suéltala aquí",
+      "chooseFile": "Elige un archivo o suéltalo aquí",
+      "chooseImages": "Elegir imágenes",
+      "chooseFiles": "Elegir archivos",
+      "addImages": "Añadir imágenes",
+      "addFiles": "Añadir archivos",
+      "none": "Ningún archivo",
+      "details": "Detalles",
+      "count": "{current} de {max}",
+      "uploading": "Subiendo",
+      "wrongType": "Este campo no admite este tipo de archivo."
     }
   },
   "notifications": {

@@ -521,7 +521,11 @@
       "copyLink": "Copier le lien d'aperçu",
       "openExternal": "Ouvrir dans un nouvel onglet",
       "mode": "Basculer le mode d'aperçu",
-      "settings": "Paramètres de l'aperçu"
+      "settings": "Paramètres de l'aperçu",
+      "reload": "Recharger",
+      "environment": "Environnement",
+      "chooseEnvironment": "Choisir un environnement",
+      "manageEnvironments": "Gérer les environnements"
     },
     "contentVersions": {
       "title": "Historique des versions",
@@ -1038,6 +1042,29 @@
             "independent": "Indépendant"
           },
           "effectiveMode": "Mode effectif : {mode}"
+        },
+        "rows": {
+          "preview": "Aperçu",
+          "translations": "Traductions",
+          "children": "Entrées enfants",
+          "cache": "Cache de diffusion",
+          "previewShown": "Affichée dans l'aperçu",
+          "previewHidden": "Masquée dans l'aperçu",
+          "modes": {
+            "overlay": "superposé",
+            "independent": "indépendant"
+          },
+          "onDefaultLanguage": "Défini dans la langue par défaut",
+          "anyType": "Tout type",
+          "typesAllowed": "{count} type autorisé | {count} types autorisés",
+          "spaceOrder": "ordre de l'espace",
+          "manualOrder": "ordre manuel",
+          "sortedBy": "trié par {field}",
+          "hours": "{count} heure | {count} heures",
+          "minutes": "{count} minute | {count} minutes",
+          "seconds": "{count} seconde | {count} secondes",
+          "tags": "{count} tag | {count} tags",
+          "notSet": "Non défini"
         }
       },
       "tabs": {
@@ -1105,6 +1132,33 @@
         "errorsTitle": "Erreurs",
         "importError": "Échec de l'importation",
         "progress": "{processed} sur {total} entrées importées"
+      },
+      "info": {
+        "publishing": "Publication",
+        "status": "Statut",
+        "liveSince": "En ligne depuis",
+        "notLive": "Pas en ligne",
+        "firstPublished": "Première publication",
+        "pendingDraft": "Brouillon en attente",
+        "draft": "Brouillon",
+        "lastPublish": "Dernière publication",
+        "scheduled": "Planifiée",
+        "versions": "Versions",
+        "relations": "Relations",
+        "parent": "Parent",
+        "languages": "Langues",
+        "comments": "Commentaires",
+        "commentsOpen": "{count} ouvert | {count} ouverts",
+        "commentsNone": "Aucun ouvert",
+        "technical": "Technique",
+        "type": "Type",
+        "address": "Adresse",
+        "id": "ID",
+        "created": "Créée",
+        "updated": "Modifiée",
+        "copyAddress": "Copier l'adresse",
+        "copyId": "Copier l'ID",
+        "copied": "Copié dans le presse-papiers"
       }
     },
     "contentTree": {
@@ -4046,7 +4100,25 @@
       "paramKeyPlaceholder": "ex. utm_source",
       "paramValuePlaceholder": "ex. newsletter",
       "anchorMissing": "Cet élément n'existe plus sur la page.",
-      "linkToPage": "Lien vers la page"
+      "linkToPage": "Lien vers la page",
+      "kinds": {
+        "internal": "Entrée",
+        "url": "URL",
+        "email": "E-mail"
+      },
+      "chooseEntry": "Choisir une entrée",
+      "searchEntries": "Rechercher des entrées",
+      "searchSections": "Rechercher des sections",
+      "entries": "Entrées",
+      "sections": "Sections",
+      "showSections": "Afficher les sections de {name}",
+      "back": "Retour aux entrées",
+      "noEntries": "Aucune entrée ne correspond.",
+      "moreEntries": "{count} de plus, continuez à taper pour affiner",
+      "noSections": "Cette entrée n'a pas de sections.",
+      "noSectionsMatch": "Aucune section ne correspond.",
+      "newTab": "Ouvrir dans un nouvel onglet",
+      "moreOptions": "Plus d'options"
     },
     "common": {
       "is": "est",
@@ -4416,6 +4488,19 @@
       "stay": "Continuer l'édition",
       "discard": "Ignorer les modifications",
       "save": "Enregistrer et quitter"
+    },
+    "assetField": {
+      "chooseImage": "Choisissez une image ou déposez-la ici",
+      "chooseFile": "Choisissez un fichier ou déposez-le ici",
+      "chooseImages": "Choisir des images",
+      "chooseFiles": "Choisir des fichiers",
+      "addImages": "Ajouter des images",
+      "addFiles": "Ajouter des fichiers",
+      "none": "Aucun fichier",
+      "details": "Détails",
+      "count": "{current} sur {max}",
+      "uploading": "Envoi en cours",
+      "wrongType": "Ce champ n'accepte pas ce type de fichier."
     }
   },
   "notifications": {

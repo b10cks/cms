@@ -530,7 +530,11 @@
       "copyLink": "Vorschau-Link kopieren",
       "openExternal": "In neuem Tab öffnen",
       "mode": "Vorschau-Modus umschalten",
-      "settings": "Vorschau-Einstellungen"
+      "settings": "Vorschau-Einstellungen",
+      "reload": "Neu laden",
+      "environment": "Umgebung",
+      "chooseEnvironment": "Umgebung wählen",
+      "manageEnvironments": "Umgebungen verwalten"
     },
     "contentVersions": {
       "title": "Versionsverlauf",
@@ -1047,6 +1051,29 @@
             "independent": "Unabhängig"
           },
           "effectiveMode": "Effektiver Modus: {mode}"
+        },
+        "rows": {
+          "preview": "Vorschau",
+          "translations": "Übersetzungen",
+          "children": "Untereinträge",
+          "cache": "Auslieferungs-Cache",
+          "previewShown": "In der Vorschau sichtbar",
+          "previewHidden": "In der Vorschau ausgeblendet",
+          "modes": {
+            "overlay": "Overlay",
+            "independent": "unabhängig"
+          },
+          "onDefaultLanguage": "In der Standardsprache festgelegt",
+          "anyType": "Jeder Typ",
+          "typesAllowed": "{count} Typ erlaubt | {count} Typen erlaubt",
+          "spaceOrder": "Space-Reihenfolge",
+          "manualOrder": "manuelle Reihenfolge",
+          "sortedBy": "sortiert nach {field}",
+          "hours": "{count} Stunde | {count} Stunden",
+          "minutes": "{count} Minute | {count} Minuten",
+          "seconds": "{count} Sekunde | {count} Sekunden",
+          "tags": "{count} Tag | {count} Tags",
+          "notSet": "Nicht gesetzt"
         }
       },
       "tabs": {
@@ -1114,6 +1141,33 @@
         "errorsTitle": "Fehler",
         "importError": "Import fehlgeschlagen",
         "progress": "{processed} von {total} Einträgen importiert"
+      },
+      "info": {
+        "publishing": "Veröffentlichung",
+        "status": "Status",
+        "liveSince": "Live seit",
+        "notLive": "Nicht live",
+        "firstPublished": "Erstmals veröffentlicht",
+        "pendingDraft": "Offener Entwurf",
+        "draft": "Entwurf",
+        "lastPublish": "Zuletzt veröffentlicht",
+        "scheduled": "Geplant",
+        "versions": "Versionen",
+        "relations": "Beziehungen",
+        "parent": "Übergeordnet",
+        "languages": "Sprachen",
+        "comments": "Kommentare",
+        "commentsOpen": "{count} offen",
+        "commentsNone": "Keine offen",
+        "technical": "Technisch",
+        "type": "Typ",
+        "address": "Adresse",
+        "id": "ID",
+        "created": "Erstellt",
+        "updated": "Geändert",
+        "copyAddress": "Adresse kopieren",
+        "copyId": "ID kopieren",
+        "copied": "In die Zwischenablage kopiert"
       }
     },
     "contentTree": {
@@ -4060,7 +4114,25 @@
       "paramKeyPlaceholder": "z. B. utm_source",
       "paramValuePlaceholder": "z. B. newsletter",
       "anchorMissing": "Dieses Element existiert auf der Seite nicht mehr.",
-      "linkToPage": "Auf Seite verlinken"
+      "linkToPage": "Auf Seite verlinken",
+      "kinds": {
+        "internal": "Eintrag",
+        "url": "URL",
+        "email": "E-Mail"
+      },
+      "chooseEntry": "Eintrag auswählen",
+      "searchEntries": "Einträge durchsuchen",
+      "searchSections": "Abschnitte durchsuchen",
+      "entries": "Einträge",
+      "sections": "Abschnitte",
+      "showSections": "Abschnitte von {name} zeigen",
+      "back": "Zurück zu den Einträgen",
+      "noEntries": "Keine Einträge gefunden.",
+      "moreEntries": "{count} weitere, tippe weiter, um einzugrenzen",
+      "noSections": "Dieser Eintrag hat keine Abschnitte.",
+      "noSectionsMatch": "Keine Abschnitte gefunden.",
+      "newTab": "In neuem Tab öffnen",
+      "moreOptions": "Weitere Optionen"
     },
     "common": {
       "is": "ist",
@@ -4430,6 +4502,19 @@
       "stay": "Weiter bearbeiten",
       "discard": "Änderungen verwerfen",
       "save": "Speichern und verlassen"
+    },
+    "assetField": {
+      "chooseImage": "Bild auswählen oder hier ablegen",
+      "chooseFile": "Datei auswählen oder hier ablegen",
+      "chooseImages": "Bilder auswählen",
+      "chooseFiles": "Dateien auswählen",
+      "addImages": "Bilder hinzufügen",
+      "addFiles": "Dateien hinzufügen",
+      "none": "Keine Datei",
+      "details": "Details",
+      "count": "{current} von {max}",
+      "uploading": "Wird hochgeladen",
+      "wrongType": "Dieses Feld nimmt diese Art von Datei nicht an."
     }
   },
   "notifications": {

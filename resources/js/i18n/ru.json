@@ -521,7 +521,11 @@
       "copyLink": "Скопировать ссылку предварительного просмотра",
       "openExternal": "Открыть в новой вкладке",
       "mode": "Переключить режим предварительного просмотра",
-      "settings": "Настройки предварительного просмотра"
+      "settings": "Настройки предварительного просмотра",
+      "reload": "Обновить",
+      "environment": "Окружение",
+      "chooseEnvironment": "Выберите окружение",
+      "manageEnvironments": "Управлять окружениями"
     },
     "contentVersions": {
       "title": "История версий",
@@ -1038,6 +1042,29 @@
             "independent": "Независимый"
           },
           "effectiveMode": "Действующий режим: {mode}"
+        },
+        "rows": {
+          "preview": "Предпросмотр",
+          "translations": "Переводы",
+          "children": "Дочерние записи",
+          "cache": "Кэш доставки",
+          "previewShown": "Показывается в предпросмотре",
+          "previewHidden": "Скрыта в предпросмотре",
+          "modes": {
+            "overlay": "наложение",
+            "independent": "независимый"
+          },
+          "onDefaultLanguage": "Задаётся на языке по умолчанию",
+          "anyType": "Любой тип",
+          "typesAllowed": "Разрешено типов: {count}",
+          "spaceOrder": "порядок пространства",
+          "manualOrder": "ручной порядок",
+          "sortedBy": "сортировка: {field}",
+          "hours": "{count} ч",
+          "minutes": "{count} мин",
+          "seconds": "{count} с",
+          "tags": "Тегов: {count}",
+          "notSet": "Не задано"
         }
       },
       "tabs": {
@@ -1105,6 +1132,33 @@
         "errorsTitle": "Ошибки",
         "importError": "Импорт не удался",
         "progress": "Импортировано {processed} из {total} записей"
+      },
+      "info": {
+        "publishing": "Публикация",
+        "status": "Статус",
+        "liveSince": "Опубликовано с",
+        "notLive": "Не опубликовано",
+        "firstPublished": "Впервые опубликовано",
+        "pendingDraft": "Неопубликованный черновик",
+        "draft": "Черновик",
+        "lastPublish": "Последняя публикация",
+        "scheduled": "Запланировано",
+        "versions": "Версии",
+        "relations": "Связи",
+        "parent": "Родитель",
+        "languages": "Языки",
+        "comments": "Комментарии",
+        "commentsOpen": "Открыто: {count}",
+        "commentsNone": "Нет открытых",
+        "technical": "Техническое",
+        "type": "Тип",
+        "address": "Адрес",
+        "id": "ID",
+        "created": "Создано",
+        "updated": "Изменено",
+        "copyAddress": "Копировать адрес",
+        "copyId": "Копировать ID",
+        "copied": "Скопировано в буфер обмена"
       }
     },
     "contentTree": {
@@ -4046,7 +4100,25 @@
       "paramKeyPlaceholder": "например, utm_source",
       "paramValuePlaceholder": "например, newsletter",
       "anchorMissing": "Этот элемент больше не существует на странице.",
-      "linkToPage": "Ссылка на страницу"
+      "linkToPage": "Ссылка на страницу",
+      "kinds": {
+        "internal": "Запись",
+        "url": "URL",
+        "email": "Эл. почта"
+      },
+      "chooseEntry": "Выберите запись",
+      "searchEntries": "Поиск записей",
+      "searchSections": "Поиск разделов",
+      "entries": "Записи",
+      "sections": "Разделы",
+      "showSections": "Показать разделы {name}",
+      "back": "Назад к записям",
+      "noEntries": "Нет подходящих записей.",
+      "moreEntries": "Ещё {count}, уточните запрос",
+      "noSections": "У этой записи нет разделов.",
+      "noSectionsMatch": "Нет подходящих разделов.",
+      "newTab": "Открыть в новой вкладке",
+      "moreOptions": "Ещё параметры"
     },
     "common": {
       "is": "равно",
@@ -4416,6 +4488,19 @@
       "stay": "Продолжить редактирование",
       "discard": "Отменить изменения",
       "save": "Сохранить и выйти"
+    },
+    "assetField": {
+      "chooseImage": "Выберите изображение или перетащите его сюда",
+      "chooseFile": "Выберите файл или перетащите его сюда",
+      "chooseImages": "Выбрать изображения",
+      "chooseFiles": "Выбрать файлы",
+      "addImages": "Добавить изображения",
+      "addFiles": "Добавить файлы",
+      "none": "Нет файла",
+      "details": "Подробности",
+      "count": "{current} из {max}",
+      "uploading": "Загрузка",
+      "wrongType": "Это поле не принимает такой тип файла."
     }
   },
   "notifications": {

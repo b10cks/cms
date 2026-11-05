@@ -521,7 +521,11 @@
       "copyLink": "Copy preview link",
       "openExternal": "Open in new tab",
       "mode": "Toggle preview mode",
-      "settings": "Preview settings"
+      "settings": "Preview settings",
+      "reload": "Reload",
+      "environment": "Environment",
+      "chooseEnvironment": "Choose environment",
+      "manageEnvironments": "Manage environments"
     },
     "contentVersions": {
       "title": "Version History",
@@ -1038,6 +1042,29 @@
             "independent": "Independent"
           },
           "effectiveMode": "Effective mode: {mode}"
+        },
+        "rows": {
+          "preview": "Preview",
+          "translations": "Translations",
+          "children": "Child entries",
+          "cache": "Delivery cache",
+          "previewShown": "Shown in the preview",
+          "previewHidden": "Hidden from the preview",
+          "modes": {
+            "overlay": "overlay",
+            "independent": "independent"
+          },
+          "onDefaultLanguage": "Set on the default language",
+          "anyType": "Any type",
+          "typesAllowed": "{count} type allowed | {count} types allowed",
+          "spaceOrder": "space order",
+          "manualOrder": "manual order",
+          "sortedBy": "sorted by {field}",
+          "hours": "{count} hour | {count} hours",
+          "minutes": "{count} minute | {count} minutes",
+          "seconds": "{count} second | {count} seconds",
+          "tags": "{count} tag | {count} tags",
+          "notSet": "Not set"
         }
       },
       "tabs": {
@@ -1105,6 +1132,33 @@
         "errorsTitle": "Errors",
         "importError": "Import failed",
         "progress": "{processed} of {total} entries imported"
+      },
+      "info": {
+        "publishing": "Publishing",
+        "status": "Status",
+        "liveSince": "Live since",
+        "notLive": "Not live",
+        "firstPublished": "First published",
+        "pendingDraft": "Pending draft",
+        "draft": "Draft",
+        "lastPublish": "Last publish",
+        "scheduled": "Scheduled",
+        "versions": "Versions",
+        "relations": "Relations",
+        "parent": "Parent",
+        "languages": "Languages",
+        "comments": "Comments",
+        "commentsOpen": "{count} open",
+        "commentsNone": "None open",
+        "technical": "Technical",
+        "type": "Type",
+        "address": "Address",
+        "id": "ID",
+        "created": "Created",
+        "updated": "Updated",
+        "copyAddress": "Copy address",
+        "copyId": "Copy ID",
+        "copied": "Copied to the clipboard"
       }
     },
     "contentTree": {
@@ -4046,7 +4100,25 @@
       "paramKeyPlaceholder": "e.g. utm_source",
       "paramValuePlaceholder": "e.g. newsletter",
       "anchorMissing": "This element no longer exists on the page.",
-      "linkToPage": "Link to page"
+      "linkToPage": "Link to page",
+      "kinds": {
+        "internal": "Entry",
+        "url": "URL",
+        "email": "Email"
+      },
+      "chooseEntry": "Choose an entry",
+      "searchEntries": "Search entries",
+      "searchSections": "Search sections",
+      "entries": "Entries",
+      "sections": "Sections",
+      "showSections": "Show the sections of {name}",
+      "back": "Back to entries",
+      "noEntries": "No entries match.",
+      "moreEntries": "{count} more, keep typing to narrow it down",
+      "noSections": "This entry has no sections.",
+      "noSectionsMatch": "No sections match.",
+      "newTab": "Open in a new tab",
+      "moreOptions": "More options"
     },
     "common": {
       "is": "is",
@@ -4416,6 +4488,19 @@
       "stay": "Keep editing",
       "discard": "Discard changes",
       "save": "Save and leave"
+    },
+    "assetField": {
+      "chooseImage": "Choose an image or drop one here",
+      "chooseFile": "Choose a file or drop one here",
+      "chooseImages": "Choose images",
+      "chooseFiles": "Choose files",
+      "addImages": "Add images",
+      "addFiles": "Add files",
+      "none": "No file",
+      "details": "Details",
+      "count": "{current} of {max}",
+      "uploading": "Uploading",
+      "wrongType": "This field doesn't take this kind of file."
     }
   },
   "notifications": {

@@ -521,7 +521,11 @@
       "copyLink": "Önizleme bağlantısını kopyala",
       "openExternal": "Yeni sekmede aç",
       "mode": "Önizleme modunu değiştir",
-      "settings": "Önizleme ayarları"
+      "settings": "Önizleme ayarları",
+      "reload": "Yenile",
+      "environment": "Ortam",
+      "chooseEnvironment": "Ortam seçin",
+      "manageEnvironments": "Ortamları yönet"
     },
     "contentVersions": {
       "title": "Sürüm Geçmişi",
@@ -1038,6 +1042,29 @@
             "independent": "Bağımsız"
           },
           "effectiveMode": "Geçerli mod: {mode}"
+        },
+        "rows": {
+          "preview": "Önizleme",
+          "translations": "Çeviriler",
+          "children": "Alt kayıtlar",
+          "cache": "Teslim önbelleği",
+          "previewShown": "Önizlemede gösteriliyor",
+          "previewHidden": "Önizlemede gizli",
+          "modes": {
+            "overlay": "katmanlı",
+            "independent": "bağımsız"
+          },
+          "onDefaultLanguage": "Varsayılan dilde ayarlanır",
+          "anyType": "Her tür",
+          "typesAllowed": "{count} türe izin var",
+          "spaceOrder": "alan sırası",
+          "manualOrder": "elle sıralama",
+          "sortedBy": "{field} göre sıralı",
+          "hours": "{count} saat",
+          "minutes": "{count} dakika",
+          "seconds": "{count} saniye",
+          "tags": "{count} etiket",
+          "notSet": "Ayarlanmadı"
         }
       },
       "tabs": {
@@ -1105,6 +1132,33 @@
         "errorsTitle": "Hatalar",
         "importError": "İçe aktarma başarısız",
         "progress": "{total} girdiden {processed} tanesi içe aktarıldı"
+      },
+      "info": {
+        "publishing": "Yayın",
+        "status": "Durum",
+        "liveSince": "Yayında olduğu tarih",
+        "notLive": "Yayında değil",
+        "firstPublished": "İlk yayın",
+        "pendingDraft": "Bekleyen taslak",
+        "draft": "Taslak",
+        "lastPublish": "Son yayın",
+        "scheduled": "Planlandı",
+        "versions": "Sürümler",
+        "relations": "İlişkiler",
+        "parent": "Üst kayıt",
+        "languages": "Diller",
+        "comments": "Yorumlar",
+        "commentsOpen": "{count} açık",
+        "commentsNone": "Açık yorum yok",
+        "technical": "Teknik",
+        "type": "Tür",
+        "address": "Adres",
+        "id": "ID",
+        "created": "Oluşturuldu",
+        "updated": "Güncellendi",
+        "copyAddress": "Adresi kopyala",
+        "copyId": "ID'yi kopyala",
+        "copied": "Panoya kopyalandı"
       }
     },
     "contentTree": {
@@ -4046,7 +4100,25 @@
       "paramKeyPlaceholder": "örn. utm_source",
       "paramValuePlaceholder": "örn. bulten",
       "anchorMissing": "Bu öğe artık sayfada mevcut değil.",
-      "linkToPage": "Sayfaya bağlantı ver"
+      "linkToPage": "Sayfaya bağlantı ver",
+      "kinds": {
+        "internal": "Kayıt",
+        "url": "URL",
+        "email": "E-posta"
+      },
+      "chooseEntry": "Bir kayıt seçin",
+      "searchEntries": "Kayıtlarda ara",
+      "searchSections": "Bölümlerde ara",
+      "entries": "Kayıtlar",
+      "sections": "Bölümler",
+      "showSections": "{name} bölümlerini göster",
+      "back": "Kayıtlara dön",
+      "noEntries": "Eşleşen kayıt yok.",
+      "moreEntries": "{count} tane daha, daraltmak için yazmaya devam edin",
+      "noSections": "Bu kaydın bölümü yok.",
+      "noSectionsMatch": "Eşleşen bölüm yok.",
+      "newTab": "Yeni sekmede aç",
+      "moreOptions": "Diğer seçenekler"
     },
     "common": {
       "is": "eşittir",
@@ -4416,6 +4488,19 @@
       "stay": "Düzenlemeye devam et",
       "discard": "Değişiklikleri at",
       "save": "Kaydet ve çık"
+    },
+    "assetField": {
+      "chooseImage": "Bir görsel seçin veya buraya bırakın",
+      "chooseFile": "Bir dosya seçin veya buraya bırakın",
+      "chooseImages": "Görselleri seç",
+      "chooseFiles": "Dosyaları seç",
+      "addImages": "Görsel ekle",
+      "addFiles": "Dosya ekle",
+      "none": "Dosya yok",
+      "details": "Ayrıntılar",
+      "count": "{current} / {max}",
+      "uploading": "Yükleniyor",
+      "wrongType": "Bu alan bu dosya türünü kabul etmiyor."
     }
   },
   "notifications": {
