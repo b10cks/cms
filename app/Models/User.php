@@ -275,6 +275,19 @@ class User extends Authenticatable implements HasLocalePreference, MustVerifyEma
         return $this->email_verified_at !== null;
     }
 
+    /**
+     * Whether the verified address was proven by mail. SAML-provisioned
+     * accounts are verified on the word of a team's own IdP, which can assert
+     * any address, so they are no proof of who owns it (for example to claim
+     * invitations sent to that address).
+     */
+    public function ownsVerifiedEmail(): bool
+    {
+        // Raw read: a model created in this request has no `source` attribute
+        // yet, and strict mode throws on the accessor.
+        return $this->hasVerifiedEmail() && ! str_starts_with((string) ($this->attributes['source'] ?? ''), 'saml:');
+    }
+
     protected function avatarUrl(): Attribute
     {
         return Attribute::get(function () {

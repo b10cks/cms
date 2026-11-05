@@ -306,6 +306,40 @@ class TeamMembershipHardeningTest extends TestCase
         $this->assertTrue($team->users()->where('users.id', $invitee->id)->exists());
     }
 
+    #[Test]
+    public function an_account_verified_by_a_team_idp_needs_the_mailed_token(): void
+    {
+        $inviter = User::factory()->create();
+        $team = Team::factory()->create();
+        $this->assignTeamRole($team, $inviter, 'owner');
+        $samlUser = User::factory()->create([
+            'email' => 'invitee@example.com',
+            'email_verified_at' => now(),
+            'source' => 'saml:01otherteam',
+        ]);
+
+        $invite = Invite::factory()->create([
+            'team_id' => $team->id,
+            'space_id' => null,
+            'invited_by' => $inviter->id,
+            'email' => 'invitee@example.com',
+            'expires_at' => now()->addDay(),
+        ]);
+
+        $this->actingAs($samlUser)
+            ->getJson(route('mgmt.users.me.invites.index'))
+            ->assertOk()
+            ->assertJsonCount(0, 'data');
+
+        $this->actingAs($samlUser)
+            ->postJson(route('mgmt.users.me.invites.accept', $invite))
+            ->assertUnprocessable();
+
+        $this->actingAs($samlUser)
+            ->postJson(route('mgmt.users.me.invites.accept', $invite), ['token' => $invite->token])
+            ->assertOk();
+    }
+
     // ── Audit trail ───────────────────────────────────────────────────────
 
     #[Test]

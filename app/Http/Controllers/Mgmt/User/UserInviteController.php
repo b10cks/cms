@@ -21,8 +21,8 @@ class UserInviteController extends Controller
         $user = auth()->user();
 
         $invites = Invite::where(function ($query) use ($user) {
-            $query->where('email', $user->email)
-                ->orWhere('invitee_id', $user->id);
+            $query->where('invitee_id', $user->id)
+                ->when($user->ownsVerifiedEmail(), fn ($query) => $query->orWhere('email', $user->email));
         })
             ->leftJoin('roles', 'roles.id', '=', 'invites.role_id')
             ->with(['inviter', 'space', 'team', 'roleDefinition'])
@@ -36,7 +36,8 @@ class UserInviteController extends Controller
     public function show(Invite $invite): InviteResource|JsonResponse
     {
         $user = auth()->user();
-        abort_if($invite->email !== $user->email && $invite->invitee_id !== $user->id, 403);
+        $matchesEmail = $user->ownsVerifiedEmail() && strcasecmp($invite->email, $user->email) === 0;
+        abort_if(! $matchesEmail && $invite->invitee_id !== $user->id, 403);
 
         return new InviteResource(
             $invite->load(['inviter', 'space', 'team', 'roleDefinition'])
