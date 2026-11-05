@@ -16,10 +16,21 @@ Rules Mike settled for the CMS UI. Tokens live in `resources/js/assets/css/main.
 - Figures: the value is semibold in the strongest ink, the label sits above it, 13px and muted.
 - No middle-dot (`·`) separators. Use a comma, a line break or separate elements.
 
+## Contrast and status text
+
+- A fill carrying white text is `bg-accent-fill` (blue-700, 4.5:1), hover `bg-accent-fill-hover`. `--accent` stays for rings, links and thin marks; blue-500 is only 3.0:1 under white.
+- Status as text on a plain surface uses the `-ink` tokens (`text-success-ink`, `text-info-ink`, `text-warning-ink`), outline badges included. The `-foreground` tokens are for filled badges.
+
+## Failed and empty states
+
+- A failed read must not read as an empty list or a zero. Dashboard, assets, blocks, content and knowledge show `QueryErrorState` (one sentence, Retry, `role="alert"`), and counts stay hidden until known. If only one source failed, it is named as missing and the other's rows stay. Inside a panel or table it uses `flush`, so there is no card in a card.
+- A search with no hits says so and offers Clear search, never the first-use pitch. An empty area offers the action that fills it as its primary button.
+
 ## Trees
 
 - All trees (content, asset folders, tags, collections, block folders) share the tree tokens. The selected row is the field fill (`bg-tree-selected`) with the strongest ink, hover is a lighter step of the same fill (`bg-tree-hover`), drop targets are the blue wash (`bg-tree-drop ring-1 ring-ring/40`). No blue selection border. Settled 2026-10-22, taking the asset tree as the model.
 - A tree row is one line. The name truncates, counts and actions keep their place.
+- From `md` up the content tree opens at 320px and can't go below 200px. Below `md` it opens at 120px and its width isn't saved.
 
 ## Sidebars
 
@@ -78,6 +89,15 @@ Settled 2026-10-27. Concept: "Threads" in `docs/concepts/native-ai-integration.m
   - A turn reads: prompt bubble, work log, answered questions (muted question, answer below), the answer with a hover copy button, sources. The work log and sources are one muted line with a chevron ("Worked for 14s, 4 steps", "2 sources") that opens into an indented list on a hairline.
   - The empty thread is one muted line centered above the composer. The thread header shows the thread's tokens as a muted label; the breakdown is in its tooltip, cost only on metered spaces.
 - AI settings (Skills, Knowledge, Schedules) have three nav entries. Each page has the title with the primary action top right; lists are one table with a type or source column. Glossary detail is wording first, see "Glossary editor". An inherited glossary opens to read, and its source column names the team that owns it.
+
+## Translation view
+
+- Source and target columns carry a sticky header with the two language names. A field reads its name and its block ("Header", "Hero 2"), and the raw path is only a tooltip.
+- An empty translation looks empty: no source text as placeholder, and a "Missing" mark with the dashed circle in `text-warning-ink`. Source field values are read-only in one muted style. Rich text keeps its disabled editor, and the entry name and slug are still disabled.
+
+## Narrow screens
+
+- Below `md` the asset folders, tags and collections move into a left sheet opened by "Browse folders". Below `md` the team nav is a horizontal scroller above the page. The content editor has no phone layout yet.
 
 ## Glossary editor
 
