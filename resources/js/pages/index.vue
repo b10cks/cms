@@ -229,7 +229,7 @@ const showGroupHeaders = computed(() => hasSubTeams.value && scope.value !== 'di
 
 <template>
   <AppHeader>
-    <div class="flex items-start">
+    <div class="flex min-w-0 flex-1 items-start">
       <TeamSelector size="sm" />
     </div>
     <template #headerActions>
@@ -242,7 +242,7 @@ const showGroupHeaders = computed(() => hasSubTeams.value && scope.value !== 'di
           :to="{ name: 'provider-dashboard' }"
         >
           <Icon name="lucide:shield-check" />
-          <span>{{ $t('labels.provider.title') }}</span>
+          <span class="max-sm:sr-only">{{ $t('labels.provider.title') }}</span>
         </Button>
         <template v-if="selectedTeam">
           <Button

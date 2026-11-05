@@ -172,7 +172,7 @@ const sizeClasses = {
       :aria-label="t('labels.teamWorkspace.switcher.label')"
       :class="
         cn(
-          'flex w-full cursor-pointer items-center justify-between gap-2 rounded-md border border-input-border bg-input py-2 pr-2 pl-3 text-start text-sm font-semibold whitespace-nowrap shadow-sm ring-offset-background focus:ring-1 focus:ring-ring focus:outline-none disabled:cursor-not-allowed disabled:opacity-50',
+          'flex w-full max-w-72 min-w-0 cursor-pointer items-center justify-between gap-2 rounded-md border border-input-border bg-input py-2 pr-2 pl-3 text-start text-sm font-semibold whitespace-nowrap shadow-sm ring-offset-background focus:ring-1 focus:ring-ring focus:outline-none disabled:cursor-not-allowed disabled:opacity-50',
           sizeClasses[props.size]
         )
       "
@@ -212,7 +212,8 @@ const sizeClasses = {
     <PopoverContent
       align="start"
       :side-offset="4"
-      class="flex max-h-[min(28rem,var(--reka-popover-content-available-height))]! w-80 min-w-(--reka-popover-trigger-width) flex-col p-1!"
+      :collision-padding="8"
+      class="flex max-h-[min(28rem,var(--reka-popover-content-available-height))]! w-80 max-w-[calc(100vw-1rem)] flex-col overflow-hidden overscroll-contain p-1!"
     >
       <div class="mb-1 flex shrink-0 items-center gap-2 rounded-md border border-border bg-background py-1 pr-2 pl-2 shadow-sm">
         <Icon
@@ -252,7 +253,7 @@ const sizeClasses = {
         :id="listId"
         role="listbox"
         :aria-label="t('labels.teamWorkspace.switcher.label')"
-        class="-mx-1 min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain px-1"
+        class="min-h-0 flex-1 overflow-y-auto overscroll-contain"
       >
         <template
           v-for="(option, index) in options"
@@ -267,7 +268,7 @@ const sizeClasses = {
           </div>
           <div
             v-if="!isSearching && option.group === 'tree' && index > 0 && options[index - 1]?.group !== 'tree'"
-            class="-mx-1 my-1 h-px bg-border"
+            class="my-1 h-px bg-border"
             role="presentation"
           />
           <div
@@ -305,7 +306,7 @@ const sizeClasses = {
       </div>
 
       <template v-if="canCreateSubTeam">
-        <div class="-mx-1 my-1 h-px shrink-0 bg-border" />
+        <div class="my-1 h-px shrink-0 bg-border" />
         <button
           type="button"
           class="flex w-full shrink-0 cursor-pointer items-center gap-2 rounded-sm py-1.5 pr-8 pl-2 text-sm text-muted outline-none select-none hover:bg-accent-fill hover:text-accent-foreground focus-visible:bg-accent-fill focus-visible:text-accent-foreground"
