@@ -143,18 +143,8 @@ class SetupConnection extends QueuedJob
 
     protected function getTempConnection(): PDO
     {
-        $tempConfig = array_merge(
-            $this->spaceConnection->config ?? [],
-            ['database' => null]
-        );
-
-        $tempConnection = new SpaceConnection([
-            'driver' => $this->spaceConnection->driver,
-            'config' => $tempConfig
-        ]);
-
         return $this->spaceConnectionService()
-            ->getConnection($tempConnection)
+            ->getServerAdminConnection($this->spaceConnection->driver)
             ->getPdo();
     }
 

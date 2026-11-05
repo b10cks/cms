@@ -137,12 +137,7 @@ class DeleteSpaceCommand extends Command
             }
 
             try {
-                $tempConfig = array_merge($connection->config ?? [], ['database' => null]);
-                $tempConnection = new \App\Models\Management\SpaceConnection([
-                    'driver' => $driver,
-                    'config' => $tempConfig,
-                ]);
-                $pdo = $this->connectionService->getConnection($tempConnection)->getPdo();
+                $pdo = $this->connectionService->getServerAdminConnection($driver)->getPdo();
 
                 $this->dropDatabase($pdo, $driver, $dbName);
 

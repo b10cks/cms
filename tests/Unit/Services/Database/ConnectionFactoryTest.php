@@ -47,6 +47,16 @@ class ConnectionFactoryTest extends TestCase
     }
 
     #[Test]
+    public function it_refuses_an_unnamed_connection_instead_of_returning_the_default(): void
+    {
+        $this->resolver->method('resolve')->willReturn(['driver' => 'mysql', 'database' => null]);
+
+        $this->expectException(\LogicException::class);
+
+        $this->factory->make(new SpaceConnection(['driver' => 'mysql', 'config' => []]));
+    }
+
+    #[Test]
     public function it_keeps_the_open_connection_when_the_config_is_unchanged(): void
     {
         $connection = SpaceConnection::factory()->mysql()->create();

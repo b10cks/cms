@@ -42,6 +42,18 @@ class DatabaseConnectionService
     }
 
     /**
+     * The database server with the installation's own credentials, for
+     * creating and dropping space databases and users. Space users can't.
+     */
+    public function getServerAdminConnection(string $driver): ConnectionInterface
+    {
+        $admin = new SpaceConnection(['driver' => $driver, 'config' => []]);
+        $admin->id = "{$driver}_server_admin";
+
+        return $this->factory->make($admin);
+    }
+
+    /**
      * Test if a connection is valid
      */
     public function testConnection(SpaceConnection $connection): bool

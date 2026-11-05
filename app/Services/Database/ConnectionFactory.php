@@ -37,6 +37,12 @@ class ConnectionFactory
 
         $name = $connection->id;
 
+        // DB::connection(null) is the management connection, so an unnamed
+        // config would be registered and then silently ignored.
+        if (empty($name)) {
+            throw new \LogicException('A space connection needs an id to be registered.');
+        }
+
         // Octane hands every request a fresh config clone, so the key must be
         // set again each time; the manager reads it whenever it (re)connects.
         // Only a config this worker has not seen (first use, rotated
