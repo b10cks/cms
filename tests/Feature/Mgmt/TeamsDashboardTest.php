@@ -28,7 +28,7 @@ class TeamsDashboardTest extends TestCase
         $editor = User::factory()->create();
         $this->assignTeamRole($client, $editor, 'member');
         Space::factory()->create(['team_id' => $agency->id]);
-        Space::factory()->create(['team_id' => $client->id]);
+        Space::factory()->create(['team_id' => $client->id, 'content_updated_at' => now()]);
 
         $data = $this->actingAs($owner)
             ->getJson(route('mgmt.teams.dashboard'))
@@ -39,6 +39,7 @@ class TeamsDashboardTest extends TestCase
         $card = $data['teams'][0];
         $this->assertSame(2, $card['people_count']);
         $this->assertSame(2, $card['spaces_count']);
+        $this->assertSame(1, $card['published_spaces']);
         $this->assertSame(1, $card['sub_team_count']);
         $this->assertSame(1, $card['teams_without_owner']);
         $this->assertSame('Client', $card['children'][0]['name']);

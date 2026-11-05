@@ -1885,6 +1885,14 @@
           "staging": "Тестирование",
           "production": "Продакшн"
         }
+      },
+      "search": "Поиск пространств",
+      "noMatches": "Нет пространств, подходящих под запрос.",
+      "otherTeams": "Другие команды",
+      "scope": {
+        "all": "Все",
+        "direct": "Эта команда",
+        "subTeams": "Подкоманды"
       }
     },
     "spaceBlueprints": {
@@ -3208,7 +3216,9 @@
         "settings": "Настройки",
         "moreTeams": "Ещё {count}",
         "withoutOwner": "Без владельца: {count} | Без владельца: {count} | Без владельца: {count}",
-        "edited": "Изменено {time}"
+        "edited": "Изменено {time}",
+        "active": "{count} активных",
+        "published": "{count} опубликовано"
       },
       "personal": {
         "title": "Личные команды"

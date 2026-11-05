@@ -2,6 +2,8 @@
 
 namespace App\Http\Filters\Mgmt;
 
+use App\Models\Management\Team;
+use App\Services\Team\TeamScope;
 use CodersCantina\Filter\ExtendedFilter;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\Relation;
@@ -18,6 +20,18 @@ class SpaceFilter extends ExtendedFilter
     public function slug($value)
     {
         $this->builder->where('slug', 'LIKE', "%{$value}%");
+    }
+
+    /**
+     * Spaces owned by the team. With `sub_teams=true` also those of every team
+     * below it. Access is still limited by the controller.
+     */
+    public function team_id($value)
+    {
+        $team = Team::query()->find($value);
+        $withSubTeams = filter_var($this->filters['sub_teams'] ?? false, FILTER_VALIDATE_BOOLEAN);
+
+        $this->builder->whereIn('team_id', $team && $withSubTeams ? TeamScope::for($team)->teamIds : [$value]);
     }
 
     public function archived($value)

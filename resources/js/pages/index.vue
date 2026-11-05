@@ -7,26 +7,28 @@ import type { SpaceQueryParams } from '~/api/resources/spaces'
 import SpaceIcon from '~/assets/images/space.svg?component'
 import AppHeader from '~/components/AppHeader.vue'
 import Icon from '~/components/Icon.vue'
-import NuxtImg from '~/components/NuxtImg.vue'
 import CreateBlueprintDialog from '~/components/space/CreateBlueprintDialog.vue'
-import SpaceActionsMenu from '~/components/space/SpaceActionsMenu.vue'
-import SpaceBadge from '~/components/space/SpaceBadge.vue'
 import SpaceBadgeDialog from '~/components/space/SpaceBadgeDialog.vue'
+import SpaceCard from '~/components/space/SpaceCard.vue'
+import TeamAvatar from '~/components/teams/TeamAvatar.vue'
 import TeamSelector from '~/components/TeamSelector.vue'
-import { Badge, type BadgeVariants } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
 import ContentHeader from '~/components/ui/ContentHeader.vue'
-import { DropdownMenu, DropdownMenuTrigger } from '~/components/ui/dropdown-menu'
+import { getPresenceColor } from '~/components/ui/presence-colors'
 import { Select, SelectContent, SelectItem } from '~/components/ui/select'
+import { Skeleton } from '~/components/ui/skeleton'
+import { Tabs, TabsList, TabsTrigger } from '~/components/ui/tabs'
 import { useAlertDialog } from '~/composables/useAlertDialog'
+import { fuzzyMatch, prepareFuzzyQuery, prepareFuzzyTarget } from '~/lib/fuzzy-match'
+import { flattenTeamHierarchy } from '~/lib/team-hierarchy'
 import { useI18n } from '~/plugins/i18n'
+import type { TeamResource } from '~/types/teams'
 
 const { $t, t } = useI18n()
 const { useSpacesQuery, useArchiveSpaceMutation } = useSpaces()
-const { formatRelativeTime } = useFormat()
 const route = useRoute()
 const router = useRouter()
-const { selectedTeam, hasTeams } = useGlobalTeam()
+const { selectedTeam, hasTeams, teams, isLoadingTeams } = useGlobalTeam()
 const { useAccessControl } = useAuthorization()
 const access = useAccessControl(
   computed(() => (selectedTeam.value?.id ? { team_id: selectedTeam.value.id } : {}))
@@ -75,12 +77,22 @@ const spaceFilter = computed<SpaceQueryParams>(() => {
   return {
     archived: archived.value || undefined,
     sort: sort.value || '-updated_at',
+    team_id: selectedTeam.value?.id,
+    sub_teams: true,
+    per_page: 1000,
   }
 })
 
-const { data: spaces } = useSpacesQuery(spaceFilter)
+// Without a team the request would return every space the user can reach, so wait for the teams.
+const { data: spaces, isLoading } = useSpacesQuery(spaceFilter, () => !isLoadingTeams.value)
 
-const badgeDialogSpaceId = ref<string | null>(null)
+// The space stays set after closing, so the dialog can animate out.
+const badgeDialogSpace = ref<SpaceResource | null>(null)
+const isBadgeDialogOpen = ref(false)
+const openBadgeDialog = (space: SpaceResource) => {
+  badgeDialogSpace.value = space
+  isBadgeDialogOpen.value = true
+}
 const blueprintSourceSpace = ref<SpaceResource | null>(null)
 const isCreateBlueprintDialogOpen = ref(false)
 
@@ -117,58 +129,102 @@ const getSortLabel = (sort: string) => {
   return $t(sort.replace(/^[+-]?(\w*)/, 'labels.sort.$1') + (sort.startsWith('-') ? 'Desc' : 'Asc'))
 }
 
-const teamRelatedSpaces = computed(() => {
-  return spaces.value?.filter((space) => space.team_id === selectedTeam.value?.id) || []
+interface SubtreeTeam {
+  team: TeamResource
+  /** Teams between the selected team and this one, nearest last. */
+  path: TeamResource[]
+}
+
+/** The selected team and every team below it, in tree order. */
+const subtree = computed<SubtreeTeam[]>(() => {
+  const rootId = selectedTeam.value?.id
+  if (!rootId) return []
+
+  const entries = flattenTeamHierarchy((teams.value?.data ?? []) as TeamResource[])
+  const start = entries.findIndex((entry) => entry.team.id === rootId)
+  if (start === -1) return []
+
+  const rootDepth = entries[start].depth
+  const result: SubtreeTeam[] = [{ team: entries[start].team, path: [] }]
+  const chain: TeamResource[] = []
+  for (const entry of entries.slice(start + 1)) {
+    if (entry.depth <= rootDepth) break
+    chain.length = entry.depth - rootDepth - 1
+    result.push({ team: entry.team, path: [...chain] })
+    chain.push(entry.team)
+  }
+  return result
 })
 
-const formatLastUpdated = (space: SpaceResource) => {
-  const contentTs = space.content_updated_at ? Date.parse(space.content_updated_at) : 0
-  const updatedTs = space.updated_at ? Date.parse(space.updated_at) : 0
-  const date = (contentTs >= updatedTs ? space.content_updated_at : space.updated_at) ?? null
+const hasSubTeams = computed(() => subtree.value.length > 1)
 
-  return date ? formatRelativeTime(date) : ''
+type Scope = 'all' | 'direct' | 'subTeams'
+
+const scope = computed<Scope>({
+  get() {
+    const value = route.query.scope
+    return value === 'direct' || value === 'subTeams' ? value : 'all'
+  },
+  set(value) {
+    router.replace({ query: { ...route.query, scope: value === 'all' ? undefined : value } })
+  },
+})
+
+const query = ref('')
+
+const isDirect = (space: SpaceResource) => space.team_id === selectedTeam.value?.id
+
+const scopeTest: Record<Scope, (space: SpaceResource) => boolean> = {
+  all: () => true,
+  direct: isDirect,
+  subTeams: (space) => !isDirect(space),
 }
 
-const getSpacePlanBadgeVariant = (status: SpacePlanSummary['status']): BadgeVariants['variant'] => {
-  switch (status) {
-    case 'on_trial':
-      return 'info'
-    case 'pending':
-    case 'paused':
-      return 'warning'
-    case 'past_due':
-    case 'unpaid':
-      return 'destructive'
-    case 'cancelled':
-    case 'expired':
-    case 'active':
-    default:
-      return 'secondary'
+const scopes = computed(() =>
+  (Object.keys(scopeTest) as Scope[]).map((key) => ({
+    value: key,
+    label: t(`labels.spaces.scope.${key}`),
+    count: (spaces.value ?? []).filter(scopeTest[key]).length,
+  }))
+)
+
+interface SpaceGroup {
+  key: string
+  /** `null` for spaces of a team the user cannot see. */
+  team: TeamResource | null
+  path: TeamResource[]
+  entries: { space: SpaceResource; indices?: number[] }[]
+}
+
+/** Spaces in scope and matching the search, grouped by team in tree order. Empty groups are dropped. */
+const groups = computed<SpaceGroup[]>(() => {
+  const normalized = prepareFuzzyQuery(query.value)
+  const byTeam = new Map<string, SpaceGroup['entries']>()
+
+  for (const space of spaces.value ?? []) {
+    if (!scopeTest[scope.value](space)) continue
+    const match = normalized ? fuzzyMatch(normalized, prepareFuzzyTarget(space.name)) : null
+    if (normalized && !match) continue
+
+    const key = space.team_id ?? ''
+    byTeam.set(key, [...(byTeam.get(key) ?? []), { space, indices: match?.indices }])
   }
-}
 
-const getSpacePlanIcon = (status: SpacePlanSummary['status']) => {
-  switch (status) {
-    case 'active':
-      return 'lucide:check'
-    case 'on_trial':
-      return 'lucide:flask-conical'
-    case 'paused':
-      return 'lucide:pause'
-    case 'past_due':
-    case 'pending':
-    case 'unpaid':
-      return 'lucide:triangle-alert'
-    case 'cancelled':
-    case 'expired':
-    default:
-      return 'lucide:circle-off'
+  const result: SpaceGroup[] = []
+  for (const { team, path } of subtree.value) {
+    const entries = byTeam.get(team.id)
+    if (!entries) continue
+    result.push({ key: team.id, team, path, entries })
+    byTeam.delete(team.id)
   }
-}
 
-const getSpacePlanLabel = (plan: SpacePlanSummary) => {
-  return plan.name ?? $t('labels.plans.free')
-}
+  const rest = [...byTeam.values()].flat()
+  if (rest.length) result.push({ key: 'other', team: null, path: [], entries: rest })
+
+  return result
+})
+
+const showGroupHeaders = computed(() => hasSubTeams.value && scope.value !== 'direct')
 </script>
 
 <template>
@@ -295,134 +351,160 @@ const getSpacePlanLabel = (plan: SpacePlanSummary) => {
           </Select>
         </ContentHeader>
 
-        <div class="flex gap-8">
-          <div
-            v-if="teamRelatedSpaces.length > 0"
-            class="grid w-full gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
-          >
-            <div
-              v-for="space in teamRelatedSpaces"
-              :key="space.id"
-              class="group flex flex-col gap-2"
+        <div
+          v-if="spaces?.length"
+          class="flex flex-wrap items-center gap-3"
+        >
+          <div class="flex h-9 w-72 items-center gap-2 rounded-md border border-input-border bg-input px-3 shadow-sm focus-within:ring-1 focus-within:ring-ring">
+            <Icon
+              name="lucide:search"
+              class="shrink-0 text-muted"
+            />
+            <input
+              v-model="query"
+              type="search"
+              :placeholder="t('labels.spaces.search')"
+              :aria-label="t('labels.spaces.search')"
+              class="min-w-0 flex-1 bg-transparent text-sm text-primary outline-none placeholder:text-muted"
             >
-              <RouterLink
-                :to="{ name: 'space', params: { space: space.id } }"
-                class="flex flex-col gap-2"
+          </div>
+
+          <Tabs
+            v-if="hasSubTeams"
+            v-model="scope"
+          >
+            <TabsList>
+              <TabsTrigger
+                v-for="item in scopes"
+                :key="item.value"
+                :value="item.value"
               >
-                <DropdownMenu v-slot="{ open }">
-                  <div
-                    :class="{ '-translate-y-2': open }"
-                    class="relative grid min-h-36 place-items-center justify-center overflow-clip rounded-lg bg-input p-4 shadow-lg transition-transform duration-500 ease-micro-bounce group-hover:-translate-y-2"
+                {{ item.label }}
+                <span class="text-muted tabular-nums">{{ item.count }}</span>
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+        </div>
+
+        <div
+          v-if="isLoading"
+          class="grid w-full gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+        >
+          <Skeleton
+            v-for="index in 4"
+            :key="index"
+            class="h-48 rounded-lg"
+          />
+        </div>
+
+        <div
+          v-else-if="groups.length"
+          class="flex flex-col gap-10"
+        >
+          <section
+            v-for="group in groups"
+            :key="group.key"
+            class="flex flex-col gap-4"
+          >
+            <header
+              v-if="showGroupHeaders"
+              class="flex min-w-0 items-center gap-2.5"
+            >
+              <template v-if="group.team">
+                <TeamAvatar
+                  :name="group.team.name"
+                  :avatar="group.team.avatar"
+                  :color="group.team.color || getPresenceColor(group.team.id).value"
+                  size="md"
+                />
+                <h3 class="flex min-w-0 items-center gap-1.5 text-panel font-semibold">
+                  <template
+                    v-for="ancestor in group.path"
+                    :key="ancestor.id"
                   >
-                    <NuxtImg
-                      v-if="space.icon"
-                      :src="space.icon"
-                      :alt="space.name"
-                      class="absolute inset-0 h-full w-full scale-110 object-cover blur-xl"
+                    <span class="truncate font-normal text-muted">{{ ancestor.name }}</span>
+                    <Icon
+                      name="lucide:chevron-right"
+                      class="shrink-0 text-muted"
                     />
-                    <NuxtImg
-                      v-if="space.icon"
-                      :src="space.icon"
-                      :alt="space.name"
-                      class="relative z-10 size-16"
-                    />
-                    <SpaceBadge
-                      v-if="space.badge"
-                      :badge="space.badge"
-                      size="2xs"
-                      class="absolute bottom-2 left-2 z-20"
-                    />
-                  </div>
-                  <div class="flex items-center">
-                    <div class="min-w-0 flex-1">
-                      <div class="flex items-center gap-2">
-                        <h4 class="truncate font-semibold text-primary">{{ space.name }}</h4>
-                      </div>
-                      <p class="text-sm text-muted">
-                        {{ $t('labels.fields.lastUpdated', { timeAgo: formatLastUpdated(space) }) }}
-                      </p>
-                    </div>
+                  </template>
+                  <RouterLink
+                    v-if="group.team.can_view_detail"
+                    :to="{ name: 'team-overview', params: { team: group.team.id } }"
+                    class="truncate text-primary hover:underline"
+                  >
+                    {{ group.team.name }}
+                  </RouterLink>
+                  <span
+                    v-else
+                    class="truncate text-primary"
+                  >{{ group.team.name }}</span>
+                </h3>
+              </template>
+              <h3
+                v-else
+                class="text-panel font-semibold text-primary"
+              >
+                {{ t('labels.spaces.otherTeams') }}
+              </h3>
+              <span class="text-sm text-muted tabular-nums">{{ group.entries.length }}</span>
+            </header>
 
-                    <div class="ml-auto grid shrink-0">
-                      <div
-                        class="grid-area-stack flex items-center gap-2 group-hover:hidden"
-                        :class="[open ? 'hidden' : '']"
-                      >
-                        <Badge
-                          v-if="space.plan"
-                          size="xs"
-                          :variant="getSpacePlanBadgeVariant(space.plan.status)"
-                        >
-                          <span class="flex items-center gap-1.5">
-                            <Icon
-                              :name="getSpacePlanIcon(space.plan.status)"
-                              size="12"
-                            />
-                            <span>{{ getSpacePlanLabel(space.plan) }}</span>
-                          </span>
-                        </Badge>
-                      </div>
-                      <DropdownMenuTrigger class="grid-area-stack">
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          class="opacity-0 transition-opacity duration-200 group-hover:opacity-100"
-                          :class="[open ? 'opacity-100' : '']"
-                          :aria-label="$t('actions.moreActions')"
-                          @click.prevent
-                        >
-                          <Icon name="lucide:ellipsis" />
-                        </Button>
-                      </DropdownMenuTrigger>
-
-                      <SpaceActionsMenu
-                        :space="space"
-                        @archive="handleArchive"
-                        @assign-badge="badgeDialogSpaceId = $event.id"
-                        @create-blueprint="openCreateBlueprintDialog"
-                      />
-                    </div>
-                  </div>
-                </DropdownMenu>
-              </RouterLink>
-
-              <SpaceBadgeDialog
-                :space="space"
-                :open="badgeDialogSpaceId === space.id"
-                @update:open="
-                  (val) => {
-                    if (!val) badgeDialogSpaceId = null
-                  }
-                "
+            <div class="grid w-full gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              <SpaceCard
+                v-for="entry in group.entries"
+                :key="entry.space.id"
+                :space="entry.space"
+                :highlight="entry.indices"
+                @archive="handleArchive"
+                @assign-badge="openBadgeDialog"
+                @create-blueprint="openCreateBlueprintDialog"
               />
             </div>
-          </div>
+          </section>
+        </div>
 
-          <div
-            v-else
-            class="flex min-h-96 w-full flex-col items-center justify-center gap-6 text-center"
-          >
-            <SpaceIcon class="w-32 text-muted" />
-            <div class="space-y-2">
-              <h3 class="text-xl font-semibold text-primary">
-                {{ $t('labels.spaces.emptyTitle') }}
-              </h3>
-              <p class="max-w-md text-sm text-muted">
-                {{ $t('labels.spaces.emptyDescription') }}
-              </p>
-            </div>
-            <Button
-              v-if="canCreateSpace"
-              :as="RouterLink"
-              variant="primary"
-              :to="{ name: 'spaces-new' }"
-            >
-              <Icon name="lucide:plus" />
-              <span>{{ $t('actions.spaces.add') }}</span>
-            </Button>
+        <div
+          v-else-if="spaces?.length"
+          class="flex flex-col items-center gap-3 rounded-xl border border-dashed border-border-strong py-16 text-center"
+        >
+          <Icon
+            name="lucide:search-x"
+            class="size-8 text-muted"
+          />
+          <p class="text-sm text-muted">{{ t('labels.spaces.noMatches') }}</p>
+        </div>
+
+        <div
+          v-else
+          class="flex min-h-96 w-full flex-col items-center justify-center gap-6 text-center"
+        >
+          <SpaceIcon class="w-32 text-muted" />
+          <div class="space-y-2">
+            <h3 class="text-xl font-semibold text-primary">
+              {{ $t('labels.spaces.emptyTitle') }}
+            </h3>
+            <p class="max-w-md text-sm text-muted">
+              {{ $t('labels.spaces.emptyDescription') }}
+            </p>
           </div>
+          <Button
+            v-if="canCreateSpace"
+            :as="RouterLink"
+            variant="primary"
+            :to="{ name: 'spaces-new' }"
+          >
+            <Icon name="lucide:plus" />
+            <span>{{ $t('actions.spaces.add') }}</span>
+          </Button>
         </div>
       </div>
+
+      <SpaceBadgeDialog
+        v-if="badgeDialogSpace"
+        v-model:open="isBadgeDialogOpen"
+        :space="badgeDialogSpace"
+      />
     </main>
   </div>
 </template>

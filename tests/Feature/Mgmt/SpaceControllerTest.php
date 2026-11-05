@@ -7,6 +7,7 @@ use App\Models\Management\Plan;
 use App\Models\Management\Space;
 use App\Models\Management\SpaceConnection;
 use App\Models\Management\Subscription;
+use App\Models\Management\Team;
 use App\Models\User;
 use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
 use Illuminate\Support\Facades\Queue;
@@ -455,5 +456,23 @@ class SpaceControllerTest extends TestCase
             ->all();
 
         $this->assertEquals(['C Space', 'B Space', 'A Space'], $spaceNames);
+    }
+
+    #[Test]
+    public function spaces_can_be_filtered_by_team_with_or_without_sub_teams()
+    {
+        $agency = Team::factory()->create();
+        $client = Team::factory()->create(['parent_id' => $agency->id]);
+        $this->assignTeamRole($agency, $this->user, 'owner');
+        $own = Space::factory()->withLive()->create(['team_id' => $agency->id, 'name' => 'Agency site']);
+        $nested = Space::factory()->withLive()->create(['team_id' => $client->id, 'name' => 'Client site']);
+
+        $this->actingAs($this->user);
+
+        $direct = $this->getJson(route('mgmt.spaces.index', ['team_id' => $agency->id]))->assertOk();
+        $this->assertSame([$own->id], array_column($direct->json('data'), 'id'));
+
+        $subtree = $this->getJson(route('mgmt.spaces.index', ['team_id' => $agency->id, 'sub_teams' => 'true']))->assertOk();
+        $this->assertEqualsCanonicalizing([$own->id, $nested->id], array_column($subtree->json('data'), 'id'));
     }
 }

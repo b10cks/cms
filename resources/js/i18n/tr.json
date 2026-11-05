@@ -1885,6 +1885,14 @@
           "staging": "Staging",
           "production": "Üretim"
         }
+      },
+      "search": "Alanlarda ara",
+      "noMatches": "Aramanızla eşleşen alan yok.",
+      "otherTeams": "Diğer ekipler",
+      "scope": {
+        "all": "Tümü",
+        "direct": "Bu ekip",
+        "subTeams": "Alt ekipler"
       }
     },
     "spaceBlueprints": {
@@ -3208,7 +3216,9 @@
         "settings": "Ayarlar",
         "moreTeams": "+{count} daha",
         "withoutOwner": "{count} sahipsiz | {count} sahipsiz | {count} sahipsiz",
-        "edited": "{time} düzenlendi"
+        "edited": "{time} düzenlendi",
+        "active": "{count} aktif",
+        "published": "{count} yayında"
       },
       "personal": {
         "title": "Kişisel ekipler"

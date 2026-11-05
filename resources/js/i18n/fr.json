@@ -1885,6 +1885,14 @@
           "staging": "Pré-production",
           "production": "Production"
         }
+      },
+      "search": "Rechercher des espaces",
+      "noMatches": "Aucun espace ne correspond à votre recherche.",
+      "otherTeams": "Autres équipes",
+      "scope": {
+        "all": "Tous",
+        "direct": "Cette équipe",
+        "subTeams": "Sous-équipes"
       }
     },
     "spaceBlueprints": {
@@ -3208,7 +3216,9 @@
         "settings": "Paramètres",
         "moreTeams": "+{count} de plus",
         "withoutOwner": "{count} sans propriétaire | {count} sans propriétaire | {count} sans propriétaire",
-        "edited": "Modifié {time}"
+        "edited": "Modifié {time}",
+        "active": "{count} actifs",
+        "published": "{count} publiés"
       },
       "personal": {
         "title": "Équipes personnelles"

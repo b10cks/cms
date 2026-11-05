@@ -1885,6 +1885,14 @@
           "staging": "Staging",
           "production": "Production"
         }
+      },
+      "search": "Search spaces",
+      "noMatches": "No space matches your search.",
+      "otherTeams": "Other teams",
+      "scope": {
+        "all": "All",
+        "direct": "This team",
+        "subTeams": "Sub-teams"
       }
     },
     "spaceBlueprints": {
@@ -3208,7 +3216,9 @@
         "settings": "Settings",
         "moreTeams": "+{count} more",
         "withoutOwner": "{count} without owner | {count} without owner | {count} without owner",
-        "edited": "Edited {time}"
+        "edited": "Edited {time}",
+        "active": "{count} active",
+        "published": "{count} published"
       },
       "personal": {
         "title": "Personal teams"

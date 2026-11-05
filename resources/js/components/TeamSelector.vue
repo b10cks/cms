@@ -252,7 +252,7 @@ const sizeClasses = {
         :id="listId"
         role="listbox"
         :aria-label="t('labels.teamWorkspace.switcher.label')"
-        class="min-h-0 flex-1 overflow-y-auto"
+        class="-mx-1 min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain px-1"
       >
         <template
           v-for="(option, index) in options"

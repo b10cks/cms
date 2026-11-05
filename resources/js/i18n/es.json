@@ -1885,6 +1885,14 @@
           "staging": "Staging",
           "production": "Production"
         }
+      },
+      "search": "Buscar espacios",
+      "noMatches": "Ningún espacio coincide con tu búsqueda.",
+      "otherTeams": "Otros equipos",
+      "scope": {
+        "all": "Todos",
+        "direct": "Este equipo",
+        "subTeams": "Subequipos"
       }
     },
     "spaceBlueprints": {
@@ -3208,7 +3216,9 @@
         "settings": "Ajustes",
         "moreTeams": "+{count} más",
         "withoutOwner": "{count} sin propietario | {count} sin propietario | {count} sin propietario",
-        "edited": "Editado {time}"
+        "edited": "Editado {time}",
+        "active": "{count} activos",
+        "published": "{count} publicados"
       },
       "personal": {
         "title": "Equipos personales"
