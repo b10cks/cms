@@ -184,6 +184,36 @@ class ContentSchemaValidationTest extends TestCase
     }
 
     #[Test]
+    public function publishing_a_version_goes_through_the_regular_publish_path(): void
+    {
+        $this->actingAs($this->owner);
+
+        $content = $this->createContent(['headline' => 'First', 'toggle' => false, 'summary' => 'A']);
+        $first = $content->current_version_id;
+
+        $scheduled = ContentVersion::query()->forceCreate([
+            'content_id' => $content->id,
+            'parent_id' => $first,
+            'content' => ['headline' => 'Later', 'toggle' => false, 'summary' => 'B'],
+            'created_by_id' => $this->owner->id,
+            'scheduled_at' => now()->addDay(),
+        ]);
+
+        $this->postJson(route('mgmt.contents.versions.publish', [
+            'space' => $this->space->id,
+            'content' => $content->id,
+            'version' => $first,
+        ]))
+            ->assertNoContent();
+
+        $content->refresh();
+        $this->assertSame($first, $content->published_version_id);
+        $this->assertNotNull($content->first_published_at);
+        $this->assertSame($this->owner->id, ContentVersion::find($first)->published_by_id);
+        $this->assertNull($scheduled->fresh()->scheduled_at);
+    }
+
+    #[Test]
     public function translation_conditionals_use_effective_overlay_values_and_clear_hidden_local_fields(): void
     {
         $this->actingAs($this->owner);
