@@ -35,9 +35,9 @@ const updateValue = (value: string | number) => {
         <Textarea
           :model-value="originalValue || ''"
           :auto-size="600"
-          disabled
+          readonly
           rows="4"
-          class="resize-none"
+          class="resize-none pr-10"
           tabindex="-1"
           :aria-label="`Original ${item.name || item.key}`"
         />
@@ -59,7 +59,6 @@ const updateValue = (value: string | number) => {
         :disabled="disabled"
         rows="4"
         :class="['resize-none', isMachineTranslated && 'ring-1 ring-ai']"
-        :placeholder="originalValue || ''"
         data-validation-target="true"
         @update:model-value="updateValue"
       />

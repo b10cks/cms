@@ -151,7 +151,7 @@ const shouldShowFieldError = inject<((path: string) => boolean) | undefined>(
 
 const showUntranslatedOnly = ref(false)
 const searchQuery = ref('')
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const { showAiError } = useAiErrorToast()
 const aiEnabled = useAiEnabled(() => props.spaceId)
 const { useAiConfigsQuery } = useAiConfigs(computed(() => props.spaceId))
@@ -177,6 +177,26 @@ function extractCompletedTranslations(partial: string): Record<string, string> {
   return result
 }
 const sourceLanguage = computed((): string => space.value?.settings?.default_language || '')
+
+const languageName = (iso: string): string => {
+  try {
+    return new Intl.DisplayNames([locale.value], { type: 'language' }).of(iso) ?? iso
+  } catch {
+    return iso
+  }
+}
+
+/** The block a field sits in: "Hero 2" for the second top-level block. Null at the entry's top level. */
+const fieldContext = (field: TranslatableField): string | null => {
+  const stamp = field.blockStamps?.at(-1)
+  if (!stamp) return null
+  const name = props.getBlockSchema?.(stamp.block)?.name ?? stamp.block
+  const position = field.path[stamp.pathIndex]
+  return typeof position === 'number' ? `${name} ${position + 1}` : name
+}
+
+const needsTranslation = (field: TranslatableField): boolean =>
+  !field.isTranslated && !field.isOrphaned && hasTranslatedValue(field.schemaItem, field.originalValue)
 
 const defaultAiConfig = computed<SpaceAiConfig | null>(() => {
   return aiConfigs.value?.find((config) => config.is_default) ?? null
@@ -816,7 +836,10 @@ const getCollaborationStyle = (field: TranslatableField): Record<string, string>
 
 const focusedCollaborationKeys = new Set<string>()
 
-const handleFieldFocusIn = (field: TranslatableField) => {
+const handleFieldFocusIn = (field: TranslatableField, event: FocusEvent) => {
+  // Reading the source is not working on the field.
+  if ((event.target as HTMLElement).matches('[readonly]')) return
+
   const key = getCollaborationKey(field)
   if (focusedCollaborationKeys.has(key)) return
 
@@ -1392,7 +1415,7 @@ const removeAllOrphanedBlocks = (): void => {
                 :style="`width: ${translationStats.percentage}%`"
               />
             </div>
-            <span class="text-xs font-semibold text-muted">
+            <span class="text-sm font-semibold text-muted">
               {{ translationStats.translated }}/{{ translationStats.total }} fields ({{
                 translationStats.percentage
               }}%)
@@ -1482,6 +1505,13 @@ const removeAllOrphanedBlocks = (): void => {
       :findings="translationRun.findings.value"
       class="mb-4"
     />
+    <div
+      v-if="filteredFields.length"
+      class="sticky top-0 z-10 grid grid-cols-2 gap-4 border-b border-border bg-background py-2 text-sm font-semibold text-primary"
+    >
+      <span>{{ languageName(sourceLanguage) }}</span>
+      <span>{{ languageName(targetLanguage) }}</span>
+    </div>
     <div class="grid gap-3">
       <div
         v-for="field in filteredFields"
@@ -1495,7 +1525,7 @@ const removeAllOrphanedBlocks = (): void => {
           fieldCollaborators(field).length ? 'collaboration-field-active' : '',
         ]"
         :style="getCollaborationStyle(field)"
-        @focusin="handleFieldFocusIn(field)"
+        @focusin="handleFieldFocusIn(field, $event)"
         @focusout="handleFieldFocusOut(field, $event)"
       >
         <div
@@ -1513,8 +1543,22 @@ const removeAllOrphanedBlocks = (): void => {
         <div class="-mb-2 pt-2">
           <h4 class="flex items-baseline gap-2">
             <span class="font-semibold text-primary">{{ field.fieldName }}</span>
-            <span class="text-2xs opacity-50 font-mono">
-              {{ field.path.join('.') }}
+            <span
+              v-if="fieldContext(field)"
+              class="text-sm text-muted"
+              :title="field.path.join('.')"
+            >
+              {{ fieldContext(field) }}
+            </span>
+            <span
+              v-if="needsTranslation(field)"
+              class="ml-auto flex items-center gap-1 text-sm text-warning-ink"
+            >
+              <Icon
+                name="lucide:circle-dashed"
+                class="size-3.5"
+              />
+              {{ $t('components.flattenedLocalization.missing') }}
             </span>
             <span
               v-if="field.isOrphaned"

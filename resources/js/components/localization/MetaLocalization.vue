@@ -57,7 +57,6 @@ const { t } = useI18n()
         :label="t('labels.contents.localization.meta.translationTitle')"
         :disabled="disabled"
         :input-class="[isMachineTranslated && 'ring-1 ring-ai']"
-        :placeholder="originalValue?.title"
         @update:model-value="updateValue('title', $event)"
       />
       <TextField
@@ -75,7 +74,6 @@ const { t } = useI18n()
         :auto-size="600"
         :disabled="disabled"
         :input-class="[isMachineTranslated && 'ring-1 ring-ai']"
-        :placeholder="originalValue?.description"
         @update:model-value="updateValue('description', $event)"
       />
       <template v-if="item.has_og_tags">
@@ -92,7 +90,6 @@ const { t } = useI18n()
           :label="t('labels.contents.localization.meta.translationOgTitle')"
           :disabled="disabled"
           :input-class="[isMachineTranslated && 'ring-1 ring-ai']"
-          :placeholder="originalValue?.ogTitle"
           @update:model-value="updateValue('ogTitle', $event)"
         />
         <TextField
@@ -110,7 +107,6 @@ const { t } = useI18n()
           :auto-size="600"
           :disabled="disabled"
           :input-class="[isMachineTranslated && 'ring-1 ring-ai']"
-          :placeholder="originalValue?.ogDescription"
           @update:model-value="updateValue('ogDescription', $event)"
         />
       </template>
