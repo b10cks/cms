@@ -19,6 +19,7 @@ addCollection(lucideIcons)
 addCollection(flagIcons)
 addCollection(brandIcons)
 import { isClient } from '~/lib/env'
+import { trackInputModality } from '~/lib/inputModality'
 import { reloadOnStaleChunks } from '~/lib/staleChunks'
 import { installAuthHandler } from '~/plugins/auth'
 import { installEcho } from '~/plugins/echo'
@@ -26,6 +27,8 @@ import { installI18n } from '~/plugins/i18n'
 import { installPosthog } from '~/plugins/posthog'
 import { installVueQuery } from '~/plugins/vue-query'
 import { router } from '~/router'
+
+trackInputModality()
 
 const app = createApp(App)
 

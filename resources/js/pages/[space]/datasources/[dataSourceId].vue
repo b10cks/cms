@@ -590,13 +590,13 @@ const handleTranslateMissingDimensions = async () => {
               <TabsList class="h-8">
                 <TabsTrigger
                   value="single"
-                  class="px-2 py-1 text-xs"
+                  class="px-2 py-1 text-sm"
                 >
                   {{ $t('labels.datasets.singleEdit') }}
                 </TabsTrigger>
                 <TabsTrigger
                   value="grid"
-                  class="px-2 py-1 text-xs"
+                  class="px-2 py-1 text-sm"
                 >
                   {{ $t('labels.datasets.gridEdit') }}
                 </TabsTrigger>
@@ -704,7 +704,7 @@ const handleTranslateMissingDimensions = async () => {
           <AiRunFindings :findings="translationFindings" />
           <div
             v-if="translationProgress"
-            class="rounded-md border border-input bg-elevated p-4"
+            class="rounded-md border border-input-border bg-elevated p-4"
           >
             <div class="mb-2 flex items-center justify-between gap-4">
               <div>
@@ -715,7 +715,7 @@ const handleTranslateMissingDimensions = async () => {
                     })
                   }}
                 </div>
-                <div class="text-xs text-muted">
+                <div class="text-sm text-muted">
                   {{
                     $t('labels.dataEntries.translation.progress', {
                       processed: translationProgress.processed,
@@ -726,7 +726,7 @@ const handleTranslateMissingDimensions = async () => {
                   }}
                 </div>
               </div>
-              <div class="text-xs font-medium text-muted">{{ translationProgressPercent }}%</div>
+              <div class="text-sm font-medium text-muted">{{ translationProgressPercent }}%</div>
             </div>
             <Progress :model-value="translationProgressPercent" />
           </div>
@@ -968,7 +968,7 @@ const handleTranslateMissingDimensions = async () => {
                           <Button
                             v-if="isDefaultSelected"
                             size="icon"
-                            variant="destructive"
+                            variant="ghost-destructive"
                             class="h-8 w-8"
                             :aria-label="$t('labels.dataEntries.actions.delete')"
                             @click="handleDeleteEntry(entry)"

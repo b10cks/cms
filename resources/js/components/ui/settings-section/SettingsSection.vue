@@ -41,7 +41,7 @@ const props = defineProps<{
         <h2
           :id="id ? `${id}-title` : undefined"
           class="text-panel font-semibold text-pretty"
-          :class="destructive ? 'text-destructive' : 'text-primary'"
+          :class="destructive ? 'text-destructive-ink' : 'text-primary'"
         >
           {{ title }}
         </h2>

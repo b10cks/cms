@@ -15,11 +15,11 @@ const forwarded = useForwardPropsEmits(props, emits)
 <template>
   <Dialog v-bind="forwarded">
     <DialogContent
-      class="overflow-hidden !p-0 shadow-lg"
+      class="overflow-hidden !p-0 [--menu-row-ring:transparent] [--overlay-edge:var(--popover-border)] [&_[data-dialog-close]]:top-2.5 [&_[data-dialog-close]]:right-2.5"
       :scroll-body="false"
     >
       <Command
-        class="[&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:font-medium [&_[cmdk-group-heading]]:text-muted [&_[cmdk-group]]:px-2 [&_[cmdk-group]:not([hidden])_~[cmdk-group]]:pt-0 [&_[cmdk-input-wrapper]_svg]:h-5 [&_[cmdk-input-wrapper]_svg]:w-5 [&_[cmdk-input]]:h-12 [&_[cmdk-item]]:px-2 [&_[cmdk-item]]:py-3 [&_[cmdk-item]_svg]:h-5 [&_[cmdk-item]_svg]:w-5"
+        class="[&_[cmdk-input-wrapper]]:pr-11 [&_[cmdk-input-wrapper]_input]:h-12 [&_[cmdk-input-wrapper]_input]:text-base"
       >
         <slot />
       </Command>

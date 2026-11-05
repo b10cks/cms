@@ -56,7 +56,7 @@ const filteredEmojis = computed(() => {
 </script>
 <template>
   <Popover v-model:open="isOpen">
-    <PopoverTrigger>
+    <PopoverTrigger as-child>
       <Button
         variant="ghost"
         size="xs"

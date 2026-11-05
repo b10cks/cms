@@ -12,7 +12,7 @@ const props = defineProps<{
   <div
     :class="
       cn(
-        'sticky top-0 z-10 flex flex-col gap-y-1.5 bg-background text-center sm:text-left',
+        'sticky top-0 z-10 flex flex-col gap-y-1.5 bg-background text-center sm:pr-8 sm:text-left',
         props.class
       )
     "

@@ -24,7 +24,7 @@ const blockClasses = (block: DiffBlock): string => {
       classes.push('bg-destructive/10')
       break
     case 'unchanged':
-      classes.push('text-muted-foreground')
+      classes.push('text-muted')
       break
   }
 
@@ -42,7 +42,7 @@ const blockClasses = (block: DiffBlock): string => {
     >
       <span
         v-if="block.label"
-        class="bg-muted text-muted-foreground shrink-0 rounded px-1 py-0.5 font-mono text-[10px] leading-none"
+        class="bg-muted-background text-muted shrink-0 rounded px-1 py-0.5 font-mono text-[10px] leading-none"
       >
         {{ block.label }}
       </span>

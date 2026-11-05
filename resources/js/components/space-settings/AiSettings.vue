@@ -264,7 +264,7 @@ const handleDeleteConfig = async (config: SpaceAiConfig) => {
 
           <div
             v-else-if="aiUsage && !aiUsage.available"
-            class="text-muted-foreground text-sm"
+            class="text-muted text-sm"
           >
             {{ $t('labels.settings.ai.notAvailable') }}
           </div>
@@ -330,7 +330,7 @@ const handleDeleteConfig = async (config: SpaceAiConfig) => {
 
           <div
             v-else
-            class="text-muted-foreground text-sm"
+            class="text-muted text-sm"
           >
             {{ $t('labels.settings.ai.noUsageData') }}
           </div>
@@ -402,7 +402,7 @@ const handleDeleteConfig = async (config: SpaceAiConfig) => {
 
         <div
           v-else-if="!aiConfigs || aiConfigs.length === 0"
-          class="flex flex-col items-center justify-center py-12 text-center text-muted-foreground"
+          class="flex flex-col items-center justify-center py-12 text-center text-muted"
         >
           <Icon
             name="ai:bot"

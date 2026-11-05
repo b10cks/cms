@@ -71,7 +71,7 @@ const emit = defineEmits<{
           :placeholder="$t('labels.spaces.fields.badgePlaceholder')"
           class="w-full"
         />
-        <p class="text-xs text-muted">
+        <p class="text-sm text-muted">
           {{ $t('labels.spaces.fields.badgeDescription') }}
         </p>
       </div>

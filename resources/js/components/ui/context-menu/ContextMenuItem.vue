@@ -22,7 +22,7 @@ const forwardedProps = useForwardProps(delegatedProps)
     v-bind="forwardedProps"
     :class="
       cn(
-        'icon-anim relative flex items-center gap-2 rounded-sm px-2 py-1.5 text-sm font-medium transition-colors outline-none select-none focus:bg-accent-fill focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 [&>svg]:size-4 [&>svg]:shrink-0',
+        'icon-anim menu-row',
         inset && 'pl-8',
         props.class
       )

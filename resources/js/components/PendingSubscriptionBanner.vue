@@ -41,7 +41,7 @@ function handleAction() {
         {{ $t('labels.subscriptions.pendingBanner.message') }}
       </span>
       <button
-        class="shrink-0 rounded-md border border-warning/40 px-3 py-1 text-xs font-medium transition-colors hover:bg-warning/20 disabled:opacity-50"
+        class="shrink-0 rounded-md border border-warning/40 px-3 py-1 text-sm font-medium transition-colors hover:bg-warning/20 disabled:opacity-50"
         :disabled="isReiniting"
         @click="handleAction"
       >

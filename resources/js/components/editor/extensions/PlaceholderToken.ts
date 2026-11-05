@@ -44,7 +44,7 @@ const PlaceholderToken = Node.create({
       mergeAttributes(HTMLAttributes, {
         'data-type': 'placeholder-token',
         class:
-          'inline-flex items-center rounded bg-primary/10 px-1.5 py-0.5 text-xs font-mono text-primary border border-primary/20 select-none mx-0.5',
+          'inline-flex items-center rounded bg-primary/10 px-1.5 py-0.5 text-sm font-mono text-primary border border-primary/20 select-none mx-0.5',
         contenteditable: 'false',
       }),
       `{${HTMLAttributes['data-key']}}`,

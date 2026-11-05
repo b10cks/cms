@@ -5,7 +5,6 @@ import type { HTMLAttributes } from 'vue'
 import { computed } from 'vue'
 
 import { cn } from '@/lib/utils'
-import Icon from '~/components/Icon.vue'
 
 const props = defineProps<RadioGroupItemProps & { class?: HTMLAttributes['class'] }>()
 
@@ -23,13 +22,13 @@ const forwardedProps = useForwardProps(delegatedProps)
     v-bind="forwardedProps"
     :class="
       cn(
-        'peer aspect-square h-4 w-4 cursor-pointer rounded-full bg-input shadow focus:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50',
+        'peer aspect-square h-4 w-4 cursor-pointer rounded-full border border-choice-border bg-input shadow-xs transition-colors duration-100 hover:border-choice-border-hover focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring disabled:cursor-not-allowed disabled:border-choice-border disabled:opacity-50 disabled:shadow-none data-[state=checked]:border-accent-fill data-[state=checked]:bg-accent-fill',
         props.class
       )
     "
   >
-    <RadioGroupIndicator class="flex items-center justify-center">
-      <Icon name="lucide:check" />
+    <RadioGroupIndicator class="flex h-full items-center justify-center">
+      <span class="size-1.5 rounded-full bg-white" />
     </RadioGroupIndicator>
   </RadioGroupItem>
 </template>

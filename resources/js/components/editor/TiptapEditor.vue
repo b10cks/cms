@@ -685,7 +685,7 @@ onBeforeUnmount(() => {
             @click="insertPlaceholder(placeholder)"
           >
             <span class="flex items-center gap-2">
-              <code class="text-xs text-muted-foreground"
+              <code class="text-sm text-muted"
                 >&#123;&#123;{{ placeholder.key }}&#125;&#125;</code
               >
               {{ placeholder.label }}

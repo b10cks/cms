@@ -35,6 +35,7 @@ const props = withDefaults(defineProps<Props>(), {
 const primaryButtonClasses = computed(() => {
   return [
     buttonVariants({ variant: props.variant, size: props.size }),
+    'relative focus-visible:z-10',
     props.hasMenu ? 'rounded-r-none' : null,
     props.class,
   ].filter(Boolean)
@@ -43,8 +44,9 @@ const primaryButtonClasses = computed(() => {
 const triggerButtonClasses = computed(() => {
   return [
     buttonVariants({ variant: props.variant, size: props.size }),
-    'rounded-l-none border-l !px-2',
-    props.variant === 'ai' ? 'border-l-current/25' : 'border-l-primary/15',
+    'relative rounded-l-none !px-2 focus-visible:z-10',
+    // Outline draws its own edge: overlap it by a pixel so the seam is one line, not two
+    props.variant === 'outline' ? '-ml-px' : 'border-l border-l-current/20',
   ].filter(Boolean)
 })
 </script>

@@ -59,17 +59,17 @@ const submit: ImportDialogSubmit<AssetDataImportResult> = (file, _mode, onProgre
         <div
           v-for="(change, index) in item.changes"
           :key="`${item.id}-${index}`"
-          class="rounded-md bg-muted/50 p-2"
+          class="rounded-md bg-muted-background p-2"
         >
           <div class="font-medium text-foreground">
             {{ change.field }}
             <span
               v-if="change.language"
-              class="font-normal text-muted-foreground"
+              class="font-normal text-muted"
               >({{ change.language }})</span
             >
           </div>
-          <div class="text-muted-foreground">
+          <div class="text-muted">
             {{ change.old ?? emptyValue }}
             ->
             {{ change.new ?? emptyValue }}

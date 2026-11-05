@@ -226,7 +226,7 @@ const saveSettings = async () => {
       />
       <p
         v-if="getError('settings.default_language')"
-        class="mt-2 text-sm text-danger"
+        class="mt-2 text-sm text-destructive"
       >
         {{ getError('settings.default_language') }}
       </p>
@@ -266,14 +266,14 @@ const saveSettings = async () => {
         <p
           v-for="[path, messages] in languageErrorEntries"
           :key="path"
-          class="text-sm text-danger"
+          class="text-sm text-destructive"
         >
           {{ messages[0] }}
         </p>
       </div>
       <p
         v-if="getError('settings.languages')"
-        class="text-sm text-danger"
+        class="text-sm text-destructive"
       >
         {{ getError('settings.languages') }}
       </p>
@@ -298,14 +298,14 @@ const saveSettings = async () => {
         <p
           v-for="[path, messages] in siteLocaleErrorEntries"
           :key="path"
-          class="text-sm text-danger"
+          class="text-sm text-destructive"
         >
           {{ messages[0] }}
         </p>
       </div>
       <p
         v-if="getError('settings.site_locales')"
-        class="text-sm text-danger"
+        class="text-sm text-destructive"
       >
         {{ getError('settings.site_locales') }}
       </p>

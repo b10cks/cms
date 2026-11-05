@@ -351,7 +351,7 @@ const handleBulkDelete = async () => {
             <TableRow
               v-for="person in people"
               :key="person.id"
-              :class="{ 'bg-muted/30': isSelected(person) }"
+              :class="{ 'bg-muted-background': isSelected(person) }"
             >
               <TableCell class="w-12">
                 <Checkbox

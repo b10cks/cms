@@ -166,7 +166,7 @@ const kindBadge: Record<FieldChange['kind'], { label: string; class: string }> =
 
 <template>
   <div class="flex flex-col gap-4 p-1">
-    <p class="text-sm text-muted-foreground">
+    <p class="text-sm text-muted">
       {{ $t('labels.blockVersions.diff.hint') }}
     </p>
 
@@ -182,7 +182,7 @@ const kindBadge: Record<FieldChange['kind'], { label: string; class: string }> =
         v-if="settingChanges.length"
         class="flex flex-col gap-2"
       >
-        <h4 class="text-xs font-medium tracking-wider text-muted uppercase">
+        <h4 class="text-sm font-medium tracking-wider text-muted uppercase">
           {{ $t('labels.blockVersions.diff.settings') }}
         </h4>
         <div class="flex flex-col gap-1 rounded-md bg-surface p-3">
@@ -205,7 +205,7 @@ const kindBadge: Record<FieldChange['kind'], { label: string; class: string }> =
         v-if="fieldChanges.length"
         class="flex flex-col gap-2"
       >
-        <h4 class="text-xs font-medium tracking-wider text-muted uppercase">
+        <h4 class="text-sm font-medium tracking-wider text-muted uppercase">
           {{ $t('labels.blockVersions.diff.fields') }}
         </h4>
         <div
@@ -222,7 +222,7 @@ const kindBadge: Record<FieldChange['kind'], { label: string; class: string }> =
             </Badge>
             <BlockType :type="change.type" />
             <span class="font-medium">{{ change.name }}</span>
-            <span class="text-xs text-muted">{{ change.key }}</span>
+            <span class="text-sm text-muted">{{ change.key }}</span>
           </div>
           <div
             v-if="change.changes.length"
@@ -233,7 +233,7 @@ const kindBadge: Record<FieldChange['kind'], { label: string; class: string }> =
               :key="attribute.key"
               class="grid grid-cols-[10rem_1fr] items-baseline gap-2 text-sm"
             >
-              <span class="font-mono text-xs">{{ attribute.key }}</span>
+              <span class="font-mono text-sm">{{ attribute.key }}</span>
               <span class="break-all">
                 <span class="text-muted line-through">{{ formatValue(attribute.from) }}</span>
                 <span class="mx-2 text-muted">→</span>
@@ -248,10 +248,10 @@ const kindBadge: Record<FieldChange['kind'], { label: string; class: string }> =
         v-if="layoutChanged"
         class="flex flex-col gap-2"
       >
-        <h4 class="text-xs font-medium tracking-wider text-muted uppercase">
+        <h4 class="text-sm font-medium tracking-wider text-muted uppercase">
           {{ $t('labels.blockVersions.diff.layout') }}
         </h4>
-        <p class="rounded-md bg-surface p-3 text-sm text-muted-foreground">
+        <p class="rounded-md bg-surface p-3 text-sm text-muted">
           {{ $t('labels.blockVersions.diff.layoutChanged') }}
         </p>
       </section>

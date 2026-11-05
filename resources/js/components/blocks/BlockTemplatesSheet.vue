@@ -120,7 +120,7 @@ watch(open, (isOpen) => {
 
       <div
         v-else-if="!templates?.length"
-        class="text-muted-foreground py-8 text-center"
+        class="text-muted py-8 text-center"
       >
         <Icon
           name="lucide:file-x"
@@ -183,7 +183,7 @@ watch(open, (isOpen) => {
               <div class="flex items-start justify-between">
                 <div class="flex items-center gap-3">
                   <div
-                    class="flex h-10 w-10 items-center justify-center rounded-lg bg-muted"
+                    class="flex h-10 w-10 items-center justify-center rounded-lg bg-muted-background"
                     :style="{
                       backgroundColor: template.color ? `${template.color}20` : undefined,
                     }"
@@ -204,7 +204,7 @@ watch(open, (isOpen) => {
                     <h4 class="font-medium">{{ template.name }}</h4>
                     <p
                       v-if="template.description"
-                      class="text-muted-foreground text-sm"
+                      class="text-muted text-sm"
                     >
                       {{ template.description }}
                     </p>
@@ -252,7 +252,7 @@ watch(open, (isOpen) => {
                 />
               </div>
 
-              <div class="text-muted-foreground mt-3 flex items-center gap-2 text-xs">
+              <div class="text-muted mt-3 flex items-center gap-2 text-sm">
                 <Avatar
                   v-if="template.created_by"
                   :name="template.created_by.name"

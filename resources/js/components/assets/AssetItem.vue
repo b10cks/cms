@@ -337,7 +337,7 @@ watchEffect((onCleanup) => {
             <span
               v-for="tag in resolvedTags"
               :key="tag.id"
-              class="inline-flex max-w-full items-center rounded-md px-1.5 py-0.5 text-xs font-medium shadow-sm backdrop-blur-sm"
+              class="inline-flex max-w-full items-center rounded-md px-1.5 py-0.5 text-sm font-medium shadow-sm backdrop-blur-sm"
               :style="tag.color ? { backgroundColor: tag.color + 'cc', color: '#fff' } : {}"
               :class="tag.color ? '' : 'bg-black/60 text-white'"
             >

@@ -145,7 +145,7 @@ const copyToken = (token: string) => {
                     <span class="sr-only">{{ $t('actions.copy') }}</span>
                   </Button>
                   <Button
-                    variant="destructive"
+                    variant="ghost-destructive"
                     size="icon"
                     @click="removeToken(token)"
                   >

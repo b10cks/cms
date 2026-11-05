@@ -342,7 +342,7 @@ watch(
   <div class="flex flex-col gap-6">
     <div class="space-y-2">
       <h4 class="text-sm font-semibold">Toolbar features</h4>
-      <p class="text-xs text-muted-foreground">
+      <p class="text-sm text-muted">
         Disable a feature to hide its button and stop it entering the content — even via paste.
       </p>
       <div class="grid grid-cols-2 gap-x-6 gap-y-4">
@@ -351,7 +351,7 @@ watch(
           :key="group.label"
           class="space-y-2"
         >
-          <h5 class="text-xs font-semibold text-muted-foreground">{{ group.label }}</h5>
+          <h5 class="text-sm font-semibold text-muted">{{ group.label }}</h5>
           <CheckboxField
             v-for="feature in group.features"
             :key="feature.key"
@@ -369,7 +369,7 @@ watch(
       class="space-y-2"
     >
       <h4 class="text-sm font-semibold">Heading levels</h4>
-      <p class="text-xs text-muted-foreground">
+      <p class="text-sm text-muted">
         Choose which block formats the format dropdown offers.
       </p>
       <div class="grid grid-cols-2 gap-x-6 gap-y-2 sm:grid-cols-4">
@@ -389,7 +389,7 @@ watch(
       class="space-y-2"
     >
       <h4 class="text-sm font-semibold">List styles</h4>
-      <p class="text-xs text-muted-foreground">
+      <p class="text-sm text-muted">
         Named CSS classes editors can apply to a list. The class is rendered on the
         <code class="font-mono">&lt;ul&gt;</code>/<code class="font-mono">&lt;ol&gt;</code> so your
         frontend can style each variant however it likes.
@@ -579,7 +579,7 @@ watch(
               <Textarea
                 v-model="htmlClass.css"
                 auto-size
-                class="font-mono text-xs"
+                class="font-mono text-sm"
                 :placeholder="$t('labels.blocks.richtext.htmlClasses.css')"
                 @blur="() => htmlClassEditor.commit()"
               />
@@ -601,7 +601,7 @@ watch(
 
     <div class="space-y-2">
       <h4 class="text-sm font-semibold">{{ $t('labels.blocks.richtext.placeholders.title') }}</h4>
-      <p class="text-xs text-muted-foreground">
+      <p class="text-sm text-muted">
         {{ $t('labels.blocks.richtext.placeholders.description') }}
         <code class="font-mono">&#123;&#123;first_name&#125;&#125;</code>
       </p>

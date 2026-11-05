@@ -157,7 +157,7 @@ const getFilterButtonClasses = (filter: ChangeType): string => {
           </div>
           <span
             :class="getBadgeClasses(change.type)"
-            class="rounded-full px-2 py-1 text-xs font-semibold"
+            class="rounded-full px-2 py-1 text-sm font-semibold"
           >
             {{ change.type.toUpperCase() }}
           </span>
@@ -178,7 +178,7 @@ const getFilterButtonClasses = (filter: ChangeType): string => {
             v-else-if="change.type === 'added'"
             class="space-y-1"
           >
-            <div class="text-xs font-semibold tracking-wide uppercase">New Value</div>
+            <div class="text-sm font-semibold tracking-wide uppercase">New Value</div>
             <div class="rounded border border-success/20 bg-success/5 px-3 py-2 font-mono text-sm">
               <ValueRenderer :value="change.newValue" />
             </div>
@@ -187,7 +187,7 @@ const getFilterButtonClasses = (filter: ChangeType): string => {
             v-else-if="change.type === 'removed'"
             class="space-y-1"
           >
-            <div class="text-xs font-semibold tracking-wide uppercase">Removed Value</div>
+            <div class="text-sm font-semibold tracking-wide uppercase">Removed Value</div>
             <div
               class="rounded border border-destructive/20 bg-destructive/5 px-3 py-2 font-mono text-sm"
             >
@@ -199,7 +199,7 @@ const getFilterButtonClasses = (filter: ChangeType): string => {
             class="grid grid-cols-2 space-x-3"
           >
             <div class="space-y-1">
-              <div class="text-xs font-semibold tracking-wide uppercase">Previous Value</div>
+              <div class="text-sm font-semibold tracking-wide uppercase">Previous Value</div>
               <div
                 class="rounded border border-destructive/20 bg-destructive/5 px-3 py-2 font-mono text-sm"
               >
@@ -207,7 +207,7 @@ const getFilterButtonClasses = (filter: ChangeType): string => {
               </div>
             </div>
             <div class="space-y-1">
-              <div class="text-xs font-semibold tracking-wide uppercase">New Value</div>
+              <div class="text-sm font-semibold tracking-wide uppercase">New Value</div>
               <div
                 class="rounded border border-success/20 bg-success/5 px-3 py-2 font-mono text-sm"
               >

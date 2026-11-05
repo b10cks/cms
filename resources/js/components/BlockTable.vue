@@ -227,9 +227,9 @@ const typeColor = (type: 'root' | 'nestable' | 'single' | 'universal') => {
 
         <div
           ref="tableRef"
-          class="overflow-hidden rounded-md border border-border"
+          class="overflow-hidden rounded-md border border-border xl:overflow-clip"
         >
-          <Table>
+          <Table sticky-header>
             <TableHeader>
               <TableRow>
                 <TableSortableHead
@@ -338,7 +338,7 @@ const typeColor = (type: 'root' | 'nestable' | 'single' | 'universal') => {
                     </Badge>
                     <span
                       v-else
-                      class="text-muted-foreground"
+                      class="text-muted"
                     >
                       -
                     </span>
@@ -365,7 +365,7 @@ const typeColor = (type: 'root' | 'nestable' | 'single' | 'universal') => {
                         <span class="sr-only">{{ $t('actions.blocks.duplicate') }}</span>
                       </Button>
                       <Button
-                        variant="destructive"
+                        variant="ghost-destructive"
                         size="icon"
                         @click="handleDelete(block)"
                       >

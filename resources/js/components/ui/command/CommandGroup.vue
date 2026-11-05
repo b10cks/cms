@@ -40,7 +40,7 @@ onUnmounted(() => {
     :id="id"
     :class="
       cn(
-        'overflow-hidden p-1 text-foreground [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-xs [&_[cmdk-group-heading]]:font-medium [&_[cmdk-group-heading]]:text-muted',
+        'overflow-hidden p-1 text-foreground [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-sm [&_[cmdk-group-heading]]:font-medium [&_[cmdk-group-heading]]:text-muted',
         props.class
       )
     "
@@ -48,7 +48,7 @@ onUnmounted(() => {
   >
     <ListboxGroupLabel
       v-if="heading"
-      class="px-2 py-1.5 text-xs font-semibold text-muted"
+      class="px-2 py-1.5 text-sm font-medium text-muted"
     >
       {{ heading }}
     </ListboxGroupLabel>

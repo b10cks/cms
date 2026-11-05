@@ -106,7 +106,7 @@ watch(open, (isOpen) => {
           :placeholder="String($t('labels.assets.move.searchPlaceholder'))"
         />
 
-        <div class="max-h-80 overflow-y-auto rounded-md border border-input p-1">
+        <div class="max-h-80 overflow-y-auto rounded-md border border-border-strong p-1">
           <button
             type="button"
             :class="[
@@ -138,7 +138,7 @@ watch(open, (isOpen) => {
               :style="{ color: folder.color || 'inherit' }"
             />
             <span class="truncate font-medium">{{ folder.name }}</span>
-            <span class="ml-auto shrink-0 text-xs text-muted">
+            <span class="ml-auto shrink-0 text-sm text-muted">
               {{ folder.assets_count ?? 0 }}
             </span>
           </button>

@@ -350,7 +350,7 @@ const toggleExpanded = (folderId: string) => {
       <div class="group my-2 flex items-center gap-2 px-2">
         <Icon
           name="lucide:folder"
-          class="text-muted-foreground"
+          class="text-muted"
           aria-hidden="true"
         />
         <h2 class="text-sm font-semibold text-primary">

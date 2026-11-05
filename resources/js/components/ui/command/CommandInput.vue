@@ -30,12 +30,12 @@ const { filterState } = useCommand()
 
 <template>
   <div
-    class="flex items-center gap-2 border-b border-border px-3"
+    class="flex items-center gap-2 border-b border-popover-border px-3"
     cmdk-input-wrapper
   >
     <Icon
       name="lucide:search"
-      class="shrink-0 opacity-50"
+      class="shrink-0 text-muted"
     />
     <ListboxFilter
       v-bind="{ ...forwardedProps, ...$attrs }"
@@ -43,7 +43,7 @@ const { filterState } = useCommand()
       auto-focus
       :class="
         cn(
-          'flex h-10 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted disabled:cursor-not-allowed disabled:opacity-50',
+          'flex h-10 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-input-muted disabled:cursor-not-allowed disabled:opacity-50',
           props.class
         )
       "

@@ -53,12 +53,12 @@ const rows = computed((): Row[] => {
       :key="row.key"
       class="flex items-baseline gap-2"
     >
-      <span class="text-muted-foreground w-24 shrink-0 truncate font-mono text-xs">{{
+      <span class="text-muted w-24 shrink-0 truncate font-mono text-sm">{{
         row.key
       }}</span>
       <span
         class="min-w-0"
-        :class="{ 'text-muted-foreground': row.unchanged }"
+        :class="{ 'text-muted': row.unchanged }"
       >
         <DiffSegments :segments="row.segments" />
       </span>

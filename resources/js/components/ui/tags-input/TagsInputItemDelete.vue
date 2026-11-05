@@ -23,11 +23,14 @@ const forwardedProps = useForwardProps(delegatedProps)
     v-bind="forwardedProps"
     :aria-label="$t('actions.remove')"
     :class="
-      cn('mr-1 flex cursor-pointer rounded bg-transparent hover:text-destructive', props.class)
+      cn('mr-1 flex cursor-pointer rounded-sm bg-transparent transition-colors duration-100 hover:text-destructive-ink focus-visible:outline-2 focus-visible:outline-ring', props.class)
     "
   >
     <slot>
-      <Icon name="lucide:x" />
+      <Icon
+        name="lucide:x"
+        size="14"
+      />
     </slot>
   </TagsInputItemDelete>
 </template>

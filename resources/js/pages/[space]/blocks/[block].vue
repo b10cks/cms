@@ -222,7 +222,7 @@ const handleDuplicateCreated = (createdBlock: BlockResource) => {
           >
             <span
               v-if="isDirty && !isSaving"
-              class="text-sm text-muted-foreground"
+              class="text-sm text-muted"
             >
               {{ $t('labels.unsavedChanges.title') }}
             </span>

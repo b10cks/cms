@@ -268,8 +268,8 @@ const handleBulkDelete = async () => {
             <TableRow
               v-for="team in teams"
               :key="team.id"
-              :class="{ 'bg-muted/30': isTeamSelected(team) }"
-              class="cursor-pointer hover:bg-muted/50"
+              :class="{ 'bg-muted-background': isTeamSelected(team) }"
+              class="cursor-pointer hover:bg-state-hover"
               @click="handleView(team)"
             >
               <TableCell
@@ -299,7 +299,7 @@ const handleBulkDelete = async () => {
                   </RouterLink>
                   <div
                     v-if="team.description"
-                    class="text-muted-foreground text-sm"
+                    class="text-muted text-sm"
                   >
                     {{ team.description }}
                   </div>
@@ -316,7 +316,7 @@ const handleBulkDelete = async () => {
                 </Badge>
                 <span
                   v-else
-                  class="text-muted-foreground text-sm"
+                  class="text-muted text-sm"
                 >
                   {{ $t('labels.teams.noType') }}
                 </span>
@@ -331,7 +331,7 @@ const handleBulkDelete = async () => {
                 </span>
                 <span
                   v-else
-                  class="text-muted-foreground text-sm"
+                  class="text-muted text-sm"
                 >
                   {{ $t('labels.teams.noParent') }}
                 </span>
@@ -355,7 +355,7 @@ const handleBulkDelete = async () => {
                 </Badge>
               </TableCell>
 
-              <TableCell class="text-muted-foreground text-sm">
+              <TableCell class="text-muted text-sm">
                 {{ formatRelativeTime(team.updated_at) }}
               </TableCell>
 

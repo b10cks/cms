@@ -326,7 +326,7 @@ const markLoaded = (asset: PublicShareAsset) => loadedAssetIds.value.add(asset.i
               :model-value="buildProgress ?? 0"
               class="h-1.5 flex-1"
             />
-            <span class="text-xs whitespace-nowrap text-muted">
+            <span class="text-sm whitespace-nowrap text-muted">
               {{
                 buildProgress != null
                   ? $t('labels.publicShare.building', { progress: buildProgress })
@@ -336,13 +336,13 @@ const markLoaded = (asset: PublicShareAsset) => loadedAssetIds.value.add(asset.i
           </div>
           <p
             v-if="isLimitReached"
-            class="text-xs text-destructive"
+            class="text-sm text-destructive"
           >
             {{ $t('labels.publicShare.downloadLimitReached') }}
           </p>
           <p
             v-else-if="downloadError"
-            class="text-xs text-destructive"
+            class="text-sm text-destructive"
           >
             {{ downloadError }}
           </p>
@@ -433,7 +433,7 @@ const markLoaded = (asset: PublicShareAsset) => loadedAssetIds.value.add(asset.i
                 >
                   {{ assetDisplayName(asset) }}
                 </p>
-                <p class="text-xs text-muted">{{ formatFileSize(asset.size) }}</p>
+                <p class="text-sm text-muted">{{ formatFileSize(asset.size) }}</p>
               </div>
               <Button
                 v-if="share.allow_individual_downloads"
@@ -468,7 +468,7 @@ const markLoaded = (asset: PublicShareAsset) => loadedAssetIds.value.add(asset.i
       </main>
 
       <footer
-        class="mt-10 flex flex-col items-center gap-3 border-t border-border pt-6 text-center text-xs text-muted sm:flex-row sm:justify-between sm:text-left"
+        class="mt-10 flex flex-col items-center gap-3 border-t border-border pt-6 text-center text-sm text-muted sm:flex-row sm:justify-between sm:text-left"
       >
         <div class="flex items-center gap-2">
           <Logo
@@ -478,7 +478,7 @@ const markLoaded = (asset: PublicShareAsset) => loadedAssetIds.value.add(asset.i
           <span>{{ $t('labels.publicShare.poweredBy') }}</span>
         </div>
         <Markdown
-          class="text-xs text-muted [&_a]:underline"
+          class="text-sm text-muted [&_a]:underline"
           :content="$t('labels.login.terms')"
         />
       </footer>

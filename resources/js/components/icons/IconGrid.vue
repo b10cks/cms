@@ -112,7 +112,7 @@ const handleClick = (icon: IconResource) => {
         class="flex flex-col bg-surface items-center justify-center rounded-lg border border-dashed border-border py-12 text-center"
       >
         <IconsIcon class="mb-4 w-32" />
-        <p class="text-muted-foreground text-sm font-medium">{{ t('labels.icons.empty') }}</p>
+        <p class="text-muted text-sm font-medium">{{ t('labels.icons.empty') }}</p>
       </div>
 
       <div
@@ -137,7 +137,7 @@ const handleClick = (icon: IconResource) => {
           />
           <div class="flex flex-col items-center gap-0.5 w-full">
             <span class="w-full truncate text-center text-sm">{{ icon.key }}</span>
-            <span class="text-xs leading-none text-muted">{{ icon.width }}×{{ icon.height }}</span>
+            <span class="text-sm leading-none text-muted">{{ icon.width }}×{{ icon.height }}</span>
           </div>
         </button>
       </div>

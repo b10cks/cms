@@ -180,7 +180,7 @@ const handleDelete = async (share: AssetShareResource) => {
           <div
             v-for="share in shares.data"
             :key="share.id"
-            class="flex flex-col gap-3 rounded-lg border border-input bg-surface p-4"
+            class="flex flex-col gap-3 rounded-lg border border-border-strong bg-surface p-4"
           >
             <div class="flex items-start justify-between gap-2">
               <div class="flex min-w-0 flex-col gap-1">
@@ -190,7 +190,7 @@ const handleDelete = async (share: AssetShareResource) => {
                     {{ $t(`labels.assetShares.status.${shareStatus(share)}`) }}
                   </Badge>
                 </div>
-                <span class="text-xs text-muted-foreground">
+                <span class="text-sm text-muted">
                   {{ formatDateTime(share.created_at ?? '') }}
                 </span>
               </div>
@@ -251,11 +251,11 @@ const handleDelete = async (share: AssetShareResource) => {
               </div>
             </div>
 
-            <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
+            <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted">
               <span class="flex items-center gap-1">
                 <Icon
                   :name="share.has_password ? 'lucide:lock' : 'lucide:lock-open'"
-                  :class="share.has_password ? 'text-primary' : 'text-muted-foreground'"
+                  :class="share.has_password ? 'text-primary' : 'text-muted'"
                 />
                 {{
                   $t(

@@ -48,7 +48,7 @@ watch(
         <div class="space-y-3">
           <p
             v-if="item.description"
-            class="text-sm text-muted-foreground"
+            class="text-sm text-muted"
           >
             {{ item.description }}
           </p>
@@ -78,14 +78,14 @@ watch(
         </Button>
       </div>
 
-      <p class="text-xs font-semibold uppercase tracking-wide text-muted">
+      <p class="text-sm font-semibold uppercase tracking-wide text-muted">
         {{ $t('components.tableBlock.previewTitle') }}
       </p>
       <div class="mt-2 flex flex-wrap gap-2">
         <span
           v-for="(label, index) in headerPreview"
           :key="`${item.key}-header-${index}`"
-          class="rounded-sm bg-elevated px-2 py-1 text-xs text-primary"
+          class="rounded-sm bg-elevated px-2 py-1 text-sm text-primary"
         >
           {{ label }}
         </span>

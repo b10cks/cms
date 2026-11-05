@@ -20,7 +20,7 @@ defineProps<{
       />
       <p
         v-if="item.description"
-        class="text-muted-foreground text-xs"
+        class="text-muted text-sm"
       >
         {{ item.description }}
       </p>

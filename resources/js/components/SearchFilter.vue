@@ -672,7 +672,7 @@ defineExpose({ clearAllFilters })
       v-if="dropdownOpen"
       :id="dropdownId"
       ref="dropdownRef"
-      class="absolute z-50 mt-1 max-h-60 w-full overflow-y-auto rounded-md bg-input p-1 shadow-lg"
+      class="overlay-panel absolute z-50 mt-1 max-h-60 w-full overflow-y-auto p-1"
       role="listbox"
       :aria-label="String($t(`labels.search.${stage}DropdownLabel`))"
     >
@@ -681,11 +681,9 @@ defineExpose({ clearAllFilters })
           v-for="(item, index) in dropdownItems"
           :id="`${dropdownId}-item-${index}`"
           :key="`dropdown-item-${index}`"
-          :class="[
-            'relative flex items-center gap-2 rounded-md px-2 py-1.5 text-sm font-semibold transition-colors outline-none select-none hover:bg-blue-600 hover:text-primary focus:bg-blue-600 focus:text-primary data-[disabled]:pointer-events-none data-[disabled]:opacity-50 [&>svg]:size-4 [&>svg]:shrink-0',
-            index === selectedDropdownIndex && 'bg-blue-600 text-primary',
-          ]"
+          class="menu-row"
           role="option"
+          :data-highlighted="index === selectedDropdownIndex ? '' : undefined"
           :aria-selected="index === selectedDropdownIndex"
           @click="
             stage === 'field'

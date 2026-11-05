@@ -107,7 +107,7 @@ const rowClasses = (status: RowStatus): string => {
           <th
             v-for="(column, columnIndex) in columns"
             :key="column"
-            class="text-muted-foreground px-2 py-1 text-left text-xs font-semibold"
+            class="text-muted px-2 py-1 text-left text-sm font-semibold"
           >
             <DiffSegments :segments="headerCells[columnIndex]" />
           </th>

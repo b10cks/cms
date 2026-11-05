@@ -248,7 +248,7 @@ watch(open, (value) => {
           class="mx-auto mb-2 text-muted"
         />
         <p class="text-sm font-medium text-primary">{{ t('labels.icons.dropHint') }}</p>
-        <p class="text-xs text-muted">{{ t('labels.icons.dropSubHint') }}</p>
+        <p class="text-sm text-muted">{{ t('labels.icons.dropSubHint') }}</p>
         <input
           ref="fileInput"
           type="file"

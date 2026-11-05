@@ -43,7 +43,7 @@ const inDraft = computed(() => props.entry.items.some(isWrittenItem))
       <button
         v-if="variant === 'row'"
         type="button"
-        class="-ml-1 flex size-7 shrink-0 items-center justify-center rounded-md text-muted hover:bg-input focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none"
+        class="-ml-1 flex size-7 shrink-0 items-center justify-center rounded-md text-muted hover:bg-input focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
         :aria-expanded="expanded"
         :aria-label="expanded ? $t('components.aiThreads.collapseEntry', { name: entry.label }) : $t('components.aiThreads.expandEntry', { name: entry.label })"
         @click="expanded = !expanded"

@@ -12,7 +12,7 @@ const model = defineModel<T>({ required: true })
 <template>
   <div
     role="radiogroup"
-    class="inline-flex shrink-0 items-center gap-0.5 rounded-lg bg-input p-0.5"
+    class="inline-flex shrink-0 items-center gap-0.5 rounded-lg bg-secondary p-0.5"
   >
     <button
       v-for="segment in segments"
@@ -22,8 +22,8 @@ const model = defineModel<T>({ required: true })
       :aria-checked="model === segment.value"
       :class="
         cn(
-          'flex h-8 items-center gap-1.5 rounded-md px-3 text-sm font-semibold text-muted transition-colors hover:text-primary',
-          model === segment.value && 'bg-secondary text-primary shadow-sm'
+          'flex h-8 items-center gap-1.5 rounded-md px-3 text-sm font-semibold text-foreground transition-colors duration-100 hover:text-primary focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
+          model === segment.value && 'bg-tab-active text-primary shadow-sm'
         )
       "
       @click="model = segment.value"

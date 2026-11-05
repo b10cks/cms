@@ -200,7 +200,7 @@ watch(
         >
           <Icon
             name="lucide:grip-vertical"
-            :class="readonly ? 'text-muted-foreground' : 'cursor-ns-resize text-muted-foreground'"
+            :class="readonly ? 'text-muted' : 'cursor-ns-resize text-muted'"
             data-option-handle
           />
           <Input
@@ -225,7 +225,7 @@ watch(
             type="button"
             :disabled="readonly"
             :aria-label="$t('actions.blocks.options.delete')"
-            class="cursor-pointer p-2 text-muted-foreground hover:text-destructive disabled:cursor-not-allowed disabled:opacity-50"
+            class="cursor-pointer p-2 text-muted hover:text-destructive disabled:cursor-not-allowed disabled:opacity-50"
             tabindex="-1"
             @click="removeOption(index)"
           >
@@ -264,10 +264,10 @@ watch(
         <p class="text-sm font-semibold text-primary">
           {{ $t('labels.blocks.fields.dataSourcePreview') }}
         </p>
-        <p class="mt-1 text-xs text-muted-foreground">
+        <p class="mt-1 text-sm text-muted">
           {{ $t('labels.blocks.fields.dataSourcePreviewDescription') }}
         </p>
-        <div class="mt-3 rounded-md bg-surface/60 p-3 text-sm text-muted-foreground">
+        <div class="mt-3 rounded-md bg-surface/60 p-3 text-sm text-muted">
           <span v-if="isLoading">{{ $t('labels.blocks.fields.dataSourcePreviewLoading') }}</span>
           <span v-else-if="isEmpty">{{ $t('labels.blocks.fields.dataSourcePreviewEmpty') }}</span>
           <div
@@ -277,7 +277,7 @@ watch(
             <span
               v-for="choice in choices"
               :key="choice.value"
-              class="rounded-full border border-border/70 px-2 py-1 text-xs text-primary"
+              class="rounded-full border border-border/70 px-2 py-1 text-sm text-primary"
             >
               {{ choice.label }}
             </span>

@@ -166,19 +166,19 @@ function clearValue(): void {
     <PopoverTrigger as-child>
       <button
         type="button"
-        class="group flex h-9 cursor-pointer items-center gap-2 rounded-md border border-input-border bg-input pr-2 pl-3 text-sm font-semibold whitespace-nowrap text-primary shadow-sm transition-colors hover:bg-input/70 focus:ring-1 focus:ring-ring focus:outline-none data-[state=open]:ring-1 data-[state=open]:ring-ring"
+        class="group flex h-9 cursor-pointer items-center gap-2 rounded-lg border border-input-border bg-input pr-2 pl-3 text-sm font-medium whitespace-nowrap text-primary shadow-sm transition-colors hover:bg-input/70 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none data-[state=open]:ring-2 data-[state=open]:ring-ring"
         :aria-label="$t('labels.dateRange.label')"
       >
         <Icon
           name="lucide:calendar"
           class="shrink-0 text-muted"
         />
-        <span :class="hasValue ? 'text-primary' : 'text-muted'">{{ triggerLabel }}</span>
+        <span :class="hasValue ? 'text-primary' : 'text-input-muted'">{{ triggerLabel }}</span>
         <span
           v-if="hasValue"
           role="button"
           tabindex="0"
-          class="-mr-1 ml-1 flex size-5 items-center justify-center rounded-full p-0.5 text-muted hover:bg-elevated hover:text-primary"
+          class="-mr-1 ml-1 flex size-5 items-center justify-center rounded-sm p-0.5 text-muted transition-colors duration-100 hover:bg-state-hover hover:text-primary"
           :aria-label="$t('labels.dateRange.clear')"
           @click.stop="clearValue"
           @keydown.enter.stop.prevent="clearValue"
@@ -200,15 +200,14 @@ function clearValue(): void {
       class="w-auto overflow-hidden !max-h-none !p-0"
     >
       <div class="flex flex-col sm:flex-row">
-        <!-- Presets -->
         <div class="flex shrink-0 flex-col gap-0.5 border-b border-popover-border p-2 sm:w-44 sm:border-r sm:border-b-0">
           <button
             v-for="preset in presets"
             :key="preset.key"
             type="button"
-            class="flex cursor-pointer items-center justify-between rounded-md px-3 py-1.5 text-start text-sm font-semibold transition-colors hover:bg-elevated"
+            class="flex cursor-pointer items-center justify-between rounded-sm px-2 py-1.5 text-start text-sm font-medium transition-colors duration-75"
             :class="
-              activePreset === preset.key ? 'bg-elevated text-accent' : 'text-primary'
+              activePreset === preset.key ? 'bg-state-selected text-primary' : 'text-popover-foreground hover:bg-state-hover hover:text-primary'
             "
             @click="applyPreset(preset)"
           >
@@ -221,11 +220,10 @@ function clearValue(): void {
           </button>
         </div>
 
-        <!-- Calendar + fields -->
         <div class="p-3">
           <div class="space-y-2 pb-3">
             <div class="flex items-center gap-2">
-              <span class="w-9 text-sm font-semibold text-muted">{{ $t('labels.dateRange.from') }}</span>
+              <span class="w-9 text-sm font-medium text-muted">{{ $t('labels.dateRange.from') }}</span>
               <DateField
                 v-model="startDate"
                 :locale="locale"
@@ -238,7 +236,7 @@ function clearValue(): void {
               />
             </div>
             <div class="flex items-center gap-2">
-              <span class="w-9 text-sm font-semibold text-muted">{{ $t('labels.dateRange.to') }}</span>
+              <span class="w-9 text-sm font-medium text-muted">{{ $t('labels.dateRange.to') }}</span>
               <DateField
                 v-model="endDate"
                 :locale="locale"

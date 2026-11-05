@@ -46,7 +46,7 @@ const indicatorClass = computed(
     :class="cn('relative h-2 w-full overflow-hidden rounded-full bg-secondary', props.class)"
   >
     <ProgressIndicator
-      :class="cn('h-full w-full flex-1 transition-all', indicatorClass)"
+      :class="cn('h-full w-full flex-1 rounded-full transition-transform duration-300 ease-out', indicatorClass)"
       :style="`transform: translateX(-${100 - clamped}%);`"
     />
   </ProgressRoot>

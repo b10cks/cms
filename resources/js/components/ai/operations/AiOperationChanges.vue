@@ -76,7 +76,7 @@ const reject = (item: Item) => rejectMutation.mutate({ changesetId: props.change
         <div class="flex min-h-11 flex-wrap items-center gap-x-3 gap-y-1 px-4 py-2">
           <button
             type="button"
-            class="-ml-1 flex size-7 shrink-0 items-center justify-center rounded-md text-muted hover:bg-input focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none"
+            class="-ml-1 flex size-7 shrink-0 items-center justify-center rounded-md text-muted hover:bg-input focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
             :aria-expanded="openEntry === entry.target_id"
             :aria-label="t('changes.fields', { name: entry.label ?? '' })"
             @click="toggle(entry)"

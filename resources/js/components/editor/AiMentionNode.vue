@@ -15,7 +15,7 @@ const icon = computed(() => {
 <template>
   <NodeViewWrapper
     as="span"
-    :class="['bg-muted/10 inline-flex items-center gap-1 rounded px-2 py-0.5 text-xs font-medium']"
+    :class="['bg-muted-background inline-flex items-center gap-1 rounded px-2 py-0.5 text-sm font-medium']"
     contenteditable="false"
     :data-id="node.attrs.id"
     :data-mention-type="node.attrs.mentionType"

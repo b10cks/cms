@@ -113,7 +113,7 @@ watchEffect((onCleanup) => {
         <Icon
           v-if="isSmart"
           name="ai:bot-star"
-          class="shrink-0 text-muted-foreground"
+          class="shrink-0 text-muted"
           :title="String($t('labels.assetCollections.smartIndicator'))"
           aria-hidden="true"
         />

@@ -294,7 +294,7 @@ const handleSubmit = async () => {
           <div class="flex items-center justify-between gap-4 rounded-md bg-surface px-3 py-2">
             <div class="flex flex-col">
               <Label :label="String($t('labels.assetShares.fields.allowIndividualDownloads'))" />
-              <span class="text-xs text-muted">
+              <span class="text-sm text-muted">
                 {{ $t('labels.assetShares.fields.allowIndividualDownloadsHint') }}
               </span>
             </div>

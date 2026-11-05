@@ -34,7 +34,7 @@ const { t } = useI18n()
 
 <template>
   <div class="space-y-4 py-2">
-    <div class="grid grid-cols-2 gap-4 text-sm font-semibold text-muted-foreground">
+    <div class="grid grid-cols-2 gap-4 text-sm font-semibold text-muted">
       <div>{{ t('labels.contents.localization.sourceColumn') }}</div>
       <div>{{ t('labels.contents.localization.translationColumn') }}</div>
     </div>

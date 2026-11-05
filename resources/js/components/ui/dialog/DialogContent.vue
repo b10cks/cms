@@ -73,14 +73,14 @@ if (props.submitShortcut) {
 <template>
   <DialogPortal>
     <DialogOverlay
-      class="data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 fixed inset-0 z-50 grid place-items-center bg-overlay backdrop-blur-xs"
+      class="data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 fixed inset-0 z-50 grid place-items-center bg-overlay"
     >
       <DialogContent
         ref="contentRef"
         v-bind="forwarded"
         :class="
           cn(
-            'data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 relative flex max-h-[calc(100dvh-2rem)] w-full max-w-lg flex-col bg-background p-6 shadow-soft-lg duration-200 sm:rounded-lg',
+            'data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 relative flex max-h-[calc(100dvh-2rem)] w-full max-w-lg flex-col border-overlay-edge bg-background p-6 shadow-overlay duration-200 sm:rounded-xl sm:border',
             props.class
           )
         "
@@ -93,7 +93,8 @@ if (props.submitShortcut) {
         </div>
         <slot v-else />
         <DialogClose
-          class="absolute top-4 right-4 z-20 flex cursor-pointer items-center rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:outline-none disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted"
+          data-dialog-close
+          class="overlay-close absolute top-5.5 right-5.5 z-20"
         >
           <Icon name="lucide:x" />
           <span class="sr-only">{{ $t('actions.close') }}</span>

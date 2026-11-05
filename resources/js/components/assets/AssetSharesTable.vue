@@ -142,7 +142,7 @@ const handleDelete = async (share: AssetShareResource) => {
               <TableCell>
                 <div class="flex flex-col gap-0.5">
                   <span class="text-sm font-medium">{{ share.name }}</span>
-                  <span class="text-xs text-muted-foreground">
+                  <span class="text-sm text-muted">
                     {{ formatDateTime(share.created_at ?? '') }}
                   </span>
                 </div>
@@ -161,7 +161,7 @@ const handleDelete = async (share: AssetShareResource) => {
               <TableCell>
                 <Icon
                   :name="share.has_password ? 'lucide:lock' : 'lucide:lock-open'"
-                  :class="share.has_password ? 'text-primary' : 'text-muted-foreground'"
+                  :class="share.has_password ? 'text-primary' : 'text-muted'"
                   :title="
                     String(
                       $t(
@@ -182,7 +182,7 @@ const handleDelete = async (share: AssetShareResource) => {
                 <span class="text-sm">{{ share.view_count }}</span>
               </TableCell>
               <TableCell>
-                <span class="text-sm text-muted-foreground">
+                <span class="text-sm text-muted">
                   {{ share.expires_at ? formatDateTime(share.expires_at) : '—' }}
                 </span>
               </TableCell>

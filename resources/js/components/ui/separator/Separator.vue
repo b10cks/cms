@@ -28,7 +28,7 @@ const delegatedProps = computed(() => {
       v-if="props.label"
       :class="
         cn(
-          'absolute top-1/2 left-1/2 flex -translate-x-1/2 -translate-y-1/2 items-center justify-center bg-background text-xs text-muted',
+          'absolute top-1/2 left-1/2 flex -translate-x-1/2 -translate-y-1/2 items-center justify-center bg-background text-sm text-muted',
           props.orientation === 'vertical' ? 'w-[1px] px-1 py-2' : 'h-[1px] px-2 py-1'
         )
       "

@@ -21,7 +21,7 @@ const props = withDefaults(
   <li
     role="presentation"
     aria-hidden="true"
-    :class="cn('inline-flex [&>svg]:size-3.5', props.class)"
+    :class="cn('inline-flex opacity-60 [&>svg]:size-3.5', props.class)"
   >
     <slot>
       <Icon

@@ -21,7 +21,7 @@ const forwardedProps = useForwardProps(delegatedProps)
     v-bind="forwardedProps"
     :class="
       cn(
-        'flex cursor-default items-center gap-2 rounded-sm px-2 py-1.5 text-sm font-semibold outline-none select-none focus:bg-accent-fill focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 data-[state=open]:bg-accent-fill data-[state=open]:text-accent-foreground',
+        'menu-row',
         props.class
       )
     "

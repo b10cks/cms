@@ -274,7 +274,7 @@ const confirmDelete = async () => {
                   </Button>
                   <Button
                     v-if="canManageDataSources"
-                    variant="destructive"
+                    variant="ghost-destructive"
                     size="icon"
                     @click="emit('delete', dataSource)"
                   >

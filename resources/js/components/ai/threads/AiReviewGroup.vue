@@ -80,7 +80,7 @@ const title = computed(() => {
       />
       <button
         type="button"
-        class="flex min-w-0 flex-1 items-center gap-2 rounded-md text-left focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none"
+        class="flex min-w-0 flex-1 items-center gap-2 rounded-md text-left focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
         :aria-expanded="expanded"
         @click="expanded = !expanded"
       >

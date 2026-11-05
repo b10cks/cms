@@ -26,7 +26,7 @@
         <span
           v-if="searchActive && searchMatches.length === 0"
           aria-live="polite"
-          class="shrink-0 text-xs text-destructive"
+          class="shrink-0 text-sm text-destructive"
         >
           {{ $t('labels.contentTree.search.noMatches') }}
         </span>
@@ -107,7 +107,7 @@
                     'shrink-0 gap-1 font-medium',
                     showElementsForContent === item.value.id
                       ? 'bg-secondary text-primary'
-                      : 'text-muted-foreground hover:text-primary',
+                      : 'text-muted hover:text-primary',
                   ]"
                   :aria-label="$t('labels.content.pageElements')"
                   :aria-expanded="showElementsForContent === item.value.id"
@@ -130,7 +130,7 @@
                 class="mb-2 rounded-2xl border border-border bg-surface px-2 pt-2"
                 :style="{ 'margin-left': `${item.level * 0.5 + 1.25}rem` }"
               >
-                <div class="flex items-center gap-2 pb-2 pl-1 text-xs font-medium text-muted-foreground">
+                <div class="flex items-center gap-2 pb-2 pl-1 text-sm font-medium text-muted">
                   <Icon name="lucide:list-tree" />
                   {{ $t('labels.content.pageElements') }}
                   <Button
@@ -156,7 +156,7 @@
                 </div>
                 <p
                   v-else-if="anchors.length === 0"
-                  class="flex items-center gap-2 rounded-lg border border-dashed border-border p-3 mb-2 text-sm text-muted-foreground"
+                  class="flex items-center gap-2 rounded-lg border border-dashed border-border p-3 mb-2 text-sm text-muted"
                 >
                   <Icon name="lucide:layers" />
                   {{ $t('labels.content.noPageElements') }}
@@ -174,16 +174,16 @@
                     <Icon
                       v-if="anchor.depth > 0"
                       name="lucide:corner-down-right"
-                      class="shrink-0 text-muted-foreground"
+                      class="shrink-0 text-muted"
                     />
                     <button
                       type="button"
-                      class="group/anchor flex min-w-0 grow cursor-pointer items-center gap-2 rounded-lg border border-border bg-background p-2 text-left transition-colors hover:border-primary/40 hover:bg-input focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                      class="group/anchor flex min-w-0 grow cursor-pointer items-center gap-2 rounded-lg border border-border bg-background p-2 text-left transition-colors hover:border-primary/40 hover:bg-input focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                       @click="selectContentWithAnchor(item.value.id, anchor.id)"
                     >
                       <Icon
                         :name="anchor.block.icon ? `lucide:${anchor.block.icon}` : 'lucide:box'"
-                        :class="['shrink-0', !anchor.block.icon && 'text-muted-foreground']"
+                        :class="['shrink-0', !anchor.block.icon && 'text-muted']"
                         :style="{ color: anchor.block.color ?? undefined }"
                       />
                       <div class="grid min-w-0 grow leading-tight">
@@ -197,7 +197,7 @@
                       </div>
                       <Icon
                         name="lucide:link"
-                        class="shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover/anchor:opacity-100 group-focus-visible/anchor:opacity-100"
+                        class="shrink-0 text-muted opacity-0 transition-opacity group-hover/anchor:opacity-100 group-focus-visible/anchor:opacity-100"
                       />
                     </button>
                   </div>

@@ -157,7 +157,7 @@ const cellLabel = (column: ColumnDefinition<TItem>, item: TItem): string => {
 </script>
 
 <template>
-  <div class="overflow-hidden rounded-lg border border-border">
+  <div class="overflow-hidden rounded-lg border border-border-strong">
     <Table>
       <TableHeader>
         <TableRow>
@@ -182,7 +182,7 @@ const cellLabel = (column: ColumnDefinition<TItem>, item: TItem): string => {
         >
           <TableCell
             v-if="allowSort"
-            class="sort-handle w-4 cursor-ns-resize"
+            class="sort-handle w-4 cursor-grab text-muted transition-colors duration-100 hover:text-foreground active:cursor-grabbing"
           >
             <Icon name="lucide:grip-vertical" />
           </TableCell>
@@ -232,21 +232,23 @@ const cellLabel = (column: ColumnDefinition<TItem>, item: TItem): string => {
               :disabled="column.readonly || !canEdit"
             />
           </TableCell>
-          <TableCell class="flex items-center gap-1 justify-end">
-            <slot
-              name="actions"
-              :item="item"
-              :index="index"
-            />
-            <Button
-              v-if="canDelete"
-              variant="ghost"
-              size="icon"
-              @click="removeItem(index)"
-            >
-              <Icon name="lucide:trash-2" />
-              <span class="sr-only">{{ $t(removeButtonLabel) }}</span>
-            </Button>
+          <TableCell>
+            <div class="flex items-center justify-end gap-1">
+              <slot
+                name="actions"
+                :item="item"
+                :index="index"
+              />
+              <Button
+                v-if="canDelete"
+                variant="ghost-destructive"
+                size="icon"
+                @click="removeItem(index)"
+              >
+                <Icon name="lucide:trash-2" />
+                <span class="sr-only">{{ $t(removeButtonLabel) }}</span>
+              </Button>
+            </div>
           </TableCell>
         </TableRow>
       </TableBody>

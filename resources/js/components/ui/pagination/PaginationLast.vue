@@ -22,7 +22,10 @@ const delegatedProps = computed(() => {
 
 <template>
   <PaginationLast v-bind="delegatedProps">
-    <Button :class="cn('h-9 w-9 !p-0', props.class)">
+    <Button
+      variant="ghost"
+      :class="cn('h-9 w-9 !p-0', props.class)"
+    >
       <slot>
         <Icon name="lucide:chevron-last" />
       </slot>

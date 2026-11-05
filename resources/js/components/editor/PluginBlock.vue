@@ -173,7 +173,7 @@ onBeforeUnmount(() => {
     </div>
     <div
       v-else-if="!plugin.is_active"
-      class="rounded-md border border-input bg-muted p-3 text-sm text-muted-foreground"
+      class="rounded-md border border-input-border bg-muted-background p-3 text-sm text-muted"
     >
       {{ t('labels.fieldPlugins.editor.pluginDeactivated', { name: plugin.name }) }}
     </div>
@@ -210,7 +210,7 @@ onBeforeUnmount(() => {
           :src="frameSrc"
           :sandbox="sandboxAttr"
           referrerpolicy="no-referrer"
-          class="w-full rounded-md border border-input bg-background"
+          class="w-full rounded-md border border-input-border bg-background"
           :class="isModal ? 'h-full flex-1' : ''"
           :style="isModal ? undefined : { height: `${height}px` }"
           :title="plugin.name"

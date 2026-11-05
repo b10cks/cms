@@ -39,7 +39,7 @@ const labelText = computed(() => {
           v-if="iconComponent"
           class="w-32 text-muted"
         />
-        <div class="font-semibold text-muted">{{ labelText }}</div>
+        <div class="font-medium text-muted">{{ labelText }}</div>
         <slot name="actions" />
       </div>
     </TableCell>

@@ -8,11 +8,11 @@ import { cn } from '~/lib/utils'
 const alertVariants = cva('relative w-full p-3', {
   variants: {
     color: {
-      default: 'border-border bg-background text-foreground',
-      info: 'border-info-border text-info bg-info-background/10',
-      destructive: 'border-destructive-border text-destructive bg-destructive-background/10',
-      success: 'border-success-border text-success bg-success-background/10',
-      warning: 'border-warning-border text-warning bg-warning-background/10',
+      default: 'border-border-strong bg-background text-foreground',
+      info: 'border-info/40 text-info-ink bg-info-background/10',
+      destructive: 'border-destructive/40 text-destructive-ink bg-destructive/10',
+      success: 'border-success/40 text-success-ink bg-success-background/10',
+      warning: 'border-warning/40 text-warning-tint-foreground bg-warning-background/10',
     },
     variant: {
       default: 'rounded-lg border',
@@ -46,11 +46,11 @@ const props = withDefaults(defineProps<AlertProps>(), {
     :class="cn(alertVariants({ variant, color }), props.class)"
     role="alert"
   >
-    <div class="items-top flex gap-2">
+    <div class="flex items-start gap-2">
       <Icon
         v-if="icon"
         :name="icon"
-        class="mt-1 shrink-0"
+        class="mt-0.5 shrink-0"
       />
       <div>
         <slot />

@@ -410,7 +410,7 @@ const openVersionJsonInNewTab = (versionId: string) => {
               >
                 <div class="relative z-10 flex items-center px-2">
                   <div
-                    class="bg-surface py-1 text-xs font-medium tracking-wider text-muted uppercase"
+                    class="bg-surface py-1 text-sm font-medium tracking-wider text-muted uppercase"
                   >
                     {{ getGroupLabel(groupKey) }}
                   </div>
@@ -681,7 +681,7 @@ const openVersionJsonInNewTab = (versionId: string) => {
             >
               <div class="flex grow flex-col gap-4">
                 <div class="flex items-center justify-between">
-                  <div class="mt-2 text-xs text-muted">
+                  <div class="mt-2 text-sm text-muted">
                     {{
                       $t('labels.contentVersions.previewingVersionFrom', {
                         date: formatCalendarTime(selectedVersion.created_at),

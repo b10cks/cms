@@ -12,7 +12,7 @@ defineProps<{
     :class="[
       'relative z-0 text-sm font-semibold transition-colors duration-200',
       hideLabel && 'sr-only',
-      hasError ? 'text-destructive' : 'text-primary',
+      hasError ? 'text-destructive-ink' : 'text-primary',
     ]"
   >
     <slot>
@@ -20,7 +20,7 @@ defineProps<{
     </slot>
     <span
       v-if="required"
-      class="ml-1 text-destructive"
+      class="ml-0.5 text-destructive-ink"
       >*</span
     >
   </label>

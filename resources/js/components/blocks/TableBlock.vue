@@ -151,7 +151,7 @@ const removeColumn = (index: number) => {
           <h5 class="font-semibold text-primary">
             {{ $t('labels.blocks.fields.table.columnsTitle') }}
           </h5>
-          <p class="text-sm text-muted-foreground">
+          <p class="text-sm text-muted">
             {{ $t('labels.blocks.fields.table.columnsDescription') }}
           </p>
         </div>
@@ -181,7 +181,7 @@ const removeColumn = (index: number) => {
               data-column-handle
               :disabled="readonly"
               :aria-label="$t('actions.dragToReorder')"
-              class="h-full flex items-center cursor-ns-resize py-2 text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50"
+              class="h-full flex items-center cursor-ns-resize py-2 text-muted disabled:cursor-not-allowed disabled:opacity-50"
             >
               <Icon name="lucide:grip-vertical" />
             </button>
@@ -225,7 +225,7 @@ const removeColumn = (index: number) => {
               type="button"
               :disabled="readonly"
               :aria-label="$t('actions.blocks.table.deleteColumn')"
-              class="mt-7 cursor-pointer p-2 text-muted-foreground hover:text-destructive disabled:cursor-not-allowed disabled:opacity-50"
+              class="mt-7 cursor-pointer p-2 text-muted hover:text-destructive disabled:cursor-not-allowed disabled:opacity-50"
               @click="removeColumn(index)"
             >
               <Icon name="lucide:trash-2" />

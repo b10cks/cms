@@ -103,7 +103,7 @@ const submit: ImportDialogSubmit<ContentTranslationImportResult, ContentTranslat
           <span class="block text-sm font-medium text-foreground">
             {{ t('labels.contents.translationImport.createMissing.label') }}
           </span>
-          <span class="block text-xs text-muted-foreground">
+          <span class="block text-sm text-muted">
             {{ t('labels.contents.translationImport.createMissing.description') }}
           </span>
         </span>
@@ -112,7 +112,7 @@ const submit: ImportDialogSubmit<ContentTranslationImportResult, ContentTranslat
 
     <template #label="{ item }">
       {{ item.name || item.content_id }}
-      <span class="ml-2 rounded bg-muted px-1.5 py-0.5 text-xs uppercase text-muted-foreground">
+      <span class="ml-2 rounded bg-muted-background px-1.5 py-0.5 text-sm uppercase text-muted">
         {{ item.language }}
       </span>
     </template>
@@ -122,7 +122,7 @@ const submit: ImportDialogSubmit<ContentTranslationImportResult, ContentTranslat
         <span
           v-for="(change, index) in item.changes"
           :key="`${item.content_id}-${item.language}-${index}`"
-          class="rounded-md bg-muted/50 px-2 py-1 text-xs text-foreground"
+          class="rounded-md bg-muted-background px-2 py-1 text-sm text-foreground"
         >
           {{ change.label }}
         </span>

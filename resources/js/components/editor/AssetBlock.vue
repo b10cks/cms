@@ -107,7 +107,7 @@ const handleAssetDetailsUpdate = (asset: AssetResource) => {
       :tabindex="props.readOnly ? -1 : 0"
       :aria-label="$t('labels.assets.addAsset')"
       :class="[
-        'rounded-lg border-2 border-dashed border-input bg-surface/50 p-8 text-center transition-colors',
+        'rounded-lg border-2 border-dashed border-input-border bg-surface/50 p-8 text-center transition-colors',
         props.readOnly ? 'cursor-default' : 'cursor-pointer hover:bg-surface',
       ]"
       @click="!props.readOnly && (showAssetPicker = true)"
@@ -118,20 +118,20 @@ const handleAssetDetailsUpdate = (asset: AssetResource) => {
       <p class="mb-1 text-sm font-medium text-primary">
         {{ $t('labels.assets.addAsset') }}
       </p>
-      <p class="text-xs text-muted">
+      <p class="text-sm text-muted">
         {{ $t('labels.assets.addAssetDescription') }}
       </p>
     </div>
 
     <div
       v-else-if="currentAsset"
-      class="group relative max-w-sm overflow-hidden rounded-lg border border-input bg-surface"
+      class="group relative max-w-sm overflow-hidden rounded-lg border border-input-border bg-surface"
     >
       <div class="flex items-center gap-3 p-2">
         <div class="flex-shrink-0">
           <div
             v-if="isImage"
-            class="h-14 w-14 overflow-hidden rounded border border-input bg-background"
+            class="h-14 w-14 overflow-hidden rounded border border-border-strong bg-background"
           >
             <NuxtImg
               :src="currentAsset.full_path"
@@ -144,7 +144,7 @@ const handleAssetDetailsUpdate = (asset: AssetResource) => {
           </div>
           <div
             v-else-if="currentAsset.metadata?.thumbnails?.[0]?.full_path"
-            class="h-14 w-14 overflow-hidden rounded border border-input bg-background"
+            class="h-14 w-14 overflow-hidden rounded border border-border-strong bg-background"
           >
             <NuxtImg
               :src="currentAsset.metadata.thumbnails[0].full_path"
@@ -157,7 +157,7 @@ const handleAssetDetailsUpdate = (asset: AssetResource) => {
           </div>
           <div
             v-else
-            class="flex h-12 w-12 items-center justify-center rounded border border-input bg-background"
+            class="flex h-12 w-12 items-center justify-center rounded border border-border-strong bg-background"
           >
             <Icon
               :name="getFileIcon(getFileType(currentAsset.mime_type))"

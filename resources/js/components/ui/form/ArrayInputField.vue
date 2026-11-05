@@ -367,7 +367,7 @@ const handleKeyPress = (event: KeyboardEvent): void => {
 
               <span
                 v-else-if="column.readonly || column.editable === false"
-                class="text-muted-foreground text-sm"
+                class="text-muted text-sm"
               >
                 {{ item[column.key] }}
               </span>
@@ -394,7 +394,7 @@ const handleKeyPress = (event: KeyboardEvent): void => {
           <TableRow v-if="showEmptyPlaceholder && items.length === 0">
             <TableCell
               :colspan="columns.length + (sortable ? 1 : 0) + (showRemoveButton ? 1 : 0)"
-              class="text-muted-foreground py-6 text-center"
+              class="text-muted py-6 text-center"
             >
               {{ String(emptyMessage) }}
             </TableCell>
@@ -511,7 +511,7 @@ const handleKeyPress = (event: KeyboardEvent): void => {
 
       <div
         v-if="maxItems && items.length >= maxItems"
-        class="text-muted-foreground text-sm"
+        class="text-muted text-sm"
       >
         {{ $t('validation.maxItems', { max: maxItems }) }}
       </div>

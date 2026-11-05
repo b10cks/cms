@@ -1,29 +1,3 @@
-html[dir='ltr'],
-[data-sonner-toaster][dir='ltr'] {
-  --toast-icon-margin-start: -3px;
-  --toast-icon-margin-end: 4px;
-  --toast-svg-margin-start: -1px;
-  --toast-svg-margin-end: 0px;
-  --toast-button-margin-start: auto;
-  --toast-button-margin-end: 0;
-  --toast-close-button-start: 0;
-  --toast-close-button-end: unset;
-  --toast-close-button-transform: translate(-35%, -35%);
-}
-
-html[dir='rtl'],
-[data-sonner-toaster][dir='rtl'] {
-  --toast-icon-margin-start: 4px;
-  --toast-icon-margin-end: -3px;
-  --toast-svg-margin-start: 0px;
-  --toast-svg-margin-end: -1px;
-  --toast-button-margin-start: 0;
-  --toast-button-margin-end: auto;
-  --toast-close-button-start: unset;
-  --toast-close-button-end: 0;
-  --toast-close-button-transform: translate(35%, -35%);
-}
-
 /* Main Toaster Container */
 [data-sonner-toaster] {
   @apply fixed z-[999999999] m-0 list-none p-0 font-sans outline-none;
@@ -80,18 +54,19 @@ html[dir='rtl'],
     box-shadow 200ms;
 }
 
-/* Styled Toast */
+/* Styled Toast: one neutral surface. Everything sits on the first line of text, so a toast
+   grows downward with its description and the icon, action and close stay in line. */
 [data-sonner-toast][data-styled='true'] {
-  @apply rounded-lg border border-border bg-card p-4 text-foreground shadow-lg;
-  @apply flex items-center gap-1.5 text-xs;
-  @apply dark:border-border dark:bg-card dark:text-foreground;
+  @apply border border-popover-border bg-popover px-3 py-2.5 text-primary shadow-overlay;
+  @apply flex items-start gap-2.5 text-sm;
 
+  --muted: var(--input-muted);
   border-radius: var(--border-radius);
   width: var(--width);
 }
 
 [data-sonner-toast]:focus-visible {
-  @apply ring-2 ring-ring ring-offset-2;
+  @apply outline-2 outline-offset-2 outline-ring;
 }
 
 /* Position-specific transforms */
@@ -110,25 +85,22 @@ html[dir='rtl'],
 }
 
 /* Toast Content Elements */
-[data-sonner-toast][data-styled='true'] [data-description] {
-  @apply leading-relaxed font-normal text-muted;
-  @apply dark:text-muted;
-}
-
-[data-rich-colors='true'][data-sonner-toast][data-styled='true'] [data-description] {
-  color: inherit;
+[data-sonner-toast][data-styled='true'] [data-content] {
+  @apply flex min-w-0 flex-1 flex-col gap-0.5;
 }
 
 [data-sonner-toast][data-styled='true'] [data-title] {
-  @apply leading-normal font-medium;
+  @apply leading-5 font-medium;
   color: inherit;
 }
 
-/* Toast Icon */
+[data-sonner-toast][data-styled='true'] [data-description] {
+  @apply leading-5 font-normal text-muted;
+}
+
+/* Toast Icon: 16px and stroked, centered on the 20px first line. Only this carries the status color */
 [data-sonner-toast][data-styled='true'] [data-icon] {
-  @apply relative flex h-4 w-4 flex-shrink-0 items-center justify-start;
-  margin-left: var(--toast-icon-margin-start);
-  margin-right: var(--toast-icon-margin-end);
+  @apply relative flex h-5 w-4 flex-shrink-0 items-center justify-center;
 }
 
 [data-sonner-toast][data-promise='true'] [data-icon] > svg {
@@ -140,50 +112,30 @@ html[dir='rtl'],
   @apply flex-shrink-0;
 }
 
-[data-sonner-toast][data-styled='true'] [data-icon] svg {
-  margin-left: var(--toast-svg-margin-start);
-  margin-right: var(--toast-svg-margin-end);
-}
-
-/* Toast Content */
-[data-sonner-toast][data-styled='true'] [data-content] {
-  @apply flex flex-col gap-0.5;
-}
-
-/* Toast Button */
+/* Toast Button: 24px, with negative margins so it doesn't set the height of a one-line toast */
 [data-sonner-toast][data-styled='true'] [data-button] {
-  @apply h-6 cursor-pointer rounded border-none px-2 text-xs font-medium outline-none;
-  @apply flex flex-shrink-0 items-center transition-all duration-[400ms];
-  @apply bg-foreground text-background hover:opacity-90;
-  @apply dark:bg-foreground dark:text-background;
-
-  margin-left: var(--toast-button-margin-start);
-  margin-right: var(--toast-button-margin-end);
+  @apply -my-0.5 flex h-6 flex-shrink-0 cursor-pointer items-center rounded-md border-none px-2 text-sm font-medium outline-none;
+  @apply transition-colors duration-100;
+  @apply bg-state-selected text-primary hover:bg-secondary-active;
 }
 
 [data-sonner-toast][data-styled='true'] [data-button]:focus-visible {
-  @apply ring-2 ring-ring ring-offset-2;
+  @apply outline-2 outline-offset-1 outline-ring;
 }
 
 [data-sonner-toast][data-styled='true'] [data-cancel] {
-  @apply bg-black/10 text-foreground hover:bg-black/20;
-  @apply dark:bg-white/20 dark:text-foreground dark:hover:bg-white/30;
+  @apply bg-transparent text-foreground hover:bg-state-hover;
 }
 
-/* Close Button */
+/* Close Button: the last item on the first line, so it can never cover the text or the action.
+   It comes first in the library's markup, hence the order. */
 [data-sonner-toast][data-styled='true'] [data-close-button] {
-  @apply absolute top-0 flex h-5 w-5 items-center justify-center p-0;
-  @apply z-10 cursor-pointer rounded-full border border-border bg-card text-foreground;
-  @apply transition-all duration-100 hover:border-elevated hover:bg-secondary;
-  @apply dark:border-border dark:bg-card dark:text-foreground dark:hover:bg-secondary;
-
-  left: var(--toast-close-button-start);
-  right: var(--toast-close-button-end);
-  transform: var(--toast-close-button-transform);
+  @apply order-1 -my-0.5 -me-1 flex size-6 flex-shrink-0 cursor-pointer items-center justify-center rounded-md border-none bg-transparent p-0 text-muted outline-none;
+  @apply transition-colors duration-100 hover:bg-state-hover hover:text-primary;
 }
 
 [data-sonner-toast][data-styled='true'] [data-close-button]:focus-visible {
-  @apply ring-2 ring-ring ring-offset-2;
+  @apply outline-2 outline-offset-1 outline-ring;
 }
 
 [data-sonner-toast][data-styled='true'] [data-disabled='true'] {
@@ -342,45 +294,22 @@ html[dir='rtl'],
   }
 }
 
-/* Toast Type Variants - Using Tailwind semantic colors */
-[data-rich-colors='true'][data-sonner-toast][data-type='success'] {
-  @apply border-success bg-success-background text-success-foreground;
-  @apply dark:border-success dark:bg-success-background dark:text-success-foreground;
+/* Toast types: the edge and text stay neutral and only the icon takes the status color.
+   A colored edge read as an alert box, and a wash would turn the warning cream. */
+[data-rich-colors='true'][data-sonner-toast][data-type='success'] [data-icon] {
+  color: var(--success-ink);
 }
 
-[data-rich-colors='true'][data-sonner-toast][data-type='success'] [data-close-button] {
-  @apply border-success bg-success-background text-success-foreground;
-  @apply dark:border-success dark:bg-success-background dark:text-success-foreground;
+[data-rich-colors='true'][data-sonner-toast][data-type='info'] [data-icon] {
+  color: var(--info-ink);
 }
 
-[data-rich-colors='true'][data-sonner-toast][data-type='info'] {
-  @apply border-info bg-info-background text-info-foreground;
-  @apply dark:border-info dark:bg-info-background dark:text-info-foreground;
+[data-rich-colors='true'][data-sonner-toast][data-type='warning'] [data-icon] {
+  color: var(--warning-ink);
 }
 
-[data-rich-colors='true'][data-sonner-toast][data-type='info'] [data-close-button] {
-  @apply border-info bg-info-background text-info-foreground;
-  @apply dark:border-info dark:bg-info-background dark:text-info-foreground;
-}
-
-[data-rich-colors='true'][data-sonner-toast][data-type='warning'] {
-  @apply border-warning bg-warning-background text-warning-foreground;
-  @apply dark:border-warning dark:bg-warning-background dark:text-warning-foreground;
-}
-
-[data-rich-colors='true'][data-sonner-toast][data-type='warning'] [data-close-button] {
-  @apply border-warning bg-warning-background text-warning-foreground;
-  @apply dark:border-warning dark:bg-warning-background dark:text-warning-foreground;
-}
-
-[data-rich-colors='true'][data-sonner-toast][data-type='error'] {
-  @apply border-destructive bg-destructive-background text-destructive-foreground;
-  @apply dark:border-destructive dark:bg-destructive-background dark:text-destructive-foreground;
-}
-
-[data-rich-colors='true'][data-sonner-toast][data-type='error'] [data-close-button] {
-  @apply border-destructive bg-destructive-background text-destructive-foreground;
-  @apply dark:border-destructive dark:bg-destructive-background dark:text-destructive-foreground;
+[data-rich-colors='true'][data-sonner-toast][data-type='error'] [data-icon] {
+  color: var(--destructive-ink);
 }
 
 /* Inverted Toast Styles */
@@ -391,7 +320,7 @@ html[dir='rtl'],
 
 /* Loading Components */
 .sonner-loading-wrapper {
-  @apply absolute inset-0 z-10 h-4 w-4;
+  @apply absolute inset-0 z-10 m-auto h-4 w-4;
 }
 
 .sonner-loading-wrapper[data-visible='false'] {

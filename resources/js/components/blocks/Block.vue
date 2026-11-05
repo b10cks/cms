@@ -485,13 +485,13 @@ const updateConditionOperator = (index: number, value: unknown) => {
       <AccordionTrigger class="flex grow cursor-pointer text-left items-center gap-4">
         <div class="flex flex-col">
           <h4 class="font-bold">{{ item?.name || name }}</h4>
-          <div class="text-xs text-muted">
+          <div class="text-sm text-muted">
             {{ $t(`labels.blocks.fieldTypes.${item?.type}.label`) }}
           </div>
         </div>
         <div
           v-if="fieldSummaryItems.length"
-          class="flex items-center gap-2 text-xs text-muted-foreground"
+          class="flex items-center gap-2 text-sm text-muted"
         >
           <SimpleTooltip
             v-for="item in fieldSummaryItems"
@@ -668,7 +668,7 @@ const updateConditionOperator = (index: number, value: unknown) => {
             <h5 class="font-semibold text-primary">
               {{ $t('labels.blocks.fields.conditions') }}
             </h5>
-            <p class="text-sm text-muted-foreground">
+            <p class="text-sm text-muted">
               {{ $t('labels.blocks.fields.conditionsDescription') }}
             </p>
           </div>

@@ -185,7 +185,7 @@ const handleSortChange = (value: { column: string; direction: 'asc' | 'desc' }) 
         <div class="relative flex-1">
           <Icon
             name="lucide:search"
-            class="text-muted-foreground pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2"
+            class="text-muted pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2"
           />
           <Input
             v-model="search"
@@ -260,7 +260,7 @@ const handleSortChange = (value: { column: string; direction: 'asc' | 'desc' }) 
               <div class="font-medium text-primary">{{ role.name }}</div>
               <p
                 v-if="role.description"
-                class="text-muted text-xs"
+                class="text-muted text-sm"
               >
                 {{ role.description }}
               </p>
@@ -292,13 +292,13 @@ const handleSortChange = (value: { column: string; direction: 'asc' | 'desc' }) 
                 v-if="role.updated_at"
                 :tooltip="formatDateTime(role.updated_at)"
               >
-                <span class="text-muted-foreground text-sm">
+                <span class="text-muted text-sm">
                   {{ formatRelativeTime(role.updated_at) }}
                 </span>
               </SimpleTooltip>
               <span
                 v-else
-                class="text-muted-foreground text-sm"
+                class="text-muted text-sm"
               >
                 {{ $t('labels.teamRoles.neverUpdated') }}
               </span>

@@ -240,7 +240,7 @@ const handleCellKeyDown = (event: KeyboardEvent, rowIndex: number, columnIndex: 
           <div class="flex items-start justify-between gap-4">
             <div>
               <DialogTitle>{{ item.name || item.key }}</DialogTitle>
-              <p class="mt-1 text-sm text-muted-foreground">
+              <p class="mt-1 text-sm text-muted">
                 {{ item.description || $t('components.tableBlock.dialogDescription') }}
               </p>
             </div>
@@ -264,7 +264,7 @@ const handleCellKeyDown = (event: KeyboardEvent, rowIndex: number, columnIndex: 
                 <thead v-if="item.has_thead">
                   <tr>
                     <th
-                      class="w-20 border-b border-r border-border bg-surface px-3 py-2 text-left text-xs font-semibold uppercase text-muted-foreground"
+                      class="w-20 border-b border-r border-border bg-surface px-3 py-2 text-left text-sm font-semibold uppercase text-muted"
                     >
                       #
                     </th>
@@ -292,7 +292,7 @@ const handleCellKeyDown = (event: KeyboardEvent, rowIndex: number, columnIndex: 
               >
                 <div class="border-r border-border bg-surface/40 px-3 py-3" />
                 <div
-                  class="border-r border-border px-3 py-6 text-center text-sm text-muted-foreground"
+                  class="border-r border-border px-3 py-6 text-center text-sm text-muted"
                   :style="{ gridColumn: `span ${Math.max(columns.length, 1)}` }"
                 >
                   {{ $t('components.tableBlock.dialogDescription') }}
@@ -311,7 +311,7 @@ const handleCellKeyDown = (event: KeyboardEvent, rowIndex: number, columnIndex: 
                   :style="{ '--table-columns': String(columns.length) }"
                 >
                   <div class="border-r border-t border-border bg-surface/40 px-3 py-3">
-                    <div class="flex items-center gap-2 text-sm text-muted-foreground">
+                    <div class="flex items-center gap-2 text-sm text-muted">
                       <button
                         v-if="canEdit"
                         type="button"
@@ -422,7 +422,7 @@ const handleCellKeyDown = (event: KeyboardEvent, rowIndex: number, columnIndex: 
                       type="button"
                       tabindex="-1"
                       :aria-label="$t('actions.remove')"
-                      class="cursor-pointer text-muted-foreground hover:text-destructive"
+                      class="cursor-pointer text-muted hover:text-destructive"
                       @click="removeRow(row.id)"
                     >
                       <Icon name="lucide:trash-2" />

@@ -12,7 +12,7 @@ const props = defineProps<{
   <th
     :class="
       cn(
-        'h-10 px-2 text-left align-middle font-bold text-muted [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-0.5',
+        'h-10 px-3 text-left align-middle font-medium text-foreground [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-0.5',
         props.class
       )
     "

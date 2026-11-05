@@ -88,10 +88,10 @@ const submit: ImportDialogSubmit<DataEntryImportResult, DataEntryImportMode> = (
         <div
           v-for="(change, index) in item.changes"
           :key="`${item.id}-${index}`"
-          class="rounded-md bg-muted/50 p-2"
+          class="rounded-md bg-muted-background p-2"
         >
           <div class="font-medium text-foreground">{{ change.field }}</div>
-          <div class="text-muted-foreground">
+          <div class="text-muted">
             {{ change.old ?? emptyValue }}
             ->
             {{ change.new ?? emptyValue }}

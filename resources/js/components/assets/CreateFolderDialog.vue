@@ -370,7 +370,7 @@ watch(
           v-model="settingsAccordionValue"
           type="single"
           collapsible
-          class="rounded-lg border border-input"
+          class="rounded-lg border border-border-strong"
         >
           <AccordionItem :value="SETTINGS_SECTION_VALUE">
             <AccordionHeader>
@@ -392,12 +392,12 @@ watch(
                 />
               </AccordionTrigger>
             </AccordionHeader>
-            <AccordionContent class="space-y-5 border-t border-input p-4 pt-4">
+            <AccordionContent class="space-y-5 border-t border-border-strong p-4 pt-4">
               <div class="space-y-2">
                 <h4 class="text-sm font-medium">
                   {{ $t('labels.assetFolders.metadata.fieldBehaviour') }}
                 </h4>
-                <p class="text-xs text-muted-foreground">
+                <p class="text-sm text-muted">
                   {{ $t('labels.assetFolders.metadata.requiredHint') }}
                 </p>
                 <SettingsTable
@@ -412,7 +412,7 @@ watch(
                 <h4 class="text-sm font-medium">
                   {{ $t('labels.assetFolders.metadata.additionalFields') }}
                 </h4>
-                <p class="text-xs text-muted-foreground">
+                <p class="text-sm text-muted">
                   {{ $t('labels.assetFolders.metadata.additionalFieldsDescription') }}
                 </p>
                 <SettingsTable

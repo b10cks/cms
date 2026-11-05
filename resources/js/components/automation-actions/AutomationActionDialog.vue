@@ -424,7 +424,7 @@ const summaryText = computed(() => {
 
           <div class="rounded-xl border border-border bg-surface/70 p-4">
             <div class="mb-3 flex items-center justify-between gap-3">
-              <span class="text-muted-foreground text-sm font-medium">{{
+              <span class="text-muted text-sm font-medium">{{
                 $t('labels.automationActions.previewLabel')
               }}</span>
               <AutomationActionTypeBadge :type="form.type" />
@@ -437,7 +437,7 @@ const summaryText = computed(() => {
                 <p class="font-medium text-sm">
                   {{ $t('labels.automationActions.fields.active') }}
                 </p>
-                <p class="text-muted-foreground text-xs">
+                <p class="text-muted text-sm">
                   {{ $t('labels.automationActions.fields.activeDescription') }}
                 </p>
               </div>
@@ -538,7 +538,7 @@ const summaryText = computed(() => {
                     </span>
                     <span
                       v-if="selectedPlaceholderTable"
-                      class="rounded-md border border-border bg-background px-2 py-0.5 text-xs text-muted-foreground"
+                      class="rounded-md border border-border bg-background px-2 py-0.5 text-sm text-muted"
                     >
                       {{ selectedPlaceholderTable.label }}
                     </span>
@@ -550,7 +550,7 @@ const summaryText = computed(() => {
                       :key="group.key"
                       class="space-y-1.5"
                     >
-                      <p class="text-muted-foreground text-xs font-medium uppercase tracking-wide">
+                      <p class="text-muted text-sm font-medium uppercase tracking-wide">
                         {{ $t(`labels.automationActions.placeholderGroups.${group.key}`) }}
                       </p>
                       <div class="flex flex-wrap gap-2">
@@ -750,7 +750,7 @@ const summaryText = computed(() => {
                   <p class="font-medium text-sm">
                     {{ $t('labels.automationActions.secretsTitle') }}
                   </p>
-                  <p class="text-muted-foreground text-sm">
+                  <p class="text-muted text-sm">
                     {{ $t('labels.automationActions.secretsDescription') }}
                   </p>
                 </div>

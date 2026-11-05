@@ -117,17 +117,17 @@ const openDetails = () => {
       severity="warning"
     />
 
-    <span class="shrink-0 text-xs text-muted">{{ formatFileSize(file.file.size) }}</span>
+    <span class="shrink-0 text-sm text-muted">{{ formatFileSize(file.file.size) }}</span>
 
     <span
       v-if="file.status === 'uploading'"
-      class="w-9 shrink-0 text-right text-xs text-muted"
+      class="w-9 shrink-0 text-right text-sm text-muted"
     >
       {{ file.progress }}%
     </span>
     <span
       v-else-if="file.status === 'error'"
-      class="max-w-40 shrink-0 truncate text-xs text-destructive"
+      class="max-w-40 shrink-0 truncate text-sm text-destructive"
       :title="statusLabel"
     >
       {{ statusLabel }}

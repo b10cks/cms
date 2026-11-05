@@ -298,7 +298,7 @@ const formatSize = (bytes: number | null) => (bytes ? formatFileSize(bytes) : 'â
             v-model="editForm.code"
             name="code"
             :rows="10"
-            input-class="font-mono text-xs"
+            input-class="font-mono text-sm"
             :label="$t('labels.fieldPlugins.form.bundle')"
             :description="$t('labels.fieldPlugins.form.bundleDescription')"
           />

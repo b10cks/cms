@@ -342,7 +342,7 @@ watch(open, (isOpen, wasOpen) => {
                   <span class="sr-only">{{ $t('labels.contents.create.slugReset') }}</span>
                 </Button>
               </div>
-              <p class="mt-1 flex items-center gap-1.5 text-xs text-muted">
+              <p class="mt-1 flex items-center gap-1.5 text-sm text-muted">
                 <Icon
                   v-if="slugMode === 'auto' && isPreviewFetching"
                   name="lucide:loader-circle"
@@ -364,7 +364,7 @@ watch(open, (isOpen, wasOpen) => {
             :description="$t('labels.contents.create.serialPreview')"
           >
             <span
-              class="inline-flex items-center rounded-md border border-input bg-elevated px-2 py-1 font-mono text-sm text-muted"
+              class="inline-flex items-center rounded-md border border-border-strong bg-elevated px-2 py-1 font-mono text-sm text-muted"
             >
               {{ field.value }}
             </span>

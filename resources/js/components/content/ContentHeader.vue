@@ -72,7 +72,7 @@ const togglePreview = () => {
   <div class="flex items-center gap-3">
     <div v-if="content">
       <h1 class="-mb-1 flex items-center gap-2">
-        <span class="text-lg font-semibold text-primary">{{ content?.name }}</span>
+        <span class="text-panel font-semibold text-primary">{{ content?.name }}</span>
         <ContentStateBadge :status="status" />
       </h1>
       <div class="flex items-center">

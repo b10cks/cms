@@ -80,7 +80,7 @@ const emit = defineEmits<{
           class="flex min-w-0 items-center gap-2 text-sm"
         >
           <span
-            :class="['size-1.5 shrink-0 rounded-full', space.published ? 'bg-success' : 'bg-muted']"
+            :class="['size-1.5 shrink-0 rounded-full', space.published ? 'bg-success' : 'bg-muted-background']"
             :title="
               space.published
                 ? $t('labels.teamWorkspace.structure.published')

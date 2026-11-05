@@ -179,7 +179,7 @@ const toggleExpanded = (key: string) => {
                   'rounded-lg border p-3 text-left transition-colors',
                   importMode === mode.value
                     ? 'border-primary bg-primary/5 text-foreground'
-                    : 'border-border text-muted-foreground hover:border-muted-foreground',
+                    : 'border-border text-muted hover:border-border-strong',
                 ]"
                 @click="importMode = mode.value"
               >
@@ -190,12 +190,12 @@ const toggleExpanded = (key: string) => {
                   />
                   <span class="text-sm font-medium">{{ mode.label }}</span>
                 </div>
-                <p class="mt-1 text-xs">{{ mode.description }}</p>
+                <p class="mt-1 text-sm">{{ mode.description }}</p>
               </button>
             </div>
             <p
               v-if="activeMode?.warning"
-              class="rounded-md bg-destructive/10 p-2 text-xs text-destructive"
+              class="rounded-md bg-destructive/10 p-2 text-sm text-destructive"
             >
               {{ activeMode.warning }}
             </p>
@@ -211,7 +211,7 @@ const toggleExpanded = (key: string) => {
               :model-value="progressPercent"
               :class="progressPercent === 0 && 'animate-pulse'"
             />
-            <p class="text-xs tabular-nums text-muted-foreground">{{ progressText }}</p>
+            <p class="text-sm tabular-nums text-muted">{{ progressText }}</p>
           </div>
 
           <div
@@ -261,7 +261,7 @@ const toggleExpanded = (key: string) => {
                 ]"
               >
                 <div class="rounded-lg border p-4">
-                  <div class="text-sm font-medium text-muted-foreground">
+                  <div class="text-sm font-medium text-muted">
                     {{ labels.summarySuccess }}
                   </div>
                   <div class="text-2xl font-semibold text-foreground">
@@ -269,7 +269,7 @@ const toggleExpanded = (key: string) => {
                   </div>
                 </div>
                 <div class="rounded-lg border p-4">
-                  <div class="text-sm font-medium text-muted-foreground">
+                  <div class="text-sm font-medium text-muted">
                     {{ labels.summaryChanges }}
                   </div>
                   <div class="text-2xl font-semibold text-foreground">
@@ -280,7 +280,7 @@ const toggleExpanded = (key: string) => {
                   v-if="(importResult.summary.total_deleted ?? 0) > 0"
                   class="rounded-lg border p-4"
                 >
-                  <div class="text-sm font-medium text-muted-foreground">
+                  <div class="text-sm font-medium text-muted">
                     {{ labels.summaryDeleted }}
                   </div>
                   <div class="text-2xl font-semibold text-destructive">
@@ -288,7 +288,7 @@ const toggleExpanded = (key: string) => {
                   </div>
                 </div>
                 <div class="rounded-lg border p-4">
-                  <div class="text-sm font-medium text-muted-foreground">
+                  <div class="text-sm font-medium text-muted">
                     {{ labels.summaryErrors }}
                   </div>
                   <div class="text-2xl font-semibold text-foreground">
@@ -310,7 +310,7 @@ const toggleExpanded = (key: string) => {
                   >
                     <button
                       type="button"
-                      class="flex w-full items-center justify-between gap-4 p-3 text-left hover:bg-muted/40"
+                      class="flex w-full items-center justify-between gap-4 p-3 text-left hover:bg-state-hover"
                       @click="toggleExpanded(itemKey(item))"
                     >
                       <span class="font-medium text-foreground">
@@ -319,7 +319,7 @@ const toggleExpanded = (key: string) => {
                           :item="item"
                         />
                       </span>
-                      <span class="flex items-center gap-2 text-xs text-muted-foreground">
+                      <span class="flex items-center gap-2 text-sm text-muted">
                         {{ changeCount(item) }}
                         <Icon
                           :name="
@@ -344,7 +344,7 @@ const toggleExpanded = (key: string) => {
                 </div>
                 <p
                   v-if="importResult.changes.length > MAX_SUMMARY_ROWS"
-                  class="text-xs text-muted-foreground"
+                  class="text-sm text-muted"
                 >
                   {{ hiddenRows(importResult.changes.length) }}
                 </p>
@@ -361,7 +361,7 @@ const toggleExpanded = (key: string) => {
                     :key="`deleted-${index}`"
                     :class="
                       deletedVariant === 'tags'
-                        ? 'rounded-md bg-destructive/10 px-3 py-1 text-xs text-destructive'
+                        ? 'rounded-md bg-destructive/10 px-3 py-1 text-sm text-destructive'
                         : 'rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive'
                     "
                   >
@@ -370,7 +370,7 @@ const toggleExpanded = (key: string) => {
                 </div>
                 <p
                   v-if="importResult.deleted.length > MAX_SUMMARY_ROWS"
-                  class="text-xs text-muted-foreground"
+                  class="text-sm text-muted"
                 >
                   {{ hiddenRows(importResult.deleted.length) }}
                 </p>
@@ -385,7 +385,7 @@ const toggleExpanded = (key: string) => {
                   <span
                     v-for="field in importResult.ignored_fields"
                     :key="field"
-                    class="rounded-full bg-muted px-3 py-1 text-xs text-muted-foreground"
+                    class="rounded-full bg-muted-background px-3 py-1 text-sm text-muted"
                   >
                     {{ field }}
                   </span>
@@ -409,7 +409,7 @@ const toggleExpanded = (key: string) => {
                 </div>
                 <p
                   v-if="importResult.errors.length > MAX_SUMMARY_ROWS"
-                  class="text-xs text-muted-foreground"
+                  class="text-sm text-muted"
                 >
                   {{ hiddenRows(importResult.errors.length) }}
                 </p>

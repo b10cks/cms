@@ -170,7 +170,7 @@ const selectFirstMatch = () => {
             >
               <div
                 v-if="row.data.type === 'label'"
-                class="py-1.5 text-xs tracking-widest text-muted uppercase select-none font-semibold"
+                class="py-1.5 text-sm tracking-widest text-muted uppercase select-none font-semibold"
               >
                 {{ row.data.title }}
               </div>

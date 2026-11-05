@@ -612,7 +612,7 @@ const exportFilters = computed(() => ({
           <div class="flex items-center gap-2">
             <span
               v-if="translationProgress"
-              class="ai-animate-text text-xs text-muted"
+              class="ai-animate-text text-sm text-muted"
             >
               {{ $t('labels.massEdit.translating', translationProgress) }}
             </span>

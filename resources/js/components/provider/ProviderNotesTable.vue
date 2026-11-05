@@ -144,7 +144,7 @@ defineExpose({
             <TableRow
               v-for="note in noteRows"
               :key="note.id"
-              class="hover:bg-muted/50"
+              class="hover:bg-state-hover"
             >
               <TableCell class="align-top">
                 <div class="flex items-start gap-3">
@@ -159,7 +159,7 @@ defineExpose({
                       <span class="font-medium text-primary">{{ note.title }}</span>
                       <span
                         v-if="note.is_pinned"
-                        class="rounded-full bg-secondary px-2 py-0.5 text-xs font-medium text-primary"
+                        class="rounded-full bg-secondary px-2 py-0.5 text-sm font-medium text-primary"
                       >
                         {{ t('labels.provider.notes.pinned') }}
                       </span>

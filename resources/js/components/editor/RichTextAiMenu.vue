@@ -139,7 +139,7 @@ const discard = () => {
         @submit="run.answer"
       />
       <template v-else>
-        <p class="text-sm text-muted-foreground line-through">{{ proposal.before }}</p>
+        <p class="text-sm text-muted line-through">{{ proposal.before }}</p>
         <Textarea
           v-if="isFinished"
           v-model="edited"

@@ -17,9 +17,9 @@ export const cardVariants = cva('', {
       surface: 'rounded-xl p-6 border border-border bg-surface shadow-soft-sm',
       outline: 'rounded-xl p-6 border border-border',
       accent: 'rounded-xl p-6 bg-accent-fill text-white shadow-soft',
-      warning: 'rounded-xl p-6 bg-warning-background/20 text-warning shadow-sm',
-      destructive: 'rounded-xl p-6 bg-destructive-background/20 text-destructive shadow-sm',
-      destructiveOutline: 'rounded-xl p-6 border border-destructive text-destructive',
+      warning: 'rounded-xl p-6 bg-warning-background/20 text-warning-ink shadow-sm',
+      destructive: 'rounded-xl p-6 bg-destructive-background/20 text-destructive-ink shadow-sm',
+      destructiveOutline: 'rounded-xl p-6 border border-destructive text-destructive-ink',
     },
   },
   defaultVariants: {

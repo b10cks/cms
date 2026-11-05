@@ -7,7 +7,7 @@ const props = defineProps<{ class?: HTMLAttributes['class'] }>()
 </script>
 
 <template>
-  <span :class="cn('ml-auto text-xs tracking-widest text-muted', props.class)">
+  <span :class="cn('ml-auto pl-4 text-sm font-normal text-muted', props.class)">
     <slot />
   </span>
 </template>

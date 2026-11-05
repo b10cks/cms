@@ -33,7 +33,7 @@ defineEmits<{
     :aria-label="props['aria-label']"
     :class="
       cn(
-        'inline-flex h-8 items-center rounded-md border border-input-border bg-input px-2 text-sm font-semibold text-primary shadow-sm focus-within:ring-1 focus-within:ring-ring',
+        'inline-flex h-8 items-center rounded-md border border-input-border bg-input px-2 text-sm font-medium text-primary shadow-sm transition-colors focus-within:ring-2 focus-within:ring-ring',
         props.class
       )
     "
@@ -46,14 +46,14 @@ defineEmits<{
       <TimeFieldInput
         v-if="item.part === 'literal'"
         :part="item.part"
-        class="text-muted"
+        class="text-input-muted"
       >
         {{ item.value }}
       </TimeFieldInput>
       <TimeFieldInput
         v-else
         :part="item.part"
-        class="rounded px-0.5 tabular-nums uppercase outline-none focus:bg-accent-fill focus:text-white data-[placeholder]:text-muted"
+        class="rounded px-0.5 tabular-nums uppercase outline-none focus:bg-accent-fill focus:text-white data-[placeholder]:text-input-muted"
       >
         {{ item.value }}
       </TimeFieldInput>

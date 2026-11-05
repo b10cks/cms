@@ -173,7 +173,7 @@ const readout = computed(() => {
       <div
         ref="plot"
         tabindex="0"
-        class="relative touch-pan-y rounded-sm outline-none focus-visible:ring-1 focus-visible:ring-ring"
+        class="relative touch-pan-y rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
         :style="{ height: `${height}px` }"
         @pointermove="hover"
         @pointerleave="hovered = null"

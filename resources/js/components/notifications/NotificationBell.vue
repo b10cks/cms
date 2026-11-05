@@ -67,7 +67,7 @@ const onMarkAllRead = () => {
 <template>
   <Popover v-model:open="open">
     <PopoverTrigger
-      class="icon-anim relative flex size-9 cursor-pointer items-center justify-center rounded-lg text-muted transition-colors duration-200 hover:bg-elevated hover:text-primary data-[state=open]:bg-elevated"
+      class="icon-anim relative flex size-8 cursor-pointer items-center justify-center rounded-lg text-sidebar-muted transition-colors duration-100 hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
       :aria-label="$t('notifications.tooltip')"
     >
       <BellIcon :size="16" />
@@ -99,7 +99,7 @@ const onMarkAllRead = () => {
         <button
           v-if="hasUnread"
           type="button"
-          class="cursor-pointer rounded-md px-2 py-1 text-xs font-medium text-muted transition-colors hover:bg-elevated hover:text-primary"
+          class="cursor-pointer rounded-md px-2 py-1 text-sm font-medium text-muted transition-colors hover:bg-elevated hover:text-primary"
           @click="onMarkAllRead"
         >
           {{ $t('notifications.markAllRead') }}
@@ -165,7 +165,7 @@ const onMarkAllRead = () => {
                 >
                   {{ titleFor(n) }}
                 </span>
-                <span class="flex items-baseline gap-1 text-xs leading-tight text-muted">
+                <span class="flex items-baseline gap-1 text-sm leading-tight text-muted">
                   <span
                     v-if="bodyFor(n)"
                     class="truncate"

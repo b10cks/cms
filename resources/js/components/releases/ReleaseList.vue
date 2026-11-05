@@ -167,7 +167,7 @@ const handleCancel = (release: Release) => {
       <div
         v-for="i in 3"
         :key="i"
-        class="h-20 animate-pulse rounded-lg border border-border bg-muted/20"
+        class="h-20 animate-pulse rounded-lg border border-border bg-muted-background"
       />
     </div>
     <template v-else-if="!hasReleases">
@@ -175,7 +175,7 @@ const handleCancel = (release: Release) => {
         class="flex flex-col bg-surface items-center justify-center rounded-lg border border-dashed border-border py-12 text-center"
       >
         <ReleasesIcon class="mb-4 w-32" />
-        <p class="text-muted-foreground text-sm font-medium">
+        <p class="text-muted text-sm font-medium">
           {{ $t('labels.releases.noReleases') }}
         </p>
       </div>
@@ -186,9 +186,9 @@ const handleCancel = (release: Release) => {
       >
         <Icon
           name="lucide:search-x"
-          class="text-muted-foreground/50 mb-4 h-12 w-12"
+          class="text-muted/50 mb-4 h-12 w-12"
         />
-        <p class="text-muted-foreground text-sm font-medium">
+        <p class="text-muted text-sm font-medium">
           No releases found matching your search
         </p>
       </div>

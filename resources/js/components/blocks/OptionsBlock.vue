@@ -192,7 +192,7 @@ watch(
             name="lucide:grip-vertical"
             :class="[
               'shrink-0',
-              readonly ? 'text-muted-foreground' : 'cursor-ns-resize hover:text-primary',
+              readonly ? 'text-muted' : 'cursor-ns-resize hover:text-primary',
             ]"
             data-option-handle
           />
@@ -259,20 +259,20 @@ watch(
           <h5 class="font-semibold text-primary">
             {{ $t('labels.blocks.fields.dataSourcePreview') }}
           </h5>
-          <p class="text-sm text-muted-foreground">
+          <p class="text-sm text-muted">
             {{ $t('labels.blocks.fields.dataSourcePreviewDescription') }}
           </p>
         </div>
 
         <div
           v-if="isLoading"
-          class="text-sm text-muted-foreground"
+          class="text-sm text-muted"
         >
           {{ $t('labels.blocks.fields.dataSourcePreviewLoading') }}
         </div>
         <div
           v-else-if="isEmpty"
-          class="text-sm text-muted-foreground"
+          class="text-sm text-muted"
         >
           {{ $t('labels.blocks.fields.dataSourcePreviewEmpty') }}
         </div>
@@ -286,7 +286,7 @@ watch(
             class="flex items-center justify-between rounded-lg border border-border px-3 py-2 text-sm"
           >
             <span>{{ choice.label }}</span>
-            <code class="text-xs text-muted-foreground">{{ choice.value }}</code>
+            <code class="text-sm text-muted">{{ choice.value }}</code>
           </div>
         </div>
       </div>

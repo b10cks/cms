@@ -51,7 +51,7 @@ const { t } = useI18n()
         @select="emit('select', skill)"
       >
         <span class="font-medium">{{ aiSkillLabel(skill.name, t) }}</span>
-        <span class="text-sm text-muted-foreground">{{ skill.description }}</span>
+        <span class="text-sm text-muted">{{ skill.description }}</span>
       </DropdownMenuItem>
     </DropdownMenuContent>
   </DropdownMenu>

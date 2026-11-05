@@ -882,7 +882,7 @@ onUnmounted(() => {
             />
             <label
               for="autosave"
-              class="text-sm text-muted-foreground"
+              class="text-sm text-muted"
             >
               {{ $t('labels.datasets.autoSave') }}
             </label>
@@ -1024,7 +1024,7 @@ onUnmounted(() => {
                   <Icon
                     :name="getFileIcon(getFileType(asset.mime_type))"
                     size="1.5rem"
-                    class="text-muted-foreground"
+                    class="text-muted"
                   />
                 </div>
               </div>
@@ -1037,13 +1037,13 @@ onUnmounted(() => {
                     :issues="getMissingRequiredFields(asset, asset.folder_id ?? folderId)"
                     severity="error"
                   />
-                  <span class="text-xs text-muted-foreground">
+                  <span class="text-sm text-muted">
                     {{ asset.extension }} • {{ asset.mime_type }}
                   </span>
                 </div>
                 <p
                   v-if="asset.linked_contents_count !== undefined"
-                  class="text-xs text-muted-foreground"
+                  class="text-sm text-muted"
                 >
                   {{
                     asset.linked_contents_count === 1

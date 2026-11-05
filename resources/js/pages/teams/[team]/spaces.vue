@@ -79,7 +79,7 @@ const rows = computed(() =>
             <TableCell class="text-sm">
               <span class="flex items-center gap-2">
                 <span
-                  :class="['size-2 rounded-full', space.published ? 'bg-success' : 'bg-muted']"
+                  :class="['size-2 rounded-full', space.published ? 'bg-success' : 'bg-muted-background']"
                 />
                 {{
                   space.published

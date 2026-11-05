@@ -1425,7 +1425,7 @@ const removeAllOrphanedBlocks = (): void => {
         <button
           v-if="translationStats.orphanedBlocks > 0"
           type="button"
-          class="flex items-center gap-1.5 rounded px-2 py-1 text-xs font-medium text-amber-500 hover:bg-amber-500/15 transition-colors border border-amber-500/30"
+          class="flex items-center gap-1.5 rounded px-2 py-1 text-sm font-medium text-amber-500 hover:bg-amber-500/15 transition-colors border border-amber-500/30"
           @click="removeAllOrphanedBlocks"
         >
           <Icon
@@ -1482,7 +1482,7 @@ const removeAllOrphanedBlocks = (): void => {
           >
             <span
               v-if="translationProgress"
-              class="ai-animate-text text-xs text-muted"
+              class="ai-animate-text text-sm text-muted"
               >{{
                 $t('components.flattenedLocalization.translationProgress', translationProgress)
               }}</span
@@ -1617,7 +1617,7 @@ const removeAllOrphanedBlocks = (): void => {
                   (e: Event) => updateTranslatedValue(field, (e.target as HTMLInputElement).value)
                 "
               />
-              <div class="mt-2 text-xs text-muted">
+              <div class="mt-2 text-sm text-muted">
                 No specialized editor for type: {{ field.schemaItem.type }}
               </div>
             </div>
@@ -1657,7 +1657,7 @@ const removeAllOrphanedBlocks = (): void => {
 .collaboration-field-dirty :deep(textarea),
 .collaboration-field-dirty :deep(select),
 .collaboration-field-dirty :deep(button[role='combobox']),
-.collaboration-field-dirty :deep(.border-input),
+.collaboration-field-dirty :deep(.border-input-border),
 .collaboration-field-dirty :deep(.border-input-border),
 .collaboration-field-dirty :deep(.ProseMirror) {
   outline: 1px solid var(--collaboration-dirty-color);
@@ -1667,7 +1667,7 @@ const removeAllOrphanedBlocks = (): void => {
 .collaboration-field-active :deep(textarea),
 .collaboration-field-active :deep(select),
 .collaboration-field-active :deep(button[role='combobox']),
-.collaboration-field-active :deep(.border-input),
+.collaboration-field-active :deep(.border-input-border),
 .collaboration-field-active :deep(.border-input-border),
 .collaboration-field-active :deep(.ProseMirror) {
   outline: 2px solid var(--collaboration-color);

@@ -447,7 +447,7 @@ const summaryText = computed(() => {
 
           <div class="rounded-xl border border-border bg-surface/70 p-4">
             <div class="mb-3 flex items-center justify-between gap-3">
-              <span class="text-muted-foreground text-sm font-medium">{{
+              <span class="text-muted text-sm font-medium">{{
                 $t('labels.automations.previewLabel')
               }}</span>
               <AutomationTriggerTypeBadge :type="form.trigger_type" />
@@ -458,7 +458,7 @@ const summaryText = computed(() => {
             >
               <div>
                 <p class="font-medium text-sm">{{ $t('labels.automations.fields.active') }}</p>
-                <p class="text-muted-foreground text-xs">
+                <p class="text-muted text-sm">
                   {{ $t('labels.automations.fields.activeDescription') }}
                 </p>
               </div>
@@ -531,7 +531,7 @@ const summaryText = computed(() => {
         >
           <div>
             <p class="font-medium text-sm">{{ selectedAction.name }}</p>
-            <p class="text-muted-foreground text-sm">
+            <p class="text-muted text-sm">
               {{ selectedAction.description || $t('labels.automations.selectedActionFallback') }}
             </p>
           </div>
@@ -586,10 +586,10 @@ const summaryText = computed(() => {
                 class="rounded-xl border border-border bg-surface/70 px-4 py-3"
               >
                 <p class="font-medium text-sm">{{ selectedTableDefinition.label }}</p>
-                <p class="text-muted-foreground mt-1 text-sm">
+                <p class="text-muted mt-1 text-sm">
                   {{ selectedTableDefinition.description }}
                 </p>
-                <p class="text-muted-foreground mt-2 text-xs">
+                <p class="text-muted mt-2 text-sm">
                   {{
                     $t('labels.automations.tableColumnsSummary', {
                       count: selectedTableDefinition.columns.length,
@@ -615,7 +615,7 @@ const summaryText = computed(() => {
                 <p class="font-medium text-sm">
                   {{ $t(`labels.automations.triggerTypes.${form.trigger_type}`) }}
                 </p>
-                <p class="text-muted-foreground mt-1 text-sm">
+                <p class="text-muted mt-1 text-sm">
                   {{
                     form.trigger_type === 'content_published'
                       ? $t('labels.automations.contentLifecycle.publishedDescription')
@@ -633,7 +633,7 @@ const summaryText = computed(() => {
                   <p class="font-medium text-sm">
                     {{ $t('labels.automations.fields.contentAction') }}
                   </p>
-                  <p class="text-muted-foreground text-sm">
+                  <p class="text-muted text-sm">
                     {{ $t('labels.automations.fields.contentActionDescription') }}
                   </p>
                 </div>

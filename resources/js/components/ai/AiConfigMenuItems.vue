@@ -23,7 +23,7 @@ const emit = defineEmits<{ select: [configId: string] }>()
     v-for="config in configs"
     :key="config.id"
     :disabled="disabled"
-    class="cursor-pointer gap-2.5 rounded-md px-2 py-1.5 font-normal focus:bg-muted-background! focus:text-foreground!"
+    class="cursor-pointer gap-2.5 rounded-md px-2 py-1.5 font-normal"
     @select="emit('select', config.id)"
   >
     <Icon

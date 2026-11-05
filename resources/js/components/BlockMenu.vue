@@ -117,13 +117,13 @@ const tabs = computed(() => ({
 <template>
   <div class="sticky top-14 flex h-[calc(100vh-3.5rem)] min-w-2xs flex-col overflow-hidden p-2">
     <div class="flex min-h-0 flex-1 flex-col">
-      <div class="mb-6 flex w-full flex-col rounded-md bg-input p-1">
+      <div class="mb-6 flex w-full flex-col rounded-md bg-secondary p-1">
         <RouterLink
           v-for="({ icon, label, count }, key) in tabs"
           :key="key"
           :to="buildOverviewRoute({ mode: key as 'list' | 'tags' })"
-          class="flex w-full cursor-pointer items-center gap-2 rounded-md p-2 text-sm font-semibold transition-colors hover:text-primary data-[state=active]:bg-background data-[state=active]:text-primary"
-          :class="currentMode === key ? 'bg-background text-primary' : ''"
+          class="flex w-full cursor-pointer items-center gap-2 rounded-md p-2 text-sm font-semibold transition-colors hover:text-primary"
+          :class="currentMode === key ? 'bg-tab-active text-primary shadow-sm' : ''"
         >
           <Icon :name="icon" />
           <span>{{ label }}</span>

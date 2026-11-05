@@ -293,7 +293,7 @@ watch(
                   <span class="font-medium">{{ backup.name }}</span>
                   <span
                     v-if="backup.description"
-                    class="text-muted-foreground text-xs"
+                    class="text-muted text-sm"
                     >{{ backup.description }}</span
                   >
                 </div>
@@ -311,7 +311,7 @@ watch(
                 <span v-if="backup.file_size">{{ formatFileSize(backup.file_size) }}</span>
                 <span
                   v-else
-                  class="text-muted-foreground"
+                  class="text-muted"
                   >—</span
                 >
               </TableCell>
@@ -322,13 +322,13 @@ watch(
                 >
                   <Icon
                     name="lucide:mail"
-                    class="text-muted-foreground"
+                    class="text-muted"
                   />
                   <span class="text-sm">{{ backup.recipients.length }}</span>
                   <Icon
                     v-if="backup.has_password"
                     name="lucide:lock"
-                    class="text-muted-foreground"
+                    class="text-muted"
                   />
                 </SimpleTooltip>
               </TableCell>

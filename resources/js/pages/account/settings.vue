@@ -40,12 +40,7 @@ const { preloadRoute, cancelPreload } = useRoutePreload()
           v-for="item in items"
           :key="item.name"
           :to="{ name: item.name }"
-          exact-active-class="bg-secondary text-primary"
-          :class="[
-            'flex items-center gap-2 rounded-md px-4 py-2',
-            'transition-colors duration-200 hover:bg-secondary',
-            'cursor-pointer font-semibold whitespace-nowrap',
-          ]"
+          class="nav-row"
           @mouseenter="preloadRoute({ name: item.name })"
           @focusin="preloadRoute({ name: item.name })"
           @mouseleave="cancelPreload({ name: item.name })"

@@ -203,7 +203,7 @@ const isTogglePending = (action: AutomationActionResource) => {
                       }}
                     </Badge>
                   </div>
-                  <p class="text-muted-foreground text-sm">
+                  <p class="text-muted text-sm">
                     {{ action.description || summarizeAction(action, t) }}
                   </p>
                 </div>
@@ -212,7 +212,7 @@ const isTogglePending = (action: AutomationActionResource) => {
               <TableCell class="align-top">
                 <div class="space-y-2">
                   <AutomationActionTypeBadge :type="action.type" />
-                  <p class="text-muted-foreground text-xs">
+                  <p class="text-muted text-sm">
                     {{ summarizeAction(action, t) }}
                   </p>
                 </div>
@@ -232,7 +232,7 @@ const isTogglePending = (action: AutomationActionResource) => {
                   </Badge>
                   <p
                     v-if="(action.automations_count ?? 0) > 0"
-                    class="text-muted-foreground text-xs"
+                    class="text-muted text-sm"
                   >
                     {{ $t('labels.automationActions.actionsDisabledHint') }}
                   </p>
@@ -249,7 +249,7 @@ const isTogglePending = (action: AutomationActionResource) => {
                   </Badge>
                   <p
                     v-if="action.last_execution_error"
-                    class="max-w-56 truncate text-destructive text-xs"
+                    class="max-w-56 truncate text-destructive text-sm"
                   >
                     {{ action.last_execution_error }}
                   </p>
@@ -262,13 +262,13 @@ const isTogglePending = (action: AutomationActionResource) => {
                   class="flex flex-col"
                 >
                   <span class="text-sm">{{ formatDateTime(action.last_executed_at) }}</span>
-                  <span class="text-muted-foreground text-xs">
+                  <span class="text-muted text-sm">
                     {{ formatRelativeTime(action.last_executed_at) }}
                   </span>
                 </div>
                 <span
                   v-else
-                  class="text-muted-foreground text-sm"
+                  class="text-muted text-sm"
                 >
                   {{ $t('labels.never') }}
                 </span>
@@ -277,7 +277,7 @@ const isTogglePending = (action: AutomationActionResource) => {
               <TableCell class="align-top">
                 <div class="flex flex-col">
                   <span class="text-sm">{{ formatDateTime(action.updated_at) }}</span>
-                  <span class="text-muted-foreground text-xs">
+                  <span class="text-muted text-sm">
                     {{ formatRelativeTime(action.updated_at) }}
                   </span>
                 </div>

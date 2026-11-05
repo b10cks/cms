@@ -70,7 +70,7 @@ const placeholderSizeClass = computed(() => {
     case 'lg':
       return 'size-12 text-sm'
     default:
-      return 'size-8 text-xs'
+      return 'size-8 text-sm'
   }
 })
 </script>
@@ -105,7 +105,7 @@ const placeholderSizeClass = computed(() => {
               cn(
                 avatarVariants({ size }),
                 placeholderSizeClass,
-                'text-muted-foreground flex items-center justify-center bg-muted font-medium ring-2 ring-background'
+                'text-muted flex items-center justify-center bg-muted-background font-medium ring-2 ring-background'
               )
             "
           >

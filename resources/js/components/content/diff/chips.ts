@@ -7,7 +7,7 @@ export function chipClasses(status: ChipStatus): string {
     case 'removed':
       return 'border-destructive/30 bg-destructive/10 text-destructive line-through'
     default:
-      return 'border-border text-muted-foreground'
+      return 'border-border text-muted'
   }
 }
 

@@ -74,7 +74,7 @@ useShortcut({
                 <kbd
                   v-for="token in item.tokens"
                   :key="token"
-                  class="rounded border border-border bg-surface px-1.5 py-0.5 font-mono text-xs"
+                  class="rounded border border-border bg-surface px-1.5 py-0.5 font-mono text-sm"
                 >
                   {{ token }}
                 </kbd>

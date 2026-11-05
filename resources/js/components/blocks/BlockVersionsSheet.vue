@@ -269,7 +269,7 @@ watch(
                 >
                   <div class="relative z-10 flex items-center px-2">
                     <div
-                      class="bg-surface py-1 text-xs font-medium tracking-wider text-muted uppercase"
+                      class="bg-surface py-1 text-sm font-medium tracking-wider text-muted uppercase"
                     >
                       {{ getGroupLabel(groupKey) }}
                     </div>

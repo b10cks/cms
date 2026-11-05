@@ -60,7 +60,7 @@ const hasChildren = computed(() => props.node.folders.length > 0 || props.node.f
       />
       <span class="min-w-0 flex-1 truncate">{{ node.name }}</span>
       <span
-        class="shrink-0 text-xs text-muted"
+        class="shrink-0 text-sm text-muted"
         :title="String($t('labels.assets.batch.summaryFiles', { count: node.fileCount }))"
       >
         {{ node.fileCount }}

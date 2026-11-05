@@ -187,7 +187,7 @@ const handleDelete = async () => {
     <div class="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
       <div class="space-y-1">
         <h2 class="font-semibold">{{ $t('labels.teams.saml.title') }}</h2>
-        <p class="text-muted-foreground max-w-3xl text-sm">
+        <p class="text-muted max-w-3xl text-sm">
           {{ $t('labels.teams.saml.description') }}
         </p>
       </div>
@@ -228,7 +228,7 @@ const handleDelete = async () => {
       <section class="space-y-4">
         <div class="space-y-1">
           <h3 class="font-semibold">{{ $t('labels.teams.saml.spTitle') }}</h3>
-          <p class="text-muted-foreground text-sm">{{ $t('labels.teams.saml.spDescription') }}</p>
+          <p class="text-muted text-sm">{{ $t('labels.teams.saml.spDescription') }}</p>
         </div>
 
         <div class="grid gap-4 lg:grid-cols-2">
@@ -266,7 +266,7 @@ const handleDelete = async () => {
       <section class="space-y-4">
         <div class="space-y-1">
           <h3 class="font-semibold">{{ $t('labels.teams.saml.idpTitle') }}</h3>
-          <p class="text-muted-foreground text-sm">{{ $t('labels.teams.saml.idpDescription') }}</p>
+          <p class="text-muted text-sm">{{ $t('labels.teams.saml.idpDescription') }}</p>
         </div>
 
         <CheckboxField
@@ -324,7 +324,7 @@ const handleDelete = async () => {
       >
         <div class="space-y-1">
           <h3 class="font-semibold">{{ $t('labels.teams.saml.mappingTitle') }}</h3>
-          <p class="text-muted-foreground text-sm">
+          <p class="text-muted text-sm">
             {{ $t('labels.teams.saml.mappingDescription') }}
           </p>
         </div>
@@ -384,7 +384,7 @@ const handleDelete = async () => {
           <div
             v-for="row in roleRows"
             :key="row.id"
-            class="grid gap-3 rounded-lg border border-input p-3 lg:grid-cols-[1fr_220px_auto]"
+            class="grid gap-3 rounded-lg border border-border-strong p-3 lg:grid-cols-[1fr_220px_auto]"
           >
             <InputField
               v-model="row.value"
@@ -418,7 +418,7 @@ const handleDelete = async () => {
       >
         <div class="space-y-1">
           <h3 class="font-semibold">{{ $t('labels.teams.saml.securityTitle') }}</h3>
-          <p class="text-muted-foreground text-sm">
+          <p class="text-muted text-sm">
             {{ $t('labels.teams.saml.securityDescription') }}
           </p>
         </div>
@@ -497,7 +497,7 @@ const handleDelete = async () => {
       </section>
 
       <div
-        class="flex flex-col-reverse gap-2 border-t border-input pt-6 sm:flex-row sm:justify-between"
+        class="flex flex-col-reverse gap-2 border-t border-border-strong pt-6 sm:flex-row sm:justify-between"
       >
         <Button
           v-if="provider"
@@ -517,7 +517,7 @@ const handleDelete = async () => {
         <div class="flex flex-col items-stretch gap-2 sm:flex-row sm:items-center">
           <span
             v-if="form.enabled && !requiredFieldsComplete"
-            class="text-muted-foreground text-sm"
+            class="text-muted text-sm"
           >
             {{ $t('labels.teams.saml.requiredHint') }}
           </span>

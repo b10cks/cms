@@ -326,7 +326,7 @@ const handleFolderChange = (folderId: string | null) => {
     </div>
     <div
       v-if="hasAssets && item.max"
-      class="text-center text-xs text-muted"
+      class="text-center text-sm text-muted"
     >
       {{ $t('labels.assets.assetsCount', { current: localValue.length, max: item.max }) }}
     </div>
@@ -370,7 +370,7 @@ const handleFolderChange = (folderId: string | null) => {
 
         <div
           v-if="replaceIndex === null"
-          class="flex items-center justify-between gap-4 border-t border-input px-6 py-3"
+          class="flex items-center justify-between gap-4 border-t border-border-strong px-6 py-3"
         >
           <p class="text-sm text-muted">
             {{ $t('labels.selectionCount', { count: pickerSelection.length }) }}
