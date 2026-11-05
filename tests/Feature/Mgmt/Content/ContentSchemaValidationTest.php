@@ -166,6 +166,24 @@ class ContentSchemaValidationTest extends TestCase
     }
 
     #[Test]
+    public function a_version_of_another_entry_cannot_be_published(): void
+    {
+        $this->actingAs($this->owner);
+
+        $entry = $this->createContent(['headline' => 'Entry', 'toggle' => false, 'summary' => 'A']);
+        $other = $this->createContent(['headline' => 'Other', 'toggle' => false, 'summary' => 'B']);
+
+        $this->postJson(route('mgmt.contents.versions.publish', [
+            'space' => $this->space->id,
+            'content' => $entry->id,
+            'version' => $other->current_version_id,
+        ]))
+            ->assertNotFound();
+
+        $this->assertNull($entry->fresh()->published_version_id);
+    }
+
+    #[Test]
     public function translation_conditionals_use_effective_overlay_values_and_clear_hidden_local_fields(): void
     {
         $this->actingAs($this->owner);

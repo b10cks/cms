@@ -33,6 +33,7 @@ class BlockVersionController extends Controller
     public function show(Space $space, Block $block, BlockVersion $version): BlockVersionResource
     {
         $this->authorize('view', [$version, $space]);
+        abort_unless($version->block_id === $block->id, 404);
 
         return new BlockVersionResource($version->load(['createdBy', 'parent']));
     }
@@ -40,6 +41,7 @@ class BlockVersionController extends Controller
     public function update(Space $space, Block $block, BlockVersion $version, UpdateBlockVersionCommitRequest $request): BlockVersionResource
     {
         $this->authorize('updateCommit', [$version, $space]);
+        abort_unless($version->block_id === $block->id, 404);
 
         $version->commit_message = $request->validated()['commit_message'];
 
@@ -54,6 +56,7 @@ class BlockVersionController extends Controller
     public function destroy(Space $space, Block $block, BlockVersion $version): JsonResponse
     {
         $this->authorize('delete', [$version, $space]);
+        abort_unless($version->block_id === $block->id, 404);
 
         $version->delete();
 
@@ -63,6 +66,7 @@ class BlockVersionController extends Controller
     public function restore(Space $space, Block $block, BlockVersion $version, RestoreBlockVersion $restoreAction): BlockResource
     {
         $this->authorize('restore', [$version, $space]);
+        abort_unless($version->block_id === $block->id, 404);
 
         $restoredBlock = $restoreAction->execute($version);
 

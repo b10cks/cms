@@ -25,6 +25,7 @@ class ContentVersionPublishController extends Controller
     public function __invoke(Space $space, Content $content, ContentVersion $version, Request $request)
     {
         $this->authorize('publish', [$content, $space]);
+        abort_unless($version->content_id === $content->id, 404);
         $validation = $this->contentSchemaValidator->validateVersion($space, $content, $version, 'publish');
 
         if (!$validation->isValid()) {

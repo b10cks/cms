@@ -45,6 +45,7 @@ class BlockTemplateController extends Controller
     public function show(Space $space, Block $block, BlockTemplate $template): BlockTemplateResource
     {
         $this->authorize('view', [$template, $space]);
+        abort_unless($template->block_id === $block->id, 404);
 
         return new BlockTemplateResource($template->load('createdBy'));
     }
@@ -52,6 +53,7 @@ class BlockTemplateController extends Controller
     public function update(Space $space, Block $block, UpdateBlockTemplateRequest $request, BlockTemplate $template): BlockTemplateResource
     {
         $this->authorize('update', [$template, $space]);
+        abort_unless($template->block_id === $block->id, 404);
 
         $template->fill($request->validated());
 
@@ -66,6 +68,7 @@ class BlockTemplateController extends Controller
     public function destroy(Space $space, Block $block, BlockTemplate $template): JsonResponse
     {
         $this->authorize('delete', [$template, $space]);
+        abort_unless($template->block_id === $block->id, 404);
 
         $template->delete();
 

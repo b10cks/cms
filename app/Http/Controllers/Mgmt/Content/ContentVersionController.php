@@ -33,6 +33,7 @@ class ContentVersionController extends Controller
     public function show(Space $space, Content $content, ContentVersion $version): ContentVersionResource
     {
         $this->authorize('viewHistory', [$content, $space]);
+        abort_unless($version->content_id === $content->id, 404);
         $version->load(['parent', 'release']);
 
         return new ContentVersionResource($version);
@@ -41,6 +42,7 @@ class ContentVersionController extends Controller
     public function update(Request $request, Space $space, Content $content, ContentVersion $version): ContentVersionResource
     {
         $this->authorize('viewHistory', [$content, $space]);
+        abort_unless($version->content_id === $content->id, 404);
         abort_if(auth()->id() !== $version->created_by_id, 403, 'You are not allowed to view this version.');
         $version->message = $request->string('message');
         $version->save();
