@@ -383,6 +383,11 @@ Only `{field:…}`, `{parent:…}`, `{ancestor:…}`, `{block}`, `{date:…}` an
 
 The pattern can be the serial alone, `{field:number}`, for URLs that do not depend on the name at all. Entries can then share a name like "Family home" without their slugs picking up `-2` suffixes.
 
+Two things to watch when a pattern mixes text and a serial:
+
+- **Use `{field:name}` for the text.** The create dialog only sends the entry name, so any other field, like `{field:title}`, is still empty when the slug is composed and silently drops out.
+- **Slugs are cut to 75 characters from the end.** With `{field:name}-{field:number}`, a long name pushes the serial out of the slug. Put the serial first if the slug has to keep it.
+
 The pattern is the block's `settings.slug_pattern`. `b10cks schema push` leaves it alone, so set it in the block editor or with `blocks.update`.
 
 A pattern only seeds the slug when an entry is created. Existing entries keep their slugs, and the backfill does not change them. To move existing entries to the pattern, update each slug, including the translations, which have their own, and publish. Each changed path gets a 301 from the old one. Older redirects that point at the old path are not rewritten, so update their targets to avoid a chain of redirects.
