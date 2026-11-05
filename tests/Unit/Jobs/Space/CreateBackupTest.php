@@ -8,6 +8,7 @@ use App\Models\Management\SpaceBackup;
 use App\Models\Space\AiAttachment;
 use App\Services\Storage\StorageService;
 use Illuminate\Contracts\Filesystem\Filesystem;
+use Illuminate\Database\Connection;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
@@ -135,6 +136,17 @@ class CreateBackupTest extends TestCase
     }
 
     #[Test]
+    public function the_dump_reads_the_space_database_not_the_management_one(): void
+    {
+        [$job] = $this->attachmentBackupJob();
+
+        $job->copyAiAttachments();
+
+        $this->assertSame('space_test', $job->dumped?->getName());
+        $this->assertNotSame(config('database.default'), $job->dumped->getName());
+    }
+
+    #[Test]
     public function an_unreadable_ai_attachment_fails_the_backup(): void
     {
         [$job, $space] = $this->attachmentBackupJob();
@@ -172,13 +184,16 @@ class CreateBackupTest extends TestCase
         {
             public ?\Closure $duringDump = null;
 
+            public ?Connection $dumped = null;
+
             public function copyAiAttachments(): void
             {
-                $this->backupDatabaseWithAttachments(null);
+                $this->backupDatabaseWithAttachments();
             }
 
-            protected function backupDatabase($connection): void
+            protected function backupDatabase(Connection $database): void
             {
+                $this->dumped = $database;
                 ($this->duringDump)?->__invoke();
             }
         };

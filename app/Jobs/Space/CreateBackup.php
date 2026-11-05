@@ -10,6 +10,7 @@ use App\Notifications\Management\BackupReadyNotification;
 use App\Services\Storage\StorageService;
 use App\Support\SpaceContext;
 use Illuminate\Contracts\Filesystem\Filesystem;
+use Illuminate\Database\Connection;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -57,12 +58,11 @@ class CreateBackup extends QueuedJob
         try {
             $this->createTempDirectory();
 
-            $connection = $this->space->defaultConnection()->first();
-            if (! $connection) {
+            if (! $this->space->defaultConnection()->exists()) {
                 throw new \Exception('No default database connection found for space');
             }
 
-            $this->backupDatabaseWithAttachments($connection);
+            $this->backupDatabaseWithAttachments();
             $this->backupAssets();
 
             $zipPath = $this->createZipArchive();
@@ -88,10 +88,15 @@ class CreateBackup extends QueuedJob
         File::makeDirectory("{$this->tempPath}/assets", 0755, true);
     }
 
-    protected function backupDatabase($connection): void
+    /**
+     * Dump the space's own database. `$database` must be the resolved space
+     * connection: the SpaceConnection model's getConnection() is the
+     * management database, and dumping that leaks every tenant.
+     */
+    protected function backupDatabase(Connection $database): void
     {
         $this->backup->updateProgress(5);
-        $config = $connection->getConnection()->getConfig();
+        $config = $database->getConfig();
         $dumpFile = "{$this->tempPath}/data/database.sql";
 
         // sqlite space databases are a single file — copy it instead of
@@ -120,7 +125,7 @@ class CreateBackup extends QueuedJob
                 // table prefix — restrict the dump to this space's tables, never
                 // the whole database (which holds management data and every other
                 // space).
-                ...$this->prefixedTables($connection, $config),
+                ...$this->prefixedTables($database, $config),
             ];
 
             // Redirect the dump's stdout straight to the file at the OS level so the
@@ -188,9 +193,9 @@ class CreateBackup extends QueuedJob
      * @return list<string> explicit table list for the dumper; empty for
      *                      dedicated (unprefixed) space databases
      */
-    protected function prefixedTables($connection, array $config): array
+    protected function prefixedTables(Connection $database, array $config): array
     {
-        $prefix = data_get($connection->config, 'prefix');
+        $prefix = $database->getTablePrefix();
         if (! $prefix) {
             return [];
         }
@@ -199,7 +204,7 @@ class CreateBackup extends QueuedJob
             throw new \Exception('Prefixed space connections can only be dumped on MySQL/MariaDB');
         }
 
-        $pdo = $connection->getConnection()->getPdo();
+        $pdo = $database->getPdo();
         $like = str_replace(['\\', '_', '%'], ['\\\\', '\\_', '\\%'], $prefix).'%';
         $tables = array_column(
             $pdo->query('SHOW TABLES LIKE '.$pdo->quote($like))->fetchAll(\PDO::FETCH_NUM),
@@ -239,7 +244,7 @@ class CreateBackup extends QueuedJob
         }
     }
 
-    protected function backupDatabaseWithAttachments($connection): void
+    protected function backupDatabaseWithAttachments(): void
     {
         $restore = SpaceContext::enter($this->space);
 
@@ -251,9 +256,9 @@ class CreateBackup extends QueuedJob
 
             // Keep the attachment rows fixed while the external dump reads them.
             // MySQL's shared range lock also prevents new rows during the dump.
-            $attachments = $database->transaction(function () use ($connection) {
+            $attachments = $database->transaction(function () use ($database) {
                 $attachments = AiAttachment::query()->select(['id', 'url'])->sharedLock()->get();
-                $this->backupDatabase($connection);
+                $this->backupDatabase($database);
 
                 return $attachments;
             });
