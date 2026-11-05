@@ -1,70 +1,50 @@
 # Status
 
-Updated 2026-11-05. Read by agents at the start of a thread; rewrite it before handing back. Git is the source of truth.
+Updated 2026-11-06. Read by agents at the start of a thread; rewrite it before handing back.
 
 ## Branches
 
-- `feat/ux-refinements` (checked out, unpushed): UX fixes from the 2026-11-05 review, branched from `feat/ai-content-operations-clean` at `3a053ac8`. See "UX refinements" below.
-- `main` at `f14e98f8`, unchanged.
-- `feat/ai-content-operations-clean` (unpushed): the version to merge. The 8 import commits unchanged, then 4 commits: team and spaces start page, backend, frontend, docs. Its tree equals `feat/ai-content-operations`, including the new user docs.
-- `feat/ai-content-operations` (unpushed): the old working branch, now at `8d8a06a2`, 4 commits past the archive. Retired: new work goes on the clean branch.
-- `archive/ai-content-operations-history` (unpushed): the full 142-commit history at `84368907`, kept for reference. The last glossary work is on the old working branch and the clean branch, not here.
-- `feat/import-streaming-progress` (8 ahead of main, unpushed): streaming imports. The clean branch starts from its head, so it can be released first without rewriting anything. Worktree at `.claude/worktrees/import-streaming`, clean.
-- Tags `archive/w7-before-reduction` and `archive/w8-before-simplify`: what W8 and W9 removed.
+- `main` at `cc370104`.
+- `feat/ux-refinements` (checked out, unpushed): UX work from 2026-11-05 and 11-06 on top of `feat/ai-content-operations-clean` (from `3a053ac8`). Every surface rated 8 to 10 by Mike, rules in DESIGN.md. Targeted checks pass: 1753 Vitest tests, AssetHandlerTest, typecheck, oxlint, pint. Merges with the clean branch.
+- `feat/ai-content-operations-clean` (unpushed): the version to merge. Not ready to deploy, see "Merge review".
+- `feat/ai-content-operations` (retired working branch) and `archive/ai-content-operations-history` (full 142-commit history): reference only.
+- `feat/import-streaming-progress` (8 ahead of main, unpushed): streaming imports, fixes a live 504. The clean branch starts from its head, so it can be released first. Worktree `.claude/worktrees/import-streaming`, clean.
+- `fix/security-review-round-2` (15 ahead of main, from another thread): security fixes from a review (SAML, MCP, invites, uploads, version ownership). Worktree `~/.t3/worktrees/cms/fix-security-review-round-2`, clean. Status of its review unknown to this thread.
+- `feature/provider-activity`, `feature/verified-team-domains`: merged into main, can be deleted.
+- Tags `archive/w7-before-reduction`, `archive/w8-before-simplify`: what W8 and W9 removed.
 
-## UX refinements, 2026-11-05
+## Uncommitted work
 
-On `feat/ux-refinements`. Council rounds: Sol 8, 8.5, 9 (signed off); Opus visual 6.5, 8, 9 (signed off); Opus behaviour 6, 8, 7.5, 8, not signed off over one item Mike must rule on: a tooltip reappears after Esc closes a dialog and focus returns to its button. Left as is, because the browser treats that focus as keyboard. Reports and before/after shots were in the session scratchpad.
+None.
 
-Not done: Needs attention panel (needs an API), Cmd+K navigation, phone editor layout, 24px hit areas, focus ring, schema page reorder, and the settled rules Opus would reopen (Publish undo, badge floor, tooltip hints, empty thread wording).
+## Local data changed for screenshots
 
-Uncommitted on top: comments redesign (location line and jump, Open and Resolved tabs, named field button, `@` picker, reading layout, failure handling). Rules in DESIGN.md "Comments". It adds one backend route, `GET contents/{content}/comments/mentionable`; `docs/public/specs/mgmt_v1.json` is not regenerated for it.
-
-## Editing bar 2027, 2026-11-05
-
-Committed on `feat/ux-refinements`, unpushed. Token repair, tables, tree and tree menu, Team Selector, Blocks block (frames, drill-in from depth 2, Undo, end and empty Add), comments (location and jump, Open and Resolved, @ picker, drafts, new `comments/mentionable` route). Council: Sol 8, 9, 8, 9 (signed off). Opus 7, 8, 8; conditional sign-off once the popover fix landed, not rerun after it. Autosave, Review changes, Work view and the asset list rework were deliberately not built.
-
-## UI kit polish, 2026-11-05
-
-Committed on `feat/ux-refinements`, unpushed. Three passes over the kit in both themes: controls (including the tab bar fix), overlays and feedback, data and navigation. Rules are in DESIGN.md under Controls, Overlays, and Data and navigation. Mike rated 36 pairs, all notes were applied, and he rated the 14 changed items 8 to 10 with no further notes.
-
-## Merge review, 2026-11-05
-
-Not ready to deploy. One blocker and a list of should-fix items, none fixed yet:
-
-- Blocker: `AiOperations::settleBatch` charges an attempt to every unreached entry when a batch stops on `max_tokens`, `max_steps` or `max_seconds`. After two attempts they fail as `not_processed` unread, and the operation still completes. How often this happens at real page sizes is unmeasured.
-- Backend: `OperationReview` loads all items into memory; `TEXT` lineage columns overflow on units over 64 KB; `approve` does full triage inside the request; review endpoints skip the target view check; `startPlanning` takes no lock; `GlossaryMatcher`'s static cache is capped by count, not size; style guides enter the prompt uncapped; wording checks read raw HTML and JSON; `IconDataImportService` yields inside a transaction; unread glossary rows are stored on every run.
-- UX: "Reject all" and "Reject selected" have no confirmation; the bulk dialog hands a skill with no prompt to a dialog that requires one; operation panels lack error states and lose unsaved plan edits; `?scope=` strands a leaf team on an empty list.
-
-## Latest glossary work
-
-Glossary improvements on `feat/ai-content-operations`, implemented by Claude Opus and signed off by all three council members after three rounds. Overall scores by round: Opus 8.3 / 9.2 / 9.6; GPT Sol 9 / 9.4 / 9.7; Grok 9 / 9 / 10. No residual blockers or further code changes requested. Committed on both the old working branch and the clean branch.
-
-- Row saves send `base`, the row as read. Under the glossary lock the writer refuses with 409 `row_changed` only when a field being changed has moved. `changes` now names field and locale, without values.
-- After a refusal the sheet reloads the row, keeps typed text, and names the fields where that same reloaded row differs from the typed text. The next Save uses that row as `base`. If the reload fails the old base stays and the message promises no overwrite.
-- Only the writer owns the note limit. It refuses a new or changed note over 200 characters with 422 `note_too_long` on every path and keeps an older long note sent back unchanged, compared without outer spaces. The row and `/terms` requests and the sheet importer have no note limit of their own, `withoutStoredNote` is gone, and a sheet reports the refusal under `note`. This tightens `/terms`, which allowed 2000. An older note with outer spaces loses them on its first reimport, which counts as one update.
-- Learning no longer shortens wording. It drops a candidate with a term, translation or Avoid over 255 characters, or a note over the limit. Accepting an older pending suggestion like that returns 422 and leaves it pending and unchanged: a validation error under `suggestion` for wording, `note_too_long` for a note. It can only be dismissed.
-- A further preferred TBX term lands in Also written as. `conceptWriteError` passes every writer refusal to the sheet.
-
-API spec, space and team MCP descriptions, `management-api.md`, DESIGN.md and the sheet guide are updated. Targeted checks pass: 155 PHP tests, 45 frontend tests, typecheck, oxlint, pint. The refusal messages are tested in the mounted component, not inspected in a browser.
-
-Committed earlier: glossary backend, editor, asset integration, generated API spec and documentation/evidence are committed separately. Generic writes check each destination's language; asset tools return findings; classification refuses offending fields with partial reports. Two real-provider CMS runs passed, 14 assertions. Earlier disposable MySQL migration/retry/rollback and rendered glossary checks passed. The new partial-result toast is unit-tested, not browser-inspected.
+- Factory user `adell.witting@example.net` (password `password`) is an Admin of local space "B10cks Website2". Remove when no more rating rounds need it.
+- B10cks Website2 Config entry, version `01kw6na6zw47jk75kgzhcwpbjq`: the Pricing menu link points at Home, section "Atomic Design Principles". It was `{"type":"internal","target":null,"content":"01kh3cvbj3qxfvv8pp9mwwwvt1"}`, a dangling id.
+- SchlafTEQ space `01kkk9mqjw2kn06vknz28t7ncg` (another thread): glossary "schlafTEQ Glossar" with 188 rows, five Reference docs, AI config, three unpublished AI drafts left for review. Management migration `2026_11_05_100000_normalize_ai_glossary_terms` is applied locally.
 
 ## Running
 
-No processes or delegates left by this run. Mike rotated the OpenRouter key. Evaluation finished at 18 synthetic GPT Luna generations, confirmed cost $0.001334. Six of eight baselines had wording violations; none of eight guided outputs did. A substitute environmental claim passed until a note was added, so wording compliance does not establish factual quality. Evidence: `docs/evidence/2026-11-04-glossary-provider-verification.json`. Scratch evaluation files removed; existing local data unchanged.
+None.
+
+## Merge review of the clean branch, 2026-11-05
+
+- Blocker: `AiOperations::settleBatch` charges an attempt to every unreached entry when a batch stops on `max_tokens`, `max_steps` or `max_seconds`; after two attempts they fail as `not_processed` and the operation still completes.
+- Backend should-fix: `OperationReview` loads all items into memory; `TEXT` lineage columns overflow over 64 KB; `approve` triages inside the request; review endpoints skip the target view check; `startPlanning` takes no lock; `GlossaryMatcher` cache capped by count; style guides uncapped in the prompt; wording checks read raw HTML and JSON; `IconDataImportService` yields inside a transaction; unread glossary rows stored every run.
+- UX should-fix: no confirm on "Reject all/selected"; the bulk dialog hands a promptless skill to a dialog that needs one; operation panels lack error states and lose unsaved plan edits; `?scope=` strands a leaf team.
 
 ## Waiting on Mike
 
-- Autosave needs a decision; it changes the version model. The `comments/mentionable` route lets anyone who can read an entry's comments see names and avatars in that space: confirm.
+- Merge review: which findings to fix before merge. Recommend the blocker and the backend items first.
+- Import branch: approve merging and releasing it (live 504).
+- AI content operations: merge, push and deploy not authorized.
+- Autosave (changes the version model) and the `comments/mentionable` route (shows names and avatars to anyone who can read comments): confirm both.
 - Whether the tooltip that reappears after Esc closes a dialog stays.
-- Merge review: which findings to fix before merge.
-- `docs/milestones/reliable-ai-content-operations` and `docs/evidence`: keep on the merged version or leave them on the archive branch only.
-- Import branch: approve merging and releasing it. It fixes a live 504.
-- AI content operations: merge, push and deploy are not authorized.
+- `docs/milestones/reliable-ai-content-operations` and `docs/evidence`: keep on the merged version or archive only.
+- "Used in" for the content info pane: parked by Mike on 2026-11-06. Half a day to a day by generalizing `AssetUsageService` to `link_ids` and `relation_ids`.
 
 ## Next
 
-1. After releasing the import branch, run `spaces:repair-databases` by hand for migration 000027, then rerun the 2026-11-03 17:52 metadata file on production.
-2. Before deploying this branch, run `spaces:repair-databases` by hand for space migration 000028: AI writes and the thread list fail without it.
-3. Review the committed glossary changes and synthetic provider evidence. Before deploying, run management migration `2026_11_05_100000_normalize_ai_glossary_terms` during a controlled worker/task swap; it is not applied locally. Preflight refuses invalid locales; rollback restores the archive and loses later edits. Authenticated full-stack use and broader editorial evaluation remain pilot checks.
+1. UI follow-ups from the 2026-11-05 audit (32 findings, team switcher and tree search rules already settled): solid blue menu highlights, hand-rolled `ContentSelect`, row action sizes, status text on `-ink` tokens, light-only alerts, confirm dialog and Cancel looks, sheet padding. Also: space blueprint radio cards, Mass Edit grid monospace 10px slugs, hard-coded dimension labels, the 500 on version filters `isCurrentVersion`/`isPublished`, the rich-text link dialog's old picker, missing `common.select`, "Automations" cut off in the rail.
+2. Before deploying: `spaces:repair-databases` by hand for space migrations 000027 (after the import release) and 000028; management migration `2026_11_05_100000_normalize_ai_glossary_terms` during a controlled worker swap.
+3. After the import release, rerun the 2026-11-03 17:52 metadata file on production.
