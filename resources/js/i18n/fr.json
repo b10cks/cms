@@ -1108,6 +1108,7 @@
       }
     },
     "contentTree": {
+      "label": "Arborescence du contenu",
       "actions": {
         "view": "Afficher",
         "edit": "Modifier",
@@ -1124,6 +1125,8 @@
         "copy": "Copier",
         "cut": "Couper",
         "duplicate": "Dupliquer",
+        "paste": "Coller",
+        "publishOptions": "Options de publication",
         "pasteIn": "Coller dans",
         "pasteAfter": "Coller après",
         "delete": "Supprimer",
@@ -1165,20 +1168,33 @@
         "draft": "Brouillon",
         "pendingChanges": "Modifications non publiées",
         "filter": "Afficher uniquement les entrées avec des modifications non publiées",
+        "filterDrafts": "Afficher uniquement les brouillons",
         "nothingPending": "Tout est publié."
       }
     },
     "comments": {
       "title": "Commentaires",
-      "fieldTitle": "Commentaires sur le champ",
-      "placeholder": "Ajouter un commentaire...",
+      "placeholder": "Ajoutez un commentaire. Tapez {'@'} pour mentionner quelqu'un.",
       "replyPlaceholder": "Écrire une réponse...",
       "addButton": "Ajouter un commentaire",
-      "emptyState": "Donnez un retour, posez des questions ou partagez vos réflexions. Vous pouvez aussi cliquer n'importe où dans l'aperçu pour laisser un commentaire positionné.",
+      "emptyState": "Aucun commentaire. Ajoutez-en un ci-dessous ou via le bouton d'un champ.",
       "hideReplies": "Masquer",
       "showReplies": "Afficher",
       "reply": "réponse | réponses",
       "you": "Vous",
+      "emptyOpen": "Aucun commentaire ouvert.",
+      "emptyResolved": "Aucun commentaire résolu.",
+      "emptyField": "Aucun commentaire sur ce champ pour l'instant. Écrivez le premier ci-dessous.",
+      "open": "Ouverts",
+      "resolved": "Résolus",
+      "fieldTrigger": "Commenter {field}",
+      "fieldTriggerCount": "Commentaires sur {field} : {total}, {open} ouverts",
+      "goToLocation": "Aller à {location}",
+      "fieldMissing": "Ce champ n'existe plus",
+      "sendHint": "{keys} pour envoyer",
+      "mentionSuggestions": "Personnes à mentionner",
+      "mentionLoadFailed": "La liste des personnes n'a pas pu être chargée.",
+      "unknownPerson": "Personne inconnue",
       "actions": {
         "reply": "Répondre",
         "resolve": "Résoudre",
@@ -4696,6 +4712,7 @@
         "reorder": "Faites glisser pour réordonner, ou utilisez les flèches"
       },
       "moved": "Déplacé en position {position} sur {count}",
+      "removed": "{name} supprimé",
       "richtext": {
         "addHtmlClass": "Ajouter une classe HTML",
         "removeHtmlClass": "Supprimer la classe HTML",

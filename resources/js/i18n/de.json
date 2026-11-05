@@ -1117,6 +1117,7 @@
       }
     },
     "contentTree": {
+      "label": "Inhaltsbaum",
       "actions": {
         "view": "Ansehen",
         "edit": "Bearbeiten",
@@ -1133,6 +1134,8 @@
         "copy": "Kopieren",
         "cut": "Ausschneiden",
         "duplicate": "Duplizieren",
+        "paste": "Einfügen",
+        "publishOptions": "Veröffentlichungsoptionen",
         "pasteIn": "Einfügen in",
         "pasteAfter": "Einfügen nach",
         "delete": "Löschen",
@@ -1174,20 +1177,33 @@
         "draft": "Entwurf",
         "pendingChanges": "Unveröffentlichte Änderungen",
         "filter": "Nur Einträge mit unveröffentlichten Änderungen anzeigen",
+        "filterDrafts": "Nur Entwürfe anzeigen",
         "nothingPending": "Alles ist veröffentlicht."
       }
     },
     "comments": {
       "title": "Kommentare",
-      "fieldTitle": "Feld-Kommentare",
-      "placeholder": "Kommentar hinzufügen...",
+      "placeholder": "Kommentar hinzufügen. Mit {'@'} erwähnst du jemanden.",
       "replyPlaceholder": "Antwort schreiben...",
       "addButton": "Kommentar hinzufügen",
-      "emptyState": "Gib Feedback, stelle Fragen oder teile deine Gedanken. Du kannst auch auf eine beliebige Stelle in der Vorschau klicken, um einen positionierten Kommentar zu hinterlassen.",
+      "emptyState": "Noch keine Kommentare. Schreib unten oder über den Kommentar-Button am Feld.",
       "hideReplies": "Ausblenden",
       "showReplies": "Anzeigen",
       "reply": "Antwort | Antworten",
       "you": "Du",
+      "emptyOpen": "Keine offenen Kommentare.",
+      "emptyResolved": "Keine erledigten Kommentare.",
+      "emptyField": "Noch keine Kommentare zu diesem Feld. Schreib unten den ersten.",
+      "open": "Offen",
+      "resolved": "Erledigt",
+      "fieldTrigger": "{field} kommentieren",
+      "fieldTriggerCount": "Kommentare zu {field}: {total}, {open} offen",
+      "goToLocation": "Zu {location} gehen",
+      "fieldMissing": "Dieses Feld gibt es nicht mehr",
+      "sendHint": "{keys} zum Senden",
+      "mentionSuggestions": "Personen zum Erwähnen",
+      "mentionLoadFailed": "Die Personenliste konnte nicht geladen werden.",
+      "unknownPerson": "Unbekannte Person",
       "actions": {
         "reply": "Antworten",
         "resolve": "Als erledigt markieren",
@@ -4705,6 +4721,7 @@
         "reorder": "Ziehen zum Sortieren oder mit den Pfeiltasten verschieben"
       },
       "moved": "Auf Position {position} von {count} verschoben",
+      "removed": "{name} entfernt",
       "richtext": {
         "addHtmlClass": "HTML-Klasse hinzufügen",
         "removeHtmlClass": "HTML-Klasse entfernen",

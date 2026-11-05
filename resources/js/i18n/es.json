@@ -1108,6 +1108,7 @@
       }
     },
     "contentTree": {
+      "label": "Árbol de contenido",
       "actions": {
         "view": "Ver",
         "edit": "Editar",
@@ -1124,6 +1125,8 @@
         "copy": "Copiar",
         "cut": "Cortar",
         "duplicate": "Duplicar",
+        "paste": "Pegar",
+        "publishOptions": "Opciones de publicación",
         "pasteIn": "Pegar dentro",
         "pasteAfter": "Pegar después",
         "delete": "Eliminar",
@@ -1165,20 +1168,33 @@
         "draft": "Borrador",
         "pendingChanges": "Cambios sin publicar",
         "filter": "Mostrar solo entradas con cambios sin publicar",
+        "filterDrafts": "Mostrar solo borradores",
         "nothingPending": "Todo está publicado."
       }
     },
     "comments": {
       "title": "Comentarios",
-      "fieldTitle": "Comentarios del campo",
-      "placeholder": "Añadir un comentario...",
+      "placeholder": "Añade un comentario. Escribe {'@'} para mencionar a alguien.",
       "replyPlaceholder": "Escribir una respuesta...",
       "addButton": "Añadir comentario",
-      "emptyState": "Da tu opinión, haz preguntas o comparte tus ideas. También puedes hacer clic en cualquier parte de la vista previa para dejar un comentario posicionado.",
+      "emptyState": "Aún no hay comentarios. Añade uno abajo o con el botón de un campo.",
       "hideReplies": "Ocultar",
       "showReplies": "Mostrar",
       "reply": "respuesta | respuestas",
       "you": "Tú",
+      "emptyOpen": "No hay comentarios abiertos.",
+      "emptyResolved": "No hay comentarios resueltos.",
+      "emptyField": "Este campo aún no tiene comentarios. Escribe el primero abajo.",
+      "open": "Abiertos",
+      "resolved": "Resueltos",
+      "fieldTrigger": "Comentar en {field}",
+      "fieldTriggerCount": "Comentarios en {field}: {total}, {open} abiertos",
+      "goToLocation": "Ir a {location}",
+      "fieldMissing": "Este campo ya no existe",
+      "sendHint": "{keys} para enviar",
+      "mentionSuggestions": "Personas para mencionar",
+      "mentionLoadFailed": "No se pudo cargar la lista de personas.",
+      "unknownPerson": "Persona desconocida",
       "actions": {
         "reply": "Responder",
         "resolve": "Resolver",
@@ -4653,7 +4669,7 @@
       "delete": "Eliminar Fuente de Datos"
     },
     "blocks": {
-      "add": "Añadir Bloque",
+      "add": "Añadir bloque",
       "addCondition": "Añadir Condición",
       "duplicateField": "Duplicar campo",
       "renameField": "Renombrar",
@@ -4696,6 +4712,7 @@
         "reorder": "Arrastra para reordenar o usa las teclas de flecha"
       },
       "moved": "Movido a la posición {position} de {count}",
+      "removed": "{name} eliminado",
       "richtext": {
         "addHtmlClass": "Añadir Clase HTML",
         "removeHtmlClass": "Quitar clase HTML",

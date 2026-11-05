@@ -1108,6 +1108,7 @@
       }
     },
     "contentTree": {
+      "label": "Content tree",
       "actions": {
         "view": "View",
         "edit": "Edit",
@@ -1124,6 +1125,8 @@
         "copy": "Copy",
         "cut": "Cut",
         "duplicate": "Duplicate",
+        "paste": "Paste",
+        "publishOptions": "Publish options",
         "pasteIn": "Paste in",
         "pasteAfter": "Paste after",
         "delete": "Delete",
@@ -1165,20 +1168,33 @@
         "draft": "Draft",
         "pendingChanges": "Unpublished changes",
         "filter": "Show only entries with unpublished changes",
+        "filterDrafts": "Show only drafts",
         "nothingPending": "Everything is published."
       }
     },
     "comments": {
       "title": "Comments",
-      "fieldTitle": "Field Comments",
-      "placeholder": "Add a comment...",
+      "placeholder": "Add a comment. Type {'@'} to mention someone.",
       "replyPlaceholder": "Write a reply...",
       "addButton": "Add Comment",
-      "emptyState": "Give feedback, ask questions, or share your thoughts. You can also click anywhere in the preview to leave a positioned comment.",
+      "emptyState": "No comments yet. Add one below or from a field's comment button.",
       "hideReplies": "Hide",
       "showReplies": "Show",
       "reply": "reply | replies",
       "you": "You",
+      "emptyOpen": "No open comments.",
+      "emptyResolved": "No resolved comments.",
+      "emptyField": "No comments on this field yet. Write the first one below.",
+      "open": "Open",
+      "resolved": "Resolved",
+      "fieldTrigger": "Comment on {field}",
+      "fieldTriggerCount": "Comments on {field}: {total}, {open} open",
+      "goToLocation": "Go to {location}",
+      "fieldMissing": "This field no longer exists",
+      "sendHint": "{keys} to send",
+      "mentionSuggestions": "People to mention",
+      "mentionLoadFailed": "The list of people could not be loaded.",
+      "unknownPerson": "Unknown person",
       "actions": {
         "reply": "Reply",
         "resolve": "Resolve",
@@ -4653,7 +4669,7 @@
       "delete": "Delete Datasource"
     },
     "blocks": {
-      "add": "Add Block",
+      "add": "Add block",
       "addCondition": "Add Condition",
       "duplicateField": "Duplicate field",
       "renameField": "Rename",
@@ -4696,6 +4712,7 @@
         "reorder": "Drag to reorder, or use the arrow keys"
       },
       "moved": "Moved to position {position} of {count}",
+      "removed": "Removed {name}",
       "richtext": {
         "addHtmlClass": "Add HTML Class",
         "removeHtmlClass": "Remove HTML class",

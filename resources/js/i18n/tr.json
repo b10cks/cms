@@ -1108,6 +1108,7 @@
       }
     },
     "contentTree": {
+      "label": "İçerik ağacı",
       "actions": {
         "view": "Görüntüle",
         "edit": "Düzenle",
@@ -1124,6 +1125,8 @@
         "copy": "Kopyala",
         "cut": "Kes",
         "duplicate": "Çoğalt",
+        "paste": "Yapıştır",
+        "publishOptions": "Yayınlama seçenekleri",
         "pasteIn": "İçine yapıştır",
         "pasteAfter": "Sonrasına yapıştır",
         "delete": "Sil",
@@ -1165,20 +1168,33 @@
         "draft": "Taslak",
         "pendingChanges": "Yayınlanmamış değişiklikler",
         "filter": "Yalnızca yayınlanmamış değişiklikleri olan girdileri göster",
+        "filterDrafts": "Yalnızca taslakları göster",
         "nothingPending": "Her şey yayında."
       }
     },
     "comments": {
       "title": "Yorumlar",
-      "fieldTitle": "Alan Yorumları",
-      "placeholder": "Yorum ekle...",
+      "placeholder": "Yorum ekleyin. Birini anmak için {'@'} yazın.",
       "replyPlaceholder": "Yanıt yazın...",
       "addButton": "Yorum Ekle",
-      "emptyState": "Geri bildirim verin, sorular sorun veya düşüncelerinizi paylaşın. Ayrıca konumlandırılmış bir yorum bırakmak için önizlemenin herhangi bir yerini tıklayabilirsiniz.",
+      "emptyState": "Henüz yorum yok. Aşağıya yazın veya bir alanın düğmesini kullanın.",
       "hideReplies": "Gizle",
       "showReplies": "Göster",
       "reply": "yanıt | yanıt",
       "you": "Siz",
+      "emptyOpen": "Açık yorum yok.",
+      "emptyResolved": "Çözülmüş yorum yok.",
+      "emptyField": "Bu alanda henüz yorum yok. İlk yorumu aşağıya yazın.",
+      "open": "Açık",
+      "resolved": "Çözüldü",
+      "fieldTrigger": "{field} için yorum yap",
+      "fieldTriggerCount": "{field} yorumları: {total}, {open} açık",
+      "goToLocation": "{location} konumuna git",
+      "fieldMissing": "Bu alan artık yok",
+      "sendHint": "Göndermek için {keys}",
+      "mentionSuggestions": "Anılacak kişiler",
+      "mentionLoadFailed": "Kişi listesi yüklenemedi.",
+      "unknownPerson": "Bilinmeyen kişi",
       "actions": {
         "reply": "Yanıtla",
         "resolve": "Çöz",
@@ -4653,7 +4669,7 @@
       "delete": "Veri Kaynağını Sil"
     },
     "blocks": {
-      "add": "Blok Ekle",
+      "add": "Blok ekle",
       "addCondition": "Koşul Ekle",
       "duplicateField": "Alanı çoğalt",
       "renameField": "Yeniden adlandır",
@@ -4696,6 +4712,7 @@
         "reorder": "Sıralamak için sürükleyin veya ok tuşlarını kullanın"
       },
       "moved": "{count} içinde {position}. konuma taşındı",
+      "removed": "{name} kaldırıldı",
       "richtext": {
         "addHtmlClass": "HTML Sınıfı Ekle",
         "removeHtmlClass": "HTML sınıfını kaldır",
