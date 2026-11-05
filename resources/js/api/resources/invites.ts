@@ -103,8 +103,11 @@ export class Invites extends BaseResource<
     )
   }
 
-  public async declineInvite(inviteId: string): Promise<ApiResponse<InviteResource>> {
-    return this.client.post<ApiResponse<InviteResource>>(`${this.basePath}/${inviteId}/decline`, {})
+  /** Pass the mailed token when declining from the invite link. */
+  public async declineInvite(inviteId: string, token?: string): Promise<ApiResponse<InviteResource>> {
+    return this.client.post<ApiResponse<InviteResource>>(`${this.basePath}/${inviteId}/decline`, {
+      token,
+    })
   }
 
   public async listMyInvites(

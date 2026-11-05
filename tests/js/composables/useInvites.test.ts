@@ -437,9 +437,9 @@ describe('useDeclineInviteMutation', () => {
     const mutations = setup()
     const invalidate = vi.spyOn(harness!.queryClient, 'invalidateQueries')
 
-    await mutations.decline.mutateAsync({ inviteId: 'i1' })
+    await mutations.decline.mutateAsync({ inviteId: 'i1', token: 'mailed' })
 
-    expect(declineInvite).toHaveBeenCalledWith('i1')
+    expect(declineInvite).toHaveBeenCalledWith('i1', 'mailed')
     expect(invalidate).toHaveBeenCalledTimes(1)
     expect(invalidate).toHaveBeenCalledWith({ queryKey: queryKeys.invites.my() })
     expect(success).toHaveBeenCalledWith('Invitation declined')

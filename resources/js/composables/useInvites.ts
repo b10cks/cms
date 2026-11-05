@@ -220,8 +220,8 @@ export function useInvites() {
 
   const useDeclineInviteMutation = () => {
     return useMutation({
-      mutationFn: async ({ inviteId }: { inviteId: string }) => {
-        const response = await api.invites.declineInvite(inviteId)
+      mutationFn: async ({ inviteId, token }: { inviteId: string; token?: string }) => {
+        const response = await api.invites.declineInvite(inviteId, token)
         return response.data
       },
       onSuccess: () => {

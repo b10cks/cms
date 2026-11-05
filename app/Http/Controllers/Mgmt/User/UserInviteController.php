@@ -68,10 +68,20 @@ class UserInviteController extends Controller
         }
     }
 
-    public function decline(Invite $invite): InviteResource
+    /**
+     * Same proof as accepting: the bound invitee, or the invited address backed
+     * by the mailed token or a mail-verified account. A team IdP asserting the
+     * address is not enough.
+     */
+    public function decline(Invite $invite, Request $request): InviteResource
     {
         $user = auth()->user();
-        abort_if(strcasecmp($invite->email, $user->email) !== 0 && $invite->invitee_id !== $user->id, 403);
+        $token = $request->validate(['token' => 'nullable|string'])['token'] ?? null;
+        abort_if($token !== null && ! hash_equals($invite->token, $token), 403);
+
+        $ownsAddress = strcasecmp($invite->email, $user->email) === 0
+            && ($token !== null || $user->ownsVerifiedEmail());
+        abort_if(! $ownsAddress && $invite->invitee_id !== $user->id, 403);
 
         if (! $invite->isPending()) {
             throw ValidationException::withMessages([

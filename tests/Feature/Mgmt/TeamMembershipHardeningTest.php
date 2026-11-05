@@ -350,6 +350,42 @@ class TeamMembershipHardeningTest extends TestCase
             ->assertOk();
     }
 
+    #[Test]
+    public function an_account_verified_by_a_team_idp_needs_the_mailed_token_to_decline(): void
+    {
+        $inviter = User::factory()->create();
+        $team = Team::factory()->create();
+        $this->assignTeamRole($team, $inviter, 'owner');
+        $samlUser = User::factory()->create([
+            'email' => 'invitee@example.com',
+            'email_verified_at' => now(),
+            'source' => 'saml:01otherteam',
+        ]);
+
+        $invite = Invite::factory()->create([
+            'team_id' => $team->id,
+            'space_id' => null,
+            'invited_by' => $inviter->id,
+            'email' => 'invitee@example.com',
+            'expires_at' => now()->addDay(),
+        ]);
+
+        $this->actingAs($samlUser)
+            ->postJson(route('mgmt.users.me.invites.decline', $invite))
+            ->assertForbidden();
+
+        $this->actingAs($samlUser)
+            ->postJson(route('mgmt.users.me.invites.decline', $invite), ['token' => 'wrong'])
+            ->assertForbidden();
+
+        $this->assertNull($invite->fresh()->declined_at);
+
+        $this->actingAs($samlUser)
+            ->postJson(route('mgmt.users.me.invites.decline', $invite), ['token' => $invite->token])
+            ->assertOk()
+            ->assertJsonPath('data.status', 'declined');
+    }
+
     // ── Audit trail ───────────────────────────────────────────────────────
 
     #[Test]

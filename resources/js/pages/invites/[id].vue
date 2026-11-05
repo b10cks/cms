@@ -147,7 +147,7 @@ const handleAccept = () => {
 const handleDecline = () => {
   if (invite.value?.id) {
     declineInvite(
-      { inviteId: invite.value.id },
+      { inviteId: invite.value.id, token: token.value || undefined },
       {
         onSuccess: () => {
           router.push('/')
