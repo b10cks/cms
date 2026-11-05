@@ -2431,7 +2431,7 @@ return [
         'uri' => '/mgmt/v1/users/me/tokens',
     ],
     'users.createToken' => [
-        'description' => 'Create a personal access token. Payload fields: name (required), abilities.',
+        'description' => 'Create a personal access token with the owner\'s full permissions. Payload fields: name (required), expires_at.',
         'required' => ['payload'],
         'accepts' => ['payload'],
         'method' => 'POST',
