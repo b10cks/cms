@@ -96,21 +96,28 @@ class SamlLoginController extends AuthController
                 Auth::guard('web')->logout();
             }, true);
 
-            if (is_string($redirectUrl) && $redirectUrl !== '') {
+            // OneLogin reports a bad signature or a failed logout through
+            // getErrors() rather than throwing. Only a valid message may end
+            // the session, or any link to this URL would log people out.
+            if ($auth->getErrors() === []) {
                 $request->session()->invalidate();
                 $request->session()->regenerateToken();
 
-                return redirect()->away($redirectUrl);
+                return is_string($redirectUrl) && $redirectUrl !== ''
+                    ? redirect()->away($redirectUrl)
+                    : redirect()->to('/login');
             }
+
+            Log::warning('SAML logout rejected', [
+                'team_id' => $team->id,
+                'errors' => $auth->getErrors(),
+            ]);
         } catch (\Throwable $exception) {
             Log::warning('SAML logout failed', [
                 'team_id' => $team->id,
                 'error' => $exception->getMessage(),
             ]);
         }
-
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
 
         return redirect()->to('/login');
     }

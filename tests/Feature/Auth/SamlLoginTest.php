@@ -193,6 +193,21 @@ class SamlLoginTest extends TestCase
         $this->assertGuest('web');
     }
 
+    #[Test]
+    public function a_logout_message_that_does_not_validate_keeps_the_session(): void
+    {
+        $owner = User::factory()->create();
+        $team = app(TeamService::class)->createTeam(['name' => 'Corp'], $owner);
+        $this->provider($team);
+
+        $this->actingAs($owner)
+            ->withSession(['marker' => true])
+            ->get(route('auth.saml.sls', $team))
+            ->assertRedirect('/login');
+
+        $this->assertTrue(session()->has('marker'));
+    }
+
     protected function tearDown(): void
     {
         Mockery::close();
