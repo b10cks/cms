@@ -243,6 +243,19 @@ class AssetTest extends TestCase
     }
 
     #[Test]
+    public function server_config_files_are_rejected_by_name(): void
+    {
+        // The extension of `.user.ini` is `ini`, so only the whole name gives it away.
+        $file = UploadedFile::fake()->createWithContent('.user.ini', "auto_prepend_file=payload\n");
+
+        $this->postJson("/mgmt/v1/spaces/{$this->space->id}/assets", ['file' => $file])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('file');
+
+        $this->assertSame(0, Asset::query()->count());
+    }
+
+    #[Test]
     public function checksum_is_computed_on_upload(): void
     {
         $file = UploadedFile::fake()->image('checksum-test.jpg', 200, 200);

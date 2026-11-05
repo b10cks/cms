@@ -26,11 +26,19 @@ trait RejectsActiveContentUploads
         // Every spelling a mis-configured web server might still hand to PHP.
         'php3', 'php4', 'php5', 'php7', 'php8', 'phps', 'pht', 'phtm', 'inc',
         // Server config that could re-enable execution for a whole directory.
-        'htaccess', 'htpasswd', 'user.ini',
+        'htaccess', 'htpasswd',
         // Compressed SVG: same active content, and the extension sidesteps any
         // check that only looks at `svg`.
         'svgz',
     ];
+
+    /**
+     * Whole file names that must never be accepted, for config files whose
+     * extension alone is harmless (`.user.ini` has the extension `ini`).
+     *
+     * @var array<int, string>
+     */
+    private array $blockedNames = ['.user.ini'];
 
     /**
      * Detected (finfo) MIME types that must never be accepted as an asset upload.
@@ -64,6 +72,7 @@ trait RejectsActiveContentUploads
             $mimeType = strtolower((string) $value->getMimeType());
 
             if (in_array($extension, $this->blockedExtensions, true)
+                || in_array(strtolower((string) $value->getClientOriginalName()), $this->blockedNames, true)
                 || in_array($mimeType, $this->blockedMimeTypes, true)) {
                 $fail('The :attribute may not be an HTML, XML or script file.');
             }
