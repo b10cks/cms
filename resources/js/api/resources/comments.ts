@@ -2,6 +2,7 @@ import type {
   CommentReactionResource,
   CommentResource,
   CreateCommentRequest,
+  MentionablePerson,
   UpdateCommentRequest,
 } from '~/types/comments'
 
@@ -29,6 +30,10 @@ export class Comments extends BaseResource<
   constructor(client: ApiClient, spaceId: string, contentId: string) {
     super(client)
     this.basePath = `/mgmt/v1/spaces/${spaceId}/contents/${contentId}/comments`
+  }
+
+  public async mentionable(): Promise<ApiResponse<MentionablePerson[]>> {
+    return this.client.get<ApiResponse<MentionablePerson[]>>(`${this.basePath}/mentionable`)
   }
 
   public async resolve(commentId: string): Promise<ApiResponse<CommentResource>> {

@@ -81,7 +81,21 @@ export function useComments(
     })
   }
 
-  const useCreateCommentMutation = () => {
+  /** Everyone a comment on this entry can mention. */
+  const useMentionablePeopleQuery = () => {
+    return useQuery({
+      queryKey: computed(() => queryKeys.comments(spaceId, resolvedContentId.value).detail('mentionable')),
+      queryFn: async () => {
+        const response = await commentsAPI.value.mentionable()
+        return response.data
+      },
+      enabled: hasContentId,
+      staleTime: 5 * 60 * 1000,
+    })
+  }
+
+  /** `quiet` leaves a failure to the caller, which shows it beside the text it kept. */
+  const useCreateCommentMutation = ({ quiet = false } = {}) => {
     return useMutation({
       mutationFn: async (payload: CreateCommentRequest) => {
         const response = await commentsAPI.value.create(payload)
@@ -93,6 +107,7 @@ export function useComments(
         toast.success(t('composables.comments.addSuccess') as string)
       },
       onError: (error: Error) => {
+        if (quiet) return
         toast.error(
           t('composables.comments.addError', {
             error: error.message || 'Unknown error',
@@ -102,7 +117,7 @@ export function useComments(
     })
   }
 
-  const useUpdateCommentMutation = () => {
+  const useUpdateCommentMutation = ({ quiet = false } = {}) => {
     return useMutation({
       mutationFn: async ({ id, payload }: { id: string; payload: UpdateCommentRequest }) => {
         const response = await commentsAPI.value.update(id, payload)
@@ -119,6 +134,7 @@ export function useComments(
         toast.success(t('composables.comments.updateSuccess') as string)
       },
       onError: (error: Error) => {
+        if (quiet) return
         toast.error(
           t('composables.comments.updateError', {
             error: error.message || 'Unknown error',
@@ -280,6 +296,7 @@ export function useComments(
     // Queries
     useCommentsQuery,
     useCommentQuery,
+    useMentionablePeopleQuery,
 
     // Mutations
     useCreateCommentMutation,

@@ -25106,6 +25106,48 @@
                 ]
             }
         },
+        "/mgmt/v1/spaces/{space}/contents/{content}/comments/mentionable": {
+            "get": {
+                "summary": "People who can be mentioned: everyone with access to the space",
+                "description": "People who can be mentioned: everyone with access to the space.\n\nOpen to anyone who can read the comments, while the people directory\nneeds space.members.view. So it gives names and avatars only.",
+                "tags": [
+                    "Contents"
+                ],
+                "operationId": "get_spaces_by_space_contents_by_content_comments_mentionable",
+                "parameters": [
+                    {
+                        "name": "space",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "The space identifier"
+                    },
+                    {
+                        "name": "content",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "The content identifier"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/mgmt/v1/spaces/{space}/contents/{content}/comments/{comment}": {
             "get": {
                 "summary": "Get a specific comment (root or reply)",

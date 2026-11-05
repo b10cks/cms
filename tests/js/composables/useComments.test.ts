@@ -231,6 +231,14 @@ describe('useCreateCommentMutation', () => {
     expect(failure).toHaveBeenCalledWith('Failed to add comment: too long')
   })
 
+  it('leaves the failure to the caller when quiet', async () => {
+    comments.create.mockRejectedValue(new Error('too long'))
+    const { result } = withSetup(() => useComments(SPACE, CONTENT).useCreateCommentMutation({ quiet: true }))
+
+    await expect(result.mutateAsync({} as never)).rejects.toThrow('too long')
+    expect(failure).not.toHaveBeenCalled()
+  })
+
   it('falls back to "Unknown error" for an empty message', async () => {
     comments.create.mockRejectedValue(new Error(''))
 

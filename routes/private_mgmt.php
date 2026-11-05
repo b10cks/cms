@@ -566,6 +566,7 @@ Route::group(['prefix' => 'spaces/{space}', 'middleware' => 'space.member'], fun
         // Root comments
         Route::get('/', [CommentController::class, 'index'])->name('comments.index');
         Route::post('/', [CommentController::class, 'store'])->name('comments.store');
+        Route::get('mentionable', [CommentController::class, 'mentionable'])->name('comments.mentionable');
 
         Route::group(['prefix' => '{comment}'], function () {
             // Comment CRUD

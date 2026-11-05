@@ -41,7 +41,7 @@ class CommentObserver
             'id' => $comment->author_id,
             'display_name' => $author?->display_name ?? '',
         ];
-        $excerpt = Str::limit(trim(strip_tags((string) $comment->body)), 140);
+        $excerpt = Str::limit(trim(strip_tags($this->bodyWithNames($comment))), 140);
 
         $notifiedUserIds = [$comment->author_id];
 
@@ -73,5 +73,21 @@ class CommentObserver
     private function notify(string $userId, object $notification): void
     {
         User::find($userId)?->notify($notification);
+    }
+
+    /** The body stores mentions as `@<id>`; a person reading a notification needs the name. */
+    private function bodyWithNames(Comment $comment): string
+    {
+        $body = (string) $comment->body;
+        $ids = array_unique($comment->mentions_ids ?? []);
+        if ($ids === []) {
+            return $body;
+        }
+
+        foreach (User::query()->whereIn('id', $ids)->get() as $user) {
+            $body = str_ireplace('@'.$user->id, '@'.$user->display_name, $body);
+        }
+
+        return $body;
     }
 }
