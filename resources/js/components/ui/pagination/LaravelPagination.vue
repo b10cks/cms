@@ -39,7 +39,7 @@ const itemsPerPage = computed(() => props.meta?.per_page || 10)
   >
     <PaginationList
       v-slot="{ items }"
-      class="flex items-center gap-1"
+      class="flex flex-wrap items-center gap-1"
     >
       <PaginationFirst v-if="showEdges" />
       <PaginationPrev />

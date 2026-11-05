@@ -28,7 +28,7 @@ const metaParams = computed(() => ({ ...props.meta }) as Record<string, unknown>
 </script>
 
 <template>
-  <div class="flex items-center px-2 py-2">
+  <div class="flex flex-wrap items-center gap-2 px-2 py-2">
     <div class="text-sm font-semibold text-muted">
       {{ meta.total ? $t('labels.showingEntries', metaParams) : $t('labels.nothingToShow') }}
     </div>

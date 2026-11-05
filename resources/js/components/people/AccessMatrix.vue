@@ -149,7 +149,7 @@ const change = (person: AccessMatrixPerson, space: AccessMatrixSpace, role: stri
           <tr class="border-b border-border">
             <th
               scope="col"
-              class="sticky left-0 z-10 min-w-56 bg-card px-4 py-3 text-left font-medium text-muted"
+              class="sticky left-0 z-10 w-32 bg-card px-4 py-3 text-left font-medium text-muted md:w-auto md:min-w-56"
             >
               {{ t('labels.teamWorkspace.matrix.person') }}
             </th>
