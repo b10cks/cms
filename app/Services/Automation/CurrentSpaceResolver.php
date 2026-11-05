@@ -3,27 +3,20 @@
 namespace App\Services\Automation;
 
 use App\Models\Management\Space;
+use App\Support\SpaceContext;
 
 class CurrentSpaceResolver
 {
+    /**
+     * The space whose automations a model write triggers. Same rule as
+     * SpaceModelResolver: only a bound route model or the ambient context,
+     * never `request('space')`, which reads query and body input first and
+     * would let `?space=x` send this space's records to another's automations.
+     */
     public function resolve(): ?Space
     {
-        $space = request()?->route('space') ?? request('space');
+        $space = request()?->route('space');
 
-        if ($space instanceof Space) {
-            return $space;
-        }
-
-        if (is_string($space) && $space !== '') {
-            return Space::query()->find($space);
-        }
-
-        if (app()->bound('currentSpace')) {
-            $currentSpace = app()->get('currentSpace');
-
-            return $currentSpace instanceof Space ? $currentSpace : null;
-        }
-
-        return null;
+        return $space instanceof Space ? $space : SpaceContext::current();
     }
 }
