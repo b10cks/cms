@@ -137,16 +137,19 @@ class AssetHandlerTest extends TestCase
             'mime_type' => 'image/jpeg',
             'size' => 42,
             'filename' => 'asset-01',
+            'metadata' => ['width' => 800, 'height' => 600, 'exif' => ['make' => 'should-not-leak']],
         ]);
 
         $payload = $handler->updateContentAssets([
             'type' => 'asset',
             'id' => 'asset-01',
+            'metadata' => ['width' => 1, 'height' => 1],
         ], collect([$asset]));
 
         $this->assertSame('https://cdn.example.com/assets/asset-01.jpg', $payload['url']);
         $this->assertSame('asset-01', $payload['filename']);
         $this->assertSame('storage-01/space/asset-01.jpg', $payload['full_path']);
+        $this->assertSame(['width' => 800, 'height' => 600], $payload['metadata']);
     }
 
     #[Test]

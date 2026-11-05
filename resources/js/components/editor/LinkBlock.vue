@@ -12,7 +12,7 @@ defineProps<{
 </script>
 
 <template>
-  <div class="space-y-3">
+  <div class="grid gap-2">
     <div class="space-y-1">
       <Label
         :label="item.name || item.key"

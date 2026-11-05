@@ -14,7 +14,7 @@ import {
 import { resolveAllowedChildContentBlocks } from '~/lib/content-children'
 import type { ContentResource } from '~/types/contents'
 
-import { Alert } from './ui/alert'
+import ConfigRow from './content/ConfigRow.vue'
 
 const { t } = useI18n()
 const content = defineModel<ContentResource>()
@@ -176,206 +176,272 @@ watch(
   },
   { immediate: true }
 )
+
+const openRows = ref<Partial<Record<'preview' | 'translations' | 'children' | 'cache' | 'externalId', boolean>>>({})
+
+const optionLabel = (options: { value: string; label: string }[], value?: string | null) =>
+  options.find((option) => option.value === value)?.label
+
+/** A cache lifetime in the largest whole unit: "1 hour", "30 minutes", "45 seconds". */
+const lifetimeLabel = (seconds: number) => {
+  if (seconds > 0 && seconds % 3600 === 0) {
+    return t('labels.contents.settings.rows.hours', seconds / 3600)
+  }
+  if (seconds > 0 && seconds % 60 === 0) {
+    return t('labels.contents.settings.rows.minutes', seconds / 60)
+  }
+  return t('labels.contents.settings.rows.seconds', seconds)
+}
+
+const previewSummary = computed(() =>
+  content.value?.settings.disablePreview
+    ? t('labels.contents.settings.rows.previewHidden')
+    : t('labels.contents.settings.rows.previewShown')
+)
+
+const translationsSummary = computed(() => {
+  const mode = t(`labels.contents.settings.rows.modes.${effectiveMode.value}`)
+  if (!isCanonical.value) return mode
+
+  const override =
+    optionLabel(overrideOptions.value, content.value?.settings.i18n_mode_override || 'inherit') ??
+    ''
+  return `${override}, ${mode}`
+})
+
+const childrenSummary = computed(() => {
+  const settings = content.value?.settings
+  if (!settings || !isCanonical.value) return t('labels.contents.settings.rows.onDefaultLanguage')
+
+  const types = settings.restrict_child_blocks
+    ? t('labels.contents.settings.rows.typesAllowed', settings.child_block_whitelist?.length ?? 0)
+    : t('labels.contents.settings.rows.anyType')
+
+  const sortBy = settings.child_sort_by || 'inherit'
+  const order =
+    sortBy === 'inherit'
+      ? t('labels.contents.settings.rows.spaceOrder')
+      : sortBy === 'manual'
+        ? t('labels.contents.settings.rows.manualOrder')
+        : t('labels.contents.settings.rows.sortedBy', {
+            field: optionLabel(childSortByOptions.value, sortBy) ?? sortBy,
+          })
+
+  return `${types}, ${order}`
+})
+
+const cacheSummary = computed(() => {
+  const ttl = content.value?.settings.cache_ttl
+  const tags = cacheTags.value.length
+  const parts = [
+    typeof ttl === 'number' ? lifetimeLabel(ttl) : null,
+    tags ? t('labels.contents.settings.rows.tags', tags) : null,
+  ].filter(Boolean)
+
+  return parts.length ? parts.join(', ') : t('labels.contents.settings.rows.notSet')
+})
 </script>
 
 <template>
-  <div :class="['flex flex-col gap-6', !canManageContent ? 'pointer-events-none opacity-70' : '']">
+  <div
+    v-if="content"
+    class="flex flex-col gap-6"
+  >
     <InputField
-      v-if="content"
       v-model="content.name"
       :label="$t('labels.contents.fields.name')"
       :readonly="!canManageContent"
       name="name"
     />
     <InputField
-      v-if="content"
       v-model="content.slug"
       :label="$t('labels.contents.fields.slug')"
       :readonly="!canManageContent"
       name="slug"
     />
-    <InputField
-      v-if="content"
-      v-model="content.external_id"
-      :tooltip="$t('labels.contents.fields.externalIdInfo')"
-      :label="$t('labels.contents.fields.externalId')"
-      :readonly="!canManageContent"
-      name="slug"
-    />
-    <CheckboxField
-      v-if="content"
-      v-model="content.settings.disablePreview"
-      :label="$t('labels.contents.settings.disablePreview')"
-      :disabled="!canManageContent"
-      name="disablePreview"
-      :description="$t('labels.contents.settings.disablePreviewDescription')"
-    />
-    <SelectField
-      v-if="content && isCanonical"
-      v-model="content.settings.i18n_mode_override"
-      name="i18nModeOverride"
-      :label="$t('labels.contents.settings.i18n.override.label')"
-      :readonly="!canManageContent"
-      :description="
-        isCanonical
-          ? $t('labels.contents.settings.i18n.override.description')
-          : $t('labels.contents.settings.i18n.override.canonicalOnly')
-      "
-      :options="overrideOptions"
-    />
-    <Alert
-      v-if="content"
-      variant="modern"
-      color="info"
-    >
-      {{ $t('labels.contents.settings.i18n.effectiveMode', { mode: effectiveMode }) }}
-    </Alert>
-    <div
-      v-if="content"
-      class="space-y-4 rounded-lg bg-surface px-4 py-4"
-    >
-      <div class="space-y-1">
-        <h3 class="text-sm font-semibold text-primary">
-          {{ $t('labels.contents.settings.cache.title') }}
-        </h3>
-        <p class="text-sm text-muted">
-          {{ $t('labels.contents.settings.cache.description') }}
-        </p>
-      </div>
 
-      <InputField
-        v-model="cacheTtl"
-        type="number"
-        :min="0"
-        name="cacheTtl"
-        :label="$t('labels.contents.settings.cache.ttl')"
-        :description="$t('labels.contents.settings.cache.ttlDescription')"
-        :placeholder="$t('labels.contents.settings.cache.ttlPlaceholder')"
-        :readonly="!canManageContent"
-      />
-
-      <FormField
-        name="cacheTags"
-        :label="$t('labels.contents.settings.cache.tags')"
-        :description="$t('labels.contents.settings.cache.tagsDescription')"
+    <div class="overflow-hidden rounded-lg border border-border bg-card shadow-soft-sm">
+      <ConfigRow
+        v-model:open="openRows.preview"
+        data-config-row="preview"
+        icon="lucide:eye"
+        :label="$t('labels.contents.settings.rows.preview')"
+        :summary="previewSummary"
       >
-        <TagsInput
-          v-model="cacheTags"
-          :disabled="!canManageContent"
-        >
-          <TagsInputItem
-            v-for="tag in cacheTags"
-            :key="tag"
-            :value="tag"
-          >
-            <TagsInputItemText>{{ tag }}</TagsInputItemText>
-            <TagsInputItemDelete />
-          </TagsInputItem>
-          <TagsInputInput :placeholder="$t('labels.contents.settings.cache.tagsPlaceholder')" />
-        </TagsInput>
-      </FormField>
-    </div>
-    <div
-      v-if="content"
-      class="space-y-4 rounded-lg bg-surface px-4 py-4"
-    >
-      <div class="space-y-1">
-        <h3 class="text-sm font-semibold text-primary">
-          {{ $t('labels.contents.settings.children.title') }}
-        </h3>
-        <p class="text-sm text-muted">
-          {{ $t('labels.contents.settings.children.description') }}
-        </p>
-      </div>
-
-      <template v-if="isCanonical">
         <CheckboxField
-          v-model="content.settings.restrict_child_blocks"
-          :label="$t('labels.contents.settings.children.restrict')"
-          :disabled="!canManageChildSettings"
-          name="restrictChildBlocks"
-          :description="$t('labels.contents.settings.children.restrictDescription')"
+          v-model="content.settings.disablePreview"
+          :label="$t('labels.contents.settings.disablePreview')"
+          :disabled="!canManageContent"
+          name="disablePreview"
+          :description="$t('labels.contents.settings.disablePreviewDescription')"
         />
+      </ConfigRow>
 
-        <ComboboxField
-          v-if="content.settings.restrict_child_blocks"
-          v-model="content.settings.child_block_whitelist"
-          name="childBlockWhitelist"
-          :label="$t('labels.contents.settings.children.blockWhitelist')"
-          :description="$t('labels.contents.settings.children.blockWhitelistDescription')"
-          placeholder="labels.contents.settings.children.blockWhitelistPlaceholder"
-          :disabled="!canManageChildSettings"
-          :options="childBlockOptions"
-          :filter-fn="filterOptions"
-          multiple
-          searchable
-          :empty-text="$t('labels.contents.settings.children.blockWhitelistEmpty')"
-        />
-
-        <ComboboxField
-          v-if="content.settings.restrict_child_blocks"
-          v-model="content.settings.child_tag_whitelist"
-          name="childTagWhitelist"
-          :label="$t('labels.contents.settings.children.tagWhitelist')"
-          :description="$t('labels.contents.settings.children.tagWhitelistDescription')"
-          placeholder="labels.contents.settings.children.tagWhitelistPlaceholder"
-          :disabled="!canManageChildSettings"
-          :options="childTagOptions"
-          :filter-fn="filterOptions"
-          multiple
-          searchable
-          :empty-text="$t('labels.contents.settings.children.tagWhitelistEmpty')"
-        />
-
-        <SelectField
-          v-model="content.settings.default_child_block"
-          name="defaultChildBlock"
-          :label="$t('labels.contents.settings.children.defaultChildBlock')"
-          :description="$t('labels.contents.settings.children.defaultChildBlockDescription')"
-          :readonly="!canManageChildSettings"
-          :options="defaultChildBlockOptions"
-          placeholder="labels.contents.settings.children.defaultChildBlockPlaceholder"
-          clearable
-        />
-      </template>
-
-      <div
-        v-else
-        class="rounded-lg border border-dashed border-border bg-background px-4 py-3 text-sm text-muted"
+      <ConfigRow
+        v-model:open="openRows.translations"
+        data-config-row="translations"
+        icon="lucide:languages"
+        :label="$t('labels.contents.settings.rows.translations')"
+        :summary="translationsSummary"
       >
-        {{ $t('labels.contents.settings.children.canonicalOnly') }}
-      </div>
-    </div>
-    <div
-      v-if="content && isCanonical"
-      class="space-y-4 rounded-lg bg-surface px-4 py-4"
-    >
-      <div class="space-y-1">
-        <h3 class="text-sm font-semibold text-primary">
-          {{ $t('labels.contents.settings.sorting.title') }}
-        </h3>
-        <p class="text-sm text-muted">
-          {{ $t('labels.contents.settings.sorting.description') }}
+        <SelectField
+          v-if="isCanonical"
+          v-model="content.settings.i18n_mode_override"
+          name="i18nModeOverride"
+          :label="$t('labels.contents.settings.i18n.override.label')"
+          :readonly="!canManageContent"
+          :description="$t('labels.contents.settings.i18n.override.description')"
+          :options="overrideOptions"
+        />
+        <p
+          v-else
+          class="text-sm text-muted"
+        >
+          {{ $t('labels.contents.settings.i18n.override.canonicalOnly') }}
         </p>
-      </div>
+        <p class="text-sm text-muted">
+          {{ $t('labels.contents.settings.i18n.effectiveMode', { mode: effectiveMode }) }}
+        </p>
+      </ConfigRow>
 
-      <SelectField
-        v-model="content.settings.child_sort_by"
-        name="childSortBy"
-        :label="$t('labels.contents.settings.sorting.sortBy')"
-        :description="$t('labels.contents.settings.sorting.sortByDescription')"
-        :readonly="!canManageChildSettings"
-        :options="childSortByOptions"
-      />
+      <ConfigRow
+        v-model:open="openRows.children"
+        data-config-row="children"
+        icon="lucide:list-tree"
+        :label="$t('labels.contents.settings.rows.children')"
+        :summary="childrenSummary"
+      >
+        <template v-if="isCanonical">
+          <CheckboxField
+            v-model="content.settings.restrict_child_blocks"
+            :label="$t('labels.contents.settings.children.restrict')"
+            :disabled="!canManageChildSettings"
+            name="restrictChildBlocks"
+            :description="$t('labels.contents.settings.children.restrictDescription')"
+          />
 
-      <SelectField
-        v-if="isAttributeChildSort"
-        v-model="content.settings.child_sort_direction"
-        name="childSortDirection"
-        :label="$t('labels.contents.settings.sorting.direction')"
-        :readonly="!canManageChildSettings"
-        :options="childSortDirectionOptions"
-      />
+          <ComboboxField
+            v-if="content.settings.restrict_child_blocks"
+            v-model="content.settings.child_block_whitelist"
+            name="childBlockWhitelist"
+            :label="$t('labels.contents.settings.children.blockWhitelist')"
+            :description="$t('labels.contents.settings.children.blockWhitelistDescription')"
+            placeholder="labels.contents.settings.children.blockWhitelistPlaceholder"
+            :disabled="!canManageChildSettings"
+            :options="childBlockOptions"
+            :filter-fn="filterOptions"
+            multiple
+            searchable
+            :empty-text="$t('labels.contents.settings.children.blockWhitelistEmpty')"
+          />
+
+          <ComboboxField
+            v-if="content.settings.restrict_child_blocks"
+            v-model="content.settings.child_tag_whitelist"
+            name="childTagWhitelist"
+            :label="$t('labels.contents.settings.children.tagWhitelist')"
+            :description="$t('labels.contents.settings.children.tagWhitelistDescription')"
+            placeholder="labels.contents.settings.children.tagWhitelistPlaceholder"
+            :disabled="!canManageChildSettings"
+            :options="childTagOptions"
+            :filter-fn="filterOptions"
+            multiple
+            searchable
+            :empty-text="$t('labels.contents.settings.children.tagWhitelistEmpty')"
+          />
+
+          <SelectField
+            v-model="content.settings.default_child_block"
+            name="defaultChildBlock"
+            :label="$t('labels.contents.settings.children.defaultChildBlock')"
+            :description="$t('labels.contents.settings.children.defaultChildBlockDescription')"
+            :readonly="!canManageChildSettings"
+            :options="defaultChildBlockOptions"
+            placeholder="labels.contents.settings.children.defaultChildBlockPlaceholder"
+            clearable
+          />
+
+          <SelectField
+            v-model="content.settings.child_sort_by"
+            name="childSortBy"
+            :label="$t('labels.contents.settings.sorting.sortBy')"
+            :description="$t('labels.contents.settings.sorting.sortByDescription')"
+            :readonly="!canManageChildSettings"
+            :options="childSortByOptions"
+          />
+
+          <SelectField
+            v-if="isAttributeChildSort"
+            v-model="content.settings.child_sort_direction"
+            name="childSortDirection"
+            :label="$t('labels.contents.settings.sorting.direction')"
+            :readonly="!canManageChildSettings"
+            :options="childSortDirectionOptions"
+          />
+        </template>
+        <p
+          v-else
+          class="text-sm text-muted"
+        >
+          {{ $t('labels.contents.settings.children.canonicalOnly') }}
+        </p>
+      </ConfigRow>
+
+      <ConfigRow
+        v-model:open="openRows.cache"
+        data-config-row="cache"
+        icon="lucide:timer"
+        :label="$t('labels.contents.settings.rows.cache')"
+        :summary="cacheSummary"
+      >
+        <InputField
+          v-model="cacheTtl"
+          type="number"
+          :min="0"
+          name="cacheTtl"
+          :label="$t('labels.contents.settings.cache.ttl')"
+          :description="$t('labels.contents.settings.cache.ttlDescription')"
+          :placeholder="$t('labels.contents.settings.cache.ttlPlaceholder')"
+          :readonly="!canManageContent"
+        />
+
+        <FormField
+          name="cacheTags"
+          :label="$t('labels.contents.settings.cache.tags')"
+          :description="$t('labels.contents.settings.cache.tagsDescription')"
+        >
+          <TagsInput
+            v-model="cacheTags"
+            :disabled="!canManageContent"
+          >
+            <TagsInputItem
+              v-for="tag in cacheTags"
+              :key="tag"
+              :value="tag"
+            >
+              <TagsInputItemText>{{ tag }}</TagsInputItemText>
+              <TagsInputItemDelete />
+            </TagsInputItem>
+            <TagsInputInput :placeholder="$t('labels.contents.settings.cache.tagsPlaceholder')" />
+          </TagsInput>
+        </FormField>
+      </ConfigRow>
+
+      <ConfigRow
+        v-model:open="openRows.externalId"
+        data-config-row="externalId"
+        icon="lucide:fingerprint"
+        :label="$t('labels.contents.fields.externalId')"
+        :summary="content.external_id || $t('labels.contents.settings.rows.notSet')"
+      >
+        <InputField
+          v-model="content.external_id"
+          :tooltip="$t('labels.contents.fields.externalIdInfo')"
+          :label="$t('labels.contents.fields.externalId')"
+          :readonly="!canManageContent"
+          name="externalId"
+        />
+      </ConfigRow>
     </div>
   </div>
 </template>

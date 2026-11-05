@@ -7,8 +7,10 @@ import Markdown from '~/components/Markdown.vue'
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuItem,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '~/components/ui/dropdown-menu'
 import { PulseDot } from '~/components/ui/pulse-dot'
@@ -128,6 +130,29 @@ const baseSrc = computed(() => {
 })
 const currentEnvironmentUrl = computed(() => effectiveEnvironment.value?.url)
 const availableEnvironments = computed(() => currentSpace.value?.settings.environments ?? [])
+
+const hostOf = (url: string) => {
+  try {
+    return new URL(url).host
+  } catch {
+    return url
+  }
+}
+
+// The address reads host then path, so the environment's part and the entry's part tell apart.
+const address = computed(() => {
+  if (!baseSrc.value) return null
+  try {
+    const url = new URL(baseSrc.value)
+    return { host: url.host, path: `${url.pathname}${url.search}` }
+  } catch {
+    return null
+  }
+})
+
+const router = useRouter()
+const openEnvironmentSettings = () =>
+  router.push({ name: 'space-settings-configuration', params: { space: props.spaceId } })
 
 // Says why there is nothing to show. An entry is always open on this page, so the cause is setup.
 const blockedReason = computed(() => {
@@ -470,14 +495,24 @@ const handleMouseMove = (event: MouseEvent) => {
           mode === 'mobile' ? 'rounded-xl shadow-2xl overflow-clip' : '',
         ]"
       >
-        <div
-          class="flex h-12 items-center gap-3 rounded-top-x; border-b border-b-border bg-background p-3"
-        >
-          <Icon
-            name="lucide:refresh-cw"
-            :class="['shrink-0 cursor-pointer', src || 'invisible', loading && 'animate-spin']"
-            @click="refresh"
-          />
+        <div class="flex h-12 items-center gap-2 border-b border-b-border bg-background px-2">
+          <SimpleTooltip
+            side="bottom"
+            :tooltip="$t('labels.preview.reload')"
+            as-child
+          >
+            <button
+              type="button"
+              :class="['row-action', src || 'invisible']"
+              :aria-label="$t('labels.preview.reload')"
+              @click="refresh"
+            >
+              <Icon
+                name="lucide:refresh-cw"
+                :class="loading && 'animate-spin'"
+              />
+            </button>
+          </SimpleTooltip>
           <SimpleTooltip :tooltip="$t('labels.preview.liveEdit')">
             <PulseDot
               :variant="isConnected ? 'success' : 'default'"
@@ -485,16 +520,108 @@ const handleMouseMove = (event: MouseEvent) => {
               size="sm"
             />
           </SimpleTooltip>
-          <p class="truncate text-sm">{{ baseSrc || $t('messages.preview.noUrl') }}</p>
-          <div class="ml-auto flex items-center gap-3">
+          <div
+            class="flex h-8 min-w-0 grow items-center rounded-md border border-input-border bg-input shadow-sm"
+          >
+            <DropdownMenu v-if="availableEnvironments.length > 0">
+              <DropdownMenuTrigger
+                data-env-trigger
+                class="flex h-full max-w-[45%] shrink-0 cursor-pointer items-center gap-1.5 rounded-l-md border-r border-input-border pr-2 pl-2.5 text-sm font-semibold text-primary outline-none hover:bg-state-hover focus-visible:ring-2 focus-visible:ring-ring data-[state=open]:bg-state-selected"
+                :aria-label="$t('labels.preview.environment')"
+              >
+                <span class="truncate">
+                  {{ effectiveEnvironment?.name || $t('labels.preview.chooseEnvironment') }}
+                </span>
+                <Icon
+                  name="lucide:chevron-down"
+                  class="shrink-0 text-muted"
+                />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                align="start"
+                class="min-w-56 max-w-80"
+              >
+                <DropdownMenuRadioGroup :model-value="currentEnvironmentUrl">
+                  <DropdownMenuRadioItem
+                    v-for="env in availableEnvironments"
+                    :key="env.url"
+                    :value="env.url"
+                    @select="switchEnvironment(env)"
+                  >
+                    <span class="shrink-0 font-semibold text-primary">{{ env.name }}</span>
+                    <span class="min-w-0 truncate font-normal text-input-muted">
+                      {{ hostOf(env.url) }}
+                    </span>
+                  </DropdownMenuRadioItem>
+                </DropdownMenuRadioGroup>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem @select="openEnvironmentSettings">
+                  <Icon name="lucide:settings-2" />
+                  {{ $t('labels.preview.manageEnvironments') }}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <p
+              class="min-w-0 truncate px-2.5 text-sm"
+              :title="baseSrc || undefined"
+            >
+              <template v-if="address">
+                <span class="text-input-muted">{{ address.host }}</span
+                ><span class="text-primary">{{ address.path }}</span>
+              </template>
+              <span
+                v-else
+                class="text-input-muted"
+                >{{ $t('messages.preview.noUrl') }}</span
+              >
+            </p>
+          </div>
+          <DropdownMenu v-if="availableSegments.length > 1">
+            <DropdownMenuTrigger
+              class="row-action w-auto shrink-0 gap-1 px-1.5 text-sm font-semibold"
+              :aria-label="$t('labels.preview.siteLocale')"
+              :title="$t('labels.preview.siteLocale')"
+            >
+              <Icon name="lucide:globe" />
+              /{{ activeSegment }}
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuRadioGroup :model-value="activeSegment">
+                <DropdownMenuRadioItem
+                  v-for="segment in availableSegments"
+                  :key="segment"
+                  :value="segment"
+                  @select="switchSiteLocale(segment)"
+                >
+                  <span class="shrink-0">{{ siteLocaleLabel(segment) }}</span>
+                  <span class="min-w-0 truncate font-normal text-muted">/{{ segment }}</span>
+                </DropdownMenuRadioItem>
+              </DropdownMenuRadioGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <div class="flex shrink-0">
             <SimpleTooltip
-              class="flex"
+              side="bottom"
+              :tooltip="$t('labels.preview.copyLink')"
+              as-child
+            >
+              <button
+                type="button"
+                :class="['row-action', src || 'invisible']"
+                :aria-label="$t('labels.preview.copyLink')"
+                @click="copyLink"
+              >
+                <Icon name="lucide:link" />
+              </button>
+            </SimpleTooltip>
+            <SimpleTooltip
               side="bottom"
               :tooltip="$t('labels.preview.openExternal')"
               as-child
             >
               <button
-                :class="['shrink-0 cursor-pointer', src || 'invisible']"
+                type="button"
+                :class="['row-action', src || 'invisible']"
                 :aria-label="$t('labels.preview.openExternal')"
                 @click="openExternal"
               >
@@ -502,82 +629,20 @@ const handleMouseMove = (event: MouseEvent) => {
               </button>
             </SimpleTooltip>
             <SimpleTooltip
-              class="flex"
-              side="bottom"
-              :tooltip="$t('labels.preview.copyLink')"
-              as-child
-            >
-              <button
-                :class="['shrink-0 cursor-pointer', src || 'invisible']"
-                :aria-label="$t('labels.preview.copyLink')"
-                @click="copyLink"
-              >
-                <Icon name="lucide:link" />
-              </button>
-            </SimpleTooltip>
-            <div class="h-6 w-px bg-border" />
-            <SimpleTooltip
-              class="flex"
               side="bottom"
               :tooltip="$t('labels.preview.mode')"
               as-child
             >
               <button
-                class="shrink-0 cursor-pointer"
+                type="button"
+                class="row-action"
                 :aria-label="$t('labels.preview.mode')"
+                :aria-pressed="mode === 'mobile'"
                 @click="mode === 'desktop' ? (mode = 'mobile') : (mode = 'desktop')"
               >
                 <Icon name="lucide:monitor-smartphone" />
               </button>
             </SimpleTooltip>
-            <DropdownMenu v-if="availableSegments.length > 1">
-              <DropdownMenuTrigger class="flex">
-                <SimpleTooltip
-                  class="flex items-center gap-1"
-                  side="bottom"
-                  :tooltip="$t('labels.preview.siteLocale')"
-                >
-                  <Icon name="lucide:globe" />
-                  <span class="text-sm font-semibold">/{{ activeSegment }}</span>
-                </SimpleTooltip>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                <DropdownMenuRadioGroup :model-value="activeSegment">
-                  <DropdownMenuRadioItem
-                    v-for="segment in availableSegments"
-                    :key="segment"
-                    :value="segment"
-                    class="grid"
-                    @select="switchSiteLocale(segment)"
-                  >
-                    <span class="font-semibold text-primary">{{ siteLocaleLabel(segment) }}</span>
-                    <span class="text-sm text-primary/60">/{{ segment }}</span>
-                  </DropdownMenuRadioItem>
-                </DropdownMenuRadioGroup>
-              </DropdownMenuContent>
-            </DropdownMenu>
-            <DropdownMenu>
-              <DropdownMenuTrigger
-                class="flex"
-                :aria-label="$t('labels.preview.settings')"
-              >
-                <Icon name="lucide:cog" />
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                <DropdownMenuRadioGroup :model-value="currentEnvironmentUrl">
-                  <DropdownMenuRadioItem
-                    v-for="env in availableEnvironments"
-                    :key="env.url"
-                    :value="env.url"
-                    class="grid"
-                    @select="switchEnvironment(env)"
-                  >
-                    <span class="font-semibold text-primary">{{ env.name }}</span>
-                    <span class="text-sm text-primary/60">{{ env.url }}</span>
-                  </DropdownMenuRadioItem>
-                </DropdownMenuRadioGroup>
-              </DropdownMenuContent>
-            </DropdownMenu>
           </div>
         </div>
         <iframe

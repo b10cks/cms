@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
-
-import ContentPicker from '~/components/editor/ContentPicker.vue'
-import InternalLinkTarget from '~/components/editor/InternalLinkTarget.vue'
+import Icon from '~/components/Icon.vue'
+import LinkEntryPicker from '~/components/editor/LinkEntryPicker.vue'
+import { Button } from '~/components/ui/button'
+import { Checkbox } from '~/components/ui/checkbox'
 import { ArrayInputField, FormField, InputField, TextField } from '~/components/ui/form'
+import { Input } from '~/components/ui/input'
 import {
   Select,
   SelectContent,
@@ -11,9 +12,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from '~/components/ui/select'
+import { Tabs, TabsList, TabsTrigger } from '~/components/ui/tabs'
+import { emptyLink, hasLinkOptions, isEmptyLink, type LinkKind } from '~/lib/linkValue'
 
-type LinkType = 'url' | 'email' | 'internal'
-
+/**
+ * A link value: the kind first (entry, URL, email), then its one field and the new-tab
+ * checkbox. Target, rel, query params and the email parts sit behind "More options".
+ */
 const props = defineProps<{
   modelValue?: LinkValue | null
   spaceId: string
@@ -28,40 +33,30 @@ const emit = defineEmits<{
 
 const { t } = useI18n()
 
-const { useContentMenuQuery } = useContentMenu(props.spaceId)
-const { data: contentMenu } = useContentMenuQuery()
+const kind = ref<LinkKind>(props.modelValue?.type ?? 'internal')
+const localValue = ref<LinkValue>(emptyLink(kind.value))
+// What each kind held before switching away, so switching back restores it.
+const drafts = new Map<LinkKind, LinkValue>()
 
-const createDefaultUrlLink = (): UrlLinkValue => ({
-  type: 'url',
-  url: '',
-  target: '_self',
-})
-
-// Internal state
-const localValue = ref<LinkValue>({
-  ...createDefaultUrlLink(),
-})
-
-const showInternalPicker = ref(false)
-
-// Sync with prop
 watch(
   () => props.modelValue,
-  (newValue) => {
-    if (newValue) {
-      localValue.value = { ...newValue }
-    } else {
-      localValue.value = createDefaultUrlLink()
+  (value) => {
+    if (value) {
+      localValue.value = { ...value }
+      kind.value = value.type
+    } else if (!isEmptyLink(localValue.value)) {
+      localValue.value = emptyLink(kind.value)
     }
   },
   { immediate: true, deep: true }
 )
 
-// Computed properties
-const linkTypes = computed(() => [
-  { value: 'url', label: t('labels.link.types.url') },
-  ...(props.allowEmail !== false ? [{ value: 'email', label: t('labels.link.types.email') }] : []),
-  { value: 'internal', label: t('labels.link.types.internal') },
+const kinds = computed(() => [
+  { value: 'internal' as const, label: t('labels.link.kinds.internal') },
+  { value: 'url' as const, label: t('labels.link.kinds.url') },
+  ...(props.allowEmail !== false || kind.value === 'email'
+    ? [{ value: 'email' as const, label: t('labels.link.kinds.email') }]
+    : []),
 ])
 
 const targetOptions = computed(() => [
@@ -72,67 +67,70 @@ const targetOptions = computed(() => [
   { value: '_top', label: t('labels.link.targets._top') },
 ])
 
-// Event handlers
+const optionsOpen = ref(false)
+watch(
+  () => hasLinkOptions(localValue.value),
+  (has) => {
+    if (has) optionsOpen.value = true
+  },
+  { immediate: true }
+)
+
 const updateValue = () => {
   emit('update:modelValue', { ...localValue.value })
 }
 
-const handleTypeChange = (newType: LinkType) => {
-  switch (newType) {
-    case 'url':
-      localValue.value = createDefaultUrlLink()
-      break
-    case 'email':
-      localValue.value = { type: 'email', email: '' }
-      break
-    case 'internal':
-      localValue.value = { type: 'internal', content: '' }
-      break
-  }
+const switchKind = (next: LinkKind) => {
+  if (next === kind.value) return
+
+  drafts.set(kind.value, localValue.value)
+  kind.value = next
+  localValue.value = drafts.get(next) ?? emptyLink(next)
+
+  // An empty kind clears the link; nothing to clear when there was none.
+  if (!isEmptyLink(localValue.value)) updateValue()
+  else if (props.modelValue) emit('update:modelValue', null)
+}
+
+const isEmailAddress = (value: string): boolean => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim())
+
+const handleUrlChange = (url: string) => {
+  if (localValue.value.type !== 'url') return
+  const trimmed = url.trim()
+  localValue.value.url = isEmailAddress(trimmed) ? `mailto:${trimmed}` : url
   updateValue()
 }
 
-const isEmailAddress = (value: string): boolean => {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim())
-}
-
-const handleUrlChange = (url: string) => {
-  if (localValue.value.type === 'url') {
-    const trimmed = url.trim()
-    localValue.value.url = isEmailAddress(trimmed) ? `mailto:${trimmed}` : url
-    updateValue()
-  }
-}
-
-const handleEmailChange = (email: string) => {
-  if (localValue.value.type === 'email') {
-    localValue.value.email = email
-    updateValue()
-  }
-}
-
-const handleEmailFieldChange = (
-  key: keyof Pick<EmailLinkValue, 'subject' | 'body' | 'cc' | 'bcc'>,
+const handleEmailChange = (
+  key: keyof Pick<EmailLinkValue, 'email' | 'subject' | 'body' | 'cc' | 'bcc'>,
   value: string
 ) => {
-  if (localValue.value.type === 'email') {
-    localValue.value[key] = value
-    updateValue()
-  }
+  if (localValue.value.type !== 'email') return
+  localValue.value[key] = value
+  updateValue()
 }
 
-const handleTargetChange = (target: string) => {
-  if (localValue.value.type === 'url' || localValue.value.type === 'internal') {
-    localValue.value.target = target === 'default' ? undefined : (target as LinkTarget)
-    updateValue()
-  }
+const target = computed(() =>
+  localValue.value.type === 'email' ? undefined : localValue.value.target
+)
+
+const setTarget = (next: LinkTarget | undefined) => {
+  if (localValue.value.type === 'email') return
+  localValue.value.target = next
+  updateValue()
 }
 
 const handleRelChange = (rel: string) => {
-  if (localValue.value.type === 'url') {
-    localValue.value.rel = rel || undefined
-    updateValue()
-  }
+  if (localValue.value.type !== 'url') return
+  localValue.value.rel = rel || undefined
+  updateValue()
+}
+
+const selectEntry = (content: string, anchor?: string) => {
+  if (localValue.value.type !== 'internal') return
+  localValue.value.content = content
+  localValue.value.anchor = anchor
+  updateValue()
 }
 
 const paramsToRows = (params?: Record<string, string>): Record<string, unknown>[] =>
@@ -142,249 +140,195 @@ const rowsToParams = (rows: Record<string, unknown>[]): Record<string, string> =
   Object.fromEntries(rows.map((r) => [String(r.key), String(r.value)]))
 
 const paramsRows = computed({
-  get: () => {
-    if (localValue.value.type === 'internal' || localValue.value.type === 'url') {
-      return paramsToRows(localValue.value.params)
-    }
-    return []
-  },
+  get: () => (localValue.value.type === 'email' ? [] : paramsToRows(localValue.value.params)),
   set: (rows: Record<string, unknown>[]) => {
-    if (localValue.value.type === 'internal' || localValue.value.type === 'url') {
-      localValue.value.params = rows.length ? rowsToParams(rows) : undefined
-      updateValue()
-    }
+    if (localValue.value.type === 'email') return
+    localValue.value.params = rows.length ? rowsToParams(rows) : undefined
+    updateValue()
   },
 })
 
-const selectContent = (contentId: string) => {
-  if (localValue.value.type === 'internal') {
-    localValue.value.content = contentId
-    localValue.value.anchor = undefined
-    updateValue()
-  }
-  showInternalPicker.value = false
-}
+const paramColumns = computed(() => [
+  {
+    key: 'key',
+    label: t('labels.link.paramKey'),
+    type: 'text' as const,
+    placeholder: t('labels.link.paramKeyPlaceholder'),
+    required: true,
+  },
+  {
+    key: 'value',
+    label: t('labels.link.paramValue'),
+    type: 'text' as const,
+    placeholder: t('labels.link.paramValuePlaceholder'),
+  },
+])
 
-const selectContentWithAnchor = (contentId: string, anchorId: string) => {
-  if (localValue.value.type === 'internal') {
-    localValue.value.content = contentId
-    localValue.value.anchor = anchorId
-    updateValue()
-  }
-  showInternalPicker.value = false
-}
-
-const getSelectedContentName = () => {
-  if (localValue.value.type === 'internal' && localValue.value.content && contentMenu.value) {
-    const item = contentMenu.value[localValue.value.content]
-    return item?.name || t('labels.references.unknownContent')
-  }
-  return ''
-}
+// An entry link without an entry has nothing to open yet, so its checkbox row waits.
+const showControls = computed(
+  () => localValue.value.type !== 'internal' || !!localValue.value.content || optionsOpen.value
+)
 </script>
 
 <template>
-  <div class="space-y-4 border-l-1 border-l-border pl-3">
-    <FormField
-      name="link-type"
-      :label="t('labels.link.type')"
+  <div class="grid gap-2">
+    <Tabs
+      :model-value="kind"
+      @update:model-value="switchKind($event as LinkKind)"
     >
-      <Select
-        :model-value="localValue.type"
-        :disabled="disabled"
-        @update:model-value="handleTypeChange(String($event) as LinkType)"
-      >
-        <SelectTrigger>
-          <SelectValue :placeholder="t('labels.link.typePlaceholder')" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem
-            v-for="type in linkTypes"
-            :key="type.value"
-            :value="type.value"
-          >
-            {{ type.label }}
-          </SelectItem>
-        </SelectContent>
-      </Select>
-    </FormField>
-    <template v-if="localValue.type === 'url'">
-      <InputField
-        name="link-url"
-        :model-value="localValue.url"
-        :label="t('labels.link.url')"
-        :placeholder="t('labels.link.urlPlaceholder')"
-        :disabled="disabled"
-        @update:model-value="handleUrlChange(String($event))"
-      />
-      <FormField
-        name="target"
-        :label="t('labels.link.target')"
-      >
-        <Select
-          :model-value="localValue.target || 'default'"
+      <TabsList class="w-fit">
+        <TabsTrigger
+          v-for="option in kinds"
+          :key="option.value"
+          :value="option.value"
           :disabled="disabled"
-          @update:model-value="handleTargetChange(String($event || 'default'))"
         >
-          <SelectTrigger>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem
-              v-for="option in targetOptions"
-              :key="String(option.value)"
-              :value="option.value"
-            >
-              {{ option.label }}
-            </SelectItem>
-          </SelectContent>
-        </Select>
-      </FormField>
-      <InputField
-        name="link-rel"
-        :model-value="localValue.rel || ''"
-        :label="t('labels.link.rel')"
-        :placeholder="t('labels.link.relPlaceholder')"
-        :disabled="disabled"
-        @update:model-value="handleRelChange(String($event))"
-      />
-      <ArrayInputField
-        v-if="allowQueryParams"
-        v-model="paramsRows"
-        name="link-params"
-        :label="t('labels.link.params')"
-        :add-button-text="null"
-        :disabled="disabled"
-        :columns="[
-          {
-            key: 'key',
-            label: t('labels.link.paramKey'),
-            type: 'text',
-            placeholder: t('labels.link.paramKeyPlaceholder'),
-            required: true,
-          },
-          {
-            key: 'value',
-            label: t('labels.link.paramValue'),
-            type: 'text',
-            placeholder: t('labels.link.paramValuePlaceholder'),
-          },
-        ]"
-      />
-    </template>
-    <template v-if="localValue.type === 'email'">
-      <InputField
-        name="link-email"
-        :model-value="localValue.email || ''"
-        :label="t('labels.link.email')"
-        type="email"
-        :placeholder="t('labels.link.emailPlaceholder')"
-        :disabled="disabled"
-        @update:model-value="handleEmailChange(String($event))"
-      />
-      <InputField
-        name="link-email-subject"
-        :model-value="localValue.subject || ''"
-        :label="t('labels.link.subject')"
-        :placeholder="t('labels.link.subjectPlaceholder')"
-        :disabled="disabled"
-        @update:model-value="handleEmailFieldChange('subject', String($event))"
-      />
-      <TextField
-        name="link-email-body"
-        :model-value="localValue.body || ''"
-        :label="t('labels.link.body')"
-        :placeholder="t('labels.link.bodyPlaceholder')"
-        :disabled="disabled"
-        :rows="4"
-        @update:model-value="handleEmailFieldChange('body', String($event))"
-      />
-      <InputField
-        name="link-email-cc"
-        :model-value="localValue.cc || ''"
-        :label="t('labels.link.cc')"
-        :placeholder="t('labels.link.recipientPlaceholder')"
-        :disabled="disabled"
-        @update:model-value="handleEmailFieldChange('cc', String($event))"
-      />
-      <InputField
-        name="link-email-bcc"
-        :model-value="localValue.bcc || ''"
-        :label="t('labels.link.bcc')"
-        :placeholder="t('labels.link.recipientPlaceholder')"
-        :disabled="disabled"
-        @update:model-value="handleEmailFieldChange('bcc', String($event))"
-      />
-    </template>
-    <template v-if="localValue.type === 'internal'">
-      <FormField
-        name="content"
-        :label="t('labels.link.content')"
-      >
-        <InternalLinkTarget
-          :space-id="spaceId"
-          :content="localValue.content"
-          :anchor="localValue.anchor"
-          :content-name="getSelectedContentName()"
-          :disabled="disabled"
-          @pick="showInternalPicker = true"
-          @clear-anchor="selectContent(localValue.content)"
-        />
-      </FormField>
-      <FormField
-        name="target"
-        :label="t('labels.link.target')"
-      >
-        <Select
-          :model-value="localValue.target || 'default'"
-          :disabled="disabled"
-          @update:model-value="handleTargetChange(String($event || 'default'))"
-        >
-          <SelectTrigger>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem
-              v-for="option in targetOptions"
-              :key="String(option.value)"
-              :value="option.value"
-            >
-              {{ option.label }}
-            </SelectItem>
-          </SelectContent>
-        </Select>
-      </FormField>
-      <ArrayInputField
-        v-if="allowQueryParams"
-        v-model="paramsRows"
-        name="link-params"
-        :label="t('labels.link.params')"
-        :add-button-text="null"
-        :disabled="disabled"
-        :columns="[
-          {
-            key: 'key',
-            label: t('labels.link.paramKey'),
-            type: 'text',
-            placeholder: t('labels.link.paramKeyPlaceholder'),
-            required: true,
-          },
-          {
-            key: 'value',
-            label: t('labels.link.paramValue'),
-            type: 'text',
-            placeholder: t('labels.link.paramValuePlaceholder'),
-          },
-        ]"
-      />
-    </template>
-    <ContentPicker
-      v-model:open="showInternalPicker"
+          {{ option.label }}
+        </TabsTrigger>
+      </TabsList>
+    </Tabs>
+
+    <LinkEntryPicker
+      v-if="localValue.type === 'internal'"
       :space-id="spaceId"
-      :title="$t('labels.link.selectContent')"
-      :show-elements="true"
-      @content-select="selectContent"
-      @content-with-anchor-select="selectContentWithAnchor"
+      :content="localValue.content || undefined"
+      :anchor="localValue.anchor"
+      :disabled="disabled"
+      @select="selectEntry"
     />
+    <Input
+      v-else-if="localValue.type === 'url'"
+      :model-value="localValue.url"
+      :placeholder="t('labels.link.urlPlaceholder')"
+      :aria-label="t('labels.link.url')"
+      :disabled="disabled"
+      @update:model-value="handleUrlChange(String($event))"
+    />
+    <Input
+      v-else
+      :model-value="localValue.email || ''"
+      type="email"
+      :placeholder="t('labels.link.emailPlaceholder')"
+      :aria-label="t('labels.link.email')"
+      :disabled="disabled"
+      @update:model-value="handleEmailChange('email', String($event))"
+    />
+
+    <div
+      v-if="showControls"
+      class="flex min-h-8 items-center gap-4"
+    >
+      <label
+        v-if="localValue.type !== 'email'"
+        class="flex cursor-pointer items-center gap-2 text-sm text-foreground"
+      >
+        <Checkbox
+          :model-value="target === '_blank'"
+          :disabled="disabled"
+          @update:model-value="setTarget($event === true ? '_blank' : undefined)"
+        />
+        {{ t('labels.link.newTab') }}
+      </label>
+      <Button
+        type="button"
+        variant="ghost"
+        size="xs"
+        class="ml-auto text-muted"
+        :aria-expanded="optionsOpen"
+        @click="optionsOpen = !optionsOpen"
+      >
+        {{ t('labels.link.moreOptions') }}
+        <Icon
+          name="lucide:chevron-down"
+          :class="['transition-transform duration-100', optionsOpen && 'rotate-180']"
+        />
+      </Button>
+    </div>
+
+    <div
+      v-if="showControls && optionsOpen"
+      class="grid gap-4 pt-1"
+    >
+      <template v-if="localValue.type === 'email'">
+        <InputField
+          name="link-email-subject"
+          :model-value="localValue.subject || ''"
+          :label="t('labels.link.subject')"
+          :placeholder="t('labels.link.subjectPlaceholder')"
+          :disabled="disabled"
+          @update:model-value="handleEmailChange('subject', String($event))"
+        />
+        <TextField
+          name="link-email-body"
+          :model-value="localValue.body || ''"
+          :label="t('labels.link.body')"
+          :placeholder="t('labels.link.bodyPlaceholder')"
+          :disabled="disabled"
+          :rows="4"
+          @update:model-value="handleEmailChange('body', String($event))"
+        />
+        <InputField
+          name="link-email-cc"
+          :model-value="localValue.cc || ''"
+          :label="t('labels.link.cc')"
+          :placeholder="t('labels.link.recipientPlaceholder')"
+          :disabled="disabled"
+          @update:model-value="handleEmailChange('cc', String($event))"
+        />
+        <InputField
+          name="link-email-bcc"
+          :model-value="localValue.bcc || ''"
+          :label="t('labels.link.bcc')"
+          :placeholder="t('labels.link.recipientPlaceholder')"
+          :disabled="disabled"
+          @update:model-value="handleEmailChange('bcc', String($event))"
+        />
+      </template>
+      <template v-else>
+        <FormField
+          name="target"
+          :label="t('labels.link.target')"
+        >
+          <Select
+            :model-value="target || 'default'"
+            :disabled="disabled"
+            @update:model-value="
+              setTarget($event && $event !== 'default' ? ($event as LinkTarget) : undefined)
+            "
+          >
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem
+                v-for="option in targetOptions"
+                :key="option.value"
+                :value="option.value"
+              >
+                {{ option.label }}
+              </SelectItem>
+            </SelectContent>
+          </Select>
+        </FormField>
+        <InputField
+          v-if="localValue.type === 'url'"
+          name="link-rel"
+          :model-value="localValue.rel || ''"
+          :label="t('labels.link.rel')"
+          :placeholder="t('labels.link.relPlaceholder')"
+          :disabled="disabled"
+          @update:model-value="handleRelChange(String($event))"
+        />
+        <ArrayInputField
+          v-if="allowQueryParams"
+          v-model="paramsRows"
+          name="link-params"
+          :label="t('labels.link.params')"
+          :add-button-text="null"
+          :disabled="disabled"
+          :columns="paramColumns"
+        />
+      </template>
+    </div>
   </div>
 </template>

@@ -69,14 +69,21 @@ class AssetHandler
                 $id = $src['id'] ?? null;
                 $asset = is_string($id) || is_int($id) ? $assets->get($id) : null;
 
-                return $asset ? \Arr::only($asset->append(['full_path'])->toArray(), [
+                if (! $asset) {
+                    return $src;
+                }
+
+                // Pixels let the editor's asset rows read "JPG, 3501 × 2481, 1.9 MB".
+                $pixels = \Arr::only($asset->metadata ?? [], ['width', 'height']);
+
+                return \Arr::only($asset->append(['full_path'])->toArray(), [
                     'id',
                     'full_path',
                     'extension',
                     'mime_type',
                     'size',
                     'filename',
-                ]) + $src + ['url' => $asset->getUrl()] : $src;
+                ]) + ($pixels ? ['metadata' => $pixels] : []) + $src + ['url' => $asset->getUrl()];
             },
         );
     }

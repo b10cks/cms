@@ -1,13 +1,18 @@
 <script setup lang="ts">
+import { useSortable } from '@vueuse/integrations/useSortable'
+
 import AssetDetailsDialog from '~/components/assets/AssetDetailsDialog.vue'
 import AssetGrid from '~/components/assets/AssetGrid.vue'
 import AssetInsertTrigger from '~/components/editor/AssetInsertTrigger.vue'
+import AssetRow from '~/components/editor/AssetRow.vue'
 import Icon from '~/components/Icon.vue'
-import NuxtImg from '~/components/NuxtImg.vue'
 import { Button } from '~/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '~/components/ui/dialog'
 import { ScrollArea } from '~/components/ui/scroll-area'
+import SortHandle from '~/components/ui/SortHandle.vue'
 import useSpaceSettings from '~/composables/useSpaceSettings'
+import { toAssetValue } from '~/lib/assetFacts'
+import { focusGrip, moveInList, sortableOptions } from '~/lib/sortable'
 
 import Label from '../ui/form/Label.vue'
 
@@ -18,6 +23,7 @@ const props = defineProps<{
     name?: string
     required?: boolean
     max?: number | null
+    file_types?: FileTypes[]
   }
   spaceId: string
   readOnly?: boolean
@@ -29,16 +35,16 @@ const emit = defineEmits<{
 
 const { settings } = useSpaceSettings(props.spaceId)
 const { $t } = useI18n()
-const { getFileIcon, getFileType } = useFileUtils()
 
 const localValue = ref<AssetValue[]>([])
 const showAssetPicker = ref(false)
 const showAssetDetails = ref(false)
 const editingAsset = ref<AssetValue | null>(null)
-const draggedIndex = ref<number | null>(null)
 const pickerSelection = ref<AssetResource[]>([])
 // Position new assets are inserted at; null appends to the end.
 const insertIndex = ref<number | null>(null)
+const replaceIndex = ref<number | null>(null)
+const listRef = ref<HTMLElement | null>(null)
 
 watch(
   () => props.modelValue,
@@ -59,22 +65,41 @@ const remainingSlots = computed(() => {
   return props.item.max - localValue.value.length
 })
 
+const imagesOnly = computed(() => {
+  const types = props.item.file_types ?? []
+  return types.length === 1 && types[0] === 'image'
+})
+
 const initialFolderId = computed(() => settings.value.assets.lastDialogFolderId)
 
 const updateValue = () => {
   emit('update:modelValue', localValue.value.length > 0 ? localValue.value : null)
 }
 
-const toAssetValue = (asset: AssetResource): AssetValue => ({
-  id: asset.id,
-  type: 'asset',
-  full_path: asset.full_path,
-  extension: asset.extension,
-  mime_type: asset.mime_type,
-  size: asset.size,
-  filename: asset.filename,
-  data: {},
-})
+// Only the grip starts a drag; the handle selector is scoped to this field, so a gallery
+// nested in a blocks row never picks up the grips around it.
+const sortId = useId()
+const handleSelector = `[data-asset-handle="${sortId}"]`
+
+useSortable(
+  listRef,
+  localValue,
+  sortableOptions({
+    handle: handleSelector,
+    draggable: '>[data-asset-row]',
+    disabled: props.readOnly,
+    // useSortable writes the new order on the next tick.
+    onEnd: () => nextTick(updateValue),
+  })
+)
+
+const moveAsset = async (index: number, delta: -1 | 1) => {
+  if (props.readOnly || !moveInList(localValue.value, index, delta)) return
+
+  updateValue()
+  await nextTick()
+  focusGrip(listRef.value, handleSelector, index + delta)
+}
 
 // Opens the multi-select picker, inserting the result at `index` (null appends).
 const openPickerAt = (index: number | null) => {
@@ -138,8 +163,6 @@ const handleAssetReplace = (index: number) => {
   showAssetPicker.value = true
 }
 
-const replaceIndex = ref<number | null>(null)
-
 const handleAssetSelectForReplace = (asset: AssetResource) => {
   if (replaceIndex.value === null) {
     handleAssetSelect(asset)
@@ -149,30 +172,6 @@ const handleAssetSelectForReplace = (asset: AssetResource) => {
     replaceIndex.value = null
   }
   showAssetPicker.value = false
-}
-
-const handleDragStart = (index: number) => {
-  draggedIndex.value = index
-}
-
-const handleDragOver = (e: DragEvent) => {
-  e.preventDefault()
-}
-
-const handleDrop = (e: DragEvent, targetIndex: number) => {
-  if (draggedIndex.value === null) return
-  e.preventDefault()
-
-  const draggedAsset = localValue.value[draggedIndex.value]
-  localValue.value.splice(draggedIndex.value, 1)
-  localValue.value.splice(targetIndex, 0, draggedAsset)
-
-  draggedIndex.value = null
-  updateValue()
-}
-
-const isImage = (asset: AssetValue) => {
-  return getFileType(asset.mime_type) === 'image'
 }
 
 const handleAssetDetailsUpdate = (updatedAsset: AssetValue) => {
@@ -202,10 +201,19 @@ const handleFolderChange = (folderId: string | null) => {
 
 <template>
   <div class="grid w-full min-w-0 gap-2">
-    <Label
-      :label="item.name || item.key"
-      :required="item.required"
-    />
+    <div class="flex items-center justify-between gap-2">
+      <Label
+        :label="item.name || item.key"
+        :required="item.required"
+      />
+      <span
+        v-if="hasAssets && item.max"
+        class="text-sm text-muted tabular-nums"
+      >
+        {{ $t('labels.assetField.count', { current: localValue.length, max: item.max }) }}
+      </span>
+    </div>
+
     <div class="min-w-0 rounded-2xl border border-border bg-surface px-2">
       <p
         v-if="props.readOnly && !hasAssets"
@@ -214,121 +222,90 @@ const handleFolderChange = (folderId: string | null) => {
         {{ $t('labels.assets.noAssetsFound') }}
       </p>
       <div
-        class="relative"
-        :class="hasAssets ? 'pt-2' : 'pt-6'"
+        ref="listRef"
+        class="pt-2"
       >
         <div
           v-for="(asset, index) in localValue"
           :key="asset.id"
-          class="group relative mb-2 min-w-0 rounded-lg border border-border bg-background p-2 transition-colors"
-          :draggable="!props.readOnly"
-          @dragstart="!props.readOnly && handleDragStart(index)"
-          @dragover="!props.readOnly && handleDragOver($event)"
-          @drop="!props.readOnly && handleDrop($event, index)"
+          data-asset-row
+          class="group relative mb-2 flex min-w-0 items-center gap-3 rounded-lg border border-border bg-card p-2 transition-colors duration-100 hover:border-border-strong"
         >
           <AssetInsertTrigger
             v-if="!props.readOnly && canAddMore"
             @add="openPickerAt(index)"
           />
-          <div class="flex min-w-0 items-center gap-3">
-            <div
+          <SortHandle
+            v-if="!props.readOnly"
+            :data-asset-handle="sortId"
+            :label="$t('actions.assets.reorder')"
+            class="-mr-1.5 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100"
+            @move="(delta) => moveAsset(index, delta)"
+          />
+          <AssetRow :asset="asset" />
+          <div
+            class="absolute top-1/2 right-1.5 flex -translate-y-1/2 rounded-md bg-card opacity-0 group-hover:opacity-100 group-focus-within:opacity-100"
+          >
+            <button
               v-if="!props.readOnly"
-              class="cursor-ns-resize opacity-0 group-hover:opacity-100"
-              :title="$t('actions.assets.reorder')"
+              type="button"
+              class="row-action"
+              :aria-label="$t('actions.assets.replace')"
+              :title="$t('actions.assets.replace')"
+              @click.stop="handleAssetReplace(index)"
             >
-              <Icon
-                name="lucide:grip-vertical"
-                class="text-muted hover:text-primary"
-              />
-            </div>
-            <div class="flex-shrink-0">
-              <div
-                v-if="isImage(asset)"
-                class="h-14 w-14 overflow-hidden rounded-md border border-border bg-surface"
-              >
-                <NuxtImg
-                  :src="asset.full_path"
-                  :alt="String((asset.data as Record<string, unknown>)?.altText || asset.filename)"
-                  :width="128"
-                  :height="128"
-                  :modifiers="{ crop: 'fill' }"
-                  class="h-full w-full object-cover"
-                />
-              </div>
-              <div
-                v-else-if="asset.metadata?.thumbnails?.[0]?.full_path"
-                class="h-14 w-14 overflow-hidden rounded-md border border-border bg-surface"
-              >
-                <NuxtImg
-                  :src="asset.metadata.thumbnails[0].full_path"
-                  :alt="asset.filename"
-                  :width="128"
-                  :height="128"
-                  :modifiers="{ crop: 'fill' }"
-                  class="h-full w-full object-cover"
-                />
-              </div>
-              <div
-                v-else
-                class="flex h-12 w-12 items-center justify-center rounded-md border border-border bg-surface"
-              >
-                <Icon
-                  :name="getFileIcon(getFileType(asset.mime_type))"
-                  class="text-muted"
-                />
-              </div>
-            </div>
-            <div class="min-w-0 flex-1">
-              <p class="truncate font-semibold text-primary">
-                {{ asset.filename }}
-              </p>
-              <p class="text-sm text-muted">
-                {{ $t('labels.assets.asset') }}
-              </p>
-            </div>
-
-            <div class="flex items-center gap-2 opacity-0 group-hover:opacity-100">
-              <button
-                v-if="!props.readOnly"
-                class="flex transform cursor-pointer items-center hover:text-primary"
-                :aria-label="$t('actions.assets.replace') as string"
-                :title="$t('actions.assets.replace') as string"
-                @click.stop="handleAssetReplace(index)"
-              >
-                <Icon name="lucide:replace" />
-              </button>
-              <button
-                class="flex transform cursor-pointer items-center hover:text-primary"
-                :aria-label="$t('actions.assets.edit') as string"
-                :title="$t('actions.assets.edit') as string"
-                @click.stop="handleAssetEdit(asset)"
-              >
-                <Icon name="lucide:pencil" />
-              </button>
-              <button
-                v-if="!props.readOnly"
-                class="flex transform cursor-pointer items-center hover:text-red-500"
-                :aria-label="$t('actions.assets.remove') as string"
-                :title="$t('actions.assets.remove') as string"
-                @click.stop="handleAssetDelete(index)"
-              >
-                <Icon name="lucide:trash-2" />
-              </button>
-            </div>
+              <Icon name="lucide:replace" />
+            </button>
+            <button
+              type="button"
+              class="row-action"
+              :aria-label="$t('labels.assetField.details')"
+              :title="$t('labels.assetField.details')"
+              @click.stop="handleAssetEdit(asset)"
+            >
+              <Icon name="lucide:sliders-horizontal" />
+            </button>
+            <button
+              v-if="!props.readOnly"
+              type="button"
+              class="row-action hover:text-destructive-ink"
+              :aria-label="$t('actions.assets.remove')"
+              :title="$t('actions.assets.remove')"
+              @click.stop="handleAssetDelete(index)"
+            >
+              <Icon name="lucide:trash-2" />
+            </button>
           </div>
         </div>
-
-        <AssetInsertTrigger
-          v-if="!props.readOnly && canAddMore"
-          @add="openPickerAt(null)"
-        />
       </div>
-    </div>
-    <div
-      v-if="hasAssets && item.max"
-      class="text-center text-sm text-muted"
-    >
-      {{ $t('labels.assets.assetsCount', { current: localValue.length, max: item.max }) }}
+
+      <div
+        v-if="!props.readOnly && canAddMore"
+        class="group/add relative mb-0.5 flex h-7 items-center justify-center"
+      >
+        <div
+          class="absolute inset-x-0 top-1/2 border-t-2 border-accent opacity-0 transition-opacity group-hover/add:opacity-100 group-has-[:focus-visible]/add:opacity-100"
+        />
+        <button
+          type="button"
+          class="relative flex size-6 cursor-pointer items-center justify-center rounded-full border border-border-strong bg-background text-muted transition-colors group-hover/add:border-transparent group-hover/add:bg-accent-fill group-hover/add:text-accent-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+          :aria-label="
+            $t(
+              hasAssets
+                ? imagesOnly
+                  ? 'labels.assetField.addImages'
+                  : 'labels.assetField.addFiles'
+                : imagesOnly
+                  ? 'labels.assetField.chooseImages'
+                  : 'labels.assetField.chooseFiles'
+            )
+          "
+          :title="$t('labels.assets.addAsset')"
+          @click="openPickerAt(null)"
+        >
+          <Icon name="lucide:plus" />
+        </button>
+      </div>
     </div>
 
     <Dialog
