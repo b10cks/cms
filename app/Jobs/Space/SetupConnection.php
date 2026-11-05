@@ -277,14 +277,4 @@ class SetupConnection extends QueuedJob
     {
         return ['spaceConnection:' . $this->spaceConnection->id, 'setup'];
     }
-
-    protected function prepareDatabase()
-    {
-        $schema = $this->spaceConnection->getConnection()->getSchemaBuilder();
-        $schema->create('migrations', function ($table) {
-            $table->increments('id');
-            $table->string('migration');
-            $table->integer('batch');
-        });
-    }
 }
