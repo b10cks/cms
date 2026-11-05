@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { deepClone } from '@vue/devtools-shared'
-import { useSortable, type UseSortableOptions } from '@vueuse/integrations/useSortable'
+import { useSortable } from '@vueuse/integrations/useSortable'
 import { AccordionRoot } from 'reka-ui'
 import type { ComponentPublicInstance, Ref } from 'vue'
 import { toast } from 'vue-sonner'
@@ -10,7 +10,9 @@ import Block from '~/components/blocks/Block.vue'
 import Icon from '~/components/Icon.vue'
 import { Button } from '~/components/ui/button'
 import { Input } from '~/components/ui/input'
+import SortHandle from '~/components/ui/SortHandle.vue'
 import { useFieldClipboard } from '~/composables/useFieldClipboard'
+import { focusGrip, moveInList, sortableOptions } from '~/lib/sortable'
 
 interface AddFieldPayload {
   type: string
@@ -519,24 +521,55 @@ const setupTabsSortable = () => {
   nextTick(() => {
     if (!tabsContainer.value || props.readonly) return
 
-    useSortable(tabsContainer.value, localEditor.value, {
-      handle: '[tab-handle]',
-      animation: 150,
-      onEnd: (event: { oldIndex?: number | null; newIndex?: number | null }) => {
-        const oldIndex = event.oldIndex
-        const newIndex = event.newIndex
-        if (oldIndex == null || newIndex == null || oldIndex === newIndex) return
+    useSortable(
+      tabsContainer.value,
+      localEditor.value,
+      sortableOptions({
+        handle: '[data-section-handle]',
+        draggable: '>[data-section]',
+        onEnd: (event: { oldIndex?: number | null; newIndex?: number | null }) => {
+          const oldIndex = event.oldIndex
+          const newIndex = event.newIndex
+          if (oldIndex == null || newIndex == null || oldIndex === newIndex) return
 
-        if (activeTab.value === oldIndex) {
-          activeTab.value = newIndex
-        } else if (activeTab.value === newIndex) {
-          activeTab.value = oldIndex
-        }
-
-        emitEditorUpdate()
-      },
-    } as UseSortableOptions)
+          activeTab.value = shiftedIndex(activeTab.value, oldIndex, newIndex)
+          emitEditorUpdate()
+        },
+      })
+    )
   })
+}
+
+/** Where the section at `index` ends up after the one at `from` moved to `to`. */
+const shiftedIndex = (index: number, from: number, to: number) => {
+  if (index === from) return to
+  if (from < index && index <= to) return index - 1
+  if (to <= index && index < from) return index + 1
+  return index
+}
+
+const editorRoot = useTemplateRef<HTMLElement>('editorRoot')
+
+const moveSection = async (index: number, delta: -1 | 1) => {
+  if (props.readonly || !moveInList(localEditor.value, index, delta)) return
+
+  activeTab.value = shiftedIndex(activeTab.value, index, index + delta)
+  emitEditorUpdate()
+  await nextTick()
+  focusGrip(tabsContainer.value, '[data-section-handle]', index + delta)
+}
+
+const moveField = async (pageIndex: number, index: number, delta: -1 | 1) => {
+  const page = localEditor.value[pageIndex]
+  if (props.readonly || !page || !moveInList(page.items, index, delta)) return
+
+  emitEditorUpdate()
+  await nextTick()
+  focusGrip(
+    editorRoot.value?.querySelector(`[data-page="${pageIndex}"]`),
+    '[data-field-handle]',
+    index + delta
+  )
 }
 
 const setupFieldSortable = (pageIndex: number, element: HTMLElement) => {
@@ -546,14 +579,17 @@ const setupFieldSortable = (pageIndex: number, element: HTMLElement) => {
 
   const pageItems = toRef(page, 'items')
 
-  useSortable(element, pageItems, {
-    handle: '[data-field-handle]',
-    group: 'schema-fields',
-    animation: 150,
-    onEnd: () => {
-      emitEditorUpdate()
-    },
-  } as UseSortableOptions)
+  useSortable(
+    element,
+    pageItems,
+    sortableOptions({
+      handle: '[data-field-handle]',
+      group: 'schema-fields',
+      onEnd: () => {
+        emitEditorUpdate()
+      },
+    })
+  )
 }
 
 onMounted(() => {
@@ -586,7 +622,10 @@ watch(
 </script>
 
 <template>
-  <div class="schema-editor">
+  <div
+    ref="editorRoot"
+    class="schema-editor"
+  >
     <div class="mb-2">
       <div
         ref="tabsContainer"
@@ -596,16 +635,18 @@ watch(
           v-for="(page, index) in localEditor"
           :key="index"
           type="button"
+          data-section
           :class="[
             'group grab-handle relative inline-flex cursor-pointer items-center gap-2 rounded-lg py-1 pr-1 pl-2 font-semibold',
             activeTab === index ? 'bg-input' : '',
           ]"
           @click="activeTab = index"
         >
-          <Icon
-            name="lucide:grip-horizontal"
-            class="shrink-0 cursor-ew-resize"
-            tab-handle
+          <SortHandle
+            v-if="!readonly"
+            data-section-handle
+            orientation="horizontal"
+            @move="(delta) => moveSection(index, delta)"
           />
           <Input
             v-model="page.header"
@@ -648,6 +689,7 @@ watch(
         v-for="(page, pageIndex) in localEditor"
         v-show="activeTab === pageIndex"
         :key="pageIndex"
+        :data-page="pageIndex"
         class="grid gap-4"
       >
         <AccordionRoot
@@ -664,7 +706,7 @@ watch(
           class="grid gap-2"
         >
           <Block
-            v-for="key in page.items"
+            v-for="(key, itemIndex) in page.items"
             :key="key"
             :name="key"
             :item="localSchema[key] as SchemaType"
@@ -680,6 +722,7 @@ watch(
             @duplicate="duplicateField(key)"
             @copy="copyField(key)"
             @delete="deleteField(key)"
+            @move="(delta: -1 | 1) => moveField(pageIndex, itemIndex, delta)"
           />
         </AccordionRoot>
 

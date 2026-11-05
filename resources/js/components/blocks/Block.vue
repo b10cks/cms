@@ -26,6 +26,7 @@ import TextBlock from '~/components/blocks/TextBlock.vue'
 import Icon from '~/components/Icon.vue'
 import BlockType from '~/components/ui/BlockType.vue'
 import { Button } from '~/components/ui/button'
+import SortHandle from '~/components/ui/SortHandle.vue'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -45,6 +46,7 @@ const emit = defineEmits([
   'duplicate',
   'copy',
   'rename',
+  'move',
 ])
 const { $t } = useI18n()
 
@@ -475,12 +477,11 @@ const updateConditionOperator = (index: number, value: unknown) => {
 <template>
   <AccordionItem :value="name">
     <AccordionHeader class="group flex items-center gap-3">
-      <div
-        class="flex h-full cursor-ns-resize items-center"
+      <SortHandle
         data-field-handle
-      >
-        <Icon name="lucide:grip-vertical" />
-      </div>
+        :disabled="readonly"
+        @move="(delta) => emit('move', delta)"
+      />
       <BlockType :type="item?.type" />
       <AccordionTrigger class="flex grow cursor-pointer text-left items-center gap-4">
         <div class="flex flex-col">

@@ -1,11 +1,13 @@
 <script setup lang="ts">
-import { useSortable, type UseSortableOptions } from '@vueuse/integrations/useSortable'
+import { useSortable } from '@vueuse/integrations/useSortable'
 
 import Icon from '~/components/Icon.vue'
 import { Button } from '~/components/ui/button'
+import SortHandle from '~/components/ui/SortHandle.vue'
 import { SelectField } from '~/components/ui/form'
 import { Input } from '~/components/ui/input'
 import { useFieldOptionChoices } from '~/composables/useFieldOptionChoices'
+import { focusGrip, moveInList, sortableOptions } from '~/lib/sortable'
 
 const props = defineProps<{
   column: Extract<TableColumn, { type: 'option' }>
@@ -46,11 +48,22 @@ const emitColumn = (patch: Partial<Extract<TableColumn, { type: 'option' }>>) =>
 }
 
 if (!props.readonly) {
-  useSortable(list, props.column.options, {
-    handle: '[data-option-handle]',
-    animation: 150,
-    onEnd: () => emitColumn({ options: [...props.column.options] }),
-  } as UseSortableOptions)
+  useSortable(
+    list,
+    props.column.options,
+    sortableOptions({
+      handle: '[data-option-handle]',
+      onEnd: () => emitColumn({ options: [...props.column.options] }),
+    })
+  )
+}
+
+const moveOption = async (index: number, delta: -1 | 1) => {
+  if (props.readonly || !moveInList(props.column.options, index, delta)) return
+
+  emitColumn({ options: [...props.column.options] })
+  await nextTick()
+  focusGrip(list.value, '[data-option-handle]', index + delta)
 }
 
 // Schema keys transliterate for the space's language too, so a German space
@@ -198,10 +211,10 @@ watch(
           :key="`${name}-option-${index}`"
           class="flex items-center gap-2 rounded-lg border border-border/60 bg-background px-3 py-2"
         >
-          <Icon
-            name="lucide:grip-vertical"
-            :class="readonly ? 'text-muted' : 'cursor-ns-resize text-muted'"
+          <SortHandle
             data-option-handle
+            :disabled="readonly"
+            @move="(delta) => moveOption(index, delta)"
           />
           <Input
             v-model="option.name"

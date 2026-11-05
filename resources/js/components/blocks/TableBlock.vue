@@ -1,11 +1,13 @@
 <script setup lang="ts">
-import { useSortable, type UseSortableOptions } from '@vueuse/integrations/useSortable'
+import { useSortable } from '@vueuse/integrations/useSortable'
 
 import TableColumnOptions from '~/components/blocks/TableColumnOptions.vue'
 import Icon from '~/components/Icon.vue'
 import { Button } from '~/components/ui/button'
+import SortHandle from '~/components/ui/SortHandle.vue'
 import { CheckboxField, InputField, SelectField } from '~/components/ui/form'
 import { ensureTableValue, getTableColumns } from '~/lib/tableField'
+import { focusGrip, moveInList, sortableOptions } from '~/lib/sortable'
 
 const props = defineProps<{
   value: TableSchema
@@ -20,11 +22,22 @@ const emit = defineEmits<{
 const list = ref<HTMLDivElement | null>(null)
 
 if (!props.readonly) {
-  useSortable(list, props.value.columns, {
-    handle: '[data-column-handle]',
-    animation: 150,
-    onEnd: () => commitColumns([...props.value.columns]),
-  } as UseSortableOptions)
+  useSortable(
+    list,
+    props.value.columns,
+    sortableOptions({
+      handle: '[data-column-handle]',
+      onEnd: () => commitColumns([...props.value.columns]),
+    })
+  )
+}
+
+const moveColumn = async (index: number, delta: -1 | 1) => {
+  if (props.readonly || !moveInList(props.value.columns, index, delta)) return
+
+  commitColumns([...props.value.columns])
+  await nextTick()
+  focusGrip(list.value, '[data-column-handle]', index + delta)
 }
 
 const syncDefault = (
@@ -176,15 +189,12 @@ const removeColumn = (index: number) => {
           class="grid gap-4 rounded border border-border bg-surface p-2"
         >
           <div class="grid gap-3 md:grid-cols-[auto_1fr_1fr_110px_auto] md:items-start">
-            <button
-              type="button"
+            <SortHandle
               data-column-handle
+              class="self-center"
               :disabled="readonly"
-              :aria-label="$t('actions.dragToReorder')"
-              class="h-full flex items-center cursor-ns-resize py-2 text-muted disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              <Icon name="lucide:grip-vertical" />
-            </button>
+              @move="(delta) => moveColumn(index, delta)"
+            />
 
             <InputField
               :name="`${name}-column-key-${index}`"

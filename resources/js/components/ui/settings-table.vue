@@ -1,4 +1,5 @@
 <script setup lang="ts" generic="TItem extends TableItem = TableItem">
+import { unrefElement } from '@vueuse/core'
 import { useSortable } from '@vueuse/integrations/useSortable'
 
 import Icon from '~/components/Icon.vue'
@@ -11,6 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '~/components/ui/select'
+import SortHandle from '~/components/ui/SortHandle.vue'
 import { Switch } from '~/components/ui/switch'
 import {
   Table,
@@ -21,6 +23,7 @@ import {
   TableHeader,
   TableRow,
 } from '~/components/ui/table'
+import { focusGrip, moveInList, sortableOptions } from '~/lib/sortable'
 
 export interface TableItem {
   [key: string]: string | number | boolean | null | undefined
@@ -93,14 +96,26 @@ watch(
 )
 
 if (props.allowSort) {
-  ;(useSortable as any)(tableBodyRef, localItems, {
-    handle: '.sort-handle',
-    animation: 150,
-    disabled: !props.canEdit,
-    onEnd: () => {
-      nextTick(() => emit('update:items', [...localItems.value]))
-    },
-  })
+  useSortable(
+    tableBodyRef,
+    localItems,
+    sortableOptions({
+      handle: '[data-row-handle]',
+      disabled: !props.canEdit,
+      forceFallback: false,
+      onEnd: () => {
+        nextTick(() => emit('update:items', [...localItems.value]))
+      },
+    })
+  )
+}
+
+const moveRow = async (index: number, delta: -1 | 1) => {
+  if (!moveInList(localItems.value, index, delta)) return
+
+  emit('update:items', [...localItems.value])
+  await nextTick()
+  focusGrip(unrefElement(tableBodyRef), '[data-row-handle]', index + delta)
 }
 
 const canAddItem = computed(() => {
@@ -158,7 +173,7 @@ const cellLabel = (column: ColumnDefinition<TItem>, item: TItem): string => {
 
 <template>
   <div class="overflow-hidden rounded-lg border border-border-strong">
-    <Table>
+    <Table class="[&_td]:p-2">
       <TableHeader>
         <TableRow>
           <TableHead
@@ -179,12 +194,17 @@ const cellLabel = (column: ColumnDefinition<TItem>, item: TItem): string => {
         <TableRow
           v-for="(item, index) in localItems"
           :key="index"
+          class="hover:bg-transparent!"
         >
           <TableCell
             v-if="allowSort"
-            class="sort-handle w-4 cursor-grab text-muted transition-colors duration-100 hover:text-foreground active:cursor-grabbing"
+            class="w-4"
           >
-            <Icon name="lucide:grip-vertical" />
+            <SortHandle
+              data-row-handle
+              :disabled="!canEdit"
+              @move="(delta) => moveRow(index, delta)"
+            />
           </TableCell>
           <TableCell
             v-for="column in columns"
@@ -256,7 +276,7 @@ const cellLabel = (column: ColumnDefinition<TItem>, item: TItem): string => {
         <TableRow
           v-if="showAddRow && canAdd"
           :id="`${id}-new-row`"
-          class="hover:bg-transparent"
+          class="hover:bg-transparent!"
         >
           <TableCell v-if="allowSort" />
           <TableCell

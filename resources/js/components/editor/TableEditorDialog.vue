@@ -8,6 +8,8 @@ import { Checkbox } from '~/components/ui/checkbox'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '~/components/ui/dialog'
 import { Input } from '~/components/ui/input'
 import { ScrollArea } from '~/components/ui/scroll-area'
+import SortHandle from '~/components/ui/SortHandle.vue'
+import { focusGrip, moveInList, sortableOptions } from '~/lib/sortable'
 import { createTableRow, ensureTableValue, getTableColumns } from '~/lib/tableField'
 
 const props = defineProps<{
@@ -76,9 +78,17 @@ watch(
   { immediate: true, deep: true }
 )
 
-;(useSortable as any)(rowList, sortableRows, {
-  handle: '[data-row-drag-handle]',
-})
+useSortable(rowList, sortableRows, sortableOptions({ handle: '[data-row-drag-handle]' }))
+
+/** Arrow keys on a row grip. Writes through the same setter a drag uses. */
+const moveRow = async (index: number, delta: -1 | 1) => {
+  const rows = [...sortableRows.value]
+  if (!moveInList(rows, index, delta)) return
+
+  sortableRows.value = rows
+  await nextTick()
+  focusGrip(rowList.value, '[data-row-drag-handle]', index + delta)
+}
 
 const updateHeader = (columnKey: string, value: string) => {
   localTable.value = {
@@ -312,16 +322,11 @@ const handleCellKeyDown = (event: KeyboardEvent, rowIndex: number, columnIndex: 
                 >
                   <div class="border-r border-t border-border bg-surface/40 px-3 py-3">
                     <div class="flex items-center gap-2 text-sm text-muted">
-                      <button
+                      <SortHandle
                         v-if="canEdit"
-                        type="button"
-                        draggable
                         data-row-drag-handle
-                        :aria-label="$t('actions.dragToReorder')"
-                        class="cursor-ns-resize"
-                      >
-                        <Icon name="lucide:grip-vertical" />
-                      </button>
+                        @move="(delta) => moveRow(rowIndex, delta)"
+                      />
                       <span>{{ rowIndex + 1 }}</span>
                     </div>
                   </div>

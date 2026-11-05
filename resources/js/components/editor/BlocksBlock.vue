@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { unrefElement, usePreferredReducedMotion } from '@vueuse/core'
-import { useSortable, type UseSortableOptions } from '@vueuse/integrations/useSortable'
+import { useSortable } from '@vueuse/integrations/useSortable'
 import {
   AccordionContent,
   AccordionHeader,
@@ -17,6 +17,7 @@ import Icon from '~/components/Icon.vue'
 import { AvatarList } from '~/components/ui/avatar'
 import { Button } from '~/components/ui/button'
 import { Checkbox } from '~/components/ui/checkbox'
+import SortHandle from '~/components/ui/SortHandle.vue'
 import Label from '~/components/ui/form/Label.vue'
 import type {
   CollaborationPresenceUser,
@@ -47,6 +48,7 @@ import {
 import type { FieldReveal } from '~/lib/commentLocation'
 import { scrollIntoViewAfterExpand } from '~/lib/fieldFocus'
 import { buildContentPath, buildPreviewUrl, resolveEnvironment } from '~/lib/preview-url'
+import { sortableOptions, sortAnimation } from '~/lib/sortable'
 import type { ContentResource } from '~/types/contents'
 
 import EditorComponent from './EditorComponent.vue'
@@ -228,26 +230,18 @@ const openItems = listView.openItems
 const sortId = useId()
 const handleSelector = `[data-block-handle="${sortId}"]`
 const reducedMotion = usePreferredReducedMotion()
-const sortAnimation = () => (reducedMotion.value === 'reduce' ? 0 : 150)
 
-// The sortablejs `Options` type doesn't resolve in this project, hence the cast.
-const { option: setSortableOption } = useSortable(accordionContainer, blockItems, {
-  handle: handleSelector,
-  draggable: '>[data-block-item]',
-  forceFallback: true,
-  fallbackOnBody: true,
-  fallbackTolerance: 4,
-  animation: sortAnimation(),
-  forceAutoScrollFallback: true,
-  scrollSensitivity: 80,
-  scrollSpeed: 14,
-  ghostClass: 'blocks-sortable-ghost',
-  dragClass: 'blocks-sortable-drag',
-  chosenClass: 'blocks-sortable-chosen',
-  onEnd: () => {
-    lastSortEndedAt = Date.now()
-  },
-} as UseSortableOptions)
+const { option: setSortableOption } = useSortable(
+  accordionContainer,
+  blockItems,
+  sortableOptions({
+    handle: handleSelector,
+    draggable: '>[data-block-item]',
+    onEnd: () => {
+      lastSortEndedAt = Date.now()
+    },
+  })
+)
 
 watch(reducedMotion, () => setSortableOption('animation', sortAnimation()))
 
@@ -890,7 +884,7 @@ const getItemRingStyle = (content: Record<string, unknown>, index: number) => {
           data-block-item
           :class="[
             'relative mb-2 min-w-0 rounded-lg border bg-card py-2 transition-colors duration-100',
-            depth === 0 ? 'px-2' : 'px-1',
+            depth === 0 ? 'px-3' : 'px-2',
             hasVisibleItemError(i) ? 'border-destructive/40 bg-destructive/5' : 'border-border hover:border-border-strong',
             content.hidden ? 'opacity-50' : '',
           ]"
@@ -932,19 +926,11 @@ const getItemRingStyle = (content: Record<string, unknown>, index: number) => {
               @keydown.alt.up.prevent.stop="moveItem(i, -1)"
               @keydown.alt.down.prevent.stop="moveItem(i, 1)"
             >
-              <div
+              <SortHandle
                 v-if="!props.readOnly"
-                role="button"
-                tabindex="0"
                 :data-block-handle="sortId"
-                :aria-label="$t('actions.blocks.tooltips.reorder')"
-                :title="$t('actions.blocks.tooltips.reorder')"
-                class="-m-1 flex shrink-0 cursor-grab touch-none items-center rounded-sm p-1 text-muted select-none hover:text-foreground focus-visible:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none active:cursor-grabbing"
-                @keydown.up.prevent.stop="moveItemFromHandle(i, -1)"
-                @keydown.down.prevent.stop="moveItemFromHandle(i, 1)"
-              >
-                <Icon name="lucide:grip-vertical" />
-              </div>
+                @move="(delta) => moveItemFromHandle(i, delta)"
+              />
               <button
                 v-if="drillsIn(content)"
                 type="button"
@@ -1125,22 +1111,3 @@ const getItemRingStyle = (content: Record<string, unknown>, index: number) => {
     </div>
   </div>
 </template>
-
-<style>
-/* Placeholder left in the list while an item is dragged. */
-.blocks-sortable-ghost {
-  border-style: dashed;
-  border-color: var(--color-ring);
-  background-color: var(--color-tree-drop);
-}
-
-.blocks-sortable-ghost > * {
-  visibility: hidden;
-}
-
-/* The clone that follows the pointer. */
-.blocks-sortable-drag {
-  box-shadow: var(--shadow-soft-lg);
-  cursor: grabbing;
-}
-</style>

@@ -1,11 +1,13 @@
 <script setup lang="ts">
-import { useSortable, type UseSortableOptions } from '@vueuse/integrations/useSortable'
+import { useSortable } from '@vueuse/integrations/useSortable'
 
 import Icon from '~/components/Icon.vue'
 import { Button } from '~/components/ui/button'
+import SortHandle from '~/components/ui/SortHandle.vue'
 import { ComboboxField, SelectField } from '~/components/ui/form'
 import { Input } from '~/components/ui/input'
 import { useFieldOptionChoices } from '~/composables/useFieldOptionChoices'
+import { focusGrip, moveInList, sortableOptions } from '~/lib/sortable'
 
 const props = defineProps<{ value: OptionsSchema; name: string; readonly?: boolean }>()
 const list = ref<HTMLDivElement | null>(null)
@@ -33,13 +35,24 @@ const dataSourceOptions = computed(
 )
 
 if (!props.readonly) {
-  useSortable(list, props.value.options, {
-    handle: '[data-option-handle]',
-    animation: 150,
-    onEnd: () => {
-      emit('update:item-value', 'options', [...props.value.options])
-    },
-  } as UseSortableOptions)
+  useSortable(
+    list,
+    props.value.options,
+    sortableOptions({
+      handle: '[data-option-handle]',
+      onEnd: () => {
+        emit('update:item-value', 'options', [...props.value.options])
+      },
+    })
+  )
+}
+
+const moveOption = async (index: number, delta: -1 | 1) => {
+  if (props.readonly || !moveInList(props.value.options, index, delta)) return
+
+  emit('update:item-value', 'options', [...props.value.options])
+  await nextTick()
+  focusGrip(list.value, '[data-option-handle]', index + delta)
 }
 
 const normalizedDefaultValue = computed({
@@ -188,13 +201,10 @@ watch(
           :key="`option-${index}`"
           class="flex items-center gap-2 rounded-xl bg-background px-3 py-1"
         >
-          <Icon
-            name="lucide:grip-vertical"
-            :class="[
-              'shrink-0',
-              readonly ? 'text-muted' : 'cursor-ns-resize hover:text-primary',
-            ]"
+          <SortHandle
             data-option-handle
+            :disabled="readonly"
+            @move="(delta) => moveOption(index, delta)"
           />
           <Input
             v-model="option.name"

@@ -939,3 +939,22 @@
     display: none;
   }
 }
+
+/* Reorderable lists (lib/sortable.ts). The slot left in the list while a row is dragged:
+   a dashed ring on the drop wash, contents hidden. Unlayered, so it beats a row's own fill. */
+.sortable-ghost {
+  border-color: transparent;
+  outline: 1px dashed var(--color-ring);
+  outline-offset: -1px;
+  background-color: var(--color-tree-drop);
+}
+
+.sortable-ghost > * {
+  visibility: hidden;
+}
+
+/* The clone that follows the pointer. */
+.sortable-drag {
+  box-shadow: var(--shadow-soft-lg);
+  cursor: grabbing;
+}

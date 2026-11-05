@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { useSortable, type UseSortableOptions } from '@vueuse/integrations/useSortable'
+import { useSortable } from '@vueuse/integrations/useSortable'
 import type { Ref } from 'vue'
 
 import Icon from '~/components/Icon.vue'
 import { Button } from '~/components/ui/button'
+import SortHandle from '~/components/ui/SortHandle.vue'
 import { CheckboxField, InputField } from '~/components/ui/form'
 import { Input } from '~/components/ui/input'
 import {
@@ -14,6 +15,7 @@ import {
   SelectValue,
 } from '~/components/ui/select'
 import { Textarea } from '~/components/ui/textarea'
+import { focusGrip, moveInList, sortableOptions } from '~/lib/sortable'
 
 interface HtmlClass {
   name: string
@@ -297,20 +299,32 @@ const handlePlaceholderBlur = (row: Placeholder) => {
   placeholderEditor.commit()
 }
 
-// The sortablejs `Options` type doesn't resolve in this project, so the
-// Sortable-native options (handle, animation, onEnd) need an explicit cast.
-// Sortable leaves `draggable="false"` on a dropped item, so the handle must
-// not be the `draggable` attribute: it would turn the whole row into a handle.
-const sortableOptions = (commit: () => void): UseSortableOptions =>
-  ({
-    handle: '[data-sort-handle]',
-    animation: 150,
-    // useSortable reorders the array on the next tick; commit after it did.
-    onEnd: () => nextTick(commit),
-  }) as UseSortableOptions
+// useSortable reorders the array on the next tick; commit after it did.
+const listSortable = (handle: string, commit: () => void) =>
+  sortableOptions({ handle, onEnd: () => nextTick(commit) })
 
-useSortable(htmlClassList, htmlClasses, sortableOptions(htmlClassEditor.commit))
-useSortable(placeholderList, placeholders, sortableOptions(placeholderEditor.commit))
+useSortable(htmlClassList, htmlClasses, listSortable('[data-class-handle]', htmlClassEditor.commit))
+useSortable(
+  placeholderList,
+  placeholders,
+  listSortable('[data-placeholder-handle]', placeholderEditor.commit)
+)
+
+/** Arrow keys on a grip: move the row, commit, and give the grip its focus back. */
+const moveRow = async <T,>(
+  rows: T[],
+  index: number,
+  delta: -1 | 1,
+  commit: () => void,
+  container: HTMLElement | null,
+  handle: string
+) => {
+  if (!moveInList(rows, index, delta)) return
+
+  commit()
+  await nextTick()
+  focusGrip(container, handle, index + delta)
+}
 
 // The parent replaces `value` (and its arrays) with fresh identities on external
 // changes, while local edits mutate the same array in place - so a shallow watch
@@ -527,10 +541,12 @@ watch(
             class="flex flex-col rounded-xl bg-background px-3 py-1"
           >
             <div class="flex items-center gap-2">
-              <Icon
-                name="lucide:grip-vertical"
-                class="shrink-0 cursor-ns-resize hover:text-primary"
-                data-sort-handle
+              <SortHandle
+                data-class-handle
+                @move="
+                  (delta) =>
+                    moveRow(htmlClasses, index, delta, htmlClassEditor.commit, htmlClassList, '[data-class-handle]')
+                "
               />
               <Input
                 v-model="htmlClass.name"
@@ -616,10 +632,12 @@ watch(
             :key="`placeholder-${index}`"
             class="flex items-center gap-2 rounded-xl bg-background px-3 py-1"
           >
-            <Icon
-              name="lucide:grip-vertical"
-              class="shrink-0 cursor-ns-resize hover:text-primary"
-              data-sort-handle
+            <SortHandle
+              data-placeholder-handle
+              @move="
+                (delta) =>
+                  moveRow(placeholders, index, delta, placeholderEditor.commit, placeholderList, '[data-placeholder-handle]')
+              "
             />
             <Input
               v-model="placeholder.label"
