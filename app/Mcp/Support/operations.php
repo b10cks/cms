@@ -2406,7 +2406,7 @@ return [
         'uri' => '/mgmt/v1/users/me/settings',
     ],
     'users.updatePassword' => [
-        'description' => 'Change the authenticated user’s password. Payload fields: current_password, password, password_confirmation.',
+        'description' => 'Change the authenticated user’s password. Payload fields: old_password, password, password_confirmation.',
         'required' => ['payload'],
         'accepts' => ['payload'],
         'method' => 'POST',
