@@ -130,7 +130,7 @@ const availableLocales = locales
   <div
     :class="[
       'flex h-full flex-col overflow-hidden border-r border-r-sidebar-border bg-sidebar text-sidebar-foreground select-none transition-[width,padding] duration-200 ease-butter',
-      isExtendedSidebar ? 'w-18 p-1 pb-3' : 'w-14 p-3',
+      isExtendedSidebar ? 'w-18 p-1 pb-3' : 'w-14 py-3 pr-[11px] pl-3',
     ]"
   >
     <div class="flex min-h-0 flex-1 flex-col overflow-y-auto">
@@ -152,9 +152,10 @@ const availableLocales = locales
           />
         </template>
         <div
-          v-for="m in menu"
+          v-for="(m, index) in menu"
           :key="m.label"
           class="group/nav relative flex w-full"
+          :class="index > 0 && menu[index - 1].group !== m.group && 'mt-1.5 border-t border-sidebar-border pt-2'"
         >
           <SimpleTooltip
             :tooltip="menuLabel(m.label)"
@@ -166,7 +167,7 @@ const availableLocales = locales
               :to="buildLink(m.routeName)"
               :aria-label="menuLabel(m.label)"
               :class="[
-                'icon-anim flex w-full flex-col items-center justify-center rounded-lg text-center transition-[padding,gap,background-color,color] duration-200 ease-butter hover:bg-sidebar-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none focus-visible:ring-inset',
+                'icon-anim flex w-full flex-col items-center justify-center rounded-lg text-center transition-[padding,gap,background-color,color] duration-200 ease-butter hover:bg-sidebar-accent/60 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none focus-visible:ring-inset',
                 isExtendedSidebar ? 'gap-1 p-2' : 'gap-0 p-1.5',
               ]"
               active-class="text-sidebar-accent-foreground bg-sidebar-accent"
@@ -217,7 +218,7 @@ const availableLocales = locales
     <div class="flex flex-col items-center gap-2">
       <DropdownMenu>
         <DropdownMenuTrigger
-          class="icon-anim relative flex size-9 cursor-pointer items-center justify-center rounded-lg text-sidebar-muted transition-colors duration-200 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground data-[state=open]:bg-sidebar-accent"
+          class="icon-anim relative flex size-8 cursor-pointer items-center justify-center rounded-lg text-sidebar-muted transition-colors duration-100 hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
         >
           <CircleHelpIcon :size="16" />
           <DropdownMenuContent
@@ -278,9 +279,11 @@ const availableLocales = locales
         </DropdownMenuTrigger>
       </DropdownMenu>
       <NotificationBell />
-      <div class="flex flex-col items-center gap-2 border-t-2 border-t-sidebar-border pt-3">
+      <div class="flex w-full flex-col items-center gap-2 border-t border-t-sidebar-border pt-3">
         <DropdownMenu v-if="user">
-          <DropdownMenuTrigger>
+          <DropdownMenuTrigger
+            class="cursor-pointer rounded-xl transition-opacity duration-100 hover:opacity-85 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring"
+          >
             <Avatar
               :avatar="user.avatar"
               :name="`${user.firstname} ${user.lastname}`.trim()"

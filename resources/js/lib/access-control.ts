@@ -27,6 +27,8 @@ export interface RouteAccessRequirement {
 }
 
 export interface NavigationAccessItem {
+  /** The job a rail entry belongs to; the rail draws a hairline between jobs. */
+  group?: 'work' | 'library' | 'system'
   label: string
   icon: string
   routeName: AppRouteName
@@ -205,74 +207,88 @@ export const providerNavigationItems: NavigationAccessItem[] = [
 ]
 
 export const spaceNavigationItems: NavigationAccessItem[] = [
+  // Order doubles as the access-denied fallback via firstAllowedRouteForSpace,
+  // which knows nothing about onboarding dismissal, so home stays first.
   {
+    group: 'work',
     label: 'labels.navigation.home',
     icon: 'lucide:home',
     routeName: 'space',
   },
-  // Not first: this array's order doubles as the access-denied fallback via
-  // firstAllowedRouteForSpace, which knows nothing about dismissal.
   {
+    group: 'work',
     label: 'labels.navigation.onboarding',
     icon: 'lucide:compass',
     routeName: 'space-onboarding',
   },
   {
-    label: 'labels.navigation.canvas',
-    icon: 'lucide:network',
-    routeName: 'space-canvas',
-  },
-  {
+    group: 'work',
     label: 'labels.navigation.content',
     icon: 'lucide:feather',
     routeName: 'space-content-index',
   },
   {
+    group: 'work',
+    label: 'labels.navigation.canvas',
+    icon: 'lucide:network',
+    routeName: 'space-canvas',
+  },
+  {
+    group: 'work',
     label: 'labels.navigation.massEdit',
     icon: 'lucide:table-properties',
     routeName: 'space-mass-edit',
   },
   {
-    label: 'labels.navigation.blocks',
-    icon: 'lucide:blocks',
-    routeName: 'space-blocks-index',
-  },
-  {
-    label: 'labels.navigation.assets',
-    icon: 'lucide:images',
-    routeName: 'space-assets-index',
-  },
-  {
-    label: 'labels.navigation.icons',
-    icon: 'lucide:shapes',
-    routeName: 'space-icons-index',
-  },
-  {
-    label: 'labels.navigation.datasets',
-    icon: 'lucide:database-zap',
-    routeName: 'space-datasources',
-  },
-  {
-    label: 'labels.navigation.redirects',
-    icon: 'lucide:split',
-    routeName: 'space-redirects',
-  },
-  {
+    group: 'work',
     label: 'labels.navigation.releases',
     icon: 'lucide:rocket',
     routeName: 'space-releases',
   },
   {
-    label: 'labels.navigation.auditLog',
-    icon: 'lucide:scroll-text',
-    routeName: 'space-audit-logs',
+    group: 'library',
+    label: 'labels.navigation.blocks',
+    icon: 'lucide:blocks',
+    routeName: 'space-blocks-index',
   },
   {
+    group: 'library',
+    label: 'labels.navigation.assets',
+    icon: 'lucide:images',
+    routeName: 'space-assets-index',
+  },
+  {
+    group: 'library',
+    label: 'labels.navigation.icons',
+    icon: 'lucide:shapes',
+    routeName: 'space-icons-index',
+  },
+  {
+    group: 'library',
+    label: 'labels.navigation.datasets',
+    icon: 'lucide:database-zap',
+    routeName: 'space-datasources',
+  },
+  {
+    group: 'system',
+    label: 'labels.navigation.redirects',
+    icon: 'lucide:split',
+    routeName: 'space-redirects',
+  },
+  {
+    group: 'system',
     label: 'labels.navigation.automations',
     icon: 'lucide:waypoints',
     routeName: 'space-automations-index',
   },
   {
+    group: 'system',
+    label: 'labels.navigation.auditLog',
+    icon: 'lucide:scroll-text',
+    routeName: 'space-audit-logs',
+  },
+  {
+    group: 'system',
     label: 'labels.navigation.settings',
     icon: 'lucide:settings',
     routeName: 'space-settings-index',

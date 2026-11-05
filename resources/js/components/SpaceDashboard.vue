@@ -174,7 +174,7 @@ const contentTiles = computed(() =>
         ),
         detailTo:
           content.count.draft > 0
-            ? { name: 'space-content-index', params: { space: props.spaceId }, query: { status: 'pending' } }
+            ? { name: 'space-content-index', params: { space: props.spaceId }, query: { status: 'drafts' } }
             : undefined,
         change: changeOf(content.count.new),
         series: counts(trends.content_creation),

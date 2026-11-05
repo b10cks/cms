@@ -1182,6 +1182,9 @@ const buildPublishActions = (item: FlatContentMenuItem): ContentTreeMenuAction[]
       disabled: unavailable || publishable.length === 0,
       onSelect: () => executePublish(publishable),
     },
+  ]
+
+  const options: ContentTreeMenuAction[] = [
     {
       id: 'publish-with-message',
       label: t('labels.contentTree.actions.publishWithMessage') as string,
@@ -1192,7 +1195,7 @@ const buildPublishActions = (item: FlatContentMenuItem): ContentTreeMenuAction[]
   ]
 
   if (hasChildren) {
-    actions.push({
+    options.push({
       id: 'publish-with-children',
       label: t(
         'labels.contentTree.actions.publishWithChildren',
@@ -1206,7 +1209,7 @@ const buildPublishActions = (item: FlatContentMenuItem): ContentTreeMenuAction[]
   }
 
   // A schedule belongs to one entry; a selection is timed through a release.
-  actions.push({
+  options.push({
     id: 'schedule',
     label: t('labels.contentTree.actions.schedule') as string,
     icon: 'clock-fading',
@@ -1241,13 +1244,22 @@ const buildPublishActions = (item: FlatContentMenuItem): ContentTreeMenuAction[]
     })
   }
 
-  actions.push({
+  options.push({
     id: 'unpublish',
     label: countedLabel('unpublish', live.length),
     icon: 'cloud-off',
+    separatorBefore: true,
     destructive: true,
     disabled: unavailable || live.length === 0,
     onSelect: () => executeUnpublish(live),
+  })
+
+  actions.splice(1, 0, {
+    id: 'publish-options',
+    label: t('labels.contentTree.actions.publishOptions') as string,
+    icon: 'settings-2',
+    disabled: options.every((option) => option.disabled),
+    children: options,
   })
 
   return actions
@@ -1284,13 +1296,16 @@ const buildItemAutomationActions = (item: FlatContentMenuItem): ContentTreeMenuA
     automationAppliesToBlock(automation, item.block_id)
   )
 
+  if (automations.length === 0) {
+    return []
+  }
+
   return [
     {
       id: 'automations',
       label: t('labels.contentTree.actions.automations') as string,
       icon: 'zap',
-      separatorBefore: true,
-      disabled: automations.length === 0,
+      separatorBefore: !aiEnabled.value,
       children: automations.map((automation) => ({
         id: `automation-${automation.id}`,
         label: automation.name,
@@ -1337,19 +1352,26 @@ const buildItemMenuActions = (item: FlatContentMenuItem): ContentTreeMenuAction[
     ...(aiEnabled.value ? [buildAiAction(item)] : []),
     ...buildItemAutomationActions(item),
     {
+      id: 'new-sub-item',
+      label: t('labels.contentTree.actions.newSubItem') as string,
+      icon: 'folder-plus',
+      separatorBefore: true,
+      disabled: !canManageContent.value || item.type === 'single',
+      onSelect: () => initCreate(item.id),
+    },
+    {
       id: 'rename',
       label: t('labels.contentTree.actions.rename') as string,
       icon: 'text-cursor-input',
-      separatorBefore: true,
       disabled: !canManageContent.value,
       onSelect: () => openRename(item.id),
     },
     {
-      id: 'new-sub-item',
-      label: t('labels.contentTree.actions.newSubItem') as string,
-      icon: 'folder-plus',
-      disabled: !canManageContent.value || item.type === 'single',
-      onSelect: () => initCreate(item.id),
+      id: 'duplicate',
+      label: t('labels.contentTree.actions.duplicate') as string,
+      icon: 'copy-plus',
+      disabled: !canCopyCutOrDuplicate(context),
+      onSelect: () => duplicateItems(context),
     },
     {
       id: 'copy',
@@ -1367,30 +1389,32 @@ const buildItemMenuActions = (item: FlatContentMenuItem): ContentTreeMenuAction[
       onSelect: () => cutToClipboard(context),
     },
     {
-      id: 'duplicate',
-      label: t('labels.contentTree.actions.duplicate') as string,
-      icon: 'copy-plus',
-      disabled: !canCopyCutOrDuplicate(context),
-      onSelect: () => duplicateItems(context),
-    },
-    {
-      id: 'paste-in',
-      label: t('labels.contentTree.actions.pasteIn') as string,
+      id: 'paste',
+      label: t('labels.contentTree.actions.paste') as string,
       icon: 'clipboard-paste',
-      disabled: !canManageContent.value || !canPasteIntoTarget,
-      onSelect: () => pasteClipboard(item, 'in'),
-    },
-    {
-      id: 'paste-after',
-      label: t('labels.contentTree.actions.pasteAfter') as string,
-      icon: 'between-horizontal-start',
-      disabled: !canManageContent.value || !canPasteAfterTarget,
-      onSelect: () => pasteClipboard(item, 'after'),
+      disabled: !canManageContent.value || (!canPasteIntoTarget && !canPasteAfterTarget),
+      children: [
+        {
+          id: 'paste-in',
+          label: t('labels.contentTree.actions.pasteIn') as string,
+          icon: 'clipboard-paste',
+          disabled: !canPasteIntoTarget,
+          onSelect: () => pasteClipboard(item, 'in'),
+        },
+        {
+          id: 'paste-after',
+          label: t('labels.contentTree.actions.pasteAfter') as string,
+          icon: 'between-horizontal-start',
+          disabled: !canPasteAfterTarget,
+          onSelect: () => pasteClipboard(item, 'after'),
+        },
+      ],
     },
     {
       id: 'delete',
       label: t('labels.contentTree.actions.delete') as string,
       icon: 'trash-2',
+      separatorBefore: true,
       disabled: !canManageContent.value || context.resolved_ids.length === 0,
       destructive: true,
       onSelect: () => executeDelete(context),
@@ -2108,8 +2132,8 @@ const handleKeydown = (event: KeyboardEvent) => {
 
 // --- Type-to-search (JetBrains-style speed search) ---
 
-const openedOnPending = route.query.status === 'pending'
-const searchOpen = ref(openedOnPending)
+const openedOnDrafts = route.query.status === 'drafts'
+const searchOpen = ref(openedOnDrafts)
 const searchQuery = ref('')
 const activeMatchIndex = ref(0)
 const searchInputRef = ref<HTMLInputElement | null>(null)
@@ -2124,16 +2148,22 @@ type ContentSearchMatch = {
 // --- Status filter: narrow the tree to entries with something to publish ---
 // Lives in the search panel and is cleared when the search closes.
 
-// The dashboard's drafts link opens the tree on the pending entries.
-const statusFilterActive = ref(openedOnPending)
-if (openedOnPending) {
+// The dashboard's drafts link opens the tree on the drafts.
+type StatusFilter = 'drafts' | 'changes'
+const statusFilter = ref<StatusFilter | null>(openedOnDrafts ? 'drafts' : null)
+if (openedOnDrafts) {
   const { status: _status, ...query } = route.query
   void router.replace({ query })
 }
-const pendingItems = computed(() => flatItems.value.filter(hasPendingChanges))
+const statusFilterActive = computed(() => statusFilter.value !== null)
+const draftItems = computed(() => flatItems.value.filter((item) => !item.pat))
+const changedItems = computed(() => flatItems.value.filter((item) => item.pat && item.drf))
+const pendingItems = computed(() =>
+  statusFilter.value === 'drafts' ? draftItems.value : changedItems.value
+)
 
-const toggleStatusFilter = () => {
-  statusFilterActive.value = !statusFilterActive.value
+const toggleStatusFilter = (filter: StatusFilter) => {
+  statusFilter.value = statusFilter.value === filter ? null : filter
 
   // Like closing the search: keep the selected row visible in the full tree.
   if (!statusFilterActive.value && selectedItemId.value) {
@@ -2456,7 +2486,7 @@ const closeSearch = (focusTree = true) => {
 
   searchOpen.value = false
   searchQuery.value = ''
-  statusFilterActive.value = false
+  statusFilter.value = null
   activeMatchIndex.value = 0
   searchExpandedOverride.value = null
 
@@ -2736,7 +2766,7 @@ defineExpose({ initCreate })
             class="size-6 shrink-0 rounded-sm object-cover"
           />
           <div class="min-w-0">
-            <div class="flex items-center gap-2 -mb-1">
+            <div class="flex items-center gap-2">
               <Icon
                 v-if="!selectedSpace.icon"
                 name="lucide:cuboid"
@@ -2759,7 +2789,7 @@ defineExpose({ initCreate })
             :aria-label="$t('labels.contentTree.search.open')"
             :title="$t('labels.contentTree.search.open')"
             :aria-expanded="searchOpen"
-            :class="searchOpen ? 'text-primary' : ''"
+            :class="searchOpen ? 'bg-state-selected text-primary' : ''"
             @pointerdown.prevent
             @click.stop="toggleSearch()"
           >
@@ -2807,7 +2837,7 @@ defineExpose({ initCreate })
         <div
           v-if="searchOpen"
           ref="searchPanelRef"
-          class="mt-1 flex items-center gap-2 rounded-md border border-border bg-background py-1 pr-1 pl-2 shadow-sm"
+          class="mt-1 flex h-8 items-center gap-2 rounded-md border border-input-border bg-input pr-px pl-2 shadow-sm transition-colors focus-within:ring-2 focus-within:ring-ring"
         >
           <Icon
             name="lucide:search"
@@ -2819,7 +2849,7 @@ defineExpose({ initCreate })
             type="text"
             :placeholder="$t('labels.contentTree.search.placeholder')"
             :aria-label="$t('labels.contentTree.search.open')"
-            class="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted"
+            class="min-w-0 flex-1 bg-transparent text-sm text-primary outline-none placeholder:text-input-muted"
             @keydown="handleSearchInputKeydown"
             @blur="handleSearchBlur"
           />
@@ -2827,26 +2857,41 @@ defineExpose({ initCreate })
             v-if="searchCounterText"
             aria-live="polite"
             :class="[
-              'shrink-0 text-xs tabular-nums',
-              searchMatches.length > 0 ? 'text-muted' : 'text-destructive',
+              'shrink-0 text-sm tabular-nums',
+              searchMatches.length > 0 ? 'text-input-muted' : 'text-destructive-ink',
             ]"
           >
             {{ searchCounterText }}
           </span>
           <Button
-            v-if="pendingItems.length > 0 || statusFilterActive"
+            v-if="draftItems.length > 0 || statusFilter === 'drafts'"
+            variant="ghost"
+            size="xs"
+            class="shrink-0"
+            :aria-label="$t('labels.contentTree.status.filterDrafts')"
+            :title="$t('labels.contentTree.status.filterDrafts')"
+            :aria-pressed="statusFilter === 'drafts'"
+            :class="statusFilter === 'drafts' ? 'bg-state-selected text-primary' : 'text-input-muted'"
+            @pointerdown.prevent
+            @click="toggleStatusFilter('drafts')"
+          >
+            <Icon name="lucide:circle-dashed" />
+            <span class="tabular-nums">{{ draftItems.length }}</span>
+          </Button>
+          <Button
+            v-if="changedItems.length > 0 || statusFilter === 'changes'"
             variant="ghost"
             size="xs"
             class="shrink-0"
             :aria-label="$t('labels.contentTree.status.filter')"
             :title="$t('labels.contentTree.status.filter')"
-            :aria-pressed="statusFilterActive"
-            :class="statusFilterActive ? 'bg-secondary text-primary' : 'text-muted'"
+            :aria-pressed="statusFilter === 'changes'"
+            :class="statusFilter === 'changes' ? 'bg-state-selected text-primary' : 'text-input-muted'"
             @pointerdown.prevent
-            @click="toggleStatusFilter()"
+            @click="toggleStatusFilter('changes')"
           >
-            <Icon name="lucide:circle-dashed" />
-            <span class="tabular-nums">{{ pendingItems.length }}</span>
+            <Icon name="lucide:pencil-line" />
+            <span class="tabular-nums">{{ changedItems.length }}</span>
           </Button>
           <Button
             variant="ghost"
@@ -2863,6 +2908,7 @@ defineExpose({ initCreate })
     <div class="relative min-h-0 w-full flex-1">
       <VerticalScrollArea class="h-full w-full">
         <TreeRoot
+          :aria-label="$t('labels.contentTree.label')"
           ref="treeRootRef"
           v-slot="{ flattenItems }"
           v-model:expanded="treeExpanded"
@@ -2892,7 +2938,7 @@ defineExpose({ initCreate })
 
           <div
             v-else-if="error"
-            class="px-2 py-4 text-sm text-destructive"
+            class="px-2 py-4 text-sm text-destructive-ink"
           >
             {{ error }}
           </div>
@@ -2918,8 +2964,8 @@ defineExpose({ initCreate })
             :class="[
               'group relative my-0.5 flex items-center gap-2 rounded-md border border-transparent py-1 pr-2 pl-0 outline-none',
               'transition-colors duration-150 hover:bg-tree-hover',
-              'focus-visible:ring-1 focus-visible:ring-ring',
-              'cursor-pointer font-semibold',
+              'focus-visible:ring-2 focus-visible:ring-ring',
+              'cursor-pointer text-sm font-medium',
               item.value.id === selectedItemId ? 'text-tree-selected-foreground' : '',
               isCutItem(item.value.id) ? 'opacity-50' : '',
               isItemSelected(item.value.id)
@@ -2964,7 +3010,7 @@ defineExpose({ initCreate })
               v-if="
                 filterVisibleIds ? getVisibleChildren(item.value).length > 0 : item.value.children
               "
-              class="z-10 h-4 w-3 cursor-pointer"
+              class="z-10 h-4 w-3 cursor-pointer text-muted transition-colors duration-100 hover:text-primary"
               :aria-label="$t('actions.toggleExpand')"
               :aria-expanded="isExpanded"
               @click.stop.prevent="toggleExpanded(item.value.id)"
@@ -3030,7 +3076,7 @@ defineExpose({ initCreate })
                 :tooltip="`${$t('labels.contentTree.status.pendingChanges')} · ${item.value.pat}`"
               >
                 <div
-                  class="h-2 w-2 rounded-full bg-text-muted ring-1 ring-success ring-offset-1 ring-offset-background"
+                  class="h-2 w-2 rounded-full bg-text-muted outline outline-offset-1 outline-success"
                 />
               </SimpleTooltip>
               <SimpleTooltip
@@ -3046,7 +3092,7 @@ defineExpose({ initCreate })
                 type="button"
                 :aria-label="$t('labels.contentTree.actions.more')"
                 :class="[
-                  'cursor-pointer flex items-center rounded-sm p-1 text-muted transition-opacity duration-200 hover:text-primary focus-visible:opacity-100',
+                  'cursor-pointer flex items-center rounded-sm p-1 text-muted transition-[opacity,background-color,color] duration-100 hover:bg-state-hover hover:text-primary focus-visible:opacity-100',
                   isItemSelected(item.value.id) || openMenuId === item.value.id
                     ? 'opacity-100'
                     : 'opacity-0 group-hover:opacity-100 group-focus-within:opacity-100',
@@ -3077,7 +3123,7 @@ defineExpose({ initCreate })
           :to="buildLink(row.id)"
           tabindex="-1"
           :class="[
-            'group absolute inset-x-2 flex items-center gap-2 rounded-md border border-transparent bg-sidebar py-1 pr-2 font-semibold',
+            'group absolute inset-x-2 flex items-center gap-2 rounded-md border border-transparent bg-sidebar py-1 pr-2 text-sm font-medium',
             'transition-colors duration-150 hover:bg-tree-hover',
             row.id === selectedItemId ? 'text-tree-selected-foreground' : '',
           ]"
@@ -3136,15 +3182,20 @@ defineExpose({ initCreate })
               <span>{{ action.label }}</span>
             </DropdownMenuSubTrigger>
             <DropdownMenuSubContent>
-              <DropdownMenuItem
+              <template
                 v-for="child in action.children"
                 :key="child.id"
-                :disabled="child.disabled"
-                @select.prevent="handleActionSelect(child)"
               >
-                <Icon :name="menuIcon(child.icon)" />
-                <span>{{ child.label }}</span>
-              </DropdownMenuItem>
+                <DropdownMenuSeparator v-if="child.separatorBefore" />
+                <DropdownMenuItem
+                  :disabled="child.disabled"
+                  :class="child.destructive ? 'text-destructive focus:text-destructive' : ''"
+                  @select.prevent="handleActionSelect(child)"
+                >
+                  <Icon :name="menuIcon(child.icon)" />
+                  <span>{{ child.label }}</span>
+                </DropdownMenuItem>
+              </template>
             </DropdownMenuSubContent>
           </DropdownMenuSub>
           <DropdownMenuItem
