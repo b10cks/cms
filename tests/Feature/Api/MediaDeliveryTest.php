@@ -18,7 +18,7 @@ class MediaDeliveryTest extends TestCase
 {
     private const string VIDEO_BODY = 'video-bytes-0123456789';
 
-    private const string VIDEO_URL = '/ilum/storage/space/asset/clip.mp4';
+    private const string VIDEO_URL = '/ilum/storage/users/avatars/clip.mp4';
 
     /**
      * Comfortably more than the 8 KiB floor on the stream chunk size, so the
@@ -27,7 +27,7 @@ class MediaDeliveryTest extends TestCase
      */
     private const int LARGE_SIZE = 20_000;
 
-    private const string LARGE_URL = '/ilum/storage/space/asset/large.mp4';
+    private const string LARGE_URL = '/ilum/storage/users/avatars/large.mp4';
 
     protected function setUp(): void
     {
@@ -39,7 +39,7 @@ class MediaDeliveryTest extends TestCase
         config()->set('filesystems.default', 'local');
         Storage::fake('local');
 
-        Storage::disk('local')->put('space/asset/clip.mp4', self::VIDEO_BODY);
+        Storage::disk('local')->put('users/avatars/clip.mp4', self::VIDEO_BODY);
     }
 
     /**
@@ -62,7 +62,7 @@ class MediaDeliveryTest extends TestCase
     {
         $body = $this->largeBody();
 
-        Storage::disk('local')->put('space/asset/large.mp4', $body);
+        Storage::disk('local')->put('users/avatars/large.mp4', $body);
 
         return $body;
     }
@@ -195,9 +195,9 @@ class MediaDeliveryTest extends TestCase
     #[Test]
     public function it_sandboxes_every_type_that_is_not_explicitly_exempt(): void
     {
-        Storage::disk('local')->put('space/asset/logo.svg', '<svg xmlns="http://www.w3.org/2000/svg"/>');
+        Storage::disk('local')->put('users/avatars/logo.svg', '<svg xmlns="http://www.w3.org/2000/svg"/>');
 
-        foreach ([self::VIDEO_URL, '/ilum/storage/space/asset/logo.svg'] as $url) {
+        foreach ([self::VIDEO_URL, '/ilum/storage/users/avatars/logo.svg'] as $url) {
             $response = $this->get($url);
 
             $response->assertOk();
@@ -212,9 +212,9 @@ class MediaDeliveryTest extends TestCase
     #[Test]
     public function it_exempts_pdf_so_the_built_in_viewer_keeps_its_controls(): void
     {
-        Storage::disk('local')->put('space/asset/manual.pdf', '%PDF-1.4 fake');
+        Storage::disk('local')->put('users/avatars/manual.pdf', '%PDF-1.4 fake');
 
-        $response = $this->get('/ilum/storage/space/asset/manual.pdf');
+        $response = $this->get('/ilum/storage/users/avatars/manual.pdf');
 
         $response->assertOk()->assertHeader('x-content-type-options', 'nosniff');
 
@@ -312,7 +312,7 @@ class MediaDeliveryTest extends TestCase
         config()->set('filesystems.disks.nonseekable', ['driver' => 'nonseekable', 'root' => $root]);
         config()->set('filesystems.default', 'nonseekable');
 
-        $stream = Storage::disk('nonseekable')->readStream('space/asset/large.mp4');
+        $stream = Storage::disk('nonseekable')->readStream('users/avatars/large.mp4');
         $this->assertFalse(stream_get_meta_data($stream)['seekable'], 'fixture must not be seekable');
         pclose($stream);
 
@@ -496,7 +496,7 @@ class MediaDeliveryTest extends TestCase
     public function it_refuses_to_route_a_name_outside_the_allowed_charset(): void
     {
         foreach (['a%22b.mp4', 'a%5Cb.mp4', 'vid%C3%A9o.mp4'] as $name) {
-            $this->get('/ilum/storage/space/asset/'.$name)->assertNotFound();
+            $this->get('/ilum/storage/users/avatars/'.$name)->assertNotFound();
         }
     }
 
@@ -510,10 +510,10 @@ class MediaDeliveryTest extends TestCase
     public function it_refuses_a_traversal_segment_instead_of_erroring(): void
     {
         $traversals = [
-            '/ilum/storage/space/asset/..',
-            '/ilum/storage/space/asset/.',
-            '/ilum/storage/space/asset/..%2Fescape.mp4',
-            '/ilum/storage/space/asset/..%2F..%2Fescape.mp4',
+            '/ilum/storage/users/avatars/..',
+            '/ilum/storage/users/avatars/.',
+            '/ilum/storage/users/avatars/..%2Fescape.mp4',
+            '/ilum/storage/users/avatars/..%2F..%2Fescape.mp4',
             '/ilum/storage/space/..%2Fasset/clip.mp4',
         ];
 
@@ -528,9 +528,9 @@ class MediaDeliveryTest extends TestCase
     #[Test]
     public function it_returns_404_for_a_directory_path(): void
     {
-        Storage::disk('local')->put('space/asset/nested/inner.mp4', 'x');
+        Storage::disk('local')->put('users/avatars/nested/inner.mp4', 'x');
 
-        $this->get('/ilum/storage/space/asset/nested')->assertNotFound();
+        $this->get('/ilum/storage/users/avatars/nested')->assertNotFound();
     }
 
     #[Test]

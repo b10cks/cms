@@ -18,6 +18,13 @@ use Illuminate\Support\Facades\Storage;
  */
 class IlumSourceResolver
 {
+    /**
+     * What the `storage` literal may serve: the directories the avatar and
+     * icon upload controllers write to. Asset files can share the default
+     * bucket, and served from here they would skip the asset lookup.
+     */
+    private const DEFAULT_DISK_DIRECTORIES = ['users/avatars', 'teams/avatars', 'spaces/icons'];
+
     public function __construct(
         private readonly StorageService $storageService,
         private readonly StoredFileProbe $probe,
@@ -35,6 +42,10 @@ class IlumSourceResolver
         }
 
         $path = "{$space}/{$assetId}/{$name}";
+
+        if ($storage === 'storage' && ! in_array("{$space}/{$assetId}", self::DEFAULT_DISK_DIRECTORIES, true)) {
+            return null;
+        }
 
         return $storage === 'storage'
             ? $this->resolveDefaultDisk($path)

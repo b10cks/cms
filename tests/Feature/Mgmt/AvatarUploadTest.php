@@ -87,4 +87,18 @@ class AvatarUploadTest extends TestCase
         $this->assertNotNull($stored);
         $this->get('/ilum/storage/'.$stored)->assertSuccessful();
     }
+
+    /**
+     * Asset files share the default bucket on hosted installs. Served through
+     * the literal they skip the asset and space lookup, so a deleted asset or
+     * a deleted space's files would stay public.
+     */
+    #[Test]
+    public function the_storage_literal_serves_only_avatars_and_icons(): void
+    {
+        Storage::fake(config('filesystems.default'));
+        Storage::disk()->put('01spaceid/01assetid/photo.png', UploadedFile::fake()->image('photo.png', 10, 10)->getContent());
+
+        $this->get('/ilum/storage/01spaceid/01assetid/photo.png')->assertNotFound();
+    }
 }

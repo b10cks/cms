@@ -20,7 +20,7 @@ class ImageControllerTest extends TestCase
         Storage::fake('local');
 
         Storage::disk('local')->putFileAs(
-            'space/asset',
+            'users/avatars',
             UploadedFile::fake()->image('image.jpg', 64, 64),
             'image.jpg',
         );
@@ -33,7 +33,7 @@ class ImageControllerTest extends TestCase
         $service->shouldNotReceive('processImage');
         $this->app->instance(ImageTransformationService::class, $service);
 
-        $this->getJson('/ilum/storage/space/asset/image.jpg/w_200?quality=101')
+        $this->getJson('/ilum/storage/users/avatars/image.jpg/w_200?quality=101')
             ->assertUnprocessable()
             ->assertJsonValidationErrors(['quality'], 'details');
     }
@@ -45,7 +45,7 @@ class ImageControllerTest extends TestCase
         $service->shouldReceive('processImage')
             ->once()
             ->withArgs(function ($disk, $fullPath, $transformation): bool {
-                return $fullPath === 'space/asset/image.jpg'
+                return $fullPath === 'users/avatars/image.jpg'
                     && $transformation instanceof ImageTransformation
                     && $transformation->operation === 'fit'
                     && $transformation->format === 'png'
@@ -60,7 +60,7 @@ class ImageControllerTest extends TestCase
             ]);
         $this->app->instance(ImageTransformationService::class, $service);
 
-        $response = $this->get('/ilum/storage/space/asset/image.jpg/w_9000,h_9000?format=png&quality=42');
+        $response = $this->get('/ilum/storage/users/avatars/image.jpg/w_9000,h_9000?format=png&quality=42');
 
         $response
             ->assertOk()
@@ -81,7 +81,7 @@ class ImageControllerTest extends TestCase
         $service->shouldNotReceive('processImage');
         $this->app->instance(ImageTransformationService::class, $service);
 
-        $this->getJson('/ilum/storage/space/asset/missing.jpg')
+        $this->getJson('/ilum/storage/users/avatars/missing.jpg')
             ->assertNotFound();
     }
 }
