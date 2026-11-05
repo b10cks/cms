@@ -61,7 +61,7 @@ class OperationRegistry
      *
      * @param  array<string, mixed>  $arguments
      *
-     * @throws \InvalidArgumentException when a required argument is missing
+     * @throws \InvalidArgumentException when a required argument is missing or holds a path separator
      */
     public static function resolveUri(string $template, array $arguments): string
     {
@@ -75,6 +75,12 @@ class OperationRegistry
 
             if (! is_string($value) || $value === '') {
                 throw new \InvalidArgumentException("Missing required string argument: {$key}");
+            }
+
+            // The router decodes the path before matching, so an encoded
+            // slash would still pick a different route than the operation's.
+            if (str_contains($value, '/') || str_contains($value, '\\') || $value === '.' || $value === '..') {
+                throw new \InvalidArgumentException("Invalid path argument: {$key}");
             }
 
             return rawurlencode($value);

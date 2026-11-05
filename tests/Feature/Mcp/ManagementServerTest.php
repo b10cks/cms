@@ -220,6 +220,19 @@ class ManagementServerTest extends TestCase
     }
 
     #[Test]
+    public function it_rejects_path_arguments_that_would_reach_another_route()
+    {
+        $block = Block::factory()->create(['slug' => 'cardGrid', 'name' => 'Card Grid']);
+
+        ManagementServer::tool(MgmtCallTool::class, [
+            'operation' => 'blocks.get',
+            'spaceId' => $this->space->id,
+            'blockId' => "{$block->id}/versions",
+        ])
+            ->assertHasErrors(['Invalid path argument: blockId']);
+    }
+
+    #[Test]
     public function it_resolves_specific_id_arguments_with_generic_id_fallback()
     {
         $block = Block::factory()->create(['slug' => 'cardGrid', 'name' => 'Card Grid']);
