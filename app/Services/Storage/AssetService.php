@@ -367,7 +367,7 @@ class AssetService
 
         $asset->save();
 
-        $this->deleteThumbnailFiles($replacedPosters, $filesystem);
+        $this->deleteThumbnailFiles($asset, $storage->space_id, $replacedPosters, $filesystem);
 
         return $asset;
     }
@@ -404,7 +404,7 @@ class AssetService
         $asset->metadata = $metadata;
         $asset->save();
 
-        $this->deleteThumbnailFiles($customPosters, $filesystem);
+        $this->deleteThumbnailFiles($asset, $storage->space_id, $customPosters, $filesystem);
 
         return $asset;
     }
@@ -412,9 +412,13 @@ class AssetService
     /**
      * @param  array<int|string, mixed>  $thumbnails
      */
-    private function deleteThumbnailFiles(array $thumbnails, Filesystem|FilesystemOperator $filesystem): void
+    private function deleteThumbnailFiles(Asset $asset, string $spaceId, array $thumbnails, Filesystem|FilesystemOperator $filesystem): void
     {
         foreach (array_unique(array_filter(array_column($thumbnails, 'path'))) as $path) {
+            if (! $asset->ownsStoragePath($spaceId, $path)) {
+                continue;
+            }
+
             try {
                 if ($filesystem->fileExists($path)) {
                     $filesystem->delete($path);
@@ -980,17 +984,17 @@ class AssetService
             $directoryPath = dirname($asset->path);
 
             $files = [];
-            if ($asset->path) {
+            if ($asset->ownsStoragePath($storage->space_id, $asset->path)) {
                 $files[] = $asset->path;
             }
 
             foreach ([...($asset->metadata['thumbnails'] ?? []), ...($asset->metadata['generated_thumbnails'] ?? [])] as $thumbnail) {
-                if (! empty($thumbnail['path'])) {
+                if ($asset->ownsStoragePath($storage->space_id, $thumbnail['path'] ?? null)) {
                     $files[] = $thumbnail['path'];
                 }
             }
 
-            if ($directoryPath !== '.' && $directoryPath !== '' && Str::startsWith($directoryPath, $storage->space_id)) {
+            if ($asset->ownsStoragePath($storage->space_id, "{$directoryPath}/")) {
                 $files = [
                     ...$files,
                     ...$filesystem->listContents($directoryPath)
@@ -1014,7 +1018,7 @@ class AssetService
                 }
             }
 
-            if ($directoryPath !== '.' && $directoryPath !== '' && Str::startsWith($directoryPath, $storage->space_id)) {
+            if ($asset->ownsStoragePath($storage->space_id, "{$directoryPath}/")) {
                 try {
                     $filesystem->deleteDirectory($directoryPath);
                 } catch (\Throwable $e) {
