@@ -10,6 +10,12 @@ import Icon from '~/components/Icon.vue'
 import MetaLocalization from '~/components/localization/MetaLocalization.vue'
 import { AvatarList } from '~/components/ui/avatar'
 import SplitButton from '~/components/ui/button/SplitButton.vue'
+import {
+  DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuSeparator,
+} from '~/components/ui/dropdown-menu'
 import { CheckboxField } from '~/components/ui/form'
 import { Input } from '~/components/ui/input'
 import { useAiConfigs } from '~/composables/useAiModels'
@@ -19,6 +25,7 @@ import {
   normalizeSchema,
   normalizeSchemaType,
 } from '~/composables/useContentSchemaState'
+import { useTranslationAssist, useTranslationStatus } from '~/composables/useTranslationStatus'
 import {
   getCollaborationFieldKey,
   getLocalizedFieldValue,
@@ -28,6 +35,7 @@ import {
 } from '~/lib/localizationCollab'
 import { idFieldPath } from '~/lib/aiChangesets'
 import { ensureTableValue, getTableColumns } from '~/lib/tableField'
+import type { ContentTranslationGlossaryFinding } from '~/types/content-translations'
 import type { FieldUpdateEvent } from '~/utils/preview-bridge'
 
 import DateLocalization from './DateLocalization.vue'
@@ -36,6 +44,8 @@ import MarkdownLocalization from './MarkdownLocalization.vue'
 import RichTextLocalization from './RichTextLocalization.vue'
 import TextareaLocalization from './TextareaLocalization.vue'
 import TextLocalization from './TextLocalization.vue'
+import TranslationAssistRail from './TranslationAssistRail.vue'
+import TranslationChecks from './TranslationChecks.vue'
 
 type LocalizableSchema = SchemaType & { translatable?: boolean }
 
@@ -84,6 +94,17 @@ interface TranslationUnit {
   changesetPath: string | null
   apply: (content: Record<string, unknown>, translation: string) => void
 }
+
+/**
+ * Which fields the Translate button sends: `pending` is missing and outdated,
+ * `missing` only the empty ones, `all` replaces every translation.
+ */
+type TranslationScope = 'pending' | 'missing' | 'all'
+
+const translationScopes: TranslationScope[] = ['pending', 'missing', 'all']
+
+const isTranslationScope = (value: unknown): value is TranslationScope =>
+  translationScopes.some((scope) => scope === value)
 
 interface SpaceSettings {
   default_language: string
@@ -160,6 +181,21 @@ const selectedConfigId = ref<string | null>(null)
 const translationRun = useAiRun(() => props.spaceId)
 const isTranslating = translationRun.isActive
 const translationProgress = ref<{ applied: number; total: number } | null>(null)
+const translationScope = ref<TranslationScope>('pending')
+
+// Saved state only, so a field edited here since the last read is no longer judged by it.
+const { data: translationStatus } = useTranslationStatus(
+  () => props.spaceId,
+  () => props.contentId,
+  () => props.targetLanguage
+)
+const editedSinceStatus = ref(new Set<string>())
+// Glossary findings for the draft, per unit, from the assist of the focused field.
+const liveFindings = ref(new Map<string, ContentTranslationGlossaryFinding[]>())
+watch(translationStatus, () => {
+  editedSinceStatus.value = new Set()
+  liveFindings.value = new Map()
+})
 
 function extractCompletedTranslations(partial: string): Record<string, string> {
   const result: Record<string, string> = {}
@@ -198,6 +234,39 @@ const fieldContext = (field: TranslatableField): string | null => {
 const needsTranslation = (field: TranslatableField): boolean =>
   !field.isTranslated && !field.isOrphaned && hasTranslatedValue(field.schemaItem, field.originalValue)
 
+/** A field's unit IDs as the server names them (`body.<block id>.text`, `seo.title`). None for an orphan. */
+const fieldUnitIds = (field: TranslatableField): string[] => {
+  const base = field.isOrphaned ? null : idFieldPath(field.path, field.blockStamps)
+  if (!base) return []
+
+  return normalizeSchemaType(field.schemaItem.type) === 'meta'
+    ? metaTranslatableKeys.map((key) => `${base}.${key}`)
+    : [base]
+}
+
+const isUnitStale = (field: TranslatableField, unitId: string): boolean =>
+  translationStatus.value?.units[unitId]?.status === 'stale' &&
+  !editedSinceStatus.value.has(getFieldIdentifier(field))
+
+/** Translated against a source text that has changed since. */
+const isOutdated = (field: TranslatableField): boolean =>
+  field.isTranslated && fieldUnitIds(field).some((unitId) => isUnitStale(field, unitId))
+
+const plainText = (html: string): string =>
+  new DOMParser().parseFromString(html, 'text/html').body.textContent?.trim() ?? ''
+
+const outdatedTitle = (field: TranslatableField): string => {
+  const previous = fieldUnitIds(field)
+    .map((unitId) => translationStatus.value?.units[unitId]?.previous_source)
+    .find(isNonEmptyString)
+
+  return previous
+    ? t('components.flattenedLocalization.outdatedTitle', {
+        source: plainText(previous).slice(0, 300),
+      })
+    : t('components.flattenedLocalization.outdated')
+}
+
 const defaultAiConfig = computed<SpaceAiConfig | null>(() => {
   return aiConfigs.value?.find((config) => config.is_default) ?? null
 })
@@ -226,6 +295,7 @@ const translationDraft = ref<Record<string, unknown>>({})
 
 const translatableFields = ref<TranslatableField[]>([])
 const metaTranslatableKeys = ['title', 'description', 'ogTitle', 'ogDescription'] as const
+type MetaTextKey = (typeof metaTranslatableKeys)[number]
 const emptyRichTextDocument = {
   type: 'doc',
   content: [
@@ -742,7 +812,7 @@ watch(
 
 const filteredFields = computed(() => {
   return translatableFields.value.filter((field) => {
-    if (showUntranslatedOnly.value && field.isTranslated && !field.isOrphaned) {
+    if (showUntranslatedOnly.value && field.isTranslated && !field.isOrphaned && !isOutdated(field)) {
       return false
     }
 
@@ -760,6 +830,120 @@ const filteredFields = computed(() => {
 
 const getFieldIdentifier = (field: TranslatableField): string => {
   return `${field.path.join('-')}-${field.key}`
+}
+
+/** Field types that carry translation units the assist and checks know. */
+const proseTypes = new Set<string>(['text', 'textarea', 'markdown', 'richtext', 'meta'])
+
+const fieldType = (field: TranslatableField): string =>
+  normalizeSchemaType(field.schemaItem.type) ?? ''
+
+/** Rich text as plain text: text nodes of one block join, blocks go on their own line. */
+const richTextPlain = (value: unknown): string => {
+  let text = ''
+  let parent: string | null = null
+
+  for (const segment of collectRichTextSegments(normalizeRichTextValue(value))) {
+    const key = segment.path.slice(0, -3).join('.')
+    if (parent !== null && key !== parent) text += '\n'
+    text += segment.text
+    parent = key
+  }
+
+  return text.trim()
+}
+
+/** The translation text of one unit of a field, the way the server compares it. */
+const unitText = (field: TranslatableField, metaKey: MetaTextKey | null): string => {
+  switch (fieldType(field)) {
+    case 'meta':
+      return metaKey ? (normalizeMetaValue(field.translatedValue)[metaKey] ?? '') : ''
+    case 'richtext':
+      return richTextPlain(field.translatedValue)
+    default:
+      return typeof field.translatedValue === 'string' ? field.translatedValue : ''
+  }
+}
+
+const fieldLength = (
+  field: TranslatableField,
+  metaKey: MetaTextKey | null
+): { count: number; max: number | null } => ({
+  count: unitText(field, metaKey).length,
+  max: fieldType(field) === 'meta' ? null : Number(field.schemaItem.validation?.max_length) || null,
+})
+
+const focused = ref<{ id: string; metaKey: MetaTextKey | null } | null>(null)
+
+const focusedUnit = computed(() => {
+  const target = focused.value
+  const field = target
+    ? translatableFields.value.find((candidate) => getFieldIdentifier(candidate) === target.id)
+    : undefined
+  if (!target || !field || field.isOrphaned || !proseTypes.has(fieldType(field))) return null
+
+  const base = idFieldPath(field.path, field.blockStamps)
+  if (!base) return null
+  if (fieldType(field) !== 'meta') return { field, metaKey: null, unit: base }
+
+  return target.metaKey ? { field, metaKey: target.metaKey, unit: `${base}.${target.metaKey}` } : null
+})
+
+const { data: assistData } = useTranslationAssist(
+  () => props.spaceId,
+  () => props.contentId,
+  () => props.targetLanguage,
+  () =>
+    focusedUnit.value
+      ? {
+          unit: focusedUnit.value.unit,
+          text: unitText(focusedUnit.value.field, focusedUnit.value.metaKey),
+        }
+      : null
+)
+
+// Kept from the last text while the next one loads, but never another field's.
+const assist = computed(() =>
+  assistData.value && assistData.value.unit === focusedUnit.value?.unit
+    ? assistData.value
+    : undefined
+)
+
+watch(assistData, (data) => {
+  if (data?.glossary) liveFindings.value.set(data.unit, data.glossary.findings ?? [])
+})
+
+const canUseMemory = computed(
+  () => !!focusedUnit.value && !isTranslating.value && fieldType(focusedUnit.value.field) !== 'richtext'
+)
+
+const useMemoryText = (text: string) => {
+  const target = focusedUnit.value
+  if (!target) return
+
+  updateTranslatedValue(
+    target.field,
+    target.metaKey ? { ...normalizeMetaValue(target.field.translatedValue), [target.metaKey]: text } : text
+  )
+}
+
+/** Glossary findings and length over the maximum under a field; null when there is nothing. */
+const fieldChecks = (
+  field: TranslatableField
+): { findings: ContentTranslationGlossaryFinding[]; length: { count: number; max: number | null } } | null => {
+  if (field.isOrphaned || !proseTypes.has(fieldType(field))) return null
+
+  const edited = editedSinceStatus.value.has(getFieldIdentifier(field))
+  const findings = aiEnabled.value
+    ? fieldUnitIds(field).flatMap(
+        (unitId) =>
+          liveFindings.value.get(unitId) ??
+          (edited ? [] : (translationStatus.value?.units[unitId]?.findings ?? []))
+      )
+    : []
+  const length = fieldLength(field, null)
+
+  return findings.length || (length.max && length.count > length.max) ? { findings, length } : null
 }
 
 const getValidationPath = (field: TranslatableField): string => {
@@ -838,7 +1022,13 @@ const focusedCollaborationKeys = new Set<string>()
 
 const handleFieldFocusIn = (field: TranslatableField, event: FocusEvent) => {
   // Reading the source is not working on the field.
-  if ((event.target as HTMLElement).matches('[readonly]')) return
+  const target = event.target as HTMLElement
+  if (target.matches('[readonly]')) return
+
+  focused.value = {
+    id: getFieldIdentifier(field),
+    metaKey: metaTranslatableKeys.find((key) => target.id.includes(`-${key}-translation-`)) ?? null,
+  }
 
   const key = getCollaborationKey(field)
   if (focusedCollaborationKeys.has(key)) return
@@ -1020,6 +1210,7 @@ const updateTranslatedValue = (field: TranslatableField, newValue: unknown): voi
     fieldToUpdate.translatedValue = newValue
     fieldToUpdate.isTranslated = isFieldTranslated(field.schemaItem, field.originalValue, newValue)
   }
+  editedSinceStatus.value.add(getFieldIdentifier(field))
 
   const previousDraft = translationDraft.value
   const nextTranslationContent = cloneTranslationContent(translationDraft.value)
@@ -1087,7 +1278,11 @@ const applyPreviewFieldUpdate = ({ itemId, path, field, value }: FieldUpdateEven
 
 defineExpose({ applyPreviewFieldUpdate })
 
-const buildTranslationUnits = (): TranslationUnit[] => {
+const buildTranslationUnits = (scope: TranslationScope): TranslationUnit[] => {
+  // Whether a unit that already holds a translation is sent again.
+  const replaces = (field: TranslatableField, unitId?: string): boolean =>
+    scope === 'all' ||
+    (scope === 'pending' && (unitId ? isUnitStale(field, unitId) : isOutdated(field)))
   const units: TranslationUnit[] = []
   let unitIndex = 0
   const nextUnitId = () => `f${++unitIndex}`
@@ -1118,7 +1313,11 @@ const buildTranslationUnits = (): TranslationUnit[] => {
 
       metaTranslatableKeys.forEach((key) => {
         const source = originalMeta[key]
-        if (!isNonEmptyString(source) || isNonEmptyString(translatedMeta[key])) {
+        const unitId = idFieldPath([...field.path, key], field.blockStamps)
+        if (
+          !isNonEmptyString(source) ||
+          (isNonEmptyString(translatedMeta[key]) && !replaces(field, unitId ?? undefined))
+        ) {
           return
         }
 
@@ -1127,7 +1326,7 @@ const buildTranslationUnits = (): TranslationUnit[] => {
           source,
           fieldIdentifier,
           field,
-          changesetPath: idFieldPath([...field.path, key], field.blockStamps),
+          changesetPath: unitId,
           apply: (content, translation) => {
             const nextMeta = normalizeMetaValue(getFieldValue(content, field))
             nextMeta[key] = translation
@@ -1145,13 +1344,20 @@ const buildTranslationUnits = (): TranslationUnit[] => {
         field.translatedValue as Record<string, unknown>
       )
 
+      const replaceSegments = replaces(field)
       collectRichTextSegments(originalDocument).forEach((segment) => {
         // Skip whitespace-only source segments
         if (!isNonEmptyString(segment.text) || !segment.text.trim()) return
 
         const translatedText = getValueAtPath(currentTranslatedDoc, segment.path)
         // Skip if already genuinely translated (non-empty and different from source)
-        if (isNonEmptyString(translatedText) && (translatedText as string) !== segment.text) return
+        if (
+          !replaceSegments &&
+          isNonEmptyString(translatedText) &&
+          (translatedText as string) !== segment.text
+        ) {
+          return
+        }
 
         units.push({
           id: nextUnitId(),
@@ -1175,7 +1381,7 @@ const buildTranslationUnits = (): TranslationUnit[] => {
 
     if (
       !isNonEmptyString(field.originalValue) ||
-      hasTranslatedValue(field.schemaItem, field.translatedValue)
+      (hasTranslatedValue(field.schemaItem, field.translatedValue) && !replaces(field))
     ) {
       return
     }
@@ -1213,6 +1419,7 @@ const applyTranslatedValues = (
     try {
       unit.apply(nextTranslationContent, translation)
       machineTranslatedFields.value.add(unit.fieldIdentifier)
+      editedSinceStatus.value.add(unit.fieldIdentifier)
       // Field-less units (the entry name) apply via their own emit and must
       // not mark the content payload as updated.
       if (unit.field) {
@@ -1276,7 +1483,7 @@ const translateWithAI = async (configId: string | null = selectedConfigId.value)
     toast.error(t('components.aiText.noConfigSelected'))
     return
   }
-  const translationUnits = buildTranslationUnits()
+  const translationUnits = buildTranslationUnits(translationScope.value)
   const fieldsToTranslate = Object.fromEntries(
     translationUnits.map((unit) => [unit.id, unit.source] as const)
   )
@@ -1353,20 +1560,43 @@ const translateWithAI = async (configId: string | null = selectedConfigId.value)
 }
 
 const translationStats = computed(() => {
-  const total = translatableFields.value.length
-  const translated = translatableFields.value.filter((f) => f.isTranslated).length
-  const percentage = total > 0 ? Math.round((translated / total) * 100) : 0
-  const machineTranslated = machineTranslatedFields.value.size
-  const orphanedBlocks = translatableFields.value.filter((f) => f.isOrphanedBlock).length
+  const fields = translatableFields.value.filter(
+    (field) => !field.isOrphaned && hasTranslatedValue(field.schemaItem, field.originalValue)
+  )
+  const translated = fields.filter((field) => field.isTranslated)
+  const outdated = translated.filter(isOutdated).length
+  const current = translated.length - outdated
+  const total = fields.length
+  const share = (count: number) => (total > 0 ? (count / total) * 100 : 0)
 
   return {
     total,
-    translated,
-    percentage,
-    machineTranslated,
-    orphanedBlocks,
+    current,
+    outdated,
+    missing: total - translated.length,
+    currentShare: share(current),
+    outdatedShare: share(outdated),
+    orphanedBlocks: translatableFields.value.filter((f) => f.isOrphanedBlock).length,
   }
 })
+
+/** Fields each scope would send, the entry name counted as one. */
+const scopeFieldCounts = computed((): Record<TranslationScope, number> => {
+  const count = (scope: TranslationScope) =>
+    new Set(buildTranslationUnits(scope).map((unit) => unit.fieldIdentifier)).size
+
+  return { pending: count('pending'), missing: count('missing'), all: count('all') }
+})
+
+const scopeLabels: Record<TranslationScope, string> = {
+  pending: 'components.flattenedLocalization.scopePending',
+  missing: 'components.flattenedLocalization.scopeMissing',
+  all: 'components.flattenedLocalization.scopeAll',
+}
+
+const selectScope = (value: unknown) => {
+  if (isTranslationScope(value)) translationScope.value = value
+}
 
 const removeAllOrphanedBlocks = (): void => {
   const orphaned = translatableFields.value.filter((f) => f.isOrphanedBlock)
@@ -1403,22 +1633,24 @@ const removeAllOrphanedBlocks = (): void => {
 </script>
 
 <template>
-  <div class="w-full">
-    <div class="mb-4 flex flex-wrap items-center justify-between">
-      <div class="flex items-center gap-4">
+  <div class="@container w-full">
+    <div class="mb-4 flex items-center justify-between gap-4">
+      <div class="flex shrink-0 items-center gap-4">
         <div class="space-y-1">
           <h3 class="text-sm font-semibold">Translation Progress</h3>
           <div class="flex items-center gap-2">
-            <div class="h-2 w-24 overflow-hidden rounded-full bg-elevated">
+            <div class="flex h-2 w-24 overflow-hidden rounded-full bg-elevated">
               <div
                 class="h-full bg-green-600"
-                :style="`width: ${translationStats.percentage}%`"
+                :style="{ width: `${translationStats.currentShare}%` }"
+              />
+              <div
+                class="h-full bg-warning"
+                :style="{ width: `${translationStats.outdatedShare}%` }"
               />
             </div>
             <span class="text-sm font-semibold text-muted">
-              {{ translationStats.translated }}/{{ translationStats.total }} fields ({{
-                translationStats.percentage
-              }}%)
+              {{ $t('components.flattenedLocalization.progress', translationStats) }}
             </span>
           </div>
         </div>
@@ -1440,7 +1672,7 @@ const removeAllOrphanedBlocks = (): void => {
         </button>
       </div>
 
-      <div class="flex items-center gap-3">
+      <div class="flex min-w-0 items-center gap-3">
         <div
           v-if="aiEnabled"
           class="flex flex-col items-end gap-1"
@@ -1449,8 +1681,7 @@ const removeAllOrphanedBlocks = (): void => {
             size="sm"
             variant="ai"
             :primary-action="() => translateWithAI()"
-            :disabled="!canTranslateWithAI"
-            :has-menu="(aiConfigs?.length ?? 0) > 1"
+            :disabled="!canTranslateWithAI || scopeFieldCounts[translationScope] === 0"
             :menu-disabled="isLoadingAiConfigs || !aiConfigs?.length"
             :loading="isTranslating"
           >
@@ -1461,9 +1692,31 @@ const removeAllOrphanedBlocks = (): void => {
             <span>{{
               isTranslating
                 ? $t('components.flattenedLocalization.translating')
-                : $t('components.flattenedLocalization.translate')
+                : scopeFieldCounts[translationScope] > 0
+                  ? $t(
+                      'components.flattenedLocalization.translateFields',
+                      { count: scopeFieldCounts[translationScope] },
+                      scopeFieldCounts[translationScope]
+                    )
+                  : $t('components.flattenedLocalization.translate')
             }}</span>
             <template #menu>
+              <DropdownMenuRadioGroup
+                :model-value="translationScope"
+                @update:model-value="selectScope"
+              >
+                <DropdownMenuRadioItem
+                  v-for="scope in translationScopes"
+                  :key="scope"
+                  :value="scope"
+                  class="min-w-64"
+                >
+                  <span class="flex-1">{{ $t(scopeLabels[scope]) }}</span>
+                  <span class="text-muted tabular-nums">{{ scopeFieldCounts[scope] }}</span>
+                </DropdownMenuRadioItem>
+              </DropdownMenuRadioGroup>
+              <DropdownMenuSeparator />
+              <DropdownMenuLabel>{{ $t('components.flattenedLocalization.model') }}</DropdownMenuLabel>
               <AiConfigMenuItems
                 :configs="aiConfigs ?? []"
                 :selected-id="aiConfigs?.find((config) => config.is_default)?.id ?? null"
@@ -1493,6 +1746,7 @@ const removeAllOrphanedBlocks = (): void => {
         <Input
           v-model="searchQuery"
           placeholder="Search fields..."
+          class="max-w-40"
         />
         <CheckboxField
           v-model="showUntranslatedOnly"
@@ -1505,147 +1759,183 @@ const removeAllOrphanedBlocks = (): void => {
       :findings="translationRun.findings.value"
       class="mb-4"
     />
-    <div
-      v-if="filteredFields.length"
-      class="sticky top-0 z-10 grid grid-cols-2 gap-4 border-b border-border bg-background py-2 text-sm font-semibold text-primary"
-    >
-      <span>{{ languageName(sourceLanguage) }}</span>
-      <span>{{ languageName(targetLanguage) }}</span>
-    </div>
-    <div class="grid gap-3">
-      <div
-        v-for="field in filteredFields"
-        :key="`${field.path.join('-')}-${field.key}`"
-        :data-field-path="getValidationPath(field)"
-        :data-validation-visible="shouldShowValidationError(field) ? 'true' : undefined"
-        :class="[
-          'relative',
-          field.isOrphaned ? 'rounded-md border border-amber-500/40 bg-amber-500/5 px-3 pb-1' : '',
-          fieldDraftOwners(field).length ? 'collaboration-field-dirty' : '',
-          fieldCollaborators(field).length ? 'collaboration-field-active' : '',
-        ]"
-        :style="getCollaborationStyle(field)"
-        @focusin="handleFieldFocusIn(field, $event)"
-        @focusout="handleFieldFocusOut(field, $event)"
-      >
+    <div class="grid items-start gap-6 @min-[1100px]:grid-cols-[minmax(0,1fr)_320px]">
+      <div class="min-w-0">
         <div
-          v-if="fieldCollaborators(field).length"
-          class="absolute top-1 right-1 z-20"
+          v-if="filteredFields.length"
+          class="sticky top-0 z-10 grid grid-cols-2 gap-4 border-b border-border bg-background py-2 text-sm font-semibold text-primary"
         >
-          <AvatarList
-            :users="fieldCollaborators(field)"
-            :max="3"
-            size="sm"
-            tooltip-side="left"
-            class="rounded-full bg-background/90 px-1 py-0.5 shadow-sm backdrop-blur"
-          />
+          <span>{{ languageName(sourceLanguage) }}</span>
+          <span>{{ languageName(targetLanguage) }}</span>
         </div>
-        <div class="-mb-2 pt-2">
-          <h4 class="flex items-baseline gap-2">
-            <span class="font-semibold text-primary">{{ field.fieldName }}</span>
-            <span
-              v-if="fieldContext(field)"
-              class="text-sm text-muted"
-              :title="field.path.join('.')"
+        <div class="grid gap-3">
+          <div
+            v-for="field in filteredFields"
+            :key="`${field.path.join('-')}-${field.key}`"
+            :data-field-path="getValidationPath(field)"
+            :data-validation-visible="shouldShowValidationError(field) ? 'true' : undefined"
+            :class="[
+              'group/row relative',
+              field.isOrphaned ? 'rounded-md border border-amber-500/40 bg-amber-500/5 px-3 pb-1' : '',
+              fieldDraftOwners(field).length ? 'collaboration-field-dirty' : '',
+              fieldCollaborators(field).length ? 'collaboration-field-active' : '',
+            ]"
+            :style="getCollaborationStyle(field)"
+            @focusin="handleFieldFocusIn(field, $event)"
+            @focusout="handleFieldFocusOut(field, $event)"
+          >
+            <div
+              v-if="fieldCollaborators(field).length"
+              class="absolute top-1 right-1 z-20"
             >
-              {{ fieldContext(field) }}
-            </span>
-            <span
-              v-if="needsTranslation(field)"
-              class="ml-auto flex items-center gap-1 text-sm text-warning-ink"
-            >
-              <Icon
-                name="lucide:circle-dashed"
-                class="size-3.5"
+              <AvatarList
+                :users="fieldCollaborators(field)"
+                :max="3"
+                size="sm"
+                tooltip-side="left"
+                class="rounded-full bg-background/90 px-1 py-0.5 shadow-sm backdrop-blur"
               />
-              {{ $t('components.flattenedLocalization.missing') }}
-            </span>
-            <span
-              v-if="field.isOrphaned"
-              class="ml-auto flex items-center gap-2"
-            >
-              <span
-                class="rounded bg-amber-500/15 px-1.5 py-0.5 text-2xs font-medium text-amber-500"
-              >
-                {{ $t('components.flattenedLocalization.orphanedField') }}
-              </span>
-              <button
-                type="button"
-                class="flex items-center gap-1 rounded px-1.5 py-0.5 text-2xs font-medium text-amber-500 hover:bg-amber-500/15 transition-colors"
-                :title="$t('components.flattenedLocalization.removeOrphanedField')"
-                @click="removeOrphanedEntry(field)"
-              >
-                <Icon
-                  name="lucide:trash-2"
-                  class="size-3"
-                />
-                {{ $t('components.flattenedLocalization.removeOrphanedField') }}
-              </button>
-            </span>
-          </h4>
-        </div>
-        <div>
-          <div
-            v-if="field.isOrphanedBlock"
-            class="py-2 text-sm text-muted"
-          >
-            {{ $t('components.flattenedLocalization.orphanedBlockDescription') }}
-          </div>
-          <component
-            :is="resolveLocalizerComponent(field.schemaItem.type)"
-            v-else-if="resolveLocalizerComponent(field.schemaItem.type)"
-            :item="field.schemaItem"
-            :original-value="field.originalValue"
-            :model-value="field.translatedValue"
-            :disabled="isTranslating"
-            :is-machine-translated="isMachineTranslated(field)"
-            :space-id="props.spaceId"
-            :error="shouldShowValidationError(field) ? getValidationError(field) : null"
-            @update:model-value="(newValue: unknown) => updateTranslatedValue(field, newValue)"
-          />
-          <div
-            v-else
-            class="grid grid-cols-2 gap-4 px-4 py-2 text-muted italic"
-          >
-            <div class="rounded border border-border bg-card p-2">
-              {{ field.originalValue }}
             </div>
-            <div class="rounded border border-border bg-card p-2">
-              <Input
-                :value="field.translatedValue"
-                @input="
-                  (e: Event) => updateTranslatedValue(field, (e.target as HTMLInputElement).value)
-                "
+            <div class="-mb-2 pt-2">
+              <h4 class="flex items-baseline gap-2">
+                <span class="font-semibold text-primary">{{ field.fieldName }}</span>
+                <span
+                  v-if="fieldContext(field)"
+                  class="text-sm text-muted"
+                  :title="field.path.join('.')"
+                >
+                  {{ fieldContext(field) }}
+                </span>
+                <span
+                  v-if="needsTranslation(field)"
+                  class="ml-auto flex items-center gap-1 text-sm text-warning-ink"
+                >
+                  <Icon
+                    name="lucide:circle-dashed"
+                    class="size-3.5"
+                  />
+                  {{ $t('components.flattenedLocalization.missing') }}
+                </span>
+                <span
+                  v-else-if="isOutdated(field)"
+                  class="ml-auto flex items-center gap-1 text-sm text-warning-ink"
+                  :title="outdatedTitle(field)"
+                >
+                  <Icon
+                    name="lucide:history"
+                    class="size-3.5"
+                  />
+                  {{ $t('components.flattenedLocalization.outdated') }}
+                </span>
+                <span
+                  v-if="field.isOrphaned"
+                  class="ml-auto flex items-center gap-2"
+                >
+                  <span
+                    class="rounded bg-amber-500/15 px-1.5 py-0.5 text-2xs font-medium text-amber-500"
+                  >
+                    {{ $t('components.flattenedLocalization.orphanedField') }}
+                  </span>
+                  <button
+                    type="button"
+                    class="flex items-center gap-1 rounded px-1.5 py-0.5 text-2xs font-medium text-amber-500 hover:bg-amber-500/15 transition-colors"
+                    :title="$t('components.flattenedLocalization.removeOrphanedField')"
+                    @click="removeOrphanedEntry(field)"
+                  >
+                    <Icon
+                      name="lucide:trash-2"
+                      class="size-3"
+                    />
+                    {{ $t('components.flattenedLocalization.removeOrphanedField') }}
+                  </button>
+                </span>
+              </h4>
+            </div>
+            <div>
+              <div
+                v-if="field.isOrphanedBlock"
+                class="py-2 text-sm text-muted"
+              >
+                {{ $t('components.flattenedLocalization.orphanedBlockDescription') }}
+              </div>
+              <component
+                :is="resolveLocalizerComponent(field.schemaItem.type)"
+                v-else-if="resolveLocalizerComponent(field.schemaItem.type)"
+                :item="field.schemaItem"
+                :original-value="field.originalValue"
+                :model-value="field.translatedValue"
+                :disabled="isTranslating"
+                :is-machine-translated="isMachineTranslated(field)"
+                :space-id="props.spaceId"
+                :error="shouldShowValidationError(field) ? getValidationError(field) : null"
+                @update:model-value="(newValue: unknown) => updateTranslatedValue(field, newValue)"
               />
-              <div class="mt-2 text-sm text-muted">
-                No specialized editor for type: {{ field.schemaItem.type }}
+              <div
+                v-else
+                class="grid grid-cols-2 gap-4 px-4 py-2 text-muted italic"
+              >
+                <div class="rounded border border-border bg-card p-2">
+                  {{ field.originalValue }}
+                </div>
+                <div class="rounded border border-border bg-card p-2">
+                  <Input
+                    :value="field.translatedValue"
+                    @input="
+                      (e: Event) => updateTranslatedValue(field, (e.target as HTMLInputElement).value)
+                    "
+                  />
+                  <div class="mt-2 text-sm text-muted">
+                    No specialized editor for type: {{ field.schemaItem.type }}
+                  </div>
+                </div>
               </div>
             </div>
+            <div
+              v-if="fieldChecks(field)"
+              class="-mt-1 grid grid-cols-2 gap-4 pb-1"
+            >
+              <div />
+              <TranslationChecks
+                :findings="fieldChecks(field)?.findings ?? []"
+                :length="fieldChecks(field)?.length"
+              />
+            </div>
+            <div
+              v-if="
+                !resolveLocalizerComponent(field.schemaItem.type) &&
+                shouldShowValidationError(field) &&
+                getValidationError(field)
+              "
+              class="mt-2 rounded-md border border-destructive/20 bg-destructive/5 px-3 py-2 text-sm text-destructive"
+            >
+              {{ getValidationError(field) }}
+            </div>
+          </div>
+          <div
+            v-if="filteredFields.length === 0"
+            class="p-8 text-center text-muted"
+          >
+            <div v-if="translatableFields.length === 0">
+              No translatable fields found in this content.
+            </div>
+            <div v-else-if="showUntranslatedOnly">
+              No untranslated fields found. All fields have been translated!
+            </div>
+            <div v-else-if="searchQuery">No fields match your search query.</div>
           </div>
         </div>
-        <div
-          v-if="
-            !resolveLocalizerComponent(field.schemaItem.type) &&
-            shouldShowValidationError(field) &&
-            getValidationError(field)
-          "
-          class="mt-2 rounded-md border border-destructive/20 bg-destructive/5 px-3 py-2 text-sm text-destructive"
-        >
-          {{ getValidationError(field) }}
-        </div>
       </div>
-      <div
-        v-if="filteredFields.length === 0"
-        class="p-8 text-center text-muted"
-      >
-        <div v-if="translatableFields.length === 0">
-          No translatable fields found in this content.
-        </div>
-        <div v-else-if="showUntranslatedOnly">
-          No untranslated fields found. All fields have been translated!
-        </div>
-        <div v-else-if="searchQuery">No fields match your search query.</div>
-      </div>
+      <aside class="sticky top-3 hidden @min-[1100px]:block">
+        <TranslationAssistRail
+          :title="focusedUnit?.field.fieldName ?? null"
+          :assist="assist"
+          :show-ai="aiEnabled"
+          :can-use="canUseMemory"
+          :length="focusedUnit ? fieldLength(focusedUnit.field, focusedUnit.metaKey) : null"
+          :language-name="languageName"
+          @use="useMemoryText"
+        />
+      </aside>
     </div>
   </div>
 </template>

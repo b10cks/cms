@@ -221,7 +221,53 @@ class TranslationMemory
      */
     public function fuzzy(array $sources, string $sourceLocale, string $targetLocale, int $limit = 8, ?array $terms = null): array
     {
-        $text = mb_substr(implode("\n", $sources), 0, 2000);
+        $exact = array_flip(array_map(self::hash(...), $sources));
+
+        return array_map(
+            fn (array $hit) => ['source' => $hit['unit']->source_text, 'target' => $hit['unit']->target_text],
+            $this->ranked(implode("\n", $sources), $sourceLocale, $targetLocale, $limit, $terms, $exact),
+        );
+    }
+
+    /**
+     * Stored pairs whose source resembles one text, best first, for a person
+     * translating it: an exact match scores 1, others the shared words over
+     * the longer of the two texts, so a short field never scores high against
+     * a long paragraph that happens to hold its words.
+     *
+     * @param  list<GlossaryConcept>|null  $terms  policy every pair must pass; null trusts stored pairs
+     * @return list<array{score: float, source: string, target: string, origin: string, content_id: string|null, field_path: string|null}>
+     */
+    public function similar(string $source, string $sourceLocale, string $targetLocale, int $limit = 5, ?array $terms = null): array
+    {
+        $hash = self::hash($source);
+        $words = \count($this->words(mb_substr($source, 0, 2000)));
+
+        $hits = array_map(fn (array $hit) => [
+            'score' => $hit['unit']->source_hash === $hash
+                ? 1.0
+                : round(min(0.99, $hit['score'] / max(1, $words, \count($this->words(mb_substr($hit['unit']->source_text, 0, 2000))))), 2),
+            'source' => $hit['unit']->source_text,
+            'target' => $hit['unit']->target_text,
+            'origin' => $hit['unit']->origin,
+            'content_id' => $hit['unit']->content_id,
+            'field_path' => $hit['unit']->field_path,
+        ], $this->ranked($source, $sourceLocale, $targetLocale, $limit, $terms));
+        usort($hits, fn (array $a, array $b) => $b['score'] <=> $a['score']);
+
+        return $hits;
+    }
+
+    /**
+     * Candidates for a text ranked by word overlap, an exact match first.
+     *
+     * @param  list<GlossaryConcept>|null  $terms
+     * @param  array<string, mixed>  $exclude  source hashes to leave out
+     * @return list<array{unit: TranslationUnit, score: int}>
+     */
+    private function ranked(string $text, string $sourceLocale, string $targetLocale, int $limit, ?array $terms, array $exclude = []): array
+    {
+        $text = mb_substr($text, 0, 2000);
         $words = $this->words($text);
 
         if ($words === []) {
@@ -242,23 +288,22 @@ class TranslationMemory
             });
         }
 
-        $exact = array_flip(array_map(self::hash(...), $sources));
+        $hash = self::hash($text);
 
-        return $query->limit(self::FUZZY_CANDIDATES)->get(['source_hash', 'source_text', 'target_text'])
-            ->reject(fn (TranslationUnit $unit) => isset($exact[$unit->source_hash]))
+        return $query->limit(self::FUZZY_CANDIDATES)->get(['source_hash', 'source_text', 'target_text', 'origin', 'content_id', 'field_path'])
+            ->reject(fn (TranslationUnit $unit) => isset($exclude[$unit->source_hash]))
             ->unique('source_hash')
-            ->map(function (TranslationUnit $unit) use ($words) {
+            ->map(function (TranslationUnit $unit) use ($words, $hash) {
                 $haystack = mb_strtolower($unit->source_text);
                 $score = \count(array_filter($words, fn (string $word) => str_contains($haystack, $word)));
 
-                return ['unit' => $unit, 'score' => $score];
+                return ['unit' => $unit, 'score' => $unit->source_hash === $hash ? PHP_INT_MAX : $score];
             })
             ->filter(fn (array $hit) => $hit['score'] > 0)
             ->sortByDesc('score')
             ->lazy()
             ->filter(fn (array $hit) => $terms === null || GlossaryChecker::blocking($this->checker->check($hit['unit']->source_text, $hit['unit']->target_text, $sourceLocale, $targetLocale, $terms)) === [])
             ->take($limit)
-            ->map(fn (array $hit) => ['source' => $hit['unit']->source_text, 'target' => $hit['unit']->target_text])
             ->values()
             ->all();
     }

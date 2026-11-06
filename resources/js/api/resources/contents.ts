@@ -9,9 +9,11 @@ import type {
   UpdateContentPayload,
 } from '~/types/contents'
 import type {
+  ContentTranslationAssist,
   ContentTranslationExportFormat,
   ContentTranslationImportMode,
   ContentTranslationImportResult,
+  ContentTranslationStatus,
 } from '~/types/content-translations'
 import type { ImportProgress } from '~/types/import-export'
 
@@ -146,6 +148,32 @@ export class Contents extends BaseResource<
   ): Promise<ApiResponse<ContentResource>> {
     return this.client.post<ApiResponse<ContentResource>>(
       `${this.basePath}/${contentId}/duplicate`,
+      payload
+    )
+  }
+
+  /**
+   * Status of each translatable unit in one locale, from saved data.
+   */
+  public async translationStatus(
+    contentId: string,
+    locale: string
+  ): Promise<ApiResponse<ContentTranslationStatus>> {
+    return this.client.get<ApiResponse<ContentTranslationStatus>>(
+      `${this.basePath}/${contentId}/translation-status?locale=${encodeURIComponent(locale)}`
+    )
+  }
+
+  /**
+   * Glossary, memory and other locales for one unit. `text` is the draft to
+   * check, by default the saved translation.
+   */
+  public async translationAssist(
+    contentId: string,
+    payload: { locale: string; unit: string; text?: string | null }
+  ): Promise<ApiResponse<ContentTranslationAssist>> {
+    return this.client.post<ApiResponse<ContentTranslationAssist>>(
+      `${this.basePath}/${contentId}/translation-assist`,
       payload
     )
   }

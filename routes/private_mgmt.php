@@ -63,6 +63,7 @@ use App\Http\Controllers\Mgmt\Content\ContentMenuController;
 use App\Http\Controllers\Mgmt\Content\ContentPublishController;
 use App\Http\Controllers\Mgmt\Content\ContentScheduleController;
 use App\Http\Controllers\Mgmt\Content\ContentSerialPreviewController;
+use App\Http\Controllers\Mgmt\Content\ContentTranslationController;
 use App\Http\Controllers\Mgmt\Content\ContentTreeOperationsController;
 use App\Http\Controllers\Mgmt\Content\ContentUnpublishController;
 use App\Http\Controllers\Mgmt\Content\ContentVersionController;
@@ -451,6 +452,10 @@ Route::group(['prefix' => 'spaces/{space}', 'middleware' => 'space.member'], fun
         ->name('contents.serial-preview');
     Route::post('contents/{content}/move', MoveContentController::class)
         ->name('contents.move');
+    Route::get('contents/{content}/translation-status', [ContentTranslationController::class, 'status'])
+        ->name('contents.translation-status');
+    Route::post('contents/{content}/translation-assist', [ContentTranslationController::class, 'assist'])
+        ->name('contents.translation-assist');
 
     Route::apiResource('tokens', SpaceTokenController::class)->only(['index', 'store', 'destroy']);
     Route::get('audit-logs', [AuditLogController::class, 'index'])->name('space-audit-logs');

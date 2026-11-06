@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useQuery } from '@tanstack/vue-query'
+import { useQuery, useQueryClient } from '@tanstack/vue-query'
 import { refDebounced, useStorage } from '@vueuse/core'
 import { toRaw } from 'vue'
 
@@ -19,6 +19,7 @@ import {
   type ContentCommitAction,
 } from '~/composables/useContentLiveCollaboration'
 import { useContentSchemaState } from '~/composables/useContentSchemaState'
+import { translationStatusKey } from '~/composables/useTranslationStatus'
 import {
   buildMissingLanguageDraft,
   resolveContentLanguage,
@@ -713,10 +714,12 @@ watch(previewItemPayload, (item) => {
   previewRef.value?.updateItem(item)
 })
 
+const queryClient = useQueryClient()
 provide(
   'commitPersistedContent',
   (nextContent: ContentResource, action: ContentCommitAction = 'save') => {
     syncPersistedContent(nextContent)
+    queryClient.invalidateQueries({ queryKey: translationStatusKey(spaceId.value) })
     // The slug is persisted now; further name edits must not move it.
     slugMode.value = 'manual'
     clearServerErrors()
@@ -797,7 +800,7 @@ useSeoMeta({
           class="h-full w-full p-3"
           aria-hidden="true"
         >
-          <div :class="['grid w-full gap-6', showPreviewPane ? '' : 'mx-auto max-w-4xl']">
+          <div :class="['grid w-full gap-6', showPreviewPane ? '' : 'mx-auto max-w-7xl']">
             <div class="grid grid-cols-2 gap-4 rounded-lg bg-surface p-3">
               <div class="space-y-2">
                 <Skeleton class="h-4 w-32" />
@@ -825,7 +828,7 @@ useSeoMeta({
           <div class="w-full p-3">
             <div
               v-if="block && canonicalContent && translatableContent"
-              :class="['grid w-full gap-6', showPreviewPane ? '' : 'mx-auto max-w-4xl']"
+              :class="['grid w-full gap-6', showPreviewPane ? '' : 'mx-auto max-w-7xl']"
             >
               <div
                 class="flex flex-wrap items-start justify-between gap-4 rounded-lg bg-surface p-3"

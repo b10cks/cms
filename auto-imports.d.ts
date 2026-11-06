@@ -92,6 +92,7 @@ declare global {
   const toRef: typeof import('vue').toRef
   const toRefs: typeof import('vue').toRefs
   const toValue: typeof import('vue').toValue
+  const translationStatusKey: typeof import('./resources/js/composables/useTranslationStatus').translationStatusKey
   const triggerRef: typeof import('vue').triggerRef
   const unref: typeof import('vue').unref
   const useAiConfigs: typeof import('./resources/js/composables/useAiModels').useAiConfigs
@@ -229,6 +230,8 @@ declare global {
   const useTemplateRef: typeof import('vue').useTemplateRef
   const useTokens: typeof import('./resources/js/composables/useTokens').useTokens
   const useTone: typeof import('./resources/js/composables/useTone').useTone
+  const useTranslationAssist: typeof import('./resources/js/composables/useTranslationStatus').useTranslationAssist
+  const useTranslationStatus: typeof import('./resources/js/composables/useTranslationStatus').useTranslationStatus
   const useTwoFactor: typeof import('./resources/js/composables/useTwoFactor').useTwoFactor
   const useTwoFactorAuth: typeof import('./resources/js/composables/useTwoFactorAuth').useTwoFactorAuth
   const useUlid: typeof import('./resources/js/composables/useUlid').useUlid
@@ -429,6 +432,7 @@ declare module 'vue' {
     readonly toRef: UnwrapRef<typeof import('vue')['toRef']>
     readonly toRefs: UnwrapRef<typeof import('vue')['toRefs']>
     readonly toValue: UnwrapRef<typeof import('vue')['toValue']>
+    readonly translationStatusKey: UnwrapRef<typeof import('./resources/js/composables/useTranslationStatus')['translationStatusKey']>
     readonly triggerRef: UnwrapRef<typeof import('vue')['triggerRef']>
     readonly unref: UnwrapRef<typeof import('vue')['unref']>
     readonly useAiConfigs: UnwrapRef<typeof import('./resources/js/composables/useAiModels')['useAiConfigs']>
@@ -565,6 +569,8 @@ declare module 'vue' {
     readonly useTemplateRef: UnwrapRef<typeof import('vue')['useTemplateRef']>
     readonly useTokens: UnwrapRef<typeof import('./resources/js/composables/useTokens')['useTokens']>
     readonly useTone: UnwrapRef<typeof import('./resources/js/composables/useTone')['useTone']>
+    readonly useTranslationAssist: UnwrapRef<typeof import('./resources/js/composables/useTranslationStatus')['useTranslationAssist']>
+    readonly useTranslationStatus: UnwrapRef<typeof import('./resources/js/composables/useTranslationStatus')['useTranslationStatus']>
     readonly useTwoFactor: UnwrapRef<typeof import('./resources/js/composables/useTwoFactor')['useTwoFactor']>
     readonly useTwoFactorAuth: UnwrapRef<typeof import('./resources/js/composables/useTwoFactorAuth')['useTwoFactorAuth']>
     readonly useUlid: UnwrapRef<typeof import('./resources/js/composables/useUlid')['useUlid']>

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import SourceCopyButton from '~/components/localization/SourceCopyButton.vue'
+import TranslationClearButton from '~/components/localization/TranslationClearButton.vue'
 import { FormField } from '~/components/ui/form'
 import { Textarea } from '~/components/ui/textarea'
 
@@ -44,6 +45,7 @@ const updateValue = (value: string | number) => {
         <SourceCopyButton
           v-if="originalValue"
           :text="originalValue"
+          class="absolute top-1 right-1.5"
         />
       </div>
     </FormField>
@@ -53,15 +55,22 @@ const updateValue = (value: string | number) => {
       :error="error"
       hide-label
     >
-      <Textarea
-        :model-value="modelValue"
-        :auto-size="600"
-        :disabled="disabled"
-        rows="4"
-        :class="['resize-none', isMachineTranslated && 'ring-1 ring-violet-500']"
-        data-validation-target="true"
-        @update:model-value="updateValue"
-      />
+      <div class="relative">
+        <Textarea
+          :model-value="modelValue"
+          :auto-size="600"
+          :disabled="disabled"
+          rows="4"
+          :class="['resize-none pr-10', isMachineTranslated && 'ring-1 ring-violet-500']"
+          data-validation-target="true"
+          @update:model-value="updateValue"
+        />
+        <TranslationClearButton
+          v-if="modelValue && !disabled"
+          class="absolute top-1 right-1.5"
+          @clear="updateValue('')"
+        />
+      </div>
     </FormField>
   </div>
 </template>

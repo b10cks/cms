@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import TiptapEditor from '~/components/editor/TiptapEditor.vue'
 import SourceCopyButton from '~/components/localization/SourceCopyButton.vue'
+import TranslationClearButton from '~/components/localization/TranslationClearButton.vue'
 import { FormField } from '~/components/ui/form'
 
 interface RteNode {
@@ -64,9 +65,15 @@ const originalPlainText = computed(() =>
   props.originalValue ? nodeToText(props.originalValue as RteNode).trim() : ''
 )
 
+const hasTranslation = computed(
+  () => !!props.modelValue && nodeToText(props.modelValue as RteNode).trim() !== ''
+)
+
 const updateValue = (value: Record<string, unknown>) => {
   emit('update:modelValue', value)
 }
+
+const clear = () => updateValue(structuredClone(emptyDocument))
 </script>
 
 <template>
@@ -81,7 +88,7 @@ const updateValue = (value: Record<string, unknown>) => {
     >
       <div class="relative">
         <div
-          class="pointer-events-none opacity-60 [&_.ProseMirror]:h-auto [&_.ProseMirror]:max-w-none"
+          class="pointer-events-none opacity-60 [&_.ProseMirror]:h-auto [&_.ProseMirror]:max-w-none [&_.ProseMirror]:pr-10"
         >
           <TiptapEditor
             :model-value="normalizedOriginalValue"
@@ -97,6 +104,7 @@ const updateValue = (value: Record<string, unknown>) => {
         <SourceCopyButton
           v-if="originalPlainText"
           :text="originalPlainText"
+          class="absolute top-1 right-1.5"
         />
       </div>
     </FormField>
@@ -108,7 +116,8 @@ const updateValue = (value: Record<string, unknown>) => {
     >
       <div
         :class="[
-          '[&_.ProseMirror]:h-auto [&_.ProseMirror]:max-w-none',
+          'relative [&_.ProseMirror]:h-auto [&_.ProseMirror]:max-w-none',
+          hasTranslation && !disabled && '[&_.sticky]:pr-10',
           props.error && 'rounded border border-destructive p-1',
           isMachineTranslated && 'rounded ring-1 ring-violet-500',
         ]"
@@ -122,6 +131,11 @@ const updateValue = (value: Record<string, unknown>) => {
           :space-id="spaceId"
           :disabled="disabled"
           @update:model-value="updateValue"
+        />
+        <TranslationClearButton
+          v-if="hasTranslation && !disabled"
+          class="absolute top-1 right-1 z-20"
+          @clear="clear"
         />
       </div>
     </FormField>
