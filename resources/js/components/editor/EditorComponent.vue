@@ -3,7 +3,7 @@ import { useElementHover } from '@vueuse/core'
 import { TabsContent, TabsRoot } from 'reka-ui'
 import type { ComputedRef } from 'vue'
 
-import ContentBreadcrumbs from '~/components/editor/ContentBreadcrumbs.vue'
+import ContentBreadcrumbs, { type ContentCrumb } from '~/components/editor/ContentBreadcrumbs.vue'
 import FieldEditor from '~/components/editor/FieldEditor.vue'
 import Icon from '~/components/Icon.vue'
 import { TabsList, TabsTrigger } from '~/components/ui/tabs'
@@ -21,6 +21,7 @@ import {
   createBlockListView,
   type BlockListViewState,
 } from '~/lib/blockTreeEdits'
+import { blockItemPlainTitle, resolveItemBlock } from '~/lib/blockItemTitle'
 import type { FieldReveal } from '~/lib/commentLocation'
 import type { ContentBlock } from '~/types/contents'
 
@@ -29,12 +30,6 @@ import { Button } from '../ui/button'
 import { SimpleTooltip } from '../ui/tooltip'
 
 const { $t } = useI18n()
-
-interface Breadcrumb {
-  id: string
-  label: string
-  block: string
-}
 
 type HoverUpdateFunction = (data: string | null) => void
 type PreviewUpdateFunction = (data: Record<string, unknown>) => void
@@ -155,14 +150,27 @@ const selectedContentModel = computed<Record<string, unknown>>({
     applyContentUpdate(value)
   },
 })
-const breadcrumbs = computed((): Breadcrumb[] =>
-  props.itemId
-    ? contentTree.buildBreadcrumbs(props.itemId).map((crumb) => ({
-        id: crumb.id ?? '',
-        label: blocks.value?.data.find((block) => block.slug === crumb.label)?.name ?? crumb.label,
-        block: crumb.label,
-      }))
-    : []
+const entry = inject<Ref<{ name?: string }>>('content', ref({}))
+const handlebars = useHandlebars()
+const blockName = (item: ContentTreeItem): string =>
+  resolveItemBlock(blocks.value?.data, item).name
+const itemLabel = (item: ContentTreeItem): string =>
+  blockItemPlainTitle(item, resolveItemBlock(blocks.value?.data, item), (template, data) =>
+    handlebars.render(template, data)
+  )
+
+/** Ancestors of the opened item by title; the root reads as the entry. */
+const breadcrumbs = computed((): ContentCrumb[] =>
+  (currentItem.value?.path.slice(0, -1) ?? []).map((node, index) => ({
+    id: node.id ?? '',
+    label: index === 0 ? entry.value.name || blockName(node) : itemLabel(node),
+    block: blockName(node),
+  }))
+)
+const currentCrumb = computed(() =>
+  currentContentItem.value
+    ? { label: itemLabel(currentContentItem.value), block: blockName(currentContentItem.value) }
+    : null
 )
 const id = computed((): string => props.itemId || rootBlock?.slug || '')
 const currentPages = computed<EditorPage[]>(() => currentBlock.value?.editor ?? [])
@@ -420,16 +428,20 @@ const removeAllOutOfSchemaKeys = (): void => {
     ref="containerRef"
     class="flex w-full flex-col"
   >
-    <ContentBreadcrumbs
-      v-if="breadcrumbs.length > 0"
-      :breadcrumbs="breadcrumbs"
-      @navigate="(itemId) => handleBreadcrumbNavigation(itemId || null)"
-    />
     <div
-      class="flex"
       v-if="!isChild"
+      :class="['flex', currentCrumb ? 'mb-4 items-center gap-2' : '']"
     >
-      <h2 class="mb-2 text-sm font-medium text-muted">
+      <ContentBreadcrumbs
+        v-if="currentCrumb"
+        :breadcrumbs="breadcrumbs"
+        :current="currentCrumb"
+        @navigate="(itemId) => handleBreadcrumbNavigation(itemId || null)"
+      />
+      <h2
+        v-else
+        class="mb-2 text-sm font-medium text-muted"
+      >
         {{ currentBlock?.name || currentBlock?.slug }}
       </h2>
       <SimpleTooltip
