@@ -16,8 +16,8 @@ import {
   DropdownMenuRadioItem,
   DropdownMenuSeparator,
 } from '~/components/ui/dropdown-menu'
-import { CheckboxField } from '~/components/ui/form'
 import { Input } from '~/components/ui/input'
+import { InputGroup, InputGroupAddon, InputGroupInput } from '~/components/ui/input-group'
 import { useAiConfigs } from '~/composables/useAiModels'
 import type { CollaborationPresenceUser } from '~/composables/useContentLiveCollaboration'
 import {
@@ -170,7 +170,10 @@ const shouldShowFieldError = inject<((path: string) => boolean) | undefined>(
   undefined
 )
 
-const showUntranslatedOnly = ref(false)
+type FieldStatus = 'current' | 'outdated' | 'missing'
+
+/** Statuses the list is narrowed to; empty shows every field. */
+const statusFilter = ref<FieldStatus[]>([])
 const searchQuery = ref('')
 const { t, locale } = useI18n()
 const { showAiError } = useAiErrorToast()
@@ -812,8 +815,9 @@ watch(
 
 const filteredFields = computed(() => {
   return translatableFields.value.filter((field) => {
-    if (showUntranslatedOnly.value && field.isTranslated && !field.isOrphaned && !isOutdated(field)) {
-      return false
+    if (statusFilter.value.length) {
+      const status = fieldStatus(field)
+      if (!status || !statusFilter.value.includes(status)) return false
     }
 
     if (searchQuery.value) {
@@ -1567,18 +1571,41 @@ const translationStats = computed(() => {
   const outdated = translated.filter(isOutdated).length
   const current = translated.length - outdated
   const total = fields.length
-  const share = (count: number) => (total > 0 ? (count / total) * 100 : 0)
 
   return {
     total,
     current,
     outdated,
     missing: total - translated.length,
-    currentShare: share(current),
-    outdatedShare: share(outdated),
     orphanedBlocks: translatableFields.value.filter((f) => f.isOrphanedBlock).length,
   }
 })
+
+/** A field's place in the progress counts; orphans and empty sources have none. */
+const fieldStatus = (field: TranslatableField): FieldStatus | null => {
+  if (field.isOrphaned || !hasTranslatedValue(field.schemaItem, field.originalValue)) return null
+  if (!field.isTranslated) return 'missing'
+  return isOutdated(field) ? 'outdated' : 'current'
+}
+
+const statusSegments = computed(() =>
+  (
+    [
+      { status: 'current', color: 'bg-green-600' },
+      { status: 'outdated', color: 'bg-warning' },
+      { status: 'missing', color: 'bg-series-other' },
+    ] as const
+  ).map((segment) => ({ ...segment, count: translationStats.value[segment.status] }))
+)
+
+const isStatusFaded = (status: FieldStatus): boolean =>
+  statusFilter.value.length > 0 && !statusFilter.value.includes(status)
+
+const toggleStatus = (status: FieldStatus) => {
+  statusFilter.value = statusFilter.value.includes(status)
+    ? statusFilter.value.filter((value) => value !== status)
+    : [...statusFilter.value, status]
+}
 
 /** Fields each scope would send, the entry name counted as one. */
 const scopeFieldCounts = computed((): Record<TranslationScope, number> => {
@@ -1634,139 +1661,169 @@ const removeAllOrphanedBlocks = (): void => {
 
 <template>
   <div class="@container w-full">
-    <div class="mb-4 flex items-center justify-between gap-4">
-      <div class="flex shrink-0 items-center gap-4">
-        <div class="space-y-1">
-          <h3 class="text-sm font-semibold">Translation Progress</h3>
-          <div class="flex items-center gap-2">
-            <div class="flex h-2 w-24 overflow-hidden rounded-full bg-elevated">
-              <div
-                class="h-full bg-green-600"
-                :style="{ width: `${translationStats.currentShare}%` }"
-              />
-              <div
-                class="h-full bg-warning"
-                :style="{ width: `${translationStats.outdatedShare}%` }"
-              />
-            </div>
-            <span class="text-sm font-semibold text-muted">
-              {{ $t('components.flattenedLocalization.progress', translationStats) }}
-            </span>
-          </div>
-        </div>
-        <button
-          v-if="translationStats.orphanedBlocks > 0"
-          type="button"
-          class="flex items-center gap-1.5 rounded px-2 py-1 text-sm font-medium text-amber-500 hover:bg-amber-500/15 transition-colors border border-amber-500/30"
-          @click="removeAllOrphanedBlocks"
-        >
-          <Icon
-            name="lucide:trash-2"
-            class="size-3"
-          />
-          {{
-            $t('components.flattenedLocalization.removeAllOrphanedBlocks', {
-              count: translationStats.orphanedBlocks,
-            })
-          }}
-        </button>
-      </div>
-
-      <div class="flex min-w-0 items-center gap-3">
-        <div
-          v-if="aiEnabled"
-          class="flex flex-col items-end gap-1"
-        >
-          <SplitButton
-            size="sm"
-            variant="ai"
-            :primary-action="() => translateWithAI()"
-            :disabled="!canTranslateWithAI || scopeFieldCounts[translationScope] === 0"
-            :menu-disabled="isLoadingAiConfigs || !aiConfigs?.length"
-            :loading="isTranslating"
-          >
-            <Icon
-              v-if="!isTranslating"
-              name="ai:bot-translate"
-            />
-            <span>{{
-              isTranslating
-                ? $t('components.flattenedLocalization.translating')
-                : scopeFieldCounts[translationScope] > 0
-                  ? $t(
-                      'components.flattenedLocalization.translateFields',
-                      { count: scopeFieldCounts[translationScope] },
-                      scopeFieldCounts[translationScope]
-                    )
-                  : $t('components.flattenedLocalization.translate')
-            }}</span>
-            <template #menu>
-              <DropdownMenuRadioGroup
-                :model-value="translationScope"
-                @update:model-value="selectScope"
-              >
-                <DropdownMenuRadioItem
-                  v-for="scope in translationScopes"
-                  :key="scope"
-                  :value="scope"
-                  class="min-w-64"
-                >
-                  <span class="flex-1">{{ $t(scopeLabels[scope]) }}</span>
-                  <span class="text-muted tabular-nums">{{ scopeFieldCounts[scope] }}</span>
-                </DropdownMenuRadioItem>
-              </DropdownMenuRadioGroup>
-              <DropdownMenuSeparator />
-              <DropdownMenuLabel>{{ $t('components.flattenedLocalization.model') }}</DropdownMenuLabel>
-              <AiConfigMenuItems
-                :configs="aiConfigs ?? []"
-                :selected-id="aiConfigs?.find((config) => config.is_default)?.id ?? null"
-                :disabled="isTranslating"
-                @select="translateWithAI"
-              />
-            </template>
-          </SplitButton>
-          <Transition
-            enter-active-class="transition-all duration-200 ease-out"
-            enter-from-class="opacity-0 translate-y-1"
-            enter-to-class="opacity-100 translate-y-0"
-            leave-active-class="transition-all duration-150 ease-in"
-            leave-from-class="opacity-100 translate-y-0"
-            leave-to-class="opacity-0 translate-y-1"
-          >
-            <span
-              v-if="translationProgress"
-              class="ai-animate-text text-sm text-muted"
-              >{{
-                $t('components.flattenedLocalization.translationProgress', translationProgress)
-              }}</span
-            >
-          </Transition>
-        </div>
-
-        <Input
-          v-model="searchQuery"
-          placeholder="Search fields..."
-          class="max-w-40"
-        />
-        <CheckboxField
-          v-model="showUntranslatedOnly"
-          name="untranslated"
-          label="Show untranslated only"
-        />
-      </div>
-    </div>
     <AiRunFindings
       :findings="translationRun.findings.value"
       class="mb-4"
     />
     <div class="grid items-start gap-6 @min-[1100px]:grid-cols-[minmax(0,1fr)_320px]">
       <div class="min-w-0">
+        <div class="sticky top-0 z-10 border-b border-border bg-background pt-1">
+          <div class="flex items-start gap-2">
+            <InputGroup class="min-w-0 flex-1">
+              <InputGroupAddon>
+                <Icon
+                  name="lucide:search"
+                  class="text-muted"
+                />
+              </InputGroupAddon>
+              <InputGroupInput
+                v-model="searchQuery"
+                type="search"
+                :placeholder="$t('components.flattenedLocalization.searchFields')"
+                :aria-label="$t('components.flattenedLocalization.searchFields')"
+              />
+            </InputGroup>
+            <div
+              v-if="aiEnabled"
+              class="flex flex-col items-end gap-1"
+            >
+              <SplitButton
+                size="sm"
+                variant="ai"
+                :primary-action="() => translateWithAI()"
+                :disabled="!canTranslateWithAI || scopeFieldCounts[translationScope] === 0"
+                :menu-disabled="isLoadingAiConfigs || !aiConfigs?.length"
+                :loading="isTranslating"
+              >
+                <Icon
+                  v-if="!isTranslating"
+                  name="ai:bot-translate"
+                />
+                <span>{{
+                  isTranslating
+                    ? $t('components.flattenedLocalization.translating')
+                    : scopeFieldCounts[translationScope] > 0
+                      ? $t(
+                          'components.flattenedLocalization.translateFields',
+                          { count: scopeFieldCounts[translationScope] },
+                          scopeFieldCounts[translationScope]
+                        )
+                      : $t('components.flattenedLocalization.translate')
+                }}</span>
+                <template #menu>
+                  <DropdownMenuRadioGroup
+                    :model-value="translationScope"
+                    @update:model-value="selectScope"
+                  >
+                    <DropdownMenuRadioItem
+                      v-for="scope in translationScopes"
+                      :key="scope"
+                      :value="scope"
+                      class="min-w-64"
+                    >
+                      <span class="flex-1">{{ $t(scopeLabels[scope]) }}</span>
+                      <span class="text-muted tabular-nums">{{ scopeFieldCounts[scope] }}</span>
+                    </DropdownMenuRadioItem>
+                  </DropdownMenuRadioGroup>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuLabel>{{ $t('components.flattenedLocalization.model') }}</DropdownMenuLabel>
+                  <AiConfigMenuItems
+                    :configs="aiConfigs ?? []"
+                    :selected-id="aiConfigs?.find((config) => config.is_default)?.id ?? null"
+                    :disabled="isTranslating"
+                    @select="translateWithAI"
+                  />
+                </template>
+              </SplitButton>
+              <Transition
+                enter-active-class="transition-all duration-200 ease-out"
+                enter-from-class="opacity-0 translate-y-1"
+                enter-to-class="opacity-100 translate-y-0"
+                leave-active-class="transition-all duration-150 ease-in"
+                leave-from-class="opacity-100 translate-y-0"
+                leave-to-class="opacity-0 translate-y-1"
+              >
+                <span
+                  v-if="translationProgress"
+                  class="ai-animate-text text-sm text-muted"
+                  >{{
+                    $t('components.flattenedLocalization.translationProgress', translationProgress)
+                  }}</span
+                >
+              </Transition>
+            </div>
+          </div>
+          <div class="flex items-center gap-1 pt-2 pb-1">
+            <div
+              role="group"
+              :aria-label="$t('components.flattenedLocalization.filterByStatus')"
+              class="flex flex-wrap items-center gap-1"
+            >
+              <button
+                v-for="segment in statusSegments"
+                :key="segment.status"
+                type="button"
+                class="flex h-8 items-center gap-1.5 rounded-md px-2 text-sm text-muted transition-[opacity,background-color] duration-100 hover:bg-state-hover"
+                :class="[
+                  statusFilter.includes(segment.status) && 'bg-state-selected',
+                  isStatusFaded(segment.status) && 'opacity-30 hover:opacity-100',
+                ]"
+                :aria-pressed="statusFilter.includes(segment.status)"
+                @click="toggleStatus(segment.status)"
+              >
+                <span
+                  class="size-2.5 shrink-0 rounded-[3px]"
+                  :class="segment.color"
+                  aria-hidden="true"
+                />
+                <span class="font-semibold text-primary tabular-nums">{{ segment.count }}</span>
+                {{ $t(`components.flattenedLocalization.status.${segment.status}`) }}
+              </button>
+            </div>
+            <div
+              class="ml-auto flex h-2.5 w-full max-w-40 min-w-16 gap-0.5 pl-2"
+              aria-hidden="true"
+            >
+              <template
+                v-for="segment in statusSegments"
+                :key="segment.status"
+              >
+                <span
+                  v-if="segment.count > 0"
+                  class="min-w-1 rounded-[3px] transition-opacity duration-100"
+                  :class="[segment.color, isStatusFaded(segment.status) && 'opacity-30']"
+                  :style="{ flexGrow: segment.count }"
+                />
+              </template>
+            </div>
+          </div>
+          <div
+            v-if="filteredFields.length"
+            class="grid grid-cols-2 gap-4 py-2 text-sm font-semibold text-primary"
+          >
+            <span>{{ languageName(sourceLanguage) }}</span>
+            <span>{{ languageName(targetLanguage) }}</span>
+          </div>
+        </div>
         <div
-          v-if="filteredFields.length"
-          class="sticky top-0 z-10 grid grid-cols-2 gap-4 border-b border-border bg-background py-2 text-sm font-semibold text-primary"
+          v-if="translationStats.orphanedBlocks > 0"
+          class="pt-3"
         >
-          <span>{{ languageName(sourceLanguage) }}</span>
-          <span>{{ languageName(targetLanguage) }}</span>
+          <button
+            type="button"
+            class="flex items-center gap-1.5 rounded px-2 py-1 text-sm font-medium text-amber-500 hover:bg-amber-500/15 transition-colors border border-amber-500/30"
+            @click="removeAllOrphanedBlocks"
+          >
+            <Icon
+              name="lucide:trash-2"
+              class="size-3"
+            />
+            {{
+              $t('components.flattenedLocalization.removeAllOrphanedBlocks', {
+                count: translationStats.orphanedBlocks,
+              })
+            }}
+          </button>
         </div>
         <div class="grid gap-3">
           <div
@@ -1918,8 +1975,8 @@ const removeAllOrphanedBlocks = (): void => {
             <div v-if="translatableFields.length === 0">
               No translatable fields found in this content.
             </div>
-            <div v-else-if="showUntranslatedOnly">
-              No untranslated fields found. All fields have been translated!
+            <div v-else-if="statusFilter.length">
+              {{ $t('components.flattenedLocalization.noStatusMatches') }}
             </div>
             <div v-else-if="searchQuery">No fields match your search query.</div>
           </div>

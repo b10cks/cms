@@ -4987,7 +4987,14 @@
       "missing": "Fehlt",
       "outdated": "Veraltet",
       "outdatedTitle": "Aus einer älteren Quelle übersetzt: {source}",
-      "progress": "{current}/{total} aktuell, {outdated} veraltet, {missing} fehlen",
+      "searchFields": "Felder durchsuchen",
+      "filterByStatus": "Nach Status filtern",
+      "status": {
+        "current": "aktuell",
+        "outdated": "veraltet",
+        "missing": "fehlen"
+      },
+      "noStatusMatches": "Keine Felder mit diesem Status.",
       "translateFields": "{count} Feld übersetzen | {count} Felder übersetzen",
       "scopePending": "Fehlende und veraltete",
       "scopeMissing": "Nur fehlende",

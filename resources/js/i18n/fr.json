@@ -5143,7 +5143,14 @@
       "missing": "Manquant",
       "outdated": "Obsolète",
       "outdatedTitle": "Traduit depuis une source antérieure : {source}",
-      "progress": "{current}/{total} à jour, {outdated} obsolètes, {missing} manquants",
+      "searchFields": "Rechercher des champs",
+      "filterByStatus": "Filtrer par statut",
+      "status": {
+        "current": "à jour",
+        "outdated": "obsolètes",
+        "missing": "manquants"
+      },
+      "noStatusMatches": "Aucun champ avec ce statut.",
       "translateFields": "Traduire {count} champ | Traduire {count} champs",
       "scopePending": "Manquants et obsolètes",
       "scopeMissing": "Seulement les manquants",

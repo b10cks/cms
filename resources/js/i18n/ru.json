@@ -5143,7 +5143,14 @@
       "missing": "Отсутствует",
       "outdated": "Устарел",
       "outdatedTitle": "Переведено с прежнего исходного текста: {source}",
-      "progress": "{current}/{total} актуальны, {outdated} устарели, {missing} отсутствуют",
+      "searchFields": "Поиск по полям",
+      "filterByStatus": "Фильтр по статусу",
+      "status": {
+        "current": "актуальны",
+        "outdated": "устарели",
+        "missing": "отсутствуют"
+      },
+      "noStatusMatches": "Нет полей с этим статусом.",
       "translateFields": "Перевести поля: {count}",
       "scopePending": "Отсутствующие и устаревшие",
       "scopeMissing": "Только отсутствующие",

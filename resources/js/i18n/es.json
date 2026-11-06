@@ -5143,7 +5143,14 @@
       "missing": "Falta",
       "outdated": "Desactualizada",
       "outdatedTitle": "Traducida de un texto de origen anterior: {source}",
-      "progress": "{current}/{total} al día, {outdated} desactualizadas, {missing} faltan",
+      "searchFields": "Buscar campos",
+      "filterByStatus": "Filtrar por estado",
+      "status": {
+        "current": "actualizados",
+        "outdated": "desactualizados",
+        "missing": "faltan"
+      },
+      "noStatusMatches": "No hay campos con este estado.",
       "translateFields": "Traducir {count} campo | Traducir {count} campos",
       "scopePending": "Faltantes y desactualizadas",
       "scopeMissing": "Solo faltantes",

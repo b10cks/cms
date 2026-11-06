@@ -5143,7 +5143,14 @@
       "missing": "Eksik",
       "outdated": "Güncel değil",
       "outdatedTitle": "Önceki kaynaktan çevrildi: {source}",
-      "progress": "{current}/{total} güncel, {outdated} güncel değil, {missing} eksik",
+      "searchFields": "Alanlarda ara",
+      "filterByStatus": "Duruma göre filtrele",
+      "status": {
+        "current": "güncel",
+        "outdated": "eski",
+        "missing": "eksik"
+      },
+      "noStatusMatches": "Bu durumda alan yok.",
       "translateFields": "{count} alanı çevir",
       "scopePending": "Eksik ve güncel olmayanlar",
       "scopeMissing": "Yalnızca eksikler",

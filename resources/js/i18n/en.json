@@ -5143,7 +5143,14 @@
       "missing": "Missing",
       "outdated": "Outdated",
       "outdatedTitle": "Translated from an earlier source: {source}",
-      "progress": "{current}/{total} current, {outdated} outdated, {missing} missing",
+      "searchFields": "Search fields",
+      "filterByStatus": "Filter by status",
+      "status": {
+        "current": "current",
+        "outdated": "outdated",
+        "missing": "missing"
+      },
+      "noStatusMatches": "No fields with this status.",
       "translateFields": "Translate {count} field | Translate {count} fields",
       "scopePending": "Missing and outdated",
       "scopeMissing": "Only missing",
