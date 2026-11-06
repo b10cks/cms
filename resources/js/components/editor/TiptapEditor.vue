@@ -312,10 +312,12 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="flex flex-col">
+  <div
+    class="flex flex-col rounded-lg border border-input-border bg-input shadow-sm transition-shadow has-[.ProseMirror:focus-visible]:ring-2 has-[.ProseMirror:focus-visible]:ring-ring"
+  >
     <div
       v-if="!props.disabled"
-      class="sticky top-0 z-10 flex flex-wrap gap-1 bg-background pb-2"
+      class="sticky top-0 z-10 flex flex-wrap items-center gap-0.5 rounded-t-lg border-b border-input-border bg-input p-1"
     >
       <Button
         v-if="isEnabled('bold')"
@@ -324,7 +326,7 @@ onBeforeUnmount(() => {
         variant="ghost"
         :aria-label="$t('labels.tiptap.toolbar.bold')"
         :title="$t('labels.tiptap.toolbar.bold')"
-        :class="editor?.isActive('bold') && 'bg-primary text-primary-foreground'"
+        :class="editor?.isActive('bold') && 'bg-state-selected text-primary'"
         @click="editor?.chain().focus().toggleBold().run()"
       >
         <Icon name="lucide:bold" />
@@ -336,7 +338,7 @@ onBeforeUnmount(() => {
         variant="ghost"
         :aria-label="$t('labels.tiptap.toolbar.italic')"
         :title="$t('labels.tiptap.toolbar.italic')"
-        :class="editor?.isActive('italic') && 'bg-primary text-primary-foreground'"
+        :class="editor?.isActive('italic') && 'bg-state-selected text-primary'"
         @click="editor?.chain().focus().toggleItalic().run()"
       >
         <Icon name="lucide:italic" />
@@ -348,7 +350,7 @@ onBeforeUnmount(() => {
         variant="ghost"
         :aria-label="$t('labels.tiptap.toolbar.underline')"
         :title="$t('labels.tiptap.toolbar.underline')"
-        :class="editor?.isActive('underline') && 'bg-primary text-primary-foreground'"
+        :class="editor?.isActive('underline') && 'bg-state-selected text-primary'"
         @click="editor?.chain().focus().toggleUnderline().run()"
       >
         <Icon name="lucide:underline" />
@@ -360,7 +362,7 @@ onBeforeUnmount(() => {
         variant="ghost"
         :aria-label="$t('labels.tiptap.toolbar.strikethrough')"
         :title="$t('labels.tiptap.toolbar.strikethrough')"
-        :class="editor?.isActive('strike') && 'bg-primary text-primary-foreground'"
+        :class="editor?.isActive('strike') && 'bg-state-selected text-primary'"
         @click="editor?.chain().focus().toggleStrike().run()"
       >
         <Icon name="lucide:strikethrough" />
@@ -372,7 +374,7 @@ onBeforeUnmount(() => {
         variant="ghost"
         :aria-label="$t('labels.tiptap.toolbar.inlineCode')"
         :title="$t('labels.tiptap.toolbar.inlineCode')"
-        :class="editor?.isActive('code') && 'bg-primary text-primary-foreground'"
+        :class="editor?.isActive('code') && 'bg-state-selected text-primary'"
         @click="editor?.chain().focus().toggleCode().run()"
       >
         <Icon name="lucide:code-2" />
@@ -382,7 +384,7 @@ onBeforeUnmount(() => {
           <Button
             size="xs"
             class="gap-1"
-            variant="input"
+            variant="ghost"
             :aria-label="$t('labels.tiptap.toolbar.format')"
             :title="`Current: ${headingDisplayLabel}`"
           >
@@ -401,7 +403,7 @@ onBeforeUnmount(() => {
               (level === 'p'
                 ? editor?.isActive('paragraph')
                 : editor?.isActive('heading', { level: headingLevelNumber(level) })) &&
-              'bg-primary text-primary-foreground'
+              'font-semibold text-primary'
             "
             @click="
               level === 'p'
@@ -428,7 +430,7 @@ onBeforeUnmount(() => {
         variant="ghost"
         :aria-label="$t('labels.tiptap.toolbar.bulletList')"
         :title="$t('labels.tiptap.toolbar.bulletList')"
-        :class="editor?.isActive('bulletList') && 'bg-primary text-primary-foreground'"
+        :class="editor?.isActive('bulletList') && 'bg-state-selected text-primary'"
         @click="editor?.chain().focus().toggleBulletList().run()"
       >
         <Icon name="lucide:list" />
@@ -440,7 +442,7 @@ onBeforeUnmount(() => {
         variant="ghost"
         :aria-label="$t('labels.tiptap.toolbar.orderedList')"
         :title="$t('labels.tiptap.toolbar.orderedList')"
-        :class="editor?.isActive('orderedList') && 'bg-primary text-primary-foreground'"
+        :class="editor?.isActive('orderedList') && 'bg-state-selected text-primary'"
         @click="editor?.chain().focus().toggleOrderedList().run()"
       >
         <Icon name="lucide:list-ordered" />
@@ -452,7 +454,7 @@ onBeforeUnmount(() => {
           <Button
             type="button"
             size="xs"
-            variant="outline"
+            variant="ghost"
             class="gap-1"
             :aria-label="$t('labels.tiptap.toolbar.listStyle')"
             :title="$t('labels.tiptap.toolbar.listStyle')"
@@ -490,7 +492,7 @@ onBeforeUnmount(() => {
         variant="ghost"
         :aria-label="$t('labels.tiptap.toolbar.codeBlock')"
         :title="$t('labels.tiptap.toolbar.codeBlock')"
-        :class="editor?.isActive('codeBlock') && 'bg-primary text-primary-foreground'"
+        :class="editor?.isActive('codeBlock') && 'bg-state-selected text-primary'"
         @click="editor?.chain().focus().toggleCodeBlock().run()"
       >
         <Icon name="lucide:code" />
@@ -502,7 +504,7 @@ onBeforeUnmount(() => {
         variant="ghost"
         :aria-label="$t('labels.tiptap.toolbar.blockquote')"
         :title="$t('labels.tiptap.toolbar.blockquote')"
-        :class="editor?.isActive('blockquote') && 'bg-primary text-primary-foreground'"
+        :class="editor?.isActive('blockquote') && 'bg-state-selected text-primary'"
         @click="editor?.chain().focus().toggleBlockquote().run()"
       >
         <Icon name="lucide:quote" />
@@ -536,7 +538,7 @@ onBeforeUnmount(() => {
           <Button
             type="button"
             size="xs"
-            variant="input"
+            variant="ghost"
             class="gap-1"
             :aria-label="$t('labels.tiptap.toolbar.tableTools')"
             :title="$t('labels.tiptap.toolbar.tableTools')"
@@ -659,7 +661,7 @@ onBeforeUnmount(() => {
         variant="ghost"
         :aria-label="$t('labels.tiptap.toolbar.link')"
         :title="$t('labels.tiptap.toolbar.link')"
-        :class="isLinkActive && 'bg-primary text-primary-foreground'"
+        :class="isLinkActive && 'bg-state-selected text-primary'"
         @click="openLinkDialog"
       >
         <Icon name="lucide:link" />
@@ -670,7 +672,7 @@ onBeforeUnmount(() => {
           <Button
             type="button"
             size="xs"
-            variant="outline"
+            variant="ghost"
             :aria-label="$t('labels.tiptap.toolbar.insertPlaceholder')"
             :title="$t('labels.tiptap.toolbar.insertPlaceholder')"
           >
@@ -699,7 +701,7 @@ onBeforeUnmount(() => {
           <Button
             type="button"
             size="xs"
-            variant="outline"
+            variant="ghost"
             :aria-label="$t('labels.tiptap.toolbar.applyCssClass')"
             :title="$t('labels.tiptap.toolbar.applyCssClass')"
           >
@@ -736,6 +738,7 @@ onBeforeUnmount(() => {
         type="button"
         size="toolbar"
         variant="ghost"
+        class="ml-auto"
         :aria-label="$t('labels.tiptap.toolbar.undo')"
         :title="$t('labels.tiptap.toolbar.undo')"
         :disabled="!editor?.can().undo()"
@@ -758,7 +761,7 @@ onBeforeUnmount(() => {
 
     <div
       v-if="isBroken"
-      class="flex items-center gap-3 border-b border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive"
+      class="flex items-center gap-3 border-b border-destructive/30 bg-destructive/8 px-3 py-2 text-sm text-destructive-ink"
     >
       <Icon
         name="lucide:alert-triangle"
@@ -777,7 +780,7 @@ onBeforeUnmount(() => {
     <EditorContent
       :editor="editor"
       :tabindex="props.disabled ? -1 : undefined"
-      class="rounded border border-input-border bg-input shadow-sm"
+      class="min-w-0 [&_.ProseMirror]:mx-0"
       data-validation-target="true"
     />
 
