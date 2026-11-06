@@ -43,3 +43,12 @@ export function contentPickerItems(
   cache.set(menuData, result)
   return result
 }
+
+/** Site path of every picker item ("/produkte/matratzen"). Tree order puts parents first, so one pass does it. */
+export function contentPickerPaths(items: ContentPickerItem[]): Map<string, string> {
+  const result = new Map<string, string>()
+  for (const item of items) {
+    result.set(item.id, `${(item.pid && result.get(item.pid)) || ''}/${item.slug}`)
+  }
+  return result
+}

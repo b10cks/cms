@@ -3,19 +3,30 @@ import Icon from '~/components/Icon.vue'
 import { Button } from '~/components/ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from '~/components/ui/popover'
 import { Skeleton } from '~/components/ui/skeleton'
-import { contentPickerItems, type ContentPickerItem } from '~/lib/content-picker-items'
+import {
+  contentPickerItems,
+  contentPickerPaths,
+  type ContentPickerItem,
+} from '~/lib/content-picker-items'
 import { fuzzyMatch, prepareFuzzyQuery, prepareFuzzyTarget } from '~/lib/fuzzy-match'
 
 /**
  * The entry of an internal link: a field naming the entry (and section), and a search popover.
  * An entry's sections open from its row, so a link can point at a block inside the entry.
  */
-const props = defineProps<{
-  spaceId: string
-  content?: string
-  anchor?: string
-  disabled?: boolean
-}>()
+const props = withDefaults(
+  defineProps<{
+    spaceId: string
+    content?: string
+    anchor?: string
+    disabled?: boolean
+    /** False for pickers that choose a whole entry, like references. */
+    sections?: boolean
+    /** Entries that can't be chosen again, such as the ones a list already holds. */
+    exclude?: readonly string[]
+  }>(),
+  { sections: true, exclude: () => [] }
+)
 
 const emit = defineEmits<{
   select: [content: string, anchor?: string]
@@ -38,15 +49,13 @@ const entryQuery = ref('')
 const listRef = ref<HTMLElement | null>(null)
 const inputRef = ref<HTMLInputElement | null>(null)
 
-const items = computed(() => (contentMenu.value ? contentPickerItems(contentMenu.value) : []))
+const allItems = computed(() => (contentMenu.value ? contentPickerItems(contentMenu.value) : []))
+const paths = computed(() => contentPickerPaths(allItems.value))
 
-// Tree order puts every parent before its children, so one pass builds every path.
-const paths = computed(() => {
-  const result = new Map<string, string>()
-  for (const item of items.value) {
-    result.set(item.id, `${(item.pid && result.get(item.pid)) || ''}/${item.slug}`)
-  }
-  return result
+const items = computed(() => {
+  if (props.exclude.length === 0) return allItems.value
+  const excluded = new Set(props.exclude)
+  return allItems.value.filter((item) => !excluded.has(item.id))
 })
 
 const searchTargets = computed(() =>
@@ -191,7 +200,7 @@ const onKeydown = (event: KeyboardEvent) => {
       break
     case 'ArrowRight': {
       const entry = shownEntries.value[highlighted.value]
-      if (!sectionsFor.value && atEnd && entry) {
+      if (props.sections && !sectionsFor.value && atEnd && entry) {
         event.preventDefault()
         showSections(entry.item.id)
       }
@@ -212,6 +221,7 @@ const onKeydown = (event: KeyboardEvent) => {
   <div class="grid gap-2">
     <Popover v-model:open="open">
       <PopoverTrigger as-child>
+        <slot name="trigger">
         <button
           type="button"
           data-link-entry-trigger
@@ -267,12 +277,13 @@ const onKeydown = (event: KeyboardEvent) => {
             class="ml-auto shrink-0 text-input-muted"
           />
         </button>
+        </slot>
       </PopoverTrigger>
 
       <PopoverContent
         align="start"
         data-link-picker
-        class="flex w-(--reka-popover-trigger-width) flex-col !border-popover-border p-0! [--muted:var(--input-muted)]"
+        class="flex w-(--reka-popover-trigger-width) min-w-80 flex-col !border-popover-border p-0! [--muted:var(--input-muted)]"
       >
         <div class="flex shrink-0 items-center gap-2 border-b border-popover-border px-3">
           <button
@@ -342,6 +353,7 @@ const onKeydown = (event: KeyboardEvent) => {
                 class="ml-auto text-primary"
               />
               <button
+                v-if="sections"
                 type="button"
                 :data-sections-for="item.id"
                 :class="[

@@ -1,273 +1,281 @@
 <script setup lang="ts">
 import { useSortable } from '@vueuse/integrations/useSortable'
-import { computed, nextTick, ref, watch } from 'vue'
 
 import Icon from '~/components/Icon.vue'
-import Label from '~/components/ui/form/Label.vue'
-import { useAlertDialog } from '~/composables/useAlertDialog'
+import { FormField } from '~/components/ui/form'
+import SortHandle from '~/components/ui/SortHandle.vue'
+import { contentPickerItems, contentPickerPaths } from '~/lib/content-picker-items'
+import { focusGrip, moveInList, sortableOptions } from '~/lib/sortable'
 
-import ContentSelect from './ContentSelect.vue'
+import LinkEntryPicker from './LinkEntryPicker.vue'
+import ReferenceRow from './ReferenceRow.vue'
 
+/**
+ * References to other entries. One reference is a field like the asset field;
+ * several are cards in a list frame like the gallery, with the round plus at the end.
+ */
 const props = defineProps<{
   modelValue?: string[] | null
   item: ReferencesSchema & { key: string }
   spaceId: string
+  readOnly?: boolean
 }>()
 
 const emit = defineEmits<{
   'update:modelValue': [value: string[] | null]
 }>()
 
-const { alert } = useAlertDialog()
 const { $t } = useI18n()
 const { useContentMenuQuery } = useContentMenu(props.spaceId)
 const { data: contentMenu } = useContentMenuQuery()
 
 const localValue = ref<string[]>([])
-const editingIndex = ref<number | null>(null)
-const sortableContainer = ref<HTMLElement | null>(null)
 
-// Sync with props
 watch(
   () => props.modelValue,
-  (newValue) => {
-    localValue.value = newValue ? [...newValue] : []
+  (value) => {
+    localValue.value = value ? [...value] : []
   },
   { immediate: true, deep: true }
 )
 
-// Computed properties
-const hasReferences = computed(() => localValue.value.length > 0)
-
-const canAddMore = computed(() => {
-  if (props.item.max && props.item.max > 0) {
-    return localValue.value.length < props.item.max
-  }
-  return true
-})
-
-const minReferences = computed(() => props.item.min || 0)
-
 const isSingle = computed(() => props.item.type === 'reference' || props.item.max === 1)
-
-// Helper functions
-const updateValue = () => {
-  const hasMinimumReferences = localValue.value.length >= minReferences.value
-  emit(
-    'update:modelValue',
-    hasMinimumReferences && localValue.value.length > 0 ? localValue.value : null
-  )
-}
-
-const getContentName = (contentId: string): string => {
-  if (!contentMenu.value || !contentId) return $t('labels.references.unknownContent')
-  const item = contentMenu.value[contentId]
-  return item?.name || $t('labels.references.unknownContent')
-}
-
-const getContentIcon = (contentId: string): string => {
-  if (!contentMenu.value || !contentId) return 'file'
-  const item = contentMenu.value[contentId]
-  return item?.icon || 'file'
-}
-
-const getContentColor = (contentId: string): string => {
-  if (!contentMenu.value || !contentId) return '#64748b'
-  const item = contentMenu.value[contentId]
-  return item?.color || '#64748b'
-}
-
-// Event handlers
-
-/** Handle selection from ContentSelect (add or replace) */
-const handleContentSelect = (contentId: string) => {
-  if (editingIndex.value !== null) {
-    localValue.value[editingIndex.value] = contentId
-    editingIndex.value = null
-  } else {
-    if (!canAddMore.value) return
-
-    localValue.value.push(contentId)
-  }
-
-  updateValue()
-}
-
-/** Handle ContentSelect update:modelValue when used for single reference */
-const handleSingleSelect = (contentId: string) => {
-  localValue.value = [contentId]
-  updateValue()
-}
-
-const handleReferenceEdit = (index: number) => {
-  editingIndex.value = index
-}
-
-const handleEditSelect = (index: number, contentId: string) => {
-  localValue.value[index] = contentId
-  editingIndex.value = null
-  updateValue()
-}
-
-const handleReferenceDelete = async (index: number) => {
-  const reference = localValue.value[index]
-  if (!reference) return
-
-  const confirmed = await alert.confirm(
-    $t('messages.references.confirmDelete', { name: getContentName(reference) }),
-    {
-      title: $t('labels.references.removeReference'),
-      confirmLabel: $t('actions.remove'),
-      cancelLabel: $t('actions.cancel'),
-    }
-  )
-
-  if (confirmed) {
-    localValue.value.splice(index, 1)
-    if (editingIndex.value === index) editingIndex.value = null
-    updateValue()
-  }
-}
-
-// Drag and drop via sortable
-const setupSortable = () => {
-  nextTick(() => {
-    if (!sortableContainer.value) return
-    ;(useSortable as any)(sortableContainer, localValue, {
-      handle: '[reference-draggable]',
-      onEnd: () => nextTick(() => updateValue()),
-    })
-  })
-}
-
-watch(
-  () => localValue.value.length,
-  () => setupSortable(),
-  { immediate: true }
+const canAddMore = computed(
+  () => !props.readOnly && (!props.item.max || localValue.value.length < props.item.max)
 )
+
+const paths = computed(() =>
+  contentPickerPaths(contentMenu.value ? contentPickerItems(contentMenu.value) : [])
+)
+
+const entryOf = (id: string) => contentMenu.value?.[id]
+
+const updateValue = () => {
+  const enough = localValue.value.length >= (props.item.min || 0)
+  emit('update:modelValue', enough && localValue.value.length > 0 ? [...localValue.value] : null)
+}
+
+const add = (id: string) => {
+  if (!canAddMore.value || localValue.value.includes(id)) return
+  localValue.value.push(id)
+  updateValue()
+}
+
+const replace = (index: number, id: string) => {
+  localValue.value[index] = id
+  updateValue()
+}
+
+const remove = (index: number) => {
+  localValue.value.splice(index, 1)
+  updateValue()
+}
+
+const listRef = ref<HTMLElement | null>(null)
+// Its own grip selector, so a references list nested in a blocks row never picks up the grips around it.
+const sortId = useId()
+const handleSelector = `[data-reference-handle="${sortId}"]`
+
+useSortable(
+  listRef,
+  localValue,
+  sortableOptions({
+    handle: handleSelector,
+    draggable: '>[data-reference-row]',
+    disabled: props.readOnly,
+    // useSortable writes the new order on the next tick.
+    onEnd: () => nextTick(updateValue),
+  })
+)
+
+const move = async (index: number, delta: -1 | 1) => {
+  if (props.readOnly || !moveInList(localValue.value, index, delta)) return
+
+  updateValue()
+  await nextTick()
+  focusGrip(listRef.value, handleSelector, index + delta)
+}
+
+const entryRoute = (id: string) => ({
+  name: 'space-content-contentId',
+  params: { space: props.spaceId, contentId: id },
+})
 </script>
 
 <template>
-  <div class="space-y-4">
-    <div class="space-y-1">
-      <Label
-        :label="item.name || item.key"
-        :required="item.required"
-      />
-      <p
-        v-if="item.description"
-        class="text-muted text-sm"
+  <FormField
+    :name="item.key"
+    :label="item.name || item.key"
+    :description="item.description || undefined"
+    :required="item.required"
+  >
+    <template
+      v-if="!isSingle && item.max"
+      #label-end
+    >
+      <span class="mr-8 text-sm text-muted tabular-nums">
+        {{ $t('labels.references.referencesCount', { current: localValue.length, max: item.max }) }}
+      </span>
+    </template>
+
+    <template v-if="isSingle">
+      <div
+        v-if="localValue[0]"
+        class="flex min-w-0 items-center gap-3 rounded-lg border border-input-border bg-input p-1.5 pr-2 shadow-sm"
       >
-        {{ item.description }}
-      </p>
-    </div>
+        <ReferenceRow
+          :entry="entryOf(localValue[0])"
+          :path="paths.get(localValue[0])"
+        />
+        <div class="flex shrink-0">
+          <LinkEntryPicker
+            v-if="!readOnly"
+            :space-id="spaceId"
+            :content="localValue[0]"
+            :sections="false"
+            @select="(id: string) => replace(0, id)"
+          >
+            <template #trigger>
+              <button
+                type="button"
+                class="row-action"
+                :aria-label="$t('labels.references.replace')"
+                :title="$t('labels.references.replace')"
+              >
+                <Icon name="lucide:replace" />
+              </button>
+            </template>
+          </LinkEntryPicker>
+          <RouterLink
+            class="row-action"
+            :to="entryRoute(localValue[0])"
+            :aria-label="$t('labels.references.open')"
+            :title="$t('labels.references.open')"
+          >
+            <Icon name="lucide:arrow-up-right" />
+          </RouterLink>
+          <button
+            v-if="!readOnly"
+            type="button"
+            class="row-action hover:text-destructive-ink"
+            :aria-label="$t('labels.references.removeReference')"
+            :title="$t('labels.references.removeReference')"
+            @click="remove(0)"
+          >
+            <Icon name="lucide:trash-2" />
+          </button>
+        </div>
+      </div>
+      <LinkEntryPicker
+        v-else
+        :space-id="spaceId"
+        :sections="false"
+        :disabled="readOnly"
+        @select="(id: string) => replace(0, id)"
+      />
+    </template>
 
-    <!-- Single reference: inline select -->
-    <ContentSelect
-      v-if="isSingle"
-      :model-value="localValue[0] ?? null"
-      :space-id="spaceId"
-      @update:model-value="handleSingleSelect"
-    />
-
-    <!-- Multiple references: list + add select -->
     <div
       v-else
-      class="space-y-2"
+      class="min-w-0 rounded-2xl border border-border bg-surface px-2"
     >
-      <div
-        v-if="!hasReferences"
-        class="flex flex-col items-center justify-center gap-2 py-2"
+      <p
+        v-if="readOnly && localValue.length === 0"
+        class="px-1 py-2 text-center text-sm text-muted"
       >
-        <Icon
-          name="lucide:link-2"
-          class="text-muted"
-        />
-        <p class="text-sm text-muted">
-          {{ $t('labels.references.noReferences') }}
-        </p>
-      </div>
-
+        {{ $t('labels.references.noReferences') }}
+      </p>
       <div
-        v-else
-        ref="sortableContainer"
-        class="space-y-1"
+        ref="listRef"
+        class="pt-2"
       >
         <div
           v-for="(reference, index) in localValue"
           :key="reference"
+          data-reference-row
+          class="group relative mb-2 flex min-w-0 items-center gap-3 rounded-lg border border-border bg-card p-2 transition-colors duration-100 hover:border-border-strong"
         >
-          <!-- Edit mode: inline ContentSelect -->
-          <ContentSelect
-            v-if="editingIndex === index"
-            :model-value="reference"
-            :space-id="spaceId"
-            @update:model-value="handleEditSelect(index, $event)"
-            @cancel="editingIndex = null"
+          <SortHandle
+            v-if="!readOnly"
+            :data-reference-handle="sortId"
+            :label="$t('actions.dragToReorder')"
+            class="-mr-1.5 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100"
+            @move="(delta) => move(index, delta)"
           />
-
-          <!-- Display mode -->
+          <ReferenceRow
+            :entry="entryOf(reference)"
+            :path="paths.get(reference)"
+          />
           <div
-            v-else
-            class="group relative overflow-hidden rounded-lg border border-input-border bg-surface"
+            class="absolute top-1/2 right-1.5 flex -translate-y-1/2 rounded-md bg-card opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 has-[[data-state=open]]:opacity-100"
           >
-            <div class="flex items-center p-2 gap-2">
-              <button
-                v-if="localValue.length > 1"
-                type="button"
-                reference-draggable
-                class="z-10 cursor-ns-resize absolute text-muted opacity-0 group-hover:opacity-100 hover:text-primary"
-                :aria-label="$t('actions.dragToReorder')"
-                @click.prevent
-              >
-                <Icon name="lucide:grip-vertical" />
-              </button>
-              <div class="flex flex-1 items-center gap-2">
-                <Icon
-                  :name="`lucide:${getContentIcon(reference) || 'file'}`"
-                  class="shrink-0 group-hover:opacity-0"
-                  :style="{ color: getContentColor(reference) }"
-                />
-                <div class="min-w-0 flex-1">
-                  {{ getContentName(reference) }}
-                </div>
-              </div>
-              <div class="flex items-center gap-2 opacity-0 group-hover:opacity-100">
+            <LinkEntryPicker
+              v-if="!readOnly"
+              :space-id="spaceId"
+              :content="reference"
+              :sections="false"
+              :exclude="localValue.filter((id) => id !== reference)"
+              @select="(id: string) => replace(index, id)"
+            >
+              <template #trigger>
                 <button
-                  class="flex transform cursor-pointer items-center hover:text-primary"
-                  :aria-label="$t('actions.edit')"
-                  @click="handleReferenceEdit(index)"
+                  type="button"
+                  class="row-action"
+                  :aria-label="$t('labels.references.replace')"
+                  :title="$t('labels.references.replace')"
                 >
-                  <Icon name="lucide:pencil" />
+                  <Icon name="lucide:replace" />
                 </button>
-                <button
-                  class="flex transform cursor-pointer items-center hover:text-red-500"
-                  :aria-label="$t('labels.references.removeReference')"
-                  @click="handleReferenceDelete(index)"
-                >
-                  <Icon name="lucide:trash-2" />
-                </button>
-              </div>
-            </div>
+              </template>
+            </LinkEntryPicker>
+            <RouterLink
+              class="row-action"
+              :to="entryRoute(reference)"
+              :aria-label="$t('labels.references.open')"
+              :title="$t('labels.references.open')"
+            >
+              <Icon name="lucide:arrow-up-right" />
+            </RouterLink>
+            <button
+              v-if="!readOnly"
+              type="button"
+              class="row-action hover:text-destructive-ink"
+              :aria-label="$t('labels.references.removeReference')"
+              :title="$t('labels.references.removeReference')"
+              @click="remove(index)"
+            >
+              <Icon name="lucide:trash-2" />
+            </button>
           </div>
         </div>
       </div>
 
-      <!-- Add new reference -->
-      <ContentSelect
-        v-if="canAddMore"
-        :model-value="null"
-        :space-id="spaceId"
-        :placeholder="$t('actions.references.add')"
-        @update:model-value="handleContentSelect"
-      />
-
       <div
-        v-if="item.max && item.max > 0"
-        class="text-muted text-center text-sm"
+        v-if="canAddMore"
+        class="group/add relative mb-2 flex h-7 items-center justify-center"
       >
-        {{ $t('labels.references.referencesCount', { current: localValue.length, max: item.max }) }}
+        <div
+          class="absolute inset-x-0 top-1/2 -mt-px border-t-2 border-accent opacity-0 transition-opacity group-hover/add:opacity-100 group-has-[:focus-visible]/add:opacity-100 group-has-[[data-state=open]]/add:opacity-100"
+        />
+        <LinkEntryPicker
+          :space-id="spaceId"
+          :sections="false"
+          :exclude="localValue"
+          class="relative"
+          @select="add"
+        >
+          <template #trigger>
+            <button
+              type="button"
+              class="flex size-6 cursor-pointer items-center justify-center rounded-full border border-border-strong bg-background text-muted transition-colors group-hover/add:border-transparent group-hover/add:bg-accent-fill group-hover/add:text-accent-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none data-[state=open]:border-transparent data-[state=open]:bg-accent-fill data-[state=open]:text-accent-foreground"
+              :aria-label="$t('actions.references.add')"
+              :title="$t('actions.references.add')"
+            >
+              <Icon name="lucide:plus" />
+            </button>
+          </template>
+        </LinkEntryPicker>
       </div>
     </div>
-  </div>
+  </FormField>
 </template>
