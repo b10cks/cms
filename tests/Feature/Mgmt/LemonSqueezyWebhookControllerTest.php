@@ -235,6 +235,43 @@ class LemonSqueezyWebhookControllerTest extends TestCase
         $this->assertSame($starter->id, $subscription->fresh()->plan_id);
     }
 
+    /**
+     * Buyers can put `checkout[custom][space_id]` in a checkout URL. Only the
+     * pending row the app created at checkout may link a purchase.
+     */
+    #[Test]
+    public function a_bare_space_id_in_custom_data_cannot_attach_a_purchase_to_a_space(): void
+    {
+        $victim = Space::factory()->withLive()->create();
+        $plan = $this->createPlan('Scale', '1374497', '872809');
+
+        $live = Subscription::create([
+            'space_id' => $victim->id,
+            'plan_id' => $plan->id,
+            'name' => 'Scale',
+            'status' => 'active',
+            'lemon_squeezy_id' => '1000',
+            'variant_id' => $plan->ls_variant_id,
+            'product_id' => $plan->ls_product_id,
+            'quantity' => 1,
+        ]);
+
+        $payload = $this->subscriptionPayload(
+            event: 'subscription_created',
+            subscriptionId: '666',
+            spaceId: $victim->id,
+            localSubscriptionId: '',
+            variantId: $plan->ls_variant_id,
+            productId: $plan->ls_product_id,
+            status: 'active',
+        );
+
+        $this->postSignedWebhook($payload);
+
+        $this->assertSame('active', $live->fresh()->status);
+        $this->assertSame(1, Subscription::where('space_id', $victim->id)->count());
+    }
+
     private function postSignedWebhook(array $payload): TestResponse
     {
         $body = json_encode($payload, JSON_THROW_ON_ERROR);

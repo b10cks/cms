@@ -165,7 +165,7 @@ class SpaceSubscriptionController extends Controller
                     // The LS response is authoritative — in particular for status:
                     // a past_due subscription must not be masked as active just
                     // because the plan switched.
-                    $this->sync->fromWebhook($response, $space->id, $existingPaid->id);
+                    $this->sync->fromWebhook($response, $existingPaid->id);
                 } else {
                     $existingPaid->update([
                         'plan_id' => $plan->id,
@@ -371,7 +371,7 @@ class SpaceSubscriptionController extends Controller
             $response = $this->ls->resumeSubscription($subscription->lemon_squeezy_id);
 
             if (! empty($response)) {
-                $this->sync->fromWebhook($response, $space->id, $subscription->id);
+                $this->sync->fromWebhook($response, $subscription->id);
             } else {
                 $subscription->update(['status' => SubscriptionStatus::Active->value, 'ends_at' => null]);
             }
@@ -472,7 +472,7 @@ class SpaceSubscriptionController extends Controller
     private function syncCancellation(Subscription $subscription, array $lsResponse): void
     {
         if (! empty($lsResponse)) {
-            $this->sync->fromWebhook($lsResponse, $subscription->space_id, $subscription->id);
+            $this->sync->fromWebhook($lsResponse, $subscription->id);
 
             return;
         }
