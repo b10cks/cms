@@ -92,6 +92,12 @@ const trigger = (action: InputActionType) => {
     :error="error"
     :class="props.class"
   >
+    <template
+      v-if="$slots['label-end']"
+      #label-end
+    >
+      <slot name="label-end" />
+    </template>
     <template #default="{ id, 'aria-describedby': describedBy, 'aria-invalid': invalid }">
       <div class="relative">
         <Input

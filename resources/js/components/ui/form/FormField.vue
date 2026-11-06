@@ -41,6 +41,12 @@ const descriptionInTooltip = computed(() => !!props.label && !props.hideLabel)
       <TooltipIcon v-if="hint && !hideLabel">
         <span class="block max-w-xs whitespace-pre-line">{{ hint }}</span>
       </TooltipIcon>
+      <div
+        v-if="$slots['label-end']"
+        class="ml-auto flex items-center"
+      >
+        <slot name="label-end" />
+      </div>
     </div>
     <slot
       v-bind="{
