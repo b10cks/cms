@@ -12,6 +12,12 @@ use App\Models\Space\Content;
 use App\Models\Space\ContentVersion;
 use App\Models\Space\Release;
 use App\Models\User;
+use App\Services\Storage\AssetService;
+use App\Services\Storage\StorageFactory;
+use App\Services\Storage\StorageService;
+use Aws\Result;
+use Aws\S3\ObjectUploader;
+use GuzzleHttp\Promise\Create;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\WithFaker;
 use Illuminate\Http\UploadedFile;
@@ -19,6 +25,7 @@ use Illuminate\Support\Facades\Storage as LaravelStorage;
 use Illuminate\Support\Str;
 use Laravel\Sanctum\Sanctum;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 use Tests\Traits\SpaceTestingTrait;
@@ -312,6 +319,79 @@ class AssetTest extends TestCase
 
         $response->assertCreated();
         $this->assertSame(2, Asset::query()->count());
+    }
+
+    #[Test]
+    #[DataProvider('s3UploadSizes')]
+    public function checksum_is_the_sha256_of_the_whole_file_on_s3(int $size): void
+    {
+        $this->useS3Storage();
+        $file = UploadedFile::fake()->createWithContent('upload.bin', random_bytes($size));
+
+        $this->postJson("/mgmt/v1/spaces/{$this->space->id}/assets", ['file' => $file])->assertCreated();
+
+        $this->assertSame(hash_file('sha256', $file->getRealPath()), Asset::query()->firstOrFail()->checksum);
+    }
+
+    public static function s3UploadSizes(): array
+    {
+        return [
+            'single PutObject' => [1024],
+            'multipart upload' => [ObjectUploader::DEFAULT_MULTIPART_THRESHOLD + 1],
+        ];
+    }
+
+    #[Test]
+    public function different_large_files_on_s3_are_not_duplicates(): void
+    {
+        $this->useS3Storage();
+        $size = ObjectUploader::DEFAULT_MULTIPART_THRESHOLD + 1;
+
+        foreach (['first.bin', 'second.bin'] as $name) {
+            $this->postJson("/mgmt/v1/spaces/{$this->space->id}/assets", [
+                'file' => UploadedFile::fake()->createWithContent($name, random_bytes($size)),
+            ])->assertCreated();
+        }
+
+        $this->assertSame(2, Asset::query()->count());
+    }
+
+    #[Test]
+    public function a_large_duplicate_on_s3_is_still_detected(): void
+    {
+        $this->useS3Storage();
+        $content = random_bytes(ObjectUploader::DEFAULT_MULTIPART_THRESHOLD + 1);
+
+        $existingAssetId = $this->postJson("/mgmt/v1/spaces/{$this->space->id}/assets", [
+            'file' => UploadedFile::fake()->createWithContent('original.bin', $content),
+        ])->assertCreated()->json('id');
+
+        $this->postJson("/mgmt/v1/spaces/{$this->space->id}/assets", [
+            'file' => UploadedFile::fake()->createWithContent('duplicate.bin', $content),
+        ])
+            ->assertStatus(409)
+            ->assertJsonPath('existing_asset.id', $existingAssetId);
+    }
+
+    /**
+     * Point the space's storage at a real S3 disk whose HTTP handler answers
+     * every request with an empty result, so the SDK's own upload paths
+     * (PutObject and multipart) run without a network.
+     */
+    private function useS3Storage(): void
+    {
+        $disk = LaravelStorage::build([
+            'driver' => 's3',
+            'key' => 'test',
+            'secret' => 'test',
+            'region' => 'eu-central-1',
+            'bucket' => 'test',
+            'handler' => fn () => Create::promiseFor(new Result(['UploadId' => 'upload', 'ETag' => '"etag"'])),
+        ]);
+
+        $this->mock(StorageFactory::class)->shouldReceive('make')->andReturn($disk);
+        $this->app->forgetInstance(StorageService::class);
+        $this->app->forgetInstance(AssetService::class);
     }
 
     #[Test]

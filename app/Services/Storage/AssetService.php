@@ -10,7 +10,6 @@ use App\Models\Space\Asset;
 use App\Models\Space\AssetFolder;
 use App\Models\Space\AssetVersion;
 use App\Services\Asset\DominantColorExtractor;
-use App\Services\Storage\Filters\HashingStreamFilter;
 use FFMpeg\Coordinate\TimeCode;
 use FFMpeg\FFMpeg;
 use FFMpeg\FFProbe;
@@ -81,8 +80,6 @@ class AssetService
                 'original_filename' => $originalFilename,
             ]);
 
-            // Compute the sha256 checksum as part of the same read that streams
-            // the file into storage, so no second pass over the file is needed.
             $asset->checksum = $this->writeStreamWithChecksum($file, $filesystem, $relativePath);
 
             // Check for duplicates before generating video thumbnails so a
@@ -127,18 +124,16 @@ class AssetService
     }
 
     /**
-     * Stream a local (temp) file into storage while computing its sha256
-     * checksum via a hashing stream filter, so hashing does not require a
-     * second read pass over the file.
+     * Stream a local (temp) file into storage and return its sha256 checksum.
+     *
+     * The hash is read from the local file, not from the upload stream: the
+     * S3 SDK reopens the file by path for multipart uploads (16 MiB and up)
+     * and rewinds it for request checksums below that, so a filter on the
+     * stream sees nothing or the bytes more than once.
      */
     private function writeStreamWithChecksum(UploadedFile $file, Filesystem $filesystem, string $relativePath): string
     {
-        HashingStreamFilter::register();
-
-        $hashContext = hash_init('sha256');
-
         $stream = fopen($file->getRealPath(), 'r');
-        stream_filter_append($stream, HashingStreamFilter::NAME, STREAM_FILTER_READ, $hashContext);
 
         $filesystem->writeStream($relativePath, $stream);
 
@@ -146,7 +141,7 @@ class AssetService
             fclose($stream);
         }
 
-        return hash_final($hashContext);
+        return hash_file('sha256', $file->getRealPath());
     }
 
     /**
