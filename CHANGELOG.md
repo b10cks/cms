@@ -3,6 +3,12 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.11.6-91d4320d] — 2026-11-6
+
+- 📝 Record the AI Translate fix waiting on review
+- 🐛 Keep the rich text editor patching when its AI menu unmounts
+- 📝 Record the release and the open locale switch report
+
 ## [v2026.11.6-04136717] — 2026-11-6
 
 - 📝 Record the translation toolbar and the prepared release
