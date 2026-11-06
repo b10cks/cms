@@ -140,10 +140,7 @@ const logout = () => {
                   v-for="space in spaces"
                   :key="space.id"
                   as-child
-                  :class="[
-                    'w-full cursor-pointer',
-                    space.id === selectedSpaceId ? 'bg-accent-fill text-accent-foreground' : '',
-                  ]"
+                  :class="['w-full cursor-pointer', space.id === selectedSpaceId && 'bg-state-selected text-primary']"
                 >
                   <RouterLink
                     :to="spaceRoute(space.id)"
@@ -170,6 +167,11 @@ const logout = () => {
                       v-if="space.badge"
                       :badge="space.badge"
                       size="2xs"
+                    />
+                    <Icon
+                      v-if="space.id === selectedSpaceId"
+                      name="lucide:check"
+                      class="ml-auto"
                     />
                   </RouterLink>
                 </DropdownMenuItem>
