@@ -3,8 +3,8 @@ import { addCollection } from '@iconify/vue'
 import { createApp } from 'vue'
 
 import App from '~/app.vue'
-// Only the framework logos the onboarding guide offers, extracted from
-// @iconify-json/simple-icons. See lib/brand-icons.json.
+// Only the framework logos the onboarding guide offers and the platforms the meta
+// preview renders, extracted from @iconify-json/simple-icons. See lib/brand-icons.json.
 import brandIcons from '~/lib/brand-icons.json'
 // Only the handful of `flag:` icons we actually use, extracted from
 // @iconify-json/flag (whose full collection is ~3.9MB). See lib/flag-icons.json.

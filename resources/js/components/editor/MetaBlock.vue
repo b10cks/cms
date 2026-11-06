@@ -4,15 +4,20 @@ import { toast } from 'vue-sonner'
 import type { SpaceAiConfig } from '~/api/resources/ai'
 import AssetBlock from '~/components/editor/AssetBlock.vue'
 import LinkEditor from '~/components/editor/LinkEditor.vue'
+import MetaPreview from '~/components/editor/meta/MetaPreview.vue'
+import type { MetaPreviewData } from '~/components/editor/meta/types'
 import RobotsDirectiveEditor from '~/components/editor/RobotsDirectiveEditor.vue'
 import AiConfigMenuItems from '~/components/ai/AiConfigMenuItems.vue'
 import AiRunFindings from '~/components/ai/AiRunFindings.vue'
 import Icon from '~/components/Icon.vue'
 import SplitButton from '~/components/ui/button/SplitButton.vue'
-import { InputField, TextField } from '~/components/ui/form'
+import { FormField, InputField, TextField } from '~/components/ui/form'
 import Label from '~/components/ui/form/Label.vue'
+import { TooltipIcon } from '~/components/ui/tooltip'
 import { useAiConfigs } from '~/composables/useAiModels'
 import { normalizeLanguageIso } from '~/lib/content-i18n'
+import { buildContentPath, buildPreviewUrl, resolveEnvironment } from '~/lib/preview-url'
+import { fitSerp } from '~/lib/serpMetrics'
 import type { ContentResource } from '~/types/contents'
 
 
@@ -188,30 +193,46 @@ const serpDescription = computed((): string => {
   return localValue.value?.description || ''
 })
 
-const serpUrl = computed((): string => {
-  return `https://example.com${content.value?.full_slug || ''}`
+const { useSpaceQuery } = useSpaces()
+const { data: space } = useSpaceQuery(props.spaceId) as { data: Ref<SpaceResource | null> }
+const { settings: userSettings } = useSpaceSettings(props.spaceId)
+
+/** The entry's address on the preview environment the user picked, else its site path. */
+const pageUrl = computed((): URL | null => {
+  const spaceSettings = space.value?.settings
+  const environment = resolveEnvironment(
+    userSettings.value.content.environment as SpaceEnvironment | null,
+    spaceSettings
+  )
+  const args = [
+    spaceSettings,
+    content.value?.language_iso,
+    content.value?.full_slug,
+    userSettings.value.content.siteLocale,
+  ] as const
+  const url = buildPreviewUrl(environment?.url, ...args)
+  if (url) return new URL(url)
+
+  const path = buildContentPath(...args)
+  return path ? new URL(path, 'https://example.com') : null
 })
 
-const truncatedDescription = computed((): string => {
-  const desc = serpDescription.value
-  if (desc.length <= 155) return desc
+const titleFit = computed(() => fitSerp(serpTitle.value, 'title'))
+const descriptionFit = computed(() => fitSerp(serpDescription.value, 'description'))
 
-  // Find the last space before the 155 character limit
-  const truncated = desc.substring(0, 155)
-  const lastSpace = truncated.lastIndexOf(' ')
-
-  return lastSpace > 0 ? truncated.substring(0, lastSpace) + '...' : truncated + '...'
-})
-
-const truncatedTitle = computed((): string => {
-  const title = serpTitle.value
-  if (title.length <= 60) return title
-
-  const truncated = title.substring(0, 60)
-  const lastSpace = truncated.lastIndexOf(' ')
-
-  return lastSpace > 0 ? truncated.substring(0, lastSpace) + '...' : truncated + '...'
-})
+const previewData = computed(
+  (): MetaPreviewData => ({
+    url: pageUrl.value,
+    siteName: space.value?.name || pageUrl.value?.host || '',
+    siteIcon: space.value?.icon ?? null,
+    title: serpTitle.value,
+    description: serpDescription.value,
+    shareTitle: localValue.value?.ogTitle || serpTitle.value,
+    shareDescription: localValue.value?.ogDescription || serpDescription.value,
+    shareTitleSource: localValue.value?.ogTitle ? 'og' : 'search',
+    image: localValue.value?.ogImage?.full_path ?? null,
+  })
+)
 
 const defaultAiConfig = computed((): SpaceAiConfig | null => {
   return aiConfigs.value?.find((config) => config.is_default) ?? null
@@ -315,25 +336,17 @@ const updateCanonicalValue = (value: LinkValue | null): void => {
 
 <template>
   <div class="flex flex-col gap-4">
-    <div class="space-y-1">
+    <div class="flex min-h-8 items-center gap-2">
       <Label
         :label="item.name || item.key"
         :required="item.required"
       />
-      <p
-        v-if="item.description"
-        class="text-sm text-muted"
-      >
-        {{ item.description }}
-      </p>
-    </div>
-    <div class="relative rounded-lg border border-input-border bg-background p-3">
-      <div class="mb-2 text-sm text-muted">
-        {{ serpUrl }}
-      </div>
+      <TooltipIcon v-if="item.description">
+        <span class="block max-w-xs whitespace-pre-line">{{ item.description }}</span>
+      </TooltipIcon>
       <div
         v-if="aiEnabled"
-        class="absolute top-1 right-1"
+        class="mr-8 ml-auto"
       >
         <SplitButton
           size="sm"
@@ -359,21 +372,8 @@ const updateCanonicalValue = (value: LinkValue | null): void => {
           </template>
         </SplitButton>
       </div>
-      <h3 class="mb-1 cursor-pointer text-lg leading-tight font-semibold text-info">
-        {{ truncatedTitle }}
-      </h3>
-      <p class="text-sm leading-relaxed text-muted">
-        {{ truncatedDescription }}
-      </p>
-      <div class="mt-3 flex gap-4 border-t border-border pt-3 text-sm text-muted">
-        <span :class="{ 'text-destructive': serpTitle.length > 60 }">
-          Title: {{ serpTitle.length }}/60 chars
-        </span>
-        <span :class="{ 'text-destructive': serpDescription.length > 155 }">
-          Description: {{ serpDescription.length }}/155 chars
-        </span>
-      </div>
     </div>
+    <MetaPreview :data="previewData" />
 
     <AiRunFindings :findings="metaRun.findings.value" />
 
@@ -381,10 +381,19 @@ const updateCanonicalValue = (value: LinkValue | null): void => {
       v-model="localValue.title"
       :name="item.key + '-title'"
       :label="$t('labels.contents.fields.meta.title')"
-      :placeholder="$t('labels.contents.fields.meta.titlePlaceholder')"
+      :placeholder="content?.name || $t('labels.contents.fields.meta.titlePlaceholder')"
       :disabled="props.readOnly || isGenerating"
       @update:model-value="updateValue('title', $event)"
-    />
+    >
+      <template #label-end>
+        <span
+          :class="['text-sm tabular-nums', titleFit.cut ? 'text-warning-ink' : 'text-muted']"
+          :title="$t('components.metaPreview.pixelsHint')"
+        >
+          {{ $t('components.metaPreview.pixels', { width: Math.round(titleFit.width), limit: titleFit.limit }) }}
+        </span>
+      </template>
+    </InputField>
     <TextField
       v-model="localValue.description"
       :name="item.key + '-description'"
@@ -393,21 +402,28 @@ const updateCanonicalValue = (value: LinkValue | null): void => {
       :disabled="props.readOnly || isGenerating"
       auto-size
       @update:model-value="updateValue('description', $event)"
-    />
-    <div class="space-y-3">
-      <div class="space-y-1">
-        <Label :label="$t('labels.contents.fields.meta.canonical')" />
-        <p class="text-sm text-muted">
-          {{ $t('labels.contents.fields.meta.canonicalDescription') }}
-        </p>
-      </div>
+    >
+      <template #label-end>
+        <span
+          :class="['text-sm tabular-nums', descriptionFit.cut ? 'text-warning-ink' : 'text-muted']"
+          :title="$t('components.metaPreview.pixelsHint')"
+        >
+          {{ $t('components.metaPreview.pixels', { width: Math.round(descriptionFit.width), limit: descriptionFit.limit }) }}
+        </span>
+      </template>
+    </TextField>
+    <FormField
+      :name="item.key + '-canonical'"
+      :label="$t('labels.contents.fields.meta.canonical')"
+      :description="$t('labels.contents.fields.meta.canonicalDescription')"
+    >
       <LinkEditor
         :model-value="canonicalValue"
         :space-id="spaceId"
         :disabled="props.readOnly || isGenerating"
         @update:model-value="updateCanonicalValue"
       />
-    </div>
+    </FormField>
     <RobotsDirectiveEditor
       :model-value="localValue.robots"
       :name="item.key + '-robots'"
@@ -421,7 +437,7 @@ const updateCanonicalValue = (value: LinkValue | null): void => {
         :model-value="localValue.ogImage"
         :space-id="spaceId"
         :read-only="props.readOnly"
-        :item="{ name: 'ogImage', key: 'ogImage', type: 'asset', file_types: ['image'] }"
+        :item="{ name: $t('labels.contents.fields.meta.ogImage'), key: 'ogImage', type: 'asset', file_types: ['image'] }"
         @update:model-value="updateValue('ogImage', $event)"
       />
       <InputField
