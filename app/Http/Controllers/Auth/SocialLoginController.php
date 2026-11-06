@@ -27,8 +27,6 @@ use Laravel\Socialite\Facades\Socialite;
 
 class SocialLoginController extends AuthController
 {
-    private const string PENDING_2FA_USER_ID = 'auth.social.pending_2fa_user_id';
-
     private const string RETURN_TO = 'auth.social.return_to';
 
     private const string INVITE_ID = 'auth.social.invite_id';

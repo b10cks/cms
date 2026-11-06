@@ -76,12 +76,10 @@ class LemonSqueezyWebhookController
     private function handleSubscriptionUpsert(array $payload, SyncSubscriptionFromLemonSqueezy $sync): void
     {
         $lsSubscription = $payload['data'] ?? [];
-        $spaceId = data_get($payload, 'meta.custom_data.space_id')
-            ?? data_get($lsSubscription, 'attributes.custom_data.space_id');
         $subscriptionId = data_get($payload, 'meta.custom_data.subscription_id')
             ?? data_get($lsSubscription, 'attributes.custom_data.subscription_id');
 
-        $sync->fromWebhook($lsSubscription, $spaceId, $subscriptionId);
+        $sync->fromWebhook($lsSubscription, $subscriptionId);
     }
 
     private function handleSubscriptionPaymentEvent(array $payload, SyncSubscriptionFromLemonSqueezy $sync): void

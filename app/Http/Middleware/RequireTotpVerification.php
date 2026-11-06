@@ -28,7 +28,7 @@ class RequireTotpVerification
             return $this->handlePasswordVerification($request, $next, $user);
         }
 
-        if ($this->twoFactorService->hasGracePeriod($user->id)) {
+        if ($this->twoFactorService->hasGracePeriod($request, $user)) {
             return $next($request);
         }
 
@@ -56,7 +56,7 @@ class RequireTotpVerification
         }
 
         $this->clearStepUpAttempts($user, 'totp');
-        $this->twoFactorService->setGracePeriod($user->id, config('auth.2fa_grace_period', 30));
+        $this->twoFactorService->setGracePeriod($request, $user, config('auth.2fa_grace_period', 30));
 
         return $next($request);
     }

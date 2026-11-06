@@ -163,6 +163,25 @@ class ContentBreadcrumbTest extends TestCase
         $this->assertFalse($response->json('breadcrumb.1.is_published'));
     }
 
+    /**
+     * `published_version_id` survives an unpublish. Opting the folder's name
+     * back in must not bring the withdrawn payload with it.
+     */
+    #[Test]
+    public function an_opted_in_unpublished_ancestor_carries_no_content(): void
+    {
+        [, $products, $shoes] = $this->createEnglishTree();
+
+        $products->forceFill(['published_at' => null])->save();
+
+        $response = $this->getJson($this->url($shoes->full_slug, ['ancestors' => 'all', 'include_content' => 1]))->assertOk();
+
+        $this->assertSame('/home/products', $response->json('breadcrumb.1.full_slug'));
+        $this->assertNull($response->json('breadcrumb.1.content'));
+        $this->assertSame('Home', $response->json('breadcrumb.0.content.title'));
+        $this->assertSame('Shoes', $response->json('breadcrumb.2.content.title'));
+    }
+
     #[Test]
     public function an_unpublished_entry_is_not_reachable(): void
     {

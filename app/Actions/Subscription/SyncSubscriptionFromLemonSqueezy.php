@@ -5,7 +5,6 @@ namespace App\Actions\Subscription;
 use App\Enums\SubscriptionStatus;
 
 use App\Models\Management\Plan;
-use App\Models\Management\Space;
 use App\Models\Management\Subscription;
 use App\Services\LemonSqueezy\LemonSqueezyService;
 use Illuminate\Support\Facades\DB;
@@ -20,26 +19,25 @@ class SyncSubscriptionFromLemonSqueezy
      *
      * Lookup priority for the local record:
      *  1. lemon_squeezy_id  — already linked
-     *  2. subscription_id   — embedded in customData at checkout time (most reliable)
-     *  3. space_id + plan   — fallback via space/variant matching
+     *  2. subscription_id   — the pending row embedded in customData at checkout
+     *
+     * A bare `space_id` in customData is never enough: buyers can set custom
+     * data in a checkout URL, which would attach their purchase to any space
+     * and cancel that space's current subscription.
      */
-    public function fromWebhook(array $lsSubscription, ?string $spaceId = null, ?string $subscriptionId = null): Subscription
+    public function fromWebhook(array $lsSubscription, ?string $subscriptionId = null): Subscription
     {
         $normalized = $this->ls->normalizeSubscription($lsSubscription);
         $lsId = $normalized['lemon_squeezy_id'];
-        $spaceId ??= data_get($lsSubscription, 'attributes.custom_data.space_id');
         $subscriptionId ??= data_get($lsSubscription, 'attributes.custom_data.subscription_id');
 
         if (! $lsId) {
             throw new \RuntimeException('Missing LemonSqueezy subscription ID.');
         }
 
-        return DB::transaction(function () use ($normalized, $lsId, $spaceId, $subscriptionId): Subscription {
+        return DB::transaction(function () use ($normalized, $lsId, $subscriptionId): Subscription {
             $subscription = $this->resolveLocalSubscription(
                 $lsId,
-                $normalized['variant_id'],
-                $normalized['product_id'],
-                $spaceId,
                 $subscriptionId,
             );
             $plan = $this->resolvePlan($normalized['variant_id'], $normalized['product_id']);
@@ -119,10 +117,9 @@ class SyncSubscriptionFromLemonSqueezy
                     }
                 }
 
-                $spaceId = data_get($lsSub, 'attributes.custom_data.space_id');
                 $subscriptionId = data_get($lsSub, 'attributes.custom_data.subscription_id');
 
-                $this->fromWebhook($lsSub, $spaceId, $subscriptionId);
+                $this->fromWebhook($lsSub, $subscriptionId);
                 $synced++;
             } catch (\Throwable $e) {
                 Log::error('Failed to sync LS subscription', [
@@ -135,13 +132,8 @@ class SyncSubscriptionFromLemonSqueezy
         return $synced;
     }
 
-    private function resolveLocalSubscription(
-        string $lemonSqueezyId,
-        string $variantId,
-        string $productId,
-        ?string $spaceId,
-        ?string $subscriptionId,
-    ): Subscription {
+    private function resolveLocalSubscription(string $lemonSqueezyId, ?string $subscriptionId): Subscription
+    {
         $subscription = Subscription::where('lemon_squeezy_id', $lemonSqueezyId)->first();
 
         if ($subscription) {
@@ -156,31 +148,9 @@ class SyncSubscriptionFromLemonSqueezy
             }
         }
 
-        if (! $spaceId) {
-            Log::warning('Cannot find space_id for LemonSqueezy subscription', ['ls_id' => $lemonSqueezyId]);
-            throw new \RuntimeException("No space_id found for LS subscription {$lemonSqueezyId}");
-        }
+        Log::warning('Cannot link LemonSqueezy subscription to a local subscription', ['ls_id' => $lemonSqueezyId]);
 
-        $space = Space::findOrFail($spaceId);
-        $plan = $this->resolvePlan($variantId, $productId);
-
-        $subscription = Subscription::where('space_id', $space->id)
-            ->where('status', SubscriptionStatus::Pending->value)
-            ->whereNull('lemon_squeezy_id')
-            ->when($plan, fn ($query) => $query->where('plan_id', $plan->id))
-            ->when(! $plan && $variantId !== '', fn ($query) => $query->where('variant_id', $variantId))
-            ->latest()
-            ->first();
-
-        if ($subscription) {
-            return $subscription;
-        }
-
-        return new Subscription([
-            'space_id' => $space->id,
-            'status' => SubscriptionStatus::Pending->value,
-            'quantity' => 1,
-        ]);
+        throw new \RuntimeException("No local subscription found for LS subscription {$lemonSqueezyId}");
     }
 
     private function resolvePlan(?string $variantId, ?string $productId): ?Plan

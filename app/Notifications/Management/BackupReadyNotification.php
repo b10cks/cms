@@ -4,6 +4,7 @@ namespace App\Notifications\Management;
 
 use App\Models\Management\Space;
 use App\Models\Management\SpaceBackup;
+use App\Notifications\Concerns\EscapesMailPlaceholders;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -12,6 +13,7 @@ use Illuminate\Support\HtmlString;
 
 class BackupReadyNotification extends Notification implements ShouldQueue
 {
+    use EscapesMailPlaceholders;
     use Queueable;
 
     public function __construct(
@@ -31,19 +33,19 @@ class BackupReadyNotification extends Notification implements ShouldQueue
         $mail = (new MailMessage())
             ->subject(__('notifications.backupReady.subject', ['space' => $this->space->name]))
             ->greeting(__('notifications.greeting'))
-            ->line(new HtmlString(__('notifications.backupReady.intro', [
+            ->line(new HtmlString(__('notifications.backupReady.intro', $this->escapeForMail([
                 'space' => $this->space->name,
                 'name' => $this->backup->name,
-            ])));
+            ]))));
 
         if ($this->backup->password) {
             $mail->line(new HtmlString(__('notifications.backupReady.passwordNotice')));
         }
 
         $mail->action(__('notifications.backupReady.action'), $this->downloadUrl)
-            ->line(new HtmlString(__('notifications.backupReady.expires', [
+            ->line(new HtmlString(__('notifications.backupReady.expires', $this->escapeForMail([
                 'expires' => $this->backup->expires_at->diffForHumans(),
-            ])))
+            ]))))
             ->salutation(' ');
 
         return $mail;

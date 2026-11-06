@@ -295,18 +295,25 @@ class ContentBreadcrumbService
      */
     private function attachContent(Space $space, Collection $levels, string $language, string $versionScope): Collection
     {
-        if ($levels->isEmpty()) {
+        // `ancestors=all` may show an unpublished folder's name, never its
+        // payload: `published_version_id` survives an unpublish, so resolving
+        // it would serve content that was taken down.
+        $resolvable = $versionScope === 'published'
+            ? $levels->filter(fn (BreadcrumbLevel $level): bool => $this->isPublished($level->row))
+            : $levels;
+
+        if ($resolvable->isEmpty()) {
             return $levels;
         }
 
-        $resolved = $this->i18nResolver->resolveMany(
+        $resolved = $resolvable->keys()->combine($this->i18nResolver->resolveMany(
             $space,
-            $levels->map(fn (BreadcrumbLevel $level): array => [
+            $resolvable->map(fn (BreadcrumbLevel $level): array => [
                 'content' => $level->row,
                 'target_language' => $language,
-            ]),
+            ])->values(),
             $versionScope,
-        )->values();
+        )->values());
 
         return $levels->map(fn (BreadcrumbLevel $level, int $index): BreadcrumbLevel => new BreadcrumbLevel(
             row: $level->row,

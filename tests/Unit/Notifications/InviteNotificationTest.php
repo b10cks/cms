@@ -40,6 +40,35 @@ class InviteNotificationTest extends TestCase
         );
     }
 
+    /**
+     * Anyone can register and invite any address, so the inviter's name must
+     * not turn mail sent from the platform's address into a phishing page.
+     */
+    #[Test]
+    public function the_inviters_name_cannot_inject_markup_or_links_into_the_mail(): void
+    {
+        $inviter = User::factory()->create([
+            'firstname' => '</strong><div class="phish">Session expired</div>',
+            'lastname' => '[Sign in again](https://evil.example)',
+        ]);
+        $team = Team::factory()->create();
+        $space = Space::factory()->create(['team_id' => $team->id]);
+
+        $invite = Invite::factory()->create([
+            'space_id' => $space->id,
+            'team_id' => null,
+            'invited_by' => $inviter->id,
+        ]);
+
+        $html = (string) (new InviteToSpaceNotification($invite, $space, $inviter))
+            ->toMail($inviter)
+            ->render();
+
+        $this->assertStringNotContainsString('<div class="phish">', $html);
+        $this->assertStringNotContainsString('href="https://evil.example"', $html);
+        $this->assertStringContainsString('Sign in again', $html);
+    }
+
     #[Test]
     public function team_invite_notifications_link_to_the_shared_invite_page(): void
     {

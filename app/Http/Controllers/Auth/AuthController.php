@@ -9,6 +9,12 @@ use Illuminate\Support\Facades\Auth;
 
 abstract class AuthController extends Controller
 {
+    /**
+     * A login proven by an external provider (social or SAML) that still owes
+     * the account's own second factor. `SocialLoginController::verifyTwoFactor`
+     * finishes it.
+     */
+    protected const string PENDING_2FA_USER_ID = 'auth.social.pending_2fa_user_id';
 
     protected function updateUserLogin(User $user): void
     {

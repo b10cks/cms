@@ -7,6 +7,7 @@ use App\Models\Management\Invite;
 use App\Models\Management\Team;
 use App\Models\User;
 use App\Notifications\Concerns\DeliversInApp;
+use App\Notifications\Concerns\EscapesMailPlaceholders;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -16,6 +17,7 @@ use Illuminate\Support\HtmlString;
 class InviteToTeamNotification extends Notification implements ShouldQueue
 {
     use DeliversInApp;
+    use EscapesMailPlaceholders;
     use Queueable;
 
     public function __construct(
@@ -58,10 +60,10 @@ class InviteToTeamNotification extends Notification implements ShouldQueue
         return (new MailMessage)
             ->subject(__('notifications.inviteTeam.subject', ['team' => $this->team->name]))
             ->greeting(__('notifications.greeting'))
-            ->line(new HtmlString(__('notifications.inviteTeam.intro', [
+            ->line(new HtmlString(__('notifications.inviteTeam.intro', $this->escapeForMail([
                 'inviter' => $this->inviter->display_name,
                 'team' => $this->team->name,
-            ])))
+            ]))))
             ->when(
                 $this->invite->message,
                 fn ($mail) => $mail->line(new HtmlString('<blockquote style="border-left: 4px solid #ccc; padding-left: 16px; margin-left: 0;">'.e($this->invite->message).'</blockquote>'))
@@ -69,8 +71,8 @@ class InviteToTeamNotification extends Notification implements ShouldQueue
             ->line(new HtmlString(__('notifications.inviteTeam.start')))
             ->action(__('notifications.inviteTeam.action'), $acceptUrl)
             ->salutation(' ')
-            ->line(new HtmlString(__('notifications.inviteTeam.outro', [
+            ->line(new HtmlString(__('notifications.inviteTeam.outro', $this->escapeForMail([
                 'expires' => $this->invite->expires_at->diffForHumans(),
-            ])));
+            ]))));
     }
 }
