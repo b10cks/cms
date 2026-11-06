@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, shallowRef, watch } from 'vue';
 
-import { InputField, Label } from '~/components/ui/form';
+import { FormField } from '~/components/ui/form';
+import { InputGroup, InputGroupAddon, InputGroupInput } from '~/components/ui/input-group';
 import { GEO_BOUNDS, GEO_TILE_URL, resolveGeoKeys, type GeoValue } from '~/types/geo';
 
 const props = defineProps<{
@@ -25,6 +26,15 @@ const showMap = computed(() => props.item.map ?? true)
 const lat = ref('')
 const lon = ref('')
 const alt = ref('')
+
+/** The coordinate inputs under the map, altitude only when the schema asks for it. */
+const coordinates = computed(() => [
+  { model: lat, key: 'lat', label: t('labels.geo.field.latitude'), unit: '°', bounds: GEO_BOUNDS.lat },
+  { model: lon, key: 'lon', label: t('labels.geo.field.longitude'), unit: '°', bounds: GEO_BOUNDS.lon },
+  ...(showAltitude.value
+    ? [{ model: alt, key: 'alt', label: t('labels.geo.field.altitude'), unit: 'm', bounds: null }]
+    : []),
+])
 
 const toInput = (value: unknown): string =>
   typeof value === 'number' && Number.isFinite(value) ? String(value) : ''
@@ -98,9 +108,9 @@ const updateMarker = () => {
       draggable: !props.readOnly,
       icon: L.divIcon({
         className: 'geo-marker',
-        html: '<span class="block size-3 rounded-full bg-black ring-2 ring-white shadow"></span>',
-        iconSize: [12, 12],
-        iconAnchor: [6, 6],
+        html: '<span class="block size-3.5 rounded-full bg-accent-fill ring-2 ring-white shadow-md"></span>',
+        iconSize: [14, 14],
+        iconAnchor: [7, 7],
       }),
     }).addTo(map.value)
 
@@ -182,52 +192,108 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="grid gap-2">
-    <Label
-      :label="item.name || item.key"
-      :required="item.required"
-    />
-
-    <div
-      v-if="showMap"
-      ref="mapEl"
-      class="isolate h-64 w-full overflow-hidden rounded-lg border border-input-border bg-surface"
-    />
-
-    <div class="grid grid-cols-2 gap-3">
-      <InputField
-        v-model="lat"
-        :name="`${item.key}_lat`"
-        :label="t('labels.geo.field.latitude')"
-        type="number"
-        step="any"
-        :min="GEO_BOUNDS.lat.min"
-        :max="GEO_BOUNDS.lat.max"
-        :readonly="readOnly"
-        @update:model-value="handleInput"
-      />
-      <InputField
-        v-model="lon"
-        :name="`${item.key}_lon`"
-        :label="t('labels.geo.field.longitude')"
-        type="number"
-        step="any"
-        :min="GEO_BOUNDS.lon.min"
-        :max="GEO_BOUNDS.lon.max"
-        :readonly="readOnly"
-        @update:model-value="handleInput"
-      />
-    </div>
-
-    <InputField
-      v-if="showAltitude"
-      v-model="alt"
-      :name="`${item.key}_alt`"
-      :label="t('labels.geo.field.altitude')"
-      type="number"
-      step="any"
-      :readonly="readOnly"
-      @update:model-value="handleInput"
-    />
-  </div>
+  <FormField
+    :name="item.key"
+    :label="item.name || item.key"
+    :description="item.description || undefined"
+    :required="item.required"
+  >
+    <template #default="{ id }">
+      <div
+        :class="[
+          'grid gap-2',
+          showMap ? 'overflow-hidden rounded-lg border border-input-border bg-input p-1 shadow-sm' : '',
+        ]"
+      >
+        <div
+          v-if="showMap"
+          ref="mapEl"
+          class="geo-map isolate h-64 w-full overflow-hidden rounded-md bg-surface"
+        />
+        <div
+          :class="[
+            'grid gap-2',
+            coordinates.length === 3 ? 'sm:grid-cols-3' : 'sm:grid-cols-2',
+          ]"
+        >
+          <InputGroup
+            v-for="(coordinate, index) in coordinates"
+            :key="coordinate.key"
+            :class="showMap ? 'shadow-none' : ''"
+          >
+            <InputGroupAddon class="text-input-muted">
+              {{ coordinate.label }}
+            </InputGroupAddon>
+            <InputGroupInput
+              :id="index === 0 ? id : undefined"
+              :model-value="coordinate.model.value"
+              :name="`${item.key}_${coordinate.key}`"
+              :aria-label="`${item.name || item.key}, ${coordinate.label}`"
+              type="number"
+              inputmode="decimal"
+              step="any"
+              :min="coordinate.bounds?.min"
+              :max="coordinate.bounds?.max"
+              :readonly="readOnly"
+              class="text-right tabular-nums [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+              @update:model-value="
+                (value: string | number) => {
+                  coordinate.model.value = String(value)
+                  handleInput()
+                }
+              "
+            />
+            <InputGroupAddon
+              align="inline-end"
+              class="text-input-muted"
+            >
+              {{ coordinate.unit }}
+            </InputGroupAddon>
+          </InputGroup>
+        </div>
+      </div>
+    </template>
+  </FormField>
 </template>
+
+<style>
+/* Leaflet's stylesheet loads unlayered and late, so these win by specificity. */
+.geo-map.leaflet-container {
+  background: var(--surface);
+  font: inherit;
+}
+
+.dark .geo-map.leaflet-container .leaflet-tile-pane {
+  filter: invert(1) hue-rotate(180deg) brightness(0.95) contrast(0.85) saturate(0.4);
+}
+
+.geo-map.leaflet-container .leaflet-bar {
+  border: 1px solid var(--popover-border);
+  border-radius: 0.5rem;
+  box-shadow: var(--shadow-soft-sm);
+  overflow: hidden;
+}
+
+.geo-map.leaflet-container .leaflet-bar a {
+  background: var(--popover);
+  border-bottom-color: var(--popover-border);
+  color: var(--primary);
+  width: 28px;
+  height: 28px;
+  line-height: 28px;
+}
+
+.geo-map.leaflet-container .leaflet-bar a:hover {
+  background: color-mix(in oklab, var(--primary) 6%, var(--popover));
+}
+
+.geo-map.leaflet-container .leaflet-control-attribution {
+  background: color-mix(in oklab, var(--card) 80%, transparent);
+  color: var(--input-muted);
+  border-top-left-radius: 0.375rem;
+}
+
+.geo-map.leaflet-container .leaflet-control-attribution a {
+  color: inherit;
+}
+</style>
