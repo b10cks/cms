@@ -139,6 +139,32 @@ class TokenLifecycleTest extends TestCase
     }
 
     #[Test]
+    public function a_second_factor_verified_in_the_browser_does_not_cover_other_credentials(): void
+    {
+        $user = User::factory()->create([
+            'two_factor_secret' => app(TwoFactorAuthService::class)->generateSecret(),
+            'two_factor_enabled_at' => now(),
+            'two_factor_backup_codes' => ['AAAAAAAA'],
+        ])->fresh();
+        $stolen = $user->createToken('leaked', ['*'])->plainTextToken;
+
+        $this->actingAs($user)
+            ->withHeader('Referer', 'http://localhost/')
+            ->postJson(route('auth.2fa.verify'), ['code' => 'AAAAAAAA'])
+            ->assertOk();
+
+        $this->app['auth']->forgetGuards();
+        $this->flushHeaders();
+
+        $this->withHeader('Authorization', "Bearer {$stolen}")
+            ->postJson(route('mgmt.users.me.tokens.store'), ['name' => 'persistence'])
+            ->assertStatus(423)
+            ->assertJsonPath('error_code', 'TOTP_VERIFICATION_REQUIRED');
+
+        $this->assertSame(1, $user->tokens()->count());
+    }
+
+    #[Test]
     public function a_user_can_list_and_revoke_their_own_tokens(): void
     {
         $user = User::factory()->create();

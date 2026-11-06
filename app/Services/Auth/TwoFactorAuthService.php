@@ -2,14 +2,14 @@
 
 namespace App\Services\Auth;
 
-use Illuminate\Support\Facades\Cache;
 use App\Models\User;
+use Illuminate\Http\Request;
 
 class TwoFactorAuthService
 {
     private const int BACKUP_CODES_COUNT = 8;
     private const int BACKUP_CODES_LENGTH = 8;
-    private const string VERIFICATION_GRACE_PERIOD_KEY = '2fa_grace_period:';
+    private const string VERIFICATION_GRACE_PERIOD_KEY = 'auth.2fa_verified_until.';
     private const int TOTP_PERIOD = 30;
     private const int TOTP_DIGITS = 6;
 
@@ -75,23 +75,30 @@ class TwoFactorAuthService
         return array_values(array_filter($backupCodes, fn($code) => $code !== $usedCode));
     }
 
-    public function setGracePeriod(string $userId, int $minutes): void
+    /**
+     * A verified second factor counts for this browser session only. Keyed per
+     * user so a later login in the same session never inherits it. Requests
+     * without a session (bearer tokens) get no grace and must send the factor.
+     */
+    public function setGracePeriod(Request $request, User $user, int $minutes): void
     {
-        $key = self::VERIFICATION_GRACE_PERIOD_KEY . $userId;
-        Cache::put($key, true, now()->addMinutes($minutes));
+        if ($request->hasSession()) {
+            $request->session()->put(
+                self::VERIFICATION_GRACE_PERIOD_KEY.$user->id,
+                now()->addMinutes($minutes)->getTimestamp(),
+            );
+        }
     }
 
-    public function hasGracePeriod(string $userId): bool
+    public function hasGracePeriod(Request $request, User $user): bool
     {
-        $key = self::VERIFICATION_GRACE_PERIOD_KEY . $userId;
+        if (! $request->hasSession()) {
+            return false;
+        }
 
-        return Cache::has($key);
-    }
+        $until = $request->session()->get(self::VERIFICATION_GRACE_PERIOD_KEY.$user->id);
 
-    public function clearGracePeriod(string $userId): void
-    {
-        $key = self::VERIFICATION_GRACE_PERIOD_KEY . $userId;
-        Cache::forget($key);
+        return \is_int($until) && $until > now()->getTimestamp();
     }
 
     private function generateTotp(string $secret, int $timestamp): string

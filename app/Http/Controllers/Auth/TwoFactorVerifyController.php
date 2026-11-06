@@ -29,7 +29,7 @@ class TwoFactorVerifyController extends AuthController
         $code = $request->input('code');
 
         if ($this->verifyTotpCode($user, $code)) {
-            $this->twoFactorService->setGracePeriod($user->id, config('auth.2fa_grace_period', 30));
+            $this->twoFactorService->setGracePeriod($request, $user, config('auth.2fa_grace_period', 30));
 
             return response()->json([
                 'message' => __('auth.2fa_verified'),
@@ -37,7 +37,7 @@ class TwoFactorVerifyController extends AuthController
         }
 
         if ($this->verifyBackupCode($user, $code)) {
-            $this->twoFactorService->setGracePeriod($user->id, config('auth.2fa_grace_period', 30));
+            $this->twoFactorService->setGracePeriod($request, $user, config('auth.2fa_grace_period', 30));
 
             return response()->json([
                 'message' => __('auth.2fa_verified_backup_code_used'),
