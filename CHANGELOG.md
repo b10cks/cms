@@ -3,6 +3,14 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.11.6-43268821] — 2026-11-6
+
+- 📝 Record the large-page AI translation fix waiting on review
+- ⚡️ Apply streamed AI translations in batches on the localization page
+- 🐛 Queue the background job before an inline run's stream closes
+- 🐛 Stream AI replies in production instead of delivering them at the end
+- ➕ Add symfony/http-client for streamed AI provider calls
+
 ## [v2026.11.6-91d4320d] — 2026-11-6
 
 - 📝 Record the AI Translate fix waiting on review
