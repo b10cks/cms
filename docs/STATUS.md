@@ -4,7 +4,7 @@ Updated 2026-11-06. Read by agents at the start of a thread; rewrite it before h
 
 ## Branches
 
-- `main` (checked out, pushed): released as v2026.11.6-04136717 on 2026-11-06 (security round 3, entry editor polish, translation view upgrade and status toolbar); deploy, self-hosted release and tests all green. Publish the four draft advisories (GHSA-rhr5-hf7m-33jf, GHSA-fh7x-m2rf-6796, GHSA-7g4p-qm7c-468h, GHSA-x748-ffgj-w7gw). Open: Mike reports that after publishing a translation, switching to another language keeps showing the old one; not reproduced locally yet (see Next). The 2027 entry editor directions (https://claude.ai/artifact/J1RLxqne22bpkjBVFf4Qse) are parked by Mike.
+- `main` (checked out, pushed): released as v2026.11.6-04136717 on 2026-11-06 (security round 3, entry editor polish, translation view upgrade and status toolbar); deploy, self-hosted release and tests all green. Publish the four draft advisories (GHSA-rhr5-hf7m-33jf, GHSA-fh7x-m2rf-6796, GHSA-7g4p-qm7c-468h, GHSA-x748-ffgj-w7gw). Fix for the stale form after AI Translate committed on main (TiptapEditor wrapper around the AI bubble menu), not pushed or released; waiting on Mike's local review, then `./release.sh`. The 2027 entry editor directions (https://claude.ai/artifact/J1RLxqne22bpkjBVFf4Qse) are parked by Mike.
 - Merged into main, can be deleted with their worktrees: `fix/security-review-round-2`, `feat/import-streaming-progress`, `feat/ai-content-operations-clean`, `feat/ux-refinements`, `feature/provider-activity`, `feature/verified-team-domains`, `delta/security-review`.
 - `feat/ai-content-operations` (retired working branch) and `archive/ai-content-operations-history` (full 142-commit history): reference only.
 - Dependabot #56, #57, #58, #59, #64 (Actions bumps, three touch `deploy.yml`): held for a release of their own.
@@ -22,7 +22,7 @@ None.
 
 - B10cks Website2 (local), for the translation view screenshots: "Blocks testing" `01KK1S2RKFE50Q2NQZ29Q8VHPE` has `i18n_mode_override: overlay` (was `inherit`) and a new current version `01m6rbr8ppkrv0qa0yberpw8ke` with a changed header and item-1 label (was `01kp1n314td35y8nef81fnz57q`); a German translation `01m6rbqz13rcp2e4ggfg960hp2` was created, published (4 memory pairs) and given a draft with "Bausteinen"; a space glossary "Website terms" `01m6rcj5eg9v4ndy3kf63ze9zd` (blocks, content model, b10cks). "For Agencies" was switched to overlay and back to `inherit`.
 
-- SchlafTEQ, for the locale-switch repro (2026-11-06): "Termin stornieren" EN published with its first body field ending in " x"; "Impressum" got a new published EN translation ("Legal notice EN" in one field).
+- SchlafTEQ, for the locale-switch repro (2026-11-06): "Termin stornieren" EN published with its first body field ending in " x"; "Impressum" got a new published EN translation ("Legal notice EN" in one field); "Termin stornieren" meta field has " q w" saved; "Home" EN has two saved test drafts.
 
 ## Running
 
@@ -49,7 +49,7 @@ Shipped on 2026-11-06 with these open, by Mike's call. Fix `settleBatch` first.
 
 ## Next
 
-0. Locale switch after publishing keeps the old language (Mike, prod, 2026-11-06). Ruled out locally: localization page EN publish then switch to an existing (nl) or missing (nl, it) language works headless; cache writes after publish/createAndPublish only touch the published row; own commit whispers are filtered. Suspects left: the regular editor's `isIncomingDifferentDocument && isDirty` guard if something writes to the document after `markSaved()`; prod-only Reverb events; the AI Translate path. Needs Mike's exact steps.
+0. Release the AI Translate stale-form fix once Mike has reviewed it locally. Root cause: disabling the translation editors during AI Translate unmounted the AI BubbleMenu, whose element is detached while hidden; Vue's patch threw (`emitsOptions` / `insertBefore` of null) and the editor stopped updating.
 1. Fix `AiOperations::settleBatch` (see "Merge review"), then the backend should-fix items.
 2. UI follow-ups from the 2026-11-05 audit (32 findings, team switcher and tree search rules already settled): solid blue menu highlights, hand-rolled `ContentSelect`, row action sizes, status text on `-ink` tokens, light-only alerts, confirm dialog and Cancel looks, sheet padding. Also: space blueprint radio cards, Mass Edit grid monospace 10px slugs, hard-coded dimension labels, the 500 on version filters `isCurrentVersion`/`isPublished`, the rich-text link dialog's old picker, missing `common.select`, "Automations" cut off in the rail.
 3. Right after the deploy: `php artisan migrate --force` (management migrations `2026_11_02_100000`, `2026_11_02_120000`, `2026_11_05_100000_normalize_ai_glossary_terms`), then `spaces:repair-databases --dry-run` and without the flag (space migrations 000021 to 000028).
