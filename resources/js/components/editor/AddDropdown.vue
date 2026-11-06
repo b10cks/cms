@@ -121,16 +121,16 @@ watch([isOpen, templatesBlock], () => {
       :class="[
         'group/add flex',
         placement === 'end'
-          ? 'relative mb-0.5 h-7 items-center justify-center'
+          ? 'relative mb-2 h-7 items-center justify-center'
           : 'opacity-0 transition-opacity hover:opacity-100 focus-within:opacity-100 has-[[data-state=open]]:opacity-100',
       ]"
     >
       <div
         :class="[
-          'absolute inset-x-0 border-t-2 border-accent',
+          'absolute border-t-2 border-accent',
           placement === 'end'
-            ? 'top-1/2 opacity-0 transition-opacity group-hover/add:opacity-100 group-has-[:focus-visible]/add:opacity-100 group-has-[[data-state=open]]/add:opacity-100'
-            : '-mt-3 pt-4',
+            ? 'inset-x-0 top-1/2 -mt-px opacity-0 transition-opacity group-hover/add:opacity-100 group-has-[:focus-visible]/add:opacity-100 group-has-[[data-state=open]]/add:opacity-100'
+            : 'inset-x-[calc(var(--row-inset,0px)*-1)] -mt-[13px] pt-4',
         ]"
       />
       <div

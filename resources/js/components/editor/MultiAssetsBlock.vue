@@ -281,10 +281,10 @@ const handleFolderChange = (folderId: string | null) => {
 
       <div
         v-if="!props.readOnly && canAddMore"
-        class="group/add relative mb-0.5 flex h-7 items-center justify-center"
+        class="group/add relative mb-2 flex h-7 items-center justify-center"
       >
         <div
-          class="absolute inset-x-0 top-1/2 border-t-2 border-accent opacity-0 transition-opacity group-hover/add:opacity-100 group-has-[:focus-visible]/add:opacity-100"
+          class="absolute inset-x-0 top-1/2 -mt-px border-t-2 border-accent opacity-0 transition-opacity group-hover/add:opacity-100 group-has-[:focus-visible]/add:opacity-100"
         />
         <button
           type="button"

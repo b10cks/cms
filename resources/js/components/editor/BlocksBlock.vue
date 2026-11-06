@@ -884,7 +884,7 @@ const getItemRingStyle = (content: Record<string, unknown>, index: number) => {
           data-block-item
           :class="[
             'relative mb-2 min-w-0 rounded-lg border bg-card py-2 transition-colors duration-100',
-            depth === 0 ? 'px-3' : 'px-2',
+            depth === 0 ? 'px-3 [--row-inset:calc(0.75rem+1px)]' : 'px-2 [--row-inset:calc(0.5rem+1px)]',
             hasVisibleItemError(i) ? 'border-destructive/40 bg-destructive/5' : 'border-border hover:border-border-strong',
             content.hidden ? 'opacity-50' : '',
           ]"
