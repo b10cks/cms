@@ -4,6 +4,7 @@ namespace App\Notifications\Space;
 
 use App\Enums\NotificationType;
 use App\Notifications\Concerns\DeliversInApp;
+use App\Notifications\Concerns\EscapesMailPlaceholders;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -20,6 +21,7 @@ use Illuminate\Support\HtmlString;
 class UsageThresholdNotification extends Notification implements ShouldQueue
 {
     use DeliversInApp;
+    use EscapesMailPlaceholders;
     use Queueable;
 
     /**
@@ -78,10 +80,10 @@ class UsageThresholdNotification extends Notification implements ShouldQueue
         return (new MailMessage)
             ->subject(__("notifications.{$key}.subject", $params))
             ->greeting(__('notifications.greeting'))
-            ->line(new HtmlString(__("notifications.{$key}.intro", [
+            ->line(new HtmlString(__("notifications.{$key}.intro", $this->escapeForMail([
                 ...$params,
-                'space' => e($this->space['name']),
-            ])))
+                'space' => $this->space['name'],
+            ]))))
             ->line(__("notifications.{$key}.detail", $params))
             ->action(__("notifications.{$key}.action"), $url)
             ->line(__("notifications.{$key}.outro"))

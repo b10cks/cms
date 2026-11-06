@@ -4,6 +4,7 @@ namespace App\Notifications\Space;
 
 use App\Enums\NotificationType;
 use App\Notifications\Concerns\DeliversInApp;
+use App\Notifications\Concerns\EscapesMailPlaceholders;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -21,6 +22,7 @@ use Illuminate\Support\HtmlString;
 class PaymentRequestedNotification extends Notification implements ShouldQueue
 {
     use DeliversInApp;
+    use EscapesMailPlaceholders;
     use Queueable;
 
     /**
@@ -67,11 +69,11 @@ class PaymentRequestedNotification extends Notification implements ShouldQueue
         return (new MailMessage)
             ->subject(__('notifications.paymentRequested.subject', $params))
             ->greeting(__('notifications.greeting'))
-            ->line(new HtmlString(__('notifications.paymentRequested.intro', [
+            ->line(new HtmlString(__('notifications.paymentRequested.intro', $this->escapeForMail([
                 ...$params,
-                'space' => e($this->space['name']),
-                'requester' => e($this->requester),
-            ])))
+                'space' => $this->space['name'],
+                'requester' => $this->requester,
+            ]))))
             ->line(__('notifications.paymentRequested.detail', $params))
             ->action(__('notifications.paymentRequested.action'), $url)
             ->line(__('notifications.paymentRequested.outro'))

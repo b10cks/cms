@@ -7,6 +7,7 @@ use App\Models\Management\Invite;
 use App\Models\Management\Space;
 use App\Models\User;
 use App\Notifications\Concerns\DeliversInApp;
+use App\Notifications\Concerns\EscapesMailPlaceholders;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -16,6 +17,7 @@ use Illuminate\Support\HtmlString;
 class InviteToSpaceNotification extends Notification implements ShouldQueue
 {
     use DeliversInApp;
+    use EscapesMailPlaceholders;
     use Queueable;
 
     public function __construct(
@@ -62,12 +64,12 @@ class InviteToSpaceNotification extends Notification implements ShouldQueue
         return (new MailMessage)
             ->subject(__('notifications.inviteSpace.subject', ['space' => $this->space->name, 'team' => $this->space->team?->name ?? __('notifications.teamFallback')]))
             ->greeting(__('notifications.greeting'))
-            ->line(new HtmlString(__('notifications.inviteSpace.intro', [
+            ->line(new HtmlString(__('notifications.inviteSpace.intro', $this->escapeForMail([
                 'inviter' => $this->inviter?->display_name ?? __('notifications.inviterFallback'),
                 'space' => $this->space->name,
                 'team' => $this->space->team?->name ?? __('notifications.teamFallback'),
                 'role' => $this->invite->role,
-            ])))
+            ]))))
             ->when(
                 $this->invite->message,
                 fn ($mail) => $mail->line(new HtmlString('<blockquote style="border-left: 4px solid #ccc; padding-left: 16px; margin-left: 0;">'.e($this->invite->message).'</blockquote>'))
@@ -75,8 +77,8 @@ class InviteToSpaceNotification extends Notification implements ShouldQueue
             ->line(new HtmlString(__('notifications.inviteSpace.start')))
             ->action(__('notifications.inviteSpace.action'), $acceptUrl)
             ->salutation(' ')
-            ->line(new HtmlString(__('notifications.inviteSpace.outro', [
+            ->line(new HtmlString(__('notifications.inviteSpace.outro', $this->escapeForMail([
                 'expires' => $this->invite->expires_at->diffForHumans(),
-            ])));
+            ]))));
     }
 }

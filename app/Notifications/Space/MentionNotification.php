@@ -4,6 +4,7 @@ namespace App\Notifications\Space;
 
 use App\Enums\NotificationType;
 use App\Notifications\Concerns\DeliversInApp;
+use App\Notifications\Concerns\EscapesMailPlaceholders;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -19,6 +20,7 @@ use Illuminate\Support\HtmlString;
 class MentionNotification extends Notification implements ShouldQueue
 {
     use DeliversInApp;
+    use EscapesMailPlaceholders;
     use Queueable;
 
     /**
@@ -66,10 +68,10 @@ class MentionNotification extends Notification implements ShouldQueue
                 'author' => $this->author['display_name'],
             ]))
             ->greeting(__('notifications.greeting'))
-            ->line(new HtmlString(__('notifications.commentMention.intro', [
+            ->line(new HtmlString(__('notifications.commentMention.intro', $this->escapeForMail([
                 'author' => $this->author['display_name'],
                 'content' => $this->content['name'] ?? $this->space['name'],
-            ])))
+            ]))))
             ->line(new HtmlString('<blockquote style="border-left: 4px solid #ccc; padding-left: 16px; margin-left: 0;">'.e($this->excerpt).'</blockquote>'))
             ->action(__('notifications.commentMention.action'), $url)
             ->salutation(' ');
