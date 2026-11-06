@@ -4,7 +4,7 @@ Updated 2026-11-06. Read by agents at the start of a thread; rewrite it before h
 
 ## Branches
 
-- `main` (checked out): released as v2026.11.6-c74a9a65, then security round 3 merged on top (f7b327da, five 🔒 commits efdf3084..a6cc98e7, not released, not pushed). Full PHPUnit passes (2041 passed, 5 skipped). Draft advisories GHSA-rhr5-hf7m-33jf (mail injection), GHSA-fh7x-m2rf-6796 (SAML skips 2FA), GHSA-7g4p-qm7c-468h (step-up grace), GHSA-x748-ffgj-w7gw (breadcrumbs) say "fixed in the next release after v2026.11.6-c74a9a65"; publish them with that release.
+- `main` (checked out): released as v2026.11.6-c74a9a65, then security round 3 merged on top (f7b327da, five 🔒 commits efdf3084..a6cc98e7, not released, not pushed). Full PHPUnit passes (2041 passed, 5 skipped). Draft advisories GHSA-rhr5-hf7m-33jf (mail injection), GHSA-fh7x-m2rf-6796 (SAML skips 2FA), GHSA-7g4p-qm7c-468h (step-up grace), GHSA-x748-ffgj-w7gw (breadcrumbs) say "fixed in the next release after v2026.11.6-c74a9a65"; publish them with that release. Then the entry editor polish on top: ten commits ee1215d4..a4baf9dc, then its rules in DESIGN.md (space switcher, blocks insert line, nested item heading, price, references, rich text, map, meta search and share preview), not pushed. The 2027 entry editor directions (https://claude.ai/artifact/J1RLxqne22bpkjBVFf4Qse) are parked by Mike.
 - Merged into main, can be deleted with their worktrees: `fix/security-review-round-2`, `feat/import-streaming-progress`, `feat/ai-content-operations-clean`, `feat/ux-refinements`, `feature/provider-activity`, `feature/verified-team-domains`, `delta/security-review`.
 - `feat/ai-content-operations` (retired working branch) and `archive/ai-content-operations-history` (full 142-commit history): reference only.
 - Dependabot #56, #57, #58, #59, #64 (Actions bumps, three touch `deploy.yml`): held for a release of their own.
@@ -16,7 +16,7 @@ None.
 
 ## Local data changed for screenshots
 
-- Factory user `adell.witting@example.net` (password `password`) is an Admin of local space "B10cks Website2". Remove when no more rating rounds need it.
+- Factory user `adell.witting@example.net` (password `password`) is an Admin of local spaces "B10cks Website2" and, since 2026-11-06, "SchlafTEQ". Remove when no more rating rounds need it.
 - B10cks Website2 Config entry, version `01kw6na6zw47jk75kgzhcwpbjq`: the Pricing menu link points at Home, section "Atomic Design Principles". It was `{"type":"internal","target":null,"content":"01kh3cvbj3qxfvv8pp9mwwwvt1"}`, a dangling id.
 - SchlafTEQ space `01kkk9mqjw2kn06vknz28t7ncg` (another thread): glossary "schlafTEQ Glossar" with 188 rows, AI config, unpublished AI drafts left for review: meta on `/kontakt-und-termine`, translations `/produkte/beds` (en), `/produkte/bedden` (nl), `/produkte/lits` (fr, with meta) and `/produkte/letti` (it). The five Reference docs that duplicated the glossary were soft-deleted on 2026-11-06; live policy now holds the glossary only. Management migration `2026_11_05_100000_normalize_ai_glossary_terms` is applied locally.
 
