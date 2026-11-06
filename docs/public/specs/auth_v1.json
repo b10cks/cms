@@ -455,8 +455,8 @@
         },
         "/auth/v1/social/{provider}/link": {
             "get": {
-                "summary": "List link",
-                "description": "",
+                "summary": "Only reachable through the short-lived URL that the step-up guarded",
+                "description": "Only reachable through the short-lived URL that the step-up guarded\n`users.me.social-links.start` signs for this user. A linked provider is\na login that survives a password change, so a borrowed session alone\nmust not be able to add one.",
                 "tags": [
                     "Social"
                 ],

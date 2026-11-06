@@ -201,6 +201,35 @@
             }
         },
         "/mgmt/v1/users/me/social-links/{provider}": {
+            "post": {
+                "summary": "Sign a five-minute link start URL for the current user",
+                "description": "Sign a five-minute link start URL for the current user. The route sits\nbehind the password or TOTP step-up.",
+                "tags": [
+                    "Social Links"
+                ],
+                "operationId": "post_users_me_social_links_by_provider",
+                "parameters": [
+                    {
+                        "name": "provider",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "The provider identifier"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
             "delete": {
                 "summary": "Delete social link",
                 "description": "",
@@ -410,7 +439,9 @@
                                         "type": "array",
                                         "items": {
                                             "type": "string",
-                                            "maxLength": 100
+                                            "enum": [
+                                                "*"
+                                            ]
                                         }
                                     },
                                     "expires_at": {
@@ -753,8 +784,8 @@
         },
         "/mgmt/v1/users/me/invites/{invite}/decline": {
             "post": {
-                "summary": "Create decline",
-                "description": "",
+                "summary": "Same proof as accepting: the bound invitee, or the invited address backed",
+                "description": "Same proof as accepting: the bound invitee, or the invited address backed\nby the mailed token or a mail-verified account. A team IdP asserting the\naddress is not enough.",
                 "tags": [
                     "Invites"
                 ],
@@ -18620,6 +18651,189 @@
                 ]
             }
         },
+        "/mgmt/v1/spaces/{space}/contents/{content}/translation-status": {
+            "get": {
+                "summary": "Status of each translatable unit of an entry in one locale, keyed by unit ID (`title`, `body.<block id>.text`, `seo.title`): `missing`, `empty`, `stale` with `previous_source`, `same_as_source`, `current`, `inherited` or `not_in_translation`",
+                "description": "Status of each translatable unit of an entry in one locale, keyed by unit ID (`title`, `body.<block id>.text`, `seo.title`): `missing`, `empty`, `stale` with `previous_source`, `same_as_source`, `current`, `inherited` or `not_in_translation`. A saved translation that breaks the glossary carries `findings`, only for people with the `ai.view` ability. The entry may be the canonical or any of its translations. Unsaved drafts are not seen.",
+                "tags": [
+                    "Contents"
+                ],
+                "operationId": "get_spaces_by_space_contents_by_content_translation_status",
+                "parameters": [
+                    {
+                        "name": "space",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "The space identifier"
+                    },
+                    {
+                        "name": "content",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "The content identifier"
+                    },
+                    {
+                        "name": "locale",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "maxLength": 20
+                        },
+                        "description": "required The target locale."
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/ContentTranslationStatus"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Unknown locale, the default language, or an entry with no source to translate from.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/mgmt/v1/spaces/{space}/contents/{content}/translation-assist": {
+            "post": {
+                "summary": "What helps translate one unit by hand: glossary terms in the source and findings for `text` (or the saved translation), similar translation memory pairs and the unit's text in other locales",
+                "description": "What helps translate one unit by hand: glossary terms in the source and findings for `text` (or the saved translation), similar translation memory pairs and the unit's text in other locales. Glossary is null without the `ai.view` ability.",
+                "tags": [
+                    "Contents"
+                ],
+                "operationId": "post_spaces_by_space_contents_by_content_translation_assist",
+                "parameters": [
+                    {
+                        "name": "space",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "The space identifier"
+                    },
+                    {
+                        "name": "content",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "The content identifier"
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "locale": {
+                                        "type": "string",
+                                        "maxLength": 20
+                                    },
+                                    "unit": {
+                                        "type": "string",
+                                        "maxLength": 500
+                                    },
+                                    "text": {
+                                        "type": "string",
+                                        "maxLength": 50000,
+                                        "nullable": true
+                                    }
+                                },
+                                "required": [
+                                    "locale",
+                                    "unit"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/ContentTranslationAssist"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "The entry has no such unit.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Unknown locale, the default language, or an entry with no source to translate from.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/mgmt/v1/spaces/{space}/tokens": {
             "get": {
                 "summary": "Display a listing of the tokens for a space",
@@ -33177,6 +33391,163 @@
                     }
                 }
             },
+            "ContentTranslationStatus": {
+                "type": "object",
+                "properties": {
+                    "locale": {
+                        "type": "string"
+                    },
+                    "source_locale": {
+                        "type": "string"
+                    },
+                    "translation_id": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "Null while the locale has no translation entry."
+                    },
+                    "units": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "$ref": "#/components/schemas/ContentTranslationUnitStatus"
+                        },
+                        "description": "Keyed by unit ID: `title`, `body.<block id>.text`, `seo.title`."
+                    }
+                }
+            },
+            "ContentTranslationAssist": {
+                "type": "object",
+                "properties": {
+                    "unit": {
+                        "type": "string"
+                    },
+                    "type": {
+                        "type": "string",
+                        "description": "Field type of the unit."
+                    },
+                    "source": {
+                        "type": "string",
+                        "description": "Plain text; rich text drops its markup."
+                    },
+                    "target": {
+                        "type": "string",
+                        "description": "The text checked: the draft sent, else the saved translation."
+                    },
+                    "glossary": {
+                        "type": "object",
+                        "description": "Null without the `ai.view` ability.",
+                        "properties": {
+                            "terms": {
+                                "type": "array",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "concept_id": {
+                                            "type": "string"
+                                        },
+                                        "term": {
+                                            "type": "string"
+                                        },
+                                        "required": {
+                                            "type": "string",
+                                            "nullable": true,
+                                            "description": "Wording to use in the target locale."
+                                        },
+                                        "do_not_translate": {
+                                            "type": "boolean",
+                                            "nullable": true,
+                                            "description": "True for Keep exact, else null."
+                                        },
+                                        "forbidden": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string"
+                                            },
+                                            "nullable": true
+                                        },
+                                        "note": {
+                                            "type": "string",
+                                            "nullable": true
+                                        },
+                                        "matches": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object",
+                                                "description": "Where the term stands in the source.",
+                                                "properties": {
+                                                    "start": {
+                                                        "type": "integer"
+                                                    },
+                                                    "end": {
+                                                        "type": "integer"
+                                                    },
+                                                    "text": {
+                                                        "type": "string"
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            },
+                            "findings": {
+                                "type": "array",
+                                "items": {
+                                    "$ref": "#/components/schemas/ContentTranslationFinding"
+                                },
+                                "nullable": true
+                            }
+                        }
+                    },
+                    "memory": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "description": "Similar stored pairs, best first, at least 30% alike and not already in the field.",
+                            "properties": {
+                                "score": {
+                                    "type": "number",
+                                    "description": "1 for an exact source match."
+                                },
+                                "source": {
+                                    "type": "string"
+                                },
+                                "target": {
+                                    "type": "string"
+                                },
+                                "origin": {
+                                    "type": "string"
+                                },
+                                "content_id": {
+                                    "type": "string",
+                                    "nullable": true
+                                },
+                                "content_name": {
+                                    "type": "string",
+                                    "nullable": true
+                                },
+                                "field_path": {
+                                    "type": "string",
+                                    "nullable": true
+                                }
+                            }
+                        }
+                    },
+                    "locales": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "locale": {
+                                    "type": "string"
+                                },
+                                "text": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
             "TokenResource": {
                 "type": "object",
                 "properties": {
@@ -35351,6 +35722,62 @@
                             "type": "string"
                         },
                         "description": "The wording that is still in the draft."
+                    }
+                }
+            },
+            "ContentTranslationUnitStatus": {
+                "type": "object",
+                "properties": {
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "missing",
+                            "empty",
+                            "stale",
+                            "same_as_source",
+                            "current",
+                            "inherited",
+                            "not_in_translation"
+                        ]
+                    },
+                    "previous_source": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "stale only: the source the translation was written against."
+                    },
+                    "findings": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/ContentTranslationFinding"
+                        },
+                        "nullable": true,
+                        "description": "Glossary findings of the saved translation, with `ai.view` only."
+                    }
+                }
+            },
+            "ContentTranslationFinding": {
+                "type": "object",
+                "properties": {
+                    "type": {
+                        "type": "string",
+                        "enum": [
+                            "missing_term",
+                            "translated_do_not_translate",
+                            "forbidden_variant"
+                        ]
+                    },
+                    "term": {
+                        "type": "string"
+                    },
+                    "expected": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "The wording to use."
+                    },
+                    "found": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "forbidden_variant: the wording found."
                     }
                 }
             },
