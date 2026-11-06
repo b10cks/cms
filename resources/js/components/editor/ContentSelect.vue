@@ -123,9 +123,9 @@ onUnmounted(() => {
     <button
       type="button"
       :class="[
-        'flex w-full items-center justify-between gap-2 rounded-md border border-input bg-input px-3 py-2 text-sm',
-        'transition-colors hover:bg-accent hover:text-accent-foreground',
-        'focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring',
+        'flex w-full items-center justify-between gap-2 rounded-md border border-input-border bg-input px-3 py-2 text-sm',
+        'transition-colors hover:bg-accent-fill hover:text-accent-foreground',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
         open && 'ring-1 ring-ring',
       ]"
       @click="open = !open"
@@ -215,8 +215,8 @@ onUnmounted(() => {
             :class="[
               'flex w-full cursor-pointer items-center gap-2 rounded-sm py-1.5 pr-2 text-left text-sm transition-colors',
               index === highlightedIndex
-                ? 'bg-accent text-accent-foreground'
-                : 'hover:bg-accent hover:text-accent-foreground',
+                ? 'bg-accent-fill text-accent-foreground'
+                : 'hover:bg-accent-fill hover:text-accent-foreground',
             ]"
             @click="selectItem(item.id)"
             @mouseenter="highlightedIndex = index"

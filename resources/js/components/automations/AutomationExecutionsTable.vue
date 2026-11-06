@@ -213,7 +213,7 @@ const handleFiltersUpdate = (value: Record<string, unknown>) => {
                       :type="execution.automation.action.type"
                     />
                   </div>
-                  <p class="text-muted-foreground text-sm">
+                  <p class="text-muted text-sm">
                     {{
                       execution.automation?.description ||
                       execution.automation?.action?.name ||
@@ -233,7 +233,7 @@ const handleFiltersUpdate = (value: Record<string, unknown>) => {
                   </Badge>
                   <p
                     v-if="execution.error"
-                    class="max-w-56 truncate text-destructive text-xs"
+                    class="max-w-56 truncate text-destructive text-sm"
                   >
                     {{ execution.error }}
                   </p>
@@ -248,7 +248,7 @@ const handleFiltersUpdate = (value: Record<string, unknown>) => {
                   >
                     {{ getSourceLabel(execution) }}
                   </Badge>
-                  <p class="text-muted-foreground text-xs">
+                  <p class="text-muted text-sm">
                     {{ formatRelativeTime(execution.created_at) }}
                   </p>
                 </div>
@@ -258,13 +258,13 @@ const handleFiltersUpdate = (value: Record<string, unknown>) => {
                 <div class="space-y-1">
                   <div class="flex flex-col">
                     <span class="text-sm">{{ formatDateTime(execution.created_at) }}</span>
-                    <span class="text-muted-foreground text-xs">
+                    <span class="text-muted text-sm">
                       {{ $t('labels.automationExecutions.fields.queuedAt') }}
                     </span>
                   </div>
                   <div
                     v-if="execution.completed_at || execution.started_at"
-                    class="text-muted-foreground text-xs"
+                    class="text-muted text-sm"
                   >
                     {{ formatExecutionDuration(execution.duration) }}
                   </div>

@@ -32,10 +32,28 @@ export interface CommentResource {
   reactions: Record<string, SimpleUserResource[]>
   position?: CommentPosition
   author: SimpleUserResource
-  mentions: SimpleReleaseResource[]
+  mentions: SimpleUserResource[]
   resolved_at?: string
   created_at: string
   updated_at: string
+}
+
+/** Someone a comment can mention. */
+export interface MentionablePerson {
+  id: string
+  name: string
+  avatar?: string | null
+}
+
+/** The writes a thread can do. A rejected reply or edit leaves its composer open with the text. */
+export interface CommentActions {
+  reply: (parent: CommentResource, body: string) => Promise<unknown>
+  edit: (comment: CommentResource, body: string) => Promise<unknown>
+  remove: (comment: CommentResource) => void
+  resolve: (commentId: string) => void
+  unresolve: (commentId: string) => void
+  addReaction: (commentId: string, emoji: string) => void
+  removeReaction: (commentId: string, emoji: string) => void
 }
 
 export interface CommentReactionResource {

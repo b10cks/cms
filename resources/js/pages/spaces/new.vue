@@ -229,7 +229,7 @@ const isStepValid = computed(() => {
         />
         <p
           v-if="selectedTeam && !canCreateSpace"
-          class="rounded-lg border border-warning/30 bg-warning/5 px-4 py-3 text-sm text-muted-foreground"
+          class="rounded-lg border border-warning/30 bg-warning/5 px-4 py-3 text-sm text-muted"
         >
           {{ $t('labels.spaces.noCreateAccess', { team: selectedTeam.name }) }}
         </p>

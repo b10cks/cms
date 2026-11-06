@@ -28,6 +28,7 @@ import {
   ContextMenuTrigger,
 } from '~/components/ui/context-menu'
 import { Select, SelectContent, SelectItem, SelectTrigger } from '~/components/ui/select'
+import QueryErrorState from '~/components/ui/QueryErrorState.vue'
 import { Skeleton } from '~/components/ui/skeleton'
 import SortSelect from '~/components/ui/SortSelect.vue'
 import TablePaginationFooter from '~/components/ui/TablePaginationFooter.vue'
@@ -184,9 +185,9 @@ const gridWrapperRef = ref<HTMLElement | null>(null)
 const mainRef = ref<HTMLElement | null>(null)
 
 const gridSizes = {
-  sm: { cls: 'grid-cols-4 xl:grid-cols-6 2xl:grid-cols-12', icon: 'lucide:grid-3x3' },
-  md: { cls: 'grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6', icon: 'lucide:grid-2x2' },
-  lg: { cls: 'grid-cols-2 xl:grid-cols-4', icon: 'lucide:square-square' },
+  sm: { cls: 'grid-cols-3 sm:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-12', icon: 'lucide:grid-3x3' },
+  md: { cls: 'grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6', icon: 'lucide:grid-2x2' },
+  lg: { cls: 'grid-cols-1 sm:grid-cols-2 xl:grid-cols-4', icon: 'lucide:square-square' },
 } as const
 
 const sortOptions = [
@@ -238,7 +239,15 @@ const assetQueryParams = computed<AssetsQueryParams & { collection?: string }>((
   }
 })
 
-const { data: assetResponse, isLoading, isFetching } = useAssetsQuery(assetQueryParams)
+const {
+  data: assetResponse,
+  isLoading,
+  isFetching,
+  isError,
+  refetch,
+} = useAssetsQuery(assetQueryParams)
+const hasActiveSearch = computed(() => q.value !== '' || Object.keys(filters.value).length > 0)
+const searchFilter = useTemplateRef<InstanceType<typeof SearchFilter>>('searchFilter')
 
 const shouldLoadDeepLinkedAsset = computed(() => {
   return (
@@ -1661,8 +1670,8 @@ onUnmounted(() => {
     data-asset-grid
     @mousedown="handleMarqueeMouseDown"
   >
-    <header class="flex h-5 items-center justify-between">
-      <Breadcrumb class="flex gap-2">
+    <header class="flex min-h-5 flex-wrap items-center justify-between gap-2">
+      <Breadcrumb class="flex flex-wrap gap-2">
         <BreadcrumbItem @click="navigateToFolder(null)">
           <button
             ref="rootBreadcrumbRef"
@@ -1745,7 +1754,7 @@ onUnmounted(() => {
         </template>
       </Breadcrumb>
 
-      <div class="flex items-center gap-2">
+      <div class="flex items-center gap-2 flex-wrap">
         <Button
           v-if="allowUpload && canManageAssets"
           variant="primary"
@@ -1813,7 +1822,7 @@ onUnmounted(() => {
 
             <div
               v-if="settings.assets.gridFolders"
-              class="grid grid-cols-3 gap-3 rounded-lg bg-surface p-3 xl:grid-cols-2 2xl:grid-cols-3"
+              class="grid grid-cols-1 gap-3 rounded-lg bg-surface p-3 sm:grid-cols-2 md:grid-cols-1 lg:grid-cols-3 xl:grid-cols-2 2xl:grid-cols-3"
               role="listbox"
               aria-label="Folders"
               aria-multiselectable="true"
@@ -1850,20 +1859,21 @@ onUnmounted(() => {
           </section>
 
           <section class="flex flex-col gap-6">
-            <div class="flex items-center">
+            <div class="flex flex-wrap items-center gap-3 xl:flex-nowrap">
               <h2 class="flex items-center gap-2 text-2xl">
                 <Icon
                   name="lucide:image"
                   size="1.25rem"
                 />
                 <span class="font-semibold text-primary">{{ $t('labels.assets.assets') }}</span>
-                <Badge>{{ assetResponse?.meta?.total || 0 }}</Badge>
+                <Badge v-if="assetResponse">{{ assetResponse.meta?.total || 0 }}</Badge>
               </h2>
               <div
-                class="ml-auto flex gap-2"
+                class="ml-auto flex flex-wrap gap-2 xl:flex-nowrap"
                 data-no-marquee
               >
                 <SearchFilter
+                  ref="searchFilter"
                   v-model="filters"
                   :filterable-fields="assetFilters"
                   class="lg:min-w-xs 2xl:min-w-md"
@@ -1877,7 +1887,7 @@ onUnmounted(() => {
                   :placeholder="String($t('labels.sortBy'))"
                 />
                 <Select v-model="settings.assets.gridSize">
-                  <SelectTrigger>
+                  <SelectTrigger class="w-auto!">
                     <Icon :name="selectedGridSize.icon" />
                   </SelectTrigger>
                   <SelectContent>
@@ -1894,9 +1904,14 @@ onUnmounted(() => {
             </div>
 
             <!-- First-load skeleton: mirrors the real tile grid so data pops in without a layout jump. -->
+            <QueryErrorState
+              v-if="isError && !assetResponse"
+              :retrying="isFetching"
+              @retry="refetch()"
+            />
             <div
-              v-if="isLoading"
-              class="grid flex-1 gap-1"
+              v-else-if="isLoading"
+              class="grid flex-1 grid-cols-[minmax(0,1fr)] gap-1"
               aria-hidden="true"
             >
               <div :class="['grid gap-3 rounded-lg bg-surface p-3', selectedGridSize.cls]">
@@ -1917,7 +1932,7 @@ onUnmounted(() => {
             <div
               v-else-if="assetResponse"
               :class="[
-                'grid flex-1 gap-1 transition-opacity duration-200',
+                'grid flex-1 grid-cols-[minmax(0,1fr)] gap-1 transition-opacity duration-200',
                 isFetching ? 'opacity-50' : '',
               ]"
             >
@@ -1931,7 +1946,9 @@ onUnmounted(() => {
                 </h3>
                 <p class="mb-4 text-center text-muted">
                   {{
-                    collectionId
+                    hasActiveSearch
+                      ? $t('labels.assets.noSearchResults')
+                      : collectionId
                       ? $t('labels.assetCollections.emptyCollection')
                       : tagId
                         ? $t('labels.assets.noAssetsWithTag')
@@ -1941,7 +1958,14 @@ onUnmounted(() => {
                   }}
                 </p>
                 <Button
-                  v-if="allowUpload && canManageAssets"
+                  v-if="hasActiveSearch"
+                  variant="outline"
+                  @click="searchFilter?.clearAllFilters()"
+                >
+                  {{ $t('labels.assets.clearSearch') }}
+                </Button>
+                <Button
+                  v-else-if="allowUpload && canManageAssets"
                   variant="primary"
                   @click="showUploadDialog = true"
                 >

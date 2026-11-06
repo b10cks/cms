@@ -68,6 +68,18 @@ export function useContentVersions(
     })
   }
 
+  /** How many versions the entry has, read from the list's pagination. */
+  const useContentVersionCountQuery = () => {
+    return useQuery({
+      queryKey: computed(() => [
+        ...queryKeys.contentVersions(spaceId, resolvedContentId.value).lists(),
+        'count',
+      ]),
+      queryFn: async () => (await versionsAPI.value.index({ per_page: 1 })).meta.total,
+      enabled: hasContentId,
+    })
+  }
+
   const useContentVersionQuery = (versionId: MaybeRef<string | null | undefined>) => {
     const resolvedVersionId = computed(() => toValue(versionId) || '')
 
@@ -158,6 +170,7 @@ export function useContentVersions(
   return {
     // Queries
     useContentVersionsQuery,
+    useContentVersionCountQuery,
     useContentVersionQuery,
 
     // Mutations

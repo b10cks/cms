@@ -1,15 +1,15 @@
 <script setup lang="ts">
+import { useMediaQuery } from '@vueuse/core'
 import { useRouteQuery } from '@vueuse/router'
 import { TabsContent, TabsRoot } from 'reka-ui'
 
-import AssetCollectionTree from '~/components/assets/AssetCollectionTree.vue'
-import AssetFolderTree from '~/components/assets/AssetFolderTree.vue'
 import AssetGrid from '~/components/assets/AssetGrid.vue'
 import AssetListView from '~/components/assets/AssetListView.vue'
-import AssetTagTree from '~/components/assets/AssetTagTree.vue'
+import AssetLibraryNav from '~/components/assets/AssetLibraryNav.vue'
 import Icon from '~/components/Icon.vue'
 import { Button } from '~/components/ui/button'
 import { ScrollArea } from '~/components/ui/scroll-area'
+import { Sheet, SheetContent, SheetTitle } from '~/components/ui/sheet'
 import { TabsList, TabsTrigger } from '~/components/ui/tabs'
 
 import ExportAssetsDialog from './assets/ExportAssetsDialog.vue'
@@ -52,6 +52,12 @@ const viewMode = useRouteQuery('view', 'grid') as Ref<'grid' | 'list'>
 const exportDialogOpen = ref(false)
 const importDialogOpen = ref(false)
 
+const isWide = useMediaQuery('(min-width: 768px)')
+const navOpen = ref(false)
+watch([selectedFolder, selectedTag, selectedCollection], () => {
+  navOpen.value = false
+})
+
 watch(selectedFolder, (folderId) => {
   if (folderId !== null) {
     selectedTag.value = null
@@ -77,33 +83,52 @@ watch(selectedCollection, (collectionId) => {
     class="flex h-[calc(100svh-3.5rem)] max-h-[calc(100svh-3.5rem)] w-full flex-col overflow-hidden"
   >
     <div class="flex min-h-0 flex-1 overflow-hidden">
-      <div class="flex h-full min-h-0 w-xs shrink-0 flex-col overflow-hidden bg-surface p-2">
+      <div
+        v-if="isWide"
+        class="flex h-full min-h-0 w-xs shrink-0 flex-col overflow-hidden bg-sidebar p-2"
+      >
         <ScrollArea class="min-h-0 flex-1 overflow-y-auto">
-          <div class="flex min-w-0! flex-col">
-            <AssetFolderTree
-              v-model="selectedFolder"
-              :space-id="spaceId"
-              :has-active-tag="Boolean(selectedTag) || Boolean(selectedCollection)"
-              @select-all="((selectedTag = null), (selectedCollection = null))"
-            />
-            <AssetTagTree
-              v-model="selectedTag"
-              :space-id="spaceId"
-              class="mt-4"
-            />
-            <AssetCollectionTree
-              v-if="canViewAssetCollections"
-              v-model="selectedCollection"
-              :space-id="spaceId"
-              class="mt-4"
-            />
-          </div>
+          <AssetLibraryNav
+            v-model:folder="selectedFolder"
+            v-model:tag="selectedTag"
+            v-model:collection="selectedCollection"
+            :space-id="spaceId"
+            :show-collections="canViewAssetCollections"
+          />
         </ScrollArea>
       </div>
+      <Sheet
+        v-else
+        v-model:open="navOpen"
+      >
+        <SheetContent
+          side="left"
+          class="w-80 overflow-y-auto p-3"
+        >
+          <SheetTitle class="sr-only">{{ $t('labels.assets.browse') }}</SheetTitle>
+          <AssetLibraryNav
+            @select-all="navOpen = false"
+            v-model:folder="selectedFolder"
+            v-model:tag="selectedTag"
+            v-model:collection="selectedCollection"
+            :space-id="spaceId"
+            :show-collections="canViewAssetCollections"
+          />
+        </SheetContent>
+      </Sheet>
       <TabsRoot
         v-model="viewMode"
-        class="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto bg-background p-6"
+        class="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto bg-background p-3 md:p-6"
       >
+        <Button
+          v-if="!isWide"
+          variant="outline"
+          class="mb-3 self-start"
+          @click="navOpen = true"
+        >
+          <Icon name="lucide:folder-tree" />
+          {{ $t('labels.assets.browse') }}
+        </Button>
         <TabsContent
           value="grid"
           class="flex-1"

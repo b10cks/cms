@@ -15,6 +15,12 @@ const props = defineProps<{
   class?: HTMLAttributes['class']
 }>()
 
+const failed = ref(false)
+watch(
+  () => props.avatar,
+  () => (failed.value = false)
+)
+
 const initials = computed(() => {
   const name = props.name
   if (!name) return ''
@@ -39,7 +45,7 @@ const fontSize = computed(() => {
     case 'sm':
       return 'text-[8px] font-bold'
     default:
-      return 'text-xs font-bold'
+      return 'text-sm font-bold'
   }
 })
 </script>
@@ -52,12 +58,13 @@ const fontSize = computed(() => {
     :style="{ borderColor: props.borderColor || 'transparent' }"
   >
     <NuxtImg
-      v-if="props.avatar"
+      v-if="props.avatar && !failed"
       :src="props.avatar"
       :alt="initials"
       :width="width"
       :height="width"
       class="h-full w-full object-cover"
+      @error="failed = true"
     />
     <span
       v-else

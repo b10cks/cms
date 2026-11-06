@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { api } from '~/api'
 import Icon from '~/components/Icon.vue'
 import CreateReleaseDialog from '~/components/releases/CreateReleaseDialog.vue'
 import ReleaseList from '~/components/releases/ReleaseList.vue'
@@ -67,7 +68,19 @@ const handleUpdateRelease = (id: string, payload: CreateReleaseRequest) => {
   )
 }
 
-const handleCommit = (releaseId: string) => {
+/** Committing is what publishes a release, so it says how many of its entries carry flags. */
+const handleCommit = async (releaseId: string) => {
+  // Flags never block, so a failed check commits as usual.
+  const flags = await api.forSpace(spaceId.value).ai.contentFlags(releaseId).catch(() => ({ data: {} }))
+  const flagged = Object.keys(flags.data).length
+  if (flagged > 0) {
+    const confirmed = await alert.confirm(t('components.contentFlags.releaseMessage', { count: flagged }, flagged) as string, {
+      title: t('components.contentFlags.confirmTitle') as string,
+      confirmLabel: t('components.contentFlags.confirmCommit') as string,
+    })
+    if (!confirmed) return
+  }
+
   commitRelease(releaseId)
 }
 

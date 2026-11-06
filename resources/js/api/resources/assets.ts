@@ -1,4 +1,5 @@
-import { requestExportBlob, requestImportJson } from '~/lib/import-export'
+import { requestExportBlob, requestImportStream } from '~/lib/import-export'
+import type { ImportProgress } from '~/types/import-export'
 import { xhrUpload } from '~/lib/xhr-upload'
 
 import type { ApiClient } from '../client'
@@ -104,15 +105,18 @@ export class Assets extends BaseResource<
   /**
    * Import assets metadata from a file
    * @param file The file containing asset data to import
+   * @param onProgress Called with the rows processed so far
    * @returns Import result with successes, changes, and errors
    */
-  public async importData(file: File): Promise<AssetDataImportResult> {
-    const data = await requestImportJson<AssetDataImportResult | { data: AssetDataImportResult }>({
+  public async importData(
+    file: File,
+    onProgress?: (progress: ImportProgress) => void
+  ): Promise<AssetDataImportResult> {
+    return requestImportStream<AssetDataImportResult>({
       client: this.client,
       endpoint: `${this.basePath}/import`,
       file,
+      onProgress,
     })
-
-    return 'data' in data ? data.data : data
   }
 }

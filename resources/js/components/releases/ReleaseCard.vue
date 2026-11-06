@@ -56,7 +56,7 @@ const handleCancel = () => {
       class="flex w-15 flex-col items-center overflow-clip rounded border border-border"
     >
       <div
-        class="h-5 w-full bg-secondary py-1 text-center text-xs font-bold tracking-widest text-primary uppercase"
+        class="h-5 w-full bg-secondary text-center text-sm font-bold tracking-widest text-primary uppercase"
       >
         {{ formatDateTime(props.release.publish_at, 'ddd') }}
       </div>
@@ -146,7 +146,7 @@ const handleCancel = () => {
 
             <DropdownMenuItem
               @click="handleDelete"
-              class="text-destructive focus:bg-destructive focus:text-destructive-foreground"
+              class="text-destructive"
             >
               <Icon name="lucide:trash-2" />
               <span>{{ $t('actions.delete') }}</span>

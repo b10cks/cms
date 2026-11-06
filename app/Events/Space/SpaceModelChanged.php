@@ -7,11 +7,12 @@ use App\Models\Management\Space;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
+use Illuminate\Contracts\Events\ShouldDispatchAfterCommit;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Str;
 
-class SpaceModelChanged implements ShouldBroadcast
+class SpaceModelChanged implements ShouldBroadcast, ShouldDispatchAfterCommit
 {
     use InteractsWithSockets;
     use ResolvesBroadcastPayload;

@@ -10,7 +10,7 @@ import { Button } from '~/components/ui/button'
 import { Message, MessageContent } from '~/components/ui/message'
 import type { AiAttachment } from '~/lib/aiAttachments'
 import type { AiChangeset } from '~/lib/aiChangesets'
-import type { AiRunState, AiSource } from '~/lib/aiRun'
+import type { AiProviderRetryNotice, AiRunState, AiSource } from '~/lib/aiRun'
 import { aiSkillLabel } from '~/lib/aiSkills'
 import type { AiRunStep, AiThreadAnswer, AiThreadSource, AiThreadStep } from '~/lib/aiThreads'
 
@@ -34,6 +34,7 @@ const props = defineProps<{
   steps: readonly (AiRunStep | AiThreadStep)[]
   startedAt: string | number | null
   finishedAt: string | null
+  providerRetry?: AiProviderRetryNotice | null
   /** Only the owner answers and cancels */
   canAct: boolean
   busy?: boolean
@@ -120,6 +121,7 @@ const hasItems = computed(() => (props.changeset?.items?.length ?? 0) > 0)
         :running="state === 'running'"
         :started-at="startedAt"
         :finished-at="finishedAt"
+        :provider-retry="providerRetry"
       />
       <Button
         v-if="state === 'running' && canAct"

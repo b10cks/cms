@@ -93,14 +93,14 @@ const handleClose = () => {
       >
         <Alert variant="modern">
           <h4 class="mb-2 font-medium">{{ $t('labels.twoFactor.setup.whatIsTitle') }}</h4>
-          <p class="text-muted-foreground text-sm">
+          <p class="text-muted text-sm">
             {{ $t('labels.twoFactor.setup.whatIsDescription') }}
           </p>
         </Alert>
 
         <div>
           <h4 class="mb-2 font-medium">{{ $t('labels.twoFactor.setup.howItWorksTitle') }}</h4>
-          <ol class="text-muted-foreground ml-4 list-decimal text-sm">
+          <ol class="text-muted ml-4 list-decimal text-sm">
             <li>{{ $t('labels.twoFactor.setup.step1') }}</li>
             <li>{{ $t('labels.twoFactor.setup.step2') }}</li>
             <li>{{ $t('labels.twoFactor.setup.step3') }}</li>

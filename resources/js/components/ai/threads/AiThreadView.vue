@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import AiOperationPanel from '~/components/ai/operations/AiOperationPanel.vue'
 import AiSuggestionActions from '~/components/ai/AiSuggestionActions.vue'
 import type { AiThreadMessage } from '~/components/ai/threads/AiThreadComposer.vue'
 import AiThreadComposer from '~/components/ai/threads/AiThreadComposer.vue'
@@ -34,7 +35,9 @@ import {
   threadCreated,
   trackLiveStep,
 } from '~/lib/aiDock'
+import type { AiChangeset } from '~/lib/aiChangesets'
 import type { AiQuestionnaireAnswers } from '~/lib/aiRun'
+import { retryNoticeOfRun } from '~/lib/aiRun'
 import type { AiThreadChip } from '~/lib/aiThreads'
 import { chipsToRunContext, sameChip, THREAD_STATUS_STYLES } from '~/lib/aiThreads'
 import { aiSkillLabel } from '~/lib/aiSkills'
@@ -74,6 +77,22 @@ const {
   dismissSuggestionMutation,
 } = useAiThreads(() => props.spaceId)
 const { data: thread, isLoading } = useThreadQuery(() => props.threadId)
+const { useThreadOperationsQuery } = useAiOperations(() => props.spaceId)
+const { data: operations } = useThreadOperationsQuery(() =>
+  thread.value && thread.value.kind !== 'suggestions' ? props.threadId : null
+)
+/** Operation changesets arrive on their thread turn; they are reviewed in the operation's panel instead. */
+const operationChangesets = computed(() => {
+  const ids = new Set((operations.value ?? []).map((operation) => operation.id))
+  return new Map(
+    (thread.value?.turns ?? []).flatMap((turn) => {
+      const id = turn.changeset?.operation_id
+      return turn.changeset && id && ids.has(id) ? [[id, { ...turn.changeset, operation_id: id }] as const] : []
+    })
+  )
+})
+const turnChangeset = (changeset: AiChangeset | null) =>
+  changeset?.operation_id && operationChangesets.value.has(changeset.operation_id) ? null : changeset
 const { data: skills } = useAiSurfaceSkills(() => props.spaceId, 'cmdk')
 const screenChips = useAiScreenChips(() => props.spaceId)
 
@@ -449,13 +468,25 @@ const suggestionsBusy = computed(
                   :answers="turn.answers"
                   :sources="turn.sources"
                   :error="turn.run.error"
-                  :changeset="turn.changeset"
+                  :changeset="turnChangeset(turn.changeset)"
                   :steps="turn.steps"
                   :started-at="turn.run.started_at ?? null"
                   :finished-at="turn.run.finished_at ?? null"
+                  :provider-retry="retryNoticeOfRun(turn.run)"
                   :can-act="isOwner"
                   :busy="cancelMutation.isPending.value"
                   @cancel="cancel(turn.run.id)"
+                />
+              </MessageScrollerItem>
+              <MessageScrollerItem
+                v-for="operation in operations ?? []"
+                :key="operation.id"
+                :message-id="`operation-${operation.id}`"
+              >
+                <AiOperationPanel
+                  :space-id="spaceId"
+                  :operation="operation"
+                  :changeset="operationChangesets.get(operation.id) ?? null"
                 />
               </MessageScrollerItem>
               <MessageScrollerItem
@@ -476,6 +507,7 @@ const suggestionsBusy = computed(
                   :steps="live.steps"
                   :started-at="live.startedAt"
                   :finished-at="null"
+                  :provider-retry="run.providerRetry.value"
                   can-act
                   @cancel="run.cancel()"
                 />

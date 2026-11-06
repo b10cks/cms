@@ -15,6 +15,7 @@ import type {
   ImportDialogLabels,
   ImportDialogMode,
   ImportDialogResult,
+  ImportDialogSubmit,
   ImportError,
   ImportProgress,
 } from '~/types/import-export'
@@ -25,10 +26,9 @@ const props = withDefaults(
     accept: string
     labels: ImportDialogLabels
     /** Runs the feature mutation; its resolved value drives the summary step. */
-    submit: (file: File, mode: TMode) => Promise<ImportDialogResult<TItem, TDeleted>>
+    submit: ImportDialogSubmit<ImportDialogResult<TItem, TDeleted>, TMode>
     pending: boolean
-    /** Live progress of a streaming import, shown while it runs. */
-    progress?: ImportProgress | null
+    /** Overrides the generic "x of y rows" text. */
     progressLabel?: (progress: ImportProgress) => string
     /** Strategy tiles. Omit for importers that take no mode. */
     modes?: ImportDialogMode<TMode>[]
@@ -42,8 +42,7 @@ const props = withDefaults(
     contentClass?: string
   }>(),
   {
-    progress: null,
-    progressLabel: (progress: ImportProgress) => `${progress.processed} / ${progress.total}`,
+    progressLabel: undefined,
     modes: undefined,
     deletedLabel: undefined,
     deletedVariant: 'list',
@@ -53,12 +52,17 @@ const props = withDefaults(
   }
 )
 
+/** Summary lists stop here: a large file can report tens of thousands of rows. */
+const MAX_SUMMARY_ROWS = 200
+
 const emit = defineEmits<{
   /** Fired when the dialog clears itself, so wrappers can reset extra options. */
   reset: []
 }>()
 
 const open = defineModel<boolean>('open', { default: false })
+
+const { t } = useI18n()
 
 const defaultMode = () => props.modes?.[0]?.value as TMode
 
@@ -67,14 +71,32 @@ const importMode = ref(defaultMode()) as Ref<TMode>
 const errorMessage = ref('')
 const importResult = ref(null) as Ref<ImportDialogResult<TItem, TDeleted> | null>
 const expanded = ref<Set<string>>(new Set())
+const progress = ref<ImportProgress | null>(null)
 
 const showSummary = computed(() => importResult.value !== null)
 const activeMode = computed(() => props.modes?.find((mode) => mode.value === importMode.value))
+const summaryChanges = computed(() => importResult.value?.changes.slice(0, MAX_SUMMARY_ROWS) ?? [])
+const summaryDeleted = computed(() => importResult.value?.deleted?.slice(0, MAX_SUMMARY_ROWS) ?? [])
+const summaryErrors = computed(() => importResult.value?.errors.slice(0, MAX_SUMMARY_ROWS) ?? [])
+const hiddenRows = (total: number) =>
+  t('labels.importDialog.moreRows', { count: total - MAX_SUMMARY_ROWS })
 const progressPercent = computed(() =>
-  props.progress && props.progress.total > 0
-    ? (props.progress.processed / props.progress.total) * 100
+  progress.value && progress.value.total > 0
+    ? (progress.value.processed / progress.value.total) * 100
     : 0
 )
+const progressText = computed(() => {
+  if (!progress.value || progress.value.total === 0) {
+    return t('labels.importDialog.preparing')
+  }
+
+  return props.progressLabel
+    ? props.progressLabel(progress.value)
+    : t('labels.importDialog.progress', {
+        processed: progress.value.processed,
+        total: progress.value.total,
+      })
+})
 
 const handleImport = async () => {
   if (!selectedFile.value) {
@@ -86,9 +108,13 @@ const handleImport = async () => {
   importResult.value = null
 
   try {
-    importResult.value = await props.submit(selectedFile.value, importMode.value)
+    importResult.value = await props.submit(selectedFile.value, importMode.value, (value) => {
+      progress.value = value
+    })
   } catch (error) {
     errorMessage.value = error instanceof Error ? error.message : props.labels.fallbackError
+  } finally {
+    progress.value = null
   }
 }
 
@@ -153,7 +179,7 @@ const toggleExpanded = (key: string) => {
                   'rounded-lg border p-3 text-left transition-colors',
                   importMode === mode.value
                     ? 'border-primary bg-primary/5 text-foreground'
-                    : 'border-border text-muted-foreground hover:border-muted-foreground',
+                    : 'border-border text-muted hover:border-border-strong',
                 ]"
                 @click="importMode = mode.value"
               >
@@ -164,12 +190,12 @@ const toggleExpanded = (key: string) => {
                   />
                   <span class="text-sm font-medium">{{ mode.label }}</span>
                 </div>
-                <p class="mt-1 text-xs">{{ mode.description }}</p>
+                <p class="mt-1 text-sm">{{ mode.description }}</p>
               </button>
             </div>
             <p
               v-if="activeMode?.warning"
-              class="rounded-md bg-destructive/10 p-2 text-xs text-destructive"
+              class="rounded-md bg-destructive/10 p-2 text-sm text-destructive"
             >
               {{ activeMode.warning }}
             </p>
@@ -178,11 +204,14 @@ const toggleExpanded = (key: string) => {
           <slot name="options" />
 
           <div
-            v-if="pending && progress"
+            v-if="pending"
             class="space-y-1.5"
           >
-            <Progress :model-value="progressPercent" />
-            <p class="text-xs tabular-nums text-muted-foreground">{{ progressLabel(progress) }}</p>
+            <Progress
+              :model-value="progressPercent"
+              :class="progressPercent === 0 && 'animate-pulse'"
+            />
+            <p class="text-sm tabular-nums text-muted">{{ progressText }}</p>
           </div>
 
           <div
@@ -220,153 +249,173 @@ const toggleExpanded = (key: string) => {
         />
 
         <ScrollArea class="h-[28rem] w-full pr-4">
-          <div
+          <slot
             v-if="importResult"
-            class="space-y-6 p-1"
+            name="summary"
           >
-            <div
-              :class="[
-                'grid gap-4',
-                (importResult.summary.total_deleted ?? 0) > 0 ? 'md:grid-cols-4' : 'md:grid-cols-3',
-              ]"
-            >
-              <div class="rounded-lg border p-4">
-                <div class="text-sm font-medium text-muted-foreground">
-                  {{ labels.summarySuccess }}
-                </div>
-                <div class="text-2xl font-semibold text-foreground">
-                  {{ importResult.summary.total_success }}
-                </div>
-              </div>
-              <div class="rounded-lg border p-4">
-                <div class="text-sm font-medium text-muted-foreground">
-                  {{ labels.summaryChanges }}
-                </div>
-                <div class="text-2xl font-semibold text-foreground">
-                  {{ importResult.summary.total_changes }}
-                </div>
-              </div>
+            <div class="space-y-6 p-1">
               <div
-                v-if="(importResult.summary.total_deleted ?? 0) > 0"
-                class="rounded-lg border p-4"
+                :class="[
+                  'grid gap-4',
+                  (importResult.summary.total_deleted ?? 0) > 0 ? 'md:grid-cols-4' : 'md:grid-cols-3',
+                ]"
               >
-                <div class="text-sm font-medium text-muted-foreground">
-                  {{ labels.summaryDeleted }}
+                <div class="rounded-lg border p-4">
+                  <div class="text-sm font-medium text-muted">
+                    {{ labels.summarySuccess }}
+                  </div>
+                  <div class="text-2xl font-semibold text-foreground">
+                    {{ importResult.summary.total_success }}
+                  </div>
                 </div>
-                <div class="text-2xl font-semibold text-destructive">
-                  {{ importResult.summary.total_deleted }}
+                <div class="rounded-lg border p-4">
+                  <div class="text-sm font-medium text-muted">
+                    {{ labels.summaryChanges }}
+                  </div>
+                  <div class="text-2xl font-semibold text-foreground">
+                    {{ importResult.summary.total_changes }}
+                  </div>
                 </div>
-              </div>
-              <div class="rounded-lg border p-4">
-                <div class="text-sm font-medium text-muted-foreground">
-                  {{ labels.summaryErrors }}
-                </div>
-                <div class="text-2xl font-semibold text-foreground">
-                  {{ importResult.summary.total_errors }}
-                </div>
-              </div>
-            </div>
-
-            <div
-              v-if="importResult.changes.length > 0"
-              class="space-y-2"
-            >
-              <h3 class="font-medium text-foreground">{{ labels.changesTitle }}</h3>
-              <div class="space-y-2">
                 <div
-                  v-for="item in importResult.changes"
-                  :key="itemKey(item)"
-                  class="rounded-lg border"
+                  v-if="(importResult.summary.total_deleted ?? 0) > 0"
+                  class="rounded-lg border p-4"
                 >
-                  <button
-                    type="button"
-                    class="flex w-full items-center justify-between gap-4 p-3 text-left hover:bg-muted/40"
-                    @click="toggleExpanded(itemKey(item))"
-                  >
-                    <span class="font-medium text-foreground">
-                      <slot
-                        name="label"
-                        :item="item"
-                      />
-                    </span>
-                    <span class="flex items-center gap-2 text-xs text-muted-foreground">
-                      {{ changeCount(item) }}
-                      <Icon
-                        :name="
-                          expanded.has(itemKey(item))
-                            ? 'lucide:chevron-down'
-                            : 'lucide:chevron-right'
-                        "
-                        class="h-4 w-4"
-                      />
-                    </span>
-                  </button>
-                  <div
-                    v-if="expanded.has(itemKey(item))"
-                    class="border-t p-3"
-                  >
-                    <slot
-                      name="details"
-                      :item="item"
-                    />
+                  <div class="text-sm font-medium text-muted">
+                    {{ labels.summaryDeleted }}
+                  </div>
+                  <div class="text-2xl font-semibold text-destructive">
+                    {{ importResult.summary.total_deleted }}
+                  </div>
+                </div>
+                <div class="rounded-lg border p-4">
+                  <div class="text-sm font-medium text-muted">
+                    {{ labels.summaryErrors }}
+                  </div>
+                  <div class="text-2xl font-semibold text-foreground">
+                    {{ importResult.summary.total_errors }}
                   </div>
                 </div>
               </div>
-            </div>
 
-            <div
-              v-if="deletedLabel && importResult.deleted?.length"
-              class="space-y-2"
-            >
-              <h3 class="font-medium text-foreground">{{ labels.deletedTitle }}</h3>
-              <div :class="deletedVariant === 'tags' ? 'flex flex-wrap gap-2' : 'flex flex-col gap-1'">
-                <span
-                  v-for="(item, index) in importResult.deleted"
-                  :key="`deleted-${index}`"
-                  :class="
-                    deletedVariant === 'tags'
-                      ? 'rounded-md bg-destructive/10 px-3 py-1 text-xs text-destructive'
-                      : 'rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive'
-                  "
+              <div
+                v-if="importResult.changes.length > 0"
+                class="space-y-2"
+              >
+                <h3 class="font-medium text-foreground">{{ labels.changesTitle }}</h3>
+                <div class="space-y-2">
+                  <div
+                    v-for="item in summaryChanges"
+                    :key="itemKey(item)"
+                    class="rounded-lg border"
+                  >
+                    <button
+                      type="button"
+                      class="flex w-full items-center justify-between gap-4 p-3 text-left hover:bg-state-hover"
+                      @click="toggleExpanded(itemKey(item))"
+                    >
+                      <span class="font-medium text-foreground">
+                        <slot
+                          name="label"
+                          :item="item"
+                        />
+                      </span>
+                      <span class="flex items-center gap-2 text-sm text-muted">
+                        {{ changeCount(item) }}
+                        <Icon
+                          :name="
+                            expanded.has(itemKey(item))
+                              ? 'lucide:chevron-down'
+                              : 'lucide:chevron-right'
+                          "
+                          class="h-4 w-4"
+                        />
+                      </span>
+                    </button>
+                    <div
+                      v-if="expanded.has(itemKey(item))"
+                      class="border-t p-3"
+                    >
+                      <slot
+                        name="details"
+                        :item="item"
+                      />
+                    </div>
+                  </div>
+                </div>
+                <p
+                  v-if="importResult.changes.length > MAX_SUMMARY_ROWS"
+                  class="text-sm text-muted"
                 >
-                  {{ deletedLabel(item) }}
-                </span>
+                  {{ hiddenRows(importResult.changes.length) }}
+                </p>
               </div>
-            </div>
 
-            <div
-              v-if="labels.ignoredFieldsTitle && importResult.ignored_fields?.length"
-              class="space-y-2"
-            >
-              <h3 class="font-medium text-foreground">{{ labels.ignoredFieldsTitle }}</h3>
-              <div class="flex flex-wrap gap-2">
-                <span
-                  v-for="field in importResult.ignored_fields"
-                  :key="field"
-                  class="rounded-full bg-muted px-3 py-1 text-xs text-muted-foreground"
+              <div
+                v-if="deletedLabel && importResult.deleted?.length"
+                class="space-y-2"
+              >
+                <h3 class="font-medium text-foreground">{{ labels.deletedTitle }}</h3>
+                <div :class="deletedVariant === 'tags' ? 'flex flex-wrap gap-2' : 'flex flex-col gap-1'">
+                  <span
+                    v-for="(item, index) in summaryDeleted"
+                    :key="`deleted-${index}`"
+                    :class="
+                      deletedVariant === 'tags'
+                        ? 'rounded-md bg-destructive/10 px-3 py-1 text-sm text-destructive'
+                        : 'rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive'
+                    "
+                  >
+                    {{ deletedLabel(item) }}
+                  </span>
+                </div>
+                <p
+                  v-if="importResult.deleted.length > MAX_SUMMARY_ROWS"
+                  class="text-sm text-muted"
                 >
-                  {{ field }}
-                </span>
+                  {{ hiddenRows(importResult.deleted.length) }}
+                </p>
               </div>
-            </div>
 
-            <div
-              v-if="importResult.errors.length > 0"
-              class="space-y-2"
-            >
-              <h3 class="font-medium text-foreground">{{ labels.errorsTitle }}</h3>
-              <div class="space-y-2">
-                <div
-                  v-for="(error, index) in importResult.errors"
-                  :key="`${index}-${error.message}`"
-                  class="rounded-md bg-destructive/10 p-3 text-sm text-destructive"
-                >
-                  <div class="font-medium">{{ errorTitle(error, index) }}</div>
-                  <div v-if="errorBody(error)">{{ errorBody(error) }}</div>
+              <div
+                v-if="labels.ignoredFieldsTitle && importResult.ignored_fields?.length"
+                class="space-y-2"
+              >
+                <h3 class="font-medium text-foreground">{{ labels.ignoredFieldsTitle }}</h3>
+                <div class="flex flex-wrap gap-2">
+                  <span
+                    v-for="field in importResult.ignored_fields"
+                    :key="field"
+                    class="rounded-full bg-muted-background px-3 py-1 text-sm text-muted"
+                  >
+                    {{ field }}
+                  </span>
                 </div>
               </div>
+
+              <div
+                v-if="importResult.errors.length > 0"
+                class="space-y-2"
+              >
+                <h3 class="font-medium text-foreground">{{ labels.errorsTitle }}</h3>
+                <div class="space-y-2">
+                  <div
+                    v-for="(error, index) in summaryErrors"
+                    :key="`${index}-${error.message}`"
+                    class="rounded-md bg-destructive/10 p-3 text-sm text-destructive"
+                  >
+                    <div class="font-medium">{{ errorTitle(error, index) }}</div>
+                    <div v-if="errorBody(error)">{{ errorBody(error) }}</div>
+                  </div>
+                </div>
+                <p
+                  v-if="importResult.errors.length > MAX_SUMMARY_ROWS"
+                  class="text-sm text-muted"
+                >
+                  {{ hiddenRows(importResult.errors.length) }}
+                </p>
+              </div>
             </div>
-          </div>
+          </slot>
         </ScrollArea>
 
         <DialogFooter>

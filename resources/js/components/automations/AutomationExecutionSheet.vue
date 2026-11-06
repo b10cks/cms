@@ -132,7 +132,7 @@ const handleReplay = () => {
                 </Badge>
               </div>
 
-              <p class="text-muted-foreground text-sm">
+              <p class="text-muted text-sm">
                 {{
                   execution.automation?.description ||
                   execution.automation?.action?.name ||
@@ -145,7 +145,7 @@ const handleReplay = () => {
                 class="flex flex-wrap items-center gap-2"
               >
                 <AutomationActionTypeBadge :type="execution.automation.action.type" />
-                <span class="text-muted-foreground text-sm">
+                <span class="text-muted text-sm">
                   {{ execution.automation.action.name }}
                 </span>
               </div>
@@ -189,7 +189,7 @@ const handleReplay = () => {
           >
             <div class="grid gap-4 md:grid-cols-2">
               <div class="rounded-xl border border-border p-4">
-                <p class="text-muted-foreground text-xs uppercase tracking-wide">
+                <p class="text-muted text-sm uppercase tracking-wide">
                   {{ $t('labels.automationExecutions.fields.automation') }}
                 </p>
                 <p class="mt-2 font-medium text-sm">
@@ -197,7 +197,7 @@ const handleReplay = () => {
                 </p>
               </div>
               <div class="rounded-xl border border-border p-4">
-                <p class="text-muted-foreground text-xs uppercase tracking-wide">
+                <p class="text-muted text-sm uppercase tracking-wide">
                   {{ $t('labels.automationExecutions.fields.action') }}
                 </p>
                 <p class="mt-2 font-medium text-sm">
@@ -205,13 +205,13 @@ const handleReplay = () => {
                 </p>
               </div>
               <div class="rounded-xl border border-border p-4">
-                <p class="text-muted-foreground text-xs uppercase tracking-wide">
+                <p class="text-muted text-sm uppercase tracking-wide">
                   {{ $t('labels.automationExecutions.fields.queuedAt') }}
                 </p>
                 <p class="mt-2 font-medium text-sm">{{ formatDateTime(execution.created_at) }}</p>
               </div>
               <div class="rounded-xl border border-border p-4">
-                <p class="text-muted-foreground text-xs uppercase tracking-wide">
+                <p class="text-muted text-sm uppercase tracking-wide">
                   {{ $t('labels.automationExecutions.fields.startedAt') }}
                 </p>
                 <p class="mt-2 font-medium text-sm">
@@ -219,7 +219,7 @@ const handleReplay = () => {
                 </p>
               </div>
               <div class="rounded-xl border border-border p-4">
-                <p class="text-muted-foreground text-xs uppercase tracking-wide">
+                <p class="text-muted text-sm uppercase tracking-wide">
                   {{ $t('labels.automationExecutions.fields.completedAt') }}
                 </p>
                 <p class="mt-2 font-medium text-sm">
@@ -227,7 +227,7 @@ const handleReplay = () => {
                 </p>
               </div>
               <div class="rounded-xl border border-border p-4">
-                <p class="text-muted-foreground text-xs uppercase tracking-wide">
+                <p class="text-muted text-sm uppercase tracking-wide">
                   {{ $t('labels.automationExecutions.fields.duration') }}
                 </p>
                 <p class="mt-2 font-medium text-sm">{{ formattedDuration }}</p>
@@ -254,7 +254,7 @@ const handleReplay = () => {
             </div>
             <div
               v-else
-              class="rounded-xl border border-dashed border-border p-4 text-muted-foreground text-sm"
+              class="rounded-xl border border-dashed border-border p-4 text-muted text-sm"
             >
               {{ $t('labels.automationExecutions.emptyContext') }}
             </div>
@@ -269,7 +269,7 @@ const handleReplay = () => {
             </div>
             <div
               v-else
-              class="rounded-xl border border-dashed border-border p-4 text-muted-foreground text-sm"
+              class="rounded-xl border border-dashed border-border p-4 text-muted text-sm"
             >
               {{ $t('labels.automationExecutions.emptyResult') }}
             </div>

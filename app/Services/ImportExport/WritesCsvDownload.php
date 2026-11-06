@@ -23,14 +23,15 @@ trait WritesCsvDownload
      *                                                         streams rather
      *                                                         than buffering
      *                                                         the export.
+     * @param  string  $escape  Pass '' for plain RFC 4180 quoting, which is what Excel writes and reads.
      */
-    protected function csvDownload(array $headings, iterable $rows, string $filename, bool $spool = false): Response
+    protected function csvDownload(array $headings, iterable $rows, string $filename, bool $spool = false, string $escape = '\\'): Response
     {
-        $write = static function ($handle) use ($headings, $rows): void {
-            fputcsv($handle, SpreadsheetValue::escapeRow($headings), escape: '\\');
+        $write = static function ($handle) use ($headings, $rows, $escape): void {
+            fputcsv($handle, SpreadsheetValue::escapeRow($headings), escape: $escape);
 
             foreach ($rows as $row) {
-                fputcsv($handle, SpreadsheetValue::escapeRow(array_values($row)), escape: '\\');
+                fputcsv($handle, SpreadsheetValue::escapeRow(array_values($row)), escape: $escape);
             }
 
         };

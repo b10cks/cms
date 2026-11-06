@@ -123,7 +123,7 @@ const handleDecline = async (invite: InviteResource) => {
               <TableCell>
                 <div class="flex flex-col">
                   <span class="font-medium">{{ resourceName(invite) }}</span>
-                  <span class="text-muted-foreground text-xs">
+                  <span class="text-muted text-sm">
                     {{
                       invite.space
                         ? $t('labels.account.invites.resourceType.space')
@@ -150,7 +150,7 @@ const handleDecline = async (invite: InviteResource) => {
                 </Badge>
               </TableCell>
 
-              <TableCell class="text-muted-foreground text-sm">
+              <TableCell class="text-muted text-sm">
                 <SimpleTooltip :tooltip="formatDateTime(invite.created_at)">
                   {{ formatRelativeTime(invite.created_at) }}
                 </SimpleTooltip>
@@ -184,7 +184,7 @@ const handleDecline = async (invite: InviteResource) => {
                   v-else-if="invite.status === InviteStatus.EXPIRED"
                   :tooltip="formatDateTime(invite.expires_at)"
                 >
-                  <span class="text-muted-foreground text-sm">
+                  <span class="text-muted text-sm">
                     {{ $t('labels.account.invites.expiredHint') }}
                   </span>
                 </SimpleTooltip>

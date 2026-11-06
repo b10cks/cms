@@ -805,7 +805,7 @@ const restoreVersionWithConfirm = async (version: AssetVersionResource) => {
                     class="pointer-events-none block h-[68px] w-[120px] object-cover"
                   />
                   <span
-                    class="absolute bottom-0 left-0 right-0 bg-black/60 py-0.5 text-center text-xs text-white"
+                    class="absolute bottom-0 left-0 right-0 bg-black/60 py-0.5 text-center text-sm text-white"
                   >
                     {{ thumb.position_formatted }}
                   </span>
@@ -926,7 +926,7 @@ const restoreVersionWithConfirm = async (version: AssetVersionResource) => {
                 )
               }}</span>
             </Button>
-            <span class="text-muted-foreground text-xs">
+            <span class="text-muted text-sm">
               {{
                 $t(
                   usesPosterWording
@@ -1046,7 +1046,7 @@ const restoreVersionWithConfirm = async (version: AssetVersionResource) => {
             </template>
           </dl>
 
-          <p class="text-xs text-muted">{{ $t('labels.assets.usageFocus.libraryHint') }}</p>
+          <p class="text-sm text-muted">{{ $t('labels.assets.usageFocus.libraryHint') }}</p>
         </div>
         <div
           v-else
@@ -1158,10 +1158,10 @@ const restoreVersionWithConfirm = async (version: AssetVersionResource) => {
                             @click="copyColor(String(color))"
                           >
                             <span
-                              class="inline-block size-4 rounded border border-input"
+                              class="inline-block size-4 rounded border border-border-strong"
                               :style="{ backgroundColor: String(color) }"
                             />
-                            <span class="text-xs">{{ color }}</span>
+                            <span class="text-sm">{{ color }}</span>
                           </button>
                         </dd>
                       </template>
@@ -1223,7 +1223,7 @@ const restoreVersionWithConfirm = async (version: AssetVersionResource) => {
                       <dd class="flex flex-wrap items-center gap-2">
                         <span class="inline-flex items-center gap-1">
                           <span
-                            class="inline-block size-4 rounded border border-input"
+                            class="inline-block size-4 rounded border border-border-strong"
                             :style="{
                               backgroundColor: asset.metadata.dominant_color,
                               color: row.swatch,
@@ -1239,9 +1239,9 @@ const restoreVersionWithConfirm = async (version: AssetVersionResource) => {
                         <span
                           v-for="check in row.checks"
                           :key="check.label"
-                          class="rounded px-1.5 py-0.5 text-xs font-medium"
+                          class="rounded px-1.5 py-0.5 text-sm font-medium"
                           :class="
-                            check.passed ? 'bg-success/15 text-success' : 'bg-muted/20 text-muted'
+                            check.passed ? 'bg-success/15 text-success' : 'bg-muted-background text-muted'
                           "
                           :title="`≥ ${check.threshold}:1`"
                         >
@@ -1324,7 +1324,7 @@ const restoreVersionWithConfirm = async (version: AssetVersionResource) => {
                     })
                   }}
                 </p>
-                <p class="mt-1 text-xs text-muted">
+                <p class="mt-1 text-sm text-muted">
                   {{ $t('labels.assets.rights.softWarningHint') }}
                 </p>
               </div>
@@ -1406,7 +1406,7 @@ const restoreVersionWithConfirm = async (version: AssetVersionResource) => {
                   <div
                     v-for="version in versionItems"
                     :key="version.id"
-                    class="flex items-center gap-3 rounded-lg border border-input bg-background p-3"
+                    class="flex items-center gap-3 rounded-lg border border-border-strong bg-background p-3"
                   >
                     <div
                       class="checkerboard flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded"
@@ -1507,7 +1507,7 @@ const restoreVersionWithConfirm = async (version: AssetVersionResource) => {
                         contentId: item.id,
                       },
                     }"
-                    class="block rounded-lg border border-input bg-background p-3 transition-colors hover:bg-input"
+                    class="block rounded-lg border border-border-strong bg-background p-3 transition-colors hover:bg-input"
                   >
                     <div class="flex items-center gap-2">
                       <Icon

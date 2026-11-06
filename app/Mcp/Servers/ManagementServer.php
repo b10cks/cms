@@ -32,6 +32,10 @@ class ManagementServer extends Server
         list_skills, read_skill, search_knowledge, lookup_glossary and search_content
         give the space's AI skills, reference documents, glossary and published
         entries, for the token's user.
+        AI operations (ai.operations.*) write content to drafts and leave asset and data entry changes as proposals. Nothing in that
+        lifecycle publishes content. Operations marked PAID in their description call
+        a provider. Approving a plan and raising a budget are decisions for a person:
+        call them only when one asked for this plan or amount.
     MARKDOWN;
 
     protected array $tools = [

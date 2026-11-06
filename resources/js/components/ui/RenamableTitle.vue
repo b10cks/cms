@@ -22,7 +22,7 @@ const props = withDefaults(
   }>(),
   {
     inputClass:
-      'rounded-md w-full px-1 flex shadow-sm transition-colors placeholder:text-muted focus-visible:outline-none focus-visible:ring-ring focus-visible:ring-1 disabled:cursor-not-allowed disabled:opacity-50',
+      'rounded-md w-full px-1 flex shadow-sm transition-colors placeholder:text-muted focus-visible:outline-none focus-visible:ring-ring focus-visible:ring-2 disabled:cursor-not-allowed disabled:opacity-50',
     disabled: false,
     fallback: undefined,
     save: undefined,
@@ -181,7 +181,7 @@ defineExpose({
       v-if="saveError"
       :id="errorId"
       role="alert"
-      class="absolute top-full left-0 z-10 mt-1 max-w-64 rounded-md bg-popover px-2 py-1 text-xs font-normal text-destructive shadow-md"
+      class="absolute top-full left-0 z-10 mt-1 max-w-64 rounded-md bg-popover px-2 py-1 text-sm font-normal text-destructive shadow-md"
     >{{ saveError }}</span>
   </div>
   <span

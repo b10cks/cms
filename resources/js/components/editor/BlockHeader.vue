@@ -27,12 +27,12 @@ const guessedTitle = computed(() =>
         v-if="block.icon"
         :name="`lucide:${block.icon}`"
         :style="{ color: block.color }"
-        class="shrink-0 transition-opacity group-hover:opacity-0"
+        class="shrink-0 transition-opacity group-focus-within:opacity-0 group-hover:opacity-0"
       />
       <Icon
         v-else
         name="lucide:box"
-        class="shrink-0 text-muted-foreground transition-opacity group-hover:opacity-0"
+        class="shrink-0 text-muted transition-opacity group-focus-within:opacity-0 group-hover:opacity-0"
       />
     </div>
   </div>

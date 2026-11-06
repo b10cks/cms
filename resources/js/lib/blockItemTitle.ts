@@ -57,3 +57,17 @@ export const blockItemTitle = (
 
   return escapeHtml(block?.name || block?.slug || (item.block ? 'Untitled Block' : 'Untitled'))
 }
+
+/** One line of plain text naming a block item, for labels and messages. */
+export const blockItemPlainTitle = (
+  item: Record<string, unknown>,
+  block: ItemBlock,
+  render: PreviewTemplateRenderer,
+  maxLength = 40
+): string => {
+  const html = blockItemTitle(item, block, render)
+  const text = new DOMParser().parseFromString(html, 'text/html').body.textContent?.trim()
+  if (!text) return block.name || block.slug || 'Untitled'
+
+  return text.length > maxLength ? `${text.slice(0, maxLength).trimEnd()}…` : text
+}

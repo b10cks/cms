@@ -4,7 +4,7 @@ export { default as Avatar } from './Avatar.vue'
 export { default as AvatarList } from './AvatarList.vue'
 
 export const avatarVariants = cva(
-  'bg-accent overflow-clip flex items-center justify-center text-primary',
+  "relative bg-accent-fill overflow-clip flex items-center justify-center text-white after:absolute after:inset-0 after:rounded-[inherit] after:inset-ring after:inset-ring-primary/10 after:content-['']",
   {
     variants: {
       size: {

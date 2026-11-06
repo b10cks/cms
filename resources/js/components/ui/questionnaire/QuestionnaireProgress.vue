@@ -50,7 +50,7 @@ const label = computed(() =>
     :data-last="root.last.value ? '' : undefined"
     :data-total="root.total.value"
     :class="
-      cn('text-xs min-h-[1lh] w-fit min-w-[14ch] font-medium text-muted tabular-nums', props.class)
+      cn('text-sm min-h-[1lh] w-fit min-w-[14ch] font-medium text-muted tabular-nums', props.class)
     "
   >
     <slot

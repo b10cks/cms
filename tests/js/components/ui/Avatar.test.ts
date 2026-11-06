@@ -71,7 +71,7 @@ describe('Avatar styling', () => {
 
   it('shrinks the initials for the small size', () => {
     expect(mountAvatar({ size: 'sm' }).find('span').classes()).toContain('text-[8px]')
-    expect(mountAvatar({ size: 'lg' }).find('span').classes()).toContain('text-xs')
+    expect(mountAvatar({ size: 'lg' }).find('span').classes()).toContain('text-sm')
   })
 
   it('draws a border only when given a colour', () => {

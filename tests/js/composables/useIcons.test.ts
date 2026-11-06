@@ -307,7 +307,7 @@ describe('useImportIconsMutation', () => {
 
     const result = await harness.result.mutateAsync({ file, mode: 'replacement' })
 
-    expect(importData).toHaveBeenCalledWith(file, 'replacement')
+    expect(importData).toHaveBeenCalledWith(file, 'replacement', undefined)
     expect(result).toEqual({ created: 2, updated: 0 })
     expect(invalidate).toHaveBeenCalledWith({ queryKey: keys.lists() })
     expect(invalidate).toHaveBeenCalledWith({ queryKey: keys.tags() })

@@ -292,6 +292,7 @@ onBeforeUnmount(() => {
     <FieldComments
       :item-id="itemId"
       :field="item.key"
+      :field-label="item.name || item.key"
     />
     <component
       :is="editors[item.type]"
@@ -329,7 +330,6 @@ onBeforeUnmount(() => {
 .collaboration-field-dirty :deep(textarea),
 .collaboration-field-dirty :deep(select),
 .collaboration-field-dirty :deep(button[role='combobox']),
-.collaboration-field-dirty :deep(.border-input),
 .collaboration-field-dirty :deep(.border-input-border),
 .collaboration-field-dirty :deep(.ProseMirror) {
   outline: 1px solid var(--collaboration-dirty-color);
@@ -339,7 +339,6 @@ onBeforeUnmount(() => {
 .collaboration-field-active :deep(textarea),
 .collaboration-field-active :deep(select),
 .collaboration-field-active :deep(button[role='combobox']),
-.collaboration-field-active :deep(.border-input),
 .collaboration-field-active :deep(.border-input-border),
 .collaboration-field-active :deep(.ProseMirror) {
   outline: 2px solid var(--collaboration-color);

@@ -8,11 +8,13 @@ use App\Models\Space\DataSource;
 use App\Services\ImportExport\WritesXlsxDownload;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Enumerable;
+use App\Services\ImportExport\ReadsSpreadsheetHeaders;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use Symfony\Component\HttpFoundation\Response;
 
 class ExcelDataEntryDataDriver extends BaseDataEntryDataDriver
 {
+    use ReadsSpreadsheetHeaders;
     use WritesXlsxDownload;
 
     public function export(Space $space, DataSource $dataSource, Enumerable $entries): Response
@@ -63,10 +65,7 @@ class ExcelDataEntryDataDriver extends BaseDataEntryDataDriver
         }
 
         try {
-            $spreadsheet = IOFactory::load($file->getRealPath());
-            $sheet = $spreadsheet->getActiveSheet();
-            $rows = $sheet->toArray();
-            $headers = array_map('trim', $rows[0] ?? []);
+            $headers = $this->spreadsheetHeaders($file->getRealPath());
 
             if (!in_array('key', $headers, true)) {
                 $errors[] = 'Excel must contain a "key" column';

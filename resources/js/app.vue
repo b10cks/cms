@@ -7,6 +7,7 @@ import { Toaster } from 'vue-sonner'
 import { AlertDialogProvider } from '@/composables/useAlertDialog'
 import UploadBatchPanel from '~/components/assets/UploadBatchPanel.vue'
 import Command from '~/components/Command.vue'
+import Icon from '~/components/Icon.vue'
 import KeyboardShortcutsDialog from '~/components/KeyboardShortcutsDialog.vue'
 import NavigationProgress from '~/components/NavigationProgress.vue'
 import { useAssetUploadBatch } from '~/composables/useAssetUploadBatch'
@@ -72,7 +73,27 @@ const currentLayout = computed(() => {
         <RouterView />
       </component>
     </AlertDialogProvider>
-    <Toaster rich-colors />
+    <Toaster
+      rich-colors
+      close-button
+      :toast-options="{ closeButtonAriaLabel: $t('actions.close') }"
+    >
+      <template #success-icon>
+        <Icon name="lucide:circle-check" />
+      </template>
+      <template #info-icon>
+        <Icon name="lucide:info" />
+      </template>
+      <template #warning-icon>
+        <Icon name="lucide:triangle-alert" />
+      </template>
+      <template #error-icon>
+        <Icon name="lucide:circle-alert" />
+      </template>
+      <template #close-icon>
+        <Icon name="lucide:x" />
+      </template>
+    </Toaster>
     <UploadBatchPanel v-if="isAuthenticated" />
     <Command />
     <KeyboardShortcutsDialog />

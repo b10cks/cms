@@ -192,6 +192,18 @@ class RouteAnalyzer
                     'description' => "The {$paramName} identifier",
                 ];
             }
+
+            // A controller can name a route parameter differently, like `$owner`
+            // for `{space}` and `{team}`, but the path still needs it declared.
+            foreach (array_diff($routeParams, array_column($parameters, 'name')) as $paramName) {
+                $parameters[] = [
+                    'name' => rtrim($paramName, '?'),
+                    'in' => 'path',
+                    'required' => true,
+                    'schema' => $this->typeInferencer->inferFromFieldName($paramName),
+                    'description' => "The {$paramName} identifier",
+                ];
+            }
         } catch (\Exception $e) {
             // Skip on error
         }
@@ -271,12 +283,30 @@ class RouteAnalyzer
                 }
             }
 
-            return $this->mergeParameters($parameters);
+            return $this->mergeParameters($parameters, $this->annotatedQueryParameters($reflection->getDocComment() ?: ''));
         } catch (\Exception $e) {
             // Skip on error
         }
 
         return [];
+    }
+
+    /**
+     * Query parameters a controller validates inline.
+     *
+     * Format: `@apiQuery name shape description`, or `@apiQuery name! ...` when required.
+     */
+    protected function annotatedQueryParameters(string $docComment): array
+    {
+        preg_match_all('/@apiQuery[ \t]+(\w+)(!?)[ \t]+(\S+)(?:[ \t]+(.+))?$/m', $docComment, $matches, PREG_SET_ORDER);
+
+        return array_map(fn (array $match) => array_filter([
+            'name' => $match[1],
+            'in' => 'query',
+            'required' => $match[2] === '!',
+            'schema' => SchemaShape::expand($match[3]),
+            'description' => isset($match[4]) ? trim($match[4]) : null,
+        ], fn (mixed $value) => $value !== null), $matches);
     }
 
     /**
@@ -314,6 +344,14 @@ class RouteAnalyzer
                         return null;
                     }
                 }
+            }
+
+            // A body validated inline, described by `@apiBody @SchemaName`.
+            if (preg_match('/@apiBody[ \t]+(\S+)/', $reflection->getDocComment() ?: '', $match)) {
+                return [
+                    'required' => true,
+                    'content' => ['application/json' => ['schema' => SchemaShape::expand($match[1])]],
+                ];
             }
         } catch (\Exception $e) {
             // Skip on error
@@ -448,6 +486,67 @@ class RouteAnalyzer
      * Extract response schema from return type
      */
     protected function extractResponses(string $controller, string $method): array
+    {
+        return $this->applyResponseAnnotations($this->inferResponses($controller, $method), $controller, $method);
+    }
+
+    /**
+     * Responses return types cannot state: a JsonResponse's shape, the envelope,
+     * statuses other than 200 and errors.
+     *
+     * Format: `@apiResponse status target description`. A target is `@Name`, or
+     * `data:@Name` for the `{data: ...}` envelope, `page:@Name` for a paginated
+     * list, or `none`. Stated success statuses replace the inferred one.
+     */
+    protected function applyResponseAnnotations(array $responses, string $controller, string $method): array
+    {
+        // apiResource routes can name a method the controller does not have.
+        $docComment = method_exists($controller, $method) ? ((new ReflectionMethod($controller, $method))->getDocComment() ?: '') : '';
+
+        if (! preg_match_all('/@apiResponse[ \t]+(\d{3})[ \t]+(\S+)(?:[ \t]+(.+))?$/m', $docComment, $matches, PREG_SET_ORDER)) {
+            return $responses;
+        }
+
+        foreach ($matches as $match) {
+            if ($match[1] < 300) {
+                $responses = array_filter($responses, fn (int|string $status) => $status >= 300, ARRAY_FILTER_USE_KEY);
+                break;
+            }
+        }
+
+        foreach ($matches as $match) {
+            $response = ['description' => isset($match[3]) ? trim($match[3]) : ($match[1] < 300 ? 'Successful response' : 'Error response')];
+
+            if ($match[2] !== 'none') {
+                $response['content'] = ['application/json' => ['schema' => $this->annotatedResponseSchema($match[2])]];
+            }
+
+            $responses[$match[1]] = $response;
+        }
+
+        ksort($responses);
+
+        return $responses;
+    }
+
+    /** @return array<string, mixed> */
+    protected function annotatedResponseSchema(string $target): array
+    {
+        return match (true) {
+            str_starts_with($target, 'data:') => [
+                'type' => 'object',
+                'properties' => ['data' => SchemaShape::expand(substr($target, 5))],
+                'required' => ['data'],
+            ],
+            str_starts_with($target, 'page:') => $this->resourceParser->buildPaginationSchema(SchemaShape::expand(substr($target, 5))),
+            default => SchemaShape::expand($target),
+        };
+    }
+
+    /**
+     * Infer responses from the method's return type
+     */
+    protected function inferResponses(string $controller, string $method): array
     {
         $responses = [];
 

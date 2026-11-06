@@ -31,15 +31,9 @@ class CsvDataEntryDataDriver extends BaseDataEntryDataDriver
 
     public function parseFile(UploadedFile $file): array
     {
-        $rows = [];
         $handle = fopen($file->getRealPath(), 'r');
         $headers = array_map('trim', fgetcsv($handle) ?: []);
-
-        while (($row = fgetcsv($handle)) !== false) {
-            if (count($row) === count($headers)) {
-                $rows[] = array_combine($headers, $row);
-            }
-        }
+        $rows = iterator_to_array($this->csvRows($handle, $headers));
 
         fclose($handle);
 

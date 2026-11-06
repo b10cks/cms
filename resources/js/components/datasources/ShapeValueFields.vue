@@ -51,7 +51,7 @@ const toggleOption = (key: string, option: string, checked: boolean) => {
   <div class="space-y-2">
     <p
       v-if="legacyValue"
-      class="text-xs text-muted"
+      class="text-sm text-muted"
       :title="legacyValue"
     >
       {{ $t('labels.datasets.shape.legacyValue', { value: legacyValue }) }}
@@ -61,7 +61,7 @@ const toggleOption = (key: string, option: string, checked: boolean) => {
       :key="field.key"
       class="space-y-1"
     >
-      <label class="text-xs font-medium text-muted">
+      <label class="text-sm font-medium text-muted">
         {{ field.name || field.key }}
         <span
           v-if="field.required"
@@ -148,7 +148,7 @@ const toggleOption = (key: string, option: string, checked: boolean) => {
 
       <p
         v-if="field.description"
-        class="text-xs text-muted"
+        class="text-sm text-muted"
       >
         {{ field.description }}
       </p>

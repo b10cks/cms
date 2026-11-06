@@ -128,7 +128,7 @@ const handleOpenChange = (val: boolean) => {
           class="w-full"
           :placeholder="t('labels.spaces.badge.selectPlaceholder')"
         />
-        <p class="mt-2 text-xs text-muted">
+        <p class="mt-2 text-sm text-muted">
           {{ t('labels.spaces.badge.hint') }}
         </p>
       </div>

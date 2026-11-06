@@ -52,7 +52,7 @@ const copy = async () => {
     <div class="flex items-center gap-2">
       <span
         v-if="!isPending"
-        class="inline-flex items-center rounded-md border border-input bg-elevated px-2 py-1 font-mono text-sm"
+        class="inline-flex items-center rounded-md border border-border-strong bg-elevated px-2 py-1 font-mono text-sm"
       >
         {{ value }}
       </span>
@@ -66,6 +66,7 @@ const copy = async () => {
       <SimpleTooltip
         v-if="!isPending"
         :tooltip="String(copied ? $t('actions.copied') : $t('actions.copy'))"
+        as-child
       >
         <Button
           type="button"

@@ -52,7 +52,7 @@ describe('defaults', () => {
     expect(settings.value.content).toEqual({
       environment: null,
       siteLocale: null,
-      treeWidth: 20,
+      treeWidth: 320,
       showPreview: true,
       history: { mode: 'changes', panelHeight: 60 },
       expanded: [],

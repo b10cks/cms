@@ -12,7 +12,10 @@ export function useSpaces() {
   const { isAuthenticated } = useAuth()
   const queryClient = useQueryClient()
 
-  const useSpacesQuery = (params: MaybeRefOrGetter<SpaceQueryParams>) => {
+  const useSpacesQuery = (
+    params: MaybeRefOrGetter<SpaceQueryParams>,
+    enabled: MaybeRefOrGetter<boolean> = true
+  ) => {
     return useQuery({
       queryKey: queryKeys.spaces.list(params),
       queryFn: async () => {
@@ -22,7 +25,7 @@ export function useSpaces() {
         })
         return response.data
       },
-      enabled: computed(() => !!toValue(isAuthenticated)),
+      enabled: computed(() => !!toValue(isAuthenticated) && toValue(enabled)),
       placeholderData: keepPreviousData,
     })
   }

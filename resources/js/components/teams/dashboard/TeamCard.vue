@@ -16,9 +16,10 @@ import { getPresenceColor } from '~/components/ui/presence-colors'
 import type { TeamsDashboardCard } from '~/types/team-workspace'
 
 /**
- * One top team on the teams start page: a wash in the team color, the mark,
- * its subtree totals and the signals an owner acts on. The whole card opens
- * the team; sub-team chips and the menu sit above that link.
+ * One top team on the teams start page, laid out like a small team overview:
+ * the header (mark, name, type), the overview's KPIs for the whole subtree,
+ * the sub-teams, and the signals an owner acts on. The whole card opens the
+ * team; sub-team chips and the menu sit above that link.
  */
 const props = defineProps<{
   team: TeamsDashboardCard
@@ -34,15 +35,25 @@ const { formatRelativeTime } = useFormat()
 /** Teams without a color get a stable one from the palette, so cards don't all look alike. */
 const accent = computed(() => props.team.color || getPresenceColor(props.team.id).value)
 
-const wash = computed(() => ({
-  backgroundImage: `radial-gradient(120% 140% at 0% 0%, color-mix(in oklch, ${accent.value} 34%, transparent), transparent 70%), linear-gradient(180deg, color-mix(in oklch, ${accent.value} 14%, transparent), transparent)`,
-}))
-
 const figures = computed(() => [
-  { label: t('labels.teamsDashboard.card.people'), value: props.team.people_count },
-  { label: t('labels.teamsDashboard.card.spaces'), value: props.team.spaces_count },
-  { label: t('labels.teamsDashboard.card.subTeams'), value: props.team.sub_team_count },
+  {
+    label: t('labels.teamWorkspace.kpis.members'),
+    value: props.team.people_count,
+    detail: t('labels.teamsDashboard.card.active', { count: props.team.active_people }),
+  },
+  {
+    label: t('labels.teamWorkspace.kpis.spaces'),
+    value: props.team.spaces_count,
+    detail: t('labels.teamsDashboard.card.published', { count: props.team.published_spaces }),
+  },
+  {
+    label: t('labels.teamsDashboard.card.subTeams'),
+    value: props.team.sub_team_count,
+    detail: undefined,
+  },
 ])
+
+const needsAttention = computed(() => props.team.teams_without_owner > 0 || props.team.pending_invites > 0)
 
 const morePeople = computed(() => Math.max(props.team.people_count - props.team.people.length, 0))
 const moreChildren = computed(() => Math.max(props.team.sub_team_count - props.team.children.length, 0))
@@ -52,11 +63,47 @@ const moreChildren = computed(() => Math.max(props.team.sub_team_count - props.t
   <article
     class="group relative flex min-w-0 flex-col overflow-hidden rounded-xl border border-border bg-card shadow-soft-sm transition-[border-color,box-shadow,translate] duration-200 focus-within:border-border-strong hover:-translate-y-0.5 hover:border-border-strong hover:shadow-soft"
   >
-    <div
-      class="relative h-24 shrink-0"
-      :style="wash"
-    >
-      <div class="absolute top-3 right-3 z-10 flex items-center gap-1.5">
+    <header class="flex items-start gap-3 px-5 pt-5">
+      <TeamAvatar
+        :name="team.name"
+        :avatar="team.avatar"
+        :color="accent"
+        size="lg"
+        class="shrink-0"
+      />
+
+      <div class="min-w-0 flex-1">
+        <div class="flex min-w-0 items-center gap-2">
+          <h3 class="truncate text-panel font-semibold text-primary">
+            <RouterLink
+              :to="{ name: 'team-overview', params: { team: team.id } }"
+              class="outline-none after:absolute after:inset-0 after:content-['']"
+            >
+              <HighlightedText
+                :text="team.name"
+                :highlight="highlight"
+              />
+            </RouterLink>
+          </h3>
+          <Badge
+            v-if="team.type"
+            type="outline"
+            size="sm"
+            class="shrink-0"
+          >
+            {{ team.type }}
+          </Badge>
+        </div>
+        <p
+          v-if="team.description"
+          class="truncate text-sm text-muted"
+          :title="team.description"
+        >
+          {{ team.description }}
+        </p>
+      </div>
+
+      <div class="relative z-10 flex shrink-0 items-center gap-1.5">
         <Badge
           v-if="team.sso"
           variant="success"
@@ -70,20 +117,11 @@ const moreChildren = computed(() => Math.max(props.team.sub_team_count - props.t
           />
           {{ t('labels.teamsDashboard.card.sso') }}
         </Badge>
-        <Badge
-          v-if="team.type"
-          type="outline"
-          size="sm"
-          class="bg-card/70 backdrop-blur-sm"
-        >
-          {{ team.type }}
-        </Badge>
         <DropdownMenu v-if="team.can_update || team.can_delete">
           <DropdownMenuTrigger as-child>
             <Button
               variant="ghost"
               size="toolbar"
-              class="bg-card/70 backdrop-blur-sm"
               :aria-label="t('labels.teamsDashboard.card.actions', { name: team.name })"
             >
               <Icon name="lucide:ellipsis" />
@@ -118,48 +156,26 @@ const moreChildren = computed(() => Math.max(props.team.sub_team_count - props.t
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
-    </div>
+    </header>
 
-    <div class="-mt-10 flex flex-1 flex-col gap-4 px-5 pb-4">
-      <TeamAvatar
-        :name="team.name"
-        :avatar="team.avatar"
-        :color="accent"
-        size="xl"
-        class="relative ring-4 ring-card"
-      />
-
-      <div class="min-w-0">
-        <h3 class="truncate text-panel font-semibold text-primary">
-          <RouterLink
-            :to="{ name: 'team-overview', params: { team: team.id } }"
-            class="outline-none after:absolute after:inset-0 after:content-['']"
-          >
-            <HighlightedText
-              :text="team.name"
-              :highlight="highlight"
-            />
-          </RouterLink>
-        </h3>
-        <p
-          v-if="team.description"
-          class="mt-0.5 line-clamp-2 text-sm text-muted"
+    <dl class="mx-5 mt-4 grid grid-cols-3 gap-3 border-y border-border py-3">
+      <div
+        v-for="figure in figures"
+        :key="figure.label"
+        class="min-w-0"
+      >
+        <dt class="truncate text-sm text-muted">{{ figure.label }}</dt>
+        <dd class="text-figure font-semibold text-primary tabular-nums">{{ figure.value }}</dd>
+        <dd
+          v-if="figure.detail"
+          class="truncate text-sm text-muted"
         >
-          {{ team.description }}
-        </p>
+          {{ figure.detail }}
+        </dd>
       </div>
+    </dl>
 
-      <dl class="grid grid-cols-3 gap-3 border-y border-border py-3">
-        <div
-          v-for="figure in figures"
-          :key="figure.label"
-          class="min-w-0"
-        >
-          <dt class="truncate text-sm text-muted">{{ figure.label }}</dt>
-          <dd class="text-panel font-semibold text-primary tabular-nums">{{ figure.value }}</dd>
-        </div>
-      </dl>
-
+    <div class="flex flex-1 flex-col gap-4 px-5 pt-4 pb-4">
       <div
         v-if="team.children.length"
         class="relative z-10 flex flex-wrap gap-1.5"
@@ -210,32 +226,35 @@ const moreChildren = computed(() => Math.max(props.team.sub_team_count - props.t
         </div>
 
         <div class="ml-auto flex min-w-0 items-center gap-1.5">
-          <Badge
-            v-if="team.teams_without_owner"
-            variant="warning"
-            size="sm"
-            class="gap-1"
-          >
-            <Icon
-              name="lucide:user-x"
-              class="size-3.5"
-            />
-            {{ t('labels.teamsDashboard.card.withoutOwner', { count: team.teams_without_owner }, team.teams_without_owner) }}
-          </Badge>
-          <Badge
-            v-if="team.pending_invites"
-            variant="info"
-            size="sm"
-            class="gap-1"
-          >
-            <Icon
-              name="lucide:mail"
-              class="size-3.5"
-            />
-            {{ team.pending_invites }}
-          </Badge>
+          <template v-if="needsAttention">
+            <Badge
+              v-if="team.teams_without_owner"
+              variant="warning"
+              size="sm"
+              class="gap-1"
+            >
+              <Icon
+                name="lucide:user-x"
+                class="size-3.5"
+              />
+              {{ t('labels.teamsDashboard.card.withoutOwner', { count: team.teams_without_owner }, team.teams_without_owner) }}
+            </Badge>
+            <Badge
+              v-if="team.pending_invites"
+              variant="info"
+              size="sm"
+              class="gap-1"
+              :title="t('labels.teamWorkspace.kpis.pendingInvites')"
+            >
+              <Icon
+                name="lucide:mail"
+                class="size-3.5"
+              />
+              {{ team.pending_invites }}
+            </Badge>
+          </template>
           <span
-            v-if="!team.teams_without_owner && team.content_updated_at"
+            v-else-if="team.content_updated_at"
             class="truncate text-sm text-muted"
           >
             {{ t('labels.teamsDashboard.card.edited', { time: formatRelativeTime(team.content_updated_at) }) }}

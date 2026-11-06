@@ -71,6 +71,8 @@ These pages assume no technical background. They explain each screen, define the
 - [Finding your way around](ui/dashboard.md) — signing in, what every menu item does, and the shortcuts worth learning first
 - [Content](ui/content.md) — the page tree, the editor, drafts and publishing, version history, comments, translating
 - [Mass Edit](ui/mass-edit.md) — one field across hundreds of pages, in a table with a column per language
+- [Working with AI](ui/ai.md) — starting tasks, what gets written where, plans, budgets, flags and conflicts
+- [Skills, knowledge and glossary](ui/ai-knowledge.md) — teaching the AI your voice and terms, when to use which, and what to avoid
 - [Canvas](ui/canvas.md) — plan and restructure whole sections on a whiteboard, then apply the plan in one click
 - [Block library](ui/blocks.md) — what a block is, how to design one, and what its fields can do
 - [Asset manager](ui/assets.md) — uploading, organizing, describing, and sharing images and files

@@ -7,6 +7,7 @@ import { createCrudComposable } from '~/lib/crud-composable'
 import { toastError, type Translate } from '~/lib/toast-error'
 
 import { queryKeys } from './useQueryClient'
+import type { ImportProgress } from '~/types/import-export'
 
 const useIconsCrud = createCrudComposable<
   IconResource,
@@ -58,8 +59,16 @@ export function useIcons(spaceId: MaybeRef<string>) {
 
   const useImportIconsMutation = () => {
     return useMutation({
-      mutationFn: async ({ file, mode }: { file: File; mode: IconImportMode }) => {
-        return spaceAPI.value.icons.importData(file, mode)
+      mutationFn: async ({
+        file,
+        mode,
+        onProgress,
+      }: {
+        file: File
+        mode: IconImportMode
+        onProgress?: (progress: ImportProgress) => void
+      }) => {
+        return spaceAPI.value.icons.importData(file, mode, onProgress)
       },
       onSuccess: () => {
         invalidateLists()

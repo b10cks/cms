@@ -28,9 +28,10 @@ abstract class BaseRedirectDataDriver extends RecordImportDriver implements Redi
 
     abstract public function export(Space $space, Enumerable $redirects): Response;
 
-    public function import(Space $space, UploadedFile $file, RedirectImportMode $mode = RedirectImportMode::Addition): ImportResult
+    /** @return \Generator<int, array{processed: int, total: int}, mixed, ImportResult> */
+    public function import(Space $space, UploadedFile $file, RedirectImportMode $mode = RedirectImportMode::Addition): \Generator
     {
-        return $this->runImport($space, $file, $mode);
+        return yield from $this->runImport($space, $file, $mode);
     }
 
     protected function importableColumns(): array

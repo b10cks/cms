@@ -269,7 +269,7 @@ watch(
                 >
                   <div class="relative z-10 flex items-center px-2">
                     <div
-                      class="bg-surface py-1 text-xs font-medium tracking-wider text-muted uppercase"
+                      class="bg-surface py-1 text-sm font-medium tracking-wider text-muted uppercase"
                     >
                       {{ getGroupLabel(groupKey) }}
                     </div>
@@ -352,23 +352,28 @@ watch(
                         class="ml-2 flex gap-1 transition-opacity"
                         :class="{
                           'opacity-100': selectedVersionId === version.id,
-                          'opacity-0 group-hover:opacity-100': selectedVersionId !== version.id,
+                          'opacity-0 group-focus-within:opacity-100 group-hover:opacity-100': selectedVersionId !== version.id,
                         }"
                       >
-                        <SimpleTooltip :tooltip="$t('labels.blockVersions.restoreTooltip')">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            class="h-6! w-6!"
-                            :disabled="isRestoring"
-                            :aria-label="$t('labels.blockVersions.restoreTooltip')"
-                            @click.stop="handleRestore(version.id)"
+                        <SimpleTooltip :tooltip="$t('labels.blockVersions.restoreTooltip')" as-child>
+                          <span
+                            :tabindex="isRestoring ? 0 : undefined"
+                            class="inline-flex"
                           >
-                            <Icon name="lucide:rotate-ccw" />
-                          </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              class="h-6! w-6!"
+                              :disabled="isRestoring"
+                              :aria-label="$t('labels.blockVersions.restoreTooltip')"
+                              @click.stop="handleRestore(version.id)"
+                            >
+                              <Icon name="lucide:rotate-ccw" />
+                            </Button>
+                          </span>
                         </SimpleTooltip>
 
-                        <SimpleTooltip :tooltip="$t('labels.blockVersions.deleteTooltip')">
+                        <SimpleTooltip :tooltip="$t('labels.blockVersions.deleteTooltip')" as-child>
                           <Button
                             variant="ghost"
                             size="icon"

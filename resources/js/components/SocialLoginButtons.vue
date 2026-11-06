@@ -55,7 +55,7 @@ const providerUrl = (url: string) => {
   >
     <div class="relative flex items-center">
       <div class="h-px flex-1 bg-border" />
-      <span class="px-3 text-xs font-medium text-muted">
+      <span class="px-3 text-sm font-medium text-muted">
         {{ $t('labels.login.social.or') }}
       </span>
       <div class="h-px flex-1 bg-border" />

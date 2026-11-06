@@ -59,7 +59,7 @@ const items = computed((): { name: string; status: ChipStatus; key: string }[] =
     <span
       v-for="(item, index) in items"
       :key="`${item.status}-${item.key}-${index}`"
-      class="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs"
+      class="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-sm"
       :class="chipClasses(item.status)"
     >
       <Icon

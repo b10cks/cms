@@ -16,7 +16,7 @@ const filled = computed(() => AI_REASONING_EFFORTS.indexOf(props.level))
       v-for="bar in 3"
       :key="bar"
       class="w-0.75 rounded-[1px] transition-colors duration-200"
-      :class="bar <= filled ? 'bg-ai-tint-foreground' : 'bg-muted/35'"
+      :class="bar <= filled ? 'bg-ai-tint-foreground' : 'bg-muted-background'"
       :style="{ height: `${1 + bar * 3}px` }"
     />
   </span>

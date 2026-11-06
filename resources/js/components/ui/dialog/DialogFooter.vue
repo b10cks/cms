@@ -10,7 +10,7 @@ const props = defineProps<{ class?: HTMLAttributes['class'] }>()
   <div
     :class="
       cn(
-        'sticky bottom-0 z-10 flex flex-col-reverse bg-background sm:flex-row sm:justify-end sm:gap-x-2',
+        'sticky bottom-0 z-10 flex flex-col-reverse gap-2 bg-background pt-2 sm:flex-row sm:justify-end',
         props.class
       )
     "

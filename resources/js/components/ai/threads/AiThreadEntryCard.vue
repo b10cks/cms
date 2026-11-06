@@ -2,11 +2,12 @@
 import AiChangesetItem from '~/components/ai/AiChangesetItem.vue'
 import Icon from '~/components/Icon.vue'
 import type { AiChangesetEntry, AiChangesetItem as Item } from '~/lib/aiChangesets'
-import { entryLink, isOpenItem } from '~/lib/aiChangesets'
+import { entryHistoryLink, entryLink, isOpenItem, isWrittenItem } from '~/lib/aiChangesets'
 
 /**
- * One entry of a changeset with its proposed fields. As a `card` it stands
- * alone in the thread; as a `row` it sits collapsed in a summary card.
+ * One entry of a changeset with its changed fields, linking to its draft and,
+ * for content, its history. As a `card` it stands alone in the thread; as a `row`
+ * it sits collapsed in a summary card.
  */
 const props = defineProps<{
   spaceId: string
@@ -17,17 +18,16 @@ const props = defineProps<{
   locales: (item: Item) => { source: string; target: string } | null
 }>()
 
-/** Reviewer edits of text proposals, item ID => text */
-const edits = defineModel<Record<string, string | undefined>>('edits', { required: true })
-
 const emit = defineEmits<{
-  accept: [itemIds: string[], overwrite: boolean]
+  accept: [item: Item, overwrite: boolean]
   reject: [itemIds: string[]]
 }>()
 
 const expanded = ref(props.variant === 'card')
 const openCount = computed(() => props.entry.items.filter(isOpenItem).length)
 const link = computed(() => entryLink(props.spaceId, props.entry))
+const historyLink = computed(() => entryHistoryLink(props.spaceId, props.entry))
+const inDraft = computed(() => props.entry.items.some(isWrittenItem))
 </script>
 
 <template>
@@ -43,7 +43,7 @@ const link = computed(() => entryLink(props.spaceId, props.entry))
       <button
         v-if="variant === 'row'"
         type="button"
-        class="-ml-1 flex size-7 shrink-0 items-center justify-center rounded-md text-muted hover:bg-input focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none"
+        class="-ml-1 flex size-7 shrink-0 items-center justify-center rounded-md text-muted hover:bg-input focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
         :aria-expanded="expanded"
         :aria-label="expanded ? $t('components.aiThreads.collapseEntry', { name: entry.label }) : $t('components.aiThreads.expandEntry', { name: entry.label })"
         @click="expanded = !expanded"
@@ -63,12 +63,24 @@ const link = computed(() => entryLink(props.spaceId, props.entry))
         </RouterLink>
         <span v-else>{{ entry.label }}</span>
       </h3>
-      <span class="ml-auto shrink-0 text-sm text-muted">
-        {{
-          openCount > 0
-            ? $t('components.aiThreads.openFields', { count: openCount })
-            : $t(`components.aiChangeset.targets.${entry.targetType}`)
-        }}
+      <span class="ml-auto flex shrink-0 items-center gap-3 text-sm text-muted">
+        <span>
+          {{
+            openCount > 0
+              ? $t('components.aiThreads.openFields', { count: openCount })
+              : inDraft
+                ? $t('components.aiThreads.inDraft')
+                : $t(`components.aiChangeset.targets.${entry.targetType}`)
+          }}
+        </span>
+        <RouterLink
+          v-if="historyLink"
+          :to="historyLink"
+          class="hover:text-primary hover:underline"
+          data-entry-history
+        >
+          {{ $t('components.aiThreads.history') }}
+        </RouterLink>
       </span>
     </header>
 
@@ -83,11 +95,10 @@ const link = computed(() => entryLink(props.spaceId, props.entry))
         :data-item="item.id"
       >
         <AiChangesetItem
-          v-model:edit="edits[item.id]"
           :item="item"
           :busy="busy"
           :locales="locales(item)"
-          @accept="(overwrite) => emit('accept', [item.id], overwrite)"
+          @accept="(overwrite) => emit('accept', item, overwrite)"
           @reject="emit('reject', [item.id])"
         />
       </li>

@@ -23,7 +23,12 @@ const props = defineProps<{
   hasClipboardItem: boolean
   spaceId: string
   canMutate?: boolean
+  /** Between two rows it shows on hover. At the end of a list, empty or not, it has a spot of its own. */
+  placement?: 'between' | 'end'
 }>()
+
+const ROUND_BUTTON =
+  'relative flex size-6 cursor-pointer items-center justify-center rounded-full border border-border-strong bg-background text-muted transition-colors group-hover/add:border-transparent group-hover/add:bg-accent-fill group-hover/add:text-accent-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none data-[state=open]:border-transparent data-[state=open]:bg-accent-fill data-[state=open]:text-accent-foreground'
 
 /** Controllable so the preview's "insert block" action can open the picker. */
 const isOpen = defineModel<boolean>('open', { default: false })
@@ -112,22 +117,45 @@ watch([isOpen, templatesBlock], () => {
     v-if="props.canMutate !== false"
     v-model:open="isOpen"
   >
-    <div class="flex opacity-0 transition-opacity hover:opacity-100">
-      <div class="absolute inset-x-0 -mt-3 border-t-2 border-accent pt-4" />
-      <div class="absolute inset-x-0 z-10 mx-auto -mt-6 flex transform justify-center gap-2">
+    <div
+      :class="[
+        'group/add flex',
+        placement === 'end'
+          ? 'relative mb-0.5 h-7 items-center justify-center'
+          : 'opacity-0 transition-opacity hover:opacity-100 focus-within:opacity-100 has-[[data-state=open]]:opacity-100',
+      ]"
+    >
+      <div
+        :class="[
+          'absolute inset-x-0 border-t-2 border-accent',
+          placement === 'end'
+            ? 'top-1/2 opacity-0 transition-opacity group-hover/add:opacity-100 group-has-[:focus-visible]/add:opacity-100 group-has-[[data-state=open]]/add:opacity-100'
+            : '-mt-3 pt-4',
+        ]"
+      />
+      <div
+        :class="[
+          'flex gap-2',
+          placement === 'end' ? 'relative' : 'absolute inset-x-0 z-10 mx-auto -mt-6 w-fit',
+        ]"
+      >
         <PopoverTrigger as-child>
           <button
             ref="trigger"
-            class="flex size-6 cursor-pointer items-center justify-center rounded-full bg-accent text-accent-foreground"
+            type="button"
+            :class="ROUND_BUTTON"
             :aria-label="$t('actions.blocks.add')"
+            :title="$t('actions.blocks.add')"
           >
             <Icon name="lucide:plus" />
           </button>
         </PopoverTrigger>
         <button
           v-if="hasClipboardItem"
-          class="flex size-6 cursor-pointer items-center justify-center rounded-full bg-accent text-accent-foreground"
+          type="button"
+          :class="ROUND_BUTTON"
           :aria-label="$t('actions.blocks.tooltips.paste')"
+          :title="$t('actions.blocks.tooltips.paste')"
           @click="emit('paste')"
         >
           <Icon name="lucide:clipboard-paste" />

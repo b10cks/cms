@@ -6,6 +6,7 @@ import AssetBlock from '~/components/editor/AssetBlock.vue'
 import LinkEditor from '~/components/editor/LinkEditor.vue'
 import RobotsDirectiveEditor from '~/components/editor/RobotsDirectiveEditor.vue'
 import AiConfigMenuItems from '~/components/ai/AiConfigMenuItems.vue'
+import AiRunFindings from '~/components/ai/AiRunFindings.vue'
 import Icon from '~/components/Icon.vue'
 import SplitButton from '~/components/ui/button/SplitButton.vue'
 import { InputField, TextField } from '~/components/ui/form'
@@ -269,7 +270,7 @@ const generateMetaWithAI = async (
   const outcome = await metaRun.start<MetaTags>({
     surface: 'meta-tags',
     skill: 'meta-tags',
-    context: { language: currentLanguage.value, page: requestData },
+    context: { language: currentLanguage.value, source_locale: currentLanguage.value, page: requestData },
     config_id: configId,
   })
 
@@ -321,12 +322,12 @@ const updateCanonicalValue = (value: LinkValue | null): void => {
       />
       <p
         v-if="item.description"
-        class="text-xs text-muted-foreground"
+        class="text-sm text-muted"
       >
         {{ item.description }}
       </p>
     </div>
-    <div class="relative rounded-lg border border-input bg-background p-3">
+    <div class="relative rounded-lg border border-input-border bg-background p-3">
       <div class="mb-2 text-sm text-muted">
         {{ serpUrl }}
       </div>
@@ -364,7 +365,7 @@ const updateCanonicalValue = (value: LinkValue | null): void => {
       <p class="text-sm leading-relaxed text-muted">
         {{ truncatedDescription }}
       </p>
-      <div class="mt-3 flex gap-4 border-t border-border pt-3 text-xs text-muted">
+      <div class="mt-3 flex gap-4 border-t border-border pt-3 text-sm text-muted">
         <span :class="{ 'text-destructive': serpTitle.length > 60 }">
           Title: {{ serpTitle.length }}/60 chars
         </span>
@@ -373,6 +374,8 @@ const updateCanonicalValue = (value: LinkValue | null): void => {
         </span>
       </div>
     </div>
+
+    <AiRunFindings :findings="metaRun.findings.value" />
 
     <InputField
       v-model="localValue.title"
@@ -394,7 +397,7 @@ const updateCanonicalValue = (value: LinkValue | null): void => {
     <div class="space-y-3">
       <div class="space-y-1">
         <Label :label="$t('labels.contents.fields.meta.canonical')" />
-        <p class="text-xs text-muted-foreground">
+        <p class="text-sm text-muted">
           {{ $t('labels.contents.fields.meta.canonicalDescription') }}
         </p>
       </div>

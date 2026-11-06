@@ -169,7 +169,7 @@ const handleClear = () => {
           v-if="clearable && hasValue"
           size="icon"
           :aria-label="$t('actions.clear')"
-          class="absolute right-8 shrink-0 text-muted-foreground hover:text-foreground"
+          class="absolute right-8 shrink-0 text-muted hover:text-foreground"
           @click="handleClear"
         >
           <Icon name="lucide:x" />

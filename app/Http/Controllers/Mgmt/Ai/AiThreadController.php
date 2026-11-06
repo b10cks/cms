@@ -112,7 +112,7 @@ class AiThreadController extends Controller
         $runs = AiRun::query()->where('conversation_id', $thread->id)->orderBy('started_at')->orderBy('id')->get();
         $messages = AiMessage::query()->where('conversation_id', $thread->id)->whereIn('run_id', $runs->modelKeys())->get()->groupBy('run_id');
         $attachments = AiAttachment::query()->whereIn('message_id', $messages->flatten(1)->pluck('id'))->orderBy('id')->get()->groupBy('message_id');
-        $visible = array_filter(ChangeTargets::PROPOSAL_TYPES, fn (string $type) => $auth->canInSpace($user, $space, $targets->for($type)->viewAbility()));
+        $visible = array_filter(ChangeTargets::REVIEW_TYPES, fn (string $type) => $auth->canInSpace($user, $space, $targets->for($type)->viewAbility()));
         $changesets = AiChangeset::query()
             ->whereIn('run_id', $runs->modelKeys())
             ->with(['actor', 'items' => fn ($query) => $query
@@ -120,6 +120,14 @@ class AiThreadController extends Controller
                 ->orderBy('target_label')->orderBy('created_at')])
             ->get()
             ->keyBy('run_id');
+        // Batch runs of an operation run outside the thread; its shared changeset shows on the thread's last turn of
+        // that operation, without items: it is reviewed in groups through the operation endpoints.
+        $operationTurns = $runs->whereNotNull('operation_id')->keyBy('operation_id')->map(fn (AiRun $run) => $run->id);
+        $operationChangesets = $operationTurns->isEmpty() ? collect() : AiChangeset::query()
+            ->whereIn('operation_id', $operationTurns->keys())
+            ->with('actor')
+            ->get()
+            ->keyBy(fn (AiChangeset $changeset) => $operationTurns[$changeset->operation_id]);
 
         $documentIds = $runs->flatMap(fn (AiRun $run) => array_column($run->setup['sources'] ?? [], 'document_id'))->unique();
         $documents = $documentIds->isEmpty() ? collect() : AiKnowledgeDocument::query()
@@ -127,9 +135,9 @@ class AiThreadController extends Controller
             ->get(['id', 'scope', 'team_id'])
             ->keyBy('id');
 
-        return $runs->map(function (AiRun $run) use ($messages, $changesets, $attachments, $documents) {
+        return $runs->map(function (AiRun $run) use ($messages, $changesets, $operationChangesets, $attachments, $documents) {
             $question = $messages->get($run->id)?->firstWhere('role', 'user');
-            $changeset = $changesets->get($run->id)?->setRelation('run', $run);
+            $changeset = $changesets->get($run->id)?->setRelation('run', $run) ?? $operationChangesets->get($run->id);
             $transcript = $run->transcriptObject();
 
             return [

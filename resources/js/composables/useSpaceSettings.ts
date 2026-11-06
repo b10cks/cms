@@ -32,7 +32,7 @@ const createDefaults = () => ({
   content: {
     environment: null,
     siteLocale: null as string | null,
-    treeWidth: 20,
+    treeWidth: 320,
     showPreview: true,
     history: {
       mode: 'changes',

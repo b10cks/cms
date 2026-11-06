@@ -34,6 +34,26 @@ export interface AiGlossaryFinding {
   found?: string
 }
 
+/**
+ * Missing required wording is a hint: exact matching can't tell an inflected form
+ * from a wrong word. It takes no reason and stops no bulk accept. The client side
+ * of `GlossaryChecker::isBlocking()`.
+ */
+export const isGlossaryHint = ({ type }: Pick<AiGlossaryFinding, 'type'>) => type === 'missing_term'
+
+/** The sentence for a finding. Banned wording without a known replacement doesn't offer one. */
+export const glossaryFindingText = (
+  finding: AiGlossaryFinding,
+  t: (key: string, params: Record<string, string>) => string
+) => {
+  const key = finding.type === 'forbidden_variant' && !finding.expected ? 'forbidden_variant_bare' : finding.type
+  return t(`components.aiActions.findings.${key}`, {
+    term: finding.term,
+    expected: finding.expected ?? '',
+    found: finding.found ?? '',
+  })
+}
+
 export interface AiRunResult<TData = unknown> {
   text: string
   data: TData | null
@@ -45,6 +65,24 @@ export interface AiRunUsage {
   input_tokens: number
   output_tokens: number
   cost_usd: number
+  /** Set once known generations are reconciled; interrupted calls may still be unaccounted for */
+  cost_confirmed_at?: string | null
+}
+
+export interface AiProviderFailure {
+  kind: 'rate_limited' | 'unavailable' | 'connection' | 'interrupted' | 'auth' | 'quota' | 'rejected' | 'unknown'
+  status: number | null
+  code: string | null
+}
+
+/** The run's stored retry state. `not_before` is set while a retry is scheduled. */
+export interface AiProviderRetryState {
+  attempts: number
+  total: number
+  unconfirmed_calls: number
+  waited_seconds: number
+  not_before: string | null
+  failure: AiProviderFailure | null
 }
 
 export interface AiSource {
@@ -69,6 +107,8 @@ export interface AiRunRecord {
   error: string | null
   event_seq: number
   usage: AiRunUsage & { cached_tokens: number }
+  provider_retry?: AiProviderRetryState | null
+  operation?: { id: string; phase: 'plan' | 'batch' | 'review'; batch?: number } | null
   /** The thread the run belongs to */
   conversation_id?: string | null
   started_at?: string | null
@@ -116,6 +156,15 @@ export type AiRunEvent =
   | (EventBase & { type: 'questionnaire'; questionnaire: AiQuestionnaire })
   | (EventBase & { type: 'glossary_findings'; findings: AiGlossaryFinding[] })
   | (EventBase & { type: 'usage' } & AiRunUsage)
+  | (EventBase & {
+      type: 'provider_retry_scheduled'
+      attempt: number
+      max_attempts: number
+      retry_at: string
+      failure: AiProviderFailure
+      possibly_billed: boolean
+      unconfirmed_calls: number
+    })
   | (EventBase & { type: 'moved_to_background' })
   | (EventBase & { type: 'completed'; result: AiRunResult; partial: boolean; usage: AiRunUsage })
   | (EventBase & { type: 'error'; reason?: string; message: string })
@@ -132,6 +181,7 @@ const EVENT_TYPES: ReadonlySet<string> = new Set<AiRunEventType>([
   'questionnaire',
   'glossary_findings',
   'usage',
+  'provider_retry_scheduled',
   'moved_to_background',
   'completed',
   'error',
@@ -144,6 +194,64 @@ export const STREAM_ENDING_EVENTS: ReadonlySet<AiRunEventType> = new Set([
   'completed',
   'error',
 ])
+
+/** A provider wait and its exposure, from a stored run or a live event, as the editor reads it. */
+export interface AiProviderRetryNotice {
+  /** When the next call may go out; null when no retry is scheduled */
+  retry_at: string | null
+  attempt: number
+  /** Only the live event carries the limit */
+  max_attempts: number | null
+  failure: AiProviderFailure['kind'] | null
+  /** Interrupted calls whose cost may not be in the recorded spend */
+  unconfirmed_calls: number
+  /** Retries over the whole run or operation; zero when not known */
+  retries: number
+  cost_status: AiRunCostStatus
+}
+
+/**
+ * `estimated` until reconciled. A confirmed time covers known generations only:
+ * a call that failed before its first chunk has no ID, so with unconfirmed calls
+ * the run never reads as fully confirmed.
+ */
+export type AiRunCostStatus = 'estimated' | 'confirmed' | 'confirmed_known_calls'
+
+export function runCostStatus(run: Pick<AiRunRecord, 'usage' | 'provider_retry'>): AiRunCostStatus {
+  if (!run.usage.cost_confirmed_at) return 'estimated'
+  return (run.provider_retry?.unconfirmed_calls ?? 0) > 0 ? 'confirmed_known_calls' : 'confirmed'
+}
+
+/** Null when the run has neither a scheduled retry nor possibly unrecorded cost. */
+export function retryNoticeOfRun(run: Pick<AiRunRecord, 'usage' | 'provider_retry' | 'state'>): AiProviderRetryNotice | null {
+  const retry = run.provider_retry
+  if (!retry) return null
+
+  const retry_at = run.state === 'running' ? retry.not_before : null
+  if (!retry_at && retry.unconfirmed_calls === 0) return null
+
+  return {
+    retry_at,
+    attempt: retry.attempts,
+    max_attempts: null,
+    failure: retry.failure?.kind ?? null,
+    unconfirmed_calls: retry.unconfirmed_calls,
+    retries: retry.total,
+    cost_status: runCostStatus(run),
+  }
+}
+
+export function retryNoticeOfEvent(event: Extract<AiRunEvent, { type: 'provider_retry_scheduled' }>): AiProviderRetryNotice {
+  return {
+    retry_at: event.retry_at,
+    attempt: event.attempt,
+    max_attempts: event.max_attempts,
+    failure: event.failure.kind,
+    unconfirmed_calls: event.unconfirmed_calls,
+    retries: 0,
+    cost_status: 'estimated',
+  }
+}
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value)

@@ -3,7 +3,6 @@ import { toast } from 'vue-sonner'
 
 import { api } from '~/api'
 import type {
-  AiGlossaryTermPayload,
   AiKnowledgeDocumentPayload,
   AiOwner,
   AiSkillPayload,
@@ -72,23 +71,12 @@ export function useAiKnowledge(owner: MaybeRefOrGetter<AiOwner>) {
       queryFn: async () => (await resource().glossaries(true)).data,
     })
 
-  const useTermsQuery = (
-    glossaryId: MaybeRefOrGetter<string | null>,
-    search: MaybeRefOrGetter<string>
-  ) =>
-    useQuery({
-      queryKey: computed(() => keys.value.terms(toValue(glossaryId) ?? '', toValue(search))),
-      queryFn: async () => (await resource().terms(toValue(glossaryId) ?? '', toValue(search))).data,
-      enabled: computed(() => !!toValue(glossaryId)),
-    })
-
   return {
     useSkillsQuery,
     useSkillQuery,
     useDocumentsQuery,
     useDocumentQuery,
     useGlossariesQuery,
-    useTermsQuery,
     useCreateSkillMutation: () =>
       mutation((payload: AiSkillPayload) => resource().createSkill(payload), 'composables.aiKnowledge.saved', 'composables.aiKnowledge.saveError'),
     useUpdateSkillMutation: () =>
@@ -137,25 +125,6 @@ export function useAiKnowledge(owner: MaybeRefOrGetter<AiOwner>) {
       ),
     useDeleteGlossaryMutation: () =>
       mutation((id: string) => resource().deleteGlossary(id), 'composables.aiKnowledge.deleted', 'composables.aiKnowledge.deleteError'),
-    useSaveTermMutation: () =>
-      mutation(
-        ({ glossaryId, id, payload }: { glossaryId: string; id: string | null; payload: AiGlossaryTermPayload }) =>
-          id ? resource().updateTerm(glossaryId, id, payload) : resource().createTerm(glossaryId, payload),
-        'composables.aiKnowledge.saved',
-        'composables.aiKnowledge.saveError'
-      ),
-    useDeleteTermMutation: () =>
-      mutation(
-        ({ glossaryId, id }: { glossaryId: string; id: string }) => resource().deleteTerm(glossaryId, id),
-        null,
-        'composables.aiKnowledge.deleteError'
-      ),
-    useImportTermsMutation: () =>
-      mutation(
-        ({ glossaryId, file }: { glossaryId: string; file: File }) => resource().importTerms(glossaryId, file),
-        'composables.aiKnowledge.imported',
-        'composables.aiKnowledge.importError'
-      ),
     exportUrl: (glossaryId: string, format: 'csv' | 'xlsx' | 'tbx') => resource().exportUrl(glossaryId, format),
   }
 }

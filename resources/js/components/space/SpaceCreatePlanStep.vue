@@ -180,7 +180,7 @@ const handleCardClick = (plan: PlanResource) => {
               :href="plan.contact_url"
               target="_blank"
               rel="noopener noreferrer"
-              class="flex w-full items-center justify-center gap-1.5 rounded-md border border-elevated py-2 text-sm font-semibold hover:bg-surface-hover"
+              class="flex w-full items-center justify-center gap-1.5 rounded-md border border-elevated py-2 text-sm font-semibold hover:bg-state-hover"
             >
               <Icon
                 name="lucide:external-link"
@@ -200,7 +200,7 @@ const handleCardClick = (plan: PlanResource) => {
                 :class="[
                   'flex w-full cursor-pointer items-center justify-center rounded-md border py-2 text-sm font-semibold',
                   selectedPlanId === plan.id
-                    ? 'border-accent bg-accent text-accent-foreground'
+                    ? 'border-accent-fill bg-accent-fill text-accent-foreground'
                     : 'border-elevated',
                 ]"
               >

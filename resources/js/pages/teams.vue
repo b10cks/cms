@@ -11,7 +11,7 @@ useSeoMeta({
 
 <template>
   <AppHeader>
-    <div class="flex items-start">
+    <div class="flex min-w-0 flex-1 items-start">
       <TeamSelector size="sm" />
     </div>
   </AppHeader>

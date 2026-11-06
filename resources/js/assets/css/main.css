@@ -49,7 +49,9 @@
   --text-2xs: 10px;
   --text-xs: 11px;
   --text-sm: 13px;
+  --text-sm--line-height: 20px;
   --text-base: 15px;
+  --text-base--line-height: 22px;
   /* Panel titles and KPI figures, the only sizes above body inside a page */
   --text-panel: 17px;
   --text-figure: 28px;
@@ -65,8 +67,8 @@
        L0 canvas   bg-surface, no shadow
        L1 panel    bg-background
        L2 card     bg-card border-border shadow-soft-sm
-       L3 popover  bg-popover border-popover-border shadow-soft-lg
-       L4 modal    bg-background shadow-soft-lg over bg-overlay scrim
+       L3 popover  overlay-panel (bg-popover border-popover-border shadow-overlay)
+       L4 modal    bg-background border-overlay-edge shadow-overlay over bg-overlay scrim
 
      Light depth comes from a tinted canvas, a hairline around every boxed
      block and a small shadow that settles it. Hairlines are one grid step
@@ -81,35 +83,69 @@
   --primary-foreground: var(--color-gray-50);
   --secondary: var(--color-gray-100);
   --secondary-foreground: var(--color-gray-800);
+  --secondary-hover: var(--color-gray-150);
+  --secondary-active: var(--color-gray-200);
+  /* The default button. Same as secondary, except on the app header, which overrides these */
+  --button: var(--secondary);
+  --button-hover: var(--secondary-hover);
+  --button-active: var(--secondary-active);
+  /* gray-100 on the gray-100 bar has no edge, so in light a header button lifts to white */
+  --header-button: var(--color-white);
+  --header-button-hover: var(--color-gray-50);
+  --header-button-active: var(--color-gray-75);
+  /* A neutral badge. gray-100 on the gray-100 bar has no edge, so in light it lifts to white there */
+  --badge: var(--secondary);
+  --header-badge: var(--color-white);
+
+  /* The active tab on a bg-secondary track: a raised card in light, one step up in dark */
+  --tab-active: var(--card);
+  /* The entry editor's tab bar: same as other tabs in light, a sunk active tab in dark */
+  --editor-tab-active: var(--tab-active);
+  --editor-tab-hover: var(--state-hover);
 
   --card: var(--color-white);
   --card-foreground: var(--color-gray-700);
   --accent: var(--color-blue-500);
   --accent-hover: var(--color-blue-700);
+  /* A fill that carries white text: blue-500 only reaches 3.0:1, blue-700 4.5:1 */
+  --accent-fill: var(--color-blue-700);
+  --accent-fill-hover: var(--color-blue-800);
+  /* One rule for every list and table: a wash of the ink, so it holds on any surface */
+  --state-hover: color-mix(in oklab, var(--primary) 6%, transparent);
+  --state-selected: color-mix(in oklab, var(--primary) 10%, transparent);
   --accent-foreground: var(--color-white);
   /* --muted is a TEXT color (app-wide convention); --muted-background is the surface pair */
   --muted: var(--color-gray-600);
   --muted-background: var(--color-gray-75);
 
   --input: var(--color-white);
-  --input-border: var(--color-gray-150);
+  --input-border: var(--color-gray-200);
+  /* Checkbox, radio, off switch and outline toggle. Small targets keep a 3:1 edge; fields do not use this */
+  --choice-border: var(--color-gray-400);
+  --choice-border-hover: var(--color-gray-500);
+  /* Placeholder and read-only text on the field fill */
+  --input-muted: var(--muted);
   /* Tags and chips inside a field: one step off the field fill in both modes */
   --chip: var(--color-gray-100);
   --chip-foreground: var(--color-gray-800);
 
   --border: var(--color-gray-125);
   --border-strong: var(--color-gray-200);
-  --ring: var(--color-blue-500);
+  /* blue-700 clears 3:1 for a focus ring on every light surface */
+  --ring: var(--color-blue-700);
   --popover: var(--color-white);
   --popover-foreground: var(--color-gray-700);
   --popover-border: var(--color-gray-100);
+  /* Dialogs, popovers and tooltips. Menus and sheets stay on --popover-border */
+  --overlay-edge: var(--popover-border);
 
   --overlay: oklch(20.63% 0.008 277.83 / 0.45);
 
   --sidebar: var(--color-gray-100);
   --sidebar-foreground: var(--color-gray-700);
   --sidebar-muted: var(--color-gray-600);
-  --sidebar-accent: var(--color-gray-150);
+  /* Active rail item. Hover is this at 60%, so the two read apart: 1.33:1 and about 1.2:1 */
+  --sidebar-accent: var(--color-gray-200);
   --sidebar-accent-foreground: var(--color-gray-900);
   --sidebar-border: var(--color-gray-150);
   --sidebar-ring: var(--color-blue-500);
@@ -125,18 +161,29 @@
   --destructive: var(--color-red-600);
   --destructive-foreground: var(--color-red-800);
   --destructive-background: var(--color-red-200);
+  /* Destructive as text: red-600 is 4.47:1 on a panel in light, red-500 4.37:1 on a card in dark */
+  --destructive-ink: var(--color-red-700);
 
   --success: var(--color-green-600);
   --success-foreground: var(--color-green-50);
-  --success-background: var(--color-green-600);
+  --success-background: var(--color-green-700);
 
   --info: var(--color-blue-600);
   --info-foreground: var(--color-blue-50);
-  --info-background: var(--color-blue-600);
+  /* Carries --info-foreground on badges and notices: blue-600 only reaches 3.47:1 */
+  --info-background: var(--color-blue-800);
 
   --warning: var(--color-yellow-600);
   --warning-foreground: var(--color-yellow-50);
-  --warning-background: var(--color-yellow-600);
+  /* Carries --warning-foreground on badges and notices: yellow-600 only reaches 2.84:1 */
+  --warning-background: var(--color-yellow-700);
+  /* Warning as text on a light surface: yellow-600 only reaches 2.9:1 */
+  --warning-ink: var(--color-yellow-700);
+  /* Warning as text on its own wash, the warning button */
+  --warning-tint-foreground: var(--color-yellow-800);
+  /* Status as text on a plain surface: the -foreground tokens are for filled badges */
+  --success-ink: var(--color-green-800);
+  --info-ink: var(--color-blue-800);
 
   --ai: var(--color-purple-600);
   --ai-foreground: var(--color-purple-50);
@@ -144,7 +191,8 @@
   /* AI action buttons: a purple wash with purple ink */
   --ai-tint: color-mix(in oklch, var(--color-purple-600) 10%, transparent);
   --ai-tint-hover: color-mix(in oklch, var(--color-purple-600) 18%, transparent);
-  --ai-tint-foreground: var(--color-purple-600);
+  /* purple-600 is 3.6:1 on the hover wash on the canvas */
+  --ai-tint-foreground: var(--color-purple-700);
 
   /* Chart series in fixed order, validated for CVD separation in both modes */
   --series-1: #2a86d1;
@@ -170,17 +218,36 @@
   --primary-foreground: var(--color-gray-950);
   --secondary: var(--color-gray-800);
   --secondary-foreground: var(--color-gray-200);
+  --secondary-hover: var(--color-gray-750);
+  --secondary-active: var(--color-gray-700);
+  --header-button: var(--color-gray-800);
+  --header-button-hover: var(--color-gray-750);
+  --header-button-active: var(--color-gray-700);
+  --header-badge: var(--secondary);
+
+  --tab-active: var(--color-gray-700);
+  --editor-tab-active: var(--background);
+  --editor-tab-hover: color-mix(in oklab, var(--background) 75%, transparent);
 
   --card: var(--color-gray-850);
   --card-foreground: var(--color-gray-300);
   --accent: var(--color-blue-500);
   --accent-hover: var(--color-blue-400);
+  --accent-fill: var(--color-blue-700);
+  --accent-fill-hover: var(--color-blue-800);
+  /* One rule for every list and table: a wash of the ink, so it holds on any surface */
+  --state-hover: color-mix(in oklab, var(--primary) 6%, transparent);
+  --state-selected: color-mix(in oklab, var(--primary) 10%, transparent);
   --accent-foreground: var(--color-white);
   --muted: var(--color-gray-400);
   --muted-background: var(--color-gray-800);
 
   --input: var(--color-gray-800);
   --input-border: var(--color-gray-750);
+  --choice-border: var(--color-gray-500);
+  --choice-border-hover: var(--color-gray-400);
+  /* gray-400 is only 4.18:1 on the gray-800 field fill */
+  --input-muted: color-mix(in oklab, var(--color-gray-400) 60%, var(--color-gray-300));
   --chip: var(--color-gray-700);
   --chip-foreground: var(--color-gray-50);
 
@@ -190,14 +257,17 @@
 
   --popover: var(--color-gray-800);
   --popover-foreground: var(--color-gray-300);
-  --popover-border: var(--color-gray-750);
+  /* One step past the fill, so a menu keeps its edge over a field or card of the same tone */
+  --popover-border: var(--color-gray-700);
+  /* Darker than the gray-800 and gray-900 fills: Mike's call for dialogs, popovers and tooltips */
+  --overlay-edge: var(--color-gray-950);
 
   --overlay: oklch(0% 0 0 / 0.6);
 
   --sidebar: var(--color-gray-950);
   --sidebar-foreground: var(--color-gray-400);
   --sidebar-muted: var(--color-gray-500);
-  --sidebar-accent: var(--color-gray-850);
+  --sidebar-accent: var(--color-gray-800);
   --sidebar-accent-foreground: var(--color-gray-50);
   --sidebar-border: var(--color-gray-850);
   --sidebar-ring: var(--color-blue-500);
@@ -208,6 +278,7 @@
   --destructive: var(--color-red-500);
   --destructive-foreground: var(--color-red-200);
   --destructive-background: var(--color-red-800);
+  --destructive-ink: var(--color-red-400);
 
   --success: var(--color-green-600);
   --success-foreground: var(--color-green-200);
@@ -220,6 +291,10 @@
   --warning: var(--color-yellow-600);
   --warning-foreground: var(--color-yellow-200);
   --warning-background: var(--color-yellow-800);
+  --warning-ink: var(--warning);
+  --warning-tint-foreground: var(--warning);
+  --success-ink: var(--success-foreground);
+  --info-ink: var(--info-foreground);
 
   --ai: var(--color-purple-500);
   --ai-foreground: var(--color-purple-200);
@@ -258,17 +333,31 @@
   --color-primary-foreground: var(--primary-foreground);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary-hover: var(--secondary-hover);
+  --color-secondary-active: var(--secondary-active);
+  --color-button: var(--button);
+  --color-button-hover: var(--button-hover);
+  --color-button-active: var(--button-active);
+  --color-badge: var(--badge);
+  --color-tab-active: var(--tab-active);
 
   --color-card: var(--card);
   --color-card-foreground: var(--card-foreground);
   --color-accent: var(--accent);
   --color-accent-hover: var(--accent-hover);
+  --color-accent-fill: var(--accent-fill);
+  --color-accent-fill-hover: var(--accent-fill-hover);
+  --color-state-hover: var(--state-hover);
+  --color-state-selected: var(--state-selected);
   --color-accent-foreground: var(--accent-foreground);
   --color-text-muted: var(--muted);
   --color-muted: var(--muted);
   --color-muted-background: var(--muted-background);
   --color-input: var(--input);
   --color-input-border: var(--input-border);
+  --color-choice-border: var(--choice-border);
+  --color-choice-border-hover: var(--choice-border-hover);
+  --color-input-muted: var(--input-muted);
   --color-chip: var(--chip);
   --color-chip-foreground: var(--chip-foreground);
   --color-border: var(--border);
@@ -277,6 +366,7 @@
   --color-popover: var(--popover);
   --color-popover-foreground: var(--popover-foreground);
   --color-popover-border: var(--popover-border);
+  --color-overlay-edge: var(--overlay-edge);
   --color-overlay: var(--overlay);
 
   --color-sidebar: var(--sidebar);
@@ -303,6 +393,7 @@
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
   --color-destructive-background: var(--destructive-background);
+  --color-destructive-ink: var(--destructive-ink);
 
   --color-success: var(--success);
   --color-success-foreground: var(--success-foreground);
@@ -311,6 +402,10 @@
   --color-warning: var(--warning);
   --color-warning-foreground: var(--warning-foreground);
   --color-warning-background: var(--warning-background);
+  --color-warning-ink: var(--warning-ink);
+  --color-warning-tint-foreground: var(--warning-tint-foreground);
+  --color-success-ink: var(--success-ink);
+  --color-info-ink: var(--info-ink);
 
   --color-ai: var(--ai);
   --color-ai-foreground: var(--ai-foreground);
@@ -346,6 +441,12 @@
     --grid-margin: 0px;
     --content-max-width: 1296px;
     @apply lg:[--grid-margin:2rem];
+  }
+
+  /* Native date and time pickers and their icons follow the theme. Only on inputs: on the
+     root it would turn transparent iframes (previews, field plugins) opaque. */
+  .dark input {
+    color-scheme: dark;
   }
 
   body {
@@ -419,6 +520,103 @@
 
 @layer components {
   @import './vue-sonner.css';
+
+  /* Everything that floats: menus, selects, popovers, tooltips, toasts. 8px around 4px rows
+     with 4px padding, so the corners are concentric. Muted text uses the field tone, since
+     --muted is only 4.18:1 on the dark popover fill. */
+  .overlay-panel {
+    @apply rounded-lg border border-popover-border bg-popover text-popover-foreground shadow-overlay;
+    --muted: var(--input-muted);
+  }
+
+  /* One row for every menu, select, combobox and command list. The highlight is a neutral
+     wash, so a red Delete and colored block icons keep their color under the pointer. */
+  .menu-row {
+    @apply relative flex cursor-default items-center gap-2 rounded-sm px-2 py-1.5 text-sm font-medium outline-none select-none;
+    transition:
+      background-color 75ms,
+      color 75ms;
+
+    &:hover:not([data-highlighted]):not([data-disabled]) {
+      background-color: var(--state-hover);
+    }
+
+    &[data-state='open'],
+    &[data-highlighted] {
+      background-color: var(--state-selected);
+      color: var(--primary);
+      --muted: var(--primary);
+    }
+
+    /* The wash alone is about 1.2:1, so the keyboard target also gets a ring. :focus-visible
+       can't tell here: menus move focus by script under the pointer too, and a listbox
+       keeps focus in its search field. See lib/inputModality.ts. Cmd+K turns it off with
+       --menu-row-ring: the wash alone marks the row there. */
+    :root[data-input='keyboard'] &[data-highlighted] {
+      box-shadow: inset 0 0 0 1px var(--menu-row-ring, var(--ring));
+    }
+
+    &[data-disabled] {
+      @apply pointer-events-none opacity-50;
+    }
+
+    & > svg {
+      @apply size-4 shrink-0;
+    }
+
+    & > svg:not([class*='text-']) {
+      color: var(--muted);
+    }
+
+    &[data-highlighted] > svg:not([class*='text-']) {
+      color: currentColor;
+    }
+
+    &.text-destructive {
+      color: var(--destructive-ink) !important;
+
+      & > svg {
+        color: currentColor;
+      }
+
+      /* The ink drops to 3.5:1 on the wash in dark mode */
+      &[data-highlighted] {
+        color: var(--destructive-foreground) !important;
+      }
+    }
+  }
+
+  /* One row of a settings-style left nav: space settings, team area, provider console, account.
+     The current page is the wash with the strongest ink, at the same weight so nothing shifts. */
+  .nav-row {
+    @apply flex h-9 cursor-pointer items-center gap-2 rounded-lg px-3 font-medium whitespace-nowrap outline-none transition-colors duration-100;
+    @apply hover:bg-state-hover active:bg-state-selected focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring;
+
+    & > svg {
+      color: var(--muted);
+    }
+
+    &[aria-current='page'] {
+      background-color: var(--state-selected);
+      color: var(--primary);
+
+      & > svg {
+        color: currentColor;
+      }
+    }
+  }
+
+  /* A 28px quiet icon action inside a row. It takes its hit area and states from here. */
+  .row-action {
+    @apply flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-muted outline-none transition-colors duration-100;
+    @apply hover:bg-state-hover hover:text-primary active:bg-state-selected data-[state=open]:bg-state-selected focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring;
+  }
+
+  /* The 28px close button of a dialog or sheet. Position comes from the caller. */
+  .overlay-close {
+    @apply flex size-7 cursor-pointer items-center justify-center rounded-md text-muted outline-none transition-colors duration-100;
+    @apply hover:bg-state-hover hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring;
+  }
 
   .checkerboard {
     background-image:
@@ -616,6 +814,18 @@
   }
 }
 
+/* What sits under anything that floats. The soft shadow's near-transparent navy disappears on
+   dark surfaces, so dark mode uses a real black one. */
+@utility shadow-overlay {
+  box-shadow: theme(--shadow-soft-lg);
+
+  .dark & {
+    box-shadow:
+      0 1px 2px oklch(0% 0 0 / 0.4),
+      0 12px 32px oklch(0% 0 0 / 0.45);
+  }
+}
+
 /* Horizontal scroller that hides its scrollbar and fades out clipped content
    at the edges. The fades are driven by the scroll position (scroll-driven
    animation), so they only appear when there is actually content to scroll
@@ -728,4 +938,23 @@
   html[data-printing] [data-print-root] [data-export-hidden] {
     display: none;
   }
+}
+
+/* Reorderable lists (lib/sortable.ts). The slot left in the list while a row is dragged:
+   a dashed ring on the drop wash, contents hidden. Unlayered, so it beats a row's own fill. */
+.sortable-ghost {
+  border-color: transparent;
+  outline: 1px dashed var(--color-ring);
+  outline-offset: -1px;
+  background-color: var(--color-tree-drop);
+}
+
+.sortable-ghost > * {
+  visibility: hidden;
+}
+
+/* The clone that follows the pointer. */
+.sortable-drag {
+  box-shadow: var(--shadow-soft-lg);
+  cursor: grabbing;
 }

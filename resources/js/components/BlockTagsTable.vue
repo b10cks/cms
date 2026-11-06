@@ -190,7 +190,7 @@ watch(showTagDialog, (isOpen) => {
                         <span class="sr-only">{{ $t('actions.blockTags.edit') }}</span>
                       </Button>
                       <Button
-                        variant="destructive"
+                        variant="ghost-destructive"
                         size="icon"
                         @click="handleDelete(tag)"
                       >

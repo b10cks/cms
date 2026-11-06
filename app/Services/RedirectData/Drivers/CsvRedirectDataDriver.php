@@ -36,13 +36,9 @@ class CsvRedirectDataDriver extends BaseRedirectDataDriver
 
     public function parseFile(UploadedFile $file): array
     {
-        $rows = [];
         $handle = fopen($file->getRealPath(), 'r');
         $headers = array_map('trim', fgetcsv($handle) ?: []);
-
-        while (($row = fgetcsv($handle)) !== false) {
-            $rows[] = array_combine($headers, $row);
-        }
+        $rows = iterator_to_array($this->csvRows($handle, $headers));
 
         fclose($handle);
 

@@ -41,7 +41,6 @@ const updateValue = (value: string | number) => {
       :disabled="disabled"
       :error="error"
       :input-class="[isMachineTranslated && 'ring-1 ring-ai']"
-      :placeholder="originalValue || ''"
       data-validation-target="true"
       hide-label
       @update:model-value="updateValue"

@@ -89,7 +89,7 @@ const handleOpenChange = (newOpen: boolean) => {
               Scheduled
             </Badge>
           </div>
-          <p class="mt-2 text-xs text-muted">
+          <p class="mt-2 text-sm text-muted">
             {{
               formatDate(currentVersion.created_at)
             }}

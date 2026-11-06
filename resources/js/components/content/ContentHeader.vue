@@ -72,7 +72,7 @@ const togglePreview = () => {
   <div class="flex items-center gap-3">
     <div v-if="content">
       <h1 class="-mb-1 flex items-center gap-2">
-        <span class="text-lg font-semibold text-primary">{{ content?.name }}</span>
+        <span class="text-panel font-semibold text-primary">{{ content?.name }}</span>
         <ContentStateBadge :status="status" />
       </h1>
       <div class="flex items-center">
@@ -103,14 +103,15 @@ const togglePreview = () => {
     </div>
 
     <SimpleTooltip
+      v-if="showPreviewToggle"
       :tooltip="
         settings.content.showPreview
           ? $t('actions.content.modes.toField')
           : $t('actions.content.modes.toVisual')
       "
+      as-child
     >
       <Button
-        v-if="showPreviewToggle"
         variant="ghost"
         size="toolbar"
         :aria-label="

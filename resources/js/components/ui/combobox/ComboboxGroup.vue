@@ -24,14 +24,14 @@ const delegatedProps = computed(() => {
     v-bind="delegatedProps"
     :class="
       cn(
-        'overflow-hidden p-1 text-foreground [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-xs [&_[cmdk-group-heading]]:font-medium [&_[cmdk-group-heading]]:text-muted',
+        'overflow-hidden p-1 text-foreground [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-sm [&_[cmdk-group-heading]]:font-medium [&_[cmdk-group-heading]]:text-muted',
         props.class
       )
     "
   >
     <ComboboxLabel
       v-if="heading"
-      class="px-2 py-1.5 text-xs font-medium text-muted"
+      class="px-2 py-1.5 text-sm font-medium text-muted"
     >
       {{ heading }}
     </ComboboxLabel>

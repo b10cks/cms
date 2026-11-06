@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { unrefElement, usePreferredReducedMotion } from '@vueuse/core'
-import { useSortable, type UseSortableOptions } from '@vueuse/integrations/useSortable'
+import { useSortable } from '@vueuse/integrations/useSortable'
 import {
   AccordionContent,
   AccordionHeader,
@@ -17,6 +17,7 @@ import Icon from '~/components/Icon.vue'
 import { AvatarList } from '~/components/ui/avatar'
 import { Button } from '~/components/ui/button'
 import { Checkbox } from '~/components/ui/checkbox'
+import SortHandle from '~/components/ui/SortHandle.vue'
 import Label from '~/components/ui/form/Label.vue'
 import type {
   CollaborationPresenceUser,
@@ -33,14 +34,21 @@ import {
   hydrateContentWithSchema,
   switchBlockItemType,
 } from '~/composables/useSchemaDefaults'
-import { resolveItemBlock } from '~/lib/blockItemTitle'
+import { blockItemPlainTitle, resolveItemBlock } from '~/lib/blockItemTitle'
 import {
+  type BlockListViewState,
   type BlockPasteRejection,
   type BlockPickerRequest,
+  blockRowValue,
   checkBlockPaste,
+  createBlockListView,
+  DRILL_IN_DEPTH,
   isBlockAllowed,
 } from '~/lib/blockTreeEdits'
-import { buildContentPath, buildPreviewUrl } from '~/lib/preview-url'
+import type { FieldReveal } from '~/lib/commentLocation'
+import { scrollIntoViewAfterExpand } from '~/lib/fieldFocus'
+import { buildContentPath, buildPreviewUrl, resolveEnvironment } from '~/lib/preview-url'
+import { sortableOptions, sortAnimation } from '~/lib/sortable'
 import type { ContentResource } from '~/types/contents'
 
 import EditorComponent from './EditorComponent.vue'
@@ -58,6 +66,10 @@ const props = defineProps<{
 const { useBlocksQuery } = useBlocks(props.spaceId)
 const { data: blocks } = useBlocksQuery({ per_page: 1000 })
 
+/** Blocks lists above this one in the current column. An opened item starts again at 0. */
+const depth = inject('blocksDepth', 0)
+provide('blocksDepth', depth + 1)
+
 const ulid = useUlid()
 const route = useRoute()
 const router = useRouter()
@@ -74,9 +86,10 @@ const editedContent = inject<Ref<ContentResource | null>>('content', ref(null))
 const pageLinks = computed(() => {
   const page = editedContent.value
   const spaceSettings = currentSpace.value?.settings
-  const environment =
-    (settings.value.content.environment as SpaceEnvironment | null) ??
-    spaceSettings?.environments?.find((entry) => entry.name === spaceSettings.default_environment)
+  const environment = resolveEnvironment(
+    settings.value.content.environment as SpaceEnvironment | null,
+    spaceSettings
+  )
   const segment = settings.value.content.siteLocale
 
   return {
@@ -150,6 +163,16 @@ const setPickerOpen = (index: number, open: boolean) => {
 const getBlockHeaderBlock = (content: Record<string, unknown>) =>
   resolveItemBlock(blocks.value?.data, content)
 
+const handlebars = useHandlebars()
+const getItemLabel = (content: Record<string, unknown>) =>
+  blockItemPlainTitle(content, getBlockHeaderBlock(content), (template, data) =>
+    handlebars.render(template, data)
+  )
+
+/** An item with no id has no route of its own, so it stays expandable. */
+const drillsIn = (content: Record<string, unknown>) =>
+  depth >= DRILL_IN_DEPTH && typeof content.id === 'string' && content.id !== ''
+
 const emitBlockOperation = (
   operation: ContentBlockOperationPayload,
   previousItems: Array<Record<string, unknown>>
@@ -195,7 +218,8 @@ const blockItems = computed({
 
 const accordionContainer = ref<HTMLElement | null>(null)
 const selectedIndexes = ref<number[]>([])
-const openItems = ref<string[]>([])
+const listView = inject<BlockListViewState>('blockListView', createBlockListView, true)
+const openItems = listView.openItems
 
 // Only the grip starts a drag, so text inside an item can still be selected.
 // Sortable leaves `draggable="false"` on a dropped item, which is why the
@@ -206,26 +230,18 @@ const openItems = ref<string[]>([])
 const sortId = useId()
 const handleSelector = `[data-block-handle="${sortId}"]`
 const reducedMotion = usePreferredReducedMotion()
-const sortAnimation = () => (reducedMotion.value === 'reduce' ? 0 : 150)
 
-// The sortablejs `Options` type doesn't resolve in this project, hence the cast.
-const { option: setSortableOption } = useSortable(accordionContainer, blockItems, {
-  handle: handleSelector,
-  draggable: '>[data-block-item]',
-  forceFallback: true,
-  fallbackOnBody: true,
-  fallbackTolerance: 4,
-  animation: sortAnimation(),
-  forceAutoScrollFallback: true,
-  scrollSensitivity: 80,
-  scrollSpeed: 14,
-  ghostClass: 'blocks-sortable-ghost',
-  dragClass: 'blocks-sortable-drag',
-  chosenClass: 'blocks-sortable-chosen',
-  onEnd: () => {
-    lastSortEndedAt = Date.now()
-  },
-} as UseSortableOptions)
+const { option: setSortableOption } = useSortable(
+  accordionContainer,
+  blockItems,
+  sortableOptions({
+    handle: handleSelector,
+    draggable: '>[data-block-item]',
+    onEnd: () => {
+      lastSortEndedAt = Date.now()
+    },
+  })
+)
 
 watch(reducedMotion, () => setSortableOption('animation', sortAnimation()))
 
@@ -273,7 +289,15 @@ const moveItemFromHandle = async (index: number, direction: -1 | 1) => {
   )
 
   await nextTick()
-  unrefElement(accordionContainer)?.querySelectorAll<HTMLElement>(handleSelector)[position]?.focus()
+  focusHandle(position)
+}
+
+/** The grip at `position`, the last one when the list got shorter, the Add button when empty. */
+const focusHandle = (position: number) => {
+  const list = unrefElement(accordionContainer)
+  const handles = list?.querySelectorAll<HTMLElement>(handleSelector)
+  if (handles?.length) handles[Math.min(position, handles.length - 1)].focus()
+  else list?.querySelector('button')?.focus()
 }
 
 useShortcut({
@@ -349,6 +373,9 @@ const insertItem = (item: Record<string, unknown>, index: number = -1) => {
 
   emitBlockOperation({ type: 'add', index: insertIndex, items: [item] }, previousItems)
   emit('update:modelValue', updatedItems)
+
+  // A row at this depth has nowhere to expand, so the new item opens to be filled in.
+  if (drillsIn(item)) navigateToItem(item.id as string)
 }
 
 const addItem = (slug: string, index: number = -1, template?: BlockTemplate | null) => {
@@ -380,9 +407,47 @@ const addItem = (slug: string, index: number = -1, template?: BlockTemplate | nu
   insertItem(newItem, index)
 }
 
+/** Undo stays on offer only while this list shows the entry the item was removed from. */
+const undoToasts: Array<string | number> = []
+const dismissUndoToasts = () => {
+  undoToasts.splice(0).forEach((id) => toast.dismiss(id))
+}
+watch(() => editedContent.value?.id, dismissUndoToasts)
+onBeforeUnmount(dismissUndoToasts)
+
+const restoreItem = (item: Record<string, unknown>, index: number) => {
+  if (!canAdd.value) {
+    toast.error(String($t('labels.contents.paste.tooMany', { max: maxItems.value })))
+    return
+  }
+
+  const previousItems = [...blockItems.value]
+  const hasId = typeof item.id === 'string' && item.id !== ''
+  // A discard or a collaborator's undo may have brought it back already.
+  if (hasId && previousItems.some((entry) => entry.id === item.id)) return
+
+  const position = Math.min(index, previousItems.length)
+  const updatedItems = [...previousItems]
+  updatedItems.splice(position, 0, item)
+
+  emitBlockOperation(
+    hasId
+      ? { type: 'add', index: position, items: [item] }
+      : { type: 'replace', items: updatedItems },
+    previousItems
+  )
+  emit('update:modelValue', updatedItems)
+  selectedIndexes.value = selectedIndexes.value.map((selected) =>
+    selected >= position ? selected + 1 : selected
+  )
+
+  nextTick(() => focusHandle(position))
+}
+
 const deleteItem = (index: number) => {
   const previousItems = [...blockItems.value]
-  const removedId = previousItems[index]?.id
+  const removed = previousItems[index]
+  const removedId = removed?.id
   const updatedItems = [...previousItems]
   updatedItems.splice(index, 1)
 
@@ -396,6 +461,16 @@ const deleteItem = (index: number) => {
   selectedIndexes.value = selectedIndexes.value
     .filter((selectedIndex) => selectedIndex !== index)
     .map((selectedIndex) => (selectedIndex > index ? selectedIndex - 1 : selectedIndex))
+
+  undoToasts.push(
+    toast(String($t('actions.blocks.removed', { name: getItemLabel(removed) })), {
+      duration: 8000,
+      action: { label: String($t('actions.undo')), onClick: () => restoreItem(removed, index) },
+    })
+  )
+
+  // The closing menu hands focus back after the row is gone, and its trigger went with the row.
+  nextTick(() => setTimeout(() => focusHandle(index)))
 }
 
 const getClipboardLabel = (items: Array<Record<string, unknown>>) => {
@@ -597,18 +672,49 @@ const switchItemType = (index: number, slug: string) => {
 }
 
 const navigateToItem = (itemId: string) => {
+  listView.returnTo.value = itemId
   router.push({
     ...route,
     hash: `#${itemId}`,
   })
 }
 
+// Back from an opened item: its row takes focus, unless focus is already somewhere.
+onMounted(async () => {
+  const itemId = listView.returnTo.value
+  if (!itemId || !blockItems.value.some((content) => content.id === itemId)) return
+
+  await nextTick()
+  if (document.activeElement !== document.body) return
+
+  listView.returnTo.value = null
+  unrefElement(accordionContainer)
+    ?.querySelector<HTMLElement>(`[data-block-row="${CSS.escape(itemId)}"]`)
+    ?.focus()
+})
+
+// A thread about a block in this list asked for its row.
+const fieldReveal = inject<Ref<FieldReveal | null>>('fieldReveal', ref(null))
+const answerRowReveal = () => {
+  const row = fieldReveal.value?.row
+  if (!row || !blockItems.value.some((content) => content.id === row)) return
+
+  fieldReveal.value = null
+  const element = unrefElement(accordionContainer)?.querySelector<HTMLElement>(
+    `[data-block-row="${CSS.escape(row)}"]`
+  )
+  element?.focus({ focusVisible: true } as FocusOptions)
+  scrollIntoViewAfterExpand(element)
+}
+onMounted(answerRowReveal)
+watch(fieldReveal, answerRowReveal, { flush: 'post' })
+
 const forwardFieldUpdate = (payload: ContentFieldUpdatePayload) => {
   emit('fieldUpdate', payload)
 }
 
 const getItemAccordionValue = (content: Record<string, unknown>, index: number) =>
-  `content-${(content.id as string) || index}`
+  blockRowValue((content.id as string) || `${(props.pathPrefix || []).join('.')}.${index}`)
 
 const getItemPathPrefix = (index: number) => [...(props.pathPrefix || []), index]
 
@@ -621,12 +727,17 @@ const getVisibleItemError = (index: number) => {
 
   if (directEntry?.messages?.[0]) return directEntry.messages[0]
 
-  const descendantEntry = getVisibleValidationEntries?.(`${basePath}.`)?.[0] || null
-
-  if (!descendantEntry) return null
-
-  return descendantEntry.messages[0] || String($t('labels.contents.validation.nestedItemHint'))
+  // A nested field's own message ("required") means nothing without the field beside it.
+  return getVisibleValidationEntries?.(`${basePath}.`)?.length
+    ? String($t('labels.contents.validation.nestedItemHint'))
+    : null
 }
+
+/** The row hides its fields, so the row has to say what is wrong. */
+const getRowError = (content: Record<string, unknown>, index: number) =>
+  drillsIn(content) || !isItemOpen(content, index) ? getVisibleItemError(index) : null
+
+const getRowErrorId = (index: number) => `${sortId}-error-${index}`
 
 const hasVisibleItemError = (index: number) => Boolean(getVisibleItemError(index))
 
@@ -639,9 +750,9 @@ const invalidAccordionValues = computed(() =>
 )
 
 const ensureInvalidItemsOpen = () => {
-  if (invalidAccordionValues.value.length === 0) return
-
-  openItems.value = Array.from(new Set([...openItems.value, ...invalidAccordionValues.value]))
+  const closed = invalidAccordionValues.value.filter((value) => !openItems.value.includes(value))
+  // The array is shared by every list, so an equal copy would re-render them all.
+  if (closed.length > 0) openItems.value = [...openItems.value, ...closed]
 }
 
 watch(
@@ -699,12 +810,19 @@ const getItemRingStyle = (content: Record<string, unknown>, index: number) => {
       :required="item.required"
       class="relative z-10 mr-8"
     />
-    <div class="min-w-0 rounded-2xl border border-border bg-surface px-2">
+    <div
+      :class="[
+        'min-w-0',
+        depth === 0
+          ? 'rounded-2xl border border-border bg-surface px-2'
+          : 'rounded-xl border border-border bg-surface px-1.5',
+      ]"
+    >
       <div
         v-if="!props.readOnly && hasSelectedItems"
-        class="flex items-center justify-between pt-2"
+        class="relative z-20 flex items-center justify-between pt-2"
       >
-        <div class="text-xs font-medium text-muted-foreground">
+        <div class="text-sm font-medium text-muted">
           {{ selectedItems.length }} selected
         </div>
         <div class="flex items-center">
@@ -756,7 +874,7 @@ const getItemRingStyle = (content: Record<string, unknown>, index: number) => {
         ref="accordionContainer"
         v-model="openItems"
         type="multiple"
-        class="relative pt-2"
+        :class="['relative', depth === 0 ? 'pt-2' : 'pt-1.5']"
         @click.capture="suppressClickAfterSort"
       >
         <AccordionItem
@@ -765,8 +883,9 @@ const getItemRingStyle = (content: Record<string, unknown>, index: number) => {
           :value="getItemAccordionValue(content, i)"
           data-block-item
           :class="[
-            'relative mb-2 min-w-0 rounded-lg border bg-background p-2 transition-colors',
-            hasVisibleItemError(i) ? 'border-destructive/40 bg-destructive/5' : 'border-border',
+            'relative mb-2 min-w-0 rounded-lg border bg-card py-2 transition-colors duration-100',
+            depth === 0 ? 'px-3' : 'px-2',
+            hasVisibleItemError(i) ? 'border-destructive/40 bg-destructive/5' : 'border-border hover:border-border-strong',
             content.hidden ? 'opacity-50' : '',
           ]"
           :style="getItemRingStyle(content, i)"
@@ -795,7 +914,9 @@ const getItemRingStyle = (content: Record<string, unknown>, index: number) => {
                 :aria-label="`Select ${content.block || `item ${i + 1}`}`"
                 :class="[
                   'transition-opacity',
-                  isSelected(i) ? 'opacity-100' : 'opacity-0 group-hover:opacity-100',
+                  isSelected(i)
+                    ? 'opacity-100'
+                    : 'opacity-0 group-focus-within:opacity-100 group-hover:opacity-100',
                 ]"
                 @update:model-value="(checked) => toggleSelected(i, checked)"
               />
@@ -805,27 +926,37 @@ const getItemRingStyle = (content: Record<string, unknown>, index: number) => {
               @keydown.alt.up.prevent.stop="moveItem(i, -1)"
               @keydown.alt.down.prevent.stop="moveItem(i, 1)"
             >
-              <div
+              <SortHandle
                 v-if="!props.readOnly"
-                role="button"
-                tabindex="0"
                 :data-block-handle="sortId"
-                :aria-label="$t('actions.blocks.tooltips.reorder')"
-                :title="$t('actions.blocks.tooltips.reorder')"
-                class="-m-1 flex shrink-0 cursor-grab touch-none items-center rounded-sm p-1 text-muted-foreground select-none hover:text-foreground focus-visible:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none active:cursor-grabbing"
-                @keydown.up.prevent.stop="moveItemFromHandle(i, -1)"
-                @keydown.down.prevent.stop="moveItemFromHandle(i, 1)"
+                @move="(delta) => moveItemFromHandle(i, delta)"
+              />
+              <button
+                v-if="drillsIn(content)"
+                type="button"
+                :data-block-row="content.id"
+                :aria-describedby="getRowError(content, i) ? getRowErrorId(i) : undefined"
+                class="flex min-w-0 grow cursor-pointer items-center gap-2 rounded-sm focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                @click="navigateToItem(content.id as string)"
               >
-                <Icon name="lucide:grip-vertical" />
-              </div>
-              <AccordionTrigger class="flex min-w-0 grow items-center gap-2">
+                <BlockHeader
+                  :content="content"
+                  :block="getBlockHeaderBlock(content)"
+                />
+              </button>
+              <AccordionTrigger
+                v-else
+                :data-block-row="content.id"
+                :aria-describedby="getRowError(content, i) ? getRowErrorId(i) : undefined"
+                class="flex min-w-0 grow items-center gap-2 rounded-sm focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+              >
                 <BlockHeader
                   :content="content"
                   :block="getBlockHeaderBlock(content)"
                 />
               </AccordionTrigger>
               <div
-                class="flex items-center gap-2 opacity-0 group-hover:opacity-100 has-[[data-state=open]]:opacity-100"
+                class="flex items-center opacity-0 group-focus-within:opacity-100 group-hover:opacity-100 has-[[data-state=open]]:opacity-100"
               >
                 <button
                   v-if="!props.readOnly"
@@ -840,7 +971,7 @@ const getItemRingStyle = (content: Record<string, unknown>, index: number) => {
                       ? $t('actions.blocks.tooltips.show')
                       : $t('actions.blocks.tooltips.hide')
                   "
-                  class="flex transform cursor-pointer items-center hover:text-primary"
+                  class="row-action"
                   @click.stop="toggleHidden(i)"
                 >
                   <Icon :name="content.hidden ? 'lucide:eye-off' : 'lucide:eye'" />
@@ -850,7 +981,7 @@ const getItemRingStyle = (content: Record<string, unknown>, index: number) => {
                   type="button"
                   :aria-label="$t('actions.blocks.tooltips.editNested')"
                   :title="$t('actions.blocks.tooltips.editNested')"
-                  class="flex transform cursor-pointer items-center hover:text-primary"
+                  class="row-action"
                   @click.stop="navigateToItem(content.id as string)"
                 >
                   <Icon name="lucide:edit-3" />
@@ -860,7 +991,7 @@ const getItemRingStyle = (content: Record<string, unknown>, index: number) => {
                   type="button"
                   :aria-label="$t('actions.blocks.tooltips.copy')"
                   :title="$t('actions.blocks.tooltips.copy')"
-                  class="flex transform cursor-pointer items-center hover:text-primary"
+                  class="row-action"
                   @click.stop="copyItems(i)"
                 >
                   <Icon name="lucide:copy" />
@@ -870,7 +1001,7 @@ const getItemRingStyle = (content: Record<string, unknown>, index: number) => {
                   type="button"
                   :aria-label="$t('actions.blocks.tooltips.cut')"
                   :title="$t('actions.blocks.tooltips.cut')"
-                  class="flex transform cursor-pointer items-center hover:text-primary"
+                  class="row-action"
                   @click.stop="cutItems(i)"
                 >
                   <Icon name="lucide:scissors" />
@@ -880,7 +1011,7 @@ const getItemRingStyle = (content: Record<string, unknown>, index: number) => {
                   type="button"
                   :aria-label="$t('actions.blocks.tooltips.delete')"
                   :title="$t('actions.blocks.tooltips.delete')"
-                  class="flex transform cursor-pointer items-center hover:text-red-500"
+                  class="row-action hover:text-destructive-ink"
                   @click.stop="deleteItem(i)"
                 >
                   <Icon name="lucide:trash-2" />
@@ -898,10 +1029,24 @@ const getItemRingStyle = (content: Record<string, unknown>, index: number) => {
                   @create-template="handleTemplateTrigger(content)"
                 />
               </div>
+              <span
+                v-if="drillsIn(content)"
+                aria-hidden="true"
+                class="flex shrink-0 cursor-pointer items-center text-muted"
+                @click="navigateToItem(content.id as string)"
+              >
+                <Icon name="lucide:chevron-right" />
+              </span>
             </div>
             <div
-              v-if="!isItemOpen(content, i) && getItemSubtreePresence(content).length > 0"
-              class="pointer-events-none absolute top-1/2 right-1 z-10 flex -translate-y-1/2 items-center transition-opacity group-hover:opacity-0"
+              v-if="
+                (drillsIn(content) || !isItemOpen(content, i)) &&
+                getItemSubtreePresence(content).length > 0
+              "
+              :class="[
+                'pointer-events-none absolute top-1/2 z-10 flex -translate-y-1/2 items-center transition-opacity group-focus-within:opacity-0 group-hover:opacity-0',
+                drillsIn(content) ? 'right-6' : 'right-1',
+              ]"
             >
               <AvatarList
                 :users="getItemSubtreePresence(content)"
@@ -910,8 +1055,19 @@ const getItemRingStyle = (content: Record<string, unknown>, index: number) => {
               />
             </div>
           </AccordionHeader>
-          <AccordionContent>
-            <div class="mt-2 grid items-start gap-4 border-t-2 border-surface p-1 pt-2">
+          <p
+            v-if="getRowError(content, i)"
+            :id="getRowErrorId(i)"
+            class="mt-1 flex items-center gap-1 pl-6 text-sm text-foreground"
+          >
+            <Icon
+              name="lucide:circle-alert"
+              class="shrink-0 text-destructive"
+            />
+            <span class="truncate">{{ getRowError(content, i) }}</span>
+          </p>
+          <AccordionContent v-if="!drillsIn(content)">
+            <div class="mt-2 grid items-start gap-4 border-t border-border pt-2">
               <div
                 @focusin.stop
                 @focusout.stop
@@ -943,6 +1099,7 @@ const getItemRingStyle = (content: Record<string, unknown>, index: number) => {
           :space-id="spaceId"
           :can-mutate="canAdd"
           :has-clipboard-item="canPaste"
+          placement="end"
           @update:open="(open: boolean) => setPickerOpen(blockItems.length, open)"
           @paste="pasteItems"
           @select="
@@ -950,45 +1107,7 @@ const getItemRingStyle = (content: Record<string, unknown>, index: number) => {
               addItem(blockSlug, blockItems.length, template)
           "
         />
-        <div
-          v-if="canPaste"
-          class="mt-2 flex justify-center pb-2"
-        >
-          <Button
-            type="button"
-            :title="$t('actions.blocks.tooltips.paste')"
-            variant="ghost"
-            size="xs"
-            class="relative z-10"
-            @click="pasteItems()"
-          >
-            <Icon
-              name="lucide:clipboard-paste"
-              size="0.75rem"
-            />
-            <span>{{ $t('actions.paste') }}</span>
-          </Button>
-        </div>
       </AccordionRoot>
     </div>
   </div>
 </template>
-
-<style>
-/* Placeholder left in the list while an item is dragged. */
-.blocks-sortable-ghost {
-  border-style: dashed;
-  border-color: var(--color-ring);
-  background-color: var(--color-tree-drop);
-}
-
-.blocks-sortable-ghost > * {
-  visibility: hidden;
-}
-
-/* The clone that follows the pointer. */
-.blocks-sortable-drag {
-  box-shadow: var(--shadow-soft-lg);
-  cursor: grabbing;
-}
-</style>

@@ -7,7 +7,6 @@ import {
   downloadBlob,
   getImportExportExtension,
   requestExportBlob,
-  requestImportJson,
   requestImportStream,
 } from '~/lib/import-export'
 
@@ -151,73 +150,6 @@ describe('requestExportBlob', () => {
   })
 })
 
-describe('requestImportJson', () => {
-  const file = new File(['id,name\n1,A'], 'rows.csv', { type: 'text/csv' })
-
-  const importJson = (extraFields?: Record<string, string>) =>
-    requestImportJson<{ imported: number }>({
-      client: client(),
-      endpoint: '/imports',
-      file,
-      extraFields,
-    })
-
-  it('posts the file as multipart form data and returns the parsed JSON', async () => {
-    fetchMock.mockResolvedValue(jsonResponse({ imported: 2 }))
-
-    expect(await importJson()).toEqual({ imported: 2 })
-
-    const body = lastRequest().init.body as FormData
-
-    expect(body).toBeInstanceOf(FormData)
-    expect(body.get('file')).toBe(file)
-  })
-
-  it('appends extra fields alongside the file', async () => {
-    fetchMock.mockResolvedValue(jsonResponse({ imported: 0 }))
-
-    await importJson({ mode: 'merge', language: 'de' })
-
-    const body = lastRequest().init.body as FormData
-
-    expect(body.get('mode')).toBe('merge')
-    expect(body.get('language')).toBe('de')
-  })
-
-  it('never sets Content-Type — the browser has to add the multipart boundary', async () => {
-    fetchMock.mockResolvedValue(jsonResponse({ imported: 0 }))
-
-    await importJson()
-
-    expect(lastRequest().headers).toEqual({
-      Authorization: 'Bearer token-1',
-      'X-XSRF-TOKEN': 'token/value',
-    })
-  })
-
-  it('refreshes the CSRF cookie before firing the request', async () => {
-    fetchMock.mockResolvedValue(jsonResponse({ imported: 0 }))
-
-    await importJson()
-
-    expect(ensureCsrfCookie).toHaveBeenCalledTimes(1)
-  })
-
-  it('throws the API message from a JSON error body', async () => {
-    fetchMock.mockResolvedValue(
-      jsonResponse({ message: 'Unsupported column' }, { status: 422, statusText: 'Unprocessable' })
-    )
-
-    await expect(importJson()).rejects.toThrow('Unsupported column')
-  })
-
-  it('falls back to its own label in the status message', async () => {
-    fetchMock.mockResolvedValue(new Response('nope', { status: 500, statusText: 'Server Error' }))
-
-    await expect(importJson()).rejects.toThrow('Import failed with status 500: Server Error')
-  })
-})
-
 describe('requestImportStream', () => {
   const file = new File(['id,name\n1,A'], 'rows.csv', { type: 'text/csv' })
 
@@ -226,13 +158,49 @@ describe('requestImportStream', () => {
       headers: { 'content-type': 'text/event-stream' },
     })
 
-  const importStream = (onProgress = vi.fn()) =>
+  const importStream = (onProgress = vi.fn(), extraFields?: Record<string, string>) =>
     requestImportStream<{ imported: number }>({
       client: client(),
       endpoint: '/imports',
       file,
+      extraFields,
       onProgress,
     })
+
+  const finished = () => sseResponse({ type: 'done', content: '', data: { imported: 0 } })
+
+  it('posts the file and extra fields as multipart form data', async () => {
+    fetchMock.mockResolvedValue(finished())
+
+    await importStream(vi.fn(), { mode: 'merge', language: 'de' })
+
+    const body = lastRequest().init.body as FormData
+
+    expect(body).toBeInstanceOf(FormData)
+    expect(body.get('file')).toBe(file)
+    expect(body.get('mode')).toBe('merge')
+    expect(body.get('language')).toBe('de')
+  })
+
+  it('never sets Content-Type — the browser has to add the multipart boundary', async () => {
+    fetchMock.mockResolvedValue(finished())
+
+    await importStream()
+
+    expect(lastRequest().headers).toEqual({
+      Accept: 'text/event-stream',
+      Authorization: 'Bearer token-1',
+      'X-XSRF-TOKEN': 'token/value',
+    })
+  })
+
+  it('refreshes the CSRF cookie before firing the request', async () => {
+    fetchMock.mockResolvedValue(finished())
+
+    await importStream()
+
+    expect(ensureCsrfCookie).toHaveBeenCalledTimes(1)
+  })
 
   it('reports progress and resolves with the done payload', async () => {
     fetchMock.mockResolvedValue(

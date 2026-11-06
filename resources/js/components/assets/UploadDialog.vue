@@ -788,7 +788,7 @@ const getProgressColor = (status: StagedUploadFile['status']) => {
                 </div>
                 <div
                   v-else-if="file.status === 'error'"
-                  class="bg-opacity-70 absolute inset-0 flex items-center justify-center bg-destructive-background"
+                  class="absolute inset-0 flex items-center justify-center bg-destructive-background"
                 >
                   <div class="p-2 text-center text-primary">
                     <Icon
@@ -796,7 +796,7 @@ const getProgressColor = (status: StagedUploadFile['status']) => {
                       size="2rem"
                       class="mb-1 h-6 w-6"
                     />
-                    <div class="text-xs">
+                    <div class="text-sm">
                       {{ statusLabel(file) }}
                     </div>
                     <Button
@@ -854,7 +854,7 @@ const getProgressColor = (status: StagedUploadFile['status']) => {
               <span class="min-w-0 flex-1 truncate">
                 {{ $t('labels.assets.batch.currentFolder') }}
               </span>
-              <span class="shrink-0 text-xs text-muted">{{ uploadTree.fileCount }}</span>
+              <span class="shrink-0 text-sm text-muted">{{ uploadTree.fileCount }}</span>
             </div>
             <UploadFileRow
               v-for="file in uploadTree.files"

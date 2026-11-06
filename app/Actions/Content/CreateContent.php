@@ -112,8 +112,10 @@ class CreateContent
                 $validatedContent = $contentValidation->content;
             }
 
+            $message = data_get($data, 'message');
             unset($data['content']);
             unset($data['force']);
+            unset($data['message']);
             $content->fill($data);
 
             // The id is needed before the version is written: the ledger row
@@ -138,6 +140,7 @@ class CreateContent
             $this->applySlugPattern($block, $content, $parent, $validatedContent, $data);
 
             $version = ContentVersion::createWithContentContext([
+                'message' => $message,
                 'content' => $validatedContent,
                 'content_id' => $content->id,
                 'created_by_id' => $owner->id,

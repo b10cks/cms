@@ -63,12 +63,12 @@ const logout = () => {
 
 <template>
   <div
-    class="fixed top-0 z-20 flex h-14 w-full items-center gap-3 border-b border-sidebar-border bg-sidebar text-sidebar-foreground p-3 select-none"
+    class="fixed top-0 z-20 flex h-14 w-full items-center gap-3 border-b border-sidebar-border bg-sidebar text-sidebar-foreground p-3 select-none [--button-active:var(--header-button-active)] [--button-hover:var(--header-button-hover)] [--badge:var(--header-badge)] [--button:var(--header-button)]"
   >
     <div class="flex items-center gap-3">
       <DropdownMenu>
         <DropdownMenuTrigger
-          class="flex cursor-pointer gap-2 rounded-lg bg-sidebar-accent/60 p-2 transition-colors duration-200 hover:bg-sidebar-accent data-[state=open]:bg-sidebar-accent"
+          class="flex cursor-pointer gap-2 rounded-lg bg-sidebar-accent/60 p-2 transition-colors duration-100 hover:bg-sidebar-accent focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring data-[state=open]:bg-sidebar-accent"
         >
           <Logo
             alt="b10cks"
@@ -76,7 +76,7 @@ const logout = () => {
           />
           <Icon
             name="lucide:chevron-down"
-            class="-mr-1"
+            class="-mr-1 text-sidebar-muted"
           />
         </DropdownMenuTrigger>
         <DropdownMenuContent
@@ -142,7 +142,7 @@ const logout = () => {
                   as-child
                   :class="[
                     'w-full cursor-pointer',
-                    space.id === selectedSpaceId ? 'bg-accent text-accent-foreground' : '',
+                    space.id === selectedSpaceId ? 'bg-accent-fill text-accent-foreground' : '',
                   ]"
                 >
                   <RouterLink

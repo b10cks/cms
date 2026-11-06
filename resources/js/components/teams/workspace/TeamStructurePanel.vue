@@ -203,7 +203,7 @@ const meta = computed(() =>
           :style="{ paddingLeft: `${1 + (row.depth + 1) * 1.25}rem` }"
         >
           <span
-            :class="['size-1.5 shrink-0 rounded-full', space.published ? 'bg-success' : 'bg-muted']"
+            :class="['size-1.5 shrink-0 rounded-full', space.published ? 'bg-success' : 'bg-muted-background']"
           />
           <RouterLink
             :to="{ name: 'space', params: { space: space.id } }"

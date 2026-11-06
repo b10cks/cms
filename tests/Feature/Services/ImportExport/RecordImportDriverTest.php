@@ -9,6 +9,7 @@ use App\Events\Space\SpaceModelsChanged;
 use App\Models\Management\Space;
 use App\Models\Space\Redirect;
 use App\Services\DataEntryData\Drivers\CsvDataEntryDataDriver;
+use App\Services\ImportExport\ImportRun;
 use App\Services\ImportExport\RecordImportDriver;
 use App\Services\RedirectData\Drivers\CsvRedirectDataDriver;
 use Illuminate\Database\Eloquent\Builder;
@@ -306,10 +307,10 @@ class RecordImportDriverTest extends TestCase
             $csv .= "/old-{$i},/new-{$i},301\n";
         }
 
-        $result = app(CsvRedirectDataDriver::class)->import(
+        $result = ImportRun::drain(app(CsvRedirectDataDriver::class)->import(
             $this->space,
             UploadedFile::fake()->createWithContent('redirects.csv', $csv),
-        );
+        ));
 
         $this->assertCount(50, $result->successes);
         $this->assertSame(50, Redirect::query()->count());
@@ -352,7 +353,7 @@ class TestRecordImportDriver extends RecordImportDriver
             $this->transactions[] = true;
         });
 
-        return $this->runImport($space, UploadedFile::fake()->create('rows.json'), $mode);
+        return ImportRun::drain($this->runImport($space, UploadedFile::fake()->create('rows.json'), $mode));
     }
 
     public function transactionCount(): int

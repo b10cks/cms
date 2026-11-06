@@ -374,7 +374,7 @@ const payProposal = () => {
               })
             }}
           </p>
-          <p class="text-xs text-muted">
+          <p class="text-sm text-muted">
             {{
               $t('labels.subscriptions.proposal.invitee', {
                 email: proposal.invited_email,
@@ -522,7 +522,7 @@ const payProposal = () => {
                 />
                 <p
                   v-if="row.over"
-                  class="text-xs font-medium text-destructive"
+                  class="text-sm font-medium text-destructive"
                 >
                   {{ $t('labels.usage.overLimit', { percentage: row.percentage }) }}
                 </p>
@@ -530,7 +530,7 @@ const payProposal = () => {
             </div>
             <p
               v-if="usage?.period?.resets_at"
-              class="text-xs text-muted"
+              class="text-sm text-muted"
             >
               {{
                 $t('labels.plans.usageResets', {
@@ -607,7 +607,7 @@ const payProposal = () => {
 
       <div
         v-else
-        class="flex flex-col items-center justify-center gap-6 rounded-md border border-input bg-surface py-12 text-center select-none"
+        class="flex flex-col items-center justify-center gap-6 rounded-md border border-border-strong bg-surface py-12 text-center select-none"
       >
         <InvoicesIcon class="w-32 text-muted" />
         <div class="font-semibold text-muted">
@@ -761,19 +761,19 @@ const payProposal = () => {
                   !plan.contact_url &&
                   !plan.is_free
                 "
-                class="mt-1 text-xs text-muted"
+                class="mt-1 text-sm text-muted"
               >
                 {{ $t('labels.plans.monthlyOnly') }}
               </p>
               <p
                 v-if="isScheduledDowngradeToFree(plan)"
-                class="mt-1 text-xs text-muted"
+                class="mt-1 text-sm text-muted"
               >
                 {{ $t('labels.plans.downgradeToFreeNotice') }}
               </p>
               <p
                 v-if="overQuotaKeys(plan).length"
-                class="mt-2 flex items-start gap-1.5 text-xs font-medium text-destructive"
+                class="mt-2 flex items-start gap-1.5 text-sm font-medium text-destructive"
               >
                 <Icon
                   name="lucide:triangle-alert"
@@ -898,7 +898,7 @@ const payProposal = () => {
               type="email"
               :placeholder="$t('labels.subscriptions.proposalDialog.emailPlaceholder')"
             />
-            <p class="text-xs text-muted">
+            <p class="text-sm text-muted">
               {{ $t('labels.subscriptions.proposalDialog.emailHint') }}
             </p>
           </div>

@@ -12,6 +12,7 @@ import type {
 } from '~/types/data-sources'
 
 import { queryKeys } from './useQueryClient'
+import type { ImportProgress } from '~/types/import-export'
 
 export function useDataEntries(spaceId: MaybeRef<string>, dataSourceId: MaybeRef<string>) {
   const { t } = useI18n()
@@ -200,8 +201,16 @@ export function useDataEntries(spaceId: MaybeRef<string>, dataSourceId: MaybeRef
 
   const useImportDataEntriesMutation = () => {
     return useMutation({
-      mutationFn: async ({ file, mode }: { file: File; mode: DataEntryImportMode }) => {
-        return spaceAPI.value.dataSources.importEntries(toValue(dataSourceId), file, mode)
+      mutationFn: async ({
+        file,
+        mode,
+        onProgress,
+      }: {
+        file: File
+        mode: DataEntryImportMode
+        onProgress?: (progress: ImportProgress) => void
+      }) => {
+        return spaceAPI.value.dataSources.importEntries(toValue(dataSourceId), file, mode, onProgress)
       },
       onSuccess: () => {
         queryClient.invalidateQueries({

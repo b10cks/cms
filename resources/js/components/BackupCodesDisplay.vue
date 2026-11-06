@@ -51,7 +51,7 @@ const handleDownload = () => {
       <span
         v-for="(code, index) in codes"
         :key="index"
-        class="rounded border border-input-border bg-surface py-2 text-center font-mono text-sm text-primary"
+        class="rounded border border-border-strong bg-surface py-2 text-center font-mono text-sm text-primary"
       >
         {{ code }}&nbsp;</span
       >

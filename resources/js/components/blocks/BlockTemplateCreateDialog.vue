@@ -104,7 +104,7 @@ watch(open, (isOpen) => {
           />
 
           <ScrollArea class="h-32 rounded-lg bg-surface p-2">
-            <div class="font-mono text-xs">
+            <div class="font-mono text-sm">
               <pre>{{ content }}</pre>
             </div>
           </ScrollArea>

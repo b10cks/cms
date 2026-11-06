@@ -586,6 +586,8 @@ onMounted(() => {
 onBeforeUnmount(() => {
   document.removeEventListener('mousedown', handleClickOutside)
 })
+
+defineExpose({ clearAllFilters })
 </script>
 
 <template>
@@ -594,7 +596,7 @@ onBeforeUnmount(() => {
     class="relative w-full"
   >
     <div
-      class="flex min-h-9 flex-wrap items-center gap-2 rounded-md border border-input-border bg-input py-1 pr-2 pl-2 text-primary shadow-sm transition-colors placeholder:text-muted focus-within:ring-1 focus-within:ring-ring focus-within:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+      class="flex min-h-9 flex-wrap items-center gap-2 rounded-lg border border-input-border bg-input py-0.5 pr-2 pl-2 text-primary shadow-sm transition-colors focus-within:ring-2 focus-within:ring-ring focus-within:outline-none"
     >
       <!-- Applied Filters as Badges; the one being edited is represented by the pending badge -->
       <template
@@ -634,7 +636,7 @@ onBeforeUnmount(() => {
           type="text"
           role="combobox"
           data-shortcut-search
-          class="w-full border-none bg-transparent p-1 text-sm font-semibold text-primary focus:outline-none"
+          class="w-full border-none bg-transparent p-1 text-sm text-primary placeholder:text-input-muted focus:outline-none"
           :placeholder="String(placeholder)"
           :aria-label="String(placeholder)"
           :aria-expanded="dropdownOpen"
@@ -670,7 +672,7 @@ onBeforeUnmount(() => {
       v-if="dropdownOpen"
       :id="dropdownId"
       ref="dropdownRef"
-      class="absolute z-50 mt-1 max-h-60 w-full overflow-y-auto rounded-md bg-input p-1 shadow-lg"
+      class="overlay-panel absolute z-50 mt-1 max-h-60 w-full overflow-y-auto p-1"
       role="listbox"
       :aria-label="String($t(`labels.search.${stage}DropdownLabel`))"
     >
@@ -679,11 +681,9 @@ onBeforeUnmount(() => {
           v-for="(item, index) in dropdownItems"
           :id="`${dropdownId}-item-${index}`"
           :key="`dropdown-item-${index}`"
-          :class="[
-            'relative flex items-center gap-2 rounded-md px-2 py-1.5 text-sm font-semibold transition-colors outline-none select-none hover:bg-blue-600 hover:text-primary focus:bg-blue-600 focus:text-primary data-[disabled]:pointer-events-none data-[disabled]:opacity-50 [&>svg]:size-4 [&>svg]:shrink-0',
-            index === selectedDropdownIndex && 'bg-blue-600 text-primary',
-          ]"
+          class="menu-row"
           role="option"
+          :data-highlighted="index === selectedDropdownIndex ? '' : undefined"
           :aria-selected="index === selectedDropdownIndex"
           @click="
             stage === 'field'

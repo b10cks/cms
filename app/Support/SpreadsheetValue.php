@@ -21,7 +21,8 @@ class SpreadsheetValue
 
     /**
      * Prefix a leading formula character with a single quote, which every
-     * major spreadsheet reads as "this cell is literal text".
+     * major spreadsheet reads as "this cell is literal text". A value that already
+     * looks escaped gets one more quote, so {@see unescape()} returns it exactly.
      */
     public static function escape(mixed $value): mixed
     {
@@ -29,7 +30,18 @@ class SpreadsheetValue
             return $value;
         }
 
-        return in_array($value[0], self::DANGEROUS_PREFIXES, true) ? "'".$value : $value;
+        return in_array($value[0], self::DANGEROUS_PREFIXES, true) || self::looksEscaped($value) ? "'".$value : $value;
+    }
+
+    /** What {@see escape()} was given, for importers reading a file it wrote. */
+    public static function unescape(string $value): string
+    {
+        return self::looksEscaped($value) ? substr($value, 1) : $value;
+    }
+
+    private static function looksEscaped(string $value): bool
+    {
+        return preg_match('/^\'+[=+\-@\t\r]/', $value) === 1;
     }
 
     /**

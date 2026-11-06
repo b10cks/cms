@@ -10,6 +10,7 @@ import type { LocationQueryRaw } from 'vue-router'
 import { RouterLink } from 'vue-router'
 import { toast } from 'vue-sonner'
 
+import AiOperationDialog from '~/components/ai/operations/AiOperationDialog.vue'
 import CreateFolderDialog from '~/components/assets/CreateFolderDialog.vue'
 import Icon from '~/components/Icon.vue'
 import { Badge } from '~/components/ui/badge'
@@ -26,6 +27,7 @@ import {
   getAssetManagerDragItems,
   setAssetManagerDragPreview,
 } from '~/lib/assets/assetDragAndDrop'
+import { useMountOnFirstOpen } from '~/lib/mountOnFirstOpen'
 
 const props = defineProps<{
   spaceId: string
@@ -49,6 +51,17 @@ const { mutateAsync: updateFolder } = useUpdateAssetFolderMutation()
 const { getChildrenOfFolder, rootFolders } = useFolderStructure()
 const access = useAccessControl(computed(() => ({ space_id: props.spaceId })))
 const canManageFolders = computed(() => access.hasAbility('asset_folders.manage'))
+const aiEnabled = useAiEnabled(() => props.spaceId)
+const canRunAiOperation = computed(() => aiEnabled.value && access.hasAbility('assets.manage'))
+
+/** An AI operation on a folder and, by default, everything below it. */
+const aiOperationFolder = ref<AssetFolderResource | null>(null)
+const aiOperationOpen = ref(false)
+const aiOperationMounted = useMountOnFirstOpen(() => aiOperationOpen.value)
+const openAiOperation = (folder: AssetFolderResource) => {
+  aiOperationFolder.value = folder
+  aiOperationOpen.value = true
+}
 
 const selectedFolderId = defineModel<string | null>()
 
@@ -337,7 +350,7 @@ const toggleExpanded = (folderId: string) => {
       <div class="group my-2 flex items-center gap-2 px-2">
         <Icon
           name="lucide:folder"
-          class="text-muted-foreground"
+          class="text-muted"
           aria-hidden="true"
         />
         <h2 class="text-sm font-semibold text-primary">
@@ -413,7 +426,7 @@ const toggleExpanded = (folderId: string) => {
         <span class="shrink-0 pl-2 text-sm tabular-nums">
           {{ item.value.assets_count ?? 0 }}
         </span>
-        <DropdownMenu v-if="canManageFolders">
+        <DropdownMenu v-if="canManageFolders || canRunAiOperation">
           <DropdownMenuTrigger
             class="opacity-0 transition-all duration-200 group-hover:opacity-100 hover:text-primary data-[state=open]:opacity-100"
             :aria-label="$t('actions.moreActions')"
@@ -425,21 +438,30 @@ const toggleExpanded = (folderId: string) => {
               <Icon name="lucide:eye" />
               <span>{{ $t('actions.view.view') }}</span>
             </DropdownMenuItem>
-            <DropdownMenuItem @select="openEditFolderDialog(item.value)">
-              <Icon name="lucide:edit" />
-              <span>{{ $t('actions.edit') }}</span>
-            </DropdownMenuItem>
-            <DropdownMenuItem @select="openCreateFolderDialog(item.value.id)">
-              <Icon name="lucide:folder-plus" />
-              <span>{{ $t('actions.createFolder') }}</span>
-            </DropdownMenuItem>
             <DropdownMenuItem
-              class="text-destructive"
-              @select="handleFolderDelete(item.value)"
+              v-if="canRunAiOperation"
+              @select="openAiOperation(item.value)"
             >
-              <Icon name="lucide:trash-2" />
-              <span>{{ $t('actions.delete') }}</span>
+              <Icon name="ai:bot" />
+              <span>{{ $t('components.aiOperations.entry') }}</span>
             </DropdownMenuItem>
+            <template v-if="canManageFolders">
+              <DropdownMenuItem @select="openEditFolderDialog(item.value)">
+                <Icon name="lucide:edit" />
+                <span>{{ $t('actions.edit') }}</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem @select="openCreateFolderDialog(item.value.id)">
+                <Icon name="lucide:folder-plus" />
+                <span>{{ $t('actions.createFolder') }}</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                class="text-destructive"
+                @select="handleFolderDelete(item.value)"
+              >
+                <Icon name="lucide:trash-2" />
+                <span>{{ $t('actions.delete') }}</span>
+              </DropdownMenuItem>
+            </template>
           </DropdownMenuContent>
         </DropdownMenu>
       </TreeItem>
@@ -451,6 +473,13 @@ const toggleExpanded = (folderId: string) => {
       :folder="editingFolder"
       :parent-folder-id="dialogParentFolderId"
       :space-id="spaceId"
+    />
+    <AiOperationDialog
+      v-if="canRunAiOperation && aiOperationMounted && aiOperationFolder"
+      v-model:open="aiOperationOpen"
+      :space-id="spaceId"
+      :scope="{ type: 'asset', root_id: aiOperationFolder.id }"
+      :scope-label="aiOperationFolder.name"
     />
   </div>
 </template>

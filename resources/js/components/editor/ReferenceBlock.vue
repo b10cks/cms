@@ -156,7 +156,7 @@ watch(
       />
       <p
         v-if="item.description"
-        class="text-muted-foreground text-xs"
+        class="text-muted text-sm"
       >
         {{ item.description }}
       </p>
@@ -209,7 +209,7 @@ watch(
           <!-- Display mode -->
           <div
             v-else
-            class="group relative overflow-hidden rounded-lg border border-input bg-surface"
+            class="group relative overflow-hidden rounded-lg border border-input-border bg-surface"
           >
             <div class="flex items-center p-2 gap-2">
               <button
@@ -264,7 +264,7 @@ watch(
 
       <div
         v-if="item.max && item.max > 0"
-        class="text-muted-foreground text-center text-xs"
+        class="text-muted text-center text-sm"
       >
         {{ $t('labels.references.referencesCount', { current: localValue.length, max: item.max }) }}
       </div>

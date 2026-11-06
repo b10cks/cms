@@ -627,7 +627,7 @@ defineExpose({
             />
           </svg>
           <div
-            class="rounded-md ml-6 px-2 py-1 text-xs font-bold text-white shadow-soft"
+            class="rounded-md ml-6 px-2 py-1 text-sm font-bold text-white shadow-soft"
             :style="{ backgroundColor: cursor.user.color }"
           >
             {{ cursor.user.firstname }} {{ cursor.user.lastname }}

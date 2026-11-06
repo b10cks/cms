@@ -56,7 +56,7 @@ const meta = computed(() =>
 
 /** Hidden until the row is hovered or the button focused; it then sits over the status, which turns invisible. */
 const settleClass =
-  'invisible absolute inset-y-0 right-0 -mr-1 inline-flex cursor-pointer items-center gap-1 rounded-md pr-1.5 pl-2 text-muted outline-none hover:text-foreground focus-visible:visible focus-visible:ring-1 focus-visible:ring-ring group-hover/row:visible'
+  'invisible absolute inset-y-0 right-0 -mr-1 inline-flex cursor-pointer items-center gap-1 rounded-md pr-1.5 pl-2 text-muted outline-none hover:text-foreground focus-visible:visible focus-visible:ring-2 focus-visible:ring-ring group-hover/row:visible'
 
 const onKeydown = (event: KeyboardEvent) => {
   if (event.target !== event.currentTarget || (event.key !== 'Enter' && event.key !== ' ')) return
@@ -70,7 +70,7 @@ const onKeydown = (event: KeyboardEvent) => {
     <div
       role="button"
       tabindex="0"
-      class="group/row relative w-full cursor-pointer rounded-md border border-transparent px-2.5 text-left outline-none transition-colors duration-150 select-none focus-visible:ring-1 focus-visible:ring-ring"
+      class="group/row relative w-full cursor-pointer rounded-md border border-transparent px-2.5 text-left outline-none transition-colors duration-150 select-none focus-visible:ring-2 focus-visible:ring-ring"
       :class="[
         settled ? 'flex h-8 items-center gap-2' : 'py-2',
         active ? 'bg-tree-selected text-tree-selected-foreground' : 'hover:bg-tree-hover',

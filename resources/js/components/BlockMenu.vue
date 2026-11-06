@@ -5,7 +5,6 @@ import { RouterLink, type LocationQueryRaw } from 'vue-router'
 import type { BlockFolderResource } from '~/api/resources/block-folders'
 import CreateBlockFolderDialog from '~/components/blocks/CreateBlockFolderDialog.vue'
 import Icon from '~/components/Icon.vue'
-import { Badge } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
 import { ScrollArea } from '~/components/ui/scroll-area'
 
@@ -26,15 +25,11 @@ const { useAccessControl } = useAuthorization()
 const access = useAccessControl(computed(() => ({ space_id: props.spaceId })))
 const canManageBlockFolders = computed(() => access.hasAbility('blocks.manage'))
 
-const { useBlocksQuery } = useBlocks(props.spaceId)
-const { data: blocks } = useBlocksQuery({ per_page: 1000 })
 
 const { useFolderStructure, useDeleteBlockFolderMutation } = useBlockFolders(props.spaceId)
 const { rootFolders, getChildrenOfFolder } = useFolderStructure()
 const { mutate: deleteBlockFolder } = useDeleteBlockFolderMutation()
 
-const { useBlockTagsQuery } = useBlockTags(props.spaceId)
-const { data: blockTags } = useBlockTagsQuery({ per_page: 500 })
 
 const showCreateFolderDialog = ref(false)
 
@@ -99,42 +94,11 @@ const initDeleteFolder = async (folder: BlockFolderResource) => {
     }
   }
 }
-
-const tabs = computed(() => ({
-  list: {
-    icon: 'lucide:blocks',
-    label: $t('labels.blocks.title'),
-    count: blocks.value?.data.length || 0,
-  },
-  tags: {
-    icon: 'lucide:tag',
-    label: $t('labels.blockTags.title'),
-    count: blockTags.value?.data.length || 0,
-  },
-}))
 </script>
 
 <template>
-  <div class="sticky top-14 flex h-[calc(100vh-3.5rem)] min-w-2xs flex-col overflow-hidden p-2">
+  <div class="sticky top-14 flex h-[calc(100vh-3.5rem)] min-w-2xs flex-col overflow-hidden bg-sidebar p-2">
     <div class="flex min-h-0 flex-1 flex-col">
-      <div class="mb-6 flex w-full flex-col rounded-md bg-input p-1">
-        <RouterLink
-          v-for="({ icon, label, count }, key) in tabs"
-          :key="key"
-          :to="buildOverviewRoute({ mode: key as 'list' | 'tags' })"
-          class="flex w-full cursor-pointer items-center gap-2 rounded-md p-2 text-sm font-semibold transition-colors hover:text-primary data-[state=active]:bg-background data-[state=active]:text-primary"
-          :class="currentMode === key ? 'bg-background text-primary' : ''"
-        >
-          <Icon :name="icon" />
-          <span>{{ label }}</span>
-          <Badge
-            class="ml-auto"
-            size="xs"
-            variant="surface"
-            >{{ count }}
-          </Badge>
-        </RouterLink>
-      </div>
       <ScrollArea class="min-h-0 flex-1">
         <TreeRoot
           v-slot="{ flattenItems }"

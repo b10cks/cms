@@ -103,7 +103,7 @@ const selectedBlueprintId = computed({
           :key="`${group.system}-${teamGroup.teamName}`"
           class="space-y-3"
         >
-          <h3 class="text-xs font-medium text-muted uppercase">
+          <h3 class="text-sm font-medium text-muted uppercase">
             {{ teamGroup.teamName }}
           </h3>
 

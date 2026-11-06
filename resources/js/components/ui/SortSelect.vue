@@ -113,7 +113,7 @@ const toggleButtonLabel = computed(() => {
       :model-value="sortField"
       @update:model-value="handleFieldChange"
     >
-      <SelectTrigger class="rounded-r-none">
+      <SelectTrigger class="relative rounded-r-none focus-visible:z-10 data-[state=open]:z-10">
         <span>{{ selectedOptionLabel }}</span>
       </SelectTrigger>
       <SelectContent>
@@ -128,9 +128,10 @@ const toggleButtonLabel = computed(() => {
         </SelectGroup>
       </SelectContent>
       <Button
+        variant="input"
         size="icon"
         :aria-label="toggleButtonLabel"
-        class="-mx-px rounded-l-none rounded-r-md border-l border-l-surface"
+        class="relative -ml-px rounded-l-none shadow-sm! inset-ring-input-border! focus-visible:z-10"
         @click="toggleDirection"
       >
         <Icon

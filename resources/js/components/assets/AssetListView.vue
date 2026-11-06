@@ -38,6 +38,7 @@ import {
   TableHeader,
   TableRow,
 } from '~/components/ui/table'
+import QueryErrorState from '~/components/ui/QueryErrorState.vue'
 import TableEmptyRow from '~/components/ui/TableEmptyRow.vue'
 import TableLoadingRow from '~/components/ui/TableLoadingRow.vue'
 import TablePaginationFooter from '~/components/ui/TablePaginationFooter.vue'
@@ -208,8 +209,12 @@ const assetQueryParams = computed<AssetsQueryParams & { collection?: string }>((
 const {
   data: assetResponse,
   isLoading: isLoadingAssets,
+  isFetching: isFetchingAssets,
+  isError: isAssetsError,
   refetch: refetchAssets,
 } = useAssetsQuery(assetQueryParams)
+const hasActiveSearch = computed(() => q.value !== '' || Object.keys(filters.value).length > 0)
+const searchFilter = useTemplateRef<InstanceType<typeof SearchFilter>>('searchFilter')
 
 const breadcrumbs = computed(() => {
   if (!folderId.value) {
@@ -821,8 +826,8 @@ onUnmounted(() => {
       }}
     </Alert>
 
-    <div class="flex items-center justify-between gap-4">
-      <div class="flex items-center gap-2">
+    <div class="flex flex-wrap items-center justify-between gap-4">
+      <div class="flex flex-wrap items-center gap-2">
         <DropdownMenu>
           <DropdownMenuTrigger as-child>
             <Button
@@ -877,7 +882,7 @@ onUnmounted(() => {
             />
             <label
               for="autosave"
-              class="text-sm text-muted-foreground"
+              class="text-sm text-muted"
             >
               {{ $t('labels.datasets.autoSave') }}
             </label>
@@ -885,8 +890,9 @@ onUnmounted(() => {
         </div>
       </div>
 
-      <div class="flex items-center gap-2">
+      <div class="flex flex-wrap items-center gap-2">
         <SearchFilter
+          ref="searchFilter"
           v-model="filters"
           :filterable-fields="assetFilters"
           @search="q = $event"
@@ -933,14 +939,30 @@ onUnmounted(() => {
             v-if="isLoadingAssets"
             :colspan="visibleLanguageTabs.length + (isManageMode && multiSelect ? 4 : 3)"
           />
+          <TableRow v-else-if="isAssetsError && !assetResponse">
+            <TableCell :colspan="visibleLanguageTabs.length + (isManageMode && multiSelect ? 4 : 3)">
+              <QueryErrorState
+                flush
+                :retrying="isFetchingAssets"
+                @retry="refetchAssets()"
+              />
+            </TableCell>
+          </TableRow>
           <TableEmptyRow
             v-else-if="!assets.length"
             :colspan="visibleLanguageTabs.length + (isManageMode && multiSelect ? 4 : 3)"
-            :label="$t('labels.assets.noAssetsFound')"
+            :label="hasActiveSearch ? $t('labels.assets.noSearchResults') : $t('labels.assets.noAssetsFound')"
           >
             <template #actions>
               <Button
-                v-if="allowUpload && canManageAssets"
+                v-if="hasActiveSearch"
+                variant="outline"
+                @click="searchFilter?.clearAllFilters()"
+              >
+                {{ $t('labels.assets.clearSearch') }}
+              </Button>
+              <Button
+                v-else-if="allowUpload && canManageAssets"
                 variant="primary"
                 @click="showUploadDialog = true"
               >
@@ -1002,7 +1024,7 @@ onUnmounted(() => {
                   <Icon
                     :name="getFileIcon(getFileType(asset.mime_type))"
                     size="1.5rem"
-                    class="text-muted-foreground"
+                    class="text-muted"
                   />
                 </div>
               </div>
@@ -1015,13 +1037,13 @@ onUnmounted(() => {
                     :issues="getMissingRequiredFields(asset, asset.folder_id ?? folderId)"
                     severity="error"
                   />
-                  <span class="text-xs text-muted-foreground">
+                  <span class="text-sm text-muted">
                     {{ asset.extension }} • {{ asset.mime_type }}
                   </span>
                 </div>
                 <p
                   v-if="asset.linked_contents_count !== undefined"
-                  class="text-xs text-muted-foreground"
+                  class="text-sm text-muted"
                 >
                   {{
                     asset.linked_contents_count === 1

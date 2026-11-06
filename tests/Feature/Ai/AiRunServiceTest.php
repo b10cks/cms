@@ -15,8 +15,8 @@ use App\Services\Ai\AiRunService;
 use App\Services\Ai\Knowledge\KnowledgeResolver;
 use App\Services\Ai\Run\RunBusy;
 use App\Services\Ai\Run\RunEvent;
+use App\Services\Ai\Run\RunLeaseLost;
 use App\Services\Ai\Run\StartRun;
-use App\Services\Ai\Run\Transcript;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Validation\ValidationException;
@@ -75,9 +75,10 @@ class AiRunServiceTest extends TestCase
         $run = $this->service()->start($this->start());
 
         // The worker dies while running the tool, after the provider turn was checkpointed.
-        $this->partialMock(KnowledgeResolver::class, function ($mock) {
-            $mock->shouldReceive('glossaryTerms')->once()->andThrow(new RuntimeException('worker died'));
-            $mock->shouldReceive('glossaryTerms')->andReturn([]);
+        $policy = app(KnowledgeResolver::class)->policy($this->space, $run);
+        $this->partialMock(KnowledgeResolver::class, function ($mock) use ($policy) {
+            $mock->shouldReceive('policy')->once()->andThrow(new RuntimeException('worker died'));
+            $mock->shouldReceive('policy')->andReturn($policy);
         });
         $this->driver->push(FakeAiDriver::toolCall('lookup_glossary', ['text' => 'hello'], 'call_1'), FakeAiDriver::text('Done.'));
 
@@ -178,6 +179,87 @@ class AiRunServiceTest extends TestCase
         $this->assertSame(range(1, \count($seqs)), $seqs);
         $this->assertSame('completed', $stored->last()->type);
         $this->assertSame('Finished in the background.', $run->result['text']);
+    }
+
+    #[Test]
+    public function a_live_worker_keeps_the_run_through_provider_calls_longer_than_any_slice(): void
+    {
+        Queue::fake();
+        $run = $this->service()->start($this->start());
+        $run->forceFill(['mode' => AiRun::MODE_BACKGROUND])->save();
+        $intruder = function () use ($run) {
+            // Quiet streams send no heartbeat; a second job must still find the run taken.
+            $this->travel(700)->seconds();
+            (new RunAgentJob($run->space_id, $run->id))->handle();
+
+            try {
+                $this->drain($this->service()->advance($run->fresh()));
+                $this->fail('A second worker must not advance a live run.');
+            } catch (RunBusy) {
+            }
+
+            return FakeAiDriver::toolCall('lookup_glossary', ['text' => 'hello']);
+        };
+        $this->driver->push($intruder, $intruder, FakeAiDriver::text('Done.'));
+
+        (new RunAgentJob($run->space_id, $run->id))->handle();
+
+        $this->assertSame(3, $this->driver->calls);
+        $this->assertSame(3, $run->refresh()->steps);
+        $this->assertSame('Done.', $run->result['text']);
+        $this->assertSame(0, $run->interruptions);
+        $this->assertNull($run->lease_owner);
+        Queue::assertNothingPushed();
+    }
+
+    #[Test]
+    public function a_worker_that_outlived_its_lease_drops_its_response_and_writes_nothing(): void
+    {
+        $run = $this->service()->start($this->start());
+        $this->driver->push(
+            function () use ($run) {
+                $this->travel((int) config('ai.runs.lease_seconds') + 1)->seconds();
+                $this->drain($this->service()->advance($run->fresh()));
+
+                return FakeAiDriver::text('From the worker that lost its lease.');
+            },
+            FakeAiDriver::text('From the worker that took over.'),
+        );
+
+        try {
+            $this->drain($this->service()->advance($run));
+            $this->fail('The first worker should have found its lease gone.');
+        } catch (RunLeaseLost) {
+        }
+
+        $run->refresh();
+        $this->assertSame('From the worker that took over.', $run->result['text']);
+        $this->assertSame(1, $run->steps);
+        $this->assertSame(1, $run->interruptions);
+    }
+
+    #[Test]
+    public function the_lease_outlasts_the_job_timeout_so_a_live_worker_never_looks_dead(): void
+    {
+        $job = new RunAgentJob('space', 'run');
+
+        $this->assertGreaterThan($job->timeout, (int) config('ai.runs.lease_seconds'));
+        $this->assertGreaterThan((int) config('ai.runs.background_slice_seconds'), $job->timeout);
+    }
+
+    #[Test]
+    public function a_handover_frees_the_run_before_the_next_slice_starts_even_on_a_sync_queue(): void
+    {
+        $this->driver->push(FakeAiDriver::text('Finished by the next slice.'));
+        $run = $this->service()->start($this->start());
+
+        $events = $this->drain($this->service()->advance($run, microtime(true) - 1));
+
+        $this->assertSame('moved_to_background', end($events)->type->value);
+        $run->refresh();
+        $this->assertSame(AiRunState::Completed, $run->state);
+        $this->assertSame('Finished by the next slice.', $run->result['text']);
+        $this->assertNull($run->lease_owner);
     }
 
     #[Test]

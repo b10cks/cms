@@ -57,7 +57,7 @@ const emit = defineEmits<{
         v-if="props.warnings.length > 0"
         class="space-y-1 rounded-xl border border-destructive/20 bg-background/90 p-2 shadow-soft backdrop-blur"
       >
-        <div class="px-2 text-xs font-medium text-destructive">
+        <div class="px-2 text-sm font-medium text-destructive">
           {{ $t('labels.contents.canvas.aiReviewTitle') }}
         </div>
 
@@ -74,7 +74,7 @@ const emit = defineEmits<{
             v-if="warning.nodeId"
             variant="ghost"
             size="sm"
-            class="h-7 px-2 text-xs"
+            class="h-7 px-2 text-sm"
             @click="emit('focus-warning', warning)"
           >
             {{ $t('labels.contents.canvas.aiReviewAction') }}

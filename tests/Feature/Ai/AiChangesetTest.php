@@ -89,21 +89,19 @@ class AiChangesetTest extends TestCase
     }
 
     #[Test]
-    public function accepting_a_field_with_an_unchanged_base_creates_a_draft_and_publishes_nothing(): void
+    public function a_change_with_an_unchanged_base_goes_straight_to_a_draft_and_publishes_nothing(): void
     {
         $content = $this->publishedPage(['title' => 'Hello', 'summary' => 'World']);
         $publishedVersionId = $content->published_version_id;
+        Event::fake([ContentUpdated::class]);
         $this->driver->push($this->propose($content, ['title' => 'Hello there']), FakeAiDriver::text('Done.'));
         $this->runToEnd();
 
         $changeset = AiChangeset::query()->sole();
-        Event::fake([ContentUpdated::class]);
-        $this->postJson($this->url("ai/changesets/{$changeset->id}/accept"), [], ['X-Socket-ID' => '1234.5678'])
-            ->assertOk()
-            ->assertJsonPath('accepted', 1)
-            ->assertJsonPath('data.status', 'applied');
+        $this->assertSame('applied', $changeset->status->value);
+        $this->assertSame(AiChangesetItemStatus::Accepted, $changeset->items()->sole()->status);
 
-        // The tab that accepted has the entry open, so the broadcast includes it.
+        // Whoever has the entry open gets the broadcast, also the tab that started the run.
         Event::assertDispatched(ContentUpdated::class, fn (ContentUpdated $event) => $event->socket === null);
         $content->refresh()->load('current_version');
         $this->assertSame(['title' => 'Hello there', 'summary' => 'World'], $content->current_version->content);
@@ -114,7 +112,34 @@ class AiChangesetTest extends TestCase
     }
 
     #[Test]
-    public function a_field_edited_after_the_run_read_it_conflicts_while_other_fields_apply(): void
+    public function a_bulk_accept_of_open_items_leaves_flags_and_invalid_entries_for_a_person_and_content_findings_stop_nothing(): void
+    {
+        $pages = array_map(fn (int $index) => $this->publishedPage(['title' => "Page {$index}", 'summary' => 'World']), range(1, 4));
+        $changeset = AiChangeset::query()->create(['space_id' => $this->space->id, 'actor_id' => $this->user->id, 'title' => 'From before direct writes']);
+        [$clean, $finding, $flagged, $invalid] = array_map(fn (Content $page) => $changeset->items()->create([
+            'operation' => AiChangesetItem::OPERATION_UPDATE, 'target_type' => 'content', 'target_id' => $page->id, 'target_label' => $page->name,
+            'base_version_id' => $page->current_version_id, 'path' => 'summary', 'field_type' => 'text', 'before' => 'World', 'after' => "Summary of {$page->name}", 'status' => AiChangesetItemStatus::Pending,
+        ]), $pages);
+        $finding->update(['glossary_findings' => [['type' => 'forbidden_variant', 'term' => 'World']]]);
+        $flagged->update(['flags' => [['code' => 'uncertain', 'message' => 'The page has two topics.']]]);
+        // Longer than the title's 60 characters, as if the schema had changed since.
+        $invalid->update(['path' => 'title', 'before' => 'Page 4', 'after' => str_repeat('x', 70)]);
+
+        $this->postJson($this->url("ai/changesets/{$changeset->id}/accept"), ['bulk' => true])
+            ->assertOk()
+            ->assertJsonPath('accepted', 2)
+            ->assertJsonPath('failed', 1);
+
+        $this->assertSame(AiChangesetItemStatus::Accepted, $clean->refresh()->status);
+        $this->assertSame(AiChangesetItemStatus::Accepted, $finding->refresh()->status);
+        foreach ([$flagged, $invalid] as $item) {
+            $this->assertSame(AiChangesetItemStatus::Pending, $item->refresh()->status);
+        }
+        $this->assertSame('invalid', $invalid->flags[0]['code']);
+    }
+
+    #[Test]
+    public function a_field_edited_after_the_run_read_it_conflicts_while_other_fields_apply_and_the_agent_is_told(): void
     {
         $content = $this->publishedPage(['title' => 'Hello', 'summary' => 'World']);
         $readVersion = $content->current_version_id;
@@ -129,35 +154,41 @@ class AiChangesetTest extends TestCase
             },
             FakeAiDriver::text('Done.'),
         );
-        $this->runToEnd();
+        $run = $this->runToEnd();
 
         $changeset = AiChangeset::query()->sole();
-        $this->postJson($this->url("ai/changesets/{$changeset->id}/accept"))
-            ->assertOk()
-            ->assertJsonPath('accepted', 1)
-            ->assertJsonPath('conflicts', 1)
-            ->assertJsonPath('data.status', 'partially_applied');
-
+        $this->assertSame('partially_applied', $changeset->status->value);
         $summary = $changeset->items()->where('path', 'summary')->sole();
         $this->assertSame(AiChangesetItemStatus::Conflict, $summary->status);
         $this->assertSame('Edited by hand', $summary->current);
         $this->assertSame(['title' => 'Hello there', 'summary' => 'Edited by hand'], $content->refresh()->getCurrentContent());
+
+        $result = json_decode((string) collect($run->transcript)->where('role', 'tool')->last()['content'], true);
+        $this->assertSame(1, $result['written']);
+        $this->assertSame('summary', $result['conflicts'][0]['path']);
+        $this->assertStringContainsString('do not write them again', $result['conflict_note']);
+
+        // The existing resolve flow: a person keeps the AI's text.
+        $this->postJson($this->url("ai/changesets/{$changeset->id}/accept"), ['item_ids' => [$summary->id], 'overwrite' => true])->assertOk()->assertJsonPath('accepted', 1);
+        $this->assertSame('AI summary', $content->refresh()->getCurrentContent()['summary']);
     }
 
     #[Test]
-    public function a_user_without_edit_rights_on_the_target_cannot_accept_its_items(): void
+    public function a_user_without_edit_rights_on_the_target_cannot_resolve_its_items(): void
     {
         $content = $this->publishedPage(['title' => 'Hello', 'summary' => 'World']);
-        $this->driver->push($this->propose($content, ['title' => 'Hello there']), FakeAiDriver::text('Done.'));
-        $this->runToEnd();
-        $changeset = AiChangeset::query()->sole();
+        $changeset = AiChangeset::query()->create(['space_id' => $this->space->id, 'actor_id' => $this->user->id, 'title' => 'Run']);
+        $item = $changeset->items()->create([
+            'operation' => AiChangesetItem::OPERATION_UPDATE, 'target_type' => 'content', 'target_id' => $content->id, 'path' => 'title',
+            'before' => 'Older', 'after' => 'Hello there', 'current' => 'Hello', 'status' => AiChangesetItemStatus::Conflict,
+        ]);
 
         $viewer = User::factory()->create();
         $this->assignSpaceRole($this->space, $viewer, 'viewer');
 
-        $this->actingAs($viewer)->postJson($this->url("ai/changesets/{$changeset->id}/accept"))->assertForbidden();
+        $this->actingAs($viewer)->postJson($this->url("ai/changesets/{$changeset->id}/accept"), ['overwrite' => true, 'item_ids' => [$item->id]])->assertForbidden();
 
-        $this->assertSame(AiChangesetItemStatus::Pending, $changeset->items()->sole()->status);
+        $this->assertSame(AiChangesetItemStatus::Conflict, $item->refresh()->status);
         $this->assertSame('Hello', $content->refresh()->getCurrentContent()['title']);
     }
 
@@ -189,13 +220,30 @@ class AiChangesetTest extends TestCase
 
         $this->getJson($this->url('ai/threads'))
             ->assertOk()
-            ->assertJsonPath('meta.attention', 1)
-            ->assertJsonPath('data.0.status', 'needs_review')
-            ->assertJsonPath('data.0.entry_count', 2);
+            // Written to drafts: nothing needs anyone.
+            ->assertJsonPath('meta.attention', 0)
+            ->assertJsonPath('data.0.entry_count', 0);
         $this->getJson($this->url("ai/threads/{$run->conversation_id}"))
             ->assertJsonPath('data.turns.0.changeset.item_count', 2)
             ->assertJsonPath('data.turns.0.changeset.run.partial', true)
             ->assertJsonPath('data.turns.0.changeset.run.stopped_by', 'max_usd');
+    }
+
+    #[Test]
+    public function a_stored_missing_term_hint_is_never_listed(): void
+    {
+        $page = $this->publishedPage(['title' => 'Hello', 'summary' => 'World']);
+        $changeset = AiChangeset::query()->create(['space_id' => $this->space->id, 'actor_id' => $this->user->id, 'title' => 'Before hints were agent only']);
+        $changeset->items()->create([
+            'operation' => AiChangesetItem::OPERATION_UPDATE, 'target_type' => 'content', 'target_id' => $page->id, 'target_label' => $page->name,
+            'base_version_id' => $page->current_version_id, 'path' => 'summary', 'field_type' => 'text', 'before' => 'World', 'after' => 'Welt', 'status' => AiChangesetItemStatus::Pending,
+            'glossary_findings' => [['type' => 'missing_term', 'term' => 'World', 'expected' => 'Erde'], ['type' => 'forbidden_variant', 'term' => 'World', 'found' => 'Welt']],
+        ]);
+
+        $this->getJson($this->url("ai/changesets/{$changeset->id}"))
+            ->assertOk()
+            ->assertJsonCount(1, 'data.items.0.glossary_findings')
+            ->assertJsonPath('data.items.0.glossary_findings.0.type', 'forbidden_variant');
     }
 
     #[Test]
@@ -221,6 +269,8 @@ class AiChangesetTest extends TestCase
             $this->driver->push($this->propose($page, ['summary' => "New {$page->name}"]));
         }
         $this->driver->push(FakeAiDriver::text('Done.'));
+        // The run writes to these entries, and the estimate is of what they held before it.
+        $estimate = PreflightEstimate::for(app(EntryScope::class)->resolve('content', ['ids' => $preflight['ids']]), null);
 
         $this->postJson($this->url('ai/runs'), [
             'surface' => 'bulk:content',
@@ -232,7 +282,6 @@ class AiChangesetTest extends TestCase
         $touched = AiChangesetItem::query()->pluck('target_id')->unique()->sort()->values()->all();
         $this->assertSame(collect($preflight['ids'])->sort()->values()->all(), $touched);
 
-        $estimate = PreflightEstimate::for(app(EntryScope::class)->resolve('content', ['ids' => $touched]), null);
         $this->assertSame($estimate['input_tokens'], $preflight['input_tokens']);
         $this->assertSame($estimate['output_tokens'], $preflight['output_tokens']);
     }
@@ -245,8 +294,8 @@ class AiChangesetTest extends TestCase
         $this->driver->push(FakeAiDriver::text('Done.'));
 
         $this->postJson($this->url('ai/schedules'), [
-            'name' => 'Translate pages to German',
-            'skill' => 'translate-fields',
+            'name' => 'Write page summaries',
+            'skill' => 'meta-tags',
             'scope' => ['type' => 'content', 'filters' => ['block' => 'page']],
             'cron' => '* * * * *',
             'max_usd' => 0.5,
@@ -255,7 +304,7 @@ class AiChangesetTest extends TestCase
         $this->artisan('ai:run-schedules')->assertSuccessful();
 
         $run = AiRun::query()->sole();
-        $this->assertSame('translate-fields', $run->skill);
+        $this->assertSame('meta-tags', $run->skill);
         $this->assertSame(AiRunState::Completed, $run->state);
         $this->assertSame('Erste', AiChangesetItem::query()->sole()->after);
         $this->assertSame(0, AiSkill::query()->count());
@@ -297,7 +346,7 @@ class AiChangesetTest extends TestCase
      * @param  array<string, mixed>  $changes
      */
     #[Test]
-    public function inserting_a_block_and_editing_another_in_the_same_list_become_one_item_that_applies(): void
+    public function inserting_a_block_and_editing_another_in_the_same_list_become_one_written_item(): void
     {
         $page = $this->pageWithBlocks();
         $content = $this->publishedPage(['title' => 'Home', 'body' => [
@@ -313,10 +362,9 @@ class AiChangesetTest extends TestCase
 
         $item = AiChangesetItem::query()->sole();
         $this->assertSame(['body', 'blocks'], [$item->path, $item->field_type]);
+        $this->assertSame(AiChangesetItemStatus::Accepted, $item->status);
         $result = json_decode((string) collect($run->transcript)->firstWhere('role', 'tool')['content'], true);
         $newId = $result['inserted_blocks'][0]['id'];
-
-        $this->postJson($this->url("ai/changesets/{$item->changeset_id}/accept"))->assertOk()->assertJsonPath('accepted', 1);
 
         $body = $content->refresh()->load('current_version')->current_version->content['body'];
         $this->assertSame(['b1', $newId, 'b2'], array_column($body, 'id'));

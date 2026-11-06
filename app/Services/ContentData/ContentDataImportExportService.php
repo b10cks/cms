@@ -125,7 +125,7 @@ class ContentDataImportExportService extends ImportExportService
 
         $documents = $driver->parse($file);
 
-        return $this->applier->applyIncrementally(
+        return yield from $this->applier->applyIncrementally(
             $space,
             $documents,
             $mode,

@@ -7,6 +7,7 @@ import { createCrudComposable } from '~/lib/crud-composable'
 import { toastError, type Translate } from '~/lib/toast-error'
 
 import { queryKeys } from './useQueryClient'
+import type { ImportProgress } from '~/types/import-export'
 
 const useRedirectsCrud = createCrudComposable<
   RedirectResource,
@@ -59,8 +60,16 @@ export function useRedirects(spaceId: MaybeRef<string>) {
 
   const useImportRedirectsMutation = () => {
     return useMutation({
-      mutationFn: async ({ file, mode }: { file: File; mode: RedirectImportMode }) => {
-        return spaceAPI.value.redirects.importData(file, mode)
+      mutationFn: async ({
+        file,
+        mode,
+        onProgress,
+      }: {
+        file: File
+        mode: RedirectImportMode
+        onProgress?: (progress: ImportProgress) => void
+      }) => {
+        return spaceAPI.value.redirects.importData(file, mode, onProgress)
       },
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: queryKeys.redirects(spaceId).lists() })

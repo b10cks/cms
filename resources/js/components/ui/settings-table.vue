@@ -1,4 +1,5 @@
 <script setup lang="ts" generic="TItem extends TableItem = TableItem">
+import { unrefElement } from '@vueuse/core'
 import { useSortable } from '@vueuse/integrations/useSortable'
 
 import Icon from '~/components/Icon.vue'
@@ -11,6 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '~/components/ui/select'
+import SortHandle from '~/components/ui/SortHandle.vue'
 import { Switch } from '~/components/ui/switch'
 import {
   Table,
@@ -21,6 +23,7 @@ import {
   TableHeader,
   TableRow,
 } from '~/components/ui/table'
+import { focusGrip, moveInList, sortableOptions } from '~/lib/sortable'
 
 export interface TableItem {
   [key: string]: string | number | boolean | null | undefined
@@ -93,14 +96,26 @@ watch(
 )
 
 if (props.allowSort) {
-  ;(useSortable as any)(tableBodyRef, localItems, {
-    handle: '.sort-handle',
-    animation: 150,
-    disabled: !props.canEdit,
-    onEnd: () => {
-      nextTick(() => emit('update:items', [...localItems.value]))
-    },
-  })
+  useSortable(
+    tableBodyRef,
+    localItems,
+    sortableOptions({
+      handle: '[data-row-handle]',
+      disabled: !props.canEdit,
+      forceFallback: false,
+      onEnd: () => {
+        nextTick(() => emit('update:items', [...localItems.value]))
+      },
+    })
+  )
+}
+
+const moveRow = async (index: number, delta: -1 | 1) => {
+  if (!moveInList(localItems.value, index, delta)) return
+
+  emit('update:items', [...localItems.value])
+  await nextTick()
+  focusGrip(unrefElement(tableBodyRef), '[data-row-handle]', index + delta)
 }
 
 const canAddItem = computed(() => {
@@ -147,11 +162,18 @@ const updateSelectValue = (item: TItem, key: string, value: unknown) => {
 const getColumnOptions = (column: ColumnDefinition<TItem>, item: TItem) => {
   return typeof column.options === 'function' ? column.options(item) : (column.options ?? [])
 }
+
+/** Names a cell by its column and its row, the row being the first column holding text. */
+const cellLabel = (column: ColumnDefinition<TItem>, item: TItem): string => {
+  const rowColumn = props.columns.find((candidate) => typeof item[candidate.key] === 'string' && item[candidate.key])
+  const rowName = rowColumn && rowColumn.key !== column.key ? item[rowColumn.key] : null
+  return rowName ? `${column.label}, ${rowName}` : column.label
+}
 </script>
 
 <template>
-  <div class="overflow-hidden rounded-lg border border-border">
-    <Table>
+  <div class="overflow-hidden rounded-lg border border-border-strong">
+    <Table class="[&_td]:p-2">
       <TableHeader>
         <TableRow>
           <TableHead
@@ -172,12 +194,17 @@ const getColumnOptions = (column: ColumnDefinition<TItem>, item: TItem) => {
         <TableRow
           v-for="(item, index) in localItems"
           :key="index"
+          class="hover:bg-transparent!"
         >
           <TableCell
             v-if="allowSort"
-            class="sort-handle w-4 cursor-ns-resize"
+            class="w-4"
           >
-            <Icon name="lucide:grip-vertical" />
+            <SortHandle
+              data-row-handle
+              :disabled="!canEdit"
+              @move="(delta) => moveRow(index, delta)"
+            />
           </TableCell>
           <TableCell
             v-for="column in columns"
@@ -193,6 +220,7 @@ const getColumnOptions = (column: ColumnDefinition<TItem>, item: TItem) => {
             <Switch
               v-else-if="column.type === 'switch'"
               v-model="item[column.key] as boolean"
+              :aria-label="cellLabel(column, item)"
               :disabled="column.readonly || !canEdit"
             />
             <Select
@@ -201,7 +229,7 @@ const getColumnOptions = (column: ColumnDefinition<TItem>, item: TItem) => {
               :disabled="column.readonly || !canEdit"
               @update:model-value="(value) => updateSelectValue(item, column.key, value)"
             >
-              <SelectTrigger>
+              <SelectTrigger :aria-label="cellLabel(column, item)">
                 <SelectValue :placeholder="column.placeholder || $t('common.select')" />
               </SelectTrigger>
               <SelectContent>
@@ -218,26 +246,29 @@ const getColumnOptions = (column: ColumnDefinition<TItem>, item: TItem) => {
             <Input
               v-else
               v-model="item[column.key] as string"
+              :aria-label="cellLabel(column, item)"
               :name="column.key"
               :placeholder="column.placeholder"
               :disabled="column.readonly || !canEdit"
             />
           </TableCell>
-          <TableCell class="flex items-center gap-1 justify-end">
-            <slot
-              name="actions"
-              :item="item"
-              :index="index"
-            />
-            <Button
-              v-if="canDelete"
-              variant="ghost"
-              size="icon"
-              @click="removeItem(index)"
-            >
-              <Icon name="lucide:trash-2" />
-              <span class="sr-only">{{ $t(removeButtonLabel) }}</span>
-            </Button>
+          <TableCell>
+            <div class="flex items-center justify-end gap-1">
+              <slot
+                name="actions"
+                :item="item"
+                :index="index"
+              />
+              <Button
+                v-if="canDelete"
+                variant="ghost-destructive"
+                size="icon"
+                @click="removeItem(index)"
+              >
+                <Icon name="lucide:trash-2" />
+                <span class="sr-only">{{ $t(removeButtonLabel) }}</span>
+              </Button>
+            </div>
           </TableCell>
         </TableRow>
       </TableBody>
@@ -245,7 +276,7 @@ const getColumnOptions = (column: ColumnDefinition<TItem>, item: TItem) => {
         <TableRow
           v-if="showAddRow && canAdd"
           :id="`${id}-new-row`"
-          class="hover:bg-transparent"
+          class="hover:bg-transparent!"
         >
           <TableCell v-if="allowSort" />
           <TableCell
@@ -261,6 +292,7 @@ const getColumnOptions = (column: ColumnDefinition<TItem>, item: TItem) => {
             <Switch
               v-else-if="column.type === 'switch'"
               v-model="newItem[column.key] as boolean"
+              :aria-label="column.label"
               :disabled="column.readonly || !canEdit"
             />
             <Select
@@ -269,7 +301,7 @@ const getColumnOptions = (column: ColumnDefinition<TItem>, item: TItem) => {
               :disabled="column.readonly || !canEdit"
               @update:model-value="(value) => updateSelectValue(newItem, column.key, value)"
             >
-              <SelectTrigger>
+              <SelectTrigger :aria-label="column.label">
                 <SelectValue :placeholder="column.placeholder || $t('common.select')" />
               </SelectTrigger>
               <SelectContent>
@@ -286,6 +318,7 @@ const getColumnOptions = (column: ColumnDefinition<TItem>, item: TItem) => {
             <Input
               v-else
               v-model="newItem[column.key] as string"
+              :aria-label="column.label"
               :placeholder="column.placeholder"
               :disabled="!canEdit"
               @keydown.enter="addItem"

@@ -69,7 +69,10 @@ Route::get('/spaces/new', AppController::class)->name('spaces-new');
 // Teams
 Route::get('/teams', AppController::class)->name('teams');
 Route::get('/teams/{team}', AppController::class)->name('team');
+Route::get('/teams/{team}/overview', AppController::class)->name('team-overview');
 Route::get('/teams/{team}/people', AppController::class)->name('team-people');
+Route::get('/teams/{team}/spaces', AppController::class)->name('team-spaces');
+Route::get('/teams/{team}/activity', AppController::class)->name('team-activity');
 Route::get('/teams/{team}/roles', AppController::class)->name('team-roles');
 Route::get('/teams/{team}/saml', AppController::class)->name('team-saml');
 Route::get('/teams/{team}/settings', AppController::class)->name('team-settings');
@@ -85,6 +88,11 @@ Route::get('/account/settings/security', AppController::class)->name('account-se
 
 // Provider routes
 Route::get('/provider', AppController::class)->name('provider-dashboard');
+Route::get('/provider/tenants', AppController::class)->name('provider-tenants');
+Route::get('/provider/users', AppController::class)->name('provider-users');
+Route::get('/provider/usage', AppController::class)->name('provider-usage');
+Route::get('/provider/audit', AppController::class)->name('provider-audit');
+Route::get('/provider/health', AppController::class)->name('provider-health');
 Route::get('/provider/notes', AppController::class)->name('provider-notes');
 
 // Space routes (must come last to avoid shadowing more specific routes)

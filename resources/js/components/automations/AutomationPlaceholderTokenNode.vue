@@ -18,7 +18,7 @@ const displayValue = computed(() => {
 <template>
   <NodeViewWrapper
     as="span"
-    class="inline-flex items-center rounded-md border border-border bg-muted px-2 py-0.5 font-mono text-[11px] text-foreground"
+    class="inline-flex items-center rounded-md border border-border bg-muted-background px-2 py-0.5 font-mono text-[11px] text-foreground"
     contenteditable="false"
     :data-value="node.attrs.value"
     :data-group="node.attrs.group"

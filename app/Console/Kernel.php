@@ -52,6 +52,13 @@ class Kernel extends ConsoleKernel
             ->withoutOverlapping()
             ->runInBackground();
 
+        // Continue AI operations and background runs that lost their worker.
+        $schedule->command('ai:recover-runs')
+            ->everyTwoMinutes()
+            ->onOneServer()
+            ->withoutOverlapping()
+            ->runInBackground();
+
         // Drop AI attachments that were uploaded but never sent with a message.
         $schedule->command('ai:prune-attachments')
             ->dailyAt('04:45')

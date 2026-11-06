@@ -209,7 +209,7 @@ const nameOf = (full: string) => splitIconName(full).name
 
     <div
       v-if="total > 0 && !loading"
-      class="shrink-0 text-xs text-muted"
+      class="shrink-0 text-sm text-muted"
     >
       {{ t('labels.icons.field.showingCount', { shown: displayed.length, total }) }}
     </div>

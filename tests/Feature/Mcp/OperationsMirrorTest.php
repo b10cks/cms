@@ -9,6 +9,12 @@ use Tests\TestCase;
 
 class OperationsMirrorTest extends TestCase
 {
+    /** The CMS is ahead of the SDK here until @b10cks/mcp-server gets the content operations lifecycle. */
+    private const NOT_IN_THE_SDK_YET = '/^ai\.(operations|assets)\.|^ai\.(glossaries|teamGlossaries)\.(\w*ConceptRows?|conceptRows|checkText)$/';
+
+    /** Concept rows replace these here. The published SDK keeps them until its next release. */
+    private const ONLY_IN_THE_SDK = '/^ai\.(glossaries|teamGlossaries)\.(terms|createTerm|updateTerm|deleteTerm)$/';
+
     #[Test]
     public function the_operation_registry_mirrors_the_sdk_mcp_server(): void
     {
@@ -24,6 +30,9 @@ class OperationsMirrorTest extends TestCase
         ]);
 
         $this->assertTrue($result->successful(), $result->errorOutput());
-        $this->assertEqualsCanonicalizing(OperationRegistry::names(), json_decode($result->output(), true));
+        $this->assertEqualsCanonicalizing(
+            array_values(preg_grep(self::NOT_IN_THE_SDK_YET, OperationRegistry::names(), PREG_GREP_INVERT)),
+            array_values(preg_grep(self::ONLY_IN_THE_SDK, json_decode($result->output(), true), PREG_GREP_INVERT)),
+        );
     }
 }

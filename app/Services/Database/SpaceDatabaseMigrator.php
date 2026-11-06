@@ -28,9 +28,10 @@ class SpaceDatabaseMigrator
     private const SENTINEL_TABLES = ['blocks', 'contents'];
 
     /**
-     * The last table each create migration builds. An unrecorded migration
-     * counts as applied only when its table exists; any other unrecorded
-     * migration is left for `migrate` to run.
+     * The last table each create migration builds, or `table.column` for the
+     * last column a migration adds. An unrecorded migration counts as applied
+     * only when its proof exists; any other unrecorded migration is left for
+     * `migrate` to run.
      */
     private const PROOF_TABLES = [
         '0000_00_00_000004_create_space_tables' => 'audit_logs',
@@ -39,6 +40,9 @@ class SpaceDatabaseMigrator
         '0000_00_00_000010_create_content_serials_table' => 'content_serials',
         '0000_00_00_000017_create_translation_units_table' => 'translation_units',
         '0000_00_00_000018_create_ai_tables' => 'ai_glossary_suggestions',
+        '0000_00_00_000021_add_review_to_ai_changeset_items' => 'ai_changeset_items.review',
+        '0000_00_00_000021_create_ai_operations_tables' => 'ai_changeset_items.flags',
+        '0000_00_00_000021_create_translation_sources_table' => 'translation_sources',
     ];
 
     public function __construct(
@@ -144,9 +148,10 @@ class SpaceDatabaseMigrator
             $schema = Schema::connection($connectionName);
 
             foreach ($this->getPendingMigrations($connectionName) as $migrationName) {
-                $table = self::PROOF_TABLES[$migrationName] ?? null;
+                $proof = self::PROOF_TABLES[$migrationName] ?? null;
+                [$table, $column] = array_pad(explode('.', (string) $proof, 2), 2, null);
 
-                if ($table === null || !$schema->hasTable($table)) {
+                if ($proof === null || !$schema->hasTable($table) || ($column !== null && !$schema->hasColumn($table, $column))) {
                     continue;
                 }
 

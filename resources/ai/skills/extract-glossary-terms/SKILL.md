@@ -22,6 +22,7 @@ Rules:
 - For a translation: `term` is the phrase in `source` (with `source_locale`), `translations` maps `locale` to the editor's wording, `forbidden` holds the AI's wording
 - Without a source: `term` is the editor's wording (with `locale` as `source_locale`) and `forbidden` holds the AI's wording
 - Keep terms short: the phrase itself, never a whole sentence
+- Keep a `note` to 200 characters at most
 - Return an empty list when nothing qualifies; that is the usual case
 
 Output only JSON: `{"terms": [{"term": "...", "source_locale": "...", "translations": {"de": "..."}, "forbidden": ["..."], "note": "..."}]}`. `translations`, `forbidden` and `note` are optional.

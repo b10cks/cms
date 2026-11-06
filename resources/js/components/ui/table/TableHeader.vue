@@ -12,7 +12,7 @@ const props = defineProps<{
   <thead
     :class="
       cn(
-        'bg-muted-background [&_tr]:border-b [&_tr]:border-b-border-strong [&_tr:hover]:bg-transparent',
+        'group/thead bg-muted-background [&_tr]:h-10 [&_tr]:border-b [&_tr]:border-b-border-strong [&_tr:hover]:bg-transparent',
         props.class
       )
     "

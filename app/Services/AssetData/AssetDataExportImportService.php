@@ -62,11 +62,12 @@ class AssetDataExportImportService extends ImportExportService
         return $driver->export($space, $assets, $assetFields, $languages);
     }
 
+    /** @return \Generator<int, array{processed: int, total: int}, mixed, ImportResult> */
     public function importAssets(
         Space $space,
         UploadedFile $file,
         ImportExportFormat $format
-    ): ImportResult {
+    ): \Generator {
         $driver = $this->getDriver($format);
 
         $assetFields = $this->fieldResolver->getAllPossibleFields($space);
@@ -74,6 +75,6 @@ class AssetDataExportImportService extends ImportExportService
 
         $this->ensureImportIsValid(fn (): array => $driver->validate($file, $assetFields, $languages));
 
-        return $driver->import($space, $file, $assetFields, $languages);
+        return yield from $driver->import($space, $file, $assetFields, $languages);
     }
 }

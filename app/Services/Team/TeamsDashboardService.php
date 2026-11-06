@@ -91,6 +91,7 @@ class TeamsDashboardService
                 ->unique()
                 ->values();
             $subtreeSpaces = collect($ids)->flatMap(fn (string $id) => $spacesByTeam->get($id, collect()));
+            $activeSince = now()->subDays(30);
 
             return [
                 'id' => $root->id,
@@ -102,7 +103,12 @@ class TeamsDashboardService
                 'type' => $root->type,
                 'created_at' => $root->created_at?->toIso8601String(),
                 'people_count' => $peopleIds->count(),
+                'active_people' => $peopleIds
+                    ->filter(fn (string $id) => $previewUsers->get($id)?->last_login_at?->isAfter($activeSince))
+                    ->count(),
                 'spaces_count' => $subtreeSpaces->count(),
+                // Same rule as the team overview: a space counts as published once it has content.
+                'published_spaces' => $subtreeSpaces->whereNotNull('content_updated_at')->count(),
                 'sub_team_count' => count($ids) - 1,
                 'pending_invites' => collect($ids)->sum(fn (string $id) => $invitesByTeam[$id] ?? 0),
                 'teams_without_owner' => collect($ids)->filter(fn (string $id) => $withoutOwner->has($id))->count(),

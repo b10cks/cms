@@ -13,6 +13,13 @@ declare interface ContentVersionListResource {
     initials: string
     avatar?: string
   } | null
+  /** Only on version lists, which load who published each version. */
+  publisher?: {
+    id: string
+    name: string
+    initials: string
+    avatar?: string
+  } | null
   message: string | null
   parent_id: string | null
   release_id: string | null
@@ -235,6 +242,7 @@ export interface ContentResource {
   slug: string
   full_slug: string
   parent_id: string | null
+  parent?: { id: string; name: string; slug: string } | null
   position: number
   children_count?: number
   block_id: string

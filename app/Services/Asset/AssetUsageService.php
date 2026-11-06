@@ -84,13 +84,16 @@ class AssetUsageService
     }
 
     /**
-     * Whether a live entry's published version shows the asset, i.e. whether
-     * the delivery API serves its data right now.
+     * Whether a live entry's published version shows any of the assets, i.e.
+     * whether the delivery API serves their data right now. One scan of the
+     * space's versions, however many ids.
+     *
+     * @param  list<string>  $assetIds
      */
-    public function isPublished(Asset $asset): bool
+    public function anyPublished(array $assetIds): bool
     {
         return ContentVersion::query()
-            ->referencingAssets([$asset->id])
+            ->referencingAssets($assetIds)
             ->whereExists(fn (QueryBuilder $query) => $query
                 ->from('contents')
                 ->whereColumn('contents.published_version_id', 'content_versions.id')

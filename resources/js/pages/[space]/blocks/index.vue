@@ -4,6 +4,8 @@ import { useRouteQuery } from '@vueuse/router'
 import BlockMenu from '~/components/BlockMenu.vue'
 import BlockTable from '~/components/BlockTable.vue'
 import BlockTagsTable from '~/components/BlockTagsTable.vue'
+import Icon from '~/components/Icon.vue'
+import { Tabs, TabsList, TabsTrigger } from '~/components/ui/tabs'
 
 const route = useRoute()
 const { t } = useI18n()
@@ -28,11 +30,27 @@ const component = computed(() => {
 
 <template>
   <BlockMenu
+    v-if="mode === 'list'"
     v-model:mode="mode"
     v-model:selected-folder="folder"
     :space-id="spaceId"
   />
-  <div class="flex grow bg-background">
+  <div class="flex grow flex-col bg-background">
+    <Tabs
+      v-model="mode"
+      class="content-grid mx-auto w-full max-w-7xl pt-6"
+    >
+      <TabsList class="w-fit justify-self-start">
+        <TabsTrigger value="list">
+          <Icon name="lucide:blocks" />
+          {{ $t('labels.blocks.title') }}
+        </TabsTrigger>
+        <TabsTrigger value="tags">
+          <Icon name="lucide:tag" />
+          {{ $t('labels.blockTags.title') }}
+        </TabsTrigger>
+      </TabsList>
+    </Tabs>
     <component
       :is="component"
       :space-id="spaceId"

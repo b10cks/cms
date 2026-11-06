@@ -3,6 +3,8 @@ export type ImportExportFormat = 'csv' | 'excel' | 'json' | 'xliff' | 'yaml'
 export interface ImportError {
   row?: number
   id?: string
+  /** The column the problem is in, for importers that know it. */
+  column?: string
   message: string
 }
 
@@ -12,7 +14,7 @@ export interface ImportSummary {
   total_errors: number
 }
 
-/** Documents applied so far, streamed by long-running imports. */
+/** Rows or documents applied so far, streamed by imports. */
 export interface ImportProgress {
   processed: number
   total: number
@@ -30,6 +32,13 @@ export interface ImportDialogResult<TItem, TDeleted = never> {
   deleted?: TDeleted[]
   summary: ImportSummary & { total_deleted?: number }
 }
+
+/** Runs one import for the generic `ImportDialog`, reporting progress while it streams. */
+export type ImportDialogSubmit<TResult, TMode extends string = string> = (
+  file: File,
+  mode: TMode,
+  onProgress: (progress: ImportProgress) => void
+) => Promise<TResult>
 
 /** One selectable import strategy tile. All copy is pre-translated. */
 export interface ImportDialogMode<TMode extends string = string> {

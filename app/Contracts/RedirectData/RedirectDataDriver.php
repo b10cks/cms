@@ -14,7 +14,8 @@ interface RedirectDataDriver extends ImportExportDriver
 {
     public function export(Space $space, Enumerable $redirects): Response;
 
-    public function import(Space $space, UploadedFile $file, RedirectImportMode $mode = RedirectImportMode::Addition): ImportResult;
+    /** @return \Generator<int, array{processed: int, total: int}, mixed, ImportResult> */
+    public function import(Space $space, UploadedFile $file, RedirectImportMode $mode = RedirectImportMode::Addition): \Generator;
 
     public function validate(UploadedFile $file): array;
 }

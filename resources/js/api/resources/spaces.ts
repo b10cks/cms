@@ -5,6 +5,8 @@ export interface SpaceQueryParams extends BaseQueryParams {
   slug?: string
   archived?: boolean
   team_id?: string
+  /** With `team_id`: also the spaces of every team below it. */
+  sub_teams?: boolean
   created_at?: string
   updated_at?: string
 }

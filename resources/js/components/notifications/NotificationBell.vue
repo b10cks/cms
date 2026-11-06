@@ -38,9 +38,9 @@ const badgeLabel = computed(() => {
 
 const TONE_CLASSES: Record<NotificationTone, string> = {
   neutral: 'bg-secondary text-muted',
-  info: 'bg-info-background/15 text-info',
-  success: 'bg-success-background/15 text-success',
-  warning: 'bg-warning-background/15 text-warning',
+  info: 'bg-info-background/15 text-info-ink',
+  success: 'bg-success-background/15 text-success-ink',
+  warning: 'bg-warning-background/15 text-warning-ink',
   destructive: 'bg-destructive-background/15 text-destructive',
 }
 
@@ -67,13 +67,13 @@ const onMarkAllRead = () => {
 <template>
   <Popover v-model:open="open">
     <PopoverTrigger
-      class="icon-anim relative flex size-9 cursor-pointer items-center justify-center rounded-lg text-muted transition-colors duration-200 hover:bg-elevated hover:text-primary data-[state=open]:bg-elevated"
+      class="icon-anim relative flex size-8 cursor-pointer items-center justify-center rounded-lg text-sidebar-muted transition-colors duration-100 hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
       :aria-label="$t('notifications.tooltip')"
     >
       <BellIcon :size="16" />
       <span
         v-if="hasUnread"
-        class="absolute -top-0.5 -right-0.5 flex min-w-4 items-center justify-center rounded-full bg-accent px-1 text-[10px] leading-4 font-semibold text-white"
+        class="absolute -top-0.5 -right-0.5 flex min-w-4 items-center justify-center rounded-full bg-accent-fill px-1 text-[10px] leading-4 font-semibold text-white"
       >
         {{ badgeLabel }}
       </span>
@@ -83,14 +83,14 @@ const onMarkAllRead = () => {
       align="end"
       :side-offset="8"
       :collision-padding="16"
-      class="w-104 max-h-none! overflow-hidden p-0!"
+      class="w-104 max-h-none! overflow-hidden border-popover-border! p-0!"
     >
-      <div class="flex h-10 items-center justify-between border-b border-border pr-2 pl-3">
-        <div class="flex items-center gap-1.5">
+      <div class="flex h-11 items-center justify-between border-b border-popover-border pr-2 pl-3">
+        <div class="flex items-center gap-2">
           <span class="text-sm font-semibold text-primary">{{ $t('notifications.title') }}</span>
           <span
             v-if="hasUnread"
-            class="rounded-full bg-accent/10 px-1.5 text-[11px] leading-[18px] font-semibold text-accent tabular-nums"
+            class="rounded-full bg-state-selected px-1.5 text-xs leading-5 font-semibold text-primary tabular-nums"
             :aria-label="$t('notifications.unreadCount', { count: unreadCount })"
           >
             {{ badgeLabel }}
@@ -99,7 +99,7 @@ const onMarkAllRead = () => {
         <button
           v-if="hasUnread"
           type="button"
-          class="cursor-pointer rounded-md px-2 py-1 text-xs font-medium text-muted transition-colors hover:bg-elevated hover:text-primary"
+          class="h-7 cursor-pointer rounded-md px-2 text-sm font-medium text-muted transition-colors duration-100 hover:bg-state-hover hover:text-primary focus-visible:outline-2 focus-visible:outline-ring"
           @click="onMarkAllRead"
         >
           {{ $t('notifications.markAllRead') }}
@@ -109,12 +109,12 @@ const onMarkAllRead = () => {
       <VerticalScrollArea class="max-h-[min(26rem,calc(100dvh-8rem))]">
         <div
           v-if="isLoading"
-          class="divide-y divide-border"
+          class="p-1"
         >
           <div
             v-for="i in 4"
             :key="i"
-            class="flex items-center gap-2.5 px-3 py-2.5"
+            class="flex items-center gap-3 px-2 py-2"
           >
             <Skeleton class="size-7 shrink-0 rounded-full" />
             <div class="flex flex-1 flex-col gap-1.5">
@@ -137,7 +137,7 @@ const onMarkAllRead = () => {
         </div>
         <ul
           v-else
-          class="divide-y divide-border"
+          class="flex flex-col gap-px p-1"
         >
           <li
             v-for="n in notifications"
@@ -145,13 +145,12 @@ const onMarkAllRead = () => {
           >
             <button
               type="button"
-              class="flex w-full cursor-pointer items-center gap-2.5 px-3 py-2.5 text-left transition-colors hover:bg-elevated"
-              :class="n.read_at ? 'text-muted' : 'bg-accent/5 text-primary'"
+              class="flex w-full cursor-pointer items-center gap-3 rounded-md px-2 py-2 text-left transition-colors duration-75 hover:bg-state-hover focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring"
               @click="onSelect(n)"
             >
               <span
                 class="flex size-7 shrink-0 items-center justify-center rounded-full"
-                :class="[TONE_CLASSES[toneFor(n)], n.read_at ? 'opacity-60' : '']"
+                :class="TONE_CLASSES[toneFor(n)]"
               >
                 <Icon
                   :name="iconFor(n)"
@@ -160,29 +159,25 @@ const onMarkAllRead = () => {
               </span>
               <span class="flex min-w-0 flex-1 flex-col gap-0.5">
                 <span
-                  class="truncate text-[13px] leading-tight"
-                  :class="n.read_at ? 'font-medium' : 'font-semibold'"
+                  class="truncate text-sm leading-5"
+                  :class="n.read_at ? 'font-medium text-foreground' : 'font-semibold text-primary'"
                 >
                   {{ titleFor(n) }}
                 </span>
-                <span class="flex items-baseline gap-1 text-xs leading-tight text-muted">
+                <span class="flex items-baseline gap-3 text-sm leading-5 text-muted">
                   <span
                     v-if="bodyFor(n)"
-                    class="truncate"
+                    class="min-w-0 flex-1 truncate"
                   >{{ bodyFor(n) }}</span>
-                  <span
-                    v-if="bodyFor(n)"
-                    class="text-muted/60"
-                  >·</span>
                   <time
                     :datetime="n.created_at"
-                    class="shrink-0 whitespace-nowrap text-muted/70"
+                    class="ml-auto shrink-0 whitespace-nowrap"
                   >{{ formatRelativeTime(n.created_at) }}</time>
                 </span>
               </span>
               <span
-                v-if="!n.read_at"
-                class="size-1.5 shrink-0 rounded-full bg-accent"
+                class="size-2 shrink-0 rounded-full"
+                :class="n.read_at ? 'bg-transparent' : 'bg-accent'"
                 aria-hidden="true"
               />
             </button>

@@ -214,6 +214,7 @@ const handleDeleteConfig = async (config: SpaceAiConfig) => {
             <SimpleTooltip
               v-if="aiUsage?.available"
               :tooltip="$t('actions.refresh')"
+              as-child
             >
               <Button
                 variant="ghost"
@@ -263,7 +264,7 @@ const handleDeleteConfig = async (config: SpaceAiConfig) => {
 
           <div
             v-else-if="aiUsage && !aiUsage.available"
-            class="text-muted-foreground text-sm"
+            class="text-muted text-sm"
           >
             {{ $t('labels.settings.ai.notAvailable') }}
           </div>
@@ -329,7 +330,7 @@ const handleDeleteConfig = async (config: SpaceAiConfig) => {
 
           <div
             v-else
-            class="text-muted-foreground text-sm"
+            class="text-muted text-sm"
           >
             {{ $t('labels.settings.ai.noUsageData') }}
           </div>
@@ -401,7 +402,7 @@ const handleDeleteConfig = async (config: SpaceAiConfig) => {
 
         <div
           v-else-if="!aiConfigs || aiConfigs.length === 0"
-          class="flex flex-col items-center justify-center py-12 text-center text-muted-foreground"
+          class="flex flex-col items-center justify-center py-12 text-center text-muted"
         >
           <Icon
             name="ai:bot"
@@ -480,6 +481,7 @@ const handleDeleteConfig = async (config: SpaceAiConfig) => {
               <SimpleTooltip
                 v-if="canManageAi"
                 :tooltip="$t('actions.edit')"
+                as-child
               >
                 <Button
                   variant="ghost"
@@ -498,19 +500,25 @@ const handleDeleteConfig = async (config: SpaceAiConfig) => {
                     ? $t('components.aiSettings.cannotDeleteLast')
                     : $t('actions.delete')
                 "
+                as-child
               >
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  :disabled="isDeleting || (aiConfigs && aiConfigs.length === 1)"
-                  @click="handleDeleteConfig(config)"
+                <span
+                  :tabindex="isDeleting || (aiConfigs && aiConfigs.length === 1) ? 0 : undefined"
+                  class="inline-flex"
                 >
-                  <Icon
-                    name="lucide:trash-2"
-                    class="h-4 w-4"
-                  />
-                  <span class="sr-only">{{ $t('actions.delete') }}</span>
-                </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    :disabled="isDeleting || (aiConfigs && aiConfigs.length === 1)"
+                    @click="handleDeleteConfig(config)"
+                  >
+                    <Icon
+                      name="lucide:trash-2"
+                      class="h-4 w-4"
+                    />
+                    <span class="sr-only">{{ $t('actions.delete') }}</span>
+                  </Button>
+                </span>
               </SimpleTooltip>
             </div>
           </div>

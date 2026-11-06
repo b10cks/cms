@@ -148,7 +148,7 @@ watch(
           <button
             id="model"
             type="button"
-            class="flex h-10 w-full cursor-pointer items-center gap-2.5 rounded-lg bg-input px-3 text-left text-sm shadow-sm transition-colors hover:bg-input/80 focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none"
+            class="flex h-10 w-full cursor-pointer items-center gap-2.5 rounded-lg bg-input px-3 text-left text-sm shadow-sm transition-colors hover:bg-input/80 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
             @click="pickerOpen = true"
           >
             <template v-if="formData.model">
@@ -203,7 +203,7 @@ watch(
             <label class="text-sm font-medium">
               {{ $t('labels.settings.ai.temperature') }}
             </label>
-            <span class="text-sm text-muted-foreground">{{ formData.temperature.toFixed(2) }}</span>
+            <span class="text-sm text-muted">{{ formData.temperature.toFixed(2) }}</span>
           </div>
           <input
             v-model="formData.temperature"
@@ -213,7 +213,7 @@ watch(
             :step="0.05"
             class="h-2 w-full cursor-pointer appearance-none rounded-lg bg-surface accent-primary"
           />
-          <div class="flex justify-between text-xs text-muted-foreground">
+          <div class="flex justify-between text-sm text-muted">
             <span>{{ $t('labels.settings.ai.precise') }}</span>
             <span>{{ $t('labels.settings.ai.creative') }}</span>
           </div>

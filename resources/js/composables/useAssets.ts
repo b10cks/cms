@@ -7,6 +7,7 @@ import { type AssetsQueryParams, unwrapAsset } from '~/api/resources/assets'
 import { UploadError, xhrUpload } from '~/lib/xhr-upload'
 
 import { queryKeys } from './useQueryClient'
+import type { ImportProgress } from '~/types/import-export'
 
 export type UploadAssetOutcome =
   | { status: 'success'; asset: AssetResource }
@@ -374,8 +375,8 @@ export function useAssets(spaceId: MaybeRef<string>) {
 
   const useImportAssetsMutation = () => {
     return useMutation({
-      mutationFn: async (file: File) => {
-        return await spaceAPI.value.assets.importData(file)
+      mutationFn: async ({ file, onProgress }: { file: File; onProgress?: (progress: ImportProgress) => void }) => {
+        return await spaceAPI.value.assets.importData(file, onProgress)
       },
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: queryKeys.assets(spaceId).lists() })

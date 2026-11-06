@@ -2,8 +2,8 @@
   "type": "object",
   "required": ["title", "description", "ogTitle", "ogDescription"],
   "properties": {
-    "title": {"type": "string"},
-    "description": {"type": "string"},
+    "title": {"type": "string", "maxLength": 60},
+    "description": {"type": "string", "maxLength": 155},
     "ogTitle": {"type": "string"},
     "ogDescription": {"type": "string"}
   }

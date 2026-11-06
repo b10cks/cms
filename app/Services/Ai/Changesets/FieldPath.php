@@ -7,10 +7,16 @@ use App\Services\Ai\Run\ToolError;
 /**
  * Dot paths into a document that address list items by their `id`, never by
  * array index: `body.01HX….text`. Index paths shift when blocks move; ID
- * paths still point at the same field when a proposal is accepted later.
+ * paths still point at the same field when a change is applied or resolved later.
  */
 final class FieldPath
 {
+    /** Whether one path is the other or lies inside it, as a block list and a field of one of its blocks do. */
+    public static function overlap(string $a, string $b): bool
+    {
+        return $a === $b || str_starts_with($a, "{$b}.") || str_starts_with($b, "{$a}.");
+    }
+
     public static function get(array $document, string $path): mixed
     {
         $node = $document;

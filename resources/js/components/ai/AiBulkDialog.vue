@@ -3,6 +3,7 @@ import { useMutation, useQuery } from '@tanstack/vue-query'
 
 import { api } from '~/api'
 import type { AiResolvedSkill } from '~/api/resources/ai'
+import AiOperationDialog from '~/components/ai/operations/AiOperationDialog.vue'
 import Icon from '~/components/Icon.vue'
 import { Button } from '~/components/ui/button'
 import {
@@ -15,8 +16,10 @@ import {
 } from '~/components/ui/dialog'
 import { TextField } from '~/components/ui/form'
 import { Spinner } from '~/components/ui/spinner'
+import { bulkEstimateLabel, bulkPlanReason } from '~/lib/aiBulk'
 import type { AiEntryScope } from '~/lib/aiChangesets'
 import { openDock } from '~/lib/aiDock'
+import { useMountOnFirstOpen } from '~/lib/mountOnFirstOpen'
 import { aiSkillLabel } from '~/lib/aiSkills'
 import { toastError } from '~/lib/toast-error'
 
@@ -66,12 +69,41 @@ const startMutation = useMutation({
   onError: (caught: unknown) => toastError(t, 'components.aiBulk.failed', caught),
 })
 
+const descriptionKey = computed(() => props.surface.replace('bulk:', ''))
+
+/** Set when the task shows its plan and budget first instead of just running. */
+const planReason = computed(() => (preflight.value ? bulkPlanReason(preflight.value) : null))
+
 const canStart = computed(
   () =>
     !!preflight.value?.count &&
+    !isFetching.value &&
     (skill.value !== null || prompt.value.trim() !== '') &&
     !startMutation.isPending.value
 )
+
+/** The same selection as an operation: recursive, planned and approved first, up to 10,000 entries. */
+const operationOpen = ref(false)
+const operationMounted = useMountOnFirstOpen(() => operationOpen.value)
+const operationPrompt = ref('')
+const operationSkill = ref<string | null>(null)
+
+const operationScopeLabel = computed(() => {
+  const count = props.scope.ids?.length ?? preflight.value?.count ?? 0
+  return t('components.aiOperations.start.selection', { count }, count)
+})
+
+const start = () => {
+  if (!planReason.value) {
+    startMutation.mutate()
+    return
+  }
+
+  operationPrompt.value = prompt.value
+  operationSkill.value = skill.value?.name ?? null
+  open.value = false
+  operationOpen.value = true
+}
 </script>
 
 <template>
@@ -85,7 +117,7 @@ const canStart = computed(
           />
           {{ $t('components.aiBulk.title') }}
         </DialogTitle>
-        <DialogDescription>{{ $t('components.aiBulk.description') }}</DialogDescription>
+        <DialogDescription>{{ $t(`components.aiBulk.descriptions.${descriptionKey}`) }}</DialogDescription>
       </DialogHeader>
 
       <div class="max-h-[60vh] space-y-4 overflow-y-auto">
@@ -140,12 +172,26 @@ const canStart = computed(
             <div>
               <div class="text-muted">{{ $t('components.aiBulk.estimate') }}</div>
               <div class="font-semibold">
-                {{ formatCurrency(preflight.cost_usd, 'USD') }}
+                {{ bulkEstimateLabel(preflight.cost_usd, t, (value) => formatCurrency(value, 'USD')) }}
               </div>
             </div>
           </div>
           <p class="text-muted">
             {{ $t('components.aiBulk.cap', { cap: formatCurrency(preflight.max_usd, 'USD'), model: preflight.model ?? '' }) }}
+          </p>
+          <p
+            v-if="planReason === 'entries'"
+            class="text-primary"
+            data-plan-why
+          >
+            {{ $t('components.aiBulk.planWhy.entries', { count: formatNumber(preflight.count) }) }}
+          </p>
+          <p
+            v-else-if="planReason === 'cost'"
+            class="text-primary"
+            data-plan-why
+          >
+            {{ $t('components.aiBulk.planWhy.cost', { cap: formatCurrency(preflight.max_usd, 'USD') }) }}
           </p>
           <p
             v-if="preflight.count === 0"
@@ -185,11 +231,21 @@ const canStart = computed(
           variant="ai"
           :disabled="!canStart"
           :loading="startMutation.isPending.value"
-          @click="startMutation.mutate()"
+          data-bulk-start
+          @click="start"
         >
-          {{ $t('components.aiBulk.confirm', { count: preflight?.count ?? 0 }) }}
+          {{ planReason ? $t('components.aiBulk.plan') : $t('components.aiBulk.confirm', { count: preflight?.count ?? 0 }, preflight?.count ?? 0) }}
         </Button>
       </DialogFooter>
     </DialogContent>
   </Dialog>
+  <AiOperationDialog
+    v-if="operationMounted"
+    v-model:open="operationOpen"
+    :space-id="spaceId"
+    :scope="{ type: scope.type, ids: scope.ids, filters: scope.filters }"
+    :scope-label="operationScopeLabel"
+    :initial-prompt="operationPrompt"
+    :initial-skill="operationSkill"
+  />
 </template>

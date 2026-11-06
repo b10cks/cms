@@ -2,27 +2,53 @@
 
 namespace App\Services\Ai\Tools;
 
+use App\Actions\Ai\AcceptAiChangesetItems;
+use App\Enums\AiChangesetItemStatus;
 use App\Models\Management\Space;
+use App\Models\Space\AiChangeset;
 use App\Models\Space\AiChangesetItem;
 use App\Models\Space\AiRun;
+use App\Models\Space\Content;
 use App\Models\User;
 use App\Services\Ai\Changesets\ChangesetRecorder;
 use App\Services\Ai\Changesets\ChangeTarget;
 use App\Services\Ai\Changesets\ChangeTargets;
+use App\Services\Ai\Changesets\FieldPath;
 use App\Services\Ai\Contracts\AiToolInterface;
 use App\Services\Ai\Contracts\ProposesChanges;
+use App\Services\Ai\Learning\EditLearning;
 use App\Services\Ai\Run\ToolError;
 use App\Services\Auth\AuthorizationService;
+use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Support\Arr;
+use Illuminate\Support\Collection;
+use Illuminate\Validation\ValidationException;
 
 /**
- * Base of the write tools. Proposals land in the run's changeset, never in
- * content. A run started on a confirmed selection may only touch those
- * entries; any other run stops at `ai.inline_entry_limit` entries.
+ * Base of the write tools. Every change lands in the run's changeset. Content
+ * has a draft layer, so a content change goes straight into the entry's draft
+ * ({@see writeContent()}) and a person publishes it. Every other target goes live
+ * when written, so its change waits as a proposal. A run started on a confirmed
+ * selection may only touch those entries; any other run stops at
+ * `ai.inline_entry_limit` entries.
  */
 abstract class ProposalTool implements AiToolInterface, ProposesChanges
 {
+    /** What an agent reads when its change was not written, in every content tool's result. */
+    protected const CONFLICT_NOTE = 'A person changed these fields after you read them. They stay as the person left them and are open for that person, so do not write them again, and say so in your summary. Everything else was handled as usual.';
+
+    /** What an agent reads when its text breaks the glossary, in every write tool's result. */
+    protected const FINDINGS_NOTE = 'The change is in place. Fix the wording for the same fields with one more call, once. If it still fits afterwards, leave it: it stays flagged for whoever publishes.';
+
+    protected const PROPOSAL_FINDINGS_NOTE = 'The proposal is open and flagged, and a person has to give a reason to accept it as it is. Fix the wording for the same fields with one more call, once.';
+
+    protected const HINTS_NOTE = 'Hints for you only, never shown to anyone: the glossary lists wording that is not in your text. An inflected form of it is fine, so change nothing unless the wording is really missing.';
+
     /** @var list<array{changeset_id: string, item_id: string, target_type: string, target_id: string|null, path: string|null}> */
     private array $proposals = [];
+
+    /** @var array<string, list<array<string, string>>> item ID => glossary hints of this call */
+    private array $hints = [];
 
     public function __construct(
         protected readonly AiRun $run,
@@ -57,6 +83,18 @@ abstract class ProposalTool implements AiToolInterface, ProposesChanges
         return $this->auth->canInSpace($this->actor, $this->space, $target->editAbility());
     }
 
+    /**
+     * Content changes are written right away, so the actor needs the rights a save needs.
+     *
+     * @throws ToolError
+     */
+    protected function ensureCanWriteContent(): void
+    {
+        if (! $this->canEdit($this->target(AiChangesetItem::TARGET_CONTENT))) {
+            throw new ToolError('Whoever started this task may not edit entries in this space, so nothing was changed. Tell them.');
+        }
+    }
+
     /** @throws ToolError when the entry is outside what this run may touch */
     protected function ensureInScope(string $type, ?string $id): void
     {
@@ -64,7 +102,7 @@ abstract class ProposalTool implements AiToolInterface, ProposesChanges
 
         if (\is_array($frozen)) {
             if ($id === null || $type !== $frozen['type'] || ! \in_array($id, $frozen['ids'], true)) {
-                throw new ToolError('This run works on the selected entries only. Propose changes to those entries and nothing else.');
+                throw new ToolError('This run works on the selected entries only. Change those entries and nothing else.');
             }
 
             return;
@@ -85,6 +123,7 @@ abstract class ProposalTool implements AiToolInterface, ProposesChanges
     protected function record(array $items): array
     {
         $created = $this->recorder->record($this->run, $items);
+        $this->hints = [...$this->hints, ...$this->recorder->takeHints()];
 
         foreach ($created as $item) {
             $this->proposals[] = [
@@ -97,5 +136,137 @@ abstract class ProposalTool implements AiToolInterface, ProposesChanges
         }
 
         return $created;
+    }
+
+    /**
+     * Record content changes and write them to their drafts in one step, through
+     * the path a person's accept takes, under the run's actor. A field someone
+     * changed since the agent read it stays open as a conflict; the rest is
+     * written. Anything refused leaves nothing behind, so the agent can fix it and
+     * call again. Called inside the tool's fence: a crash rolls back the write with
+     * its record and result, and the next owner repeats the call once.
+     *
+     * @param  callable(): list<AiChangesetItem>  $record
+     * @return array{written: Collection<int, AiChangesetItem>, conflicts: Collection<int, AiChangesetItem>, version_id: string|null}
+     *
+     * @throws ToolError
+     */
+    protected function writeContent(callable $record): array
+    {
+        try {
+            return (new AiChangesetItem)->getConnection()->transaction(function () use ($record) {
+                $items = $record();
+                $changeset = AiChangeset::query()->findOrFail($items[0]->changeset_id);
+                app(AcceptAiChangesetItems::class)->handle($changeset, $this->space, $this->actor, array_map(fn (AiChangesetItem $item) => $item->id, $items));
+
+                $fresh = AiChangesetItem::query()->whereKey(array_map(fn (AiChangesetItem $item) => $item->id, $items))->orderBy('id')->get();
+                $written = $fresh->where('status', AiChangesetItemStatus::Accepted)->values();
+                app(EditLearning::class)->supersede($written);
+
+                return [
+                    'written' => $written,
+                    'conflicts' => $fresh->where('status', AiChangesetItemStatus::Conflict)->values(),
+                    'version_id' => Content::query()->whereKey($fresh->first()?->target_id)->value('current_version_id'),
+                ];
+            });
+        } catch (AuthorizationException) {
+            $this->proposals = [];
+
+            throw new ToolError('Whoever started this task may not edit entries in this space, so nothing was changed. Tell them.');
+        } catch (ValidationException $e) {
+            $this->proposals = [];
+
+            throw new ToolError("Nothing was written:\n- ".implode("\n- ", Arr::flatten($e->errors())));
+        }
+    }
+
+    /**
+     * Which of these fields hold an open conflict, from any task. Such a field
+     * stays open for a person: an agent's further write is refused here and
+     * reported, while the other fields go on. Once a person decides, tasks may
+     * write it again.
+     *
+     * @param  list<string>  $paths
+     * @return array<string, string> requested path => the conflict's item ID
+     */
+    protected function leftForPerson(string $contentId, array $paths): array
+    {
+        $open = AiChangesetItem::query()
+            ->where('target_type', AiChangesetItem::TARGET_CONTENT)
+            ->where('target_id', $contentId)
+            ->where('status', AiChangesetItemStatus::Conflict->value)
+            ->get(['id', 'path']);
+
+        $left = [];
+        foreach ($paths as $path) {
+            $conflict = $open->first(fn (AiChangesetItem $item) => $item->path !== null && FieldPath::overlap((string) $item->path, $path));
+            if ($conflict !== null) {
+                $left[$path] = $conflict->id;
+            }
+        }
+
+        return $left;
+    }
+
+    /**
+     * Hints a tool found after recording, for the agent's result.
+     *
+     * @param  array<string, list<array<string, string>>>  $hints  item ID => hints
+     */
+    protected function addHints(array $hints): void
+    {
+        $this->hints = [...$this->hints, ...$hints];
+    }
+
+    /**
+     * What the agent is told about glossary wording: the blocking findings of the items
+     * and this call's hints, with what to do about them. Empty when there is nothing.
+     *
+     * @param  iterable<AiChangesetItem>  $items
+     * @param  bool  $written  whether the items are in a draft or open proposals
+     * @return array<string, mixed>
+     */
+    protected function findingsResult(iterable $items, bool $written = true): array
+    {
+        $findings = [];
+        $hints = [];
+
+        foreach ($items as $item) {
+            array_push($findings, ...($item->glossary_findings ?? []));
+            array_push($hints, ...($this->hints[$item->id] ?? []));
+        }
+        $this->hints = [];
+
+        $findings = array_values(array_unique($findings, SORT_REGULAR));
+        $hints = array_values(array_unique($hints, SORT_REGULAR));
+
+        return [
+            ...($findings !== [] ? ['glossary_findings' => $findings] : []),
+            ...($hints !== [] ? ['glossary_hints' => $hints] : []),
+            ...($findings !== [] || $hints !== [] ? ['glossary_note' => trim(($findings !== [] ? ($written ? self::FINDINGS_NOTE : self::PROPOSAL_FINDINGS_NOTE).' ' : '').($hints !== [] ? self::HINTS_NOTE : ''))] : []),
+        ];
+    }
+
+    /**
+     * What the result of a write tells the agent.
+     *
+     * @param  array{written: Collection<int, AiChangesetItem>, conflicts: Collection<int, AiChangesetItem>, version_id: string|null}  $write
+     * @param  array<string, string>  $left  fields refused before writing, from {@see leftForPerson()}
+     * @return array<string, mixed>
+     */
+    protected function writeResult(array $write, array $left = []): array
+    {
+        $conflicts = [
+            ...$write['conflicts']->map(fn (AiChangesetItem $item) => ['item_id' => $item->id, 'path' => $item->path])->all(),
+            ...array_map(fn (string $path, string $itemId) => ['item_id' => $itemId, 'path' => $path], array_keys($left), $left),
+        ];
+
+        return [
+            ...$this->findingsResult($write['written']->concat($write['conflicts'])),
+            'written' => $write['written']->count(),
+            'item_ids' => $write['written']->pluck('id')->all(),
+            'version_id' => $write['version_id'],
+            ...($conflicts !== [] ? ['conflicts' => $conflicts, 'conflict_note' => self::CONFLICT_NOTE] : []),
+        ];
     }
 }

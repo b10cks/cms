@@ -45,6 +45,8 @@ interface ValidationStateOptions {
   blocks: Ref<BlockResource[] | undefined>
   effectiveContent?: Ref<Record<string, unknown> | null | undefined>
   ignoreAbsentNonTranslatableFields?: boolean
+  /** Brings an invalid field to the user. A page whose fields are not all rendered opens the way there. */
+  revealField?: (path: string) => void | Promise<void>
 }
 
 const INDEXABLE_TYPES: CanonicalSchemaTypeName[] = [
@@ -759,6 +761,7 @@ export const useContentSchemaState = ({
   blocks,
   effectiveContent: effectiveContentRef,
   ignoreAbsentNonTranslatableFields = false,
+  revealField = focusField,
 }: ValidationStateOptions) => {
   const dirtyFields = ref<Record<string, boolean>>({})
   const submitAttempted = ref(false)
@@ -924,7 +927,7 @@ export const useContentSchemaState = ({
 
     await revealValidationState()
 
-    focusField(path)
+    await revealField(path)
   }
 
   const resetValidationState = () => {

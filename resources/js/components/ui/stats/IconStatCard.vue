@@ -24,7 +24,7 @@ defineProps<{
       </div>
       <p
         v-if="description"
-        class="text-xs"
+        class="text-sm"
       >
         {{ description }}
       </p>

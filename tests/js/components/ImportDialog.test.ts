@@ -173,6 +173,39 @@ describe('mode selection', () => {
 })
 
 describe('errors', () => {
+  it('shows a preparing state, then live progress while the import runs', async () => {
+    let report: (progress: { processed: number; total: number }) => void = () => {}
+    const submit = vi.fn((_file: File, _mode: string, onProgress: typeof report) => {
+      report = onProgress
+
+      return new Promise(() => {})
+    })
+    const wrapper = await mountDialog({ submit })
+
+    await chooseFile()
+    await click('Import')
+    await wrapper.setProps({ pending: true })
+
+    expect(text()).toContain('Uploading and preparing file')
+
+    report({ processed: 100, total: 250 })
+    await flushPromises()
+
+    expect(text()).toContain('100 of 250 rows processed')
+  })
+
+  it('caps long summary lists and says how many rows it left out', async () => {
+    const errors = Array.from({ length: 250 }, (_, index) => ({ row: index + 1, message: 'Asset not found' }))
+    await mountDialog({ submit: vi.fn().mockResolvedValue({ ...result, errors }) })
+
+    await chooseFile()
+    await click('Import')
+    await flushPromises()
+
+    expect(text().match(/Asset not found/g)).toHaveLength(200)
+    expect(text()).toContain('50 more not shown')
+  })
+
   it('refuses to submit without a file', async () => {
     const submit = vi.fn()
     await mountDialog({ submit })

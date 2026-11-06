@@ -158,7 +158,11 @@ export interface TeamsDashboardCard {
   type: string | null
   created_at: string | null
   people_count: number
+  /** People who signed in within the last 30 days. */
+  active_people: number
   spaces_count: number
+  /** Spaces with content, the team overview's "published" rule. */
+  published_spaces: number
   sub_team_count: number
   pending_invites: number
   teams_without_owner: number

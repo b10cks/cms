@@ -196,7 +196,19 @@ const handleSetAsCurrent = (versionId: string) => {
   setCurrentVersion(versionId)
 }
 
-const handlePublishVersion = (versionId: string) => {
+const { freshTotals: freshFlagTotals } = useContentFlags(() => props.spaceId)
+
+// Flags describe the draft, so only publishing the current version is warned about.
+const handlePublishVersion = async (versionId: string) => {
+  const flagged = versionId === props.content.current_version_id ? (await freshFlagTotals([props.content.id])).entries : 0
+  if (flagged > 0) {
+    const confirmed = await alert.confirm($t('components.contentFlags.countSentence', { count: flagged }, flagged), {
+      title: $t('components.contentFlags.confirmTitle'),
+      confirmLabel: $t('components.contentFlags.confirmPublish'),
+    })
+    if (!confirmed) return
+  }
+
   publishVersion(versionId)
 }
 
@@ -398,7 +410,7 @@ const openVersionJsonInNewTab = (versionId: string) => {
               >
                 <div class="relative z-10 flex items-center px-2">
                   <div
-                    class="bg-surface py-1 text-xs font-medium tracking-wider text-muted uppercase"
+                    class="bg-surface py-1 text-sm font-medium tracking-wider text-muted uppercase"
                   >
                     {{ getGroupLabel(groupKey) }}
                   </div>
@@ -543,46 +555,61 @@ const openVersionJsonInNewTab = (versionId: string) => {
                       class="ml-2 flex gap-1 transition-opacity"
                       :class="{
                         'opacity-100': selectedVersionId === version.id,
-                        'opacity-0 group-hover:opacity-100': selectedVersionId !== version.id,
+                        'opacity-0 group-focus-within:opacity-100 group-hover:opacity-100': selectedVersionId !== version.id,
                       }"
                     >
-                      <SimpleTooltip :tooltip="$t('labels.contentVersions.actions.setCurrent')">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          class="h-6! w-6!"
-                          :disabled="isCurrentDraft(version) || isSettingCurrent"
-                          :aria-label="$t('labels.contentVersions.actions.setCurrent')"
-                          @click.prevent.stop="handleSetAsCurrent(version.id)"
+                      <SimpleTooltip :tooltip="$t('labels.contentVersions.actions.setCurrent')" as-child>
+                        <span
+                          :tabindex="isCurrentDraft(version) || isSettingCurrent ? 0 : undefined"
+                          class="inline-flex"
                         >
-                          <Icon name="lucide:square-pen" />
-                        </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            class="h-6! w-6!"
+                            :disabled="isCurrentDraft(version) || isSettingCurrent"
+                            :aria-label="$t('labels.contentVersions.actions.setCurrent')"
+                            @click.prevent.stop="handleSetAsCurrent(version.id)"
+                          >
+                            <Icon name="lucide:square-pen" />
+                          </Button>
+                        </span>
                       </SimpleTooltip>
 
-                      <SimpleTooltip :tooltip="$t('labels.contentVersions.actions.showJson')">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          class="h-6! w-6!"
-                          :disabled="!apiToken"
-                          :aria-label="$t('labels.contentVersions.actions.showJson')"
-                          @click.prevent.stop="openVersionJsonInNewTab(version.id)"
+                      <SimpleTooltip :tooltip="$t('labels.contentVersions.actions.showJson')" as-child>
+                        <span
+                          :tabindex="!apiToken ? 0 : undefined"
+                          class="inline-flex"
                         >
-                          <Icon name="lucide:braces" />
-                        </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            class="h-6! w-6!"
+                            :disabled="!apiToken"
+                            :aria-label="$t('labels.contentVersions.actions.showJson')"
+                            @click.prevent.stop="openVersionJsonInNewTab(version.id)"
+                          >
+                            <Icon name="lucide:braces" />
+                          </Button>
+                        </span>
                       </SimpleTooltip>
 
-                      <SimpleTooltip :tooltip="$t('labels.contentVersions.actions.publish')">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          class="h-6! w-6!"
-                          :disabled="isCurrentlyPublished(version) || isPublishing"
-                          :aria-label="$t('labels.contentVersions.actions.publish')"
-                          @click.prevent.stop="handlePublishVersion(version.id)"
+                      <SimpleTooltip :tooltip="$t('labels.contentVersions.actions.publish')" as-child>
+                        <span
+                          :tabindex="isCurrentlyPublished(version) || isPublishing ? 0 : undefined"
+                          class="inline-flex"
                         >
-                          <Icon name="lucide:send" />
-                        </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            class="h-6! w-6!"
+                            :disabled="isCurrentlyPublished(version) || isPublishing"
+                            :aria-label="$t('labels.contentVersions.actions.publish')"
+                            @click.prevent.stop="handlePublishVersion(version.id)"
+                          >
+                            <Icon name="lucide:send" />
+                          </Button>
+                        </span>
                       </SimpleTooltip>
                     </div>
                   </RadioGroupItem>
@@ -654,7 +681,7 @@ const openVersionJsonInNewTab = (versionId: string) => {
             >
               <div class="flex grow flex-col gap-4">
                 <div class="flex items-center justify-between">
-                  <div class="mt-2 text-xs text-muted">
+                  <div class="mt-2 text-sm text-muted">
                     {{
                       $t('labels.contentVersions.previewingVersionFrom', {
                         date: formatCalendarTime(selectedVersion.created_at),

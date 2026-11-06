@@ -191,7 +191,7 @@ const clearSearch = () => {
     >
       <button
         type="button"
-        class="flex h-8 w-full shrink-0 cursor-pointer items-center gap-2 rounded-md px-2.5 text-left text-sm font-medium text-muted transition-colors duration-150 hover:bg-tree-hover hover:text-foreground focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none focus-visible:ring-inset"
+        class="flex h-8 w-full shrink-0 cursor-pointer items-center gap-2 rounded-md px-2.5 text-left text-sm font-medium text-muted transition-colors duration-150 hover:bg-tree-hover hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none focus-visible:ring-inset"
         :aria-expanded="settledOpen"
         data-settled-toggle
         @click="settledOpen = !settledOpen"

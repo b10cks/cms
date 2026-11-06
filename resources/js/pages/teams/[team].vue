@@ -56,20 +56,15 @@ provide('teamId', teamId)
 </script>
 
 <template>
-  <div class="flex min-h-full w-full bg-background">
-    <aside class="shrink-0 p-6 xl:w-1/5">
-      <nav class="sticky top-20 flex flex-col space-y-1">
+  <div class="flex min-h-full w-full flex-col bg-background md:flex-row">
+    <aside class="min-w-0 shrink-0 p-3 md:p-6 xl:w-1/5">
+      <nav class="flex gap-1 overflow-x-auto md:sticky md:top-20 md:flex-col md:overflow-visible">
         <RouterLink
           v-for="item in items"
           :key="item.routeName"
           :to="linkTo(item.routeName)"
           :aria-current="item.routeName === activeNavItem ? 'page' : undefined"
-          :class="[
-            'icon-anim flex items-center gap-2 rounded-md px-4 py-2',
-            'transition-colors duration-200 hover:bg-secondary',
-            'cursor-pointer font-semibold whitespace-nowrap',
-            item.routeName === activeNavItem && 'bg-secondary text-primary',
-          ]"
+          class="icon-anim nav-row"
           @mouseenter="preloadRoute(linkTo(item.routeName))"
           @focusin="preloadRoute(linkTo(item.routeName))"
           @mouseleave="cancelPreload(linkTo(item.routeName))"

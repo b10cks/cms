@@ -23,8 +23,6 @@ use Illuminate\Support\Facades\Log;
  */
 abstract class RecordImportDriver extends BaseImportExportDriver
 {
-    protected const IMPORT_CHUNK_SIZE = 500;
-
     protected array $deleted = [];
     protected array $touchedIds = [];
 
@@ -43,7 +41,8 @@ abstract class RecordImportDriver extends BaseImportExportDriver
     /** Human readable subject for log messages, e.g. "Redirect". */
     abstract protected function importLogLabel(): string;
 
-    protected function runImport(Space $space, UploadedFile $file, RedirectImportMode $mode): ImportResult
+    /** @return \Generator<int, array{processed: int, total: int}, mixed, ImportResult> */
+    protected function runImport(Space $space, UploadedFile $file, RedirectImportMode $mode): \Generator
     {
         $this->resetState();
 
@@ -54,29 +53,35 @@ abstract class RecordImportDriver extends BaseImportExportDriver
                 return new ImportResult([], [], [], [['message' => 'File is empty']]);
             }
 
-            $this->ignoredFields = $this->detectIgnoredFields(array_keys($rows[0] ?? []));
+            $this->ignoredFields = $this->detectIgnoredFields(array_keys($this->firstWellFormedRow($rows)));
 
             // Chunked: one transaction and one batched lookup per chunk
             // instead of a per-row SELECT inside one giant transaction. Rows
             // keep going through model saves so audit entries and change
             // tracking stay intact.
             $connection = $this->newModel()->getConnection();
+            $total = count($rows);
+            $processed = 0;
 
-            $this->withMutedEvents(function () use ($connection, $rows, $mode): void {
-                foreach (array_chunk($rows, static::IMPORT_CHUNK_SIZE, preserve_keys: true) as $chunk) {
-                    $connection->transaction(function () use ($chunk): void {
-                        $lookup = $this->prefetchRecords($chunk);
+            yield ['processed' => $processed, 'total' => $total];
 
-                        foreach ($chunk as $rowNumber => $rowData) {
-                            $this->importRow($rowNumber, $rowData, $lookup);
-                        }
-                    });
-                }
+            foreach (array_chunk($rows, static::IMPORT_CHUNK_SIZE, preserve_keys: true) as $chunk) {
+                $this->withMutedEvents(fn () => $connection->transaction(function () use ($chunk): void {
+                    $lookup = $this->prefetchRecords($chunk);
 
-                if ($mode === RedirectImportMode::Replacement && $this->errors === []) {
-                    $this->deleteUntouched();
-                }
-            });
+                    foreach ($chunk as $rowNumber => $rowData) {
+                        $this->importRow($rowNumber, $rowData, $lookup);
+                    }
+                }));
+
+                $processed += count($chunk);
+
+                yield ['processed' => $processed, 'total' => $total];
+            }
+
+            if ($mode === RedirectImportMode::Replacement && $this->errors === []) {
+                yield from $this->deleteUntouched($total);
+            }
 
             $this->afterImport($space);
         } catch (\Throwable $e) {
@@ -94,6 +99,12 @@ abstract class RecordImportDriver extends BaseImportExportDriver
     protected function importRow(int $rowNumber, array $rowData, array &$lookup): void
     {
         $naturalKey = $this->naturalKeyColumn();
+
+        if (isset($rowData[self::MALFORMED_ROW])) {
+            $this->errors[] = ['row' => $rowNumber + 1, 'message' => $rowData[self::MALFORMED_ROW]];
+
+            return;
+        }
 
         try {
             $payload = $this->normalizeRow($rowData);
@@ -250,7 +261,13 @@ abstract class RecordImportDriver extends BaseImportExportDriver
         return null;
     }
 
-    protected function deleteUntouched(): void
+    /**
+     * Keeps yielding the finished row count: deleting is not extra progress,
+     * but a stream must stay active during it.
+     *
+     * @return \Generator<int, array{processed: int, total: int}>
+     */
+    protected function deleteUntouched(int $total): \Generator
     {
         // Diff the id set in PHP instead of a whereNotIn with thousands of
         // bindings; deletions stay per-model so audit entries keep firing.
@@ -264,7 +281,7 @@ abstract class RecordImportDriver extends BaseImportExportDriver
         $connection = $this->newModel()->getConnection();
 
         foreach ($idsToDelete->chunk(static::IMPORT_CHUNK_SIZE) as $ids) {
-            $connection->transaction(function () use ($ids, $naturalKey): void {
+            $this->withMutedEvents(fn () => $connection->transaction(function () use ($ids, $naturalKey): void {
                 foreach ($this->newQuery()->whereIn('id', $ids->all())->get() as $record) {
                     $this->deleted[] = [
                         'id' => $record->id,
@@ -272,7 +289,9 @@ abstract class RecordImportDriver extends BaseImportExportDriver
                     ];
                     $record->delete();
                 }
-            });
+            }));
+
+            yield ['processed' => $total, 'total' => $total];
         }
     }
 

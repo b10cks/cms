@@ -147,7 +147,7 @@ export class ApiClient {
     }
   }
 
-  private async parseResponse<T>(response: Response): Promise<T> {
+  public async parseResponse<T>(response: Response): Promise<T> {
     const contentType = response.headers.get('content-type')
     const isJson =
       !!contentType &&

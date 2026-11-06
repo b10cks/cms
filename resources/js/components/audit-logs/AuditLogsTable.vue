@@ -300,9 +300,9 @@ function buildItemRoute(row: AuditLogResource): object | null {
             <TableRow
               v-for="row in rows"
               :key="row.id"
-              class="hover:bg-muted/50"
+              class="hover:bg-state-hover"
             >
-              <TableCell class="text-sm text-muted-foreground whitespace-nowrap">
+              <TableCell class="text-sm text-muted whitespace-nowrap">
                 {{ row.created_at ? formatDateTime(row.created_at) : '' }}
               </TableCell>
 

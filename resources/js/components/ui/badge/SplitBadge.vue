@@ -50,7 +50,6 @@ const iconSize = computed(
     class="inline-flex items-center font-semibold"
     :class="[`text-${props.size}`]"
   >
-    <!-- Label part -->
     <div
       :class="[
         badgeVariants({ variant: labelVariant, size }),
@@ -62,7 +61,6 @@ const iconSize = computed(
       {{ label }}
     </div>
 
-    <!-- Value part -->
     <div
       v-if="value || $slots.default || removable"
       :class="[badgeVariants({ variant, size }), valueClass, 'rounded-l-none', 'flex items-center']"

@@ -1657,7 +1657,7 @@ const createDragPreviewElement = (draggedNodeIds: string[]) => {
   if (draggedNodeIds.length > 1) {
     const badge = document.createElement('div')
     badge.className =
-      'ml-auto rounded-full bg-primary px-2 py-1 text-xs font-semibold text-primary-foreground shadow-sm'
+      'ml-auto rounded-full bg-primary px-2 py-1 text-sm font-semibold text-primary-foreground shadow-sm'
     badge.textContent = `${draggedNodeIds.length}`
     preview.appendChild(badge)
   }

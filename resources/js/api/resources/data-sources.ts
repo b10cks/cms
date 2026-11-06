@@ -1,4 +1,5 @@
-import { requestExportBlob, requestImportJson } from '~/lib/import-export'
+import { requestExportBlob, requestImportStream } from '~/lib/import-export'
+import type { ImportProgress } from '~/types/import-export'
 import type {
   CreateDataEntryPayload,
   CreateDataSourcePayload,
@@ -79,13 +80,15 @@ export class DataSources extends BaseResource<
   public async importEntries(
     dataSourceId: string,
     file: File,
-    mode: DataEntryImportMode = 'addition'
+    mode: DataEntryImportMode = 'addition',
+    onProgress?: (progress: ImportProgress) => void
   ): Promise<DataEntryImportResult> {
-    return requestImportJson<DataEntryImportResult>({
+    return requestImportStream<DataEntryImportResult>({
       client: this.client,
       endpoint: `${this.basePath}/${dataSourceId}/entries/import`,
       file,
       extraFields: { import_mode: mode },
+      onProgress,
     })
   }
 }

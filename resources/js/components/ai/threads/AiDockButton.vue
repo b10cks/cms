@@ -22,7 +22,7 @@ const label = computed(() =>
 <template>
   <button
     type="button"
-    class="icon-anim relative flex size-9 cursor-pointer items-center justify-center rounded-lg text-sidebar-foreground transition-colors duration-200 hover:bg-sidebar-accent focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none"
+    class="icon-anim relative flex size-9 cursor-pointer items-center justify-center rounded-lg text-sidebar-foreground transition-colors duration-200 hover:bg-sidebar-accent/60 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
     :class="aiDock.state.open && 'bg-sidebar-accent text-sidebar-accent-foreground'"
     :aria-label="label"
     :aria-pressed="aiDock.state.open"
@@ -35,7 +35,7 @@ const label = computed(() =>
     />
     <span
       v-if="attention > 0"
-      class="pointer-events-none absolute -top-0.5 -right-0.5 flex min-w-4 items-center justify-center rounded-full bg-accent px-1 text-[10px] leading-4 font-semibold text-white"
+      class="pointer-events-none absolute -top-0.5 -right-0.5 flex min-w-4 items-center justify-center rounded-full bg-accent-fill px-1 text-[10px] leading-4 font-semibold text-white"
       aria-hidden="true"
     >
       {{ attention > 99 ? '99+' : attention }}

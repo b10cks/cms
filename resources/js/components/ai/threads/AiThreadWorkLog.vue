@@ -1,12 +1,15 @@
 <script setup lang="ts">
 import { useIntervalFn } from '@vueuse/core'
 
+import AiProviderRetryNotice from '~/components/ai/operations/AiProviderRetryNotice.vue'
 import Icon from '~/components/Icon.vue'
+import type { AiProviderRetryNotice as RetryNotice } from '~/lib/aiRun'
 import type { AiRunStep, AiThreadStep } from '~/lib/aiThreads'
 
 /**
  * What a turn did, as one quiet line: "Working for 12s" while the run goes,
- * "Worked for 14s, 4 steps" after. Opens into the tool calls in order.
+ * "Worked for 14s, 4 steps" after. Opens into the tool calls in order. A
+ * provider wait shows below it with its retry time and unconfirmed calls.
  */
 const props = defineProps<{
   steps: readonly (AiRunStep | AiThreadStep)[]
@@ -14,6 +17,7 @@ const props = defineProps<{
   /** ISO string from the run record, or epoch ms for the live turn */
   startedAt: string | number | null
   finishedAt: string | null
+  providerRetry?: RetryNotice | null
 }>()
 
 const { t, te } = useI18n()
@@ -63,10 +67,11 @@ const current = computed(() => (props.running ? props.steps.findLast(isPending) 
 
 <template>
   <div
-    v-if="summary"
+    v-if="summary || providerRetry"
     class="grid gap-1.5 text-sm"
   >
     <button
+      v-if="summary"
       type="button"
       class="inline-flex w-fit items-center gap-1 rounded-md text-muted transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none"
       :aria-expanded="open"
@@ -81,6 +86,11 @@ const current = computed(() => (props.running ? props.steps.findLast(isPending) 
         :class="open && 'rotate-90'"
       />
     </button>
+
+    <AiProviderRetryNotice
+      v-if="providerRetry"
+      :notice="providerRetry"
+    />
 
     <p
       v-if="current && !open"

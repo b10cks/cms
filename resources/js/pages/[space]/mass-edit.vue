@@ -7,6 +7,7 @@ import ImportContentTranslationsDialog from '~/components/content/ImportContentT
 import type { FilterableField } from '~/components/SearchFilter.vue'
 import SearchFilter from '~/components/SearchFilter.vue'
 import AiConfigMenuItems from '~/components/ai/AiConfigMenuItems.vue'
+import AiRunFindings from '~/components/ai/AiRunFindings.vue'
 import { Badge } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
 import SplitButton from '~/components/ui/button/SplitButton.vue'
@@ -32,6 +33,7 @@ import TableEmptyRow from '~/components/ui/TableEmptyRow.vue'
 import TablePaginationFooter from '~/components/ui/TablePaginationFooter.vue'
 import { Textarea } from '~/components/ui/textarea'
 import { useMassEdit } from '~/composables/useMassEdit'
+import type { AiGlossaryFinding } from '~/lib/aiRun'
 import type {
   MassEditDocument,
   MassEditRowsParams,
@@ -41,6 +43,7 @@ import type {
 
 const route = useRoute()
 const { t } = useI18n()
+
 const spaceId = computed(() => route.params.space as string)
 
 const { useAccessControl } = useAuthorization()
@@ -377,12 +380,28 @@ const clearSavedEdits = (result: MassEditSaveResult) => {
   edits.value = unsaved
 }
 
+const { freshTotals: freshFlagTotals } = useContentFlags(spaceId)
+
 const handleSave = async (mode: 'draft' | 'publish' = 'draft') => {
   if (dirtyCount.value === 0) return
 
+  const documents = buildDocumentsPayload()
+  if (mode === 'publish') {
+    const flagged = (await freshFlagTotals(documents.map((document) => document.content_id))).entries
+    if (
+      flagged > 0 &&
+      !(await alert.confirm(t('components.contentFlags.countSentence', { count: flagged }, flagged) as string, {
+        title: t('components.contentFlags.confirmTitle') as string,
+        confirmLabel: t('components.contentFlags.confirmPublish') as string,
+      }))
+    ) {
+      return
+    }
+  }
+
   try {
     const result = await saveMutation.mutateAsync({
-      documents: buildDocumentsPayload(),
+      documents,
       mode,
       create_missing: true,
     })
@@ -399,6 +418,8 @@ const defaultAiConfig = computed(() => aiConfigs.value?.find((config) => config.
 const translationRun = useAiRun(spaceId)
 const isTranslating = translationRun.isActive
 const translationProgress = ref<{ language: string; applied: number; total: number } | null>(null)
+const translationFindings = ref<AiGlossaryFinding[]>([])
+const findingKey = ({ type, term, found }: AiGlossaryFinding) => `${type}:${term}:${found ?? ''}`
 
 const AI_KEY_SEPARATOR = '|'
 
@@ -459,6 +480,7 @@ const translateWithAI = async (configId: string | null = defaultAiConfig.value?.
   )
 
   let translatedTotal = 0
+  translationFindings.value = []
 
   try {
     // Translate the whole selection, not just the visible page — edits are kept across
@@ -530,6 +552,12 @@ const translateWithAI = async (configId: string | null = defaultAiConfig.value?.
           }
         )
 
+        const seen = new Set(translationFindings.value.map(findingKey))
+        translationFindings.value = [
+          ...translationFindings.value,
+          ...(outcome.result?.glossary_findings ?? []).filter((finding) => !seen.has(findingKey(finding))),
+        ]
+
         if (outcome.status === 'completed' && outcome.result?.data) {
           applyEntries(
             Object.fromEntries(
@@ -585,7 +613,7 @@ const exportFilters = computed(() => ({
           <div class="flex items-center gap-2">
             <span
               v-if="translationProgress"
-              class="ai-animate-text text-xs text-muted"
+              class="ai-animate-text text-sm text-muted"
             >
               {{ $t('labels.massEdit.translating', translationProgress) }}
             </span>
@@ -627,6 +655,7 @@ const exportFilters = computed(() => ({
               variant="primary"
               :primary-action="() => handleSave('draft')"
               :disabled="dirtyCount === 0"
+              :menu-disabled="dirtyCount === 0"
               :has-menu="canPublishContent"
               :loading="saveMutation.isPending.value"
             >
@@ -646,13 +675,13 @@ const exportFilters = computed(() => ({
           </div>
         </template>
       </ContentHeader>
-
       <div class="space-y-2 pb-8">
-        <div class="flex flex-wrap items-center gap-2">
+        <AiRunFindings :findings="translationFindings" />
+        <div class="flex flex-wrap items-start gap-2">
           <ComboboxField
             v-model="selectedFieldKeys"
             name="fields"
-            class="min-w-72"
+            class="w-auto! min-w-72 flex-1 basis-72"
             :options="fieldOptions"
             :filter-fn="fieldOptionFilter"
             placeholder="labels.massEdit.fieldsPlaceholder"
@@ -677,16 +706,20 @@ const exportFilters = computed(() => ({
           </ComboboxField>
 
           <DropdownMenu>
-            <DropdownMenuTrigger as-child>
-              <Button variant="outline">
-                <Icon name="lucide:languages" />
-                {{ $t('labels.massEdit.languages') }}
-                <Badge
-                  v-if="selectedLanguages.length"
-                  size="sm"
-                  >{{ selectedLanguages.length }}</Badge
-                >
-              </Button>
+            <DropdownMenuTrigger
+              class="flex h-9 shrink-0 cursor-pointer items-center gap-2 rounded-lg border border-input-border bg-input pr-2 pl-3 text-sm font-medium whitespace-nowrap text-primary shadow-sm transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none data-[state=open]:ring-2 data-[state=open]:ring-ring"
+            >
+              <Icon
+                name="lucide:languages"
+                class="text-muted"
+              />
+              {{ $t('labels.massEdit.languages') }}
+              <span class="text-input-muted tabular-nums">{{ selectedLanguages.length }}</span>
+              <Icon
+                name="lucide:chevron-down"
+                size="1rem"
+                class="text-muted"
+              />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start">
               <DropdownMenuCheckboxItem
@@ -703,7 +736,7 @@ const exportFilters = computed(() => ({
           <SearchFilter
             v-model="filters"
             :filterable-fields="filterableFields"
-            class="ml-auto lg:min-w-xs 2xl:min-w-md"
+            class="w-auto! min-w-64 flex-1 basis-64"
           />
         </div>
 
@@ -779,6 +812,7 @@ const exportFilters = computed(() => ({
                       v-else
                       :model-value="cellValue(row, language)"
                       rows="1"
+                      :aria-label="`${row.document.name}, ${row.unit.label}, ${language}`"
                       class="min-h-9 w-full resize-y text-sm"
                       :class="{ 'ring-1 ring-amber-500': isCellDirty(row, language) }"
                       :disabled="isTranslating || isPreparingTranslation || !canManageContent"

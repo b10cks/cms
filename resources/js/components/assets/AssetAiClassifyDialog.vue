@@ -161,7 +161,7 @@ watch(
           />
         </div>
 
-        <p class="text-xs text-muted">
+        <p class="text-sm text-muted">
           {{ $t('labels.assets.aiClassify.hint') }}
         </p>
       </div>

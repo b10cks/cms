@@ -13,7 +13,7 @@ export { default as SheetTrigger } from './SheetTrigger.vue'
 export { default as UnobstrusiveSheetContent } from './UnobstrusiveSheetContent.vue'
 
 export const sheetVariants = cva(
-  'fixed z-50 gap-4 bg-background p-3 shadow-lg transition ease-in-out data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:duration-300 data-[state=open]:duration-500 border-border',
+  'fixed z-50 gap-4 bg-background p-3 shadow-overlay transition ease-in-out data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:duration-200 data-[state=open]:duration-300 border-popover-border',
   {
     variants: {
       side: {
@@ -32,7 +32,7 @@ export const sheetVariants = cva(
 )
 
 export const unobstrusiveSheetVariants = cva(
-  'fixed pointer-events-none z-50 transition ease-in-out data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:duration-300 data-[state=open]:duration-500',
+  'fixed pointer-events-none z-50 transition ease-in-out data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:duration-200 data-[state=open]:duration-300',
   {
     variants: {
       side: {
@@ -47,7 +47,7 @@ export const unobstrusiveSheetVariants = cva(
 )
 
 export const unobstrusiveSheetContentVariants = cva(
-  'bg-background shadow-lg border-border pointer-events-auto',
+  'bg-background shadow-overlay border-popover-border pointer-events-auto',
   {
     variants: {
       side: {

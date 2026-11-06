@@ -1,5 +1,6 @@
 import { Ai } from '~/api/resources/ai'
 import { AiKnowledge, type AiOwner } from '~/api/resources/ai-knowledge'
+import { AiOperations } from '~/api/resources/ai-operations'
 import { AuditLogs } from '~/api/resources/audit-logs'
 import { AutomationActions } from '~/api/resources/automation-actions'
 import { AutomationExecutions } from '~/api/resources/automation-executions'
@@ -157,6 +158,7 @@ export class API {
   public forSpace(spaceId: string) {
     return {
       ai: new Ai(this.client, spaceId),
+      aiOperations: new AiOperations(this.client, spaceId),
       auditLogs: new AuditLogs(this.client, spaceId),
       automationActions: new AutomationActions(this.client, spaceId),
       automationExecutions: new AutomationExecutions(this.client, spaceId),

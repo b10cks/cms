@@ -21,7 +21,9 @@ const forwarded = useForwardProps(delegatedProps)
     v-bind="forwarded"
     :class="
       cn(
-        'inline-flex h-8 w-8 items-center justify-center rounded-full text-muted',
+        'inline-flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium text-muted tabular-nums',
+        // Upcoming
+        'group-data-[state=inactive]:inset-ring group-data-[state=inactive]:inset-ring-border-strong',
         // Disabled
         'group-data-[disabled]:text-muted group-data-[disabled]:opacity-50',
         // Active

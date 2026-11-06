@@ -1,5 +1,12 @@
 {
   "labels": {
+    "mainNavigation": "Navigation principale",
+    "queryError": "Impossible de charger cet élément. Rien n'a été modifié, vous pouvez réessayer.",
+    "importDialog": {
+      "preparing": "Envoi et préparation du fichier…",
+      "moreRows": "{count} autres non affichés. Les totaux ci-dessus les incluent.",
+      "progress": "{processed} lignes traitées sur {total}"
+    },
     "loading": "Un instant...",
     "never": "Jamais",
     "notifications": {
@@ -514,7 +521,11 @@
       "copyLink": "Copier le lien d'aperçu",
       "openExternal": "Ouvrir dans un nouvel onglet",
       "mode": "Basculer le mode d'aperçu",
-      "settings": "Paramètres de l'aperçu"
+      "settings": "Paramètres de l'aperçu",
+      "reload": "Recharger",
+      "environment": "Environnement",
+      "chooseEnvironment": "Choisir un environnement",
+      "manageEnvironments": "Gérer les environnements"
     },
     "contentVersions": {
       "title": "Historique des versions",
@@ -571,6 +582,9 @@
       "assetsCount": "{current} actif sur {max}",
       "noAssetsFound": "Aucun actif trouvé",
       "noAssetsFoundDescription": "Votre bibliothèque d'actifs est vide. Téléchargez votre premier actif pour commencer.",
+      "noSearchResults": "Aucun actif ne correspond à votre recherche.",
+      "browse": "Parcourir les dossiers",
+      "clearSearch": "Effacer la recherche",
       "asset": "Actif",
       "assets": "Actifs",
       "showing": "Affichage de {from} à {to} sur {total} actifs",
@@ -1028,6 +1042,29 @@
             "independent": "Indépendant"
           },
           "effectiveMode": "Mode effectif : {mode}"
+        },
+        "rows": {
+          "preview": "Aperçu",
+          "translations": "Traductions",
+          "children": "Entrées enfants",
+          "cache": "Cache de diffusion",
+          "previewShown": "Affichée dans l'aperçu",
+          "previewHidden": "Masquée dans l'aperçu",
+          "modes": {
+            "overlay": "superposé",
+            "independent": "indépendant"
+          },
+          "onDefaultLanguage": "Défini dans la langue par défaut",
+          "anyType": "Tout type",
+          "typesAllowed": "{count} type autorisé | {count} types autorisés",
+          "spaceOrder": "ordre de l'espace",
+          "manualOrder": "ordre manuel",
+          "sortedBy": "trié par {field}",
+          "hours": "{count} heure | {count} heures",
+          "minutes": "{count} minute | {count} minutes",
+          "seconds": "{count} seconde | {count} secondes",
+          "tags": "{count} tag | {count} tags",
+          "notSet": "Non défini"
         }
       },
       "tabs": {
@@ -1047,8 +1084,8 @@
         "persistWithRemoteDrafts": "Cela enregistrera également les modifications non sauvegardées de {names}. Continuer ?",
         "persistWithRemoteDraftsTitle": "Inclure les modifications des autres ?"
       },
-      "emptyTitle": "Aucun contenu sélectionné",
-      "emptyDescription": "Commencez par créer votre première page de contenu",
+      "emptyTitle": "Pas encore de contenu",
+      "emptyDescription": "Créez votre première entrée pour commencer.",
       "managerTitle": "Gestionnaire de contenu",
       "managerDescription": "Sélectionnez un élément dans le menu de contenu pour le modifier ou créer un nouveau contenu.",
       "paste": {
@@ -1095,9 +1132,37 @@
         "errorsTitle": "Erreurs",
         "importError": "Échec de l'importation",
         "progress": "{processed} sur {total} entrées importées"
+      },
+      "info": {
+        "publishing": "Publication",
+        "status": "Statut",
+        "liveSince": "En ligne depuis",
+        "notLive": "Pas en ligne",
+        "firstPublished": "Première publication",
+        "pendingDraft": "Brouillon en attente",
+        "draft": "Brouillon",
+        "lastPublish": "Dernière publication",
+        "scheduled": "Planifiée",
+        "versions": "Versions",
+        "relations": "Relations",
+        "parent": "Parent",
+        "languages": "Langues",
+        "comments": "Commentaires",
+        "commentsOpen": "{count} ouvert | {count} ouverts",
+        "commentsNone": "Aucun ouvert",
+        "technical": "Technique",
+        "type": "Type",
+        "address": "Adresse",
+        "id": "ID",
+        "created": "Créée",
+        "updated": "Modifiée",
+        "copyAddress": "Copier l'adresse",
+        "copyId": "Copier l'ID",
+        "copied": "Copié dans le presse-papiers"
       }
     },
     "contentTree": {
+      "label": "Arborescence du contenu",
       "actions": {
         "view": "Afficher",
         "edit": "Modifier",
@@ -1114,6 +1179,8 @@
         "copy": "Copier",
         "cut": "Couper",
         "duplicate": "Dupliquer",
+        "paste": "Coller",
+        "publishOptions": "Options de publication",
         "pasteIn": "Coller dans",
         "pasteAfter": "Coller après",
         "delete": "Supprimer",
@@ -1155,20 +1222,33 @@
         "draft": "Brouillon",
         "pendingChanges": "Modifications non publiées",
         "filter": "Afficher uniquement les entrées avec des modifications non publiées",
+        "filterDrafts": "Afficher uniquement les brouillons",
         "nothingPending": "Tout est publié."
       }
     },
     "comments": {
       "title": "Commentaires",
-      "fieldTitle": "Commentaires sur le champ",
-      "placeholder": "Ajouter un commentaire...",
+      "placeholder": "Ajoutez un commentaire. Tapez {'@'} pour mentionner quelqu'un.",
       "replyPlaceholder": "Écrire une réponse...",
       "addButton": "Ajouter un commentaire",
-      "emptyState": "Donnez un retour, posez des questions ou partagez vos réflexions. Vous pouvez aussi cliquer n'importe où dans l'aperçu pour laisser un commentaire positionné.",
+      "emptyState": "Aucun commentaire. Ajoutez-en un ci-dessous ou via le bouton d'un champ.",
       "hideReplies": "Masquer",
       "showReplies": "Afficher",
       "reply": "réponse | réponses",
       "you": "Vous",
+      "emptyOpen": "Aucun commentaire ouvert.",
+      "emptyResolved": "Aucun commentaire résolu.",
+      "emptyField": "Aucun commentaire sur ce champ pour l'instant. Écrivez le premier ci-dessous.",
+      "open": "Ouverts",
+      "resolved": "Résolus",
+      "fieldTrigger": "Commenter {field}",
+      "fieldTriggerCount": "Commentaires sur {field} : {total}, {open} ouverts",
+      "goToLocation": "Aller à {location}",
+      "fieldMissing": "Ce champ n'existe plus",
+      "sendHint": "{keys} pour envoyer",
+      "mentionSuggestions": "Personnes à mentionner",
+      "mentionLoadFailed": "La liste des personnes n'a pas pu être chargée.",
+      "unknownPerson": "Personne inconnue",
       "actions": {
         "reply": "Répondre",
         "resolve": "Résoudre",
@@ -1880,6 +1960,14 @@
           "staging": "Pré-production",
           "production": "Production"
         }
+      },
+      "search": "Rechercher des espaces",
+      "noMatches": "Aucun espace ne correspond à votre recherche.",
+      "otherTeams": "Autres équipes",
+      "scope": {
+        "all": "Tous",
+        "direct": "Cette équipe",
+        "subTeams": "Sous-équipes"
       }
     },
     "spaceBlueprints": {
@@ -3206,7 +3294,9 @@
         "settings": "Paramètres",
         "moreTeams": "+{count} de plus",
         "withoutOwner": "{count} sans propriétaire | {count} sans propriétaire | {count} sans propriétaire",
-        "edited": "Modifié {time}"
+        "edited": "Modifié {time}",
+        "active": "{count} actifs",
+        "published": "{count} publiés"
       },
       "personal": {
         "title": "Équipes personnelles"
@@ -4013,7 +4103,25 @@
       "paramKeyPlaceholder": "ex. utm_source",
       "paramValuePlaceholder": "ex. newsletter",
       "anchorMissing": "Cet élément n'existe plus sur la page.",
-      "linkToPage": "Lien vers la page"
+      "linkToPage": "Lien vers la page",
+      "kinds": {
+        "internal": "Entrée",
+        "url": "URL",
+        "email": "E-mail"
+      },
+      "chooseEntry": "Choisir une entrée",
+      "searchEntries": "Rechercher des entrées",
+      "searchSections": "Rechercher des sections",
+      "entries": "Entrées",
+      "sections": "Sections",
+      "showSections": "Afficher les sections de {name}",
+      "back": "Retour aux entrées",
+      "noEntries": "Aucune entrée ne correspond.",
+      "moreEntries": "{count} de plus, continuez à taper pour affiner",
+      "noSections": "Cette entrée n'a pas de sections.",
+      "noSectionsMatch": "Aucune section ne correspond.",
+      "newTab": "Ouvrir dans un nouvel onglet",
+      "moreOptions": "Plus d'options"
     },
     "common": {
       "is": "est",
@@ -4383,6 +4491,19 @@
       "stay": "Continuer l'édition",
       "discard": "Ignorer les modifications",
       "save": "Enregistrer et quitter"
+    },
+    "assetField": {
+      "chooseImage": "Choisissez une image ou déposez-la ici",
+      "chooseFile": "Choisissez un fichier ou déposez-le ici",
+      "chooseImages": "Choisir des images",
+      "chooseFiles": "Choisir des fichiers",
+      "addImages": "Ajouter des images",
+      "addFiles": "Ajouter des fichiers",
+      "none": "Aucun fichier",
+      "details": "Détails",
+      "count": "{current} sur {max}",
+      "uploading": "Envoi en cours",
+      "wrongType": "Ce champ n'accepte pas ce type de fichier."
     }
   },
   "notifications": {
@@ -4679,6 +4800,7 @@
         "reorder": "Faites glisser pour réordonner, ou utilisez les flèches"
       },
       "moved": "Déplacé en position {position} sur {count}",
+      "removed": "{name} supprimé",
       "richtext": {
         "addHtmlClass": "Ajouter une classe HTML",
         "removeHtmlClass": "Supprimer la classe HTML",
@@ -4895,6 +5017,9 @@
         "notFound": "This skill does not exist or was deleted."
       },
       "knowledge": {
+        "loadFailed": "Les connaissances n'ont pas pu être chargées. La liste est peut-être incomplète.",
+        "loadFailedDocuments": "Les documents n'ont pas pu être chargés. Seuls les glossaires sont listés.",
+        "loadFailedGlossaries": "Les glossaires n'ont pas pu être chargés. Seuls les documents sont listés.",
         "title": "Knowledge",
         "description": "Style guides are always followed. Documents are searched when a task needs them. Glossaries set the terms the AI must use, keep untranslated or avoid.",
         "editorHint": "Write markdown or upload a PDF or Word file. Runs use the published revision.",
@@ -4925,36 +5050,15 @@
       "glossaries": {
         "description": "Terms the AI must use, keep untranslated or avoid. Findings are flagged on the generated text.",
         "create": "New glossary",
-        "emptyTerms": "No terms found.",
         "confirmDelete": "Delete the glossary {name} and all its terms?",
-        "addTerm": "Add term",
-        "editTerm": "Edit term",
-        "term": "Term",
-        "sourceLocale": "Locale",
-        "translations": "Translations",
-        "translationsHint": "One per line, for example de: Kasse",
-        "forbidden": "Never use",
-        "forbiddenHint": "Comma-separated variants the AI must not write",
-        "note": "Note",
-        "doNotTranslate": "Keep untranslated",
-        "caseSensitive": "Case sensitive",
-        "rules": "Rules",
-        "import": "Import",
-        "importErrors": "{count} rows could not be imported",
         "termCount": "{count} term | {count} terms",
-        "avoid": "Avoid: {terms}",
-        "editTermNamed": "Edit {term}",
-        "deleteTermNamed": "Delete {term}",
-        "confirmDeleteTerm": "Delete the term {term}?",
         "notFound": "Glossary not found",
-        "terms": "Terms",
-        "search": "Search terms",
         "exportLabel": "Export",
         "delete": "Delete glossary"
       },
       "schedules": {
         "title": "Schedules",
-        "description": "Run a skill over a saved scope on a schedule. Each run acts as the person who last saved the schedule, stops at its budget and puts its proposals in the inbox.",
+        "description": "Run a skill over a saved scope on a schedule. Each run acts as the person who last saved the schedule and stops at its budget. Content goes to drafts, and other changes wait in its thread.",
         "add": "Add schedule",
         "edit": "Edit schedule",
         "name": "Name",
@@ -4972,7 +5076,8 @@
         "runsAs": "runs as {name}",
         "paused": {
           "access_revoked": "Paused: the person it runs as lost access. Save or enable it to run as you.",
-          "skill_unavailable": "Paused: the skill is gone or can no longer propose changes."
+          "skill_unavailable": "Paused: the skill is gone or can no longer propose changes.",
+          "scope_too_large": "Paused: the scope grew past what a schedule may cover. Narrow its filters to run again."
         },
         "filters": {
           "block": "Block",
@@ -5015,6 +5120,7 @@
       "noConfigs": "Aucune configuration disponible"
     },
     "flattenedLocalization": {
+      "missing": "Manquant",
       "translate": "Traduction IA",
       "translating": "Traduction en cours…",
       "translationProgress": "{applied} sur {total} champs traduits…",
@@ -5092,10 +5198,13 @@
         "extract-glossary-terms": "Extract glossary terms",
         "find-untranslated": "Find untranslated entries"
       },
+      "findingsTitle": "Banned wording in the generated text",
+      "dismissFindings": "Dismiss",
       "findings": {
-        "missing_term": "Use \"{expected}\" for \"{term}\".",
-        "translated_do_not_translate": "Keep \"{term}\" untranslated.",
-        "forbidden_variant": "\"{found}\" is not allowed, use \"{expected}\"."
+        "missing_term": "Hint: the glossary uses \"{expected}\" for \"{term}\". An inflected form is fine.",
+        "translated_do_not_translate": "\"{expected}\" is a protected name, use it exactly.",
+        "forbidden_variant": "\"{found}\" is not allowed, use \"{expected}\".",
+        "forbidden_variant_bare": "\"{found}\" is not allowed."
       }
     },
     "aiChangeset": {
@@ -5115,7 +5224,7 @@
       "blockField": "Field {key}",
       "blockFields": "Fields of the new block",
       "noBlockFields": "No fields",
-      "partial": "The run stopped early ({reason}). These are the changes it proposed so far.",
+      "partial": "L'exécution s'est arrêtée plus tôt ({reason}). Voici ses modifications jusqu'ici.",
       "stoppedBy": {
         "max_usd": "cost limit reached",
         "max_steps": "step limit reached",
@@ -5128,11 +5237,14 @@
         "data_entry": "Data entry",
         "asset": "Asset",
         "block": "Block",
-        "selection": "Selection"
+        "selection": "Selection",
+        "asset_folder": "Asset folder",
+        "asset_tag": "Asset tag"
       },
       "status": {
         "pending": "Open",
         "accepted": "Accepted",
+        "written": "Écrit dans le brouillon",
         "rejected": "Rejected",
         "conflict": "Conflict"
       },
@@ -5140,7 +5252,11 @@
         "read": "When the AI read it",
         "current": "Now",
         "proposed": "AI proposal",
-        "currentIn": "Now ({language})"
+        "currentIn": "Now ({language})",
+        "source": "Source",
+        "sourceChange": "Source, changed since the current translation",
+        "currentTranslation": "Current translation",
+        "proposedTranslation": "Proposed translation"
       },
       "acceptFailed": "Could not apply the changes: {error}",
       "rejectFailed": "Could not reject the changes: {error}",
@@ -5148,7 +5264,31 @@
       "discardEdit": "Discard edit",
       "editLabel": "Edited proposal",
       "editedBeforeAccepting": "Edited before accepting",
-      "glossaryFindings": "Glossary findings"
+      "glossaryFindings": "Glossary findings",
+      "newFolder": "New folder",
+      "newTag": "New tag",
+      "assetFields": {
+        "tags": "Tags",
+        "folder": "Folder"
+      },
+      "translationUnits": "Translated texts",
+      "unitReasons": {
+        "missing": "Missing",
+        "empty": "Was empty",
+        "stale": "Source changed",
+        "same_as_source": "Copied from the source"
+      },
+      "structureExamples": "Based on {count} asset | Based on {count} assets",
+      "tagChange": {
+        "add": "Adds",
+        "remove": "Removes"
+      },
+      "libraryRoot": "Library root",
+      "notesLabel": "Needs your look",
+      "notes": {
+        "uncertain": "The AI is unsure:",
+        "invalid": "Could not apply:"
+      }
     },
     "aiCommand": {
       "ask": "Ask AI: {prompt}",
@@ -5157,7 +5297,6 @@
     "aiBulk": {
       "entry": "Ask AI",
       "title": "Ask AI about these entries",
-      "description": "Runs in the background in a thread. The changes arrive there for review; nothing is saved until you accept it.",
       "skills": "Skills",
       "task": "What should the AI do?",
       "extraInstructions": "Extra instructions (optional)",
@@ -5168,8 +5307,265 @@
       "more": "and {count} more",
       "preflightFailed": "Could not estimate this task.",
       "cancel": "Cancel",
-      "confirm": "Start on {count} entries",
-      "failed": "Could not start the task: {error}"
+      "confirm": "Start on {count} entry | Start on {count} entries",
+      "failed": "Could not start the task: {error}",
+      "descriptions": {
+        "content": "Runs in the background in a thread. Changes are written to the drafts straight away, and nothing is published.",
+        "assets": "Runs in the background in a thread. Changes wait there for you to accept them.",
+        "data_entries": "Runs in the background in a thread. Changes wait there for you to accept them."
+      },
+      "estimateUnknown": "Not known for this model",
+      "estimateTiny": "Under {amount}",
+      "plan": "Review plan",
+      "planWhy": {
+        "entries": "More than {count} entries match, more than one run can take, so you see the plan and budget first.",
+        "cost": "Estimated above {cap}, the most one run may spend, so you see the plan and budget first."
+      }
+    },
+    "aiOperations": {
+      "entry": "AI operation",
+      "kinds": {
+        "translation": {
+          "title": "Translation",
+          "description": "Fill missing locale entries, empty fields and stale translations. Human edits stay.",
+          "placeholder": "Translate the product pages into French and Italian, keep brand names in English."
+        },
+        "assets": {
+          "title": "Asset metadata",
+          "description": "Look at the images and fill metadata and tags. New folders or tags only when you approve them.",
+          "placeholder": "Write alt texts and titles, tag products by category."
+        },
+        "general": {
+          "title": "Any task",
+          "description": "Run a skill or your own instructions over every entry in the scope.",
+          "placeholder": "Shorten every SEO description to 155 characters."
+        }
+      },
+      "start": {
+        "title": "Start an AI operation",
+        "description": "Counts the scope and opens a thread where you shape the plan. Drafting with AI uses your AI allowance. Processing starts after you approve the plan and budget.",
+        "scope": "Scope",
+        "selection": "{count} selected entry | {count} selected entries",
+        "recursive": {
+          "content": "Include everything below",
+          "asset": "Include subfolders",
+          "data_entry": "Include everything below"
+        },
+        "kind": "What the operation does",
+        "outcome": "What should be true when it is done?",
+        "confirm": "Count and prepare",
+        "tooLarge": "This scope holds {count} entries. An operation takes at most {limit}, so narrow the scope or split it.",
+        "empty": "Nothing in this scope can be worked on."
+      },
+      "bulk": {
+        "truncated": "More than {count} entries match, more than one run can take."
+      },
+      "counts": {
+        "total": "Entries",
+        "supported": "To work on",
+        "estimate": "Estimate",
+        "spent": "Spent",
+        "unsupported": "{count} entry can't be worked on and is skipped. | {count} entries can't be worked on and are skipped.",
+        "groups": "Entries by type",
+        "moreGroups": "and {count} more type | and {count} more types"
+      },
+      "scope": {
+        "folder": {
+          "recursive": "The folder and every folder below it. Approval locks the item list; later entries are reported separately.",
+          "flat": "This folder only. Approval locks the item list; later entries are reported separately."
+        },
+        "selection": {
+          "recursive": "The selection and everything below it. Approval locks the item list; later entries are reported separately.",
+          "flat": "The selection only. Approval locks the item list; later entries are reported separately."
+        }
+      },
+      "draft": {
+        "noPlan": "Approve a plan before batch processing starts. The AI can draft one from a sample of the entries, or you write it.",
+        "draftWithAi": "Draft a plan",
+        "writeMyself": "Write it myself",
+        "redraft": "Draft again",
+        "planning": "Drafting the plan from a sample of entries. Nothing changes yet.",
+        "planAsks": "The AI has questions about the plan. Answer them below.",
+        "planFailed": "Drafting the plan failed. Try again or write it yourself.",
+        "stale": "The plan changed since you started editing.",
+        "loadPlan": "Show the new plan",
+        "save": "Save plan",
+        "discard": "Discard changes",
+        "saveFirst": "Save before you approve.",
+        "approval": "Approval",
+        "approvalExplain": "Approving freezes this plan and starts working in small batches. The estimate is {estimate}. When the budget is spent the operation pauses and waits for you; nothing spends on its own.",
+        "budget": "Budget in USD",
+        "budgetRange": "Between 0.01 and 1,000",
+        "writesNotice": "L'approbation lance le travail. Le contenu est écrit immédiatement dans des brouillons et rien n'est publié. Les modifications d'assets et de données vous attendent.",
+        "approve": "Approve and start on {count} entries",
+        "scopeChanged": "The item list changed since it was counted: {added} added, {removed} removed. Approval locks the item list, so recount it, check the new counts and plan, then approve again. Nothing was approved and no batch processing started.",
+        "recount": "Recount the scope",
+        "recounted": "Recounted: {count} entries, {before} before. Check the counts, the estimate and the plan, then approve again.",
+        "scopeTooLarge": "The scope now holds {count} entries, more than the {limit} one operation takes. Nothing was approved. Cancel this operation and start one on a smaller scope.",
+        "scopeEmpty": "No entries are left in the scope. Nothing was approved. Cancel this operation.",
+        "cancel": "Cancel operation"
+      },
+      "plan": {
+        "summary": "What the AI will do",
+        "locales": "Translate into",
+        "noLocales": "This space has no languages besides the default.",
+        "include": "Work to do",
+        "includeKinds": {
+          "missing": {
+            "title": "Missing translations",
+            "description": "Create the locale entry where a language has none yet."
+          },
+          "empty": {
+            "title": "Empty fields",
+            "description": "Fill translatable fields that are still empty."
+          },
+          "stale": {
+            "title": "Outdated translations",
+            "description": "Update fields whose source changed since they were translated."
+          },
+          "same_as_source": {
+            "title": "Copied source text",
+            "description": "Translate fields that still hold the untranslated source text."
+          }
+        },
+        "translationKeeps": "Only affected fields change. Other edits, markup, placeholders and fields that aren't translated stay as they are. The glossary and translation memory apply.",
+        "permissions": "Allowed changes",
+        "permissionsDefault": "By default the AI only fills empty metadata and adds tags.",
+        "permissionKinds": {
+          "overwrite": {
+            "title": "Replace existing values",
+            "description": "Rewrite metadata that already has a value, for example a poor alt text."
+          },
+          "remove_tags": {
+            "title": "Remove tags",
+            "description": "Take off tags that don't fit the asset."
+          },
+          "move": {
+            "title": "Move assets",
+            "description": "Move assets into other folders, including the planned ones. A move and its metadata are accepted together."
+          }
+        },
+        "rules": "Rules",
+        "rule": "Rule {number}",
+        "noRules": "No extra rules.",
+        "addRule": "Add rule",
+        "removeRule": "Remove rule",
+        "options": "Settings",
+        "overwriteFields": "Values it may replace",
+        "overwriteFieldsHint": "Pick the fields whose existing values the AI may replace.",
+        "noFields": "The folders in this scope have no metadata fields.",
+        "languages": "Languages to write",
+        "languagesHint": "None picked: the AI writes every language.",
+        "allLanguages": "Every language",
+        "defaultLanguage": "{name} (default)"
+      },
+      "structure": {
+        "title": "New folders and tags",
+        "explain": "You approve these with the plan. Batches create nothing else, so remove what you don't want.",
+        "empty": "No new folders or tags. The AI uses the existing ones.",
+        "needsMove": "New folders need permission to move assets.",
+        "folders": "Planned folders",
+        "tags": "Planned tags",
+        "folderName": "Folder name",
+        "tagName": "Tag name",
+        "removeFolder": "Remove folder {name}",
+        "removeTag": "Remove tag {name}",
+        "under": "In {path}"
+      },
+      "outcome": {
+        "draft": "Waiting for an approved plan",
+        "running": "Working, batch {batch}",
+        "pausing": "Pausing after the current batch",
+        "paused": {
+          "budget": "Paused: the budget is spent",
+          "user": "Paused",
+          "access_revoked": "Paused: you lost access to some entries",
+          "batch_failed": "Paused: a batch failed",
+          "batch_cancelled": "Paused: a batch was cancelled"
+        },
+        "completed": "Done",
+        "completed_with_exceptions": "Done, with {skipped} skipped and {failed} failed",
+        "cancelled": "Cancelled",
+        "cancelled_partial": "Cancelled. {count} entry was not processed. | Cancelled. {count} entries were not processed."
+      },
+      "progress": {
+        "label": "Entries worked on",
+        "settled": "{done} of {total} entries worked on",
+        "inspect": "Show entries: {status}",
+        "reasons": "Why entries were skipped or failed"
+      },
+      "status": {
+        "pending": "Waiting",
+        "running": "In progress",
+        "written": "Écrit",
+        "conflict": "Conflit",
+        "proposed": "Proposed",
+        "unchanged": "Unchanged",
+        "skipped": "Skipped",
+        "failed": "Failed"
+      },
+      "reasons": {
+        "unsupported_file_type": "File type can't be worked on",
+        "deleted": "Deleted since it was frozen",
+        "agent": "The AI left it as it is",
+        "not_processed": "Not processed after two attempts",
+        "batch_failed": "Its batch failed"
+      },
+      "budget": {
+        "title": "Budget",
+        "spent": "{spent} of {max}",
+        "pausedExplain": "Set a new total to continue. The work done so far stays.",
+        "newTotal": "New total in USD",
+        "extend": "Extend budget",
+        "extendAndResume": "Extend and continue"
+      },
+      "steer": {
+        "pause": "Pause",
+        "resume": "Continue",
+        "cancel": "Cancel operation",
+        "cancelTitle": "Cancel this operation?",
+        "cancelConfirm": "{count} entry won't be processed. What was written stays in its draft, and proposals stay open. | {count} entries won't be processed. What was written stays in drafts, and proposals stay open."
+      },
+      "sections": {
+        "plan": "Approved plan",
+        "ledger": "All {count} entries"
+      },
+      "ledger": {
+        "title": "Entries",
+        "status": "Status",
+        "all": "All ({count})",
+        "empty": "No entries here.",
+        "versionChanged": "Edited since the scope was frozen"
+      },
+      "arrivals": {
+        "check": "Check for new entries",
+        "found": "{count} entry appeared since the scope was frozen. It isn't part of this operation. | {count} entries appeared since the scope was frozen. They aren't part of this operation.",
+        "none": "No new entries since the scope was frozen."
+      },
+      "review": {
+        "title": "Ce qui a changé",
+        "arriving": "Les modifications apparaissent ici à mesure que les lots se terminent."
+      },
+      "pager": {
+        "label": "Pages",
+        "previous": "Previous page",
+        "next": "Next page",
+        "position": "{page} of {last}"
+      },
+      "errors": {
+        "start": "Could not start the operation: {error}",
+        "plan": "Could not draft the plan: {error}",
+        "save": "Could not save the plan: {error}",
+        "approve": "Could not approve the plan: {error}",
+        "planChanged": "The plan changed since you looked at it. Review it again before approving.",
+        "concurrency": "This space already runs as many AI tasks as it may. Try again when one has finished.",
+        "budgetSpent": "The budget is spent. Extend it to continue.",
+        "budget": "Could not extend the budget: {error}",
+        "pause": "Could not pause: {error}",
+        "resume": "Could not continue: {error}",
+        "cancel": "Could not cancel: {error}",
+        "recount": "Could not recount the scope: {error}"
+      }
     },
     "aiThreads": {
       "title": "AI threads",
@@ -5183,7 +5579,7 @@
       "sharedWithSpace": "Shared with the space",
       "empty": "No threads yet. Ask the AI something to start one.",
       "noMatches": "No thread matches.",
-      "toReview": "{count} entry to review | {count} entries to review",
+      "toReview": "{count} entrée a besoin de vous | {count} entrées ont besoin de vous",
       "status": {
         "needs_input": "Input",
         "needs_review": "Review",
@@ -5233,10 +5629,15 @@
       "answerFailed": "Could not send your answers: {error}",
       "cancelFailed": "Could not cancel the task: {error}",
       "openFields": "{count} open field | {count} open fields",
+      "inDraft": "Dans le brouillon",
+      "history": "Historique",
       "expandEntry": "Show the changes to {name}",
       "collapseEntry": "Hide the changes to {name}",
       "summary": {
-        "counts": "{entries} entries, {open} open, {accepted} accepted, {rejected} rejected",
+        "changed": "{count} entrée modifiée | {count} entrées modifiées",
+        "conflicts": "{count} conflit | {count} conflits",
+        "flagged": "{count} signalée | {count} signalées",
+        "notPublished": "Rien n'est publié.",
         "findings": "{count} glossary warning | {count} glossary warnings"
       },
       "suggestions": {
@@ -5325,11 +5726,55 @@
       "thisPage": "Cette page",
       "other": "Autres fils",
       "disabled": "Les fonctionnalités IA sont désactivées pour cet espace.",
-      "enableInSettings": "Les activer dans les réglages IA"
+      "enableInSettings": "Les activer dans les réglages IA",
+      "review": {
+        "counts": "{open} proposition vous attend | {open} propositions vous attendent",
+        "structure": "New folders and tags",
+        "created": "New entries ({target})",
+        "selectGroup": "Include {name} when accepting groups",
+        "groupMeta": "{open} of {total} open",
+        "individual": "{count} to check | {count} to check",
+        "examples": "Examples",
+        "individualTitle": "Left for you to decide",
+        "loading": "Loading changes…",
+        "showMore": "Show more",
+        "showMoreEntries": "Show {count} more",
+        "showAll": "Show the change | Show all {count} changes",
+        "allTitle": "All changes ({count})",
+        "acceptSelected": "Accept {count} change | Accept {count} changes",
+        "selectToAccept": "Select groups to accept",
+        "rejectSelected": "Reject selected",
+        "individualTotal": "{count} change left for you | {count} changes left for you",
+        "acceptedWithLeft": "Accepted {accepted}. {left} could not be applied and wait for you.",
+        "acceptQueued": "Accepting {count} change in the background. The group updates when it is done. | Accepting {count} changes in the background. The groups update when they are done.",
+        "rejectQueued": "Rejecting {count} change in the background. The group updates when it is done. | Rejecting {count} changes in the background. The groups update when they are done.",
+        "queued": {
+          "accept": "Accepting in the background, {open} open",
+          "reject": "Rejecting in the background, {open} open"
+        }
+      }
     },
     "metaBlock": {
       "generate": "Générer avec l’IA",
       "generating": "Génération…"
+    },
+    "contentFlags": {
+      "conflicts": "{count} conflict | {count} conflicts",
+      "flagged": "{count} flagged wording | {count} flagged wordings",
+      "title": "AI left something to check",
+      "flaggedRow": "Flagged: \"{wording}\" in {field}",
+      "flaggedRowNoField": "Flagged: \"{wording}\"",
+      "replacement": "Use \"{replacement}\" instead.",
+      "conflictRow": "A person's change in {field} waits for a decision",
+      "conflictRowNoField": "A person's change waits for a decision",
+      "open": "Open",
+      "more": "and {count} more",
+      "proceed": "You can still publish.",
+      "countSentence": "{count} of these entries has flagged wording or a conflict. | {count} of these entries have flagged wording or a conflict.",
+      "confirmTitle": "Publish with flags?",
+      "releaseMessage": "This release holds {count} entry with flagged wording or a conflict. | This release holds {count} entries with flagged wording or a conflict.",
+      "confirmCommit": "Commit anyway",
+      "confirmPublish": "Publish anyway"
     }
   },
   "alertDialog": {
@@ -5777,7 +6222,10 @@
   },
   "messages": {
     "preview": {
-      "noContent": "Aucun contenu sélectionné. Sélectionnez un élément de contenu à prévisualiser.",
+      "noUrl": "Aucune URL d'aperçu",
+      "noEnvironmentSelected": "Aucun environnement n'est sélectionné pour cet aperçu. Choisissez-en un avec l'icône d'engrenage ci-dessus ou [définissez-en un par défaut dans les paramètres de l'espace]({url}).",
+      "badEnvironmentUrl": "Cet environnement n'a pas d'URL http ou https valide. [Corrigez-la dans les paramètres de l'espace]({url}).",
+      "noSlug": "Cette entrée n'a pas encore d'URL à prévisualiser. Donnez-lui un slug ou enregistrez-la d'abord.",
       "noEnvironments": "Aucun environnement disponible. [Configurez des environnements dans les paramètres de l'espace]({url}) pour prévisualiser le contenu."
     },
     "deleteTokenConfirm": "Êtes-vous sûr de vouloir supprimer le jeton « {name} » ? Cette action est irréversible.",
@@ -5816,6 +6264,7 @@
       "classifyQueued": "{queued} image en attente de classification | {queued} images en attente de classification",
       "classifyProgress": "{updated} mises à jour, {pending} en attente, {skipped} ignorées, {failed} en échec",
       "classifyProgressUnavailable": "Impossible de vérifier la progression de la classification",
+      "classifyOpen": "{open} image a des champs restés ouverts, relancez la classification pour réessayer | {open} images ont des champs restés ouverts, relancez la classification pour réessayer",
       "classifyNothing": "Rien à classer : tous les champs admissibles ont déjà une valeur.",
       "classifyFailed": "Impossible de lancer la classification"
     },

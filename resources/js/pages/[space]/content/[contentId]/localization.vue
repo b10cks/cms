@@ -904,7 +904,7 @@ useSeoMeta({
                           </span>
                         </Button>
                       </div>
-                      <p class="flex items-center gap-1.5 text-xs text-muted">
+                      <p class="flex items-center gap-1.5 text-sm text-muted">
                         <Icon
                           v-if="slugMode === 'auto' && isSlugPreviewFetching"
                           name="lucide:loader-circle"

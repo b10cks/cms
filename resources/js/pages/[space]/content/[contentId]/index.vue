@@ -34,10 +34,7 @@ import {
 import type { ContentTreeItem } from '~/composables/useContentTree'
 import { useGlobalClipboard } from '~/composables/useGlobalClipboard'
 import { queryKeys } from '~/composables/useQueryClient'
-import {
-  createContentDefaultsBlockLookup,
-  hydrateContentWithSchema,
-} from '~/composables/useSchemaDefaults'
+import { hydrateContentWithSchema } from '~/composables/useSchemaDefaults'
 import {
   findBlock,
   findBlockPath,
@@ -62,7 +59,15 @@ import {
   isSameJsonValue,
   useEditorContentModel,
 } from '~/lib/contentEditorState'
-import { focusField } from '~/lib/fieldFocus'
+import { flagFieldTarget } from '~/lib/aiContentFlags'
+import { commentDraftsKey, createCommentDrafts } from '~/lib/commentDrafts'
+import {
+  planFieldReveal,
+  planRowReveal,
+  type CommentLocation,
+  type FieldReveal,
+} from '~/lib/commentLocation'
+import { findFieldContainer, focusField } from '~/lib/fieldFocus'
 import type { ContentResource } from '~/types/contents'
 import type {
   BlockActionEvent,
@@ -302,6 +307,7 @@ const versionConflict = createVersionConflictState({
 const validation = useContentSchemaState({
   content,
   blocks,
+  revealField: (path) => revealInvalidField(path),
 })
 provideValidationState(validation)
 const { clearServerErrors, markFieldDirty, resetValidationState, sanitizedContent } = validation
@@ -310,17 +316,21 @@ const { useCommentsQuery } = useComments(
   spaceId,
   computed(() => content.value?.id || null)
 )
-const { data: comments, isLoading: isLoadingComments } = useCommentsQuery()
+const {
+  data: comments,
+  isLoading: isLoadingComments,
+  isError: isCommentsError,
+  refetch: refetchComments,
+} = useCommentsQuery()
 
 const cloneContent = (value: ContentResource): ContentResource => JSON.parse(JSON.stringify(value))
 
 const hydrationBlockLookup = computed<
   Record<string, Pick<BlockResource, 'slug' | 'schema' | 'name'>>
 >(() => {
-  const lookup = createContentDefaultsBlockLookup(blocks.value) as Record<
-    string,
-    Pick<BlockResource, 'slug' | 'schema' | 'name'>
-  >
+  const lookup = Object.fromEntries(
+    blocks.value.map(({ slug, schema, name }) => [slug, { slug, schema, name }])
+  )
 
   if (currentContentSource.value?.block?.slug && currentContentSource.value.block_schema) {
     lookup[currentContentSource.value.block.slug] = {
@@ -391,6 +401,8 @@ watch(
       const shouldReplace = !content.value || !persistedContent.value || !isDirty.value
 
       syncPersistedContent(newContent, shouldReplace ? 'replace' : 'preserve-local')
+      // A clean editor now shows the newest version, so a later save has nothing to conflict with.
+      if (shouldReplace) versionConflict.anchor(newContent.current_version_id)
       resetValidationState()
     }
   },
@@ -519,7 +531,9 @@ const isPreviewDisabled = computed(() => {
   if (!spaceData.value) return false
 
   return (
-    spaceData.value.settings?.visual_editor === false || content.value?.settings?.disablePreview
+    spaceData.value.settings?.visual_editor === false ||
+    content.value?.settings?.disablePreview ||
+    !spaceData.value.settings?.environments?.length
   )
 })
 
@@ -628,11 +642,12 @@ const blockListRules = (parent: ContentTreeItem, field: string): BlockListRules 
 }
 
 /** Select block `itemId` (the root shows as no selection) and wait for its form. */
-const selectBlock = async (itemId: string | null) => {
+const selectBlock = async (itemId: string | null, history: 'push' | 'replace' = 'replace') => {
   blockPickerRequest.value = null
-  mode.value = 'edit'
   const hash = itemId && itemId !== content.value?.id ? `#${itemId}` : ''
-  if (route.hash !== hash) await router.replace({ ...route, hash })
+  // One navigation: setting `mode` queues its own, which would overwrite the hash.
+  const { mode: _mode, ...query } = route.query
+  if (route.hash !== hash || route.query.mode) await router[history]({ ...route, query, hash })
   await nextTick()
 }
 
@@ -656,19 +671,67 @@ const offerRichTextEditing = ({ itemId, path }: FieldSelectEvent) => {
   previewRef.value?.sendFieldConfig({ itemId, path, richtext: { features, headingLevels } })
 }
 
-/** FIELD_SELECT: open the block and focus the field the preview points at. */
-const selectField = async ({ itemId, path }: FieldSelectEvent) => {
+/** Open the block and tab holding a field, then focus the field. */
+const openField = async ({ itemId, path }: FieldSelectEvent, history: 'push' | 'replace' = 'replace') => {
   const target = resolveFieldTarget(editorContentModel.value, itemId, path)
   if (!target) return
-  offerRichTextEditing({ itemId, path })
 
-  await selectBlock(target.itemId)
+  await selectBlock(target.itemId, history)
   if (target.field) {
     editorRef.value?.showField(target.field)
-    await nextTick()
   }
-  focusField(`content.${target.fieldPath.join('.')}`)
+
+  // A newly shown tab reveals its panel a few frames after the switch.
+  const fieldPath = `content.${target.fieldPath.join('.')}`
+  for (let frame = 0; frame < 20; frame++) {
+    await new Promise(requestAnimationFrame)
+    const container = findFieldContainer(fieldPath)
+    if (container?.offsetParent) break
+  }
+  focusField(fieldPath)
 }
+
+/** FIELD_SELECT: open the block and focus the field the preview points at. */
+const selectField = async (event: FieldSelectEvent) => {
+  offerRichTextEditing(event)
+  await openField(event)
+}
+
+/**
+ * Take the user to an invalid field (`content.body.0.title`). A field already
+ * on screen is only focused, so its surroundings stay. One on another tab, in
+ * another item or below the depth rows expand to is opened first.
+ */
+const revealInvalidField = async (fieldPath: string) => {
+  const root = editorContentModel.value
+  const path = fieldPath
+    .split('.')
+    .slice(1)
+    .map((segment) => (/^\d+$/.test(segment) ? Number(segment) : segment))
+  const target = resolveFieldTarget(root, root.id, path)
+  const blockPath = target && findBlockPath(root, target.itemId)
+  const shown = findFieldContainer(fieldPath)?.dataset.fieldPath
+  const fieldRoot = blockPath && `content.${[...blockPath, target.field].join('.')}`
+
+  if (shown && fieldRoot && (shown === fieldRoot || shown.startsWith(`${fieldRoot}.`))) {
+    focusField(fieldPath)
+    return
+  }
+
+  await openField({ itemId: root.id, path }, 'push')
+}
+
+/** A link from a publish warning names a stored field path (`?field=`): open it once the entry is here. */
+const handledFieldLink = ref<string | null>(null)
+watch(
+  [() => route.query.field, () => content.value?.id],
+  ([field, id]) => {
+    if (typeof field !== 'string' || !id || handledFieldLink.value === `${id}:${field}`) return
+    handledFieldLink.value = `${id}:${field}`
+    void nextTick(() => selectField(flagFieldTarget(field, id)))
+  },
+  { immediate: true }
+)
 
 /**
  * Apply a structural edit requested by the preview the way BlocksBlock applies
@@ -734,6 +797,46 @@ const moveBlock = ({ itemId, targetId, position }: BlockMoveEvent) => {
   )
 }
 
+const commentsTab = ref<'open' | 'resolved'>('open')
+watch(
+  () => route.params.contentId,
+  () => {
+    commentsTab.value = 'open'
+  }
+)
+provide(commentDraftsKey, createCommentDrafts())
+const fieldReveal = shallowRef<FieldReveal | null>(null)
+
+/** How long the editor gets to mount the way to a field before the jump settles for nearby. */
+const FIELD_REVEAL_WAIT_MS = 500
+
+/**
+ * From a thread back to the fields. FieldComments takes up a field's reveal and
+ * BlocksBlock a row's once the editor has reached them. If nothing does, the field
+ * is hidden by a condition, so the closest thing on screen comes into view.
+ */
+const jumpToCommentLocation = async (location: CommentLocation) => {
+  if (location.kind !== 'place') return
+
+  const root = editorContentModel.value
+  const reveal = location.field
+    ? planFieldReveal(root, location.itemId, location.field)
+    : planRowReveal(root, location.itemId)
+  if (!reveal) return
+
+  // One navigation: setting `mode` queues its own, which would overwrite the hash.
+  const { mode: _mode, ...query } = route.query
+  fieldReveal.value = reveal
+  await router.push({ ...route, query, hash: reveal.openItem ? `#${reveal.openItem}` : '' })
+
+  setTimeout(() => {
+    if (fieldReveal.value !== reveal) return
+
+    fieldReveal.value = null
+    findFieldContainer(reveal.fieldPath)?.scrollIntoView({ block: 'center' })
+  }, FIELD_REVEAL_WAIT_MS)
+}
+
 const template = reactive({
   isOpen: false,
   blockId: '',
@@ -759,6 +862,12 @@ provide(
 )
 provide('comments', comments)
 provide('commentsLoading', isLoadingComments)
+provide(
+  'commentsFailed',
+  computed(() => isCommentsError.value && !comments.value)
+)
+provide('retryComments', refetchComments)
+provide('fieldReveal', fieldReveal)
 provide('broadcastCommentUpdate', broadcastCommentUpdate)
 provide('commitPersistedContent', commitPersistedContent)
 provide('discardOwnDrafts', discardOwnDrafts)
@@ -898,8 +1007,13 @@ provide('reloadServerContent', reloadServerContent)
         :class="['p-4', showPreview ? '' : 'mx-auto max-w-3xl']"
       >
         <CommentsSidebar
+          v-model:tab="commentsTab"
           :content-id="content.id"
           :content-version-id="content.current_version_id || undefined"
+          :entry-name="content.name"
+          :root="editorContentModel"
+          :blocks="hydrationBlockLookup"
+          @jump="jumpToCommentLocation"
         />
       </TabsContent>
     </ScrollArea>
@@ -943,11 +1057,13 @@ provide('reloadServerContent', reloadServerContent)
             :disabled="isExtendedSidebar"
             side="left"
             class="flex cursor-pointer"
+            as-child
           >
             <TabsTrigger
               :value="tab.value"
+              :aria-label="tab.label"
               :class="[
-                'icon-anim relative flex w-full cursor-pointer flex-col items-center justify-center rounded-lg text-center transition-[padding,gap,background-color,color] duration-200 ease-butter hover:bg-sidebar-accent',
+                'icon-anim relative flex w-full cursor-pointer flex-col items-center justify-center rounded-lg text-center transition-[padding,gap,background-color,color] duration-200 ease-butter hover:bg-sidebar-accent/60',
                 isExtendedSidebar ? 'gap-1 p-2' : 'gap-0 p-1.5',
                 mode === tab.value ? 'bg-sidebar-accent text-sidebar-accent-foreground' : '',
               ]"

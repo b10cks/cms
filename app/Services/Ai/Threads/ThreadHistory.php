@@ -10,7 +10,7 @@ use App\Models\Space\AiRun;
 
 /**
  * What a follow-up run remembers of its thread: earlier prompts and answers
- * as conversation turns, and a ledger of the earlier proposals with their
+ * as conversation turns, and a ledger of the earlier changes with their
  * status. Tool results are not replayed; the agent re-reads entries.
  *
  * Both share the `ai.threads.history_tokens` budget (four characters per
@@ -102,7 +102,11 @@ class ThreadHistory
             $line = json_encode([
                 'entry' => $item->target_label ?? "{$item->target_type}:".($item->target_id ?? 'new'),
                 'field' => $item->operation === AiChangesetItem::OPERATION_CREATE ? '(new entry)' : $item->path,
-                'status' => $item->status === AiChangesetItemStatus::Accepted && $item->final !== null ? 'accepted_edited' : $item->status->value,
+                'status' => match (true) {
+                    $item->status === AiChangesetItemStatus::Accepted && $item->final !== null => 'accepted_edited',
+                    $item->status === AiChangesetItemStatus::Accepted && $item->target_type === AiChangesetItem::TARGET_CONTENT => 'written',
+                    default => $item->status->value,
+                },
             ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_INVALID_UTF8_SUBSTITUTE) ?: '{}';
 
             $budget -= mb_strlen($line) + 1;

@@ -28,12 +28,12 @@ const forwarded = useForwardPropsEmits(delegatedProps, emits)
 <template>
   <DialogPortal>
     <DialogOverlay
-      class="data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-surface/30 backdrop-blur-xs"
+      class="data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-overlay"
     >
       <DialogContent
         :class="
           cn(
-            'relative z-50 my-8 grid w-full max-w-lg gap-4 border border-border bg-background p-6 shadow-lg duration-200 sm:rounded-lg md:w-full',
+            'relative z-50 my-8 grid w-full max-w-lg gap-4 border-overlay-edge bg-background p-6 shadow-overlay duration-200 sm:rounded-xl sm:border md:w-full',
             props.class
           )
         "
@@ -54,7 +54,7 @@ const forwarded = useForwardPropsEmits(delegatedProps, emits)
         <slot />
 
         <DialogClose
-          class="absolute top-4 right-4 z-20 rounded-md p-0.5 transition-colors hover:bg-secondary"
+          class="overlay-close absolute top-5.5 right-5.5 z-20"
         >
           <Icon name="lucide:x" />
           <span class="sr-only">{{ $t('actions.close') }}</span>

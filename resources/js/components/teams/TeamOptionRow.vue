@@ -15,6 +15,8 @@ withDefaults(
     compact?: boolean
     /** Matched characters of the name, from a fuzzy search. */
     highlight?: number[]
+    /** Draws one vertical guide per level instead of plain indent; the row must have no vertical padding. */
+    guides?: boolean
   }>(),
   {
     icon: null,
@@ -23,6 +25,7 @@ withDefaults(
     depth: 0,
     compact: false,
     highlight: undefined,
+    guides: false,
   }
 )
 </script>
@@ -49,12 +52,20 @@ withDefaults(
 
   <div
     v-else
-    class="flex w-full min-w-0 items-center justify-between gap-2"
+    :class="['flex w-full min-w-0 items-center justify-between gap-2', guides && 'min-h-8 self-stretch']"
   >
     <div
-      class="flex min-w-0 items-center gap-2"
-      :style="{ paddingLeft: `${depth * 16}px` }"
+      :class="['flex min-w-0 items-center gap-2', guides && 'self-stretch']"
+      :style="guides ? undefined : { paddingLeft: `${depth * 16}px` }"
     >
+      <template v-if="guides">
+        <span
+          v-for="level in depth"
+          :key="level"
+          class="relative -mr-2 w-4 shrink-0 self-stretch before:absolute before:inset-y-0 before:left-[7px] before:w-px before:bg-popover-border"
+          aria-hidden="true"
+        />
+      </template>
       <Icon
         :name="`lucide:${icon ?? 'users'}`"
         :style="{ color: color ?? undefined }"

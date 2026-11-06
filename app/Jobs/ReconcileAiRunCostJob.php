@@ -6,6 +6,7 @@ use App\Models\Management\Space;
 use App\Models\Space\AiRun;
 use App\Services\Ai\Drivers\OpenRouterDriver;
 use App\Services\Ai\ModelRegistry;
+use App\Services\Ai\Operations\AiOperations;
 use App\Support\SpaceContext;
 
 /**
@@ -13,6 +14,8 @@ use App\Support\SpaceContext;
  * provider's figure. A lookup without a cost releases the job so the queue
  * retries it; once the tries are used up the estimate stays. The sync driver
  * treats a release as a no-op, so a run there keeps its estimate instead of failing.
+ * The run's operation follows in the same transaction, whether or not it has
+ * settled the run yet, and whatever the number of times this job runs.
  */
 class ReconcileAiRunCostJob extends QueuedJob
 {
@@ -44,7 +47,10 @@ class ReconcileAiRunCostJob extends QueuedJob
                 return;
             }
 
-            $run->update(['cost_usd' => round(array_sum($costs), 6)]);
+            $run->getConnection()->transaction(function () use ($run, $costs) {
+                $run->update(['cost_usd' => round(array_sum($costs), 6), 'cost_confirmed_at' => now()]);
+                app(AiOperations::class)->syncSpend($run);
+            });
         } finally {
             $restore();
         }

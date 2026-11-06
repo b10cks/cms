@@ -82,6 +82,48 @@ class CommentControllerTest extends TestCase
     }
 
     #[Test]
+    public function anyone_who_reads_comments_gets_names_of_mentionable_people_and_nothing_more()
+    {
+        $this->actingAs($this->viewer);
+
+        $response = $this->getJson(route('mgmt.comments.mentionable', [
+            'space' => $this->space->id,
+            'content' => $this->content->id,
+        ]));
+
+        $response->assertOk();
+        $response->assertJsonCount(2, 'data');
+        $response->assertJsonStructure(['data' => [['id', 'name', 'avatar']]]);
+        $this->assertSame(['avatar', 'id', 'name'], collect($response->json('data.0'))->keys()->sort()->values()->all());
+    }
+
+    #[Test]
+    public function someone_outside_the_space_cannot_list_mentionable_people()
+    {
+        $this->actingAs(User::factory()->create());
+
+        $this->getJson(route('mgmt.comments.mentionable', [
+            'space' => $this->space->id,
+            'content' => $this->content->id,
+        ]))->assertForbidden();
+    }
+
+    #[Test]
+    public function a_mention_resolves_to_its_person_in_the_response()
+    {
+        $this->actingAs($this->owner);
+
+        $response = $this->postJson(route('mgmt.comments.store', [
+            'space' => $this->space->id,
+            'content' => $this->content->id,
+        ]), ['body' => "Look at this @{$this->viewer->id} please"]);
+
+        $response->assertStatus(201);
+        $response->assertJsonPath('data.body', "Look at this @{$this->viewer->id} please");
+        $response->assertJsonPath('data.mentions.0.id', $this->viewer->id);
+    }
+
+    #[Test]
     public function owner_can_create_reply_to_comment()
     {
         $this->actingAs($this->owner);

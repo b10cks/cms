@@ -81,27 +81,27 @@ const blockRoute = (blockId: string) => ({
 </script>
 
 <template>
-  <section class="flex flex-col gap-3 rounded-lg border border-input p-4">
+  <section class="flex flex-col gap-3 rounded-lg border border-border-strong p-4">
     <div>
       <h3 class="font-semibold text-primary">{{ $t('labels.blocks.usedIn.title') }}</h3>
-      <p class="text-sm text-muted-foreground">
+      <p class="text-sm text-muted">
         {{ $t('labels.blocks.usedIn.description') }}
       </p>
     </div>
 
     <div class="flex flex-col gap-2">
-      <h4 class="text-xs font-medium tracking-wider text-muted uppercase">
+      <h4 class="text-sm font-medium tracking-wider text-muted uppercase">
         {{ $t('labels.blocks.usedIn.nestedIn') }}
       </h4>
       <p
         v-if="!isNestable"
-        class="text-sm text-muted-foreground"
+        class="text-sm text-muted"
       >
         {{ $t('labels.blocks.usedIn.notNestable', { type: $t(`labels.blocks.types.${block.type}.label`) }) }}
       </p>
       <p
         v-else-if="nestedIn.length === 0"
-        class="text-sm text-muted-foreground"
+        class="text-sm text-muted"
       >
         {{ $t('labels.blocks.usedIn.emptyNested') }}
       </p>
@@ -143,7 +143,7 @@ const blockRoute = (blockId: string) => ({
       v-if="referencedBy.length > 0"
       class="flex flex-col gap-2"
     >
-      <h4 class="text-xs font-medium tracking-wider text-muted uppercase">
+      <h4 class="text-sm font-medium tracking-wider text-muted uppercase">
         {{ $t('labels.blocks.usedIn.referencedBy') }}
       </h4>
       <ul class="flex flex-col">

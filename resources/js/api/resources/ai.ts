@@ -1,5 +1,16 @@
 import type { AiAttachment } from '~/lib/aiAttachments'
-import type { AiDecision, AiDecisionResult, AiEntryScope, AiPreflight } from '~/lib/aiChangesets'
+import type { AiContentFlagEntry, AiContentFlagMap } from '~/lib/aiContentFlags'
+import type {
+  AiDecision,
+  AiDecisionResult,
+  AiEntryScope,
+  AiGroupDecisionResult,
+  AiGroupRejectResult,
+  AiPreflight,
+  AiReviewGroup,
+  AiOperationChangesPage,
+  AiReviewItemsPage,
+} from '~/lib/aiChangesets'
 import type { AiQuestionnaireAnswers, AiRunRecord, StartAiRunRequest } from '~/lib/aiRun'
 import type { AiThread, AiThreadDetail, AiThreadList, AiThreadListParams, AiThreadPatch } from '~/lib/aiThreads'
 import { xhrUpload } from '~/lib/xhr-upload'
@@ -53,6 +64,8 @@ export interface ClassifyAssetsProgress {
   skipped: number
   failed: number
   complete: boolean
+  /** Counted once the run finished. `partial` and `none` are assets with requested values left open. */
+  field_report: { partial: number; none: number } | null
 }
 
 export type AiScheduleTargetType = AiEntryScope['type']
@@ -68,7 +81,7 @@ export interface AiSchedulePayload {
 
 export interface AiSchedule extends AiSchedulePayload {
   id: string
-  paused_reason: 'access_revoked' | 'skill_unavailable' | null
+  paused_reason: 'access_revoked' | 'skill_unavailable' | 'scope_too_large' | null
   creator: { id: string; name: string } | null
   last_run_at: string | null
   last_run: { id: string; state: AiRunRecord['state'] } | null
@@ -185,6 +198,16 @@ export class Ai {
     return this.client.post<{ data: AiPreflight }>(`/mgmt/v1/spaces/${this.spaceId}/ai/preflight`, payload)
   }
 
+  /** Open conflicts and flagged wording per entry, optionally of one release. */
+  public async contentFlags(releaseId?: string): Promise<{ data: AiContentFlagMap }> {
+    return this.client.get<{ data: AiContentFlagMap }>(`/mgmt/v1/spaces/${this.spaceId}/ai/content-flags`, releaseId ? { release_id: releaseId } : undefined)
+  }
+
+  /** The conflicts and flagged wording of some entries, named by field. */
+  public async contentFlagDetails(ids: string[]): Promise<{ data: AiContentFlagEntry[] }> {
+    return this.client.get<{ data: AiContentFlagEntry[] }>(`/mgmt/v1/spaces/${this.spaceId}/ai/content-flags/details`, { ids })
+  }
+
   /** Upload a file for the next message; progress is 0 to 100. */
   public async uploadAttachment(
     file: File,
@@ -229,6 +252,47 @@ export class Ai {
     return this.client.post<AiDecisionResult>(
       `/mgmt/v1/spaces/${this.spaceId}/ai/changesets/${changesetId}/reject`,
       decision
+    )
+  }
+
+  /** What an operation changed in drafts, a page of entries, conflicts and flagged wording first. */
+  public async getOperationChanges(operationId: string, params: { page: number; per_page: number }): Promise<AiOperationChangesPage> {
+    return this.client.get<AiOperationChangesPage>(`/mgmt/v1/spaces/${this.spaceId}/ai/operations/${operationId}/changes`, params)
+  }
+
+  /** One page of the fields of a changed entry. */
+  public async getOperationEntryItems(operationId: string, params: { target_id: string; page: number; per_page: number }): Promise<AiReviewItemsPage> {
+    return this.client.get<AiReviewItemsPage>(`/mgmt/v1/spaces/${this.spaceId}/ai/operations/${operationId}/review/items`, params)
+  }
+
+  /** An operation's proposals in review groups, with a few examples each. */
+  public async getOperationReview(operationId: string): Promise<{ data: AiReviewGroup[] }> {
+    return this.client.get<{ data: AiReviewGroup[] }>(`/mgmt/v1/spaces/${this.spaceId}/ai/operations/${operationId}/review`)
+  }
+
+  /** One page of a review group's items; `individual` lists only those a group accept leaves open. */
+  public async getOperationReviewItems(
+    operationId: string,
+    params: { group: string; individual: boolean; page: number; per_page: number }
+  ): Promise<AiReviewItemsPage> {
+    return this.client.get<AiReviewItemsPage>(`/mgmt/v1/spaces/${this.spaceId}/ai/operations/${operationId}/review/items`, {
+      ...params,
+      individual: params.individual ? 1 : 0,
+    })
+  }
+
+  /** 200 when decided at once, 202 with `queued` when a large group went to the queue. */
+  public async acceptOperationGroup(operationId: string, group: string): Promise<{ data: AiGroupDecisionResult }> {
+    return this.client.post<{ data: AiGroupDecisionResult }>(
+      `/mgmt/v1/spaces/${this.spaceId}/ai/operations/${operationId}/review/accept`,
+      { group }
+    )
+  }
+
+  public async rejectOperationGroup(operationId: string, group: string): Promise<{ data: AiGroupRejectResult }> {
+    return this.client.post<{ data: AiGroupRejectResult }>(
+      `/mgmt/v1/spaces/${this.spaceId}/ai/operations/${operationId}/review/reject`,
+      { group }
     )
   }
 

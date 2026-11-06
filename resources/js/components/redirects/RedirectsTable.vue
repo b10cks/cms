@@ -425,7 +425,7 @@ defineExpose({
               :key="redirect.id"
               :data-redirect-id="redirect.id"
               data-table-row
-              class="hover:bg-muted/50 focus-visible:outline focus-visible:outline-1 focus-visible:-outline-offset-1 focus-visible:outline-ring"
+              class="hover:bg-state-hover focus-visible:outline focus-visible:outline-1 focus-visible:-outline-offset-1 focus-visible:outline-ring"
               :data-state="isRedirectSelected(redirect) ? 'selected' : undefined"
             >
               <TableCell v-if="canManageRedirects">
@@ -445,7 +445,7 @@ defineExpose({
               <TableCell>
                 <div class="flex flex-col">
                   <span>{{ redirect.status_code }}</span>
-                  <span class="text-xs text-muted-foreground">
+                  <span class="text-sm text-muted">
                     {{ getStatusCodeDescription(redirect.status_code) }}
                   </span>
                 </div>

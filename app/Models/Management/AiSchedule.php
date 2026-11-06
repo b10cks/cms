@@ -35,6 +35,9 @@ class AiSchedule extends GlobalModel
     /** The skill was removed or no longer proposes changes. */
     public const PAUSED_SKILL = 'skill_unavailable';
 
+    /** The scope outgrew one operation, or outgrew one run with a filter operations cannot apply. */
+    public const PAUSED_SCOPE = 'scope_too_large';
+
     protected $fillable = [
         'space_id',
         'created_by',

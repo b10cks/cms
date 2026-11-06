@@ -216,7 +216,7 @@ const handleDeleteToken = async (id: number, tokenName: string) => {
               <TableCell>
                 <div class="flex justify-end">
                   <Button
-                    variant="destructive"
+                    variant="ghost-destructive"
                     size="icon"
                     @click="handleDeleteToken(token.id, token.name)"
                   >

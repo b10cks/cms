@@ -6,11 +6,13 @@ use App\Enums\ImportExportFormat;
 use App\Models\Management\Space;
 use App\Services\ImportExport\WritesXlsxDownload;
 use Illuminate\Http\UploadedFile;
+use App\Services\ImportExport\ReadsSpreadsheetHeaders;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use Symfony\Component\HttpFoundation\Response;
 
 class ExcelAssetDataDriver extends BaseAssetDataDriver
 {
+    use ReadsSpreadsheetHeaders;
     use WritesXlsxDownload;
 
     public function export(
@@ -73,17 +75,7 @@ class ExcelAssetDataDriver extends BaseAssetDataDriver
         }
 
         try {
-            $spreadsheet = IOFactory::load($file->getRealPath());
-            $sheet = $spreadsheet->getActiveSheet();
-            $rows = $sheet->toArray();
-
-            if (empty($rows)) {
-                $errors[] = 'Excel file is empty';
-
-                return $errors;
-            }
-
-            $headers = array_map('trim', $rows[0] ?? []);
+            $headers = $this->spreadsheetHeaders($file->getRealPath());
 
             if (! in_array('id', $headers) && ! in_array('filename', $headers)) {
                 $errors[] = 'Excel must contain either "id" or "filename" column for asset identification';

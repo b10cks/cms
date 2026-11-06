@@ -1,5 +1,12 @@
 {
   "labels": {
+    "mainNavigation": "Ana gezinme",
+    "queryError": "Bu yüklenemedi. Hiçbir şey değişmedi, yeniden deneyebilirsiniz.",
+    "importDialog": {
+      "preparing": "Dosya yükleniyor ve hazırlanıyor…",
+      "moreRows": "{count} tane daha gösterilmiyor. Yukarıdaki toplamlara dahildir.",
+      "progress": "{total} satırdan {processed} tanesi işlendi"
+    },
     "loading": "Bir saniye...",
     "never": "Hiçbir zaman",
     "notifications": {
@@ -514,7 +521,11 @@
       "copyLink": "Önizleme bağlantısını kopyala",
       "openExternal": "Yeni sekmede aç",
       "mode": "Önizleme modunu değiştir",
-      "settings": "Önizleme ayarları"
+      "settings": "Önizleme ayarları",
+      "reload": "Yenile",
+      "environment": "Ortam",
+      "chooseEnvironment": "Ortam seçin",
+      "manageEnvironments": "Ortamları yönet"
     },
     "contentVersions": {
       "title": "Sürüm Geçmişi",
@@ -571,6 +582,9 @@
       "assetsCount": "{max} varlıktan {current} tanesi",
       "noAssetsFound": "Varlık bulunamadı",
       "noAssetsFoundDescription": "Varlık kitaplığınız boş. Başlamak için ilk varlığınızı yükleyin.",
+      "noSearchResults": "Aramanızla eşleşen varlık yok.",
+      "browse": "Klasörlere göz at",
+      "clearSearch": "Aramayı temizle",
       "asset": "Varlık",
       "assets": "Varlıklar",
       "showing": "Toplam {total} varlığın {from} ila {to} arası gösteriliyor",
@@ -1028,6 +1042,29 @@
             "independent": "Bağımsız"
           },
           "effectiveMode": "Geçerli mod: {mode}"
+        },
+        "rows": {
+          "preview": "Önizleme",
+          "translations": "Çeviriler",
+          "children": "Alt kayıtlar",
+          "cache": "Teslim önbelleği",
+          "previewShown": "Önizlemede gösteriliyor",
+          "previewHidden": "Önizlemede gizli",
+          "modes": {
+            "overlay": "katmanlı",
+            "independent": "bağımsız"
+          },
+          "onDefaultLanguage": "Varsayılan dilde ayarlanır",
+          "anyType": "Her tür",
+          "typesAllowed": "{count} türe izin var",
+          "spaceOrder": "alan sırası",
+          "manualOrder": "elle sıralama",
+          "sortedBy": "{field} göre sıralı",
+          "hours": "{count} saat",
+          "minutes": "{count} dakika",
+          "seconds": "{count} saniye",
+          "tags": "{count} etiket",
+          "notSet": "Ayarlanmadı"
         }
       },
       "tabs": {
@@ -1047,8 +1084,8 @@
         "persistWithRemoteDrafts": "Bu aynı zamanda {names} tarafından kaydedilmemiş değişiklikleri de kalıcı hale getirecektir. Devam edilsin mi?",
         "persistWithRemoteDraftsTitle": "Başkalarının değişiklikleri dahil edilsin mi?"
       },
-      "emptyTitle": "İçerik Seçilmedi",
-      "emptyDescription": "İlk içerik sayfanızı oluşturarak başlayın",
+      "emptyTitle": "Henüz içerik yok",
+      "emptyDescription": "Başlamak için ilk girdinizi oluşturun.",
       "managerTitle": "İçerik Yöneticisi",
       "managerDescription": "Düzenlemek veya yeni içerik oluşturmak için içerik menüsünden bir öğe seçin.",
       "paste": {
@@ -1095,9 +1132,37 @@
         "errorsTitle": "Hatalar",
         "importError": "İçe aktarma başarısız",
         "progress": "{total} girdiden {processed} tanesi içe aktarıldı"
+      },
+      "info": {
+        "publishing": "Yayın",
+        "status": "Durum",
+        "liveSince": "Yayında olduğu tarih",
+        "notLive": "Yayında değil",
+        "firstPublished": "İlk yayın",
+        "pendingDraft": "Bekleyen taslak",
+        "draft": "Taslak",
+        "lastPublish": "Son yayın",
+        "scheduled": "Planlandı",
+        "versions": "Sürümler",
+        "relations": "İlişkiler",
+        "parent": "Üst kayıt",
+        "languages": "Diller",
+        "comments": "Yorumlar",
+        "commentsOpen": "{count} açık",
+        "commentsNone": "Açık yorum yok",
+        "technical": "Teknik",
+        "type": "Tür",
+        "address": "Adres",
+        "id": "ID",
+        "created": "Oluşturuldu",
+        "updated": "Güncellendi",
+        "copyAddress": "Adresi kopyala",
+        "copyId": "ID'yi kopyala",
+        "copied": "Panoya kopyalandı"
       }
     },
     "contentTree": {
+      "label": "İçerik ağacı",
       "actions": {
         "view": "Görüntüle",
         "edit": "Düzenle",
@@ -1114,6 +1179,8 @@
         "copy": "Kopyala",
         "cut": "Kes",
         "duplicate": "Çoğalt",
+        "paste": "Yapıştır",
+        "publishOptions": "Yayınlama seçenekleri",
         "pasteIn": "İçine yapıştır",
         "pasteAfter": "Sonrasına yapıştır",
         "delete": "Sil",
@@ -1155,20 +1222,33 @@
         "draft": "Taslak",
         "pendingChanges": "Yayınlanmamış değişiklikler",
         "filter": "Yalnızca yayınlanmamış değişiklikleri olan girdileri göster",
+        "filterDrafts": "Yalnızca taslakları göster",
         "nothingPending": "Her şey yayında."
       }
     },
     "comments": {
       "title": "Yorumlar",
-      "fieldTitle": "Alan Yorumları",
-      "placeholder": "Yorum ekle...",
+      "placeholder": "Yorum ekleyin. Birini anmak için {'@'} yazın.",
       "replyPlaceholder": "Yanıt yazın...",
       "addButton": "Yorum Ekle",
-      "emptyState": "Geri bildirim verin, sorular sorun veya düşüncelerinizi paylaşın. Ayrıca konumlandırılmış bir yorum bırakmak için önizlemenin herhangi bir yerini tıklayabilirsiniz.",
+      "emptyState": "Henüz yorum yok. Aşağıya yazın veya bir alanın düğmesini kullanın.",
       "hideReplies": "Gizle",
       "showReplies": "Göster",
       "reply": "yanıt | yanıt",
       "you": "Siz",
+      "emptyOpen": "Açık yorum yok.",
+      "emptyResolved": "Çözülmüş yorum yok.",
+      "emptyField": "Bu alanda henüz yorum yok. İlk yorumu aşağıya yazın.",
+      "open": "Açık",
+      "resolved": "Çözüldü",
+      "fieldTrigger": "{field} için yorum yap",
+      "fieldTriggerCount": "{field} yorumları: {total}, {open} açık",
+      "goToLocation": "{location} konumuna git",
+      "fieldMissing": "Bu alan artık yok",
+      "sendHint": "Göndermek için {keys}",
+      "mentionSuggestions": "Anılacak kişiler",
+      "mentionLoadFailed": "Kişi listesi yüklenemedi.",
+      "unknownPerson": "Bilinmeyen kişi",
       "actions": {
         "reply": "Yanıtla",
         "resolve": "Çöz",
@@ -1880,6 +1960,14 @@
           "staging": "Staging",
           "production": "Üretim"
         }
+      },
+      "search": "Alanlarda ara",
+      "noMatches": "Aramanızla eşleşen alan yok.",
+      "otherTeams": "Diğer ekipler",
+      "scope": {
+        "all": "Tümü",
+        "direct": "Bu ekip",
+        "subTeams": "Alt ekipler"
       }
     },
     "spaceBlueprints": {
@@ -3206,7 +3294,9 @@
         "settings": "Ayarlar",
         "moreTeams": "+{count} daha",
         "withoutOwner": "{count} sahipsiz | {count} sahipsiz | {count} sahipsiz",
-        "edited": "{time} düzenlendi"
+        "edited": "{time} düzenlendi",
+        "active": "{count} aktif",
+        "published": "{count} yayında"
       },
       "personal": {
         "title": "Kişisel ekipler"
@@ -4013,7 +4103,25 @@
       "paramKeyPlaceholder": "örn. utm_source",
       "paramValuePlaceholder": "örn. bulten",
       "anchorMissing": "Bu öğe artık sayfada mevcut değil.",
-      "linkToPage": "Sayfaya bağlantı ver"
+      "linkToPage": "Sayfaya bağlantı ver",
+      "kinds": {
+        "internal": "Kayıt",
+        "url": "URL",
+        "email": "E-posta"
+      },
+      "chooseEntry": "Bir kayıt seçin",
+      "searchEntries": "Kayıtlarda ara",
+      "searchSections": "Bölümlerde ara",
+      "entries": "Kayıtlar",
+      "sections": "Bölümler",
+      "showSections": "{name} bölümlerini göster",
+      "back": "Kayıtlara dön",
+      "noEntries": "Eşleşen kayıt yok.",
+      "moreEntries": "{count} tane daha, daraltmak için yazmaya devam edin",
+      "noSections": "Bu kaydın bölümü yok.",
+      "noSectionsMatch": "Eşleşen bölüm yok.",
+      "newTab": "Yeni sekmede aç",
+      "moreOptions": "Diğer seçenekler"
     },
     "common": {
       "is": "eşittir",
@@ -4383,6 +4491,19 @@
       "stay": "Düzenlemeye devam et",
       "discard": "Değişiklikleri at",
       "save": "Kaydet ve çık"
+    },
+    "assetField": {
+      "chooseImage": "Bir görsel seçin veya buraya bırakın",
+      "chooseFile": "Bir dosya seçin veya buraya bırakın",
+      "chooseImages": "Görselleri seç",
+      "chooseFiles": "Dosyaları seç",
+      "addImages": "Görsel ekle",
+      "addFiles": "Dosya ekle",
+      "none": "Dosya yok",
+      "details": "Ayrıntılar",
+      "count": "{current} / {max}",
+      "uploading": "Yükleniyor",
+      "wrongType": "Bu alan bu dosya türünü kabul etmiyor."
     }
   },
   "notifications": {
@@ -4636,7 +4757,7 @@
       "delete": "Veri Kaynağını Sil"
     },
     "blocks": {
-      "add": "Blok Ekle",
+      "add": "Blok ekle",
       "addCondition": "Koşul Ekle",
       "duplicateField": "Alanı çoğalt",
       "renameField": "Yeniden adlandır",
@@ -4679,6 +4800,7 @@
         "reorder": "Sıralamak için sürükleyin veya ok tuşlarını kullanın"
       },
       "moved": "{count} içinde {position}. konuma taşındı",
+      "removed": "{name} kaldırıldı",
       "richtext": {
         "addHtmlClass": "HTML Sınıfı Ekle",
         "removeHtmlClass": "HTML sınıfını kaldır",
@@ -4895,6 +5017,9 @@
         "notFound": "This skill does not exist or was deleted."
       },
       "knowledge": {
+        "loadFailed": "Bilgi yüklenemedi. Liste eksik olabilir.",
+        "loadFailedDocuments": "Belgeler yüklenemedi. Yalnızca sözlükler listeleniyor.",
+        "loadFailedGlossaries": "Sözlükler yüklenemedi. Yalnızca belgeler listeleniyor.",
         "title": "Knowledge",
         "description": "Style guides are always followed. Documents are searched when a task needs them. Glossaries set the terms the AI must use, keep untranslated or avoid.",
         "editorHint": "Write markdown or upload a PDF or Word file. Runs use the published revision.",
@@ -4925,36 +5050,15 @@
       "glossaries": {
         "description": "Terms the AI must use, keep untranslated or avoid. Findings are flagged on the generated text.",
         "create": "New glossary",
-        "emptyTerms": "No terms found.",
         "confirmDelete": "Delete the glossary {name} and all its terms?",
-        "addTerm": "Add term",
-        "editTerm": "Edit term",
-        "term": "Term",
-        "sourceLocale": "Locale",
-        "translations": "Translations",
-        "translationsHint": "One per line, for example de: Kasse",
-        "forbidden": "Never use",
-        "forbiddenHint": "Comma-separated variants the AI must not write",
-        "note": "Note",
-        "doNotTranslate": "Keep untranslated",
-        "caseSensitive": "Case sensitive",
-        "rules": "Rules",
-        "import": "Import",
-        "importErrors": "{count} rows could not be imported",
         "termCount": "{count} term | {count} terms",
-        "avoid": "Avoid: {terms}",
-        "editTermNamed": "Edit {term}",
-        "deleteTermNamed": "Delete {term}",
-        "confirmDeleteTerm": "Delete the term {term}?",
         "notFound": "Glossary not found",
-        "terms": "Terms",
-        "search": "Search terms",
         "exportLabel": "Export",
         "delete": "Delete glossary"
       },
       "schedules": {
         "title": "Schedules",
-        "description": "Run a skill over a saved scope on a schedule. Each run acts as the person who last saved the schedule, stops at its budget and puts its proposals in the inbox.",
+        "description": "Run a skill over a saved scope on a schedule. Each run acts as the person who last saved the schedule and stops at its budget. Content goes to drafts, and other changes wait in its thread.",
         "add": "Add schedule",
         "edit": "Edit schedule",
         "name": "Name",
@@ -4972,7 +5076,8 @@
         "runsAs": "runs as {name}",
         "paused": {
           "access_revoked": "Paused: the person it runs as lost access. Save or enable it to run as you.",
-          "skill_unavailable": "Paused: the skill is gone or can no longer propose changes."
+          "skill_unavailable": "Paused: the skill is gone or can no longer propose changes.",
+          "scope_too_large": "Paused: the scope grew past what a schedule may cover. Narrow its filters to run again."
         },
         "filters": {
           "block": "Block",
@@ -5015,6 +5120,7 @@
       "noConfigs": "Yapılandırma mevcut değil"
     },
     "flattenedLocalization": {
+      "missing": "Eksik",
       "translate": "Yapay Zeka ile Çevir",
       "translating": "Çevriliyor…",
       "translationProgress": "{total} alandan {applied} kadarı çevrildi…",
@@ -5092,10 +5198,13 @@
         "extract-glossary-terms": "Extract glossary terms",
         "find-untranslated": "Find untranslated entries"
       },
+      "findingsTitle": "Banned wording in the generated text",
+      "dismissFindings": "Dismiss",
       "findings": {
-        "missing_term": "Use \"{expected}\" for \"{term}\".",
-        "translated_do_not_translate": "Keep \"{term}\" untranslated.",
-        "forbidden_variant": "\"{found}\" is not allowed, use \"{expected}\"."
+        "missing_term": "Hint: the glossary uses \"{expected}\" for \"{term}\". An inflected form is fine.",
+        "translated_do_not_translate": "\"{expected}\" is a protected name, use it exactly.",
+        "forbidden_variant": "\"{found}\" is not allowed, use \"{expected}\".",
+        "forbidden_variant_bare": "\"{found}\" is not allowed."
       }
     },
     "aiChangeset": {
@@ -5115,7 +5224,7 @@
       "blockField": "Field {key}",
       "blockFields": "Fields of the new block",
       "noBlockFields": "No fields",
-      "partial": "The run stopped early ({reason}). These are the changes it proposed so far.",
+      "partial": "Çalışma erken durdu ({reason}). Şimdiye kadarki değişiklikleri bunlar.",
       "stoppedBy": {
         "max_usd": "cost limit reached",
         "max_steps": "step limit reached",
@@ -5128,11 +5237,14 @@
         "data_entry": "Data entry",
         "asset": "Asset",
         "block": "Block",
-        "selection": "Selection"
+        "selection": "Selection",
+        "asset_folder": "Asset folder",
+        "asset_tag": "Asset tag"
       },
       "status": {
         "pending": "Open",
         "accepted": "Accepted",
+        "written": "Taslağa yazıldı",
         "rejected": "Rejected",
         "conflict": "Conflict"
       },
@@ -5140,7 +5252,11 @@
         "read": "When the AI read it",
         "current": "Now",
         "proposed": "AI proposal",
-        "currentIn": "Now ({language})"
+        "currentIn": "Now ({language})",
+        "source": "Source",
+        "sourceChange": "Source, changed since the current translation",
+        "currentTranslation": "Current translation",
+        "proposedTranslation": "Proposed translation"
       },
       "acceptFailed": "Could not apply the changes: {error}",
       "rejectFailed": "Could not reject the changes: {error}",
@@ -5148,7 +5264,31 @@
       "discardEdit": "Discard edit",
       "editLabel": "Edited proposal",
       "editedBeforeAccepting": "Edited before accepting",
-      "glossaryFindings": "Glossary findings"
+      "glossaryFindings": "Glossary findings",
+      "newFolder": "New folder",
+      "newTag": "New tag",
+      "assetFields": {
+        "tags": "Tags",
+        "folder": "Folder"
+      },
+      "translationUnits": "Translated texts",
+      "unitReasons": {
+        "missing": "Missing",
+        "empty": "Was empty",
+        "stale": "Source changed",
+        "same_as_source": "Copied from the source"
+      },
+      "structureExamples": "Based on {count} asset | Based on {count} assets",
+      "tagChange": {
+        "add": "Adds",
+        "remove": "Removes"
+      },
+      "libraryRoot": "Library root",
+      "notesLabel": "Needs your look",
+      "notes": {
+        "uncertain": "The AI is unsure:",
+        "invalid": "Could not apply:"
+      }
     },
     "aiCommand": {
       "ask": "Ask AI: {prompt}",
@@ -5157,7 +5297,6 @@
     "aiBulk": {
       "entry": "Ask AI",
       "title": "Ask AI about these entries",
-      "description": "Runs in the background in a thread. The changes arrive there for review; nothing is saved until you accept it.",
       "skills": "Skills",
       "task": "What should the AI do?",
       "extraInstructions": "Extra instructions (optional)",
@@ -5168,8 +5307,265 @@
       "more": "and {count} more",
       "preflightFailed": "Could not estimate this task.",
       "cancel": "Cancel",
-      "confirm": "Start on {count} entries",
-      "failed": "Could not start the task: {error}"
+      "confirm": "Start on {count} entry | Start on {count} entries",
+      "failed": "Could not start the task: {error}",
+      "descriptions": {
+        "content": "Runs in the background in a thread. Changes are written to the drafts straight away, and nothing is published.",
+        "assets": "Runs in the background in a thread. Changes wait there for you to accept them.",
+        "data_entries": "Runs in the background in a thread. Changes wait there for you to accept them."
+      },
+      "estimateUnknown": "Not known for this model",
+      "estimateTiny": "Under {amount}",
+      "plan": "Review plan",
+      "planWhy": {
+        "entries": "More than {count} entries match, more than one run can take, so you see the plan and budget first.",
+        "cost": "Estimated above {cap}, the most one run may spend, so you see the plan and budget first."
+      }
+    },
+    "aiOperations": {
+      "entry": "AI operation",
+      "kinds": {
+        "translation": {
+          "title": "Translation",
+          "description": "Fill missing locale entries, empty fields and stale translations. Human edits stay.",
+          "placeholder": "Translate the product pages into French and Italian, keep brand names in English."
+        },
+        "assets": {
+          "title": "Asset metadata",
+          "description": "Look at the images and fill metadata and tags. New folders or tags only when you approve them.",
+          "placeholder": "Write alt texts and titles, tag products by category."
+        },
+        "general": {
+          "title": "Any task",
+          "description": "Run a skill or your own instructions over every entry in the scope.",
+          "placeholder": "Shorten every SEO description to 155 characters."
+        }
+      },
+      "start": {
+        "title": "Start an AI operation",
+        "description": "Counts the scope and opens a thread where you shape the plan. Drafting with AI uses your AI allowance. Processing starts after you approve the plan and budget.",
+        "scope": "Scope",
+        "selection": "{count} selected entry | {count} selected entries",
+        "recursive": {
+          "content": "Include everything below",
+          "asset": "Include subfolders",
+          "data_entry": "Include everything below"
+        },
+        "kind": "What the operation does",
+        "outcome": "What should be true when it is done?",
+        "confirm": "Count and prepare",
+        "tooLarge": "This scope holds {count} entries. An operation takes at most {limit}, so narrow the scope or split it.",
+        "empty": "Nothing in this scope can be worked on."
+      },
+      "bulk": {
+        "truncated": "More than {count} entries match, more than one run can take."
+      },
+      "counts": {
+        "total": "Entries",
+        "supported": "To work on",
+        "estimate": "Estimate",
+        "spent": "Spent",
+        "unsupported": "{count} entry can't be worked on and is skipped. | {count} entries can't be worked on and are skipped.",
+        "groups": "Entries by type",
+        "moreGroups": "and {count} more type | and {count} more types"
+      },
+      "scope": {
+        "folder": {
+          "recursive": "The folder and every folder below it. Approval locks the item list; later entries are reported separately.",
+          "flat": "This folder only. Approval locks the item list; later entries are reported separately."
+        },
+        "selection": {
+          "recursive": "The selection and everything below it. Approval locks the item list; later entries are reported separately.",
+          "flat": "The selection only. Approval locks the item list; later entries are reported separately."
+        }
+      },
+      "draft": {
+        "noPlan": "Approve a plan before batch processing starts. The AI can draft one from a sample of the entries, or you write it.",
+        "draftWithAi": "Draft a plan",
+        "writeMyself": "Write it myself",
+        "redraft": "Draft again",
+        "planning": "Drafting the plan from a sample of entries. Nothing changes yet.",
+        "planAsks": "The AI has questions about the plan. Answer them below.",
+        "planFailed": "Drafting the plan failed. Try again or write it yourself.",
+        "stale": "The plan changed since you started editing.",
+        "loadPlan": "Show the new plan",
+        "save": "Save plan",
+        "discard": "Discard changes",
+        "saveFirst": "Save before you approve.",
+        "approval": "Approval",
+        "approvalExplain": "Approving freezes this plan and starts working in small batches. The estimate is {estimate}. When the budget is spent the operation pauses and waits for you; nothing spends on its own.",
+        "budget": "Budget in USD",
+        "budgetRange": "Between 0.01 and 1,000",
+        "writesNotice": "Onay işi başlatır. İçerik hemen taslaklara yazılır ve hiçbir şey yayımlanmaz. Varlık ve veri değişiklikleri sizi bekler.",
+        "approve": "Approve and start on {count} entries",
+        "scopeChanged": "The item list changed since it was counted: {added} added, {removed} removed. Approval locks the item list, so recount it, check the new counts and plan, then approve again. Nothing was approved and no batch processing started.",
+        "recount": "Recount the scope",
+        "recounted": "Recounted: {count} entries, {before} before. Check the counts, the estimate and the plan, then approve again.",
+        "scopeTooLarge": "The scope now holds {count} entries, more than the {limit} one operation takes. Nothing was approved. Cancel this operation and start one on a smaller scope.",
+        "scopeEmpty": "No entries are left in the scope. Nothing was approved. Cancel this operation.",
+        "cancel": "Cancel operation"
+      },
+      "plan": {
+        "summary": "What the AI will do",
+        "locales": "Translate into",
+        "noLocales": "This space has no languages besides the default.",
+        "include": "Work to do",
+        "includeKinds": {
+          "missing": {
+            "title": "Missing translations",
+            "description": "Create the locale entry where a language has none yet."
+          },
+          "empty": {
+            "title": "Empty fields",
+            "description": "Fill translatable fields that are still empty."
+          },
+          "stale": {
+            "title": "Outdated translations",
+            "description": "Update fields whose source changed since they were translated."
+          },
+          "same_as_source": {
+            "title": "Copied source text",
+            "description": "Translate fields that still hold the untranslated source text."
+          }
+        },
+        "translationKeeps": "Only affected fields change. Other edits, markup, placeholders and fields that aren't translated stay as they are. The glossary and translation memory apply.",
+        "permissions": "Allowed changes",
+        "permissionsDefault": "By default the AI only fills empty metadata and adds tags.",
+        "permissionKinds": {
+          "overwrite": {
+            "title": "Replace existing values",
+            "description": "Rewrite metadata that already has a value, for example a poor alt text."
+          },
+          "remove_tags": {
+            "title": "Remove tags",
+            "description": "Take off tags that don't fit the asset."
+          },
+          "move": {
+            "title": "Move assets",
+            "description": "Move assets into other folders, including the planned ones. A move and its metadata are accepted together."
+          }
+        },
+        "rules": "Rules",
+        "rule": "Rule {number}",
+        "noRules": "No extra rules.",
+        "addRule": "Add rule",
+        "removeRule": "Remove rule",
+        "options": "Settings",
+        "overwriteFields": "Values it may replace",
+        "overwriteFieldsHint": "Pick the fields whose existing values the AI may replace.",
+        "noFields": "The folders in this scope have no metadata fields.",
+        "languages": "Languages to write",
+        "languagesHint": "None picked: the AI writes every language.",
+        "allLanguages": "Every language",
+        "defaultLanguage": "{name} (default)"
+      },
+      "structure": {
+        "title": "New folders and tags",
+        "explain": "You approve these with the plan. Batches create nothing else, so remove what you don't want.",
+        "empty": "No new folders or tags. The AI uses the existing ones.",
+        "needsMove": "New folders need permission to move assets.",
+        "folders": "Planned folders",
+        "tags": "Planned tags",
+        "folderName": "Folder name",
+        "tagName": "Tag name",
+        "removeFolder": "Remove folder {name}",
+        "removeTag": "Remove tag {name}",
+        "under": "In {path}"
+      },
+      "outcome": {
+        "draft": "Waiting for an approved plan",
+        "running": "Working, batch {batch}",
+        "pausing": "Pausing after the current batch",
+        "paused": {
+          "budget": "Paused: the budget is spent",
+          "user": "Paused",
+          "access_revoked": "Paused: you lost access to some entries",
+          "batch_failed": "Paused: a batch failed",
+          "batch_cancelled": "Paused: a batch was cancelled"
+        },
+        "completed": "Done",
+        "completed_with_exceptions": "Done, with {skipped} skipped and {failed} failed",
+        "cancelled": "Cancelled",
+        "cancelled_partial": "Cancelled. {count} entry was not processed. | Cancelled. {count} entries were not processed."
+      },
+      "progress": {
+        "label": "Entries worked on",
+        "settled": "{done} of {total} entries worked on",
+        "inspect": "Show entries: {status}",
+        "reasons": "Why entries were skipped or failed"
+      },
+      "status": {
+        "pending": "Waiting",
+        "running": "In progress",
+        "written": "Yazıldı",
+        "conflict": "Çakışma",
+        "proposed": "Proposed",
+        "unchanged": "Unchanged",
+        "skipped": "Skipped",
+        "failed": "Failed"
+      },
+      "reasons": {
+        "unsupported_file_type": "File type can't be worked on",
+        "deleted": "Deleted since it was frozen",
+        "agent": "The AI left it as it is",
+        "not_processed": "Not processed after two attempts",
+        "batch_failed": "Its batch failed"
+      },
+      "budget": {
+        "title": "Budget",
+        "spent": "{spent} of {max}",
+        "pausedExplain": "Set a new total to continue. The work done so far stays.",
+        "newTotal": "New total in USD",
+        "extend": "Extend budget",
+        "extendAndResume": "Extend and continue"
+      },
+      "steer": {
+        "pause": "Pause",
+        "resume": "Continue",
+        "cancel": "Cancel operation",
+        "cancelTitle": "Cancel this operation?",
+        "cancelConfirm": "{count} entry won't be processed. What was written stays in its draft, and proposals stay open. | {count} entries won't be processed. What was written stays in drafts, and proposals stay open."
+      },
+      "sections": {
+        "plan": "Approved plan",
+        "ledger": "All {count} entries"
+      },
+      "ledger": {
+        "title": "Entries",
+        "status": "Status",
+        "all": "All ({count})",
+        "empty": "No entries here.",
+        "versionChanged": "Edited since the scope was frozen"
+      },
+      "arrivals": {
+        "check": "Check for new entries",
+        "found": "{count} entry appeared since the scope was frozen. It isn't part of this operation. | {count} entries appeared since the scope was frozen. They aren't part of this operation.",
+        "none": "No new entries since the scope was frozen."
+      },
+      "review": {
+        "title": "Ne değişti",
+        "arriving": "Değişiklikler, gruplar bittikçe burada görünür."
+      },
+      "pager": {
+        "label": "Pages",
+        "previous": "Previous page",
+        "next": "Next page",
+        "position": "{page} of {last}"
+      },
+      "errors": {
+        "start": "Could not start the operation: {error}",
+        "plan": "Could not draft the plan: {error}",
+        "save": "Could not save the plan: {error}",
+        "approve": "Could not approve the plan: {error}",
+        "planChanged": "The plan changed since you looked at it. Review it again before approving.",
+        "concurrency": "This space already runs as many AI tasks as it may. Try again when one has finished.",
+        "budgetSpent": "The budget is spent. Extend it to continue.",
+        "budget": "Could not extend the budget: {error}",
+        "pause": "Could not pause: {error}",
+        "resume": "Could not continue: {error}",
+        "cancel": "Could not cancel: {error}",
+        "recount": "Could not recount the scope: {error}"
+      }
     },
     "aiThreads": {
       "title": "AI threads",
@@ -5183,7 +5579,7 @@
       "sharedWithSpace": "Shared with the space",
       "empty": "No threads yet. Ask the AI something to start one.",
       "noMatches": "No thread matches.",
-      "toReview": "{count} entry to review | {count} entries to review",
+      "toReview": "{count} kayıt size ihtiyaç duyuyor | {count} kayıt size ihtiyaç duyuyor",
       "status": {
         "needs_input": "Input",
         "needs_review": "Review",
@@ -5233,10 +5629,15 @@
       "answerFailed": "Could not send your answers: {error}",
       "cancelFailed": "Could not cancel the task: {error}",
       "openFields": "{count} open field | {count} open fields",
+      "inDraft": "Taslakta",
+      "history": "Geçmiş",
       "expandEntry": "Show the changes to {name}",
       "collapseEntry": "Hide the changes to {name}",
       "summary": {
-        "counts": "{entries} entries, {open} open, {accepted} accepted, {rejected} rejected",
+        "changed": "{count} kayıt değişti | {count} kayıt değişti",
+        "conflicts": "{count} çakışma | {count} çakışma",
+        "flagged": "{count} işaretli | {count} işaretli",
+        "notPublished": "Hiçbir şey yayımlanmadı.",
         "findings": "{count} glossary warning | {count} glossary warnings"
       },
       "suggestions": {
@@ -5325,11 +5726,55 @@
       "thisPage": "Bu sayfa",
       "other": "Diğer konular",
       "disabled": "Bu alanda yapay zekâ özellikleri kapalı.",
-      "enableInSettings": "Yapay zekâ ayarlarından açın"
+      "enableInSettings": "Yapay zekâ ayarlarından açın",
+      "review": {
+        "counts": "{open} öneri sizi bekliyor | {open} öneri sizi bekliyor",
+        "structure": "New folders and tags",
+        "created": "New entries ({target})",
+        "selectGroup": "Include {name} when accepting groups",
+        "groupMeta": "{open} of {total} open",
+        "individual": "{count} to check | {count} to check",
+        "examples": "Examples",
+        "individualTitle": "Left for you to decide",
+        "loading": "Loading changes…",
+        "showMore": "Show more",
+        "showMoreEntries": "Show {count} more",
+        "showAll": "Show the change | Show all {count} changes",
+        "allTitle": "All changes ({count})",
+        "acceptSelected": "Accept {count} change | Accept {count} changes",
+        "selectToAccept": "Select groups to accept",
+        "rejectSelected": "Reject selected",
+        "individualTotal": "{count} change left for you | {count} changes left for you",
+        "acceptedWithLeft": "Accepted {accepted}. {left} could not be applied and wait for you.",
+        "acceptQueued": "Accepting {count} change in the background. The group updates when it is done. | Accepting {count} changes in the background. The groups update when they are done.",
+        "rejectQueued": "Rejecting {count} change in the background. The group updates when it is done. | Rejecting {count} changes in the background. The groups update when they are done.",
+        "queued": {
+          "accept": "Accepting in the background, {open} open",
+          "reject": "Rejecting in the background, {open} open"
+        }
+      }
     },
     "metaBlock": {
       "generate": "Yapay zekâ ile oluştur",
       "generating": "Oluşturuluyor…"
+    },
+    "contentFlags": {
+      "conflicts": "{count} conflict | {count} conflicts",
+      "flagged": "{count} flagged wording | {count} flagged wordings",
+      "title": "AI left something to check",
+      "flaggedRow": "Flagged: \"{wording}\" in {field}",
+      "flaggedRowNoField": "Flagged: \"{wording}\"",
+      "replacement": "Use \"{replacement}\" instead.",
+      "conflictRow": "A person's change in {field} waits for a decision",
+      "conflictRowNoField": "A person's change waits for a decision",
+      "open": "Open",
+      "more": "and {count} more",
+      "proceed": "You can still publish.",
+      "countSentence": "{count} of these entries has flagged wording or a conflict. | {count} of these entries have flagged wording or a conflict.",
+      "confirmTitle": "Publish with flags?",
+      "releaseMessage": "This release holds {count} entry with flagged wording or a conflict. | This release holds {count} entries with flagged wording or a conflict.",
+      "confirmCommit": "Commit anyway",
+      "confirmPublish": "Publish anyway"
     }
   },
   "alertDialog": {
@@ -5777,7 +6222,10 @@
   },
   "messages": {
     "preview": {
-      "noContent": "İçerik seçilmedi. Önizlemek için bir içerik öğesi seçin.",
+      "noUrl": "Önizleme URL'si yok",
+      "noEnvironmentSelected": "Bu önizleme için ortam seçilmedi. Yukarıdaki dişli simgesiyle birini seçin veya [alan ayarlarında varsayılan belirleyin]({url}).",
+      "badEnvironmentUrl": "Bu ortamın geçerli bir http veya https URL'si yok. [Alan ayarlarında düzeltin]({url}).",
+      "noSlug": "Bu girdinin henüz önizlenecek URL'si yok. Bir slug verin veya önce kaydedin.",
       "noEnvironments": "Ortam mevcut değil. İçeriği önizlemek için [çalışma alanı ayarlarında ortam kurun]({url})."
     },
     "deleteTokenConfirm": "'{name}' belirtecini silmek istediğinize emin misiniz? Bu işlem geri alınamaz.",
@@ -5816,6 +6264,7 @@
       "classifyQueued": "{queued} görsel sınıflandırma için sıraya alındı",
       "classifyProgress": "{updated} güncellendi, {pending} bekliyor, {skipped} atlandı, {failed} başarısız",
       "classifyProgressUnavailable": "Sınıflandırma ilerlemesi kontrol edilemedi",
+      "classifyOpen": "{open} görselde alanlar boş kaldı, yeniden denemek için tekrar sınıflandırın | {open} görselde alanlar boş kaldı, yeniden denemek için tekrar sınıflandırın",
       "classifyNothing": "Sınıflandırılacak bir şey yok: uygun alanların tümünde zaten bir değer var.",
       "classifyFailed": "Sınıflandırma başlatılamadı"
     },

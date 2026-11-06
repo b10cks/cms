@@ -2,6 +2,7 @@
 import { keepPreviousData, useQuery } from '@tanstack/vue-query'
 
 import { api } from '~/api'
+import QueryErrorState from '~/components/ui/QueryErrorState.vue'
 import type { ActivityCalendar } from '~/components/stats/StatsActivityHeatmap.vue'
 import StatTile from '~/components/stats/StatTile.vue'
 import { Panel } from '~/components/ui/panel'
@@ -102,6 +103,7 @@ const {
   isLoading,
   isFetching,
   error,
+  refetch,
 } = useQuery({
   queryKey: computed(
     () => ['spaces', props.spaceId, 'stats', props.period, props.dateRange] as const
@@ -170,6 +172,10 @@ const contentTiles = computed(() =>
           { count: count(content.count.draft) },
           content.count.draft
         ),
+        detailTo:
+          content.count.draft > 0
+            ? { name: 'space-content-index', params: { space: props.spaceId }, query: { status: 'drafts' } }
+            : undefined,
         change: changeOf(content.count.new),
         series: counts(trends.content_creation),
         format: count,
@@ -346,13 +352,13 @@ const assetTypes = computed(() =>
     class="grid gap-8 transition-opacity duration-100"
     :class="isFetching && !isLoading && 'opacity-60'"
   >
-    <p
+    <QueryErrorState
       v-if="error && !stats"
-      class="rounded-xl border border-destructive/30 bg-destructive/8 px-5 py-4 text-primary"
-    >
-      {{ error.message }}
-    </p>
+      :retrying="isFetching"
+      @retry="refetch()"
+    />
 
+    <template v-else>
     <section class="grid gap-4">
       <h2 class="text-panel font-semibold text-primary select-none">
         {{ t('dashboard.sections.content') }}
@@ -481,5 +487,6 @@ const assetTypes = computed(() =>
         />
       </Panel>
     </section>
+    </template>
   </div>
 </template>

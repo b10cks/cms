@@ -2019,6 +2019,19 @@ describe('useContentSchemaState', () => {
       expect(document.activeElement?.id).toBe('title')
     })
 
+    it('skips the comment button beside the label', async () => {
+      document.body.innerHTML = `
+        <div data-field-path="content.title">
+          <button id="comment" data-field-side-action></button>
+          <input id="title" />
+        </div>
+      `
+
+      await invalidState().focusFirstInvalidField()
+
+      expect(document.activeElement?.id).toBe('title')
+    })
+
     it('prefers the declared validation target', async () => {
       document.body.innerHTML = `
         <div data-field-path="content.title">

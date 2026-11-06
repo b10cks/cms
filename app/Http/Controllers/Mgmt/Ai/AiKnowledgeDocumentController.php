@@ -50,7 +50,7 @@ class AiKnowledgeDocumentController extends Controller
 
         $document = AiKnowledgeDocument::create([
             ...AiKnowledgeDocument::ownerAttributes($owner),
-            ...$request->safe()->only(['title', 'slug', 'type', 'enabled']),
+            ...$request->safe()->only(['title', 'slug', 'type', 'locale', 'enabled']),
             'draft' => (string) $request->input('draft', ''),
             'created_by' => $request->user()->id,
             'updated_by' => $request->user()->id,
@@ -72,7 +72,7 @@ class AiKnowledgeDocumentController extends Controller
             $this->ensureUniqueSlug($this->aiOwner($request), $request->input('slug'), $model->id);
         }
 
-        $model->fill($request->safe()->only(['title', 'slug', 'type', 'enabled']));
+        $model->fill($request->safe()->only(['title', 'slug', 'type', 'locale', 'enabled']));
         if ($request->has('draft')) {
             $model->draft = (string) $request->input('draft', '');
         }
@@ -121,6 +121,8 @@ class AiKnowledgeDocumentController extends Controller
             Storage::disk('transfers')->delete($model->source_path);
         }
 
+        // The published revisions stay for approved work; the unpublished draft does not.
+        $model->forceFill(['draft' => '', 'source_path' => null, 'source_name' => null])->save();
         $model->delete();
 
         return response()->json(null, 204);

@@ -26,6 +26,7 @@ import TextBlock from '~/components/blocks/TextBlock.vue'
 import Icon from '~/components/Icon.vue'
 import BlockType from '~/components/ui/BlockType.vue'
 import { Button } from '~/components/ui/button'
+import SortHandle from '~/components/ui/SortHandle.vue'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -45,6 +46,7 @@ const emit = defineEmits([
   'duplicate',
   'copy',
   'rename',
+  'move',
 ])
 const { $t } = useI18n()
 
@@ -475,23 +477,22 @@ const updateConditionOperator = (index: number, value: unknown) => {
 <template>
   <AccordionItem :value="name">
     <AccordionHeader class="group flex items-center gap-3">
-      <div
-        class="flex h-full cursor-ns-resize items-center"
+      <SortHandle
         data-field-handle
-      >
-        <Icon name="lucide:grip-vertical" />
-      </div>
+        :disabled="readonly"
+        @move="(delta) => emit('move', delta)"
+      />
       <BlockType :type="item?.type" />
       <AccordionTrigger class="flex grow cursor-pointer text-left items-center gap-4">
         <div class="flex flex-col">
           <h4 class="font-bold">{{ item?.name || name }}</h4>
-          <div class="text-xs text-muted">
+          <div class="text-sm text-muted">
             {{ $t(`labels.blocks.fieldTypes.${item?.type}.label`) }}
           </div>
         </div>
         <div
           v-if="fieldSummaryItems.length"
-          class="flex items-center gap-2 text-xs text-muted-foreground"
+          class="flex items-center gap-2 text-sm text-muted"
         >
           <SimpleTooltip
             v-for="item in fieldSummaryItems"
@@ -668,7 +669,7 @@ const updateConditionOperator = (index: number, value: unknown) => {
             <h5 class="font-semibold text-primary">
               {{ $t('labels.blocks.fields.conditions') }}
             </h5>
-            <p class="text-sm text-muted-foreground">
+            <p class="text-sm text-muted">
               {{ $t('labels.blocks.fields.conditionsDescription') }}
             </p>
           </div>

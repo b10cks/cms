@@ -12,7 +12,7 @@ defineProps<{
   <p
     v-if="error"
     :id="`${id}-error`"
-    class="mt-1 text-sm leading-tight whitespace-pre-line text-destructive"
+    class="text-sm leading-snug whitespace-pre-line text-destructive-ink"
   >
     {{ error }}
   </p>

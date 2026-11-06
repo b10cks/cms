@@ -71,7 +71,7 @@ const selectionCount = computed(() => props.assetCount + props.folderCount)
         </Badge>
         <span
           v-if="offPageCount > 0"
-          class="text-xs whitespace-nowrap text-muted"
+          class="text-sm whitespace-nowrap text-muted"
         >
           {{ $t('labels.assets.selection.onOtherPages', { count: offPageCount }) }}
         </span>

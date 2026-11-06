@@ -63,10 +63,12 @@ const inputProps = computed(() => {
     class: _class,
     modelValue: _modelValue,
     defaultValue: _defaultValue,
+    autoFocus,
     ...rest
   } = props
 
-  return { ...rest, class: props.inputClass }
+  // As `autoFocus` it would land on the input as an attribute that is present even when false.
+  return { ...rest, autofocus: autoFocus || undefined, class: props.inputClass }
 })
 
 const trigger = (action: InputActionType) => {

@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest'
 import {
   buildContentPath,
   buildPreviewUrl,
+  resolveEnvironment,
   resolveLocaleSegment,
   resolveLocaleSegments,
 } from '~/lib/preview-url'
@@ -146,5 +147,19 @@ describe('buildPreviewUrl', () => {
 
   it('accepts plain http', () => {
     expect(buildPreviewUrl('http://localhost:3000', config, 'en', '/')).toBe('http://localhost:3000/')
+  })
+})
+
+describe('resolveEnvironment', () => {
+  const staging = { name: 'staging', url: 'https://staging.test' } as SpaceEnvironment
+  const live = { name: 'live', url: 'https://live.test' } as SpaceEnvironment
+
+  it('prefers the pick, then the space default, then the first environment', () => {
+    const environments = [staging, live]
+
+    expect(resolveEnvironment(staging, settings({ environments, default_environment: 'live' }))).toBe(staging)
+    expect(resolveEnvironment(null, settings({ environments, default_environment: 'live' }))).toBe(live)
+    expect(resolveEnvironment(null, settings({ environments }))).toBe(staging)
+    expect(resolveEnvironment(null, settings())).toBeNull()
   })
 })

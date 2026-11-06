@@ -151,6 +151,11 @@ class AiRunController extends Controller
         ];
     }
 
+    /**
+     * A run with its state, result, provider wait, policy snapshot and usage. `usage.cost_usd` is an estimate until `usage.cost_confirmed_at` is set.
+     *
+     * @apiResponse 200 data:@AiRunResource
+     */
     public function show(Request $request, Space $space, string $run): AiRunResource
     {
         return new AiRunResource($this->findRun($request, $space, $run));

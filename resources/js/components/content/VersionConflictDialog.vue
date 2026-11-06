@@ -68,7 +68,7 @@ const formattedDate = computed(() => {
           </span>
           <span
             v-if="serverVersion.created_at"
-            class="text-muted-foreground"
+            class="text-muted"
           >
             · {{ formattedDate }}
           </span>
@@ -79,14 +79,14 @@ const formattedDate = computed(() => {
         <Button
           variant="ghost"
           size="sm"
-          class="gap-1.5 text-xs"
+          class="gap-1.5 text-sm"
           @click="showDiff = !showDiff"
         >
           <Icon :name="showDiff ? 'lucide:chevron-up' : 'lucide:chevron-down'" />
           {{ t('content.conflict.diffToggle') }}
           <span
             v-if="diffChanges.length"
-            class="ml-1 rounded bg-muted px-1.5 py-0.5 font-mono text-xs"
+            class="ml-1 rounded bg-muted-background px-1.5 py-0.5 font-mono text-sm"
           >
             {{ diffChanges.length }}
           </span>
@@ -102,7 +102,7 @@ const formattedDate = computed(() => {
           />
           <p
             v-else
-            class="p-4 text-sm text-muted-foreground"
+            class="p-4 text-sm text-muted"
           >
             {{ t('content.conflict.noDiff') }}
           </p>

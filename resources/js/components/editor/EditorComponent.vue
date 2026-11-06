@@ -16,6 +16,12 @@ import type {
 import { isFieldVisible, normalizeSchema } from '~/composables/useContentSchemaState'
 import type { ContentTreeItem, FindResult } from '~/composables/useContentTree'
 import { useContentTree } from '~/composables/useContentTree'
+import {
+  blockRowValue,
+  createBlockListView,
+  type BlockListViewState,
+} from '~/lib/blockTreeEdits'
+import type { FieldReveal } from '~/lib/commentLocation'
 import type { ContentBlock } from '~/types/contents'
 
 import { Badge } from '../ui/badge'
@@ -153,7 +159,7 @@ const breadcrumbs = computed((): Breadcrumb[] =>
   props.itemId
     ? contentTree.buildBreadcrumbs(props.itemId).map((crumb) => ({
         id: crumb.id ?? '',
-        label: crumb.label,
+        label: blocks.value?.data.find((block) => block.slug === crumb.label)?.name ?? crumb.label,
         block: crumb.label,
       }))
     : []
@@ -162,9 +168,6 @@ const id = computed((): string => props.itemId || rootBlock?.slug || '')
 const currentPages = computed<EditorPage[]>(() => currentBlock.value?.editor ?? [])
 const pageValue = (index: number) => `${id.value}-page-${index}`
 const activePage = ref(pageValue(0))
-watch(id, () => {
-  activePage.value = pageValue(0)
-})
 
 /** Switch to the editor page (tab) holding `fieldKey` of the current block. */
 const showField = (fieldKey: string): void => {
@@ -196,6 +199,27 @@ const currentBlock = computed((): BlockResource | null => {
   }
 
   return null
+})
+
+const blockListView = props.isChild
+  ? inject<BlockListViewState>('blockListView', createBlockListView, true)
+  : createBlockListView()
+if (!props.isChild) provide('blockListView', blockListView)
+
+/** The item whose tabs show here, the same whether the hash names the root or is empty. */
+const pageOwner = computed(() =>
+  props.isChild ? (props.rootId ?? '') : props.itemId || rootContentId.value
+)
+const savedPage = () => {
+  const index = blockListView.activePages.get(pageOwner.value) ?? 0
+  return pageValue(index < currentPages.value.length ? index : 0)
+}
+activePage.value = savedPage()
+watch(id, () => {
+  activePage.value = savedPage()
+})
+watch(activePage, (page) => {
+  blockListView.activePages.set(pageOwner.value, Number(page.slice(page.lastIndexOf('-') + 1)))
 })
 
 const currentSchema = computed(
@@ -257,6 +281,31 @@ const isVisibleField = (itemKey: string) => {
   )
 }
 
+// A comment's location asked for a field below this column: expand the way to it.
+const fieldReveal = inject<Ref<FieldReveal | null>>('fieldReveal', ref(null))
+watch(
+  () => fieldReveal.value?.expand,
+  (expand) => {
+    if (props.isChild || !expand?.length) return
+
+    const open = blockListView.openItems
+    open.value = [...new Set([...open.value, ...expand.map(blockRowValue)])]
+  },
+  { immediate: true }
+)
+
+// The row that opened this item is gone, so focus moves to the way back.
+watch(
+  () => props.itemId,
+  (itemId) => {
+    if (props.isChild || !itemId || blockListView.returnTo.value !== itemId) return
+
+    const crumbs = containerRef.value?.querySelectorAll<HTMLElement>('nav button')
+    crumbs?.[crumbs.length - 1]?.focus()
+  },
+  { flush: 'post' }
+)
+
 const handleBreadcrumbNavigation = (itemId: string | null): void => {
   emit('navigate', itemId)
 }
@@ -292,6 +341,14 @@ const getAggregatedCollaboratorsForField = inject<
 >('getAggregatedCollaboratorsForField', undefined)
 
 const activeItemId = computed(() => currentContentItem.value?.id || rootContentId.value)
+
+watch(
+  [() => fieldReveal.value?.pages[activeItemId.value], currentPages],
+  ([fieldKey]) => {
+    if (fieldKey) showField(fieldKey)
+  },
+  { immediate: true }
+)
 
 const getPagePresence = (page: EditorPage): CollaborationPresenceUser[] => {
   if (!getAggregatedCollaboratorsForField || !activeItemId.value) return []
@@ -372,16 +429,17 @@ const removeAllOutOfSchemaKeys = (): void => {
       class="flex"
       v-if="!isChild"
     >
-      <h2 class="mb-2 text-xl font-bold text-primary">
+      <h2 class="mb-2 text-sm font-medium text-muted">
         {{ currentBlock?.name || currentBlock?.slug }}
       </h2>
       <SimpleTooltip
+        v-if="!props.readOnly"
         class="ml-auto flex"
         side="bottom"
         :tooltip="$t('labels.blockTemplates.createFromBlock')"
+        as-child
       >
         <Button
-          v-if="!props.readOnly"
           size="xs"
           variant="ghost"
           :aria-label="$t('labels.blockTemplates.createFromBlock')"
@@ -396,7 +454,7 @@ const removeAllOutOfSchemaKeys = (): void => {
     >
       <TabsList
         v-if="currentPages.length > 1"
-        class="mb-4 flex w-full max-w-full"
+        class="mb-4 flex w-full max-w-full [--state-hover:var(--editor-tab-hover)] [--tab-active:var(--editor-tab-active)]"
       >
         <TabsTrigger
           v-for="(page, i) in currentPages"
@@ -494,7 +552,7 @@ const removeAllOutOfSchemaKeys = (): void => {
                 type="button"
                 variant="ghost"
                 size="xs"
-                class="ml-auto text-xs text-destructive hover:text-destructive"
+                class="ml-auto text-sm text-destructive hover:text-destructive"
                 @click.stop="removeAllOutOfSchemaKeys"
               >
                 {{ $t('labels.contents.outOfSchema.removeAll') }}
@@ -506,7 +564,7 @@ const removeAllOutOfSchemaKeys = (): void => {
             >
               <table class="w-full text-sm">
                 <thead>
-                  <tr class="text-left text-xs text-warning">
+                  <tr class="text-left text-sm text-warning">
                     <th class="pb-1 w-1/3 font-medium">
                       {{ $t('labels.contents.outOfSchema.key') }}
                     </th>
@@ -522,7 +580,7 @@ const removeAllOutOfSchemaKeys = (): void => {
                     :key="key"
                     class="border-t border-warning/20"
                   >
-                    <td class="py-1.5 text-xs text-warning">{{ key }}</td>
+                    <td class="py-1.5 text-sm text-warning">{{ key }}</td>
                     <td class="py-1.5 text-sm text-primary">
                       <span :title="JSON.stringify(value)">{{
                         formatOutOfSchemaValue(value)

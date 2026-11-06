@@ -1,148 +1,140 @@
 <script setup lang="ts">
-import Icon from '~/components/Icon.vue'
-import type { CommentResource, CreateCommentRequest } from '~/types/comments'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '~/components/ui/tabs'
+import QueryErrorState from '~/components/ui/QueryErrorState.vue'
+import type { ContentTreeItem } from '~/composables/useContentTree'
+import {
+  commentDraftKeys,
+  commentDraftModel,
+  commentDraftsKey,
+  createCommentDrafts,
+} from '~/lib/commentDrafts'
+import {
+  locateComment,
+  type CommentBlockLookup,
+  type CommentLocation,
+} from '~/lib/commentLocation'
+import type { CommentResource } from '~/types/comments'
 
-import { Badge } from '../ui/badge'
-import { Button } from '../ui/button'
-import { TextField } from '../ui/form'
+import CommentComposer from './CommentComposer.vue'
 import CommentsList from './CommentsList.vue'
 
 const props = defineProps<{
   contentId: string
   contentVersionId?: string
+  entryName: string
+  root: ContentTreeItem
+  blocks: CommentBlockLookup
 }>()
 
-const spaceId = inject<string>('spaceId', '')
-const newCommentBody = ref('')
+const emit = defineEmits<{ jump: [location: CommentLocation] }>()
 
-const {
-  useCommentsQuery,
-  useCreateCommentMutation,
-  useUpdateCommentMutation,
-  useDeleteCommentMutation,
-  useResolveCommentMutation,
-  useUnresolveCommentMutation,
-  useAddReactionMutation,
-  useRemoveReactionMutation,
-} = useComments(
+/** Held by the page, so it survives a jump to a field and back. */
+const tab = defineModel<'open' | 'resolved'>('tab', { default: 'open' })
+const draft = commentDraftModel(inject(commentDraftsKey, createCommentDrafts, true), () =>
+  commentDraftKeys.entry(props.contentId)
+)
+
+const spaceId = inject<string>('spaceId', '')
+
+const { useCommentsQuery, useCreateCommentMutation } = useComments(
   spaceId,
   computed(() => props.contentId)
 )
 
-const { data: comments, isLoading } = useCommentsQuery(
-  computed(() => ({
-    filter: {
-      content_version_id: props.contentVersionId,
-    },
-  }))
-)
+const {
+  data: comments,
+  isLoading,
+  isError,
+  isFetching,
+  refetch,
+} = useCommentsQuery()
 
-const createCommentMutation = useCreateCommentMutation()
-const updateCommentMutation = useUpdateCommentMutation()
-const deleteCommentMutation = useDeleteCommentMutation()
-const resolveCommentMutation = useResolveCommentMutation()
-const unresolveCommentMutation = useUnresolveCommentMutation()
-const addReactionMutation = useAddReactionMutation()
-const removeReactionMutation = useRemoveReactionMutation()
+const createComment = useCreateCommentMutation({ quiet: true })
 
-const handleCreateComment = () => {
-  if (!newCommentBody.value.trim()) return
+const openThreads = computed(() => comments.value?.filter((c) => !c.is_resolved) ?? [])
+const resolvedThreads = computed(() => comments.value?.filter((c) => c.is_resolved) ?? [])
 
-  const payload: CreateCommentRequest = {
-    content_version_id: props.contentVersionId,
-    body: newCommentBody.value,
-  }
+const readFailed = computed(() => isError.value && !comments.value)
 
-  createCommentMutation.mutate(payload, {
-    onSuccess: () => {
-      newCommentBody.value = ''
-    },
-  })
+const locationOf = (comment: CommentResource) => {
+  const location = locateComment(comment, props.root, props.blocks)
+
+  return { location, label: location.kind === 'place' ? location.label : props.entryName }
 }
 
-const handleReply = (parentId: string, body: string) => {
-  const payload: CreateCommentRequest = {
-    content_version_id: props.contentVersionId,
-    parent_id: parentId,
-    body,
-  }
-  createCommentMutation.mutate(payload)
-}
-
-const handleEdit = (comment: CommentResource, body: string) => {
-  updateCommentMutation.mutate({ id: comment.id, payload: { body } })
-}
-
-const handleDelete = (comment: CommentResource) => {
-  deleteCommentMutation.mutate(comment.id)
-}
-
-const handleResolve = (commentId: string) => {
-  resolveCommentMutation.mutate(commentId)
-}
-
-const handleUnresolve = (commentId: string) => {
-  unresolveCommentMutation.mutate(commentId)
-}
-
-const handleAddReaction = (commentId: string, emoji: string) => {
-  addReactionMutation.mutate({ commentId, emoji })
-}
-
-const handleRemoveReaction = (commentId: string, emoji: string) => {
-  removeReactionMutation.mutate({ commentId, emoji })
-}
-
-const unresolvedCount = computed(() => {
-  if (!comments.value) return 0
-  return comments.value.filter((c) => !c.is_resolved).length
-})
+const sections = computed(() => [
+  {
+    value: 'open' as const,
+    label: 'labels.comments.open',
+    threads: openThreads.value,
+    empty: resolvedThreads.value.length
+      ? 'labels.comments.emptyOpen'
+      : 'labels.comments.emptyState',
+  },
+  {
+    value: 'resolved' as const,
+    label: 'labels.comments.resolved',
+    threads: resolvedThreads.value,
+    empty: 'labels.comments.emptyResolved',
+  },
+])
 </script>
 
 <template>
-  <div class="flex h-full flex-1 flex-col">
-    <div class="flex items-center gap-1">
-      <h3 class="text-xl font-semibold text-primary">{{ $t('labels.comments.title') }}</h3>
-      <Badge
-        v-if="unresolvedCount > 0"
-        variant="default"
-        size="sm"
-      >
-        {{ unresolvedCount }}/{{ comments?.length || 0 }}
-      </Badge>
-    </div>
+  <div class="flex flex-col gap-2">
+    <h3 class="text-panel font-semibold text-primary">{{ $t('labels.comments.title') }}</h3>
 
-    <ScrollArea class="h-full flex-1">
-      <CommentsList
-        :comments="comments || []"
-        :is-loading="isLoading"
-        @reply="handleReply"
-        @edit="handleEdit"
-        @delete="handleDelete"
-        @resolve="handleResolve"
-        @unresolve="handleUnresolve"
-        @add-reaction="handleAddReaction"
-        @remove-reaction="handleRemoveReaction"
-      />
-    </ScrollArea>
-
-    <div class="space-y-1">
-      <TextField
-        name="comment"
-        v-model="newCommentBody"
-        @keydown.enter.meta.prevent.stop="handleCreateComment"
-        :placeholder="$t('labels.comments.placeholder')"
-        :auto-size="100"
-      />
-      <div class="flex justify-end">
-        <Button
-          :loading="createCommentMutation.isPending.value"
-          :disabled="!newCommentBody.trim()"
-          @click="handleCreateComment"
+    <QueryErrorState
+      v-if="readFailed"
+      flush
+      class="py-2"
+      :retrying="isFetching"
+      @retry="refetch()"
+    />
+    <Tabs
+      v-else
+      v-model="tab"
+    >
+      <TabsList>
+        <TabsTrigger
+          v-for="section in sections"
+          :key="section.value"
+          :value="section.value"
         >
-          <span>{{ $t('labels.comments.addButton') }}</span>
-        </Button>
-      </div>
+          {{ $t(section.label) }}
+          <span
+            v-if="comments"
+            class="font-medium text-muted"
+          >
+            {{ section.threads.length }}
+          </span>
+        </TabsTrigger>
+      </TabsList>
+      <TabsContent
+        v-for="section in sections"
+        :key="section.value"
+        :value="section.value"
+        class="!mt-0"
+      >
+        <CommentsList
+          :comments="section.threads"
+          :is-loading="isLoading"
+          :empty-text="$t(section.empty)"
+          :location-of="locationOf"
+          @jump="(location) => emit('jump', location)"
+        />
+      </TabsContent>
+    </Tabs>
+
+    <div class="sticky bottom-0 z-10 -mb-4 bg-background pt-2 pb-4">
+      <CommentComposer
+        v-model="draft"
+        :placeholder="$t('labels.comments.placeholder')"
+        :submit-label="$t('labels.comments.addButton')"
+        :submit="
+          (body) => createComment.mutateAsync({ content_version_id: contentVersionId, body })
+        "
+      />
     </div>
   </div>
 </template>

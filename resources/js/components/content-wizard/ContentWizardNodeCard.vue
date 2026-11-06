@@ -291,13 +291,13 @@ const handleBlockChange = (value: AcceptableValue) => {
           />
 
           <div class="flex items-center gap-px">
-            <span class="text-xs text-muted">/</span>
+            <span class="text-sm text-muted">/</span>
             <input
               ref="slugInputRef"
               v-model="slugValue"
               tabindex="-1"
               :disabled="!canMutate || !!node.deletedReason"
-              class="h-4 text-xs text-muted shadow-none outline-none placeholder:text-muted"
+              class="h-4 text-sm text-muted shadow-none outline-none placeholder:text-muted"
               @input="emit('input-slug', String(($event.target as HTMLInputElement).value))"
               @focus="onFocus('slug')"
               @blur="commitSlug"

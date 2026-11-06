@@ -1,6 +1,9 @@
 <?php
 
 use App\Enums\Edition;
+use App\Services\Ai\Assets\AssetTriage;
+use App\Services\Ai\Metadata\MetadataTriage;
+use App\Services\Ai\Translation\TranslationTriage;
 
 return [
     // "space" provisions a metered OpenRouter key per space (SaaS). "single"
@@ -26,7 +29,30 @@ return [
         // queue before that.
         'inline_seconds' => (int) env('AI_RUN_INLINE_SECONDS', 45),
         // One RunAgentJob advances at most this long, then re-dispatches.
+        // The check runs between provider calls, so a call started just in time
+        // has the worker's 900s job timeout minus this slice to finish.
         'background_slice_seconds' => (int) env('AI_RUN_BACKGROUND_SLICE_SECONDS', 300),
+        // Exclusive ownership of a run. Must exceed RunAgentJob's timeout: a quiet
+        // provider stream sends no heartbeat, and a live worker must never look dead.
+        // A killed worker's run therefore waits this long before it recovers.
+        'lease_seconds' => (int) env('AI_RUN_LEASE_SECONDS', 960),
+        // Inline streams die with their request, well before this.
+        'inline_lease_seconds' => (int) env('AI_RUN_INLINE_LEASE_SECONDS', 300),
+        // A run with no lease and no activity for this long has lost its job.
+        'recovery_grace_seconds' => (int) env('AI_RUN_RECOVERY_GRACE_SECONDS', 300),
+        // Workers a run may lose before it fails instead of repeating the same work.
+        'max_interruptions' => (int) env('AI_RUN_MAX_INTERRUPTIONS', 3),
+        // A background run retries transient provider failures on its own, then
+        // fails and pauses its operation. Defaults wait 60s, 120s and 240s. A
+        // Retry-After header can lengthen a wait up to the maximum.
+        'provider_retries' => [
+            // Consecutive retries without an answered call.
+            'max_attempts' => (int) env('AI_RUN_PROVIDER_RETRY_ATTEMPTS', 3),
+            'backoff_seconds' => (int) env('AI_RUN_PROVIDER_RETRY_BACKOFF_SECONDS', 60),
+            'max_backoff_seconds' => (int) env('AI_RUN_PROVIDER_RETRY_MAX_BACKOFF_SECONDS', 300),
+            // Interrupted calls a run may repeat. Each can be billed with no usage to show for it.
+            'max_unconfirmed_calls' => (int) env('AI_RUN_PROVIDER_RETRY_MAX_UNCONFIRMED_CALLS', 2),
+        ],
         'max_output_tokens' => (int) env('AI_RUN_MAX_OUTPUT_TOKENS', 16384),
         // Corrections asked for when a final answer misses the skill's output schema.
         'max_output_corrections' => 2,
@@ -57,6 +83,25 @@ return [
     // Entries one request may change before it must run in the background
     // after a preflight estimate and confirmation.
     'inline_entry_limit' => (int) env('AI_INLINE_ENTRY_LIMIT', 5),
+
+    // Content operations: an approved plan over a frozen scope, worked in
+    // bounded batch runs. A larger scope is refused, never cut.
+    'operations' => [
+        'max_items' => (int) env('AI_OPERATION_MAX_ITEMS', 10000),
+        'batch_size' => (int) env('AI_OPERATION_BATCH_SIZE', 20),
+        // Batches an entry may sit in without an outcome before it fails.
+        'max_attempts' => 2,
+        // Entries a planning run reads, spread over the scope's groups.
+        'plan_sample' => 20,
+        // Items a review group accept or reject decides within the request; larger groups go to the queue.
+        'review_sync_limit' => 200,
+        // OperationTriage class per kind, for outcomes code can decide without a model call.
+        'triage' => [
+            'translation' => TranslationTriage::class,
+            'assets' => AssetTriage::class,
+            'general' => MetadataTriage::class,
+        ],
+    ],
 
     'drivers' => [
         'openai' => [

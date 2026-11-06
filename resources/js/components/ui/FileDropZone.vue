@@ -68,7 +68,7 @@ const handleDrop = (event: DragEvent) => {
       'cursor-pointer rounded-lg border-2 border-dashed p-6 text-center transition-colors',
       isDragging
         ? 'border-primary bg-primary/5'
-        : 'border-border hover:border-muted-foreground',
+        : 'border-border hover:border-border-strong',
     ]"
     @click="fileInputRef?.click()"
     @keydown.enter.prevent="fileInputRef?.click()"
@@ -88,7 +88,7 @@ const handleDrop = (event: DragEvent) => {
     <div class="flex flex-col items-center gap-2">
       <Icon
         :name="isDragging ? 'lucide:download' : 'lucide:upload-cloud'"
-        :class="['h-8 w-8 transition-colors', isDragging ? 'text-primary' : 'text-muted-foreground']"
+        :class="['h-8 w-8 transition-colors', isDragging ? 'text-primary' : 'text-muted']"
       />
 
       <div class="space-y-1">
@@ -102,7 +102,7 @@ const handleDrop = (event: DragEvent) => {
         </p>
         <p
           v-if="hint"
-          class="text-xs text-muted-foreground"
+          class="text-sm text-muted"
         >
           {{ hint }}
         </p>

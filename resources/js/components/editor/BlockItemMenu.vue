@@ -68,7 +68,7 @@ const manageBlock = () => {
         type="button"
         :aria-label="$t('actions.moreActions')"
         :title="$t('actions.moreActions')"
-        class="flex transform cursor-pointer items-center hover:text-primary"
+        class="row-action"
         @click.stop
         @keydown.stop
       >

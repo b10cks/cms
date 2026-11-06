@@ -3,6 +3,7 @@
 namespace App\Services\Ai\Drivers;
 
 use App\Services\Ai\Exceptions\ProviderCallFailed;
+use App\Services\Ai\Exceptions\ProviderFailure;
 use App\Services\Ai\Run\RunOptions;
 use App\Services\Ai\Run\TextDelta;
 use App\Services\Ai\Run\ToolCall;
@@ -99,7 +100,9 @@ trait StreamsOpenAiTurns
     /**
      * Run one streamed OpenAI-compatible chat completion and collect its text,
      * tool calls and usage. Reasoning deltas are dropped: they are never shown
-     * to users.
+     * to users. A failure keeps the provider's status and code, the generation
+     * ID and any usage seen so far. A stream that ends with no finish reason, or
+     * with OpenRouter's `error` one, is an interrupted call and not a short answer.
      *
      * @param  array<string, mixed>  $params
      * @return Generator<int, TextDelta, mixed, TurnResult>
@@ -110,10 +113,24 @@ trait StreamsOpenAiTurns
         $calls = [];
         $usage = null;
         $generationId = null;
+        $finish = null;
+        $opened = false;
+        $turnUsage = static function () use (&$usage, &$generationId): TurnUsage {
+            return new TurnUsage(
+                (int) ($usage?->promptTokens ?? 0),
+                (int) ($usage?->completionTokens ?? 0),
+                cachedTokens: (int) ($usage?->promptTokensDetails?->cachedTokens ?? 0),
+                generationId: $generationId,
+            );
+        };
 
         try {
-            foreach ($client->chat()->createStreamed($params) as $response) {
+            $stream = $client->chat()->createStreamed($params);
+            $opened = true;
+
+            foreach ($stream as $response) {
                 $generationId ??= $response->id;
+                $finish = $response->choices[0]->finishReason ?? $finish;
                 if ($response->usage !== null) {
                     $usage = $response->usage;
                 }
@@ -141,7 +158,11 @@ trait StreamsOpenAiTurns
                 }
             }
         } catch (\Throwable $e) {
-            throw new ProviderCallFailed("{$this->getName()} call failed: {$e->getMessage()}", previous: $e);
+            throw new ProviderCallFailed("{$this->getName()} call failed: {$e->getMessage()}", ProviderFailure::classify($e, $opened, $turnUsage()), $e);
+        }
+
+        if ($finish === null || $finish === 'error') {
+            throw new ProviderCallFailed("{$this->getName()} stream ended before the response finished.", ProviderFailure::truncated($turnUsage()));
         }
 
         ksort($calls);
@@ -152,12 +173,7 @@ trait StreamsOpenAiTurns
                 static fn (array $call) => ToolCall::fromJson($call['id'] !== '' ? $call['id'] : 'call_'.uniqid(), $call['name'], $call['arguments']),
                 $calls,
             )),
-            new TurnUsage(
-                (int) ($usage?->promptTokens ?? 0),
-                (int) ($usage?->completionTokens ?? 0),
-                cachedTokens: (int) ($usage?->promptTokensDetails?->cachedTokens ?? 0),
-                generationId: $generationId,
-            ),
+            $turnUsage(),
         );
     }
 }

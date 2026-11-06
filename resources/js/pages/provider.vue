@@ -37,12 +37,7 @@ const linkTo = (routeName: string) => ({ name: routeName })
           :key="item.routeName"
           :to="linkTo(item.routeName)"
           :aria-current="item.routeName === route.name ? 'page' : undefined"
-          :class="[
-            'flex items-center gap-2 rounded-md px-4 py-2',
-            'transition-colors duration-200 hover:bg-secondary',
-            'cursor-pointer font-semibold whitespace-nowrap',
-            item.routeName === route.name && 'bg-secondary text-primary',
-          ]"
+          class="nav-row"
           @mouseenter="preloadRoute(linkTo(item.routeName))"
           @focusin="preloadRoute(linkTo(item.routeName))"
           @mouseleave="cancelPreload(linkTo(item.routeName))"

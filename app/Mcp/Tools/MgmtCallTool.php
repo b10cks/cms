@@ -60,6 +60,10 @@ class MgmtCallTool extends Tool
             'periodId' => 'Subscription period ID.',
             'roleId' => null,
             'blueprintId' => null,
+            'glossaryId' => 'Glossary of a concept row. Never falls back to id.',
+            'rowId' => 'Glossary row: its concept id. Never falls back to id.',
+            'questionId' => 'Question group of an operation. Never falls back to id.',
+            'runId' => 'Asset classification run. Never falls back to id.',
             'provider' => 'Social login provider name.',
             'token' => 'Public share token.',
             'accessToken' => 'Access token from shares.unlock, for password-protected shares.',
@@ -79,7 +83,7 @@ class MgmtCallTool extends Tool
         $properties['params'] = $schema->object()
             ->description('Query parameters for list/search operations (e.g. page, per_page, filters).');
         $properties['payload'] = $schema->object()
-            ->description('JSON request body for create/update/action operations. File arguments are objects {filename, content_base64}.');
+            ->description('JSON request body for create/update/action operations. File arguments are objects {filename, content_base64}. Explicit nulls and empty arrays are forwarded as given.');
 
         return $properties;
     }
@@ -112,7 +116,7 @@ class MgmtCallTool extends Tool
         $payload = in_array('payload', $accepts, true) ? $this->sanitize($arguments['payload'] ?? null) : null;
 
         try {
-            $files = $this->files($operation['files'] ?? [], $payload);
+            $files = $this->files($operation['files'] ?? [], $payload, $operation['filesOptional'] ?? false);
         } catch (\InvalidArgumentException $e) {
             return Response::error($e->getMessage());
         }
@@ -154,7 +158,8 @@ class MgmtCallTool extends Tool
     /**
      * Decode the operation's `{filename, content_base64}` payload arguments into
      * temporary uploads and take them out of the payload. Oversize content is
-     * rejected from its encoded length, before decoding.
+     * rejected from its encoded length, before decoding. With `$optional` an
+     * absent file leaves the payload alone, for operations that also take text.
      *
      * @param  array<string, int>  $limits  payload key => limit in kilobytes
      * @param  array<string, mixed>|null  $payload
@@ -162,13 +167,17 @@ class MgmtCallTool extends Tool
      *
      * @throws \InvalidArgumentException
      */
-    private function files(array $limits, ?array &$payload): array
+    private function files(array $limits, ?array &$payload, bool $optional = false): array
     {
         $files = [];
 
         foreach ($limits as $key => $limitKb) {
             $argument = $payload[$key] ?? null;
             unset($payload[$key]);
+
+            if ($argument === null && $optional) {
+                continue;
+            }
 
             if (! \is_array($argument) || ! \is_string($argument['filename'] ?? null) || ! \is_string($argument['content_base64'] ?? null)) {
                 throw new \InvalidArgumentException("Payload {$key} must be an object {filename, content_base64}.");
@@ -256,7 +265,8 @@ class MgmtCallTool extends Tool
 
     /**
      * Surfaces only safe, structured fields from an error response — never the
-     * raw body, which can echo request context or internal detail.
+     * raw body, which can echo request context or internal detail. Conflict codes
+     * and their IDs stay, so an agent can tell why it must review again.
      */
     private function formatError(int $status, string $body): string
     {
@@ -264,8 +274,14 @@ class MgmtCallTool extends Tool
         $details = ['statusCode' => $status];
 
         if (is_array($decoded)) {
-            foreach (['message', 'error'] as $key) {
+            foreach (['message', 'error', 'reason', 'code'] as $key) {
                 if (is_string($decoded[$key] ?? null)) {
+                    $details[$key] = $decoded[$key];
+                }
+            }
+
+            foreach (['added', 'removed', 'count', 'limit'] as $key) {
+                if (is_int($decoded[$key] ?? null)) {
                     $details[$key] = $decoded[$key];
                 }
             }

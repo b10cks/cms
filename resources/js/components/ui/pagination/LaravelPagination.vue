@@ -39,7 +39,7 @@ const itemsPerPage = computed(() => props.meta?.per_page || 10)
   >
     <PaginationList
       v-slot="{ items }"
-      class="flex items-center gap-1"
+      class="flex flex-wrap items-center gap-1"
     >
       <PaginationFirst v-if="showEdges" />
       <PaginationPrev />
@@ -51,8 +51,8 @@ const itemsPerPage = computed(() => props.meta?.per_page || 10)
           as-child
         >
           <Button
-            class="h-9 w-9"
-            :variant="item.value === modelValue ? 'primary' : 'default'"
+            class="h-9 w-9 !px-0 text-sm font-medium tabular-nums"
+            :variant="item.value === modelValue ? 'primary' : 'ghost'"
           >
             {{ item.value }}
           </Button>

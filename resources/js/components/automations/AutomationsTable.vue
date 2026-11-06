@@ -233,7 +233,7 @@ const isTogglePending = (automation: AutomationResource) => {
                       }}
                     </Badge>
                   </div>
-                  <p class="text-muted-foreground text-sm">
+                  <p class="text-muted text-sm">
                     {{ automation.description || summarizeTrigger(automation, t, triggerCatalog) }}
                   </p>
                 </div>
@@ -242,18 +242,18 @@ const isTogglePending = (automation: AutomationResource) => {
               <TableCell class="align-top">
                 <div class="space-y-2">
                   <AutomationTriggerTypeBadge :type="automation.trigger_type" />
-                  <p class="text-muted-foreground text-xs">
+                  <p class="text-muted text-sm">
                     {{ summarizeTrigger(automation, t, triggerCatalog) }}
                   </p>
                   <p
                     v-if="getTriggerTable(automation.trigger.config)"
-                    class="text-muted-foreground text-xs"
+                    class="text-muted text-sm"
                   >
                     {{ getTriggerTable(automation.trigger.config) }}
                   </p>
                   <p
                     v-if="formatWatchedColumns(automation)"
-                    class="text-muted-foreground text-xs"
+                    class="text-muted text-sm"
                   >
                     {{ formatWatchedColumns(automation) }}
                   </p>
@@ -268,14 +268,14 @@ const isTogglePending = (automation: AutomationResource) => {
                   <p class="font-medium text-sm">{{ automation.action.name }}</p>
                   <div class="flex flex-wrap items-center gap-2">
                     <AutomationActionTypeBadge :type="automation.action.type" />
-                    <span class="text-muted-foreground text-xs">
+                    <span class="text-muted text-sm">
                       {{ automation.action.description || automation.action.name }}
                     </span>
                   </div>
                 </div>
                 <span
                   v-else
-                  class="text-muted-foreground text-sm"
+                  class="text-muted text-sm"
                 >
                   {{ $t('labels.automations.missingAction') }}
                 </span>
@@ -286,7 +286,7 @@ const isTogglePending = (automation: AutomationResource) => {
                   <p class="font-medium text-sm">
                     {{ formatNumber(automation.execution_count) }}
                   </p>
-                  <p class="text-muted-foreground text-xs">
+                  <p class="text-muted text-sm">
                     {{ formatExecutionSummary(automation) }}
                   </p>
                 </div>
@@ -298,13 +298,13 @@ const isTogglePending = (automation: AutomationResource) => {
                   class="flex flex-col"
                 >
                   <span class="text-sm">{{ formatDateTime(automation.last_triggered_at) }}</span>
-                  <span class="text-muted-foreground text-xs">
+                  <span class="text-muted text-sm">
                     {{ formatRelativeTime(automation.last_triggered_at) }}
                   </span>
                 </div>
                 <span
                   v-else
-                  class="text-muted-foreground text-sm"
+                  class="text-muted text-sm"
                 >
                   {{ $t('labels.never') }}
                 </span>
@@ -313,7 +313,7 @@ const isTogglePending = (automation: AutomationResource) => {
               <TableCell class="align-top">
                 <div class="flex flex-col">
                   <span class="text-sm">{{ formatDateTime(automation.updated_at) }}</span>
-                  <span class="text-muted-foreground text-xs">
+                  <span class="text-muted text-sm">
                     {{ formatRelativeTime(automation.updated_at) }}
                   </span>
                 </div>

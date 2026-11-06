@@ -14,7 +14,10 @@ use Illuminate\Http\JsonResponse;
 
 /**
  * Read-only pass before a bulk run: resolves the entries and estimates the
- * cost. The client starts the run with exactly these IDs.
+ * cost. The client starts the run with exactly these IDs. A scope larger
+ * than one run may take is reported as `truncated`: the client starts an
+ * operation (`POST ai/operations`) for it instead of a run over the first
+ * MAX_ENTRIES.
  */
 class AiPreflightController extends Controller
 {
@@ -37,6 +40,7 @@ class AiPreflightController extends Controller
         $entries = $scope->resolve($type, $filters);
         $config = $request->filled('config_id') ? $space->aiConfigs()->find($request->input('config_id')) : $space->defaultAiConfig;
         $limit = (int) config('ai.inline_entry_limit');
+        $truncated = \count($entries) === EntryScope::MAX_ENTRIES && $scope->overflows($type, $filters);
 
         return response()->json(['data' => [
             'type' => $type,
@@ -52,6 +56,8 @@ class AiPreflightController extends Controller
             'max_usd' => (float) config('ai.runs.max_usd'),
             'background' => \count($entries) > $limit,
             'inline_entry_limit' => $limit,
+            'truncated' => $truncated,
+            'max_entries' => EntryScope::MAX_ENTRIES,
         ]]);
     }
 }

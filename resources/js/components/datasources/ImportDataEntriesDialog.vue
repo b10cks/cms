@@ -1,7 +1,11 @@
 <script setup lang="ts">
 import ImportDialog from '~/components/import-export/ImportDialog.vue'
 import type { DataEntryImportMode, DataEntryImportResult } from '~/types/data-sources'
-import type { ImportDialogLabels, ImportDialogMode } from '~/types/import-export'
+import type {
+  ImportDialogLabels,
+  ImportDialogMode,
+  ImportDialogSubmit,
+} from '~/types/import-export'
 
 const props = defineProps<{
   spaceId: string
@@ -53,8 +57,11 @@ const modes = computed<ImportDialogMode<DataEntryImportMode>[]>(() => [
 
 const emptyValue = computed(() => t('labels.dataEntries.importDialog.emptyValue'))
 
-const submit = (file: File, mode: DataEntryImportMode): Promise<DataEntryImportResult> =>
-  importMutation.mutateAsync({ file, mode })
+const submit: ImportDialogSubmit<DataEntryImportResult, DataEntryImportMode> = (
+  file,
+  mode,
+  onProgress
+) => importMutation.mutateAsync({ file, mode, onProgress })
 </script>
 
 <template>
@@ -81,10 +88,10 @@ const submit = (file: File, mode: DataEntryImportMode): Promise<DataEntryImportR
         <div
           v-for="(change, index) in item.changes"
           :key="`${item.id}-${index}`"
-          class="rounded-md bg-muted/50 p-2"
+          class="rounded-md bg-muted-background p-2"
         >
           <div class="font-medium text-foreground">{{ change.field }}</div>
-          <div class="text-muted-foreground">
+          <div class="text-muted">
             {{ change.old ?? emptyValue }}
             ->
             {{ change.new ?? emptyValue }}

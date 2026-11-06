@@ -201,7 +201,7 @@ export interface AiItemLocales {
  * The locales of a cross-locale item. Items that name their locales win;
  * otherwise the path tells: asset fields are `fields.<locale>.<field>`, data
  * entry translations `dimensions.<locale>`. Null when the item stays in the
- * source locale.
+ * source locale, which asset fields store as `_default`.
  */
 export function itemLocales(item: AiChangesetItem, defaultLocale: string): AiItemLocales | null {
   const segments = (item.path ?? '').split('.')
@@ -214,6 +214,6 @@ export function itemLocales(item: AiChangesetItem, defaultLocale: string): AiIte
         ? segments[1]
         : undefined)
 
-  if (!target || target.toLowerCase() === source.toLowerCase()) return null
+  if (!target || target === '_default' || target.toLowerCase() === source.toLowerCase()) return null
   return { source, target }
 }

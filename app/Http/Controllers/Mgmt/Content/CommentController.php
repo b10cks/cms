@@ -11,6 +11,7 @@ use App\Models\Management\Space;
 use App\Models\Space\Comment;
 use App\Models\Space\Content;
 use App\Services\Audit\AuditActor;
+use App\Services\People\PeopleDirectoryService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\ResourceCollection;
@@ -46,6 +47,29 @@ class CommentController extends Controller
             ->get();
 
         return CommentResource::collection($comments);
+    }
+
+    /**
+     * People who can be mentioned: everyone with access to the space.
+     *
+     * Open to anyone who can read the comments, while the people directory
+     * needs space.members.view. So it gives names and avatars only.
+     */
+    public function mentionable(Space $space, Content $content, PeopleDirectoryService $people): JsonResponse
+    {
+        $this->authorize('view', [$content, $space]);
+
+        $members = $people->paginateForSpace($space, ['segment' => 'members', 'per_page' => PHP_INT_MAX])['data'];
+
+        return response()->json([
+            'data' => collect($members->items())
+                ->map(fn (array $member) => [
+                    'id' => $member['user']['id'],
+                    'name' => $member['user']['name'],
+                    'avatar' => $member['user']['avatar'],
+                ])
+                ->values(),
+        ]);
     }
 
     /**

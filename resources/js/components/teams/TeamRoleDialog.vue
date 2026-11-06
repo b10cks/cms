@@ -237,7 +237,7 @@ const handleOpenChange = (value: boolean) => {
           <div class="space-y-6 px-3 py-5">
             <div
               v-if="isReadOnly"
-              class="rounded-xl border border-border bg-muted/40 p-4"
+              class="rounded-xl border border-border bg-muted-background p-4"
             >
               <div class="flex items-start gap-3">
                 <Icon
@@ -246,7 +246,7 @@ const handleOpenChange = (value: boolean) => {
                 />
                 <div class="space-y-1">
                   <p class="font-medium">{{ $t('labels.teamRoles.readOnlyTitle') }}</p>
-                  <p class="text-muted-foreground text-sm">
+                  <p class="text-muted text-sm">
                     {{ $t('labels.teamRoles.readOnlyDescription') }}
                   </p>
                 </div>
@@ -300,7 +300,7 @@ const handleOpenChange = (value: boolean) => {
               <div class="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
                 <div class="space-y-1">
                   <h3 class="font-semibold">{{ $t('labels.teamRoles.fields.abilities') }}</h3>
-                  <p class="text-muted-foreground text-sm">
+                  <p class="text-muted text-sm">
                     {{ $t('labels.teamRoles.fields.abilitiesDescription') }}
                   </p>
                 </div>
@@ -309,7 +309,7 @@ const handleOpenChange = (value: boolean) => {
                   <div class="relative min-w-[16rem] flex-1 sm:flex-initial">
                     <Icon
                       name="lucide:search"
-                      class="text-muted-foreground pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2"
+                      class="text-muted pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2"
                     />
                     <Input
                       v-model="abilitySearch"
@@ -347,10 +347,10 @@ const handleOpenChange = (value: boolean) => {
               >
                 <Icon
                   name="lucide:list-filter"
-                  class="text-muted-foreground mx-auto mb-3 h-8 w-8"
+                  class="text-muted mx-auto mb-3 h-8 w-8"
                 />
                 <p class="font-medium">{{ $t('labels.teamRoles.noAbilityMatchesTitle') }}</p>
-                <p class="text-muted-foreground mt-1 text-sm">
+                <p class="text-muted mt-1 text-sm">
                   {{ $t('labels.teamRoles.noAbilityMatchesDescription') }}
                 </p>
               </div>
@@ -387,7 +387,7 @@ const handleOpenChange = (value: boolean) => {
                     >
                       <div>
                         <div class="font-medium text-primary capitalize">{{ resource.label }}</div>
-                        <div class="text-muted text-xs">
+                        <div class="text-muted text-sm">
                           {{
                             $t('labels.teamRoles.selectedResourceAbilities', {
                               selected: resource.abilities.filter((ability) =>
@@ -444,7 +444,7 @@ const handleOpenChange = (value: boolean) => {
                         :key="ability.key"
                         class="flex items-center gap-3 px-3 py-2 transition-colors"
                         :class="[
-                          isReadOnly ? 'cursor-default' : 'cursor-pointer hover:bg-muted/40',
+                          isReadOnly ? 'cursor-default' : 'cursor-pointer hover:bg-state-hover',
                           formData.abilities.includes(ability.key) ? 'bg-primary/5' : '',
                         ]"
                       >
@@ -455,7 +455,7 @@ const handleOpenChange = (value: boolean) => {
                         />
                         <div class="min-w-0 flex-1 flex items-center gap-2">
                           <span class="font-medium">{{ ability.label }}</span
-                          ><span class="text-muted text-xs font-mono">
+                          ><span class="text-muted text-sm font-mono">
                             {{ ability.key }}
                           </span>
                         </div>

@@ -26,7 +26,9 @@ export function useAssetAiClassification(spaceId: MaybeRefOrGetter<string>) {
       const message = t('messages.assets.classifyProgress', { ...data })
 
       if (data.complete) {
-        if (data.failed > 0) toast.warning(message, { id: runId })
+        const open = (data.field_report?.partial ?? 0) + (data.field_report?.none ?? 0)
+        if (open > 0) toast.warning(`${message}. ${t('messages.assets.classifyOpen', { open }, open)}`, { id: runId })
+        else if (data.failed > 0) toast.warning(message, { id: runId })
         else toast.success(message, { id: runId })
         return
       }

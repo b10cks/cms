@@ -408,7 +408,7 @@ defineExpose({
           :aria-selected="selectedIndex === option.index"
           :class="[
             'flex w-full flex-col items-start rounded-sm px-2 py-1.5 text-left text-sm',
-            selectedIndex === option.index ? 'bg-accent text-accent-foreground' : 'hover:bg-accent/50',
+            selectedIndex === option.index ? 'bg-accent-fill text-accent-foreground' : 'hover:bg-accent/50',
           ]"
           @mousedown.prevent
           @click="selectItem(option.index)"

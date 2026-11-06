@@ -136,7 +136,7 @@ const handleDelete = async (migration: MigrationResource) => {
                   <span class="font-medium text-sm">{{ directionLabel(migration) }}</span>
                   <span
                     v-if="migration.error_message && migration.state === 'failed'"
-                    class="text-destructive text-xs"
+                    class="text-destructive text-sm"
                   >
                     {{ migration.error_message }}
                   </span>
@@ -152,7 +152,7 @@ const handleDelete = async (migration: MigrationResource) => {
                 />
               </TableCell>
               <TableCell>
-                <span class="text-muted-foreground text-sm">{{ scopeLabel(migration.scope) }}</span>
+                <span class="text-muted text-sm">{{ scopeLabel(migration.scope) }}</span>
               </TableCell>
               <TableCell>
                 <Badge type="outline">
@@ -164,7 +164,7 @@ const handleDelete = async (migration: MigrationResource) => {
                   <span class="text-sm">{{ formatDateTime(migration.created_at) }}</span>
                   <span
                     v-if="migration.created_by"
-                    class="text-muted-foreground text-xs"
+                    class="text-muted text-sm"
                   >
                     {{ migration.created_by.display_name }}
                   </span>

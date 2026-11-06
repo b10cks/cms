@@ -15,10 +15,12 @@ final class SearchKnowledgeTool implements AiToolInterface, ProvidesSources
 
     /**
      * @param  array<string, string>  $revisions  revision_id => document_id
+     * @param  (\Closure(): array<string, array<string, mixed>>|null)|null  $frozenSources  a pinned run's descriptors by revision, read on first use
      */
     public function __construct(
         private readonly KnowledgeSearch $search,
         private readonly array $revisions,
+        private readonly ?\Closure $frozenSources = null,
     ) {}
 
     public function name(): string
@@ -51,7 +53,9 @@ final class SearchKnowledgeTool implements AiToolInterface, ProvidesSources
             throw new ToolError('Provide a search query.');
         }
 
-        $hits = $this->search->search($query, $this->revisions, max(1, min(8, (int) ($input['limit'] ?? 5))));
+        $sources = $this->frozenSources !== null ? ($this->frozenSources)() : null;
+        $hits = $this->search->search($query, $this->revisions, max(1, min(8, (int) ($input['limit'] ?? 5))), $sources);
+        $unavailable = $this->search->unavailable($this->revisions, $sources);
         $this->sources = array_map(static fn (array $hit) => [
             'document_id' => $hit['document_id'],
             'revision_id' => $hit['revision_id'],
@@ -59,7 +63,7 @@ final class SearchKnowledgeTool implements AiToolInterface, ProvidesSources
             'heading' => $hit['heading'],
         ], $hits);
 
-        return ['results' => $hits];
+        return ['results' => $hits, ...($unavailable !== [] ? ['unavailable' => $unavailable, 'note' => 'These reference revisions of the approved policy no longer exist, so this search could not read them. Do not treat their absence as evidence.'] : [])];
     }
 
     public function takeSources(): array

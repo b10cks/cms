@@ -134,7 +134,7 @@ const openPicker = () => {
       :tabindex="readOnly ? -1 : 0"
       :aria-label="t('labels.icons.field.add')"
       :class="[
-        'rounded-lg border-1 border-input bg-surface p-6 text-center transition-colors',
+        'rounded-lg border-1 border-input-border bg-surface p-6 text-center transition-colors',
         readOnly ? 'cursor-default' : 'cursor-pointer hover:border-muted',
       ]"
       @click="openPicker"
@@ -149,15 +149,15 @@ const openPicker = () => {
       <p class="mb-1 text-sm font-semibold text-primary">
         {{ sourceKnownEmpty ? t('labels.icons.field.emptyTitle') : t('labels.icons.field.add') }}
       </p>
-      <p class="text-xs text-muted">
+      <p class="text-sm text-muted">
         {{ sourceKnownEmpty ? t('labels.icons.field.emptyHint') : t('labels.icons.field.addHint') }}
       </p>
     </div>
     <div
       v-else-if="localValue"
-      class="group relative flex items-center gap-3 overflow-hidden rounded-lg border border-input bg-surface p-2"
+      class="group relative flex items-center gap-3 overflow-hidden rounded-lg border border-input-border bg-surface p-2"
     >
-      <div class="flex size-12 shrink-0 items-center justify-center rounded border border-input bg-background text-primary">
+      <div class="flex size-12 shrink-0 items-center justify-center rounded border border-border-strong bg-background text-primary">
         <IconPreview
           v-if="isRegistry && registryIcon"
           :body="registryIcon.body"

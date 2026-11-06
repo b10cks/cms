@@ -82,7 +82,7 @@ useSeoMeta({
       <CardContent class="space-y-6">
         <p
           v-if="sourcePath"
-          class="text-muted-foreground"
+          class="text-muted"
         >
           {{ $t('labels.accessDenied.from', 'Requested page') }}:
           <span class="font-mono">{{ sourcePath }}</span>

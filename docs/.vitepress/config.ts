@@ -65,6 +65,7 @@ function guideSidebar(prefix = ''): DefaultTheme.SidebarItem[] {
       items: sorted([
         { text: 'CLI', link: `${prefix}/guides/cli` },
         { text: 'Field Plugins', link: `${prefix}/guides/field-plugins` },
+        { text: 'Glossary Sheets', link: `${prefix}/guides/glossary-sheet` },
         { text: 'Management Client', link: `${prefix}/guides/management-client` },
         { text: 'MCP Server (AI Assistants)', link: `${prefix}/guides/mcp-server` },
       ]),
@@ -104,6 +105,8 @@ function uiSidebar(prefix = ''): DefaultTheme.SidebarItem[] {
         { text: 'Finding your way around', link: `${prefix}/ui/dashboard` },
         { text: 'Content', link: `${prefix}/ui/content` },
         { text: 'Mass Edit', link: `${prefix}/ui/mass-edit` },
+        { text: 'Working with AI', link: `${prefix}/ui/ai` },
+        { text: 'Skills, knowledge and glossary', link: `${prefix}/ui/ai-knowledge` },
         { text: 'Canvas', link: `${prefix}/ui/canvas` },
         { text: 'Block library', link: `${prefix}/ui/blocks` },
         { text: 'Asset manager', link: `${prefix}/ui/assets` },
@@ -207,7 +210,7 @@ export default defineConfig({
   outDir: '../public/docs',
   cacheDir: './.vitepress/cache',
   // Internal design briefings and milestone plans stay out of the public site.
-  srcExclude: ['README.md', 'concepts/native-ai-integration.md', 'concepts/team-management.md', 'milestones/**'],
+  srcExclude: ['README.md', 'concepts/native-ai-integration.md', 'concepts/ai-content-operations.md', 'concepts/team-management.md', 'milestones/**'],
   cleanUrls: true,
   lastUpdated: true,
   metaChunk: true,

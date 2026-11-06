@@ -17,6 +17,7 @@ import {
   Table,
   TableBody,
   TableCell,
+  TableFooter,
   TableHead,
   TableHeader,
   TableRow,
@@ -235,14 +236,15 @@ const handleKeyPress = (event: KeyboardEvent): void => {
       role="group"
       :aria-labelledby="`${id}-label`"
       :aria-describedby="describedBy"
-      class="space-y-4"
+      class="space-y-2"
     >
       <Label
         :id="`${id}-label`"
         :label="label"
         :required="required"
       />
-      <Table class="overflow-hidden rounded-md bg-elevated">
+      <div class="overflow-hidden rounded-lg border border-border-strong">
+      <Table class="[&_td]:p-2">
         <TableHeader>
           <TableRow>
             <TableHead
@@ -253,19 +255,21 @@ const handleKeyPress = (event: KeyboardEvent): void => {
             <TableHead
               v-for="column in columns"
               :key="column.key"
+              :class="column.type === 'checkbox' && 'w-px whitespace-nowrap'"
               :style="column.width ? { width: column.width } : undefined"
             >
               {{ String(column.label) }}
               <span
                 v-if="column.required"
-                class="ml-1 text-destructive"
+                class="ml-0.5 text-destructive-ink"
+                aria-hidden="true"
                 >*</span
               >
             </TableHead>
 
             <TableHead
               v-if="showRemoveButton"
-              class="w-12"
+              class="w-px"
             />
           </TableRow>
         </TableHeader>
@@ -273,6 +277,7 @@ const handleKeyPress = (event: KeyboardEvent): void => {
           <TableRow
             v-for="(item, index) in items"
             :key="`item-${index}`"
+            class="hover:bg-transparent!"
           >
             <TableCell v-if="sortable">
               <Button
@@ -302,7 +307,9 @@ const handleKeyPress = (event: KeyboardEvent): void => {
                 :model-value="String(item[column.key] || '')"
                 :type="column.type"
                 :placeholder="String(column.placeholder || '')"
-                :disabled="disabled || column.readonly || column.editable === false"
+                :disabled="disabled"
+                :readonly="column.readonly || column.editable === false"
+                :aria-label="String(column.label)"
                 :maxlength="column.maxLength"
                 @update:model-value="updateItem(index, column.key, $event)"
               />
@@ -367,7 +374,7 @@ const handleKeyPress = (event: KeyboardEvent): void => {
 
               <span
                 v-else-if="column.readonly || column.editable === false"
-                class="text-muted-foreground text-sm"
+                class="text-muted text-sm"
               >
                 {{ item[column.key] }}
               </span>
@@ -375,13 +382,12 @@ const handleKeyPress = (event: KeyboardEvent): void => {
 
             <TableCell
               v-if="showRemoveButton"
-              class="flex"
+              class="text-right"
             >
               <Button
                 type="button"
-                variant="ghost"
+                variant="ghost-destructive"
                 size="icon"
-                class="ml-auto"
                 :disabled="disabled || (minItems && items.length <= minItems)"
                 @click="removeItem(index)"
               >
@@ -391,16 +397,24 @@ const handleKeyPress = (event: KeyboardEvent): void => {
             </TableCell>
           </TableRow>
 
-          <TableRow v-if="showEmptyPlaceholder && items.length === 0">
+          <TableRow
+            v-if="showEmptyPlaceholder && items.length === 0"
+            class="hover:bg-transparent!"
+          >
             <TableCell
               :colspan="columns.length + (sortable ? 1 : 0) + (showRemoveButton ? 1 : 0)"
-              class="text-muted-foreground py-6 text-center"
+              class="text-muted py-6 text-center"
             >
               {{ String(emptyMessage) }}
             </TableCell>
           </TableRow>
 
-          <TableRow v-if="showAddButton && (!maxItems || items.length < maxItems)">
+        </TableBody>
+        <TableFooter
+          v-if="showAddButton && (!maxItems || items.length < maxItems)"
+          class="bg-surface/60 font-normal"
+        >
+          <TableRow class="hover:bg-transparent!">
             <TableCell v-if="sortable" />
 
             <TableCell
@@ -487,11 +501,15 @@ const handleKeyPress = (event: KeyboardEvent): void => {
               </template>
             </TableCell>
 
-            <TableCell v-if="showRemoveButton">
+            <TableCell
+              v-if="showRemoveButton"
+              class="text-right"
+            >
               <Button
                 type="button"
-                :disabled="!canAddItem"
+                :variant="canAddItem ? 'primary' : 'ghost'"
                 size="sm"
+                :disabled="!canAddItem"
                 @click="addItem"
               >
                 <Icon name="lucide:plus" />
@@ -499,8 +517,9 @@ const handleKeyPress = (event: KeyboardEvent): void => {
               </Button>
             </TableCell>
           </TableRow>
-        </TableBody>
+        </TableFooter>
       </Table>
+      </div>
 
       <div
         v-if="minItems && items.length < minItems"
@@ -511,7 +530,7 @@ const handleKeyPress = (event: KeyboardEvent): void => {
 
       <div
         v-if="maxItems && items.length >= maxItems"
-        class="text-muted-foreground text-sm"
+        class="text-muted text-sm"
       >
         {{ $t('validation.maxItems', { max: maxItems }) }}
       </div>

@@ -66,7 +66,8 @@ class SpaceStatsService
         $blocks = Block::count();
         $contents = Content::count();
         $published = Content::whereNotNull('published_at')->count();
-        $draft = Content::whereNull('published_at')->count();
+        // Entries, not translations: the same scope as the content tree this figure links to.
+        $draft = Content::whereNull('published_at')->whereNull('i18n_parent_id')->count();
         $newContent = Content::whereBetween('created_at', [$startDate, $endDate])->count();
         $newBlocks = Block::whereBetween('created_at', [$startDate, $endDate])->count();
 

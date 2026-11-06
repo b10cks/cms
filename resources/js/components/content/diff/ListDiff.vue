@@ -45,7 +45,7 @@ const items = computed((): { value: string; status: ChipStatus }[] => {
     <span
       v-for="(item, index) in items"
       :key="`${item.status}-${item.value}-${index}`"
-      class="rounded-full border px-2 py-0.5 text-xs"
+      class="rounded-full border px-2 py-0.5 text-sm"
       :class="chipClasses(item.status)"
     >
       {{ item.value }}

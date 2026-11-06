@@ -416,12 +416,13 @@ describe('data source events', () => {
 describe('ai thread events', () => {
   beforeEach(() => setup())
 
-  it('refetches the thread lists and the changed thread', () => {
+  it('refetches the thread lists, the changed thread and its operations', () => {
     emit('spaces.space-1.ai', '.ai_thread:changed', { thread_id: 'thread-1' })
 
     expect(invalidated()).toEqual([
       queryKeys.ai('space-1').threadLists(),
       queryKeys.ai('space-1').thread('thread-1'),
+      queryKeys.ai('space-1').operationList('thread-1'),
     ])
   })
 })

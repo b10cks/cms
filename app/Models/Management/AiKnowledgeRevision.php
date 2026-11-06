@@ -26,7 +26,7 @@ class AiKnowledgeRevision extends GlobalModel
 
     public function document(): BelongsTo
     {
-        return $this->belongsTo(AiKnowledgeDocument::class, 'document_id');
+        return $this->belongsTo(AiKnowledgeDocument::class, 'document_id')->withTrashed();
     }
 
     public function chunks(): HasMany

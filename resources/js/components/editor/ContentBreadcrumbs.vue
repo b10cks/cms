@@ -34,7 +34,7 @@ const navigateTo = (id: string | null) => {
         <BreadcrumbItem>
           <button
             type="button"
-            class="flex cursor-pointer items-center gap-2 hover:text-primary focus:text-primary focus:outline-none"
+            class="flex cursor-pointer items-center gap-2 rounded-sm transition-colors duration-100 hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring"
             @click="navigateTo(crumb.id)"
           >
             {{ crumb.label }}

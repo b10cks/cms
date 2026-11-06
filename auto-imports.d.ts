@@ -97,9 +97,11 @@ declare global {
   const useAiConfigs: typeof import('./resources/js/composables/useAiModels').useAiConfigs
   const useAiEnabled: typeof import('./resources/js/composables/useAiEnabled').useAiEnabled
   const useAiErrorToast: typeof import('./resources/js/composables/useAiErrorToast').useAiErrorToast
+  const useAiGlossaryConceptRows: typeof import('./resources/js/composables/useAiGlossaryConceptRows').useAiGlossaryConceptRows
   const useAiKnowledge: typeof import('./resources/js/composables/useAiKnowledge').useAiKnowledge
   const useAiMentions: typeof import('./resources/js/composables/useAiMentions').useAiMentions
   const useAiModels: typeof import('./resources/js/composables/useAiModels').useAiModels
+  const useAiOperations: typeof import('./resources/js/composables/useAiOperations').useAiOperations
   const useAiRun: typeof import('./resources/js/composables/useAiRun').useAiRun
   const useAiSchedules: typeof import('./resources/js/composables/useAiSchedules').useAiSchedules
   const useAiScreenChips: typeof import('./resources/js/composables/useAiScreenChips').useAiScreenChips
@@ -141,6 +143,7 @@ declare global {
   const useContentAnchors: typeof import('./resources/js/composables/useContentAnchors').useContentAnchors
   const useContentCanvasCommands: typeof import('./resources/js/composables/useContentCanvasCommands').useContentCanvasCommands
   const useContentEditorPage: typeof import('./resources/js/composables/useContentEditorPage').useContentEditorPage
+  const useContentFlags: typeof import('./resources/js/composables/useContentFlags').useContentFlags
   const useContentJson: typeof import('./resources/js/composables/useContentJson').useContentJson
   const useContentLiveCollaboration: typeof import('./resources/js/composables/useContentLiveCollaboration').useContentLiveCollaboration
   const useContentMenu: typeof import('./resources/js/composables/useContentMenu').useContentMenu
@@ -431,9 +434,11 @@ declare module 'vue' {
     readonly useAiConfigs: UnwrapRef<typeof import('./resources/js/composables/useAiModels')['useAiConfigs']>
     readonly useAiEnabled: UnwrapRef<typeof import('./resources/js/composables/useAiEnabled')['useAiEnabled']>
     readonly useAiErrorToast: UnwrapRef<typeof import('./resources/js/composables/useAiErrorToast')['useAiErrorToast']>
+    readonly useAiGlossaryConceptRows: UnwrapRef<typeof import('./resources/js/composables/useAiGlossaryConceptRows')['useAiGlossaryConceptRows']>
     readonly useAiKnowledge: UnwrapRef<typeof import('./resources/js/composables/useAiKnowledge')['useAiKnowledge']>
     readonly useAiMentions: UnwrapRef<typeof import('./resources/js/composables/useAiMentions')['useAiMentions']>
     readonly useAiModels: UnwrapRef<typeof import('./resources/js/composables/useAiModels')['useAiModels']>
+    readonly useAiOperations: UnwrapRef<typeof import('./resources/js/composables/useAiOperations')['useAiOperations']>
     readonly useAiRun: UnwrapRef<typeof import('./resources/js/composables/useAiRun')['useAiRun']>
     readonly useAiSchedules: UnwrapRef<typeof import('./resources/js/composables/useAiSchedules')['useAiSchedules']>
     readonly useAiScreenChips: UnwrapRef<typeof import('./resources/js/composables/useAiScreenChips')['useAiScreenChips']>
@@ -475,6 +480,7 @@ declare module 'vue' {
     readonly useContentAnchors: UnwrapRef<typeof import('./resources/js/composables/useContentAnchors')['useContentAnchors']>
     readonly useContentCanvasCommands: UnwrapRef<typeof import('./resources/js/composables/useContentCanvasCommands')['useContentCanvasCommands']>
     readonly useContentEditorPage: UnwrapRef<typeof import('./resources/js/composables/useContentEditorPage')['useContentEditorPage']>
+    readonly useContentFlags: UnwrapRef<typeof import('./resources/js/composables/useContentFlags')['useContentFlags']>
     readonly useContentJson: UnwrapRef<typeof import('./resources/js/composables/useContentJson')['useContentJson']>
     readonly useContentLiveCollaboration: UnwrapRef<typeof import('./resources/js/composables/useContentLiveCollaboration')['useContentLiveCollaboration']>
     readonly useContentMenu: UnwrapRef<typeof import('./resources/js/composables/useContentMenu')['useContentMenu']>

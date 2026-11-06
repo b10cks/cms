@@ -20,6 +20,17 @@ class AssetClassificationController extends Controller
 {
     use SpaceFromQuery;
 
+    /**
+     * Queue AI classification for a selection of assets or the whole library, which is paid provider work.
+     *
+     * Results land asynchronously and valid values save directly. Needs the `spaceId` query parameter.
+     *
+     * @apiQuery spaceId! string
+     *
+     * @apiBody @AiAssetClassifyRequest
+     *
+     * @apiResponse 200 data:@AiAssetClassifyQueued
+     */
     public function __invoke(Request $request, AssetClassificationService $service): JsonResponse
     {
         $validated = $request->validate([
@@ -86,7 +97,14 @@ class AssetClassificationController extends Controller
         return response()->json(['data' => $result]);
     }
 
-    public function show(string $runId): JsonResponse
+    /**
+     * Progress of a run. `field_report` says field by field how it went once it is complete.
+     *
+     * @apiQuery spaceId! string
+     *
+     * @apiResponse 200 data:@AiAssetClassificationProgress
+     */
+    public function show(string $runId, AssetClassificationService $service): JsonResponse
     {
         $space = $this->getSpaceFromQuery();
         $this->authorizeSpaceAbility($space, 'assets.manage');
@@ -94,6 +112,15 @@ class AssetClassificationController extends Controller
             ->where('space_id', $space->id)
             ->findOrFail($runId);
 
-        return response()->json(['data' => $run->progress()]);
+        $progress = $run->progress();
+        $restore = SpaceContext::enter($space);
+
+        try {
+            $report = $progress['complete'] ? $service->runReport($run) : null;
+        } finally {
+            $restore();
+        }
+
+        return response()->json(['data' => [...$progress, 'field_report' => $report]]);
     }
 }

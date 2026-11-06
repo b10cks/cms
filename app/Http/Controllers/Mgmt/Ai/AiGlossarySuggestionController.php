@@ -5,20 +5,21 @@ namespace App\Http\Controllers\Mgmt\Ai;
 use App\Actions\Ai\AcceptAiGlossarySuggestion;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Ai\AcceptAiGlossarySuggestionRequest;
-use App\Http\Resources\Management\Ai\AiGlossaryTermResource;
+use App\Http\Resources\Management\Ai\AiGlossaryConceptRowResource;
 use App\Models\Management\Space;
 use App\Models\Space\AiGlossarySuggestion;
+use App\Services\Ai\Knowledge\Concepts\GlossaryConceptRows;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 /** Learning suggestions from the suggestions thread: accept into a glossary or dismiss. */
 class AiGlossarySuggestionController extends Controller
 {
-    public function accept(AcceptAiGlossarySuggestionRequest $request, Space $space, string $suggestion, AcceptAiGlossarySuggestion $action): AiGlossaryTermResource
+    public function accept(AcceptAiGlossarySuggestionRequest $request, Space $space, string $suggestion, AcceptAiGlossarySuggestion $action, GlossaryConceptRows $rows): AiGlossaryConceptRowResource
     {
-        $term = $action->accept($this->findPending($space, $suggestion), $space, $request->user(), $request->string('glossary_id')->value());
+        ['glossary' => $glossary, 'row_id' => $rowId] = $action->accept($this->findPending($space, $suggestion), $space, $request->user(), $request->string('glossary_id')->value());
 
-        return new AiGlossaryTermResource($term);
+        return new AiGlossaryConceptRowResource($rows->row($glossary, $space, $rowId));
     }
 
     public function dismiss(Request $request, Space $space, string $suggestion, AcceptAiGlossarySuggestion $action): JsonResponse

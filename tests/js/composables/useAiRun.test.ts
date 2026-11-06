@@ -58,8 +58,9 @@ describe('useAiRun', () => {
     api.getRunEvents.mockResolvedValue({
       data: [
         { type: 'moved_to_background', run_id: 'run-1', seq: 3 },
-        { type: 'text_delta', run_id: 'run-1', seq: 4, text: ' world' },
-        { type: 'completed', run_id: 'run-1', seq: 5, result, partial: false, usage: {} },
+        { type: 'provider_retry_scheduled', run_id: 'run-1', seq: 4, attempt: 1, max_attempts: 3, retry_at: '2026-11-02T13:00:00Z', failure: { kind: 'unavailable', status: 503, code: null }, possibly_billed: false, unconfirmed_calls: 0 },
+        { type: 'text_delta', run_id: 'run-1', seq: 5, text: ' world' },
+        { type: 'completed', run_id: 'run-1', seq: 6, result, partial: false, usage: {} },
       ],
       run,
     })
@@ -74,10 +75,40 @@ describe('useAiRun', () => {
     )
     scope.stop()
 
-    expect(seen).toEqual([1, 2, 3, 4, 5])
+    expect(seen).toEqual([1, 2, 3, 4, 5, 6])
     expect(api.getRunEvents).toHaveBeenCalledWith('run-1', 3)
     expect(aiRun.text.value).toBe('Hello world')
     expect(outcome).toMatchObject({ status: 'completed', result })
+  })
+
+  it('shows a provider wait until the run moves on and keeps only its unconfirmed calls', async () => {
+    const retry = (unconfirmed_calls: number) => ({
+      type: 'provider_retry_scheduled',
+      run_id: 'run-1',
+      attempt: 2,
+      max_attempts: 3,
+      retry_at: '2026-11-02T14:05:00Z',
+      failure: { kind: 'interrupted', status: null, code: null },
+      possibly_billed: true,
+      unconfirmed_calls,
+    })
+    fetchMock.mockResolvedValue(
+      sse([
+        { type: 'run_started', run_id: 'run-1', seq: 1, skill: null, surface: 'cmdk' },
+        { ...retry(1), seq: 2 },
+        { type: 'text_delta', run_id: 'run-1', seq: 3, text: 'Hello' },
+        { type: 'completed', run_id: 'run-1', seq: 4, result: { text: 'Hello', data: null, glossary_findings: [] }, partial: false, usage: {} },
+      ])
+    )
+    const scope = effectScope()
+    const aiRun = scope.run(() => useAiRun(ref('space-1')))!
+    const during: Array<string | null | undefined> = []
+
+    await aiRun.start({ surface: 'cmdk', prompt: 'Hi' }, { onEvent: () => during.push(aiRun.providerRetry.value?.retry_at) })
+    scope.stop()
+
+    expect(during).toEqual([undefined, undefined, '2026-11-02T14:05:00Z', null])
+    expect(aiRun.providerRetry.value).toMatchObject({ retry_at: null, unconfirmed_calls: 1 })
   })
 
   it('lets go of a background run when the space changes and keeps it on its own space', async () => {

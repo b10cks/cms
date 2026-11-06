@@ -18,6 +18,7 @@ class AiKnowledgeDocumentResource extends JsonResource
             'slug' => $this->slug,
             'title' => $this->title,
             'type' => $this->type->value,
+            'locale' => $this->locale,
             'enabled' => $this->enabled,
             // Lists select the row without its draft to stay small.
             'draft' => $this->when(\array_key_exists('draft', $this->resource->getAttributes()), fn () => $this->draft),

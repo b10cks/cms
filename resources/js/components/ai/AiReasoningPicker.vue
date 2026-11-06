@@ -57,7 +57,7 @@ const labelOf = (effort: AiReasoningEffort) => t(`components.aiModelSelector.rea
   <DropdownMenu v-else>
     <DropdownMenuTrigger
       :disabled="disabled"
-      class="inline-flex h-7 shrink-0 cursor-pointer items-center gap-1.5 rounded-md px-2 text-sm text-muted transition-colors outline-none hover:bg-muted-background hover:text-foreground focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 data-[state=open]:bg-muted-background data-[state=open]:text-foreground"
+      class="inline-flex h-7 shrink-0 cursor-pointer items-center gap-1.5 rounded-md px-2 text-sm text-muted transition-colors outline-none hover:bg-muted-background hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 data-[state=open]:bg-muted-background data-[state=open]:text-foreground"
       :aria-label="`${$t('components.aiModelSelector.reasoning.label')}: ${labelOf(level)}`"
     >
       <AiReasoningBars :level="level" />
@@ -73,7 +73,7 @@ const labelOf = (effort: AiReasoningEffort) => t(`components.aiModelSelector.rea
       <DropdownMenuItem
         v-for="effort in levels"
         :key="effort"
-        class="cursor-pointer gap-2.5 rounded-md px-2 py-1.5 font-normal focus:bg-muted-background! focus:text-foreground!"
+        class="cursor-pointer gap-2.5 rounded-md px-2 py-1.5 font-normal"
         @select="level = effort"
       >
         <AiReasoningBars :level="effort" />

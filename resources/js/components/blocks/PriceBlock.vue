@@ -72,12 +72,12 @@ const handleNewCurrencyKey = (event: KeyboardEvent) => {
           <span
             v-for="code in currencies"
             :key="code"
-            class="flex items-center gap-1 rounded-md border border-input bg-elevated px-2 py-1 text-sm font-mono"
+            class="flex items-center gap-1 rounded-md border border-input-border bg-elevated px-2 py-1 text-sm font-mono"
           >
             {{ code }}
             <button
               type="button"
-              class="text-muted-foreground hover:text-foreground ml-1"
+              class="text-muted hover:text-foreground ml-1"
               :aria-label="$t('actions.remove')"
               @click="removeCurrency(code)"
             >

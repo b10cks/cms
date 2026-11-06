@@ -1,0 +1,169 @@
+{
+  "outcomes": {
+    "open": "Waiting",
+    "written": "Written to draft",
+    "proposed": "Proposed",
+    "conflict": "Conflict",
+    "satisfied": "Already filled",
+    "unchanged": "Already up to date",
+    "intentionally_empty": "Left empty on purpose",
+    "uninferable": "Couldn't be determined",
+    "refused": "Declined by the AI",
+    "blocked": "Needs an answer",
+    "invalid": "Proposal was rejected as invalid",
+    "unfinished": "Not finished",
+    "skipped": "Skipped",
+    "failed": "Failed"
+  },
+  "reasons": {
+    "has_value": "It already has a value",
+    "has_tags": "It already has tags",
+    "pending_review": "Another proposal is waiting for review",
+    "field_not_available": "This field isn't available in the asset's folder",
+    "no_meta_field": "This entry has no metadata field",
+    "locale_not_in_plan": "This entry's language isn't in the plan",
+    "complete": "Nothing was missing",
+    "awaiting_translation": "Waits for the translation it is written from",
+    "not_stored_on_translation": "This field isn't translatable, so the translation can't hold it",
+    "block_not_in_translation": "The translation doesn't have the block holding this field",
+    "translation_not_in_plan": "The plan leaves out the translation work this needs",
+    "no_stable_path": "This block has no ID, so the field can't be addressed",
+    "unit_exceptions": "Every unit has its own outcome"
+  },
+  "targets": {
+    "tags": "Tags",
+    "folder": "Folder",
+    "unit": "Unit {unit}"
+  },
+  "metaKeys": {
+    "title": "Title",
+    "description": "Description",
+    "ogTitle": "Social title",
+    "ogDescription": "Social description"
+  },
+  "plan": {
+    "asset": {
+      "track": "Account for each value",
+      "trackDescription": "Each asset reports what happened to every value you pick, so you can see exactly what is still missing.",
+      "untracked": "This plan names no values, so results are counted per asset and don't show whether each field was filled.",
+      "legend": "Each asset should end up with",
+      "tags": "Tags",
+      "tagsRequired": "Needed because this plan removes or adds tags.",
+      "noFieldsPicked": "Pick the fields each asset should get. Languages are set below."
+    },
+    "metadata": {
+      "track": "Generate page metadata",
+      "trackDescription": "Each entry reports what happened to every value you pick. Canonical URLs, robots settings and images stay untouched.",
+      "untracked": "This plan names no specific values, so results are counted per entry and don't show whether each one was written.",
+      "keys": "Values to write",
+      "keysRequired": "Pick at least one value.",
+      "overwrite": "Values it may replace",
+      "overwriteHint": "Existing values stay unless you pick them here. Empty ones are always filled.",
+      "overwriteNone": "None. Only empty values are filled.",
+      "fields": "Metadata fields",
+      "fieldsAll": "All metadata fields used in this scope",
+      "fieldsHint": "None picked: every metadata field on these entries.",
+      "locales": "Entries in these languages",
+      "localesAll": "All languages",
+      "localesHint": "None picked: entries in every language. This filters entries and translates nothing.",
+      "defaultLanguage": "{name} (default)"
+    },
+    "linked": {
+      "track": "Also generate page metadata",
+      "trackDescription": "Each target language also gets the values you pick, written from its translated draft once that is finished. Canonical URLs, robots settings and images stay untouched.",
+      "untracked": "Metadata fields are translated like other text.",
+      "locales": "Languages to write it in",
+      "localesAll": "All target languages",
+      "localesHint": "None picked: every target language above."
+    }
+  },
+  "ledger": {
+    "outputs": "Outputs of {label}",
+    "summary": "{done} of {total} outputs accounted for",
+    "summaryWith": "{done} of {total} outputs accounted for. {others}",
+    "other": "{outcome}: {count}",
+    "units": "{written} written, {remaining} remaining",
+    "remaining": "Still open: {units}",
+    "mayReplace": "May replace the existing value",
+    "question": "Question: {question}"
+  },
+  "outcome": {
+    "completedWithGaps": "Done with the queue, but some requested outputs are missing"
+  },
+  "coverage": {
+    "title": "Requested outputs",
+    "unverified": "Coverage isn't verified",
+    "unverifiedExplain": "This plan doesn't name specific outputs, so entries are counted as a whole. Check the changes themselves to see whether each field was filled.",
+    "counting": "Requested outputs are counted when the operation pauses or finishes.",
+    "complete": "Every requested output is accounted for",
+    "incomplete": {
+      "completed": "Not every requested output was fulfilled",
+      "paused": "Paused with requested outputs still open",
+      "cancelled": "Cancelled with requested outputs still open"
+    },
+    "incompleteExplain": {
+      "completed": "Finishing means no entry is left in the queue. Open each entry below to see what is missing and why.",
+      "other": "Open each entry below to see what is missing and why."
+    },
+    "entries": "{skipped} skipped and {failed} failed entries count as missing.",
+    "questions": "{count} output is waiting for an answer. The question is listed below. | {count} outputs are waiting for an answer. The questions are listed below.",
+    "publishing": "Nothing is published. Open a draft and publish it when you are happy. Its history is how to go back.",
+    "proposalsWaiting": "{count} asset or data entry change waits for you. | {count} asset or data entry changes wait for you."
+  },
+  "retry": {
+    "failure": {
+      "rate_limited": "The AI provider is limiting requests.",
+      "unavailable": "The AI provider is temporarily unavailable.",
+      "connection": "The AI provider can't be reached right now.",
+      "interrupted": "The AI provider's response was cut off.",
+      "generic": "The AI provider call failed."
+    },
+    "at": "Trying again at {time}.",
+    "now": "Trying again now.",
+    "attempt": "Attempt {attempt}.",
+    "attemptOf": "Attempt {attempt} of {max}.",
+    "retries": "The provider needed {count} retry so far. | The provider needed {count} retries so far.",
+    "unconfirmed": "{count} interrupted call may have cost more than the spend shown. | {count} interrupted calls may have cost more than the spend shown.",
+    "unconfirmedConfirmed": "Known costs are confirmed, but {count} interrupted call may have cost more. | Known costs are confirmed, but {count} interrupted calls may have cost more."
+  },
+  "questions": {
+    "title": "Questions",
+    "summary": "{questions} question on {outputs} outputs | {questions} questions on {outputs} outputs",
+    "state": {
+      "accepting": "The rest of the work is finished. These outputs need a fact the agent couldn't establish. Answer what you know. What you leave blank stays blocked.",
+      "running": "The agent is still working through the rest, and more questions may follow. You can answer once it has finished.",
+      "paused": "The operation is paused. You can answer once the remaining work has finished.",
+      "cancelled": "This operation was cancelled, so these questions stay unanswered."
+    },
+    "noQuestion": "The agent recorded no question for these outputs.",
+    "appliesTo": "{outputs} output in {where} | {outputs} outputs in {where}",
+    "answerAll": "Your answer",
+    "answerAllMany": "Your answer for all {count} outputs",
+    "answerOne": "Answer for this output only",
+    "showEntries": "Show entries",
+    "hideEntries": "Hide entries",
+    "untitled": "Untitled entry",
+    "bounds": "Only the answered outputs run again, inside the approved plan and the {remaining} left of the budget. An answer gives the agent a fact. It can't widen the plan or replace other values.",
+    "budgetSpent": "The budget is spent. Your answers are kept, and the operation pauses until you extend the budget.",
+    "send": "Send {count} answer and continue | Send {count} answers and continue",
+    "resuming": "{count} answered output is waiting to run. | {count} answered outputs are waiting to run.",
+    "stale": "Some answers were not applied because their questions changed. Your text is still here. Check it and send it again.",
+    "duplicate": "Some of these were already answered, so nothing changed for them.",
+    "closed": "The operation is no longer waiting for answers. Your text is still here.",
+    "failed": "The answers could not be sent: {error}",
+    "answered": "Answered ({count})",
+    "answeredBy": "{name}, {time}",
+    "answeredAt": "{time}",
+    "answeredOutputs": "{count} output | {count} outputs",
+    "appliesToEntries": "{count} entry | {count} entries",
+    "sendNone": "Send answers and continue"
+  },
+  "changes": {
+    "fields": "Fields of {name}",
+    "conflicts": "{count} conflict | {count} conflicts",
+    "flagged": "{count} flagged | {count} flagged",
+    "flaggedWording": "Flagged: {wording}",
+    "written": "{count} field written | {count} fields written",
+    "history": "History"
+  }
+}

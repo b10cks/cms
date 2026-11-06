@@ -91,6 +91,9 @@ class Asset extends SpaceModel
         'data',
     ];
 
+    /** @var list<string>|null Asset ids waiting for one usage lookup, null outside a bulk write. */
+    private static ?array $deferredDeliveryRefresh = null;
+
     protected string $spaceChannel = 'assets';
 
     protected $table = 'assets';
@@ -150,9 +153,50 @@ class Asset extends SpaceModel
      */
     protected function refreshDeliveryCache(): void
     {
+        if (self::$deferredDeliveryRefresh !== null) {
+            self::$deferredDeliveryRefresh[] = $this->id;
+
+            return;
+        }
+
+        self::refreshDeliveryCacheFor([$this->id]);
+    }
+
+    /**
+     * Runs a bulk write with one usage lookup at the end instead of one per
+     * asset, each of which scans the space's content versions. Wrap this around
+     * the transaction, so the bump follows the commit. Never hold it across a
+     * yield: the state is static.
+     *
+     * @template TReturn
+     *
+     * @param  callable(): TReturn  $callback
+     * @return TReturn
+     */
+    public static function batchingDeliveryRefresh(callable $callback): mixed
+    {
+        self::$deferredDeliveryRefresh = [];
+
+        try {
+            return $callback();
+        } finally {
+            $assetIds = self::$deferredDeliveryRefresh;
+            self::$deferredDeliveryRefresh = null;
+
+            self::refreshDeliveryCacheFor($assetIds);
+        }
+    }
+
+    /** @param  list<string>  $assetIds */
+    private static function refreshDeliveryCacheFor(array $assetIds): void
+    {
+        if ($assetIds === []) {
+            return;
+        }
+
         $space = app(CurrentSpaceResolver::class)->resolve();
 
-        if ($space && app(AssetUsageService::class)->isPublished($this)) {
+        if ($space && app(AssetUsageService::class)->anyPublished($assetIds)) {
             $space->touchContentUpdatedAt();
         }
     }

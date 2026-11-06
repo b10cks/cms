@@ -6,6 +6,7 @@ import BlocksIcon from '~/assets/images/blocks.svg?component'
 import CreateBlockDialog from '~/components/blocks/CreateBlockDialog.vue'
 import Icon from '~/components/Icon.vue'
 import SearchFilter from '~/components/SearchFilter.vue'
+import QueryErrorState from '~/components/ui/QueryErrorState.vue'
 import { Badge } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
 import ContentHeader from '~/components/ui/ContentHeader.vue'
@@ -73,6 +74,8 @@ const {
   data: blocks,
   isLoading: isLoadingBlocks,
   isFetching: isFetchingBlocks,
+  isError: isBlocksError,
+  refetch: refetchBlocks,
 } = useBlocksQuery(queryParams)
 const { mutate: deleteBlock } = useDeleteBlockMutation()
 
@@ -224,9 +227,9 @@ const typeColor = (type: 'root' | 'nestable' | 'single' | 'universal') => {
 
         <div
           ref="tableRef"
-          class="overflow-hidden rounded-md border border-border"
+          class="overflow-hidden rounded-md border border-border xl:overflow-clip"
         >
-          <Table>
+          <Table sticky-header>
             <TableHeader>
               <TableRow>
                 <TableSortableHead
@@ -265,6 +268,15 @@ const typeColor = (type: 'root' | 'nestable' | 'single' | 'universal') => {
                 v-if="isLoading"
                 :colspan="6"
               />
+              <TableRow v-else-if="isBlocksError && !blocks">
+                <TableCell :colspan="6">
+                  <QueryErrorState
+                    flush
+                    :retrying="isFetchingBlocks"
+                    @retry="refetchBlocks()"
+                  />
+                </TableCell>
+              </TableRow>
               <TableEmptyRow
                 v-else-if="blocks?.meta?.total === 0"
                 :icon="BlocksIcon"
@@ -326,7 +338,7 @@ const typeColor = (type: 'root' | 'nestable' | 'single' | 'universal') => {
                     </Badge>
                     <span
                       v-else
-                      class="text-muted-foreground"
+                      class="text-muted"
                     >
                       -
                     </span>
@@ -353,7 +365,7 @@ const typeColor = (type: 'root' | 'nestable' | 'single' | 'universal') => {
                         <span class="sr-only">{{ $t('actions.blocks.duplicate') }}</span>
                       </Button>
                       <Button
-                        variant="destructive"
+                        variant="ghost-destructive"
                         size="icon"
                         @click="handleDelete(block)"
                       >

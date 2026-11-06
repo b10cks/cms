@@ -1,90 +1,108 @@
 <script setup lang="ts">
-import Icon from '~/components/Icon.vue'
 import { Skeleton } from '~/components/ui/skeleton'
-import type { CommentResource } from '~/types/comments'
+import type { CommentLocation } from '~/lib/commentLocation'
+import type { CommentActions, CommentResource } from '~/types/comments'
 
 import CommentItem from './CommentItem.vue'
 
 const props = defineProps<{
   comments: CommentResource[]
   isLoading?: boolean
+  emptyText?: string
+  /** Where a thread belongs. Left out when the list is about one field. */
+  locationOf?: (comment: CommentResource) => { location: CommentLocation; label: string }
+  markResolved?: boolean
 }>()
 
-const emit = defineEmits<{
-  (e: 'reply', commentId: string, body: string): void
-  (e: 'edit', comment: CommentResource, body: string): void
-  (e: 'delete', comment: CommentResource): void
-  (e: 'resolve', commentId: string): void
-  (e: 'unresolve', commentId: string): void
-  (e: 'addReaction', commentId: string, emoji: string): void
-  (e: 'removeReaction', commentId: string, emoji: string): void
-}>()
+const emit = defineEmits<{ jump: [location: CommentLocation] }>()
 
-// Separate top-level comments from replies
-const topLevelComments = computed(() => props.comments.filter((c) => !c.parent_id))
-const repliesByParent = computed(() => {
-  const replies: Record<string, CommentResource[]> = {}
-  props.comments.forEach((comment) => {
-    if (comment.parent_id) {
-      if (!replies[comment.parent_id]) {
-        replies[comment.parent_id] = []
-      }
-      replies[comment.parent_id].push(comment)
-    }
-  })
-  return replies
-})
+const spaceId = inject<string>('spaceId', '')
+const contentId = inject<Ref<string | null | undefined>>('contentId', ref(null))
+const contentVersionId = inject<Ref<string | undefined>>('contentVersionId', ref(undefined))
+
+const {
+  useCreateCommentMutation,
+  useUpdateCommentMutation,
+  useDeleteCommentMutation,
+  useResolveCommentMutation,
+  useUnresolveCommentMutation,
+  useAddReactionMutation,
+  useRemoveReactionMutation,
+} = useComments(spaceId, contentId)
+
+const createComment = useCreateCommentMutation({ quiet: true })
+const updateComment = useUpdateCommentMutation({ quiet: true })
+const deleteComment = useDeleteCommentMutation()
+const resolveComment = useResolveCommentMutation()
+const unresolveComment = useUnresolveCommentMutation()
+const addReaction = useAddReactionMutation()
+const removeReaction = useRemoveReactionMutation()
+
+const actions: CommentActions = {
+  // A reply stays on its thread's field, wherever it was written.
+  reply: (parent, body) =>
+    createComment.mutateAsync({
+      content_version_id: contentVersionId.value,
+      parent_id: parent.id,
+      item_id: parent.item_id ?? undefined,
+      field: parent.field ?? undefined,
+      body,
+    }),
+  edit: (comment, body) => updateComment.mutateAsync({ id: comment.id, payload: { body } }),
+  remove: (comment) => deleteComment.mutate(comment.id),
+  resolve: (commentId) => resolveComment.mutate(commentId),
+  unresolve: (commentId) => unresolveComment.mutate(commentId),
+  addReaction: (commentId, emoji) => addReaction.mutate({ commentId, emoji }),
+  removeReaction: (commentId, emoji) => removeReaction.mutate({ commentId, emoji }),
+}
+
+const threads = computed(() =>
+  props.comments
+    .filter((comment) => !comment.parent_id)
+    .map((comment) => ({ comment, place: props.locationOf?.(comment) }))
+)
 </script>
 
 <template>
-  <div class="space-y-6 py-4">
+  <div
+    v-if="isLoading && comments.length === 0"
+    class="space-y-4 py-2"
+    aria-hidden="true"
+  >
     <div
-      v-if="isLoading && comments.length === 0"
-      class="space-y-4"
-      aria-hidden="true"
+      v-for="i in 3"
+      :key="i"
+      class="space-y-2"
     >
-      <div
-        v-for="i in 3"
-        :key="i"
-        class="space-y-2"
-      >
-        <div class="flex items-center gap-2">
-          <Skeleton class="size-6 rounded-full" />
-          <Skeleton class="h-4 w-24" />
-          <Skeleton class="h-3 w-12" />
-        </div>
-        <Skeleton class="h-4 w-full" />
-        <Skeleton class="h-4 w-2/3" />
+      <div class="flex items-center gap-2">
+        <Skeleton class="size-5 rounded-md" />
+        <Skeleton class="h-4 w-24" />
+        <Skeleton class="h-4 w-12" />
       </div>
+      <Skeleton class="h-4 w-full" />
     </div>
+  </div>
 
-    <div
-      v-else-if="comments.length === 0"
-      class="flex items-start gap-2 text-muted"
-    >
-      <Icon
-        name="lucide:message-circle"
-        class="shrink-0"
-      />
-      <p class="text-sm">
-        {{ $t('labels.comments.emptyState') }}
-      </p>
-    </div>
+  <p
+    v-else-if="threads.length === 0"
+    class="py-2 text-sm text-muted"
+  >
+    {{ emptyText }}
+  </p>
 
-    <div v-else>
-      <CommentItem
-        v-for="comment in topLevelComments"
-        :key="comment.id"
-        :comment="comment"
-        :replies="repliesByParent[comment.id]"
-        @reply="(id, body) => emit('reply', id, body)"
-        @edit="(c, body) => emit('edit', c, body)"
-        @delete="(c) => emit('delete', c)"
-        @resolve="(id) => emit('resolve', id)"
-        @unresolve="(id) => emit('unresolve', id)"
-        @add-reaction="(id, emoji) => emit('addReaction', id, emoji)"
-        @remove-reaction="(id, emoji) => emit('removeReaction', id, emoji)"
-      />
-    </div>
+  <div
+    v-else
+    class="space-y-2 py-2"
+  >
+    <CommentItem
+      v-for="{ comment, place } in threads"
+      :key="comment.id"
+      :comment="comment"
+      :actions="actions"
+      :location="place?.location"
+      :location-label="place?.label"
+      :mark-resolved="markResolved"
+      @jump="place && emit('jump', place.location)"
+    />
   </div>
 </template>

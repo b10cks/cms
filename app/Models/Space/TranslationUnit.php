@@ -3,6 +3,7 @@
 namespace App\Models\Space;
 
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
+use Illuminate\Support\Carbon;
 
 /**
  * A translated field of a published translation, the space's translation memory.
@@ -16,8 +17,8 @@ use Illuminate\Database\Eloquent\Concerns\HasUlids;
  * @property string $origin
  * @property string $content_id
  * @property string $field_path
- * @property \Illuminate\Support\Carbon|null $created_at
- * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
  */
 class TranslationUnit extends SpaceModel
 {
@@ -25,6 +26,7 @@ class TranslationUnit extends SpaceModel
 
     public const ORIGIN_HUMAN = 'human';
 
+    /** AI text a person published. */
     public const ORIGIN_AI_ACCEPTED = 'ai_accepted';
 
     protected $table = 'translation_units';

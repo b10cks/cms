@@ -31,7 +31,7 @@ const isAnchorMissing = computed(() => !!props.anchor && isLoaded.value && !sele
   <div class="space-y-2">
     <button
       type="button"
-      class="text-input-foreground flex min-h-[2.5rem] w-full items-center gap-2 rounded-md border border-input-border bg-input px-3 py-2 text-left text-sm"
+      class="text-foreground flex min-h-[2.5rem] w-full items-center gap-2 rounded-md border border-input-border bg-input px-3 py-2 text-left text-sm"
       :disabled="disabled"
       @click="emit('pick')"
     >
@@ -43,7 +43,7 @@ const isAnchorMissing = computed(() => !!props.anchor && isLoaded.value && !sele
         <template v-if="anchor">
           <Icon
             name="lucide:chevron-right"
-            class="shrink-0 text-muted-foreground"
+            class="shrink-0 text-muted"
           />
           <span
             v-if="selectedAnchor"
@@ -53,7 +53,7 @@ const isAnchorMissing = computed(() => !!props.anchor && isLoaded.value && !sele
           />
           <span
             v-else
-            class="truncate font-mono text-xs font-normal text-muted-foreground"
+            class="truncate font-mono text-sm font-normal text-muted"
           >
             #{{ anchor }}
           </span>
@@ -61,7 +61,7 @@ const isAnchorMissing = computed(() => !!props.anchor && isLoaded.value && !sele
       </span>
       <span
         v-else
-        class="text-muted-foreground"
+        class="text-muted"
       >
         {{ t('labels.link.noContentSelected') }}
       </span>

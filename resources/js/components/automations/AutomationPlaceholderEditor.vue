@@ -329,7 +329,7 @@ function serializeAutomationPlaceholderNode(node: ProseMirrorNode): string {
 <template>
   <div class="space-y-3">
     <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-      <div class="text-muted-foreground text-xs">
+      <div class="text-muted text-sm">
         {{ tokenEditorHint }}
       </div>
 

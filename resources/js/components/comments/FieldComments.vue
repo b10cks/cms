@@ -1,210 +1,202 @@
 <script setup lang="ts">
+import { unrefElement } from '@vueuse/core'
+
+import CommentComposer from '~/components/comments/CommentComposer.vue'
 import Icon from '~/components/Icon.vue'
 import { MessageSquareIcon } from '~/components/icons'
 import { Button } from '~/components/ui/button'
-import { TextField } from '~/components/ui/form'
-import { Popover, PopoverContent, PopoverTrigger } from '~/components/ui/popover'
-import { ScrollArea } from '~/components/ui/scroll-area'
-import type { CommentResource, CreateCommentRequest } from '~/types/comments'
+import { Popover, PopoverAnchor, PopoverContent, PopoverTrigger } from '~/components/ui/popover'
+import QueryErrorState from '~/components/ui/QueryErrorState.vue'
+import {
+  commentDraftKeys,
+  commentDraftModel,
+  commentDraftsKey,
+  createCommentDrafts,
+} from '~/lib/commentDrafts'
+import type { FieldReveal } from '~/lib/commentLocation'
+import { scrollIntoViewAfterExpand } from '~/lib/fieldFocus'
+import type { CommentResource } from '~/types/comments'
 
 import CommentsList from './CommentsList.vue'
 
 const props = defineProps<{
   itemId?: string
   field?: string
+  /** The field's name, for the button and the popover heading. */
+  fieldLabel: string
 }>()
 
 const spaceId = inject<string>('spaceId', '')
-const contentId = inject<Ref<string>>('contentId', ref(''))
+const contentId = inject<Ref<string | null | undefined>>('contentId', ref(null))
 const contentVersionId = inject<Ref<string | undefined>>('contentVersionId', ref(undefined))
+const comments = inject<Ref<CommentResource[] | undefined>>('comments', ref(undefined))
+const isLoadingComments = inject<Ref<boolean>>('commentsLoading', ref(false))
+const commentsFailed = inject<Ref<boolean>>('commentsFailed', ref(false))
+const retryComments = inject<() => void>('retryComments', () => {})
+const fieldReveal = inject<Ref<FieldReveal | null>>('fieldReveal', ref(null))
+
+const { t } = useI18n()
 
 const isOpen = ref(false)
-const newCommentBody = ref('')
-const comments = inject<Ref<CommentResource[]>>('comments', ref([]))
-const isLoadingComments = inject<Ref<boolean>>('commentsLoading', ref(false))
+const draft = commentDraftModel(inject(commentDraftsKey, createCommentDrafts, true), () =>
+  commentDraftKeys.field(contentId.value ?? '', props.itemId, props.field)
+)
+const trigger = useTemplateRef('trigger')
+const composer = useTemplateRef('composer')
 
-const {
-  useCreateCommentMutation,
-  useUpdateCommentMutation,
-  useDeleteCommentMutation,
-  useResolveCommentMutation,
-  useUnresolveCommentMutation,
-  useAddReactionMutation,
-  useRemoveReactionMutation,
-} = useComments(
-  computed(() => spaceId),
-  computed(() => contentId.value)
+provide('dismissCommentSurface', () => {
+  isOpen.value = false
+})
+
+const { useCreateCommentMutation } = useComments(spaceId, contentId)
+const createComment = useCreateCommentMutation({ quiet: true })
+
+const fieldComments = computed(
+  () =>
+    comments.value?.filter(
+      (comment) => comment.item_id === (props.itemId || null) && comment.field === props.field
+    ) ?? []
 )
 
-const createCommentMutation = useCreateCommentMutation()
-const updateCommentMutation = useUpdateCommentMutation()
-const deleteCommentMutation = useDeleteCommentMutation()
-const resolveCommentMutation = useResolveCommentMutation()
-const unresolveCommentMutation = useUnresolveCommentMutation()
-const addReactionMutation = useAddReactionMutation()
-const removeReactionMutation = useRemoveReactionMutation()
+const openCount = computed(() => fieldComments.value.filter((c) => !c.is_resolved).length)
+const totalCount = computed(() => fieldComments.value.length)
 
-const fieldComments = computed(() => {
-  return (
-    comments.value?.filter(
-      (c) => c.item_id === (props.itemId || null) && c.field === props.field
-    ) || []
+const triggerLabel = computed(() =>
+  totalCount.value > 0
+    ? t('labels.comments.fieldTriggerCount', {
+        field: props.fieldLabel,
+        total: totalCount.value,
+        open: openCount.value,
+      })
+    : t('labels.comments.fieldTrigger', { field: props.fieldLabel })
+)
+
+/** A comment's location asked for this field: bring it into view and open its popover. */
+const answerReveal = () => {
+  const reveal = fieldReveal.value
+  if (!reveal || reveal.row || reveal.itemId !== props.itemId || reveal.field !== props.field) return
+
+  fieldReveal.value = null
+  scrollIntoViewAfterExpand(
+    (unrefElement(trigger) as HTMLElement | undefined)?.closest('[data-field-path]')
   )
+  isOpen.value = true
+}
+
+onMounted(answerReveal)
+watch(fieldReveal, answerReveal, { flush: 'post' })
+
+// Beside the field when the popover fits to its left, the comment stays next to the text. Below it otherwise.
+const POPOVER_WIDTH = 448
+const anchor = useTemplateRef<HTMLElement>('anchor')
+const side = ref<'left' | 'bottom'>('left')
+watch(isOpen, (open) => {
+  if (!open) return
+  const left = anchor.value?.getBoundingClientRect().left ?? 0
+  side.value = left >= POPOVER_WIDTH + 16 ? 'left' : 'bottom'
 })
 
-const unresolvedCount = computed(() => {
-  return fieldComments.value.filter((c) => !c.is_resolved).length
-})
-
-const totalComments = computed(() => {
-  return fieldComments.value.length
-})
-
-const handleCreateComment = () => {
-  if (!newCommentBody.value.trim()) return
-
-  const payload: CreateCommentRequest = {
-    content_version_id: contentVersionId.value,
-    body: newCommentBody.value,
-    item_id: props.itemId,
-    field: props.field,
-  }
-
-  createCommentMutation.mutate(payload, {
-    onSuccess: () => {
-      newCommentBody.value = ''
-    },
-  })
-}
-
-const handleDelete = (comment: CommentResource) => {
-  deleteCommentMutation.mutate(comment.id)
-}
-
-const handleResolve = (commentId: string) => {
-  resolveCommentMutation.mutate(commentId)
-}
-
-const handleUnresolve = (commentId: string) => {
-  unresolveCommentMutation.mutate(commentId)
-}
-
-const handleEdit = (comment: CommentResource, body: string) => {
-  updateCommentMutation.mutate({ id: comment.id, payload: { body } })
-}
-
-const handleReply = (parentId: string, body: string) => {
-  const payload: CreateCommentRequest = {
-    content_version_id: contentVersionId.value,
-    parent_id: parentId,
-    body,
-    item_id: props.itemId,
-    field: props.field,
-  }
-  createCommentMutation.mutate(payload)
-}
-
-const handleAddReaction = (commentId: string, emoji: string) => {
-  addReactionMutation.mutate({ commentId, emoji })
-}
-
-const handleRemoveReaction = (commentId: string, emoji: string) => {
-  removeReactionMutation.mutate({ commentId, emoji })
+const focusComposer = async (event: Event) => {
+  event.preventDefault()
+  await nextTick()
+  composer.value?.focus()
 }
 </script>
 
 <template>
   <Popover v-model:open="isOpen">
-    <PopoverTrigger
-      class="absolute -top-1 right-0 z-0 flex w-full justify-end"
-      tabindex="-1"
-    >
-      <span
+    <PopoverAnchor as-child>
+      <div
+        ref="anchor"
+        aria-hidden="true"
+        class="pointer-events-none absolute inset-0"
+      />
+    </PopoverAnchor>
+    <PopoverTrigger as-child>
+      <Button
+        ref="trigger"
+        variant="ghost"
+        size="xs"
         :class="[
-          unresolvedCount > 0 ? 'text-warning' : 'text-muted',
-          totalComments > 0 ? '' : 'opacity-0 group-hover/field:opacity-100',
+          'absolute -top-1 right-0 z-10 !px-1.5 transition-opacity',
+          openCount > 0 ? 'text-warning-ink' : 'text-muted',
+          totalCount === 0 && 'field-comment-trigger-idle',
         ]"
-        class="icon-anim inline-flex cursor-pointer items-center gap-1 rounded-sm p-1 text-xs font-semibold hover:bg-secondary/80"
+        data-field-side-action
+        :aria-label="triggerLabel"
+        :title="triggerLabel"
       >
         <MessageSquareIcon :size="14" />
-        <span v-if="totalComments > 0">
-          {{ totalComments }}
-        </span>
-      </span>
+        <span v-if="totalCount > 0">{{ totalCount }}</span>
+      </Button>
     </PopoverTrigger>
     <PopoverContent
-      class="w-md max-w-full"
-      side="left"
-      :sideOffset="16"
+      class="flex !max-h-[min(36rem,80svh)] w-md max-w-[calc(100vw-2rem)] flex-col gap-2"
+      :side="side"
+      :side-offset="side === 'left' ? 16 : 8"
+      :collision-padding="8"
       align="start"
+      @open-auto-focus="focusComposer"
     >
-      <div class="flex h-160 flex-col">
-        <div class="flex items-center justify-between">
-          <h4 class="font-medium">{{ $t('labels.comments.fieldTitle') }}</h4>
-          <Button
-            variant="ghost"
-            size="toolbar"
-            :aria-label="$t('actions.close')"
-            @click="isOpen = false"
-          >
-            <Icon name="lucide:x" />
-          </Button>
-        </div>
-
-        <ScrollArea class="h-96">
-          <div class="flex h-full w-full flex-1 flex-col">
-            <CommentsList
-              v-if="isLoadingComments"
-              :comments="[]"
-              is-loading
-              class="mx-2"
-            />
-            <div
-              v-else-if="fieldComments.length === 0"
-              class="flex items-start gap-2 py-3 text-muted"
-            >
-              <Icon
-                name="lucide:message-circle"
-                class="shrink-0"
-              />
-              <p class="text-sm">
-                {{ $t('labels.comments.emptyState') }}
-              </p>
-            </div>
-            <CommentsList
-              v-else
-              :comments="fieldComments"
-              @reply="handleReply"
-              @edit="handleEdit"
-              @delete="handleDelete"
-              @resolve="handleResolve"
-              @unresolve="handleUnresolve"
-              @add-reaction="handleAddReaction"
-              @remove-reaction="handleRemoveReaction"
-              class="mx-2"
-            />
-          </div>
-        </ScrollArea>
-
-        <div class="h-full space-y-1">
-          <TextField
-            name="comment"
-            v-model="newCommentBody"
-            @keydown.enter.meta.prevent.stop="handleCreateComment"
-            :placeholder="$t('labels.comments.placeholder')"
-            :auto-size="100"
-          />
-          <div class="flex justify-end">
-            <Button
-              :loading="createCommentMutation.isPending.value"
-              :disabled="!newCommentBody.trim()"
-              @click="handleCreateComment"
-            >
-              <span>{{ $t('labels.comments.addButton') }}</span>
-            </Button>
-          </div>
-        </div>
+      <div class="flex items-center justify-between gap-2">
+        <h4 class="min-w-0 truncate font-medium">{{ fieldLabel }}</h4>
+        <Button
+          variant="ghost"
+          size="toolbar"
+          :aria-label="$t('actions.close')"
+          @click="isOpen = false"
+        >
+          <Icon name="lucide:x" />
+        </Button>
       </div>
+
+      <QueryErrorState
+        v-if="commentsFailed"
+        flush
+        @retry="retryComments()"
+      />
+      <div
+        v-else
+        class="-mx-1 min-h-0 flex-1 overflow-y-auto px-3"
+      >
+        <CommentsList
+          :comments="fieldComments"
+          :is-loading="isLoadingComments"
+          :empty-text="$t('labels.comments.emptyField')"
+          mark-resolved
+        />
+      </div>
+
+      <CommentComposer
+        ref="composer"
+        v-model="draft"
+        class="shrink-0"
+        :placeholder="$t('labels.comments.placeholder')"
+        :submit-label="$t('labels.comments.addButton')"
+        :submit="
+          (body) =>
+            createComment.mutateAsync({
+              content_version_id: contentVersionId,
+              body,
+              item_id: itemId,
+              field,
+            })
+        "
+      />
     </PopoverContent>
   </Popover>
 </template>
+
+<style>
+/* The idle button belongs to the innermost field under the pointer or focus, so a
+   nested list doesn't light up every field in it. */
+.field-comment-trigger-idle:not([data-state='open']) {
+  opacity: 0;
+}
+
+[data-field-path]:hover:not(:has([data-field-path]:hover)) > .field-comment-trigger-idle,
+[data-field-path]:focus-within:not(:has([data-field-path]:focus-within))
+  > .field-comment-trigger-idle {
+  opacity: 1;
+}
+</style>

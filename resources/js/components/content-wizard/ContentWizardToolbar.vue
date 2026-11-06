@@ -115,7 +115,7 @@ defineEmits<{
       <Button
         variant="ghost"
         size="toolbar"
-        class="px-3 text-xs font-semibold"
+        class="px-3 text-sm font-semibold"
         @click="$emit('zoom-reset')"
       >
         1:1

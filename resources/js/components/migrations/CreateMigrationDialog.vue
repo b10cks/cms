@@ -210,7 +210,7 @@ const handleOpenChange = (newOpen: boolean) => {
           </Select>
           <p
             v-if="selectedStrategy"
-            class="text-muted-foreground mt-1.5 text-xs"
+            class="text-muted mt-1.5 text-sm"
           >
             {{ $t(selectedStrategy.description) }}
           </p>

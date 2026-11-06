@@ -138,6 +138,7 @@ describe('forSpace', () => {
   it('exposes exactly the known resource set', () => {
     expect(Object.keys(sdk.forSpace('space-1')).sort()).toEqual([
       'ai',
+      'aiOperations',
       'assetCollections',
       'assetFolders',
       'assetPackages',

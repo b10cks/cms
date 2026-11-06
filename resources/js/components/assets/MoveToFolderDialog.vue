@@ -106,12 +106,12 @@ watch(open, (isOpen) => {
           :placeholder="String($t('labels.assets.move.searchPlaceholder'))"
         />
 
-        <div class="max-h-80 overflow-y-auto rounded-md border border-input p-1">
+        <div class="max-h-80 overflow-y-auto rounded-md border border-border-strong p-1">
           <button
             type="button"
             :class="[
               'flex w-full cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 text-sm transition-colors',
-              targetFolderId === null ? 'bg-accent text-accent-foreground' : 'hover:bg-input',
+              targetFolderId === null ? 'bg-accent-fill text-accent-foreground' : 'hover:bg-input',
             ]"
             :disabled="!isValidTarget(null)"
             @click="targetFolderId = null"
@@ -126,7 +126,7 @@ watch(open, (isOpen) => {
             type="button"
             :class="[
               'flex w-full cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 text-sm transition-colors',
-              targetFolderId === folder.id ? 'bg-accent text-accent-foreground' : 'hover:bg-input',
+              targetFolderId === folder.id ? 'bg-accent-fill text-accent-foreground' : 'hover:bg-input',
               !isValidTarget(folder.id) ? 'pointer-events-none opacity-40' : '',
             ]"
             :style="{ paddingLeft: `${0.5 + depth * 1.25}rem` }"
@@ -138,7 +138,7 @@ watch(open, (isOpen) => {
               :style="{ color: folder.color || 'inherit' }"
             />
             <span class="truncate font-medium">{{ folder.name }}</span>
-            <span class="ml-auto shrink-0 text-xs text-muted">
+            <span class="ml-auto shrink-0 text-sm text-muted">
               {{ folder.assets_count ?? 0 }}
             </span>
           </button>

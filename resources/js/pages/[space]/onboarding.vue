@@ -231,7 +231,7 @@ const spaceLink = (name: string) => ({ name, params: { space: spaceId.value } })
                 class="flex items-center justify-between gap-3 rounded-xl bg-surface p-3 shadow-soft"
               >
                 <div class="min-w-0">
-                  <p class="text-xs text-muted">{{ deliveryToken.name }}</p>
+                  <p class="text-sm text-muted">{{ deliveryToken.name }}</p>
                   <code class="font-mono text-sm break-all">{{ deliveryToken.token }}</code>
                 </div>
                 <Button
@@ -257,7 +257,7 @@ const spaceLink = (name: string) => ({ name, params: { space: spaceId.value } })
                   <span>{{ t('labels.onboarding.steps.token.action') }}</span>
                 </Button>
               </RouterLink>
-              <p class="mt-2 text-xs text-muted">
+              <p class="mt-2 text-sm text-muted">
                 {{ t('labels.onboarding.steps.token.hint') }}
               </p>
             </div>
@@ -282,7 +282,7 @@ const spaceLink = (name: string) => ({ name, params: { space: spaceId.value } })
                     :name="framework.icon"
                     size="24"
                   />
-                  <span class="text-xs font-semibold">{{ framework.label }}</span>
+                  <span class="text-sm font-semibold">{{ framework.label }}</span>
                 </button>
               </div>
               <a
@@ -329,14 +329,14 @@ const spaceLink = (name: string) => ({ name, params: { space: spaceId.value } })
                     type="text"
                     :aria-label="t('labels.onboarding.steps.scaffold.directory')"
                     :placeholder="defaultDirectory"
-                    class="h-9 w-40 rounded-lg border border-border bg-input px-3 text-sm focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none"
+                    class="h-9 w-40 rounded-lg border border-border bg-input px-3 text-sm focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
                   />
                 </div>
                 <div
                   class="flex items-start justify-between gap-3 rounded-xl bg-surface p-3 shadow-soft"
                 >
                   <div class="min-w-0">
-                    <p class="text-xs text-muted">bash</p>
+                    <p class="text-sm text-muted">bash</p>
                     <code class="overflow-x-auto font-mono text-sm break-all whitespace-pre-wrap">{{
                       command
                     }}</code>
@@ -351,7 +351,7 @@ const spaceLink = (name: string) => ({ name, params: { space: spaceId.value } })
                     <span>{{ copied ? t('actions.copied') : t('actions.copy') }}</span>
                   </Button>
                 </div>
-                <p class="mt-2 text-xs text-muted">
+                <p class="mt-2 text-sm text-muted">
                   {{ t('labels.onboarding.steps.scaffold.tokenHint') }}
                 </p>
               </template>
@@ -390,7 +390,7 @@ const spaceLink = (name: string) => ({ name, params: { space: spaceId.value } })
         </StepperItem>
       </Stepper>
 
-      <h2 class="mb-4 text-md font-semibold">{{ t('labels.onboarding.resources.title') }}</h2>
+      <h2 class="mb-4 text-base font-semibold">{{ t('labels.onboarding.resources.title') }}</h2>
       <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <a
           v-for="card in resourceCards"

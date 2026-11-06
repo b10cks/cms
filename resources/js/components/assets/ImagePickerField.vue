@@ -57,7 +57,7 @@ const handleRemove = () => {
       type="button"
       :disabled="readOnly"
       :class="[
-        'flex items-center justify-center gap-2 rounded-lg border-2 border-dashed border-input bg-surface/50 p-6 text-sm text-muted transition-colors',
+        'flex items-center justify-center gap-2 rounded-lg border-2 border-dashed border-input-border bg-surface/50 p-6 text-sm text-muted transition-colors',
         readOnly ? 'cursor-default' : 'cursor-pointer hover:bg-surface hover:text-primary',
       ]"
       @click="showAssetPicker = true"
@@ -68,7 +68,7 @@ const handleRemove = () => {
 
     <div
       v-else
-      class="group relative max-w-sm overflow-hidden rounded-lg border border-input bg-surface"
+      class="group relative max-w-sm overflow-hidden rounded-lg border border-input-border bg-surface"
     >
       <NuxtImg
         :src="modelValue"
@@ -105,7 +105,7 @@ const handleRemove = () => {
 
     <p
       v-if="description"
-      class="text-xs text-muted"
+      class="text-sm text-muted"
     >
       {{ description }}
     </p>

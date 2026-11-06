@@ -159,7 +159,7 @@ watch(
         </div>
 
         <label
-          class="flex items-center justify-between rounded-lg border border-input px-3 py-2 text-sm"
+          class="flex items-center justify-between rounded-lg border border-border-strong px-3 py-2 text-sm"
         >
           <span class="font-medium text-primary">{{
             t('labels.provider.notes.fields.pinned')

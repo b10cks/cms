@@ -353,7 +353,7 @@ const handleSubmit = async () => {
                 <Icon :name="option === 'smart' ? 'ai:bot-star' : 'lucide:layers'" />
                 {{ $t(`labels.assetCollections.types.${option}`) }}
               </span>
-              <span class="text-xs text-muted">
+              <span class="text-sm text-muted">
                 {{ $t(`labels.assetCollections.types.${option}Description`) }}
               </span>
             </button>

@@ -5,7 +5,11 @@ import type {
   ContentTranslationImportMode,
   ContentTranslationImportResult,
 } from '~/types/content-translations'
-import type { ImportDialogLabels, ImportDialogMode, ImportProgress } from '~/types/import-export'
+import type {
+  ImportDialogLabels,
+  ImportDialogMode,
+  ImportDialogSubmit,
+} from '~/types/import-export'
 
 const props = withDefaults(
   defineProps<{
@@ -23,7 +27,6 @@ const { useImportContentTranslationsMutation } = useContent(props.spaceId)
 const importMutation = useImportContentTranslationsMutation()
 
 const createMissing = ref(false)
-const progress = ref<ImportProgress | null>(null)
 
 const labels = computed<ImportDialogLabels>(() => ({
   title: t('labels.contents.translationImport.title'),
@@ -58,24 +61,18 @@ const modes = computed<ImportDialogMode<ContentTranslationImportMode>[]>(() => [
   },
 ])
 
-const submit = async (
-  file: File,
-  mode: ContentTranslationImportMode
-): Promise<ContentTranslationImportResult> => {
-  progress.value = null
-
-  try {
-    return await importMutation.mutateAsync({
-      file,
-      mode,
-      createMissing: createMissing.value,
-      grid: props.grid,
-      onProgress: (value) => (progress.value = value),
-    })
-  } finally {
-    progress.value = null
-  }
-}
+const submit: ImportDialogSubmit<ContentTranslationImportResult, ContentTranslationImportMode> = (
+  file,
+  mode,
+  onProgress
+) =>
+  importMutation.mutateAsync({
+    file,
+    mode,
+    createMissing: createMissing.value,
+    grid: props.grid,
+    onProgress,
+  })
 </script>
 
 <template>
@@ -86,7 +83,6 @@ const submit = async (
     :modes="modes"
     :submit="submit"
     :pending="importMutation.isPending.value"
-    :progress="progress"
     :progress-label="
       ({ processed, total }) =>
         t('labels.contents.translationImport.progress', { processed, total })
@@ -107,7 +103,7 @@ const submit = async (
           <span class="block text-sm font-medium text-foreground">
             {{ t('labels.contents.translationImport.createMissing.label') }}
           </span>
-          <span class="block text-xs text-muted-foreground">
+          <span class="block text-sm text-muted">
             {{ t('labels.contents.translationImport.createMissing.description') }}
           </span>
         </span>
@@ -116,7 +112,7 @@ const submit = async (
 
     <template #label="{ item }">
       {{ item.name || item.content_id }}
-      <span class="ml-2 rounded bg-muted px-1.5 py-0.5 text-xs uppercase text-muted-foreground">
+      <span class="ml-2 rounded bg-muted-background px-1.5 py-0.5 text-sm uppercase text-muted">
         {{ item.language }}
       </span>
     </template>
@@ -126,7 +122,7 @@ const submit = async (
         <span
           v-for="(change, index) in item.changes"
           :key="`${item.content_id}-${item.language}-${index}`"
-          class="rounded-md bg-muted/50 px-2 py-1 text-xs text-foreground"
+          class="rounded-md bg-muted-background px-2 py-1 text-sm text-foreground"
         >
           {{ change.label }}
         </span>

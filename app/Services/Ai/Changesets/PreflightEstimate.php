@@ -28,15 +28,24 @@ final class PreflightEstimate
      */
     public static function for(array $entries, ?AiModelDto $model, ?float $observed = null): array
     {
-        $source = array_sum(array_column($entries, 'tokens'));
-        $input = \count($entries) * self::STEP_OVERHEAD_TOKENS + 2 * $source;
-        $output = \count($entries) * self::OUTPUT_OVERHEAD_TOKENS + $source;
+        return self::forTotals(\count($entries), array_sum(array_column($entries, 'tokens')), $model, $observed);
+    }
+
+    /**
+     * The same estimate from an entry count and their summed source tokens.
+     *
+     * @return array{input_tokens: int, output_tokens: int, cost_usd: float}
+     */
+    public static function forTotals(int $entries, int $source, ?AiModelDto $model, ?float $observed = null): array
+    {
+        $input = $entries * self::STEP_OVERHEAD_TOKENS + 2 * $source;
+        $output = $entries * self::OUTPUT_OVERHEAD_TOKENS + $source;
 
         return [
             'input_tokens' => $input,
             'output_tokens' => $output,
             'cost_usd' => $observed !== null
-                ? round($observed * \count($entries), 4)
+                ? round($observed * $entries, 4)
                 : round($model ? ($input * $model->inputCost + $output * $model->outputCost) / 1_000_000 : 0.0, 4),
         ];
     }
@@ -63,6 +72,8 @@ final class PreflightEstimate
             ->where('r.skill', $skill)
             ->where('r.state', AiRunState::Completed->value)
             ->where('r.cost_usd', '>', 0)
+            // Operation batches share one changeset, so per-run entry counts do not apply.
+            ->whereNull('r.operation_id')
             ->groupBy('r.id', 'r.cost_usd')
             ->selectRaw("{$wrap('r.cost_usd')} as cost, count(distinct coalesce({$wrap('i.target_id')}, {$wrap('i.id')})) as entries");
 

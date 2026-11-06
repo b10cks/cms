@@ -35,8 +35,8 @@ watch(
   <DropdownMenu>
     <DropdownMenuTrigger
       :disabled="disabled || isLoading"
-      class="inline-flex h-7 min-w-0 cursor-pointer items-center gap-1.5 rounded-md px-2 text-sm text-muted transition-colors outline-none hover:bg-muted-background hover:text-foreground focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 data-[state=open]:bg-muted-background data-[state=open]:text-foreground"
-      :class="!isLoading && !selected && 'text-warning'"
+      class="inline-flex h-7 min-w-0 cursor-pointer items-center gap-1.5 rounded-md px-2 text-sm transition-colors outline-none hover:bg-muted-background hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 data-[state=open]:bg-muted-background data-[state=open]:text-foreground"
+      :class="!isLoading && !selected ? 'text-warning-ink' : 'text-muted'"
       :aria-label="$t('components.aiThreads.config.label')"
       data-config-picker
     >

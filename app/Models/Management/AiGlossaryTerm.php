@@ -2,44 +2,40 @@
 
 namespace App\Models\Management;
 
+use App\Services\Ai\Knowledge\Concepts\GlossaryConcepts;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
+ * What one language of a concept says. `preferred` null with `forbidden` set is a ban.
+ * {@see GlossaryConcepts} is the only writer.
+ *
  * @property string $id
- * @property string $glossary_id
- * @property string $source_locale
- * @property string $term
- * @property array<string, string>|null $translations
- * @property bool $case_sensitive
- * @property bool $do_not_translate
- * @property list<string>|null $forbidden
- * @property string|null $note
+ * @property string $concept_id
+ * @property string $locale normalized, one per concept
+ * @property string|null $preferred Use
+ * @property list<string>|null $forbidden Avoid
+ * @property list<string>|null $aliases Also written as
  */
 class AiGlossaryTerm extends GlobalModel
 {
     use HasUlids;
 
-    protected $fillable = [
-        'glossary_id',
-        'source_locale',
-        'term',
-        'translations',
-        'case_sensitive',
-        'do_not_translate',
-        'forbidden',
-        'note',
-    ];
+    protected $fillable = ['concept_id', 'locale', 'preferred', 'forbidden', 'aliases'];
 
     protected $casts = [
-        'translations' => 'array',
-        'case_sensitive' => 'boolean',
-        'do_not_translate' => 'boolean',
         'forbidden' => 'array',
+        'aliases' => 'array',
     ];
 
-    public function glossary(): BelongsTo
+    public function scopeInGlossary(Builder $query, string $glossaryId): Builder
     {
-        return $this->belongsTo(AiGlossary::class, 'glossary_id');
+        return $query->whereIn('concept_id', AiGlossaryConcept::query()->select('id')->where('glossary_id', $glossaryId));
+    }
+
+    public function concept(): BelongsTo
+    {
+        return $this->belongsTo(AiGlossaryConcept::class, 'concept_id');
     }
 }

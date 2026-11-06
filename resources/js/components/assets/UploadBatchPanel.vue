@@ -128,7 +128,7 @@ const hasRetryable = computed(() => failures.value.some((item) => !item.permanen
                 />
                 <span class="min-w-0 flex-1 truncate">{{ item.file.name }}</span>
               </span>
-              <span class="truncate pl-6 text-xs text-muted">
+              <span class="truncate pl-6 text-sm text-muted">
                 <template v-if="item.folderPath">{{ item.folderPath }} · </template>
                 {{ failureLabel(item) }}
               </span>

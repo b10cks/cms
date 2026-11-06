@@ -28,8 +28,8 @@ const metaParams = computed(() => ({ ...props.meta }) as Record<string, unknown>
 </script>
 
 <template>
-  <div class="flex items-center px-2 py-2">
-    <div class="text-sm font-semibold text-muted">
+  <div class="flex flex-wrap items-center gap-2 px-3 py-2">
+    <div class="text-sm text-muted tabular-nums">
       {{ meta.total ? $t('labels.showingEntries', metaParams) : $t('labels.nothingToShow') }}
     </div>
     <LaravelPagination

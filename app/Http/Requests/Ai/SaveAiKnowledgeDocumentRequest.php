@@ -16,6 +16,7 @@ class SaveAiKnowledgeDocumentRequest extends FormRequest
             'title' => [$creating ? 'required' : 'sometimes', 'string', 'max:255'],
             'slug' => [$creating ? 'required' : 'sometimes', 'string', 'max:120', 'regex:/^[a-z0-9]+(-[a-z0-9]+)*$/'],
             'type' => [$creating ? 'required' : 'sometimes', Rule::enum(AiKnowledgeType::class)],
+            'locale' => ['sometimes', 'nullable', 'string', 'max:20', 'regex:/^[A-Za-z]{2,3}([_-][A-Za-z0-9]{2,8})*$/'],
             'enabled' => ['sometimes', 'boolean'],
             'draft' => ['sometimes', 'nullable', 'string', 'max:500000'],
         ];
