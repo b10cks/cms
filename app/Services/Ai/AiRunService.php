@@ -778,9 +778,8 @@ class AiRunService
         $wasInline = $run->mode === AiRun::MODE_INLINE;
         $run->mode = AiRun::MODE_BACKGROUND;
         $this->checkpoint($run, $transcript);
-
-        if ($wasInline) {
-            yield $this->emit($run, RunEventType::MovedToBackground, []);
+        $moved = $wasInline ? $this->emit($run, RunEventType::MovedToBackground, []) : null;
+        if ($moved) {
             $this->store($run);
         }
 
@@ -789,6 +788,11 @@ class AiRunService
         $run->lease = null;
         $lease->release();
         RunAgentJob::dispatch($run->space_id, $run->id);
+
+        // Last: the stream closes on this event and never resumes the generator.
+        if ($moved) {
+            yield $moved;
+        }
     }
 
     /**

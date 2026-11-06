@@ -164,7 +164,7 @@ class AiRunServiceTest extends TestCase
         );
 
         $run = $this->service()->start($this->start());
-        $inline = $this->drain($this->service()->advance($run, microtime(true) + 0.2));
+        $inline = $this->streamed($this->service()->advance($run, microtime(true) + 0.2));
 
         $this->assertSame('moved_to_background', end($inline)->type->value);
         $this->assertSame(AiRun::MODE_BACKGROUND, $run->refresh()->mode);
@@ -341,5 +341,24 @@ class AiRunServiceTest extends TestCase
     private function drain(\Generator $events): array
     {
         return iterator_to_array($events, false);
+    }
+
+    /**
+     * Read events the way the SSE stream does: it stops at the first terminal
+     * event and never resumes the generator.
+     *
+     * @return list<RunEvent>
+     */
+    private function streamed(\Generator $events): array
+    {
+        $read = [];
+        foreach ($events as $event) {
+            $read[] = $event;
+            if ($event->isTerminal()) {
+                break;
+            }
+        }
+
+        return $read;
     }
 }
