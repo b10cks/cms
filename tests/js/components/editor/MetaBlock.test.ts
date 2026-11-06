@@ -13,6 +13,8 @@ vi.mock('~/composables/useAiErrorToast', () => ({ useAiErrorToast: () => ({ show
 vi.mock('~/composables/useAiModels', () => ({
   useAiConfigs: () => ({ useAiConfigsQuery: () => ({ data: ref([{ id: 'config', is_default: true }]) }) }),
 }))
+vi.mock('~/composables/useSpace', () => ({ useSpaces: () => ({ useSpaceQuery: () => ({ data: ref(null) }) }) }))
+vi.mock('~/composables/useSpaceSettings', () => ({ default: () => ({ settings: ref({ content: { environment: null, siteLocale: null } }) }) }))
 vi.mock('vue-sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }))
 
 const MetaBlock = (await import('~/components/editor/MetaBlock.vue')).default
@@ -22,7 +24,7 @@ const mountBlock = () =>
     props: { item: { key: 'meta' }, modelValue: {}, spaceId: 'space' },
     global: {
       provide: { content: ref({ name: 'Seite', language_iso: 'de', content: {} }) },
-      stubs: { AssetBlock: true, LinkEditor: true, RobotsDirectiveEditor: true, AiConfigMenuItems: true, SplitButton: { template: '<button data-generate @click="primaryAction()" />', props: ['primaryAction'] } },
+      stubs: { MetaPreview: true, AssetBlock: true, LinkEditor: true, RobotsDirectiveEditor: true, AiConfigMenuItems: true, SplitButton: { template: '<button data-generate @click="primaryAction()" />', props: ['primaryAction'] } },
     },
   })
 
