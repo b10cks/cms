@@ -4,7 +4,7 @@ Updated 2026-11-06. Read by agents at the start of a thread; rewrite it before h
 
 ## Branches
 
-- `main` (checked out): security rounds 1 and 2, streaming imports, AI content operations, the UX refinements, #66 (large asset checksum) and #65 (serial and slug docs), merged 2026-11-06 for the next release. Full PHPUnit, Vitest, typecheck and oxlint pass.
+- `main` (checked out): released as v2026.11.6-c74a9a65, then security round 3 merged on top (f7b327da, five 🔒 commits efdf3084..a6cc98e7, not released, not pushed). Full PHPUnit passes (2041 passed, 5 skipped). Draft advisories GHSA-rhr5-hf7m-33jf (mail injection), GHSA-fh7x-m2rf-6796 (SAML skips 2FA), GHSA-7g4p-qm7c-468h (step-up grace), GHSA-x748-ffgj-w7gw (breadcrumbs) say "fixed in the next release after v2026.11.6-c74a9a65"; publish them with that release.
 - Merged into main, can be deleted with their worktrees: `fix/security-review-round-2`, `feat/import-streaming-progress`, `feat/ai-content-operations-clean`, `feat/ux-refinements`, `feature/provider-activity`, `feature/verified-team-domains`, `delta/security-review`.
 - `feat/ai-content-operations` (retired working branch) and `archive/ai-content-operations-history` (full 142-commit history): reference only.
 - Dependabot #56, #57, #58, #59, #64 (Actions bumps, three touch `deploy.yml`): held for a release of their own.
@@ -33,6 +33,10 @@ Shipped on 2026-11-06 with these open, by Mike's call. Fix `settleBatch` first.
 - UX should-fix: no confirm on "Reject all/selected"; the bulk dialog hands a promptless skill to a dialog that needs one; operation panels lack error states and lose unsaved plan edits; `?scope=` strands a leaf team.
 
 ## Waiting on Mike
+
+- Push main and cut the release with security round 3, then publish its four draft advisories.
+- Read-only production check for misuse of the LemonSqueezy `space_id` hole: unexpected subscriptions, or one cancelled locally when another was created.
+- SAML trust model: a team's IdP can still sign in as members without 2FA, and that session reaches their other teams.
 
 - Autosave (changes the version model) and the `comments/mentionable` route (shows names and avatars to anyone who can read comments): confirm both.
 - Whether the tooltip that reappears after Esc closes a dialog stays.
