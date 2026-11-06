@@ -3,6 +3,33 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.11.6-04136717] — 2026-11-6
+
+- 📝 Record the translation toolbar and the prepared release
+- ✅ Mock the space and its settings in the meta field tests
+- 📝 Record the rated rule for the translation view toolbar
+- 💄 Filter the translation view by status from a sticky legend
+- 📝 Record the translation view upgrade and its screenshot data
+- 📝 Regenerate the API specs for the translation endpoints and security round 3
+- ✨ Show outdated translations, glossary and memory in the translation view
+- 📝 Record the rated rules for the entry editor fields and the meta preview
+- ✨ Preview search and share cards per platform in the meta field
+- 💄 Theme the map for dark mode and join the coordinates to it
+- 💄 Make the rich text toolbar and editor one field
+- ✨ Pick references with the link field's entry search and show them as rows
+- 💄 Show each price as one field with the region in front and the currency behind
+- ✨ Head an opened nested item with its title, its ancestors and a back button
+- 💄 Run the insert line across the whole list and center the end button
+- 💄 Mark the current space with the menu wash and a check instead of the accent fill
+- ✨ Let form fields put a count or an action at the end of their label row
+- 🌐 Add the strings for the entry editor polish in all languages
+- 📝 Record security round 3 on main and its draft advisories
+- 🔒 Escape user values in mail lines for HTML and Markdown
+- 🔒 Leave the content of unpublished ancestors out of published breadcrumbs
+- 🔒 Link LemonSqueezy purchases only to the subscription the app created
+- 🔒 Ask for the account's own 2FA after a SAML sign-in
+- 🔒 Keep a 2FA step-up to the browser session that passed it
+
 ## [v2026.11.6-c74a9a65] — 2026-11-6
 
 - 📝 Record the merged release set and the open settleBatch fix
