@@ -4062,7 +4062,9 @@
       "unknownContent": "Unknown content",
       "duplicateTitle": "Already added",
       "removeReference": "Remove Reference",
-      "referencesCount": "{current} of {max}"
+      "referencesCount": "{current} of {max}",
+      "replace": "Replace reference",
+      "open": "Open entry"
     },
     "link": {
       "type": "Link Type",
@@ -4903,7 +4905,8 @@
     "zoomOut": "Zoom out",
     "zoomToFit": "Zoom to fit",
     "moreActions": "More actions",
-    "moreOptions": "More options"
+    "moreOptions": "More options",
+    "backTo": "Back to {name}"
   },
   "navigation": {
     "home": "Home",
@@ -5775,6 +5778,17 @@
       "releaseMessage": "This release holds {count} entry with flagged wording or a conflict. | This release holds {count} entries with flagged wording or a conflict.",
       "confirmCommit": "Commit anyway",
       "confirmPublish": "Publish anyway"
+    },
+    "metaPreview": {
+      "noDescription": "No description: Google picks text from the page",
+      "pixels": "{width} / {limit} px",
+      "pixelsHint": "Google cuts by rendered width, not by characters",
+      "noImage": "No image: the card shows text only",
+      "fromHost": "From {host}",
+      "borrowsSearchTitle": "Uses the search title, no Open Graph title set",
+      "previewOn": "Preview on {platform}",
+      "titleCut": "Title cut:",
+      "descriptionCut": "Description cut:"
     }
   },
   "alertDialog": {

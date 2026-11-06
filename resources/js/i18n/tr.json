@@ -4062,7 +4062,9 @@
       "unknownContent": "Bilinmeyen içerik",
       "duplicateTitle": "Zaten eklendi",
       "removeReference": "Başvuruyu Kaldır",
-      "referencesCount": "{current} / {max}"
+      "referencesCount": "{current} / {max}",
+      "replace": "Referansı değiştir",
+      "open": "Girdiyi aç"
     },
     "link": {
       "type": "Bağlantı Türü",
@@ -4903,7 +4905,8 @@
     "zoomOut": "Uzaklaştır",
     "zoomToFit": "Sığdırmak için yakınlaştır",
     "moreActions": "Daha fazla işlem",
-    "moreOptions": "Daha fazla seçenek"
+    "moreOptions": "Daha fazla seçenek",
+    "backTo": "{name} sayfasına dön"
   },
   "navigation": {
     "home": "Ana sayfa",
@@ -5775,6 +5778,17 @@
       "releaseMessage": "This release holds {count} entry with flagged wording or a conflict. | This release holds {count} entries with flagged wording or a conflict.",
       "confirmCommit": "Commit anyway",
       "confirmPublish": "Publish anyway"
+    },
+    "metaPreview": {
+      "noDescription": "Açıklama yok: Google sayfadan metin seçer",
+      "pixels": "{width} / {limit} px",
+      "pixelsHint": "Google karaktere göre değil genişliğe göre keser",
+      "noImage": "Görsel yok: kart yalnızca metin gösterir",
+      "fromHost": "{host} kaynağından",
+      "borrowsSearchTitle": "Arama başlığını kullanır, Open Graph başlığı yok",
+      "previewOn": "{platform} önizlemesi",
+      "titleCut": "Başlıkta kesilen:",
+      "descriptionCut": "Açıklamada kesilen:"
     }
   },
   "alertDialog": {

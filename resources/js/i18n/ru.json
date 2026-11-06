@@ -4062,7 +4062,9 @@
       "unknownContent": "Неизвестный контент",
       "duplicateTitle": "Уже добавлено",
       "removeReference": "Удалить связь",
-      "referencesCount": "{current} из {max}"
+      "referencesCount": "{current} из {max}",
+      "replace": "Заменить ссылку",
+      "open": "Открыть запись"
     },
     "link": {
       "type": "Тип ссылки",
@@ -4903,7 +4905,8 @@
     "zoomOut": "Уменьшить",
     "zoomToFit": "По размеру",
     "moreActions": "Ещё действия",
-    "moreOptions": "Ещё параметры"
+    "moreOptions": "Ещё параметры",
+    "backTo": "Назад к {name}"
   },
   "navigation": {
     "home": "Главная",
@@ -5775,6 +5778,17 @@
       "releaseMessage": "This release holds {count} entry with flagged wording or a conflict. | This release holds {count} entries with flagged wording or a conflict.",
       "confirmCommit": "Commit anyway",
       "confirmPublish": "Publish anyway"
+    },
+    "metaPreview": {
+      "noDescription": "Нет описания: Google возьмёт текст со страницы",
+      "pixels": "{width} / {limit} px",
+      "pixelsHint": "Google обрезает по ширине, а не по числу символов",
+      "noImage": "Нет изображения: карточка покажет только текст",
+      "fromHost": "С {host}",
+      "borrowsSearchTitle": "Используется заголовок для поиска, заголовок Open Graph не задан",
+      "previewOn": "Предпросмотр в {platform}",
+      "titleCut": "Обрезано в заголовке:",
+      "descriptionCut": "Обрезано в описании:"
     }
   },
   "alertDialog": {

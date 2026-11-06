@@ -4076,7 +4076,9 @@
       "unknownContent": "Unbekannter Inhalt",
       "duplicateTitle": "Bereits hinzugefügt",
       "removeReference": "Referenz entfernen",
-      "referencesCount": "{current} von {max}"
+      "referencesCount": "{current} von {max}",
+      "replace": "Referenz ersetzen",
+      "open": "Eintrag öffnen"
     },
     "link": {
       "type": "Link-Typ",
@@ -4917,7 +4919,8 @@
     "zoomOut": "Verkleinern",
     "zoomToFit": "Auf Ansicht einpassen",
     "moreActions": "Weitere Aktionen",
-    "moreOptions": "Weitere Optionen"
+    "moreOptions": "Weitere Optionen",
+    "backTo": "Zurück zu {name}"
   },
   "navigation": {
     "home": "Start",
@@ -5791,6 +5794,17 @@
       "releaseMessage": "Dieses Release enthält {count} Eintrag mit markierter Formulierung oder Konflikt. | Dieses Release enthält {count} Einträge mit markierten Formulierungen oder Konflikten.",
       "confirmCommit": "Trotzdem committen",
       "confirmPublish": "Trotzdem veröffentlichen"
+    },
+    "metaPreview": {
+      "noDescription": "Keine Beschreibung: Google wählt Text von der Seite",
+      "pixels": "{width} / {limit} px",
+      "pixelsHint": "Google kürzt nach Breite, nicht nach Zeichen",
+      "noImage": "Kein Bild: die Karte zeigt nur Text",
+      "fromHost": "Von {host}",
+      "borrowsSearchTitle": "Nutzt den Suchtitel, kein Open-Graph-Titel gesetzt",
+      "previewOn": "Vorschau auf {platform}",
+      "titleCut": "Titel gekürzt:",
+      "descriptionCut": "Beschreibung gekürzt:"
     }
   },
   "alertDialog": {
