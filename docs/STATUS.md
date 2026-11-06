@@ -4,9 +4,10 @@ Updated 2026-11-06. Read by agents at the start of a thread; rewrite it before h
 
 ## Branches
 
-- `main` (checked out, pushed): released as v2026.11.6-04136717 on 2026-11-06 (security round 3, entry editor polish, translation view upgrade and status toolbar); deploy, self-hosted release and tests all green. Publish the four draft advisories (GHSA-rhr5-hf7m-33jf, GHSA-fh7x-m2rf-6796, GHSA-7g4p-qm7c-468h, GHSA-x748-ffgj-w7gw). Fix for the stale form after AI Translate committed on main (TiptapEditor wrapper around the AI bubble menu), not pushed or released; waiting on Mike's local review, then `./release.sh`. The 2027 entry editor directions (https://claude.ai/artifact/J1RLxqne22bpkjBVFf4Qse) are parked by Mike.
-- Merged into main, can be deleted with their worktrees: `fix/security-review-round-2`, `feat/import-streaming-progress`, `feat/ai-content-operations-clean`, `feat/ux-refinements`, `feature/provider-activity`, `feature/verified-team-domains`, `delta/security-review`.
-- `feat/ai-content-operations` (retired working branch) and `archive/ai-content-operations-history` (full 142-commit history): reference only.
+- `main` (pushed): released as v2026.11.6-91d4320d, including the AI Translate stale-form fix. Publish the four draft advisories (GHSA-rhr5-hf7m-33jf, GHSA-fh7x-m2rf-6796, GHSA-7g4p-qm7c-468h, GHSA-x748-ffgj-w7gw).
+- `fix/ai-translate-large-pages` (local, 4 commits, not pushed): large pages failed to AI-translate in production and small ones arrived all at once. Cause: the image sets `allow_url_fopen=Off`, so Guzzle buffered every streamed provider call over curl and CloudFront (30s origin read timeout) dropped silent streams. Streamed turns now use Symfony's curl client (`StreamingTransport`, `ChunkStream`), pings keep the SSE stream alive while the provider is silent, the inline-to-background handover now dispatches its job, and the localization page applies streamed fields in 500ms batches. All 500 AI tests, typecheck and lint pass; verified locally with `-d allow_url_fopen=0` (first token 36s → 7s). Needs Mike's review, then merge and release.
+- Merged into main, can be deleted with their worktrees: `fix/security-review-round-2`, `feat/import-streaming-progress` (worktree `.claude/worktrees/import-streaming`), `feat/ai-content-operations-clean`, `feat/ux-refinements`, `feature/provider-activity`, `feature/verified-team-domains`, `delta/security-review`.
+- `feat/ai-content-operations` (retired) and `archive/ai-content-operations-history`: reference only.
 - Dependabot #56, #57, #58, #59, #64 (Actions bumps, three touch `deploy.yml`): held for a release of their own.
 - Tags `archive/w7-before-reduction`, `archive/w8-before-simplify`: what W8 and W9 removed.
 
@@ -14,43 +15,29 @@ Updated 2026-11-06. Read by agents at the start of a thread; rewrite it before h
 
 None.
 
-## Local data changed for screenshots
+## Local data changed for screenshots and repros
 
-- Factory user `adell.witting@example.net` (password `password`) is an Admin of local spaces "B10cks Website2" and, since 2026-11-06, "SchlafTEQ". Remove when no more rating rounds need it.
-- B10cks Website2 Config entry, version `01kw6na6zw47jk75kgzhcwpbjq`: the Pricing menu link points at Home, section "Atomic Design Principles". It was `{"type":"internal","target":null,"content":"01kh3cvbj3qxfvv8pp9mwwwvt1"}`, a dangling id.
-- SchlafTEQ space `01kkk9mqjw2kn06vknz28t7ncg` (another thread): glossary "schlafTEQ Glossar" with 188 rows, AI config, unpublished AI drafts left for review: meta on `/kontakt-und-termine`, translations `/produkte/beds` (en), `/produkte/bedden` (nl), `/produkte/lits` (fr, with meta) and `/produkte/letti` (it). The five Reference docs that duplicated the glossary were soft-deleted on 2026-11-06; live policy now holds the glossary only. Management migration `2026_11_05_100000_normalize_ai_glossary_terms` is applied locally.
-
-- B10cks Website2 (local), for the translation view screenshots: "Blocks testing" `01KK1S2RKFE50Q2NQZ29Q8VHPE` has `i18n_mode_override: overlay` (was `inherit`) and a new current version `01m6rbr8ppkrv0qa0yberpw8ke` with a changed header and item-1 label (was `01kp1n314td35y8nef81fnz57q`); a German translation `01m6rbqz13rcp2e4ggfg960hp2` was created, published (4 memory pairs) and given a draft with "Bausteinen"; a space glossary "Website terms" `01m6rcj5eg9v4ndy3kf63ze9zd` (blocks, content model, b10cks). "For Agencies" was switched to overlay and back to `inherit`.
-
-- SchlafTEQ, for the locale-switch repro (2026-11-06): "Termin stornieren" EN published with its first body field ending in " x"; "Impressum" got a new published EN translation ("Legal notice EN" in one field); "Termin stornieren" meta field has " q w" saved; "Home" EN has two saved test drafts.
+- Factory user `adell.witting@example.net` (password `password`) is an Admin of "B10cks Website2" and "SchlafTEQ". Remove when no rating rounds need it.
+- B10cks Website2: Config entry version `01kw6na6zw47jk75kgzhcwpbjq` Pricing link points at Home/"Atomic Design Principles" (was a dangling id); "Blocks testing" `01KK1S2RKFE50Q2NQZ29Q8VHPE` is overlay with a German translation `01m6rbqz13rcp2e4ggfg960hp2` and glossary "Website terms".
+- SchlafTEQ `01kkk9mqjw2kn06vknz28t7ncg`: glossary "schlafTEQ Glossar" (188 rows), unpublished AI drafts on `/kontakt-und-termine`, `/produkte/beds|bedden|lits|letti`; locale-switch test edits on "Termin stornieren", "Impressum" and "Home" EN. Three completed `translate-fields` test runs for "Level 24 Pro" from 2026-11-06 (nothing saved).
 
 ## Running
 
 None.
 
-## Merge review of the clean branch, 2026-11-05
-
-Shipped on 2026-11-06 with these open, by Mike's call. Fix `settleBatch` first.
-
-- Blocker, fix next: `AiOperations::settleBatch` charges an attempt to every unreached entry when a batch stops on `max_tokens`, `max_steps` or `max_seconds`; after two attempts they fail as `not_processed` and the operation still completes.
-- Backend should-fix: `OperationReview` loads all items into memory; `TEXT` lineage columns overflow over 64 KB; `approve` triages inside the request; review endpoints skip the target view check; `startPlanning` takes no lock; `GlossaryMatcher` cache capped by count; style guides uncapped in the prompt; wording checks read raw HTML and JSON; `IconDataImportService` yields inside a transaction; unread glossary rows stored every run.
-- UX should-fix: no confirm on "Reject all/selected"; the bulk dialog hands a promptless skill to a dialog that needs one; operation panels lack error states and lose unsaved plan edits; `?scope=` strands a leaf team.
-
 ## Waiting on Mike
 
-- Push main and cut the release with security round 3, then publish its four draft advisories.
-- Read-only production check for misuse of the LemonSqueezy `space_id` hole: unexpected subscriptions, or one cancelled locally when another was created.
-- SAML trust model: a team's IdP can still sign in as members without 2FA, and that session reaches their other teams.
-
-- Autosave (changes the version model) and the `comments/mentionable` route (shows names and avatars to anyone who can read comments): confirm both.
+- Review and merge `fix/ai-translate-large-pages`, then `./release.sh`. Recommend releasing soon: every AI call over 30s fails in production today.
+- Read-only production check for misuse of the LemonSqueezy `space_id` hole.
+- SAML trust model: a team's IdP can sign in as members without 2FA, reaching their other teams.
+- Autosave (changes the version model) and the `comments/mentionable` route: confirm both.
 - Whether the tooltip that reappears after Esc closes a dialog stays.
-- `docs/milestones/reliable-ai-content-operations` and `docs/evidence`: keep on the merged version or archive only.
-- "Used in" for the content info pane: parked by Mike on 2026-11-06. Half a day to a day by generalizing `AssetUsageService` to `link_ids` and `relation_ids`.
+- `docs/milestones/reliable-ai-content-operations` and `docs/evidence`: keep or archive.
+- "Used in" for the content info pane: parked 2026-11-06 (half a day to a day via `AssetUsageService`).
 
 ## Next
 
-0. Release the AI Translate stale-form fix once Mike has reviewed it locally. Root cause: disabling the translation editors during AI Translate unmounted the AI BubbleMenu, whose element is detached while hidden; Vue's patch threw (`emitsOptions` / `insertBefore` of null) and the editor stopped updating.
-1. Fix `AiOperations::settleBatch` (see "Merge review"), then the backend should-fix items.
-2. UI follow-ups from the 2026-11-05 audit (32 findings, team switcher and tree search rules already settled): solid blue menu highlights, hand-rolled `ContentSelect`, row action sizes, status text on `-ink` tokens, light-only alerts, confirm dialog and Cancel looks, sheet padding. Also: space blueprint radio cards, Mass Edit grid monospace 10px slugs, hard-coded dimension labels, the 500 on version filters `isCurrentVersion`/`isPublished`, the rich-text link dialog's old picker, missing `common.select`, "Automations" cut off in the rail.
-3. Right after the deploy: `php artisan migrate --force` (management migrations `2026_11_02_100000`, `2026_11_02_120000`, `2026_11_05_100000_normalize_ai_glossary_terms`), then `spaces:repair-databases --dry-run` and without the flag (space migrations 000021 to 000028).
-4. After the import release, rerun the 2026-11-03 17:52 metadata file on production.
+1. After the large-pages release, check a big AI translation on app.b10cks.com streams live. Bedrock streaming still goes through the AWS SDK's Guzzle handler and buffers the same way in production.
+2. Fix `AiOperations::settleBatch`: it charges an attempt to every unreached entry when a batch stops on `max_tokens`, `max_steps` or `max_seconds`. Then the backend should-fix list from the 2026-11-05 merge review (`OperationReview` memory, 64 KB `TEXT` lineage, approve triage in request, review view checks, `startPlanning` lock, glossary cache cap, uncapped style guides, wording checks on raw HTML, `IconDataImportService` yield in transaction).
+3. UI follow-ups from the 2026-11-05 audit (32 findings) and UX should-fix (confirm on reject all, promptless bulk skill, operation panel error states, `?scope=` leaf team).
+4. After each deploy: `php artisan migrate --force`, then `spaces:repair-databases --dry-run` and without the flag.
