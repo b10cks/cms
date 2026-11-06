@@ -162,6 +162,11 @@ const insertPlaceholder = (placeholder: Placeholder) => {
 
 const canLinkUrl = computed(() => isEnabled('link'))
 const canLinkInternal = computed(() => isEnabled('internalLink') && !!props.spaceId)
+/**
+ * Gates the AI menu, a BubbleMenu that takes its element out of the DOM while hidden.
+ * Toggled on its own, Vue looks for that element's parent on unmount, finds none and
+ * stops patching the editor, so the template toggles a wrapper around it instead.
+ */
 const aiEnabled = useAiEnabled(() => props.spaceId)
 const canLink = computed(() => canLinkUrl.value || canLinkInternal.value)
 const isLinkActive = computed(
@@ -784,11 +789,15 @@ onBeforeUnmount(() => {
       data-validation-target="true"
     />
 
-    <RichTextAiMenu
+    <div
       v-if="editor && spaceId && aiEnabled && !props.disabled"
-      :editor="editor"
-      :space-id="spaceId"
-    />
+      class="contents"
+    >
+      <RichTextAiMenu
+        :editor="editor"
+        :space-id="spaceId"
+      />
+    </div>
 
     <LinkDialog
       v-if="canLink && !props.disabled"
