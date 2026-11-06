@@ -23,6 +23,7 @@ use App\Services\Ai\Drivers\StreamsOpenAiTurns;
 use App\Services\Ai\Exceptions\ProviderCallFailed;
 use App\Services\Ai\Exceptions\ProviderFailure;
 use App\Services\Ai\Exceptions\ProviderFailureKind;
+use App\Services\Ai\Exceptions\ProviderTransportException;
 use App\Services\Ai\Run\RunOptions;
 use App\Services\Ai\Run\StartRun;
 use App\Services\Ai\Run\ToolCall;
@@ -498,6 +499,8 @@ class AiProviderRecoveryTest extends TestCase
             '400 schema' => [[new Response(400, $json, '{"error":{"message":"Too long","code":"context_length_exceeded"}}')], ProviderFailureKind::Rejected, 400, 'context_length_exceeded', null, null],
             'could not connect' => [[new ConnectException('Refused.', $request, null, ['errno' => \CURLE_COULDNT_CONNECT])], ProviderFailureKind::Connection, null, null, null, null],
             'timeout may have reached the provider' => [[new ConnectException('Timed out.', $request, null, ['errno' => \CURLE_OPERATION_TIMEOUTED])], ProviderFailureKind::Interrupted, null, null, null, null],
+            'streamed call never left' => [[new ProviderTransportException($request, false, new \RuntimeException('Could not resolve host'))], ProviderFailureKind::Connection, null, null, null, null],
+            'streamed call sent, then lost' => [[new ProviderTransportException($request, true, new \RuntimeException('Idle timeout reached'))], ProviderFailureKind::Interrupted, null, null, null, null],
             'error inside the stream' => [[new Response(200, [], $start.'data: {"error":{"message":"Upstream gone","code":502}}'."\n\n")], ProviderFailureKind::Interrupted, 502, '502', null, 'gen-9'],
             'permanent error inside the stream' => [[new Response(200, [], $start.'data: {"error":{"message":"Blocked","code":403}}'."\n\n")], ProviderFailureKind::Auth, 403, '403', null, 'gen-9'],
             'unrecognized error inside the stream' => [[new Response(200, [], $start.'data: {"error":{"message":"Hm","code":"odd_thing"}}'."\n\n")], ProviderFailureKind::Unknown, 200, 'odd_thing', null, 'gen-9'],

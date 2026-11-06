@@ -22,6 +22,15 @@ trait StreamsOpenAiTurns
 {
     abstract protected function getClient(): Client;
 
+    /** Streamed turns bypass Guzzle, which buffers them without `allow_url_fopen`. */
+    protected function streamingTransport(): StreamingTransport
+    {
+        return StreamingTransport::create(
+            (float) ($this->config['connect_timeout'] ?? 10),
+            (float) ($this->config['stream_idle_timeout'] ?? 120),
+        );
+    }
+
     public function turn(Transcript $transcript, ToolSet $tools, RunOptions $options): Generator
     {
         $params = $this->buildChatParams(

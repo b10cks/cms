@@ -46,6 +46,7 @@ class OpenRouterDriver extends BaseAiDriver
                     'connect_timeout' => (float) ($this->config['connect_timeout'] ?? 10),
                     'read_timeout' => (float) ($this->config['stream_idle_timeout'] ?? 120),
                 ]))
+                ->withStreamHandler($this->streamingTransport()->send(...))
                 ->withHttpHeader('HTTP-Referer', $this->config['site_url'] ?? config('app.url'))
                 ->withHttpHeader('X-Title', $this->config['site_name'] ?? config('app.name'));
 

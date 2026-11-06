@@ -106,7 +106,7 @@ final readonly class ProviderFailure
     {
         return match (true) {
             $e instanceof RateLimitException, $e instanceof ServerException, $e instanceof ErrorException, $e instanceof UnserializableResponse => $e->response,
-            // Streamed requests go through Guzzle's send(), so 5xx and non-JSON 4xx arrive wrapped.
+            // openai-php's default stream handler is Guzzle's send(), which wraps 5xx and non-JSON 4xx.
             $e instanceof TransporterException && $e->getPrevious() instanceof RequestException => $e->getPrevious()->getResponse(),
             $e instanceof AwsException => $e->getResponse(),
             default => null,
@@ -167,6 +167,7 @@ final readonly class ProviderFailure
     {
         return match (true) {
             $cause instanceof ConnectException && \in_array($cause->getHandlerContext()['errno'] ?? null, self::NEVER_SENT, true) => ProviderFailureKind::Connection,
+            $cause instanceof ProviderTransportException && ! $cause->reached => ProviderFailureKind::Connection,
             $cause instanceof NetworkExceptionInterface, $cause instanceof RequestException => ProviderFailureKind::Interrupted,
             default => null,
         };

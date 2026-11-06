@@ -23,6 +23,7 @@ class OpenAiDriver extends BaseAiDriver
                 ->withApiKey($this->config['api_key'] ?? config('openai.api_key'))
                 ->withOrganization($this->config['organization'] ?? null)
                 ->withHttpClient($this->makeHttpClient())
+                ->withStreamHandler($this->streamingTransport()->send(...))
                 ->make();
         }
 

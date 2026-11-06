@@ -29,6 +29,9 @@ class AiSseStream
     /** Upper bound for one stream, long enough for a large import. */
     public const MAX_SECONDS = 1800;
 
+    /** Pings the stream being sent, when it has been quiet for a ping interval. */
+    private static ?Closure $keepAlive = null;
+
     /**
      * @param  Closure(): Generator<SseEvent>  $events  Factory that yields the AI stream events.
      * @param  array<string, mixed>  $logContext  Extra context attached to error logs.
@@ -47,6 +50,18 @@ class AiSseStream
             'X-Accel-Buffering' => 'no',
             'Connection' => 'close',
         ]);
+    }
+
+    /**
+     * Keeps the open stream alive from inside a long blocking call, such as a
+     * provider still thinking before its first token. Behind CloudFront a
+     * stream with no bytes for 30s is dropped. A no-op with no stream open.
+     */
+    public static function keepAlive(): void
+    {
+        if (self::$keepAlive !== null) {
+            (self::$keepAlive)();
+        }
     }
 
     /**
@@ -74,15 +89,19 @@ class AiSseStream
 
         $write(": ping\n\n");
         $lastActivity = time();
+        $ping = static function () use (&$lastActivity, $write): void {
+            if ((time() - $lastActivity) >= self::PING_INTERVAL) {
+                $write(": ping\n\n");
+                $lastActivity = time();
+            }
+        };
+        $outer = self::$keepAlive;
+        self::$keepAlive = $ping;
 
         try {
             foreach ($events() as $event) {
                 if ($stopOnDisconnect && connection_aborted()) {
                     break;
-                }
-
-                if ((time() - $lastActivity) >= self::PING_INTERVAL) {
-                    $write(": ping\n\n");
                 }
 
                 $write($event->toJsonLine()."\n\n");
@@ -114,6 +133,8 @@ class AiSseStream
             if (! connection_aborted()) {
                 $write(StreamEvent::error("Something went wrong while generating. Reference: {$ref}")->toJsonLine()."\n\n");
             }
+        } finally {
+            self::$keepAlive = $outer;
         }
 
         if ($ownsBuffer) {
