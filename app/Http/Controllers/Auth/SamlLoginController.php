@@ -56,6 +56,18 @@ class SamlLoginController extends AuthController
             $auth = $this->samlLoginService->authFor($provider);
             $user = $this->samlLoginService->completeLogin($provider, $auth, $requestId);
 
+            // The IdP proves who the user is to this team, but the account
+            // reaches every other team the user belongs to as well. Its own
+            // second factor still applies, as it does for social logins.
+            if ($user->hasEnabledTwoFactor()) {
+                $request->session()->put(self::PENDING_2FA_USER_ID, $user->id);
+
+                return redirect()->to($this->loginPath([
+                    'social_2fa' => '1',
+                    'return' => $returnTo,
+                ]));
+            }
+
             Auth::guard('web')->login($user);
             $this->updateUserLogin($user);
             $request->session()->regenerate();

@@ -193,6 +193,34 @@ class SamlLoginTest extends TestCase
         $this->assertGuest('web');
     }
 
+    /**
+     * The team's IdP vouches for the user, but the session it opens reaches
+     * every other team of that account too. The account's own second factor
+     * still has to be passed.
+     */
+    #[Test]
+    public function a_saml_login_still_asks_for_the_accounts_second_factor(): void
+    {
+        $owner = User::factory()->create([
+            'two_factor_secret' => 'JBSWY3DPEHPK3PXP',
+            'two_factor_enabled_at' => now(),
+        ]);
+        $team = app(TeamService::class)->createTeam(['name' => 'Corp'], $owner);
+        $provider = $this->provider($team);
+
+        $service = Mockery::mock(SamlLoginService::class);
+        $service->shouldReceive('authFor')->andReturn($this->assertion($owner->email));
+        $service->shouldReceive('completeLogin')->andReturn($owner->fresh());
+        $this->app->instance(SamlLoginService::class, $service);
+
+        $this->withSession(['auth.saml.request_id.'.$provider->id => 'request-1'])
+            ->post(route('auth.saml.acs', $team), ['SAMLResponse' => 'signed'])
+            ->assertRedirectContains('social_2fa=1');
+
+        $this->assertGuest('web');
+        $this->assertSame($owner->id, session('auth.social.pending_2fa_user_id'));
+    }
+
     #[Test]
     public function a_logout_message_that_does_not_validate_keeps_the_session(): void
     {
