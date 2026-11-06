@@ -200,11 +200,21 @@ watch(translationStatus, () => {
   liveFindings.value = new Map()
 })
 
-function extractCompletedTranslations(partial: string): Record<string, string> {
+/**
+ * Completed `"key": "value"` pairs of streamed JSON from `from` on, and where
+ * the next call resumes, so each delta parses only the new tail.
+ */
+function extractCompletedTranslations(
+  partial: string,
+  from = 0
+): { entries: Record<string, string>; end: number } {
   const result: Record<string, string> = {}
   const regex = /"((?:[^"\\]|\\.)+)"\s*:\s*"((?:[^"\\]|\\.)*)"/g
+  regex.lastIndex = from
+  let end = from
   let match
   while ((match = regex.exec(partial)) !== null) {
+    end = regex.lastIndex
     const key = match[1].replace(/\\"/g, '"').replace(/\\\\/g, '\\')
     const value = match[2]
       .replace(/\\"/g, '"')
@@ -213,7 +223,7 @@ function extractCompletedTranslations(partial: string): Record<string, string> {
       .replace(/\\\\/g, '\\')
     result[key] = value
   }
-  return result
+  return { entries: result, end }
 }
 const sourceLanguage = computed((): string => space.value?.settings?.default_language || '')
 
@@ -1482,6 +1492,8 @@ function findTranslationsObject(parsed: unknown): Record<string, string> | null 
   return null
 }
 
+const STREAMED_APPLY_INTERVAL = 500
+
 const translateWithAI = async (configId: string | null = selectedConfigId.value): Promise<void> => {
   if (!configId) {
     toast.error(t('components.aiText.noConfigSelected'))
@@ -1504,6 +1516,9 @@ const translateWithAI = async (configId: string | null = selectedConfigId.value)
 
   const appliedKeys = new Set<string>()
   let accumulated = ''
+  let parsedTo = 0
+  let streamed: Record<string, string> = {}
+  let flushTimer: ReturnType<typeof setTimeout> | null = null
   translationProgress.value = { applied: 0, total: fieldCount }
 
   // Apply only entries not yet applied — let updateTranslatedValues handle field matching
@@ -1519,6 +1534,15 @@ const translateWithAI = async (configId: string | null = selectedConfigId.value)
       applyTranslatedValues(fresh, translationUnitsById)
       translationProgress.value = { applied: appliedKeys.size, total: fieldCount }
     }
+  }
+
+  // Every apply re-renders the whole form, so streamed fields land in batches.
+  const flushStreamed = () => {
+    if (flushTimer) clearTimeout(flushTimer)
+    flushTimer = null
+    const entries = streamed
+    streamed = {}
+    applyNew(entries)
   }
 
   const outcome = await translationRun.start<Record<string, unknown>>(
@@ -1537,11 +1561,15 @@ const translateWithAI = async (configId: string | null = selectedConfigId.value)
       onEvent: (event) => {
         if (event.type !== 'text_delta') return
         accumulated += event.text
-        applyNew(extractCompletedTranslations(accumulated))
+        const { entries, end } = extractCompletedTranslations(accumulated, parsedTo)
+        parsedTo = end
+        Object.assign(streamed, entries)
+        flushTimer ??= setTimeout(flushStreamed, STREAMED_APPLY_INTERVAL)
       },
     }
   )
 
+  flushStreamed()
   translationProgress.value = null
 
   if (outcome.status === 'failed') {
