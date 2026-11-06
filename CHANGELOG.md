@@ -3,6 +3,70 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.11.6-c74a9a65] — 2026-11-6
+
+- 📝 Record the merged release set and the open settleBatch fix
+- 📝 Record the SchlafTEQ review drafts in the status
+- 📝 Record the rated rules for editor surfaces, navs, radios and the team switcher
+- 🌐 Add the strings for the reworked editor surfaces in all languages
+- 💄 Share one radio card, put Mass Edit on one toolbar row and show the team path
+- ✨ Rework the asset, link, preview, config and info surfaces of the editor
+- 💄 Tidy notifications, tree navs, Select and the app rail order
+- ✨ Reorder schema fields, sections and option lists the way blocks reorder
+- 🔥 Remove the unused InviteService
+- 🐛 Publish a chosen version through the regular publish path
+- ⚡️ Stop minting a throwaway token for every signed-in MCP call
+- 🐛 Name the field users.updatePassword actually expects
+- 🔒 Reject .user.ini uploads by their full name
+- 🔒 Escape every value the asset XLIFF export writes into XML
+- 🔒 Serve only avatars and icons through the ilum storage literal
+- 🔒 Reject path separators in MCP operation arguments
+- 🔒 Keep a browser impersonation in force for MCP sub-requests
+- 🔒 Check that content and block versions belong to the entry in the URL
+- 🔒 Keep the session when a SAML logout message does not validate
+- 🔒 Refuse SAML responses that answer no sign-in started in this session
+- 🔒 Require a password or TOTP step-up before linking a social login
+- 🔒 Create and drop space databases through a named admin connection
+- 🔒 Require the same proof to decline an invite as to accept it
+- 🔒 Reject uploads finfo detects as PHP
+- 🔒 Resolve the automation space from the bound context, not request input
+- 🔒 Never resolve a saved space connection without its own database
+- 🔒 Keep asset file paths inside the asset's own directory
+- 🔒 Refuse personal access token abilities nothing enforces
+- 🔒 Block linking a social login while impersonating
+- 🔒 Stop team admins demoting owners through the add-member endpoint
+- 🔒 Make SAML-provisioned accounts use the mailed token to claim invites
+- 🐛 Hash uploaded assets from the local file, not the S3 upload stream
+- 📝 Record the settled block, comment, control, overlay and data rules
+- 💄 Repair the UI kit tokens and polish every shared component in both themes
+- 🌐 Add the strings for comments, the tree menu, blocks and failed reads in all languages
+- 🐛 Stop the Team Selector scrolling sideways and pushing the header wide
+- ✨ Group the content tree menu and rail, and filter drafts and changes apart
+- ✨ Rework the blocks field so depth stops costing width
+- ✨ Let comments say where they belong and mention people by name
+- 📝 Warn about empty fields and truncation in mixed slug patterns
+- 📝 Spell out how to backfill serials and move URLs to a slug pattern
+- 📝 Record the contrast, failed state, translation and narrow screen rules
+- 💄 Give white-on-accent fills and status text enough contrast
+- ♿ One tab stop per tooltip trigger, and names on unnamed controls
+- 📱 Fit assets and the team area on narrow screens
+- ✨ Make the translation view say which language is which
+- ✨ Show failed reads and empty results as what they are
+- 🐛 Open the content tree at a readable width
+- 🐛 Keep team and provider pages on reload instead of a bare 404
+- 📝 Document AI in the user guide and record the design and API changes
+- ✨ Start, plan and follow AI operations and edit glossaries in the app
+- ✨ Run AI content operations and normalize glossaries
+- ✨ Group the spaces start page by team and lay out team cards like an overview
+- 📝 Correct the retry_after note on the heavy queue worker
+- ⚡ Cap the import summary lists at 200 rows
+- 🐛 Report malformed CSV rows and shared filenames as row errors
+- ⚡ Index asset filenames for imports that match by name
+- ✨ Show live progress in every import dialog
+- ✨ Stream every file import with row progress
+- ⚡ Validate spreadsheets from their header row only
+- ⚡ Check asset usage once per bulk write instead of per asset
+
 ## [v2026.11.5-00c931f0] — 2026-11-5
 
 - 🔒 Dump the space database in space backups, not the management database
