@@ -263,7 +263,7 @@ jobs:
             --paths "/docs*"
 
       - name: Deploy CMS service to Amazon ECS
-        uses: aws-actions/amazon-ecs-deploy-task-definition@c465972ecbd160473f22e683363b422a5412a3de # v2.6.3
+        uses: aws-actions/amazon-ecs-deploy-task-definition@a00d4d57ac0de1a99b39fe469f3d898d38717c2b # v2.6.4
         with:
           task-definition: ${{ steps.task-def.outputs.task-definition }}
           service: ${{ env.ECS_SERVICE }}
@@ -374,7 +374,7 @@ jobs:
       # After the smoke check: if the CMS rolls back, Reverb must not be left
       # running the image that was just rejected.
       - name: Deploy Reverb service to Amazon ECS
-        uses: aws-actions/amazon-ecs-deploy-task-definition@c465972ecbd160473f22e683363b422a5412a3de # v2.6.3
+        uses: aws-actions/amazon-ecs-deploy-task-definition@a00d4d57ac0de1a99b39fe469f3d898d38717c2b # v2.6.4
         with:
           task-definition: ${{ steps.reverb-task-def.outputs.task-definition }}
           service: b10cks-reverb
