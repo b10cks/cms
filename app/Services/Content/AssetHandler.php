@@ -61,6 +61,32 @@ class AssetHandler
         );
     }
 
+    /**
+     * Point every asset reference at the asset it actually names: its `id`
+     * when that is one of `$assetIds`, else the `full_path` asset when that
+     * is. References matching neither stay as they are.
+     *
+     * @param  list<string>  $assetIds  ids of the assets that exist
+     */
+    public function canonicalizeContentAssets(array $data, array $assetIds): array
+    {
+        $known = array_flip($assetIds);
+
+        return $this->replaceMatching(
+            $data,
+            ['type' => 'asset'],
+            function (array $src) use ($known): array {
+                foreach ($this->referencedIds($src) as $id) {
+                    if (isset($known[$id])) {
+                        return ($src['id'] ?? null) === $id ? $src : array_replace($src, ['id' => $id]);
+                    }
+                }
+
+                return $src;
+            },
+        );
+    }
+
     public function updateContentAssets(array $data, Collection $assets): array
     {
         $assets = $assets->reverse()->keyBy('id');
