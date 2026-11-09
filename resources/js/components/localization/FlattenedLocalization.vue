@@ -5,7 +5,6 @@ import { toast } from 'vue-sonner'
 
 import type { SpaceAiConfig } from '~/api/resources/ai'
 import AiConfigMenuItems from '~/components/ai/AiConfigMenuItems.vue'
-import AiRunFindings from '~/components/ai/AiRunFindings.vue'
 import Icon from '~/components/Icon.vue'
 import MetaLocalization from '~/components/localization/MetaLocalization.vue'
 import { AvatarList } from '~/components/ui/avatar'
@@ -35,7 +34,6 @@ import {
 } from '~/lib/localizationCollab'
 import { idFieldPath } from '~/lib/aiChangesets'
 import { ensureTableValue, getTableColumns } from '~/lib/tableField'
-import type { ContentTranslationGlossaryFinding } from '~/types/content-translations'
 import type { FieldUpdateEvent } from '~/utils/preview-bridge'
 
 import DateLocalization from './DateLocalization.vue'
@@ -193,11 +191,8 @@ const { data: translationStatus } = useTranslationStatus(
   () => props.targetLanguage
 )
 const editedSinceStatus = ref(new Set<string>())
-// Glossary findings for the draft, per unit, from the assist of the focused field.
-const liveFindings = ref(new Map<string, ContentTranslationGlossaryFinding[]>())
 watch(translationStatus, () => {
   editedSinceStatus.value = new Set()
-  liveFindings.value = new Map()
 })
 
 /**
@@ -907,25 +902,15 @@ const { data: assistData } = useTranslationAssist(
   () => props.spaceId,
   () => props.contentId,
   () => props.targetLanguage,
-  () =>
-    focusedUnit.value
-      ? {
-          unit: focusedUnit.value.unit,
-          text: unitText(focusedUnit.value.field, focusedUnit.value.metaKey),
-        }
-      : null
+  () => focusedUnit.value?.unit ?? null
 )
 
-// Kept from the last text while the next one loads, but never another field's.
+// Kept while the next field's loads, but never shown for another field.
 const assist = computed(() =>
   assistData.value && assistData.value.unit === focusedUnit.value?.unit
     ? assistData.value
     : undefined
 )
-
-watch(assistData, (data) => {
-  if (data?.glossary) liveFindings.value.set(data.unit, data.glossary.findings ?? [])
-})
 
 const canUseMemory = computed(
   () => !!focusedUnit.value && !isTranslating.value && fieldType(focusedUnit.value.field) !== 'richtext'
@@ -941,23 +926,12 @@ const useMemoryText = (text: string) => {
   )
 }
 
-/** Glossary findings and length over the maximum under a field; null when there is nothing. */
-const fieldChecks = (
-  field: TranslatableField
-): { findings: ContentTranslationGlossaryFinding[]; length: { count: number; max: number | null } } | null => {
+/** A field's length when it is over the maximum; null when there is nothing to flag. */
+const fieldOverLength = (field: TranslatableField): { count: number; max: number } | null => {
   if (field.isOrphaned || !proseTypes.has(fieldType(field))) return null
 
-  const edited = editedSinceStatus.value.has(getFieldIdentifier(field))
-  const findings = aiEnabled.value
-    ? fieldUnitIds(field).flatMap(
-        (unitId) =>
-          liveFindings.value.get(unitId) ??
-          (edited ? [] : (translationStatus.value?.units[unitId]?.findings ?? []))
-      )
-    : []
-  const length = fieldLength(field, null)
-
-  return findings.length || (length.max && length.count > length.max) ? { findings, length } : null
+  const { count, max } = fieldLength(field, null)
+  return max && count > max ? { count, max } : null
 }
 
 const getValidationPath = (field: TranslatableField): string => {
@@ -1689,10 +1663,6 @@ const removeAllOrphanedBlocks = (): void => {
 
 <template>
   <div class="@container w-full">
-    <AiRunFindings
-      :findings="translationRun.findings.value"
-      class="mb-4"
-    />
     <div class="grid items-start gap-6 @min-[1100px]:grid-cols-[minmax(0,1fr)_320px]">
       <div class="min-w-0">
         <div class="sticky top-0 z-10 border-b border-border bg-background pt-1">
@@ -1976,14 +1946,11 @@ const removeAllOrphanedBlocks = (): void => {
               </div>
             </div>
             <div
-              v-if="fieldChecks(field)"
+              v-if="fieldOverLength(field)"
               class="-mt-1 grid grid-cols-2 gap-4 pb-1"
             >
               <div />
-              <TranslationChecks
-                :findings="fieldChecks(field)?.findings ?? []"
-                :length="fieldChecks(field)?.length"
-              />
+              <TranslationChecks :length="fieldOverLength(field)" />
             </div>
             <div
               v-if="
