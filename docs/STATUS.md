@@ -30,6 +30,8 @@ None.
 
 ## Waiting on Mike
 
+- Go to push `fix/preview-localized-field-merge`, open its PR and release it.
+- Localization preview vs delivery, non-translatable fields: the preview lets a translation's stored value win, delivery keeps the base's non-null value. Left as is, translations only store translatable fields in practice.
 - Production repairs after this release (#67, #69, #70), dry run first each time. Since #69 the entrypoint runs a command override instead of the server, so the regular task definition works:
 
   ```sh
