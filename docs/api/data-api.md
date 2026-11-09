@@ -24,6 +24,7 @@ The public, read-only content delivery API. Base path: `/api/v1`. Every request 
 ```json
 {
   "id": "01JW…",
+  "canonical_id": "01JW…",
   "name": "Home",
   "slug": "home",
   "full_slug": "home",
@@ -37,6 +38,8 @@ The public, read-only content delivery API. Base path: `/api/v1`. Every request 
   "updated_at": "…"
 }
 ```
+
+`id` is the row that was served, which differs per language. `canonical_id` is the id of the canonical entry, the same in every language and on fallback responses. References, links and `parent_id` store that id, so match fetched entries against them by `canonical_id`.
 
 `content` contains the field values including the full nested block tree; referenced entries, assets, and links are resolved into the payload. Per-entry cache hints (TTL, tags) configured in the entry's Config tab are delivered as response headers.
 

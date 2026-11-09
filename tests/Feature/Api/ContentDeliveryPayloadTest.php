@@ -184,6 +184,19 @@ class ContentDeliveryPayloadTest extends TestCase
         $this->assertSame('Hero', $english->json('data.content.image.data.alt'));
     }
 
+    #[Test]
+    public function every_entry_carries_the_id_of_its_canonical_row(): void
+    {
+        $english = $this->getJson($this->url('api.contents.show', ['slug' => 'home']))->assertOk();
+        $german = $this->getJson($this->url('api.contents.show', ['slug' => 'startseite', 'language' => 'de']))->assertOk();
+        $fallback = $this->getJson($this->url('api.contents.show', ['slug' => 'plain', 'language' => 'de']))->assertOk();
+
+        $this->assertSame('01k60000000000000000000007', $english->json('data.canonical_id'));
+        $this->assertSame('01k60000000000000000000008', $german->json('data.id'));
+        $this->assertSame('01k60000000000000000000007', $german->json('data.canonical_id'));
+        $this->assertSame('01k60000000000000000000009', $fallback->json('data.canonical_id'));
+    }
+
     /**
      * Each request with its expected query count. The count includes the
      * space_connections load of the token lookup, which tests otherwise skip.

@@ -17,6 +17,7 @@ use Illuminate\Support\Collection;
  * @mixin Content
  *
  * @resourceProperty id format=uuid Unique content identifier.
+ * @resourceProperty canonical_id type=string format=uuid nullable=false Identifier of the canonical entry this row belongs to. Equals `id` on that entry; references, links and `parent_id` store this value.
  * @resourceProperty name Human-readable content name.
  * @resourceProperty slug URL slug of the resolved content.
  * @resourceProperty block Slug of the assigned block definition.
@@ -51,6 +52,7 @@ class ContentResource extends JsonResource
 
         return [
             'id' => $row->getRouteKey(),
+            'canonical_id' => $row->i18n_parent_id ?? $row->getRouteKey(),
             'name' => $row->name,
             'slug' => $row->slug,
             'block' => $row->block?->slug,
