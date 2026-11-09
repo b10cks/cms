@@ -312,6 +312,35 @@ class ContentTreeOperationServiceTest extends TestCase
         $this->assertSame(str_repeat('a', 73).'-3', $slug);
     }
 
+    #[Test]
+    public function a_move_files_translations_under_the_destination_when_it_has_no_translation_in_their_language(): void
+    {
+        $this->createAndActAs();
+
+        $space = Space::factory()->create(['settings' => [
+            'default_language' => 'en',
+            'languages' => [['code' => 'de', 'name' => 'German']],
+        ]]);
+        $this->setUpSpaceTesting($space);
+        app()->instance('currentSpace', $space);
+
+        $block = Block::factory()->create(['type' => 'root']);
+        $destination = $this->createContentItem($space, $block, 'Products', 'products');
+        $movable = $this->createContentItem($space, $block, 'Chair', 'chair');
+        $translation = Content::factory()->create([
+            'block_id' => $block->id,
+            'slug' => 'stuhl',
+            'language_iso' => 'de',
+            'i18n_parent_id' => $movable->id,
+        ]);
+
+        app(ContentTreeOperationService::class)->moveItems([$movable->id], $destination->id, null, $space);
+
+        $translation->refresh();
+        $this->assertSame($destination->id, $translation->parent_id);
+        $this->assertSame('/products/stuhl', $translation->full_slug);
+    }
+
     protected function enableContentSorting(Space $space): void
     {
         $space->settings = array_merge($space->settings->toArray(), ['content_sorting' => true]);
