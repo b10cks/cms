@@ -195,15 +195,22 @@ class ContentResource extends JsonResource
 
     protected function injectData(ResolvedContent $resolved, array &$content, Request $request)
     {
+        $defaultLanguage = app('currentSpace')->settings->getDefaultLanguage();
         $content = app(LinkHandler::class)->replaceContentLinks(
             $content,
             $resolved->effectiveLinks,
             $resolved->requestedLanguage,
-            app('currentSpace')->settings->getDefaultLanguage(),
+            $defaultLanguage,
             $request->input('vid', 'published') === 'published',
         );
-        $assetContext = $resolved->targetContent ?? $resolved->fallbackContent ?? $resolved->canonicalContent;
-        $content = app(AssetHandler::class)->replaceContentAssets($assetContext, $content, $resolved->effectiveAssets);
+        // Asset texts follow the language the reader asked for, also when the
+        // entry itself falls back to another language. The default language
+        // lives in `_default`.
+        $assetLanguages = array_values(array_diff(
+            array_unique([$resolved->requestedLanguage, $resolved->resolvedLanguage]),
+            [$defaultLanguage],
+        ));
+        $content = app(AssetHandler::class)->replaceContentAssets($assetLanguages, $content, $resolved->effectiveAssets);
     }
 
     protected function shouldResolveRelations(Request $request): bool

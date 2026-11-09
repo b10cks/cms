@@ -2,9 +2,7 @@
 
 namespace App\Services\Content;
 
-use App\Http\Resources\Api\ContentResource;
 use App\Models\Space\Asset;
-use App\Models\Space\Content;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 
@@ -88,7 +86,14 @@ class AssetHandler
         );
     }
 
-    public function replaceContentAssets(Content|ContentResource $content, $data, Collection $assets): array
+    /**
+     * Overlay live asset data onto delivered content. `$languages` lists the
+     * asset field translations to use, most specific first; `_default` fills
+     * whatever they leave out.
+     *
+     * @param  list<string>  $languages
+     */
+    public function replaceContentAssets(array $languages, $data, Collection $assets): array
     {
         if ($assets->isEmpty()) {
             return $data;
@@ -101,14 +106,14 @@ class AssetHandler
             [
                 'type' => 'asset',
             ],
-            function ($src) use ($assets, $content) {
+            function ($src) use ($assets, $languages) {
                 $id = $src['id'] ?? null;
                 $asset = is_string($id) || is_int($id) ? $assets->get($id) : null;
                 if ($asset) {
-                    $assetTranslationFields = $content->i18n_parent_id !== null
-                        ? data_get($asset, "data.fields.{$content->language_iso}", [])
-                        : [];
-                    $assetFields = $assetTranslationFields + data_get($asset, 'data.fields._default', []);
+                    $assetFields = data_get($asset, 'data.fields._default', []);
+                    foreach (array_reverse($languages) as $language) {
+                        $assetFields = data_get($asset, "data.fields.{$language}", []) + $assetFields;
+                    }
                     $result = $assetFields + ($src['data'] ?? []);
                     $result['focus'] = data_get($src, 'data.focus', data_get($asset, 'data.focus', null));
 

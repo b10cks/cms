@@ -3,7 +3,6 @@
 namespace Tests\Unit\Services\Content;
 
 use App\Models\Space\Asset;
-use App\Models\Space\Content;
 use App\Services\Content\AssetHandler;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -27,10 +26,9 @@ class AssetHandlerTest extends TestCase
         $missing = ['type' => 'asset', 'id' => 'missing'];
         $payload = ['images' => [$node, $missing, $node]];
         $assets = collect([$first, $duplicate]);
-        $content = new Content;
         $handler = new AssetHandler;
 
-        foreach ([$handler->updateContentAssets($payload, $assets), $handler->replaceContentAssets($content, $payload, $assets)] as $result) {
+        foreach ([$handler->updateContentAssets($payload, $assets), $handler->replaceContentAssets([], $payload, $assets)] as $result) {
             $this->assertSame('first', $result['images'][0]['filename']);
             $this->assertSame($missing, $result['images'][1]);
             $this->assertSame($result['images'][0], $result['images'][2]);
@@ -38,7 +36,7 @@ class AssetHandlerTest extends TestCase
     }
 
     #[Test]
-    public function translated_content_gets_its_language_fields_without_loading_the_parent(): void
+    public function requested_languages_win_over_default_fields_in_order(): void
     {
         $asset = new class extends Asset
         {
@@ -51,13 +49,17 @@ class AssetHandlerTest extends TestCase
             '_default' => ['alt' => 'Default', 'title' => 'Title'],
             'de' => ['alt' => 'Deutsch'],
         ]]]);
-        $content = (new Content)->forceFill(['language_iso' => 'de', 'i18n_parent_id' => 'canonical-01']);
+        $handler = new AssetHandler;
+        $node = ['type' => 'asset', 'id' => 'asset-01'];
 
-        $payload = (new AssetHandler)->replaceContentAssets($content, ['type' => 'asset', 'id' => 'asset-01'], collect([$asset]));
+        $german = $handler->replaceContentAssets(['de'], $node, collect([$asset]));
+        $austrian = $handler->replaceContentAssets(['de-at', 'de'], $node, collect([$asset]));
+        $default = $handler->replaceContentAssets([], $node, collect([$asset]));
 
-        $this->assertSame('Deutsch', $payload['data']['alt']);
-        $this->assertSame('Title', $payload['data']['title']);
-        $this->assertFalse($content->relationLoaded('i18n_parent'));
+        $this->assertSame('Deutsch', $german['data']['alt']);
+        $this->assertSame('Title', $german['data']['title']);
+        $this->assertSame('Deutsch', $austrian['data']['alt']);
+        $this->assertSame('Default', $default['data']['alt']);
     }
 
     #[Test]
@@ -72,10 +74,9 @@ class AssetHandlerTest extends TestCase
         };
         $asset->forceFill(['id' => 'asset-01', 'metadata' => [], 'data' => ['focus' => ['x' => 10, 'y' => 20]]]);
         $handler = new AssetHandler;
-        $content = new Content;
 
-        $overridden = $handler->replaceContentAssets($content, ['type' => 'asset', 'id' => 'asset-01', 'data' => ['focus' => ['x' => 70, 'y' => 80]]], collect([$asset]));
-        $inherited = $handler->replaceContentAssets($content, ['type' => 'asset', 'id' => 'asset-01', 'data' => []], collect([$asset]));
+        $overridden = $handler->replaceContentAssets([], ['type' => 'asset', 'id' => 'asset-01', 'data' => ['focus' => ['x' => 70, 'y' => 80]]], collect([$asset]));
+        $inherited = $handler->replaceContentAssets([], ['type' => 'asset', 'id' => 'asset-01', 'data' => []], collect([$asset]));
 
         $this->assertSame(['x' => 70, 'y' => 80], $overridden['data']['focus']);
         $this->assertSame(['x' => 10, 'y' => 20], $inherited['data']['focus']);
@@ -181,10 +182,7 @@ class AssetHandlerTest extends TestCase
             ],
         ]);
 
-        $content = new Content;
-        $content->forceFill(['language_iso' => 'en', 'i18n_parent_id' => null]);
-
-        $payload = $handler->replaceContentAssets($content, [
+        $payload = $handler->replaceContentAssets([], [
             'type' => 'asset',
             'id' => 'asset-01',
         ], collect([$asset]));

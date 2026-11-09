@@ -169,6 +169,21 @@ class ContentDeliveryPayloadTest extends TestCase
         }
     }
 
+    #[Test]
+    public function an_entry_without_a_translation_still_gets_the_requested_language_asset_texts(): void
+    {
+        $this->createEntry('01k6000000000000000000000a', 'english-only', 5, [
+            'title' => 'English only',
+            'image' => ['type' => 'asset', 'id' => '01k60000000000000000000003'],
+        ]);
+
+        $german = $this->getJson($this->url('api.contents.show', ['slug' => 'english-only', 'language' => 'de']))->assertOk();
+        $english = $this->getJson($this->url('api.contents.show', ['slug' => 'english-only']))->assertOk();
+
+        $this->assertSame('Held', $german->json('data.content.image.data.alt'));
+        $this->assertSame('Hero', $english->json('data.content.image.data.alt'));
+    }
+
     /**
      * Each request with its expected query count. The count includes the
      * space_connections load of the token lookup, which tests otherwise skip.
