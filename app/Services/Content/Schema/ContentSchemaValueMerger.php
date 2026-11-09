@@ -110,6 +110,57 @@ class ContentSchemaValueMerger
         return $merged;
     }
 
+    /**
+     * Align an overlay translation's nested items with the base before they are
+     * stored. An item whose id the base also has takes the base's `block`; when
+     * that changes its type, the keys the base block's schema does not define
+     * were the old block's and are dropped. Merging already ignores both, this
+     * keeps them from being saved.
+     *
+     * @param  array<string, mixed>  $schema
+     * @param  array<string, mixed>  $base
+     * @param  array<string, mixed>  $overrides
+     * @return array<string, mixed>
+     */
+    public function alignOverlayStructure(array $schema, array $base, array $overrides): array
+    {
+        foreach ($schema as $fieldKey => $field) {
+            if (! \is_array($field) || SchemaField::canonicalizeType((string) ($field['type'] ?? '')) !== 'blocks') {
+                continue;
+            }
+
+            if (! \is_array($overrides[$fieldKey] ?? null) || ! \is_array($base[$fieldKey] ?? null)) {
+                continue;
+            }
+
+            $baseById = [];
+            foreach ($base[$fieldKey] as $baseItem) {
+                if (\is_array($baseItem) && \is_string($baseItem['id'] ?? null) && \is_string($baseItem['block'] ?? null)) {
+                    $baseById[$baseItem['id']] = $baseItem;
+                }
+            }
+
+            foreach ($overrides[$fieldKey] as $index => $item) {
+                $baseItem = \is_array($item) && \is_string($item['id'] ?? null) ? ($baseById[$item['id']] ?? null) : null;
+
+                if ($baseItem === null) {
+                    continue;
+                }
+
+                $blockSchema = $this->resolveBlockSchema($baseItem['block']);
+
+                if (($item['block'] ?? null) !== $baseItem['block']) {
+                    $item = array_intersect_key($item, $blockSchema + ['id' => true]);
+                    $item['block'] = $baseItem['block'];
+                }
+
+                $overrides[$fieldKey][$index] = $this->alignOverlayStructure($blockSchema, $baseItem, $item);
+            }
+        }
+
+        return $overrides;
+    }
+
     protected function isEmptyOverlayValue(mixed $value): bool
     {
         return $value === null || $value === '' || $value === [];

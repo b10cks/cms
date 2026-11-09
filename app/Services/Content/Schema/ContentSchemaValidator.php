@@ -30,6 +30,18 @@ class ContentSchemaValidator
     ): ContentSchemaValidationResult {
         $submittedContent = $this->restoreReadonlyValues($block, $submittedContent, $content);
         $effectiveBase = $this->resolveEffectiveBase($space, $content, $languageIso, $i18nParentId);
+        $ignoreAbsentNonTranslatableFields = $effectiveBase['mode'] === 'overlay'
+            && (($content?->i18n_parent_id ?? null) !== null || $i18nParentId !== null);
+
+        // An overlay translation never stores a nested block type of its own.
+        if ($ignoreAbsentNonTranslatableFields) {
+            $submittedContent = $this->contentSchemaValueMerger->alignOverlayStructure(
+                $block->schema?->toArray() ?? [],
+                $effectiveBase['content'],
+                $submittedContent,
+            );
+        }
+
         $effectiveContent = $this->contentSchemaValueMerger->mergeForSchema(
             $block->schema?->toArray() ?? [],
             $effectiveBase['content'],
@@ -41,8 +53,6 @@ class ContentSchemaValidator
             $submittedContent,
             $effectiveContent,
         );
-        $ignoreAbsentNonTranslatableFields = $effectiveBase['mode'] === 'overlay'
-            && (($content?->i18n_parent_id ?? null) !== null || $i18nParentId !== null);
         $sanitizedContent = $this->pruner->prune($tree);
 
         if ($ignoreAbsentNonTranslatableFields) {
