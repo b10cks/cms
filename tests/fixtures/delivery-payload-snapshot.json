@@ -3,6 +3,7 @@
         "data": [
             {
                 "id": "01k60000000000000000000004",
+                "canonical_id": "01k60000000000000000000004",
                 "name": "Linked Page",
                 "slug": "linked-page",
                 "block": "page",
@@ -39,6 +40,7 @@
             },
             {
                 "id": "01k60000000000000000000006",
+                "canonical_id": "01k60000000000000000000006",
                 "name": "Related Page",
                 "slug": "related-page",
                 "block": "page",
@@ -63,6 +65,7 @@
             },
             {
                 "id": "01k60000000000000000000007",
+                "canonical_id": "01k60000000000000000000007",
                 "name": "Home",
                 "slug": "home",
                 "block": "page",
@@ -150,6 +153,7 @@
             },
             {
                 "id": "01k60000000000000000000009",
+                "canonical_id": "01k60000000000000000000009",
                 "name": "Plain",
                 "slug": "plain",
                 "block": "page",
@@ -214,6 +218,7 @@
         "data": [
             {
                 "id": "01k60000000000000000000005",
+                "canonical_id": "01k60000000000000000000004",
                 "name": "Verlinkte Seite",
                 "slug": "verlinkte-seite",
                 "block": "page",
@@ -250,6 +255,7 @@
             },
             {
                 "id": "01k60000000000000000000006",
+                "canonical_id": "01k60000000000000000000006",
                 "name": "Related Page",
                 "slug": "related-page",
                 "block": "page",
@@ -274,6 +280,7 @@
             },
             {
                 "id": "01k60000000000000000000008",
+                "canonical_id": "01k60000000000000000000007",
                 "name": "Startseite",
                 "slug": "startseite",
                 "block": "page",
@@ -361,6 +368,7 @@
             },
             {
                 "id": "01k60000000000000000000009",
+                "canonical_id": "01k60000000000000000000009",
                 "name": "Plain",
                 "slug": "plain",
                 "block": "page",
@@ -425,6 +433,7 @@
         "data": [
             {
                 "id": "01k60000000000000000000005",
+                "canonical_id": "01k60000000000000000000004",
                 "name": "Verlinkte Seite",
                 "slug": "verlinkte-seite",
                 "block": "page",
@@ -461,6 +470,7 @@
             },
             {
                 "id": "01k60000000000000000000006",
+                "canonical_id": "01k60000000000000000000006",
                 "name": "Related Page",
                 "slug": "related-page",
                 "block": "page",
@@ -485,6 +495,7 @@
             },
             {
                 "id": "01k60000000000000000000008",
+                "canonical_id": "01k60000000000000000000007",
                 "name": "Startseite",
                 "slug": "startseite",
                 "block": "page",
@@ -572,6 +583,7 @@
             },
             {
                 "id": "01k60000000000000000000009",
+                "canonical_id": "01k60000000000000000000009",
                 "name": "Plain",
                 "slug": "plain",
                 "block": "page",
@@ -635,6 +647,7 @@
     "show_home": {
         "data": {
             "id": "01k60000000000000000000007",
+            "canonical_id": "01k60000000000000000000007",
             "name": "Home",
             "slug": "home",
             "block": "page",
@@ -704,6 +717,7 @@
             "relations": [
                 {
                     "id": "01k60000000000000000000006",
+                    "canonical_id": "01k60000000000000000000006",
                     "name": "Related Page",
                     "slug": "related-page",
                     "block": "page",
@@ -751,6 +765,7 @@
     "show_home_de": {
         "data": {
             "id": "01k60000000000000000000008",
+            "canonical_id": "01k60000000000000000000007",
             "name": "Startseite",
             "slug": "startseite",
             "block": "page",
@@ -820,6 +835,7 @@
             "relations": [
                 {
                     "id": "01k60000000000000000000006",
+                    "canonical_id": "01k60000000000000000000006",
                     "name": "Related Page",
                     "slug": "related-page",
                     "block": "page",
@@ -867,6 +883,7 @@
     "show_plain": {
         "data": {
             "id": "01k60000000000000000000009",
+            "canonical_id": "01k60000000000000000000009",
             "name": "Plain",
             "slug": "plain",
             "block": "page",
@@ -894,6 +911,7 @@
     "show_plain_draft": {
         "data": {
             "id": "01k60000000000000000000009",
+            "canonical_id": "01k60000000000000000000009",
             "name": "Plain",
             "slug": "plain",
             "block": "page",

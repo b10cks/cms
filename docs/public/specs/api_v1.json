@@ -348,6 +348,12 @@
                                                         "format": "uuid",
                                                         "description": "Unique content identifier."
                                                     },
+                                                    "canonical_id": {
+                                                        "nullable": false,
+                                                        "description": "Identifier of the canonical entry this row belongs to. Equals `id` on that entry; references, links and `parent_id` store this value.",
+                                                        "type": "string",
+                                                        "format": "uuid"
+                                                    },
                                                     "name": {
                                                         "type": "string",
                                                         "description": "Human-readable content name."

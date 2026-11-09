@@ -48,6 +48,8 @@ GET /api/v1/contents?language=de&include_fallback=true
 - **Collections** by default return only entries that *have* a translation in the requested language. Add `include_fallback=true` to also include canonical entries without one (served with fallback values), so listings are complete per language.
 - `canonical_id` / `canonical_parent_id` filters address an entry *across* languages: "give me this entry (or this folder's children) in German, whatever the German variant's own ID is". See [Querying content](../guides/querying-content.md).
 
+Every entry carries `canonical_id`, the id of its canonical row, so a German response can be matched back to a reference that stores the English id.
+
 Responses include the entry's language and its available siblings/translations, so frontends can build language switchers.
 
 ## Publishing translations
