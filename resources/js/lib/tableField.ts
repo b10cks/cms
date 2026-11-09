@@ -92,7 +92,9 @@ const normalizeTableColumn = (column: unknown): TableColumn | null => {
 
 export const getTableColumns = (field?: Partial<TableFieldSchema> | null): TableColumn[] => {
   return Array.isArray(field?.columns)
-    ? field.columns.map((column) => normalizeTableColumn(column)).filter((column): column is TableColumn => Boolean(column))
+    ? field.columns
+        .map((column) => normalizeTableColumn(column))
+        .filter((column): column is TableColumn => Boolean(column))
     : []
 }
 
@@ -127,7 +129,9 @@ const normalizeTableCellValue = (
 
 export const createTableRow = (columns: TableColumn[], id: string): TableRow => ({
   id,
-  cells: Object.fromEntries(columns.map((column) => [column.key, getTableDefaultCellValue(column)])),
+  cells: Object.fromEntries(
+    columns.map((column) => [column.key, getTableDefaultCellValue(column)])
+  ),
 })
 
 export const ensureTableValue = (
@@ -144,7 +148,7 @@ export const ensureTableValue = (
     columns.map((column) => {
       const existing = rawHeader[column.key]
 
-        return [
+      return [
         column.key,
         typeof existing === 'string'
           ? existing
@@ -171,7 +175,10 @@ export const ensureTableValue = (
       return {
         id: rowId,
         cells: Object.fromEntries(
-          columns.map((column) => [column.key, normalizeTableCellValue(column, rawCells[column.key])])
+          columns.map((column) => [
+            column.key,
+            normalizeTableCellValue(column, rawCells[column.key]),
+          ])
         ),
       } satisfies TableRow
     })
@@ -205,7 +212,10 @@ export const mergeLocalizedTableValue = (
     header: Object.fromEntries(
       columns.map((column) => [
         column.key,
-        overlayTable.header[column.key] || baseTable.header[column.key] || column.label || column.key,
+        overlayTable.header[column.key] ||
+          baseTable.header[column.key] ||
+          column.label ||
+          column.key,
       ])
     ),
     rows: baseTable.rows.map((baseRow) => {
@@ -249,7 +259,8 @@ const mergePlainContent = (base: unknown, overlay: unknown): unknown => {
     const merged = cloneStructuredValue(base)
 
     Object.entries(overlay).forEach(([key, value]) => {
-      merged[key] = key in merged ? mergePlainContent(merged[key], value) : cloneStructuredValue(value)
+      merged[key] =
+        key in merged ? mergePlainContent(merged[key], value) : cloneStructuredValue(value)
     })
 
     return merged
@@ -299,11 +310,7 @@ export const mergeLocalizedContentForSchema = (
     const type = normalizeSchemaTypeName(field?.type)
 
     if (type === 'table' && (field as TableSchema).translatable) {
-      merged[key] = mergeLocalizedTableValue(
-        base?.[key],
-        overlay?.[key],
-        field as TableSchema
-      )
+      merged[key] = mergeLocalizedTableValue(base?.[key], overlay?.[key], field as TableSchema)
       return
     }
 
@@ -328,7 +335,9 @@ export const mergeLocalizedContentForSchema = (
       return
     }
 
-    const baseItems = Array.isArray(base?.[key]) ? (base[key] as Array<Record<string, unknown>>) : []
+    const baseItems = Array.isArray(base?.[key])
+      ? (base[key] as Array<Record<string, unknown>>)
+      : []
     const overlayItems = Array.isArray(overlay?.[key])
       ? (overlay[key] as Array<Record<string, unknown>>)
       : []

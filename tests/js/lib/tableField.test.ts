@@ -78,7 +78,9 @@ describe('getTableColumns', () => {
   })
 
   it('coerces missing key and label to empty strings', () => {
-    expect(getTableColumns(schema([{ type: 'text' }]))).toEqual([{ key: '', label: '', type: 'text' }])
+    expect(getTableColumns(schema([{ type: 'text' }]))).toEqual([
+      { key: '', label: '', type: 'text' },
+    ])
   })
 
   it('drops columns of an unsupported type', () => {
@@ -132,9 +134,9 @@ describe('getTableColumns', () => {
     })
 
     it('treats any other source as self', () => {
-      expect(getTableColumns(schema([{ key: 's', type: 'option', source: 'weird' }]))[0]).toMatchObject(
-        { source: 'self' }
-      )
+      expect(
+        getTableColumns(schema([{ key: 's', type: 'option', source: 'weird' }]))[0]
+      ).toMatchObject({ source: 'self' })
     })
 
     it('drops malformed options and defaults a missing list to empty', () => {
@@ -143,7 +145,9 @@ describe('getTableColumns', () => {
           schema([{ key: 's', type: 'option', options: ['nope', null, { name: 'A', value: 'a' }] }])
         )[0]
       ).toMatchObject({ options: [{ name: 'A', value: 'a' }] })
-      expect(getTableColumns(schema([{ key: 's', type: 'option' }]))[0]).toMatchObject({ options: [] })
+      expect(getTableColumns(schema([{ key: 's', type: 'option' }]))[0]).toMatchObject({
+        options: [],
+      })
     })
   })
 })
@@ -201,13 +205,17 @@ describe('ensureTableValue', () => {
   })
 
   it('keeps an existing header string, including a blank one', () => {
-    expect(
-      ensureTableValue(field, { header: { name: 'Produkt', qty: '' } }).header
-    ).toEqual({ name: 'Produkt', qty: '', live: 'Live' })
+    expect(ensureTableValue(field, { header: { name: 'Produkt', qty: '' } }).header).toEqual({
+      name: 'Produkt',
+      qty: '',
+      live: 'Live',
+    })
   })
 
   it('drops header entries for columns that no longer exist', () => {
-    expect(ensureTableValue(schema([textColumn]), { header: { name: 'A', gone: 'B' } }).header).toEqual({
+    expect(
+      ensureTableValue(schema([textColumn]), { header: { name: 'A', gone: 'B' } }).header
+    ).toEqual({
       name: 'A',
     })
   })
@@ -222,7 +230,8 @@ describe('ensureTableValue', () => {
 
   it('keeps well-typed cell values', () => {
     expect(
-      ensureTableValue(field, { rows: [{ id: 'r1', cells: { name: 'A', qty: 7, live: true } }] }).rows
+      ensureTableValue(field, { rows: [{ id: 'r1', cells: { name: 'A', qty: 7, live: true } }] })
+        .rows
     ).toEqual([{ id: 'r1', cells: { name: 'A', qty: 7, live: true } }])
   })
 
@@ -275,7 +284,10 @@ describe('ensureTableValue', () => {
   })
 
   it.each([null, undefined, 'nope', 42, ['a']])('treats %o as an empty value', (value) => {
-    expect(ensureTableValue(schema([textColumn]), value)).toEqual({ header: { name: '' }, rows: [] })
+    expect(ensureTableValue(schema([textColumn]), value)).toEqual({
+      header: { name: '' },
+      rows: [],
+    })
   })
 
   it('ignores a non-array rows key and a non-object header key', () => {
@@ -300,10 +312,9 @@ describe('ensureTableValue', () => {
 describe('getTableHeaderPreview', () => {
   it('prefers the stored header, then the label, then the key', () => {
     expect(
-      getTableHeaderPreview(
-        schema([textColumn, numberColumn, { key: 'bare', type: 'text' }]),
-        { header: { name: 'Produkt' } }
-      )
+      getTableHeaderPreview(schema([textColumn, numberColumn, { key: 'bare', type: 'text' }]), {
+        header: { name: 'Produkt' },
+      })
     ).toEqual(['Produkt', 'Qty', 'bare'])
   })
 
@@ -323,34 +334,50 @@ describe('mergeLocalizedTableValue', () => {
   }
 
   it('lets the overlay win for translatable text cells', () => {
-    const merged = mergeLocalizedTableValue(base, {
-      rows: [{ id: 'r1', cells: { name: 'Gerät' } }],
-    }, field)
+    const merged = mergeLocalizedTableValue(
+      base,
+      {
+        rows: [{ id: 'r1', cells: { name: 'Gerät' } }],
+      },
+      field
+    )
 
     expect(merged.rows[0].cells.name).toBe('Gerät')
     expect(merged.rows[1].cells.name).toBe('Gadget')
   })
 
   it('keeps the base value for non-text cells even when the overlay sets one', () => {
-    const merged = mergeLocalizedTableValue(base, {
-      rows: [{ id: 'r1', cells: { name: 'Gerät', qty: 99, live: false } }],
-    }, field)
+    const merged = mergeLocalizedTableValue(
+      base,
+      {
+        rows: [{ id: 'r1', cells: { name: 'Gerät', qty: 99, live: false } }],
+      },
+      field
+    )
 
     expect(merged.rows[0].cells).toEqual({ name: 'Gerät', qty: 3, live: true })
   })
 
   it('matches rows by id, not by position', () => {
-    const merged = mergeLocalizedTableValue(base, {
-      rows: [{ id: 'r2', cells: { name: 'Zweitens' } }],
-    }, field)
+    const merged = mergeLocalizedTableValue(
+      base,
+      {
+        rows: [{ id: 'r2', cells: { name: 'Zweitens' } }],
+      },
+      field
+    )
 
     expect(merged.rows.map((row) => row.cells.name)).toEqual(['Widget', 'Zweitens'])
   })
 
   it('drops overlay rows the base does not have', () => {
-    const merged = mergeLocalizedTableValue(base, {
-      rows: [{ id: 'ghost', cells: { name: 'Nope' } }],
-    }, field)
+    const merged = mergeLocalizedTableValue(
+      base,
+      {
+        rows: [{ id: 'ghost', cells: { name: 'Nope' } }],
+      },
+      field
+    )
 
     expect(merged.rows.map((row) => row.id)).toEqual(['r1', 'r2'])
   })
@@ -391,10 +418,14 @@ describe('mergeLocalizedContentForSchema', () => {
 
   it('lets the overlay win for translatable fields', () => {
     expect(
-      mergeLocalizedContentForSchema({ title: 'Home', slug: 'home' }, { title: 'Startseite' }, {
-        title: textField,
-        slug: textField,
-      })
+      mergeLocalizedContentForSchema(
+        { title: 'Home', slug: 'home' },
+        { title: 'Startseite' },
+        {
+          title: textField,
+          slug: textField,
+        }
+      )
     ).toEqual({ title: 'Startseite', slug: 'home' })
   })
 
@@ -421,7 +452,9 @@ describe('mergeLocalizedContentForSchema', () => {
   })
 
   it('replaces a non-array base with an overlay array', () => {
-    expect(mergeLocalizedContentForSchema({ list: 'nope' }, { list: ['A'] }, {}).list).toEqual(['A'])
+    expect(mergeLocalizedContentForSchema({ list: 'nope' }, { list: ['A'] }, {}).list).toEqual([
+      'A',
+    ])
   })
 
   it('does not mutate the base', () => {
@@ -500,7 +533,9 @@ describe('mergeLocalizedContentForSchema', () => {
   describe('nested blocks', () => {
     const blocksField = { type: 'blocks' } as SchemaType
     const getBlockSchema = (slug: string) =>
-      slug === 'hero' ? { schema: { headline: textField, count: { type: 'number' } as SchemaType } } : undefined
+      slug === 'hero'
+        ? { schema: { headline: textField, count: { type: 'number' } as SchemaType } }
+        : undefined
 
     it('recurses into a block using the resolved schema', () => {
       const merged = mergeLocalizedContentForSchema(
@@ -571,15 +606,19 @@ describe('mergeLocalizedContentForSchema', () => {
     })
 
     it('ignores a blocks field whose merged value is not an array', () => {
-      expect(
-        mergeLocalizedContentForSchema({ body: 'nope' }, {}, { body: blocksField }).body
-      ).toBe('nope')
+      expect(mergeLocalizedContentForSchema({ body: 'nope' }, {}, { body: blocksField }).body).toBe(
+        'nope'
+      )
     })
   })
 
   it('tolerates a null schema', () => {
     expect(
-      mergeLocalizedContentForSchema({ a: 1 }, { a: 2 }, null as unknown as Record<string, SchemaType>)
+      mergeLocalizedContentForSchema(
+        { a: 1 },
+        { a: 2 },
+        null as unknown as Record<string, SchemaType>
+      )
     ).toEqual({ a: 2 })
   })
 })
