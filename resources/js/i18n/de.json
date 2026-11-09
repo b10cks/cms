@@ -4976,20 +4976,13 @@
       }
     },
     "translationAssist": {
-      "empty": "Klicken Sie in eine Übersetzung, um Glossar, Übersetzungsspeicher und andere Sprachen zu sehen.",
-      "glossary": "Glossar",
-      "keepExact": "{term}, unverändert",
-      "avoid": "Vermeiden: {terms}",
+      "empty": "Klicken Sie in eine Übersetzung, um Übersetzungsspeicher und andere Sprachen zu sehen.",
       "memory": "Übersetzungsspeicher",
       "use": "Übernehmen",
       "otherLanguages": "Andere Sprachen",
       "length": "Länge",
       "lengthOf": "{count} von {max} Zeichen",
       "lengthCount": "{count} Zeichen | {count} Zeichen",
-      "checkGlossarySays": "Glossar sagt \"{expected}\", gefunden \"{found}\"",
-      "checkAvoid": "Das Glossar vermeidet \"{found}\"",
-      "checkKeepExact": "\"{expected}\" bleibt wie geschrieben",
-      "checkMissing": "Glossar sagt \"{expected}\" für \"{term}\"",
       "checkTooLong": "Länger als {max} Zeichen"
     },
     "flattenedLocalization": {
@@ -5115,11 +5108,9 @@
         "notFound": "Diesen Skill gibt es nicht oder er wurde gelöscht."
       },
       "knowledge": {
-        "loadFailed": "Wissen konnte nicht geladen werden. Die Liste ist eventuell unvollständig.",
-        "loadFailedDocuments": "Dokumente konnten nicht geladen werden. Nur Glossare sind aufgeführt.",
-        "loadFailedGlossaries": "Glossare konnten nicht geladen werden. Nur Dokumente sind aufgeführt.",
+        "loadFailed": "Wissen konnte nicht geladen werden.",
         "title": "Wissen",
-        "description": "Styleguides werden immer befolgt. Dokumente werden durchsucht, wenn eine Aufgabe sie braucht. Glossare legen fest, welche Begriffe die KI verwenden, unübersetzt lassen oder vermeiden muss.",
+        "description": "Styleguides werden immer befolgt. Dokumente werden durchsucht, wenn eine Aufgabe sie braucht.",
         "editorHint": "Schreibe Markdown oder lade eine PDF- oder Word-Datei hoch. Läufe nutzen die veröffentlichte Revision.",
         "descriptionLabel": "Beschreibung",
         "descriptionHint": "Ein Satz dazu, was es abdeckt und wann man es liest. KI-Läufe wählen Referenzdokumente danach aus.",
@@ -5129,8 +5120,7 @@
         "confirmDelete": "Dokument {title} löschen?",
         "types": {
           "style": "Styleguide",
-          "reference": "Dokument",
-          "glossary": "Glossar"
+          "reference": "Dokument"
         },
         "extraction": {
           "pending": "Text wird extrahiert",
@@ -5146,15 +5136,6 @@
         "delete": "Dokument löschen",
         "replaceSource": "Datei ersetzen",
         "notFound": "Dieses Dokument gibt es nicht oder es wurde gelöscht."
-      },
-      "glossaries": {
-        "description": "Begriffe, die die KI verwenden, unübersetzt lassen oder vermeiden muss. Abweichungen werden am Text markiert.",
-        "create": "Neues Glossar",
-        "confirmDelete": "Glossar {name} mit allen Begriffen löschen?",
-        "termCount": "{count} Begriff | {count} Begriffe",
-        "notFound": "Glossar nicht gefunden",
-        "exportLabel": "Exportieren",
-        "delete": "Glossar löschen"
       },
       "schedules": {
         "title": "Zeitpläne",
@@ -5257,18 +5238,8 @@
         "shorten": "Kürzen",
         "expand": "Ausbauen",
         "fix-grammar": "Grammatik korrigieren",
-        "apply-glossary": "Glossar anwenden",
         "translate-selection": "Übersetzen",
-        "extract-glossary-terms": "Glossarbegriffe extrahieren",
         "find-untranslated": "Unübersetzte Einträge finden"
-      },
-      "findingsTitle": "Verbotene Formulierungen im erstellten Text",
-      "dismissFindings": "Schließen",
-      "findings": {
-        "missing_term": "Hinweis: Das Glossar verwendet „{expected}“ für „{term}“. Eine gebeugte Form ist in Ordnung.",
-        "translated_do_not_translate": "„{expected}“ ist ein geschützter Name, verwende ihn genau so.",
-        "forbidden_variant": "„{found}“ ist nicht erlaubt, verwende „{expected}“.",
-        "forbidden_variant_bare": "„{found}“ ist nicht erlaubt."
       }
     },
     "aiChangeset": {
@@ -5328,7 +5299,6 @@
       "discardEdit": "Bearbeitung verwerfen",
       "editLabel": "Bearbeiteter Vorschlag",
       "editedBeforeAccepting": "Vor dem Übernehmen bearbeitet",
-      "glossaryFindings": "Glossar-Hinweise",
       "newFolder": "Neuer Ordner",
       "newTag": "Neues Tag",
       "assetFields": {
@@ -5492,7 +5462,7 @@
             "description": "Felder übersetzen, die noch den unübersetzten Quelltext enthalten."
           }
         },
-        "translationKeeps": "Nur betroffene Felder ändern sich. Andere Änderungen, Markup, Platzhalter und nicht übersetzte Felder bleiben, wie sie sind. Glossar und Übersetzungsspeicher gelten.",
+        "translationKeeps": "Nur betroffene Felder ändern sich. Andere Änderungen, Markup, Platzhalter und nicht übersetzte Felder bleiben, wie sie sind. Der Übersetzungsspeicher gilt.",
         "permissions": "Erlaubte Änderungen",
         "permissionsDefault": "Standardmäßig füllt die KI nur leere Metadaten und fügt Tags hinzu.",
         "permissionKinds": {
@@ -5700,25 +5670,7 @@
       "summary": {
         "changed": "{count} Eintrag geändert | {count} Einträge geändert",
         "conflicts": "{count} Konflikt | {count} Konflikte",
-        "flagged": "{count} markiert | {count} markiert",
-        "notPublished": "Es wird nichts veröffentlicht.",
-        "findings": "{count} Glossar-Warnung | {count} Glossar-Warnungen"
-      },
-      "suggestions": {
-        "addTo": "Zum Glossar hinzufügen",
-        "chooseGlossary": "Hinzufügen zu",
-        "createGlossary": "Zuerst ein Glossar anlegen",
-        "dismiss": "Verwerfen",
-        "scopes": {
-          "space": "Space",
-          "team": "Team"
-        },
-        "acceptFailed": "Begriff konnte nicht hinzugefügt werden: {error}",
-        "dismissFailed": "Vorschlag konnte nicht verworfen werden: {error}",
-        "addTermTo": "{term} zu einem Glossar hinzufügen",
-        "dismissTerm": "{term} verwerfen",
-        "empty": "Keine Glossarvorschläge offen.",
-        "evidence": "Die KI schrieb „{ai}“, eine Person änderte es zu „{final}“."
+        "notPublished": "Es wird nichts veröffentlicht."
       },
       "searchPlaceholder": "Suchen",
       "clearSearch": "Suche leeren",
@@ -5729,8 +5681,7 @@
       "unsettleThread": "{title} wieder öffnen",
       "sharedBy": "Geteilt von {name}",
       "context": {
-        "schedule": "Zeitplan",
-        "suggestions": "Glossarvorschläge"
+        "schedule": "Zeitplan"
       },
       "config": {
         "label": "KI-Konfiguration",
@@ -5759,7 +5710,6 @@
         "get_block_schemas": "Block-Schemas lesen",
         "get_entry": "Eintrag lesen",
         "get_mentioned_content": "Erwähnungen lesen",
-        "lookup_glossary": "Glossar prüfen",
         "propose_create": "Neuen Eintrag entwerfen",
         "propose_update": "Änderungen entwerfen",
         "read_knowledge": "Wissen lesen",
@@ -5824,19 +5774,15 @@
     },
     "contentFlags": {
       "conflicts": "{count} Konflikt | {count} Konflikte",
-      "flagged": "{count} markierte Formulierung | {count} markierte Formulierungen",
       "title": "Die KI hat etwas zum Prüfen hinterlassen",
-      "flaggedRow": "Markiert: \"{wording}\" in {field}",
-      "flaggedRowNoField": "Markiert: \"{wording}\"",
-      "replacement": "Stattdessen \"{replacement}\" verwenden.",
       "conflictRow": "Die Änderung einer Person in {field} wartet auf eine Entscheidung",
       "conflictRowNoField": "Die Änderung einer Person wartet auf eine Entscheidung",
       "open": "Öffnen",
       "more": "und {count} weitere",
       "proceed": "Du kannst trotzdem veröffentlichen.",
-      "countSentence": "{count} dieser Einträge hat eine markierte Formulierung oder einen Konflikt. | {count} dieser Einträge haben markierte Formulierungen oder Konflikte.",
-      "confirmTitle": "Mit Markierungen veröffentlichen?",
-      "releaseMessage": "Dieses Release enthält {count} Eintrag mit markierter Formulierung oder Konflikt. | Dieses Release enthält {count} Einträge mit markierten Formulierungen oder Konflikten.",
+      "countSentence": "{count} dieser Einträge hat einen offenen Konflikt. | {count} dieser Einträge haben offene Konflikte.",
+      "confirmTitle": "Mit Konflikten veröffentlichen?",
+      "releaseMessage": "Dieses Release enthält {count} Eintrag mit offenem Konflikt. | Dieses Release enthält {count} Einträge mit offenen Konflikten.",
       "confirmCommit": "Trotzdem committen",
       "confirmPublish": "Trotzdem veröffentlichen"
     },
@@ -6280,7 +6226,6 @@
       "deleted": "Gelöscht",
       "deleteError": "Löschen fehlgeschlagen: {error}",
       "uploaded": "Datei hochgeladen, der Text wird extrahiert",
-      "imported": "Glossar importiert",
       "importError": "Import fehlgeschlagen: {error}"
     }
   },
