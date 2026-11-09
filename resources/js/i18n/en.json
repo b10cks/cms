@@ -4567,6 +4567,10 @@
       "storage": "storage",
       "traffic": "traffic",
       "ai": "AI credit"
+    },
+    "appUpdate": {
+      "message": "A new version of b10cks is available. Save your work, then reload.",
+      "reload": "Reload"
     }
   },
   "dashboard": {

@@ -10,6 +10,7 @@ import Command from '~/components/Command.vue'
 import Icon from '~/components/Icon.vue'
 import KeyboardShortcutsDialog from '~/components/KeyboardShortcutsDialog.vue'
 import NavigationProgress from '~/components/NavigationProgress.vue'
+import { useAppUpdateNotice } from '~/composables/useAppUpdateNotice'
 import { useAssetUploadBatch } from '~/composables/useAssetUploadBatch'
 import { useUrlNotifications } from '~/composables/useUrlNotifications'
 import DefaultLayout from '~/layouts/default.vue'
@@ -28,6 +29,7 @@ watchEffect(() => {
   }
 })
 useUrlNotifications()
+useAppUpdateNotice()
 const commandOpen = ref(false)
 
 provide('commandOpen', commandOpen)

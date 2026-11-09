@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { ApiClient } from '~/api/client'
+import { outdatedBy } from '~/lib/appVersion'
 
 const CSRF_ENDPOINT = '/auth/v1/csrf-cookie'
 const BASE_URL = 'https://api.b10cks.test'
@@ -76,6 +77,21 @@ afterEach(() => {
   vi.unstubAllGlobals()
   vi.restoreAllMocks()
   document.cookie = 'XSRF-TOKEN=; expires=Thu, 01 Jan 1970 00:00:00 GMT'
+})
+
+describe('release check', () => {
+  it('notes the release named by a response header', async () => {
+    enqueue(() =>
+      json(
+        { data: 'ok' },
+        { headers: { 'content-type': 'application/json', 'x-b10cks-version': 'next' } }
+      )
+    )
+
+    await client().get('/mgmt/v1/spaces')
+
+    expect(outdatedBy.value).toBe('next')
+  })
 })
 
 describe('URL building', () => {

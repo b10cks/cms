@@ -1,3 +1,4 @@
+import { noteServerRelease, VERSION_HEADER } from '~/lib/appVersion'
 import { getXsrfHeaders, hasXsrfToken } from '~/lib/csrf'
 import { isClient } from '~/lib/env'
 
@@ -21,9 +22,7 @@ const MAX_ERROR_BODY_LENGTH = 500
 const getSocketId = (): string | null => {
   if (!isClient) return null
   try {
-    return (
-      (window as { Echo?: { socketId?: () => string | undefined } }).Echo?.socketId?.() ?? null
-    )
+    return (window as { Echo?: { socketId?: () => string | undefined } }).Echo?.socketId?.() ?? null
   } catch {
     return null
   }
@@ -226,6 +225,7 @@ export class ApiClient {
         },
         body: body !== undefined ? (isFormData ? body : JSON.stringify(body)) : undefined,
       })
+      noteServerRelease(response.headers.get(VERSION_HEADER))
       return this.parseResponse<T>(response)
     }
 

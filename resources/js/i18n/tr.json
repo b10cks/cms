@@ -4567,6 +4567,10 @@
       "storage": "depolama",
       "traffic": "trafik",
       "ai": "Yapay zeka kredisi"
+    },
+    "appUpdate": {
+      "message": "b10cks'in yeni bir sürümü var. Çalışmanı kaydet, ardından yeniden yükle.",
+      "reload": "Yeniden yükle"
     }
   },
   "dashboard": {
