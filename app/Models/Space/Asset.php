@@ -3,6 +3,7 @@
 namespace App\Models\Space;
 
 use App\Enums\AssetRightsStatus;
+use App\Jobs\Space\SignalPublishedAssetUsageJob;
 use App\Models\Management\Storage;
 use App\Models\Traits\BroadcastsSpaceModelEvents;
 use App\Models\Traits\HasPurifiedAttributes;
@@ -149,7 +150,9 @@ class Asset extends SpaceModel
      * Delivery overlays live asset data (url, file details, alt texts, focus,
      * dimensions) onto content, but its CDN cache is keyed on the space's
      * `content_updated_at`. Bump it when published content shows this asset,
-     * or edits stay invisible until the next unrelated publish.
+     * or edits stay invisible until the next unrelated publish. The same
+     * change is signalled to `content_published` automations per entry, so
+     * frontends that cache pages can drop the ones showing the asset.
      */
     protected function refreshDeliveryCache(): void
     {
@@ -198,6 +201,7 @@ class Asset extends SpaceModel
 
         if ($space && app(AssetUsageService::class)->anyPublished($assetIds)) {
             $space->touchContentUpdatedAt();
+            SignalPublishedAssetUsageJob::dispatchFor($space, $assetIds);
         }
     }
 
