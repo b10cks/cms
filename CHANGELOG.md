@@ -3,6 +3,14 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.11.9-df172646] — 2026-11-9
+
+- 📝 Record the localization preview merge release
+- 🎨 Format the localized content merge and its tests
+- 🐛 Keep non-translatable fields from the source in the localization preview
+- 📝 Record the localization preview merge fix
+- 🐛 Show translated rich text whole in the localization preview
+
 ## [v2026.11.9-0e7e8ec6] — 2026-11-9
 
 - 📝 Record the asset reference boundary and the production repair commands
