@@ -283,7 +283,8 @@ const isEmptyOverlayValue = (value: unknown, type: string): boolean => {
 /**
  * Lay a translation over its source the way delivery does. Nested blocks merge
  * item by item and translatable tables cell by cell; every other schema field
- * is a whole value (a rich text doc, link or meta), taken from the overlay when
+ * is a whole value (a rich text doc, link or meta). A translatable one comes
+ * from the overlay when it has one, a non-translatable one from the base when
  * it has one. Keys outside the schema merge structurally.
  */
 export const mergeLocalizedContentForSchema = (
@@ -309,10 +310,16 @@ export const mergeLocalizedContentForSchema = (
     if (type !== 'blocks') {
       // Merging two docs node by node by position drops or mixes nodes, e.g.
       // the text after a placeholder token the source paragraph doesn't have.
-      if (!isEmptyOverlayValue(overlay?.[key], type)) {
+      const baseValue = isObjectRecord(base) ? base[key] : undefined
+      // A non-translatable field belongs to the source; a translation's copy
+      // only shows where the source has no value.
+      const useOverlay = field?.translatable
+        ? !isEmptyOverlayValue(overlay?.[key], type)
+        : (baseValue === undefined || baseValue === null) && overlay?.[key] !== undefined
+      if (useOverlay) {
         merged[key] = cloneStructuredValue(overlay[key])
-      } else if (isObjectRecord(base) && key in base) {
-        merged[key] = cloneStructuredValue(base[key])
+      } else if (baseValue !== undefined) {
+        merged[key] = cloneStructuredValue(baseValue)
       }
       return
     }

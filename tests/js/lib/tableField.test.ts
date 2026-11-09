@@ -386,15 +386,28 @@ describe('mergeLocalizedTableValue', () => {
 })
 
 describe('mergeLocalizedContentForSchema', () => {
-  const textField = { type: 'text' } as SchemaType
+  const textField = { type: 'text', translatable: true } as SchemaType
+  const fixedField = { type: 'text' } as SchemaType
 
-  it('lets the overlay win for plain fields', () => {
+  it('lets the overlay win for translatable fields', () => {
     expect(
       mergeLocalizedContentForSchema({ title: 'Home', slug: 'home' }, { title: 'Startseite' }, {
         title: textField,
         slug: textField,
       })
     ).toEqual({ title: 'Startseite', slug: 'home' })
+  })
+
+  it('keeps the base value of a non-translatable field', () => {
+    expect(
+      mergeLocalizedContentForSchema({ phone: '+49 1' }, { phone: '+31 2' }, { phone: fixedField })
+    ).toEqual({ phone: '+49 1' })
+  })
+
+  it('takes the overlay value of a non-translatable field the base has no value for', () => {
+    expect(
+      mergeLocalizedContentForSchema({ phone: null }, { phone: '+31 2' }, { phone: fixedField })
+    ).toEqual({ phone: '+31 2' })
   })
 
   it('keeps base keys the overlay omits and adds keys only the overlay has', () => {
@@ -473,14 +486,14 @@ describe('mergeLocalizedContentForSchema', () => {
       expect((merged.specs as TableValue).rows[0].cells).toEqual({ name: 'Breite', qty: 3 })
     })
 
-    it('takes a non-translatable table as a whole value', () => {
+    it('keeps a non-translatable table from the base', () => {
       const merged = mergeLocalizedContentForSchema(
         { specs: { rows: [{ id: 'r1', cells: { name: 'Width', qty: 3 } }] } },
         { specs: { rows: [{ id: 'r1', cells: { name: 'Breite' } }] } },
         { specs: { ...tableField, translatable: false } as SchemaType }
       )
 
-      expect(merged.specs).toEqual({ rows: [{ id: 'r1', cells: { name: 'Breite' } }] })
+      expect(merged.specs).toEqual({ rows: [{ id: 'r1', cells: { name: 'Width', qty: 3 } }] })
     })
   })
 
