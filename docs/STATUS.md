@@ -1,9 +1,10 @@
 # Status
 
-Updated 2026-11-09. Read by agents at the start of a thread; rewrite it before handing back.
+Updated 2026-11-10. Read by agents at the start of a thread; rewrite it before handing back.
 
 ## Branches
 
+- `feature/remove-glossary` (local, not pushed, on top of `feature/knowledge-cleanup`): the AI glossary is gone, with no replacement check. Prompt sections, `lookup_glossary`, checkers and findings, override reasons, glossary suggestions and the suggestions thread kind, translation memory filtering, the glossary API, 22 MCP operations, the `apply-glossary` and `extract-glossary-terms` skills, the editor pages and the glossary docs. Policy snapshots are version 3 (documents only); version 2 loads with its concepts ignored. Migrations: `2026_11_10_120000_drop_ai_glossaries` writes each glossary as JSON to `glossary-archive/{timestamp}/` on the transfers disk, then drops the three tables; space migration `000029` drops `ai_glossary_suggestions`, `glossary_findings` and `open_findings` and deletes suggestions threads. **After tagging, run `spaces:repair-databases` by hand**, and release the SDK without the glossary operations before or with it. Merged from `feature/remove-glossary-backend` and `feature/remove-glossary-frontend` (both can be deleted with their worktrees). Merge after `feature/knowledge-cleanup`. Waiting on Mike's review.
 - `feature/knowledge-cleanup` (local, not pushed, on top of `feature/style-guide-limits`): knowledge documents get a required `description` (200 characters, backfilled with the title), runs list the reference documents in scope by slug, title, locale and description, and drop `search_knowledge`/`read_knowledge` when none is in scope. Glossary cleanup: `/terms` endpoints, `AiGlossaryTermResource`, `SaveAiGlossaryTermRequest`, `case_sensitive` (case follows Keep exact), `FrozenGlossaryRow` and version 1 snapshot reading are gone, and `2026_11_10_110000` drops `ai_glossary_terms_legacy`. Production had 0 `case_sensitive` overrides, an empty legacy table and no open work on version 1 snapshots (checked 2026-11-09). **Breaks the published `@b10cks/mgmt-client` and stdio MCP glossary term calls**: release the SDK on concept rows before or with this. `OperationsMirrorTest` keeps the term names in `ONLY_IN_THE_SDK` until the SDK drops them. Glossaries stay in the management database (decided 2026-11-09, team glossaries span spaces). Waiting on Mike's review.
 - `feature/style-guide-limits` (local, not pushed, on top of `feature/translation-memory-mgmt`): a style guide holds at most 20,000 characters (`AiKnowledgeDocument::MAX_STYLE_CHARS`). Create, update and publish refuse a longer style draft with a 422 on `draft` naming the limit and the length; an older guide over the limit takes other edits while its draft is unchanged. `get_translation_task` no longer cuts `style_guides` at 8,000 characters, so every surface gets the guide whole. Merge after `feature/translation-memory-mgmt`. Waiting on Mike's review.
 - `feature/translation-memory-mgmt` (local, not pushed, from v2026.11.9-df172646): Management API and MCP for a space's translation memory. `GET|PATCH|DELETE …/spaces/{space}/ai/translation-memory[/{unit}]` and `POST …/bulk` (delete by ids), MCP `ai.translationMemory.list|update|delete|bulk`. Reads need `ai.view`, writes `ai.manage`. A correction becomes `origin: human`; the entry is not changed, so its next publish records what it holds again (documented, on purpose). Not in `@b10cks/mcp-server` yet (listed in `OperationsMirrorTest`). Waiting on Mike's review and merge.
@@ -34,7 +35,7 @@ None.
 
 ## Waiting on Mike
 
-- Space backups and space-to-space migrations carry no glossaries, skills or knowledge documents. Parked on 2026-11-09 as its own project; decide how inherited team items are handled.
+- Space backups and space-to-space migrations carry no skills or knowledge documents. Parked on 2026-11-09 as its own project; decide how inherited team items are handled.
 
 - Production repairs after this release (#67, #69, #70), dry run first each time. Since #69 the entrypoint runs a command override instead of the server, so the regular task definition works:
 
