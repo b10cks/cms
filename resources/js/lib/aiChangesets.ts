@@ -4,7 +4,7 @@
  * a person. Everything else is a proposal, decided per field, entry or changeset.
  */
 import type { DiffChange } from '~/components/content/diff/field-diff'
-import { isGlossaryHint, type AiGlossaryFinding, type AiRunRecord } from '~/lib/aiRun'
+import type { AiRunRecord } from '~/lib/aiRun'
 
 /** Kinds that bulk scopes, schedules and preflight work on. */
 export type AiTargetType = 'content' | 'data_entry' | 'asset'
@@ -49,23 +49,10 @@ export type AiItemEvidence =
 export interface AiItemPolicy {
   snapshot_id: string
   fingerprint?: string
-  terms?: Array<{ id?: string | null; concept_id?: string | null; status?: string | null; version?: string | null }>
-}
-
-/** A reviewer's reason for keeping a deterministic finding, committed with the decision. */
-export interface AiItemOverride {
-  finding_id: string
-  finding?: AiGlossaryFinding
-  reason: string
-  text_sha256?: string
-  policy_snapshot_id?: string | null
-  reviewer_id?: string
-  overridden_at?: string
 }
 
 /** Review data of a proposal: asset review, see `AssetReview` on the server, and its provenance. */
 export interface AiItemReview {
-  overrides?: AiItemOverride[]
   evidence?: AiItemEvidence
   policy?: AiItemPolicy
   group?: string
@@ -96,8 +83,6 @@ export interface AiChangesetItem {
   final: unknown
   current: unknown
   status: AiChangesetItemStatus
-  /** `id` names a finding in an accept's `overrides` */
-  glossary_findings: Array<AiGlossaryFinding & { id: string }>
   flags?: AiItemFlag[]
   translation_units?: AiTranslationUnit[]
   review?: AiItemReview | null
@@ -129,19 +114,6 @@ export interface AiChangeset {
   created_at: string
 }
 
-/** A glossary term the learning loop drew from an editor's correction of AI output. */
-export interface AiGlossarySuggestion {
-  id: string
-  source_locale: string
-  term: string
-  translations: Record<string, string>
-  forbidden: string[]
-  note: string | null
-  evidence: { ai: string; final: string; label: string | null } | null
-  actor: { id: string; name: string } | null
-  created_at: string
-}
-
 export interface AiDecision {
   item_ids?: string[]
   overwrite?: boolean
@@ -149,13 +121,6 @@ export interface AiDecision {
   bulk?: boolean
   /** Reviewer edits of text proposals, item ID => text to apply instead */
   values?: Record<string, string>
-  /** Reasons for keeping deterministic findings of the text applied, item ID => findings */
-  overrides?: Record<string, AiFindingOverride[]>
-}
-
-export interface AiFindingOverride {
-  finding_id: string
-  reason: string
 }
 
 export interface AiDecisionResult {
@@ -167,15 +132,12 @@ export interface AiDecisionResult {
   rejected?: number
 }
 
-/** One entry an operation changed, conflicts and flagged wording first. */
+/** One entry an operation changed, conflicts first. */
 export interface AiChangedEntry {
   target_id: string | null
   label: string | null
   written: number
   conflicts: number
-  flagged: number
-  /** The wording that is still in the draft */
-  flagged_wording: string[]
 }
 
 /** What an operation did to drafts. */
@@ -184,8 +146,6 @@ export interface AiChangesSummary {
   changed: number
   /** Fields not written because someone changed them */
   conflicts: number
-  /** Fields with banned wording or a protected name to look at before publishing */
-  flagged: number
 }
 
 export interface AiOperationChangesPage {
@@ -295,38 +255,29 @@ export const isOpenItem = (item: AiChangesetItem) =>
 /** Content in its draft: done, with nothing to decide. */
 export const isWrittenItem = (item: AiChangesetItem) => item.target_type === 'content' && item.status === 'accepted'
 
-/** Wording to fix before publishing, on what is in the draft or waits as a conflict. Content only: on a proposal a finding is part of the decision. */
-export const isFlaggedItem = (item: AiChangesetItem) =>
-  item.target_type === 'content' &&
-  item.status !== 'rejected' &&
-  item.glossary_findings.some((finding) => !isGlossaryHint(finding))
-
 /** The same figures an operation's receipt shows, for a changeset the client holds. */
 export function changesSummary(items: readonly AiChangesetItem[]): AiChangesSummary {
   return {
     changed: new Set(items.filter(isWrittenItem).map((item) => item.target_id)).size,
     conflicts: items.filter((item) => item.target_type === 'content' && item.status === 'conflict').length,
-    flagged: items.filter(isFlaggedItem).length,
   }
 }
 
-/** "Changed 412 entries, 3 conflicts, 7 flagged": what happened, in one line. */
+/** "Changed 412 entries, 3 conflicts": what happened, in one line. */
 export function changesLine(
   t: (key: string, named: Record<string, unknown>, plural: number) => string,
-  { changed, conflicts, flagged }: AiChangesSummary,
+  { changed, conflicts }: AiChangesSummary,
   formatNumber: (value: number) => string = String
 ): string {
   return [
     t('components.aiThreads.summary.changed', { count: formatNumber(changed) }, changed),
     t('components.aiThreads.summary.conflicts', { count: formatNumber(conflicts) }, conflicts),
-    t('components.aiThreads.summary.flagged', { count: formatNumber(flagged) }, flagged),
   ].join(', ')
 }
 
-/** Entries that need a person first: conflicts, then flagged wording, else in the order they arrived. */
+/** Entries with a conflict first, else in the order they arrived. */
 export function attentionFirst(entries: readonly AiChangesetEntry[]): AiChangesetEntry[] {
-  const rank = (entry: AiChangesetEntry) =>
-    entry.items.some((item) => item.status === 'conflict') ? 0 : entry.items.some(isFlaggedItem) ? 1 : 2
+  const rank = (entry: AiChangesetEntry) => (entry.items.some((item) => item.status === 'conflict') ? 0 : 1)
   return [...entries].sort((a, b) => rank(a) - rank(b))
 }
 
@@ -343,28 +294,12 @@ export const itemNotes = (item: AiChangesetItem): AiItemFlag[] => [
  */
 export const needsIndividualLook = (item: AiChangesetItem) =>
   item.status === 'conflict' ||
-  (item.target_type !== 'content' && item.glossary_findings.some((finding) => !isGlossaryHint(finding))) ||
   itemNotes(item).length > 0 ||
   STRUCTURE_TARGET_TYPES.has(item.target_type)
 
 /** The reviewer's text, when it differs from a text proposal. */
 export const editedText = (item: AiChangesetItem, edit: string | undefined): string | undefined =>
   edit !== undefined && edit !== item.after ? edit : undefined
-
-/** A 422's missing overrides, item ID => findings; an edit's new findings are only named this way. */
-export function overrideErrors(error: unknown): Record<string, Array<{ id: string; message: string }>> {
-  const errors = (error as { data?: { errors?: unknown } } | null | undefined)?.data?.errors
-  const named: Record<string, Array<{ id: string; message: string }>> = {}
-  if (typeof errors !== 'object' || errors === null) return named
-
-  for (const [key, messages] of Object.entries(errors)) {
-    const [root, itemId, findingId, ...rest] = key.split('.')
-    if (root !== 'overrides' || !itemId || !findingId || rest.length > 0) continue
-    const message = Array.isArray(messages) && typeof messages[0] === 'string' ? messages[0] : ''
-    ;(named[itemId] ??= []).push({ id: findingId, message })
-  }
-  return named
-}
 
 const ID_SEGMENT = /^([0-9a-hjkmnp-tv-z]{26}|[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}|\d+|\*)$/i
 

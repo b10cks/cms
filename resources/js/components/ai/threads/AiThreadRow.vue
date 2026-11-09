@@ -29,7 +29,6 @@ const { formatRelativeTime } = useFormat()
 const context = computed(() => {
   const { thread } = props
   if (thread.kind === 'schedule') return t('components.aiThreads.context.schedule')
-  if (thread.kind === 'suggestions') return t('components.aiThreads.context.suggestions')
   const screen = thread.context?.find((chip) => SCREEN_CHIP_TYPES.has(chip.type))
   return screen?.label ?? (thread.skill ? aiSkillLabel(thread.skill, t) : '')
 })

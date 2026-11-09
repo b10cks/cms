@@ -150,7 +150,7 @@ export class API {
     return this._personalAccessTokens
   }
 
-  /** Skills, knowledge and glossaries of a space or a team. */
+  /** Skills and knowledge of a space or a team. */
   public aiKnowledge(owner: AiOwner): AiKnowledge {
     return new AiKnowledge(this.client, owner)
   }

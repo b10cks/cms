@@ -164,13 +164,10 @@ export class Contents extends BaseResource<
     )
   }
 
-  /**
-   * Glossary, memory and other locales for one unit. `text` is the draft to
-   * check, by default the saved translation.
-   */
+  /** Memory and other locales for one unit. */
   public async translationAssist(
     contentId: string,
-    payload: { locale: string; unit: string; text?: string | null }
+    payload: { locale: string; unit: string }
   ): Promise<ApiResponse<ContentTranslationAssist>> {
     return this.client.post<ApiResponse<ContentTranslationAssist>>(
       `${this.basePath}/${contentId}/translation-assist`,

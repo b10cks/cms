@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { AiOwner } from '~/api/resources/ai-knowledge'
+import type { AiKnowledgeType, AiOwner } from '~/api/resources/ai-knowledge'
 import type { AiScope } from '~/api/resources/ai'
 import { Badge } from '~/components/ui/badge'
 import { Panel } from '~/components/ui/panel'
@@ -18,9 +18,8 @@ import TableLoadingRow from '~/components/ui/TableLoadingRow.vue'
 import { aiSettingsRoutes, isOwnedBy } from '~/lib/aiSettingsRoutes'
 
 /**
- * Style guides, reference documents and glossaries of a space or team in one
- * table. Rows of the team layers above the owner are read-only here, and a glossary
- * among them opens to read.
+ * Style guides and reference documents of a space or team in one table. Rows
+ * of the team layers above the owner are read-only here.
  */
 const props = defineProps<{
   owner: AiOwner
@@ -31,111 +30,55 @@ const props = defineProps<{
 const { t } = useI18n()
 const router = useRouter()
 const knowledge = useAiKnowledge(() => props.owner)
-const documentsQuery = knowledge.useDocumentsQuery()
-const glossariesQuery = knowledge.useGlossariesQuery()
-const { data: documents, isLoading: isLoadingDocuments } = documentsQuery
-const { data: glossaries, isLoading: isLoadingGlossaries } = glossariesQuery
+const { data: documents, isLoading, isError, isFetching, refetch } = knowledge.useDocumentsQuery()
 const { mutate: updateDocument } = knowledge.useUpdateDocumentMutation()
-const { mutate: updateGlossary } = knowledge.useUpdateGlossaryMutation()
 
 const routes = computed(() => aiSettingsRoutes(props.owner))
 
 interface KnowledgeRow {
-  key: string
   id: string
-  kind: 'document' | 'glossary'
   name: string
-  type: 'style' | 'reference' | 'glossary'
+  type: AiKnowledgeType
   scope: AiScope
   owned: boolean
-  ownerName: string | null
-  canOpen: boolean
   enabled: boolean
   status: { label: string; variant: 'success' | 'warning' | 'destructive' | 'secondary' }[]
   description: string | null
-  meta: string | null
 }
 
-const rows = computed<KnowledgeRow[]>(() => {
-  const docRows = (documents.value ?? []).map((doc): KnowledgeRow => ({
-    key: `document:${doc.id}`,
-    id: doc.id,
-    kind: 'document',
-    name: doc.title,
-    description: doc.description !== doc.title ? doc.description : null,
-    type: doc.type,
-    scope: doc.scope,
-    owned: isOwnedBy(doc, props.owner),
-    ownerName: null,
-    canOpen: isOwnedBy(doc, props.owner),
-    enabled: doc.enabled,
-    status: [
-      doc.published_revision
-        ? { label: t('components.aiSettings.status.published', { revision: doc.published_revision.revision }), variant: 'success' as const }
-        : { label: t('components.aiSettings.status.draft'), variant: 'warning' as const },
-      ...(doc.extraction_status === 'pending' || doc.extraction_status === 'failed'
-        ? [
-            {
-              label: t(`components.aiSettings.knowledge.extraction.${doc.extraction_status}`),
-              variant: doc.extraction_status === 'failed' ? ('destructive' as const) : ('secondary' as const),
-            },
-          ]
-        : []),
-    ],
-    meta: null,
-  }))
+const rows = computed<KnowledgeRow[]>(() =>
+  (documents.value ?? [])
+    .map((doc): KnowledgeRow => ({
+      id: doc.id,
+      name: doc.title,
+      description: doc.description !== doc.title ? doc.description : null,
+      type: doc.type,
+      scope: doc.scope,
+      owned: isOwnedBy(doc, props.owner),
+      enabled: doc.enabled,
+      status: [
+        doc.published_revision
+          ? { label: t('components.aiSettings.status.published', { revision: doc.published_revision.revision }), variant: 'success' as const }
+          : { label: t('components.aiSettings.status.draft'), variant: 'warning' as const },
+        ...(doc.extraction_status === 'pending' || doc.extraction_status === 'failed'
+          ? [
+              {
+                label: t(`components.aiSettings.knowledge.extraction.${doc.extraction_status}`),
+                variant: doc.extraction_status === 'failed' ? ('destructive' as const) : ('secondary' as const),
+              },
+            ]
+          : []),
+      ],
+    }))
+    .sort((a, b) => Number(b.owned) - Number(a.owned) || a.name.localeCompare(b.name))
+)
 
-  const glossaryRows = (glossaries.value ?? []).map((glossary): KnowledgeRow => ({
-    key: `glossary:${glossary.id}`,
-    id: glossary.id,
-    kind: 'glossary',
-    name: glossary.name,
-    description: null,
-    type: 'glossary',
-    scope: glossary.scope,
-    owned: isOwnedBy(glossary, props.owner),
-    ownerName: isOwnedBy(glossary, props.owner) ? null : (glossary.owner_name ?? null),
-    canOpen: true,
-    enabled: glossary.enabled,
-    status: [],
-    meta: t('components.aiSettings.glossaries.termCount', { count: glossary.terms_count ?? 0 }),
-  }))
+const loadFailed = computed(() => isError.value && !documents.value)
 
-  return [...docRows, ...glossaryRows].sort(
-    (a, b) => Number(b.owned) - Number(a.owned) || a.name.localeCompare(b.name)
-  )
-})
-
-const isLoading = computed(() => isLoadingDocuments.value || isLoadingGlossaries.value)
-
-// Rows from the source that loaded stay; the failed one is named above them.
-const failedDocuments = computed(() => documentsQuery.isError.value && !documents.value)
-const failedGlossaries = computed(() => glossariesQuery.isError.value && !glossaries.value)
-const loadFailure = computed(() => {
-  if (failedDocuments.value && failedGlossaries.value) return t('components.aiSettings.knowledge.loadFailed')
-  if (failedDocuments.value) return t('components.aiSettings.knowledge.loadFailedDocuments')
-  if (failedGlossaries.value) return t('components.aiSettings.knowledge.loadFailedGlossaries')
-  return null
-})
-const isRetrying = computed(() => documentsQuery.isFetching.value || glossariesQuery.isFetching.value)
-const retryLoad = () => {
-  if (failedDocuments.value) documentsQuery.refetch()
-  if (failedGlossaries.value) glossariesQuery.refetch()
-}
-
-const linkFor = (row: KnowledgeRow) =>
-  row.kind === 'glossary' ? routes.value.glossary(row.id) : routes.value.document(row.id)
+const linkFor = (row: KnowledgeRow) => routes.value.document(row.id)
 
 const open = (row: KnowledgeRow) => {
-  if (row.canOpen) void router.push(linkFor(row))
-}
-
-const toggle = (row: KnowledgeRow, enabled: boolean) => {
-  if (row.kind === 'glossary') {
-    updateGlossary({ id: row.id, payload: { enabled } })
-  } else {
-    updateDocument({ id: row.id, payload: { enabled } })
-  }
+  if (row.owned) void router.push(linkFor(row))
 }
 </script>
 
@@ -151,14 +94,14 @@ const toggle = (row: KnowledgeRow, enabled: boolean) => {
       <slot name="actions" />
     </template>
     <div
-      v-if="loadFailure"
+      v-if="loadFailed"
       class="border-b border-border px-5 py-3"
     >
       <QueryErrorState
         flush
-        :title="loadFailure"
-        :retrying="isRetrying"
-        @retry="retryLoad"
+        :title="$t('components.aiSettings.knowledge.loadFailed')"
+        :retrying="isFetching"
+        @retry="refetch()"
       />
     </div>
     <Table>
@@ -180,13 +123,13 @@ const toggle = (row: KnowledgeRow, enabled: boolean) => {
         <template v-else>
           <TableRow
             v-for="row in rows"
-            :key="row.key"
-            :class="row.canOpen && 'cursor-pointer'"
+            :key="row.id"
+            :class="row.owned && 'cursor-pointer'"
             @click="open(row)"
           >
             <TableCell class="font-medium">
               <RouterLink
-                v-if="row.canOpen"
+                v-if="row.owned"
                 :to="linkFor(row)"
                 class="rounded-sm hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
                 @click.stop
@@ -203,13 +146,7 @@ const toggle = (row: KnowledgeRow, enabled: boolean) => {
             </TableCell>
             <TableCell class="text-sm">{{ $t(`components.aiSettings.knowledge.types.${row.type}`) }}</TableCell>
             <TableCell>
-              <div class="flex flex-wrap items-center gap-1.5">
-                <Badge :variant="row.owned ? 'secondary' : 'surface'">{{ $t(`components.aiSettings.sources.${row.scope}`) }}</Badge>
-                <span
-                  v-if="row.ownerName"
-                  class="text-sm text-muted"
-                >{{ row.ownerName }}</span>
-              </div>
+              <Badge :variant="row.owned ? 'secondary' : 'surface'">{{ $t(`components.aiSettings.sources.${row.scope}`) }}</Badge>
             </TableCell>
             <TableCell>
               <div class="flex flex-wrap items-center gap-1">
@@ -220,12 +157,6 @@ const toggle = (row: KnowledgeRow, enabled: boolean) => {
                 >
                   {{ status.label }}
                 </Badge>
-                <span
-                  v-if="row.meta"
-                  class="text-sm text-muted"
-                >
-                  {{ row.meta }}
-                </span>
               </div>
             </TableCell>
             <TableCell @click.stop>
@@ -233,12 +164,12 @@ const toggle = (row: KnowledgeRow, enabled: boolean) => {
                 :model-value="row.enabled"
                 :disabled="!canManage || !row.owned"
                 :aria-label="$t('components.aiSettings.enabledFor', { name: row.name })"
-                @update:model-value="(enabled: boolean) => toggle(row, enabled)"
+                @update:model-value="(enabled: boolean) => updateDocument({ id: row.id, payload: { enabled } })"
               />
             </TableCell>
           </TableRow>
           <TableEmpty
-            v-if="rows.length === 0 && !loadFailure"
+            v-if="rows.length === 0 && !loadFailed"
             :colspan="5"
           >
             {{ $t('components.aiSettings.knowledge.empty') }}

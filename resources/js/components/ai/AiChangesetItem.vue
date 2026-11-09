@@ -1,8 +1,6 @@
 <script setup lang="ts">
-import AiFindingOverrides from '~/components/ai/threads/AiFindingOverrides.vue'
 import AiItemReview from '~/components/ai/threads/AiItemReview.vue'
 import { useItemDecisions } from '~/components/ai/threads/useItemDecisions'
-import { useReviewI18n } from '~/components/ai/threads/useReviewI18n'
 import BlockItemDiff from '~/components/content/diff/BlockItemDiff.vue'
 import { resolveDiffComponent } from '~/components/content/diff/field-diff'
 import InlineTextDiff from '~/components/content/diff/InlineTextDiff.vue'
@@ -12,14 +10,12 @@ import { Badge } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
 import { Textarea } from '~/components/ui/textarea'
 import type { AiChangesetItem, AiItemFlag } from '~/lib/aiChangesets'
-import { glossaryFindingText, isGlossaryHint } from '~/lib/aiRun'
 import {
   assetFolderChange,
   assetTagChange,
   blockListChanges,
   createdBlockFields,
   diffFieldType,
-  editedText,
   isOpenItem,
   isWrittenItem,
   itemNotes,
@@ -31,14 +27,12 @@ import {
 
 /**
  * One field change: its diff on the history renderers, conflicts and
- * cross-locale changes side by side and glossary findings as warnings on the
- * field. Content is already in its draft and has nothing to decide. A conflict
- * and a proposal take accept and reject as icon buttons, and a proposal an
- * optional edit. Translations show per unit the source (with its change since
+ * cross-locale changes side by side. Content is already in its draft and has
+ * nothing to decide. A conflict and a proposal take accept and reject as icon
+ * buttons, and a proposal an optional edit. Translations show per unit the source (with its change since
  * the current translation was made), the current and the written translation.
  * Asset proposals show tag and folder changes by name, new folders and tags
- * their reason. Flags show as warnings. Findings of a proposal's text take a
- * correction or a reason to keep them. The status shows once the field is decided.
+ * their reason. Flags show as warnings. The status shows once the field is decided.
  */
 const props = defineProps<{
   item: AiChangesetItem
@@ -66,7 +60,6 @@ const emit = defineEmits<{
 }>()
 
 const { t, te } = useI18n()
-const { t: reviewT } = useReviewI18n()
 
 /** A block list proposal shows one row per added, removed or changed block. */
 const blockChanges = computed(() =>
@@ -154,13 +147,6 @@ const isStructure = computed(() => STRUCTURE_TARGET_TYPES.has(props.item.target_
 const tagChange = computed(() => assetTagChange(props.item))
 const folderChange = computed(() => assetFolderChange(props.item))
 const notes = computed(() => itemNotes(props.item))
-/** Content's findings; a proposal's once an edit replaces it or it is decided, as open ones take a reason below. */
-const isContent = computed(() => props.item.target_type === 'content')
-const listedFindings = computed(() =>
-  !isContent.value && isOpenItem(props.item) && editedText(props.item, edit.value) === undefined
-    ? []
-    : props.item.glossary_findings.filter((finding) => !isGlossaryHint(finding))
-)
 const noteTitle = (note: AiItemFlag) =>
   te(`components.aiChangeset.notes.${note.code}`) ? t(`components.aiChangeset.notes.${note.code}`) : null
 
@@ -515,32 +501,6 @@ const STATUS_VARIANTS = {
       </li>
     </ul>
 
-    <AiFindingOverrides
-      v-if="isOpenItem(item)"
-      :item="item"
-    />
-
-    <p
-      v-if="isOpenItem(item) && !isContent && listedFindings.length > 0"
-      class="text-sm text-muted"
-      data-findings-of-proposal
-    >
-      {{ reviewT('overrides.ofProposal') }}
-    </p>
-    <ul
-      v-if="listedFindings.length > 0"
-      class="grid gap-1 rounded-md bg-warning-background/20 px-3 py-2 text-sm text-warning"
-      :aria-label="$t('components.aiChangeset.glossaryFindings')"
-    >
-      <li
-        v-for="finding in listedFindings"
-        :key="`${finding.type}:${finding.term}:${finding.found ?? ''}`"
-        class="flex items-center gap-2"
-      >
-        <Icon name="lucide:triangle-alert" />
-        {{ glossaryFindingText(finding, $t) }}
-      </li>
-    </ul>
     <AiItemReview
       v-if="item.status !== 'rejected'"
       :item="item"

@@ -5029,11 +5029,9 @@
         "notFound": "This skill does not exist or was deleted."
       },
       "knowledge": {
-        "loadFailed": "No se ha podido cargar el conocimiento. Puede que la lista esté incompleta.",
-        "loadFailedDocuments": "No se han podido cargar los documentos. Solo se muestran los glosarios.",
-        "loadFailedGlossaries": "No se han podido cargar los glosarios. Solo se muestran los documentos.",
+        "loadFailed": "No se ha podido cargar el conocimiento.",
         "title": "Knowledge",
-        "description": "Style guides are always followed. Documents are searched when a task needs them. Glossaries set the terms the AI must use, keep untranslated or avoid.",
+        "description": "Style guides are always followed. Documents are searched when a task needs them.",
         "editorHint": "Write markdown or upload a PDF or Word file. Runs use the published revision.",
         "descriptionLabel": "Descripción",
         "descriptionHint": "Una frase sobre lo que cubre y cuándo leerlo. Las ejecuciones de IA eligen los documentos de referencia por ella.",
@@ -5043,8 +5041,7 @@
         "confirmDelete": "Delete the document {title}?",
         "types": {
           "style": "Style guide",
-          "reference": "Document",
-          "glossary": "Glossary"
+          "reference": "Document"
         },
         "extraction": {
           "pending": "Extracting text",
@@ -5060,15 +5057,6 @@
         "delete": "Delete document",
         "replaceSource": "Replace file",
         "notFound": "This document does not exist or was deleted."
-      },
-      "glossaries": {
-        "description": "Terms the AI must use, keep untranslated or avoid. Findings are flagged on the generated text.",
-        "create": "New glossary",
-        "confirmDelete": "Delete the glossary {name} and all its terms?",
-        "termCount": "{count} term | {count} terms",
-        "notFound": "Glossary not found",
-        "exportLabel": "Export",
-        "delete": "Delete glossary"
       },
       "schedules": {
         "title": "Schedules",
@@ -5134,20 +5122,13 @@
       "noConfigs": "No hay configuraciones disponibles"
     },
     "translationAssist": {
-      "empty": "Haz clic en una traducción para ver su glosario, memoria y otros idiomas.",
-      "glossary": "Glosario",
-      "keepExact": "{term}, sin cambios",
-      "avoid": "Evitar {terms}",
+      "empty": "Haz clic en una traducción para ver su memoria y otros idiomas.",
       "memory": "Memoria",
       "use": "Usar",
       "otherLanguages": "Otros idiomas",
       "length": "Longitud",
       "lengthOf": "{count} de {max} caracteres",
       "lengthCount": "{count} carácter | {count} caracteres",
-      "checkGlossarySays": "El glosario dice \"{expected}\", se encontró \"{found}\"",
-      "checkAvoid": "El glosario evita \"{found}\"",
-      "checkKeepExact": "\"{expected}\" se queda tal cual",
-      "checkMissing": "El glosario dice \"{expected}\" para \"{term}\"",
       "checkTooLong": "Más de {max} caracteres"
     },
     "flattenedLocalization": {
@@ -5241,18 +5222,8 @@
         "shorten": "Shorten",
         "expand": "Expand",
         "fix-grammar": "Fix grammar",
-        "apply-glossary": "Apply glossary",
         "translate-selection": "Translate",
-        "extract-glossary-terms": "Extract glossary terms",
         "find-untranslated": "Find untranslated entries"
-      },
-      "findingsTitle": "Banned wording in the generated text",
-      "dismissFindings": "Dismiss",
-      "findings": {
-        "missing_term": "Hint: the glossary uses \"{expected}\" for \"{term}\". An inflected form is fine.",
-        "translated_do_not_translate": "\"{expected}\" is a protected name, use it exactly.",
-        "forbidden_variant": "\"{found}\" is not allowed, use \"{expected}\".",
-        "forbidden_variant_bare": "\"{found}\" is not allowed."
       }
     },
     "aiChangeset": {
@@ -5312,7 +5283,6 @@
       "discardEdit": "Discard edit",
       "editLabel": "Edited proposal",
       "editedBeforeAccepting": "Edited before accepting",
-      "glossaryFindings": "Glossary findings",
       "newFolder": "New folder",
       "newTag": "New tag",
       "assetFields": {
@@ -5476,7 +5446,7 @@
             "description": "Translate fields that still hold the untranslated source text."
           }
         },
-        "translationKeeps": "Only affected fields change. Other edits, markup, placeholders and fields that aren't translated stay as they are. The glossary and translation memory apply.",
+        "translationKeeps": "Only affected fields change. Other edits, markup, placeholders and fields that aren't translated stay as they are. Translation memory applies.",
         "permissions": "Allowed changes",
         "permissionsDefault": "By default the AI only fills empty metadata and adds tags.",
         "permissionKinds": {
@@ -5684,25 +5654,7 @@
       "summary": {
         "changed": "{count} entrada cambiada | {count} entradas cambiadas",
         "conflicts": "{count} conflicto | {count} conflictos",
-        "flagged": "{count} marcada | {count} marcadas",
-        "notPublished": "No se publica nada.",
-        "findings": "{count} glossary warning | {count} glossary warnings"
-      },
-      "suggestions": {
-        "addTo": "Add to glossary",
-        "chooseGlossary": "Add to",
-        "createGlossary": "Create a glossary first",
-        "dismiss": "Dismiss",
-        "scopes": {
-          "space": "Space",
-          "team": "Team"
-        },
-        "acceptFailed": "Could not add the term: {error}",
-        "dismissFailed": "Could not dismiss the suggestion: {error}",
-        "addTermTo": "Add {term} to a glossary",
-        "dismissTerm": "Dismiss {term}",
-        "empty": "No glossary suggestions waiting.",
-        "evidence": "The AI wrote \"{ai}\", an editor changed it to \"{final}\"."
+        "notPublished": "No se publica nada."
       },
       "searchPlaceholder": "Search",
       "clearSearch": "Clear search",
@@ -5713,8 +5665,7 @@
       "unsettleThread": "Unsettle {title}",
       "sharedBy": "Shared by {name}",
       "context": {
-        "schedule": "Schedule",
-        "suggestions": "Glossary suggestions"
+        "schedule": "Schedule"
       },
       "config": {
         "label": "AI config",
@@ -5743,7 +5694,6 @@
         "get_block_schemas": "Read block schemas",
         "get_entry": "Read entry",
         "get_mentioned_content": "Read mentions",
-        "lookup_glossary": "Check glossary",
         "propose_create": "Draft new entry",
         "propose_update": "Draft changes",
         "read_knowledge": "Read knowledge",
@@ -5808,19 +5758,15 @@
     },
     "contentFlags": {
       "conflicts": "{count} conflict | {count} conflicts",
-      "flagged": "{count} flagged wording | {count} flagged wordings",
       "title": "AI left something to check",
-      "flaggedRow": "Flagged: \"{wording}\" in {field}",
-      "flaggedRowNoField": "Flagged: \"{wording}\"",
-      "replacement": "Use \"{replacement}\" instead.",
       "conflictRow": "A person's change in {field} waits for a decision",
       "conflictRowNoField": "A person's change waits for a decision",
       "open": "Open",
       "more": "and {count} more",
       "proceed": "You can still publish.",
-      "countSentence": "{count} of these entries has flagged wording or a conflict. | {count} of these entries have flagged wording or a conflict.",
-      "confirmTitle": "Publish with flags?",
-      "releaseMessage": "This release holds {count} entry with flagged wording or a conflict. | This release holds {count} entries with flagged wording or a conflict.",
+      "countSentence": "{count} of these entries has an open conflict. | {count} of these entries have open conflicts.",
+      "confirmTitle": "Publish with conflicts?",
+      "releaseMessage": "This release holds {count} entry with an open conflict. | This release holds {count} entries with open conflicts.",
       "confirmCommit": "Commit anyway",
       "confirmPublish": "Publish anyway"
     },
@@ -6264,7 +6210,6 @@
       "deleted": "Deleted",
       "deleteError": "Could not delete: {error}",
       "uploaded": "File uploaded, the text is being extracted",
-      "imported": "Glossary imported",
       "importError": "Could not import: {error}"
     }
   },

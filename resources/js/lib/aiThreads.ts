@@ -2,12 +2,11 @@
  * Types and helpers for AI threads: every conversation and run lives in one,
  * listed in the dock and on the threads page. Status is derived on the server.
  */
-import type { AiGlossaryResource } from '~/api/resources/ai-knowledge'
 import type { AiAttachment } from '~/lib/aiAttachments'
-import type { AiChangeset, AiChangesetItem, AiGlossarySuggestion } from '~/lib/aiChangesets'
+import type { AiChangeset, AiChangesetItem } from '~/lib/aiChangesets'
 import type { AiRunRecord, AiSource } from '~/lib/aiRun'
 
-export type AiThreadKind = 'chat' | 'schedule' | 'suggestions'
+export type AiThreadKind = 'chat' | 'schedule'
 
 export type AiThreadStatus = 'needs_input' | 'needs_review' | 'running' | 'failed' | 'done'
 
@@ -88,10 +87,6 @@ export interface AiThreadSource extends AiSource {
 export interface AiThreadDetail extends AiThread {
   context: AiThreadChip[] | null
   turns: AiThreadTurn[]
-  /** Suggestions thread only */
-  suggestions?: AiGlossarySuggestion[]
-  /** Glossaries the user may accept suggestions into; suggestions thread only */
-  glossaries?: AiGlossaryResource[]
 }
 
 export interface AiThreadList {

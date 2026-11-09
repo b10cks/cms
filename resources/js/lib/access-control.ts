@@ -364,7 +364,6 @@ export const routeAccessRequirements: Record<AppRouteName, RouteAccessRequiremen
   'space-settings-ai-knowledge': { abilities: 'ai.view' },
   'space-settings-ai-skill': { abilities: 'ai.view' },
   'space-settings-ai-document': { abilities: 'ai.view' },
-  'space-settings-ai-glossary': { abilities: 'ai.view' },
   'space-settings-people': {
     abilities: {
       anyOf: [
@@ -392,7 +391,6 @@ export const routeAccessRequirements: Record<AppRouteName, RouteAccessRequiremen
   'team-ai': { abilities: 'team.ai.manage' },
   'team-ai-skill': { abilities: 'team.ai.manage' },
   'team-ai-document': { abilities: 'team.ai.manage' },
-  'team-ai-glossary': { abilities: 'team.ai.manage' },
   'spaces-new': actionAccessRequirements['team.spaces.create'],
 }
 

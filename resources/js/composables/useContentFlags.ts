@@ -4,7 +4,7 @@ import { api } from '~/api'
 import { flagTotals, type AiContentFlagTotals } from '~/lib/aiContentFlags'
 
 /**
- * Open conflicts and flagged wording per entry, one cheap request for the whole
+ * Open conflicts per entry, one cheap request for the whole
  * space. The tree reads the figures; a publish path asks `freshTotals` first,
  * since flags may have changed since the figures loaded.
  */

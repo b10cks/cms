@@ -8,7 +8,6 @@ import AiQuestionnaireForm from '~/components/ai/AiQuestionnaireForm.vue'
 import Icon from '~/components/Icon.vue'
 import { Button } from '~/components/ui/button'
 import { Textarea } from '~/components/ui/textarea'
-import { glossaryFindingText } from '~/lib/aiRun'
 import { normalizeLanguageIso } from '~/lib/content-i18n'
 import { aiSkillLabel } from '~/lib/aiSkills'
 import type { ContentResource } from '~/types/contents'
@@ -154,17 +153,6 @@ const discard = () => {
         >
           {{ suggestion || $t('components.aiText.thinking') }}
         </p>
-        <ul
-          v-if="run.findings.value.length > 0"
-          class="space-y-1 text-sm text-warning"
-        >
-          <li
-            v-for="finding in run.findings.value"
-            :key="`${finding.type}:${finding.term}:${finding.found ?? ''}`"
-          >
-            {{ glossaryFindingText(finding, $t) }}
-          </li>
-        </ul>
       </template>
       <div class="flex justify-end gap-2">
         <Button

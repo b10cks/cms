@@ -8,8 +8,8 @@ import type { AiContentFlag, AiContentFlagEntry } from '~/lib/aiContentFlags'
 import { flagFieldLink } from '~/lib/aiContentFlags'
 
 /**
- * Names what AI left on the entries about to be published: the wording, the field
- * and a link to it. It informs and never blocks.
+ * Names what AI left on the entries about to be published: the conflict, the
+ * field and a link to it. It informs and never blocks.
  */
 const props = defineProps<{
   spaceId: string
@@ -40,7 +40,7 @@ const rows = computed(() =>
 )
 const shown = computed(() => rows.value.slice(0, SHOWN))
 const overall = computed(() => totals(props.contentIds))
-const hidden = computed(() => overall.value.conflicts + overall.value.flagged - shown.value.length)
+const hidden = computed(() => overall.value.conflicts - shown.value.length)
 
 const linkTo = (entry: AiContentFlagEntry, flag: AiContentFlag) => flagFieldLink(props.spaceId, entry.content_id, flag.path)
 
@@ -63,22 +63,12 @@ const openConflict = (threadId: string) => {
       <ul class="grid gap-1">
         <li
           v-for="{ entry, flag } in shown"
-          :key="`${entry.content_id}:${flag.kind}:${flag.path}:${flag.wording ?? ''}`"
+          :key="`${entry.content_id}:${flag.path}`"
           class="flex flex-wrap items-baseline gap-x-2"
           data-content-flag-row
         >
           <span v-if="contentIds.length > 1" class="font-medium">{{ entry.name }}</span>
-          <template v-if="flag.kind === 'flagged'">
-            <span>
-              {{
-                flag.field
-                  ? $t('components.contentFlags.flaggedRow', { wording: flag.wording, field: flag.field })
-                  : $t('components.contentFlags.flaggedRowNoField', { wording: flag.wording })
-              }}
-            </span>
-            <span v-if="flag.replacement">{{ $t('components.contentFlags.replacement', { replacement: flag.replacement }) }}</span>
-          </template>
-          <span v-else>
+          <span>
             {{
               flag.field
                 ? $t('components.contentFlags.conflictRow', { field: flag.field })
@@ -86,7 +76,7 @@ const openConflict = (threadId: string) => {
             }}
           </span>
           <button
-            v-if="flag.kind === 'conflict' && flag.thread_id"
+            v-if="flag.thread_id"
             type="button"
             class="underline underline-offset-2"
             @click="openConflict(flag.thread_id)"

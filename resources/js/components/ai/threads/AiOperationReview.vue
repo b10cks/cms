@@ -4,7 +4,6 @@ import { toast } from 'vue-sonner'
 import AiOperationChanges from '~/components/ai/operations/AiOperationChanges.vue'
 import AiReviewGroup from '~/components/ai/threads/AiReviewGroup.vue'
 import { provideItemDecisions } from '~/components/ai/threads/useItemDecisions'
-import { useReviewI18n } from '~/components/ai/threads/useReviewI18n'
 import { Button } from '~/components/ui/button'
 import type { AiChangeset, AiChangesetItem, AiReviewGroup as ReviewGroup } from '~/lib/aiChangesets'
 import { changesLine } from '~/lib/aiChangesets'
@@ -14,9 +13,8 @@ import { changesLine } from '~/lib/aiChangesets'
  * is already in its drafts: {@see AiOperationChanges} lists it per entry, and only
  * its conflicts take a decision. Proposals for assets, data entries and blocks show
  * as one row per group with examples, every change loaded only on request. Groups
- * are accepted only when selected, and a group accept leaves conflicts, glossary
- * violations, flagged changes, edits and new folders and tags to an individual
- * decision. A large group is decided on the queue: it shows as queued and takes no
+ * are accepted only when selected, and a group accept leaves conflicts, flagged
+ * changes, edits and new folders and tags to an individual decision. A large group is decided on the queue: it shows as queued and takes no
  * other decision until the job is done.
  */
 const props = defineProps<{
@@ -26,7 +24,6 @@ const props = defineProps<{
 }>()
 
 const { t } = useI18n()
-const { t: reviewT } = useReviewI18n()
 const { useOperationReviewQuery, useOperationChangesQuery, acceptGroupsMutation, rejectGroupsMutation, rejectMutation, refreshGroupTargets } = useAiThreads(() => props.spaceId)
 // Its own, as the operation panel mounts this review outside a thread's changeset.
 const decisions = provideItemDecisions(() => props.spaceId, () => props.changeset.id)
@@ -75,21 +72,14 @@ const reject = (item: AiChangesetItem) =>
   rejectMutation.mutate({ changesetId: props.changeset.id, decision: { item_ids: [item.id] } })
 
 /**
- * Edited proposals go first with their edit and reasons, so the group accept
- * that follows cannot apply the unedited proposal over them. An edit a reason
- * is missing for holds no state on the server yet, so the group accept waits
- * for it.
+ * Edited proposals go first with their edit, so the group accept that follows
+ * cannot apply the unedited proposal over them.
  */
 const acceptSelected = async () => {
   const groupsToAccept = selectedGroups.value
   try {
     for (const item of decisions.unsentEdits(groupsToAccept.map((group) => group.key))) {
-      const outcome = await decisions.accept(item)
-      if (outcome === 'failed') return
-      if (outcome === 'open' && decisions.missingReasons(item).length > 0) {
-        toast.warning(reviewT('overrides.groupHeld'))
-        return
-      }
+      if ((await decisions.accept(item)) === 'failed') return
     }
     const result = await acceptGroupsMutation.mutateAsync({ operationId: props.changeset.operation_id, groups: groupsToAccept })
     selected.value = []

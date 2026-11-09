@@ -10,8 +10,8 @@ import { changesLine } from '~/lib/aiChangesets'
  * What the operation delivered. Coverage says whether the requested outputs
  * were fulfilled, which finishing the queue does not. A plan naming no outputs
  * says so instead of claiming more. One line says what happened to content:
- * entries changed in their drafts, conflicts and flagged wording, the only things
- * that need a person. Proposals for assets and data entries wait for one.
+ * entries changed in their drafts and conflicts, the only things that need a
+ * person. Proposals for assets and data entries wait for one.
  */
 const props = defineProps<{
   spaceId: string
