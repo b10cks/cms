@@ -747,6 +747,11 @@
       "removeThumbnail": "Vorschaubild entfernen",
       "finish": "Fertig",
       "forceDeleteTitle": "Löschen erzwingen",
+      "usageFilter": {
+        "label": "Verwendung",
+        "used": "In Inhalten verwendet",
+        "unused": "Nicht verwendet"
+      },
       "rights": {
         "title": "Rechte & Lizenzierung",
         "filterLabel": "Rechtestatus",

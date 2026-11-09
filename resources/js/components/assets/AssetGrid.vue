@@ -220,6 +220,14 @@ const assetFilters = computed(() => [
     ],
   },
   {
+    id: 'usage',
+    label: String($t('labels.assets.usageFilter.label')),
+    items: [
+      { value: 'used', label: String($t('labels.assets.usageFilter.used')) },
+      { value: 'unused', label: String($t('labels.assets.usageFilter.unused')) },
+    ],
+  },
+  {
     id: 'expiring_before',
     label: String($t('labels.assets.rights.filterExpiringBefore')),
     datepicker: {},

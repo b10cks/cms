@@ -16,6 +16,8 @@ export interface AssetsQueryParams extends BaseQueryParams {
   mime_type?: string
   rights_status?: AssetRightsStatus | AssetRightsStatus[]
   expiring_before?: string
+  /** `used`: an entry outside the trash shows the asset. */
+  usage?: 'used' | 'unused'
 }
 
 export interface LinkedAssetContentsQueryParams extends BaseQueryParams {}

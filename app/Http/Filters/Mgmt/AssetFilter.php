@@ -2,6 +2,7 @@
 
 namespace App\Http\Filters\Mgmt;
 
+use App\Services\Asset\AssetUsageService;
 use CodersCantina\Filter\AdvancedFilter;
 use CodersCantina\Filter\ExtendedFilter;
 
@@ -80,6 +81,17 @@ class AssetFilter extends AdvancedFilter
     public function rights_status($value)
     {
         $this->applyDynamicFilter('rights_status', $value);
+    }
+
+    /**
+     * `used`: an entry outside the trash shows the asset in a version that can
+     * still go live. `unused`: everything else.
+     */
+    public function usage($value)
+    {
+        if (\in_array($value, ['used', 'unused'], true)) {
+            app(AssetUsageService::class)->constrainUsage($this->builder, $value === 'used');
+        }
     }
 
     public function expiring_before($value)

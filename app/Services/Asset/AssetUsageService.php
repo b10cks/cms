@@ -103,6 +103,65 @@ class AssetUsageService
     }
 
     /**
+     * Limit an asset query to assets an entry outside the trash uses (`$used`),
+     * or to the rest. Same rule as `linked_contents_count`; trashed entries do
+     * not count as a use here.
+     *
+     * @param  Builder<Asset>  $assets
+     */
+    public function constrainUsage(Builder $assets, bool $used): void
+    {
+        $usedIds = $this->usedAssetIds();
+
+        $used
+            ? $assets->whereIn($assets->qualifyColumn('id'), $usedIds)
+            : $assets->whereNotIn($assets->qualifyColumn('id'), $usedIds);
+    }
+
+    /**
+     * Ids of assets referenced by a version that can still go live, as one
+     * uncorrelated subquery: the database expands each version's `asset_ids`
+     * array once instead of probing it per asset.
+     */
+    private function usedAssetIds(): QueryBuilder
+    {
+        $versions = ContentVersion::query()->toBase();
+        $connection = $versions->getConnection();
+        $grammar = $versions->getGrammar();
+        $assetIds = $grammar->wrap('cv.asset_ids');
+
+        $query = $connection->table('content_versions as cv')
+            ->join('contents as c', 'c.id', '=', 'cv.content_id')
+            ->whereNull('c.deleted_at')
+            ->where(fn (QueryBuilder $query) => $query
+                ->whereColumn('c.current_version_id', 'cv.id')
+                ->orWhereColumn('c.published_version_id', 'cv.id')
+                ->orWhere(fn (QueryBuilder $query) => $query
+                    ->whereNull('cv.published_at')
+                    ->where(fn (QueryBuilder $query) => $query
+                        ->whereNotNull('cv.scheduled_at')
+                        ->orWhereIn('cv.release_id', Release::query()->whereNull('published_at')->select('id')))));
+
+        if ($connection->getDriverName() === 'sqlite') {
+            return $query
+                ->crossJoin($connection->raw("json_each({$assetIds}) as ".$grammar->wrapTable('used')))
+                ->whereNotNull('used.value')
+                ->select('used.value');
+        }
+
+        // JSON_TABLE columns default to a binary collation; comparing them to
+        // `assets.id` in its own collation is an illegal mix on MySQL.
+        $charset = $connection->getConfig('charset') ?: 'utf8mb4';
+        $collation = $connection->getConfig('collation') ?: 'utf8mb4_unicode_ci';
+        $column = "varchar(64) character set {$charset} collate {$collation} path '\$'";
+
+        return $query
+            ->crossJoin($connection->raw("json_table({$assetIds}, '\$[*]' columns (asset_id {$column})) as ".$grammar->wrapTable('used')))
+            ->whereNotNull('used.asset_id')
+            ->select('used.asset_id');
+    }
+
+    /**
      * One row per referenced asset on each version that can still go live.
      *
      * The version lookup scans the space's versions; the pointer checks run on

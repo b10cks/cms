@@ -738,6 +738,11 @@
       "removeThumbnail": "Remove Thumbnail",
       "finish": "Finish",
       "forceDeleteTitle": "Force Delete Asset",
+      "usageFilter": {
+        "label": "Usage",
+        "used": "Used in content",
+        "unused": "Not used"
+      },
       "rights": {
         "title": "Rights & Licensing",
         "filterLabel": "Rights Status",

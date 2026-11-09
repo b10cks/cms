@@ -738,6 +738,11 @@
       "removeThumbnail": "Retirer la vignette",
       "finish": "Terminer",
       "forceDeleteTitle": "Forcer la suppression de l'actif",
+      "usageFilter": {
+        "label": "Utilisation",
+        "used": "Utilisé dans le contenu",
+        "unused": "Non utilisé"
+      },
       "rights": {
         "title": "Droits et licences",
         "filterLabel": "Statut des droits",

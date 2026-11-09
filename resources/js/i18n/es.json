@@ -738,6 +738,11 @@
       "removeThumbnail": "Quitar miniatura",
       "finish": "Finalizar",
       "forceDeleteTitle": "Forzar eliminación del activo",
+      "usageFilter": {
+        "label": "Uso",
+        "used": "Usado en contenido",
+        "unused": "Sin usar"
+      },
       "rights": {
         "title": "Derechos y licencias",
         "filterLabel": "Estado de derechos",

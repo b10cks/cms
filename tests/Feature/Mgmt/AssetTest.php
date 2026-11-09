@@ -779,6 +779,21 @@ class AssetTest extends TestCase
     }
 
     #[Test]
+    public function assets_can_be_filtered_by_whether_entries_use_them(): void
+    {
+        [$published, $draft, $trashed, $unused] = Asset::factory()->count(4)->create(['storage_id' => $this->storage->id]);
+        $this->createContentWithVersions(currentAssetIds: [$published->id], publishedAssetIds: [$published->id]);
+        $this->createContentWithVersions(currentAssetIds: [$draft->id]);
+        $this->createContentWithVersions(currentAssetIds: [$trashed->id])->delete();
+
+        $ids = fn (string $usage) => collect($this->getJson("/mgmt/v1/spaces/{$this->space->id}/assets?usage={$usage}")
+            ->assertOk()->json('data'))->pluck('id')->sort()->values()->all();
+
+        $this->assertSame(collect([$published->id, $draft->id])->sort()->values()->all(), $ids('used'));
+        $this->assertSame(collect([$trashed->id, $unused->id])->sort()->values()->all(), $ids('unused'));
+    }
+
+    #[Test]
     public function editing_an_asset_used_only_by_drafts_keeps_the_delivery_revision(): void
     {
         $asset = Asset::factory()->create([
