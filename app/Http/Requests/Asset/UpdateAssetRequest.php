@@ -9,6 +9,10 @@ use App\Models\Space\AssetFolder;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
+/**
+ * @requestProperty metadata shape=object Merged into the stored metadata: keys you leave out keep their values. Server-managed keys (`thumbnails`, `generated_thumbnails`) are ignored.
+ * @requestProperty data shape=object Replaces the stored data as a whole. Send every field translation and the focus point you want to keep, or they are removed.
+ */
 class UpdateAssetRequest extends FormRequest
 {
     use ExternalIdValidation;

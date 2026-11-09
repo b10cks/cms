@@ -33,12 +33,12 @@ Data API responses are aggressively cacheable because every URL is pinned to a *
 
 1. Content-serving requests without `rv` are **301-redirected** to the same URL with `rv=<timestamp of the space's last content change>` appended. The redirect itself is cached only briefly (`max-age=60`).
 2. The `rv`-stamped response is cached long (`max-age=3600, s-maxage=86400` by default) — by browsers, CDNs, and the server.
-3. Publishing content changes the space's revision. New requests redirect to new `rv` URLs — old cache entries become irrelevant without any purging.
+3. Publishing content, and changing a file that live content shows, changes the space's revision. New requests redirect to new `rv` URLs — old cache entries become irrelevant without any purging. Every change gets its own revision, also when two land in the same second.
 
 In practice:
 
 - **Do nothing special** and you get correct freshness: the cheap redirect re-validates every minute; heavy payloads are served from cache.
-- The SDKs can **pin the revision once per session** (`syncRevision()` / the `rv` client option) to skip the redirect hop for subsequent requests.
+- The SDKs can **pin the revision once per session** (`syncRevision()` / the `rv` client option) to skip the redirect hop for subsequent requests. `syncRevision()` reads `spaces/me`, which is cached for 5 seconds, so a freshly rendered page picks up a change within seconds.
 - To **bypass caches** (previews, tests), pass a unique `rv`, e.g. `rv=Date.now()`.
 
 Endpoints that aren't content-revision-bound (blocks, data sources, redirects, search, icons) are served with shorter cache lifetimes (~60s) instead of the redirect flow.

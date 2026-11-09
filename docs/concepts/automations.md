@@ -17,7 +17,7 @@ Two pieces, managed separately:
 
 | Trigger | Fires |
 | --- | --- |
-| `content.published` / `content.unpublished` | An entry goes live / offline |
+| `content.published` / `content.unpublished` | An entry goes live / offline. `content.published` also fires when a file the live entry shows changes, see [below](#asset-changes) |
 | On insert / update / delete | Row-level changes of a chosen resource type; *on update* can watch specific columns |
 | Time based | A cron expression |
 | Manual | Only when run by hand (or via `automations.trigger` in the Management API) |
@@ -101,6 +101,23 @@ Content entries can define **cache tags** (entry Config tab, delivered as respon
 1. Trigger: `content.published`, 2. Action: webhook to your CDN's purge API, 3. Parameters: `{ "tags": "{{ cache_tags }}" }`{v-pre}.
 
 Publishing an entry then purges exactly the routes that render it — no full-site invalidation, no polling.
+
+### Asset changes
+
+Replacing a file, editing its alt text, copyright, focus point or other delivered details, restoring an older file version, or deleting it changes what every live entry showing that file delivers, without anyone publishing those entries. So `content.published` fires for each of them as well: every live entry whose published version shows the file, plus its live translations, which inherit the file without referencing it themselves.
+
+Nothing is republished. No version is written, `published_at` stays as it was, and pending drafts stay drafts. The context is the usual one for the entry, with two extra keys:
+
+```jsonc
+{
+  "operation": "content_published",
+  "reason": "asset_changed",
+  "asset_ids": ["01JX…"],
+  "record": { /* the entry, unchanged */ }
+}
+```
+
+The purge pattern above needs no change to cover file edits. To treat them differently, add a condition on `reason`. A file shown on many pages fires once per entry and language, so prefer a purge API that takes tags over one call per path.
 
 ## Executions, limits, replay
 

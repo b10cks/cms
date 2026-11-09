@@ -56,6 +56,10 @@ Links are managed per collection (**Manage shares**) or centrally under **Settin
 
 ## Delivery
 
+Delivered content always carries the file's current details: its URL, size, dimensions, alt text and the other asset fields, read live from the asset. Replacing a file or editing its details changes every live entry that shows it, without republishing, and the Data API's [revision](access-tokens.md#revision-based-caching) moves on so cached responses are not reused. To also purge your own page cache, see [asset changes](automations.md#asset-changes).
+
+Asset field texts follow the language you request. An entry without a translation in that language still gets the file's alt text in it, when the file has one.
+
 Asset fields deliver an object including `full_path` — the stable path you feed to the [image service](image-service.md) for transformations, or serve directly for non-image files. Signed delivery and CDN setups are transparent to your frontend: always build URLs from `full_path`.
 
 Non-image assets go through the same host, streamed rather than transformed: byte-range requests are supported (so video seeks and plays everywhere, Safari included), responses revalidate via `ETag`, and appending `?download=1` turns an inline response into a download with the original filename. Videos additionally expose a [poster frame](image-service.md#poster-frames) at `…/{filename}/poster`, which accepts the same transformation operations as any image; other non-image assets expose the same sub-path once a custom poster has been uploaded for them.

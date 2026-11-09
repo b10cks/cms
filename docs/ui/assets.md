@@ -16,7 +16,7 @@ If you can work the file manager on your own computer, you can work this one. Th
 
 **The keyboard works too**, if you prefer it. Arrow keys move the selection, <kbd>Enter</kbd> opens a file, typing a name jumps to the first match, and cut and paste moves files between folders. Press <kbd>?</kbd> at any time for the list of shortcuts.
 
-**Filtering** narrows the library by file type (image, video, audio, document and so on), by tag, by folder, by rights status, or by licence expiry. Filters combine, so "images tagged *hero* whose licence expires before March" is a single view.
+**Filtering** narrows the library by file type (image, video, audio, document and so on), by tag, by folder, by rights status, by licence expiry, or by usage. Filters combine, so "images tagged *hero* whose licence expires before March" is a single view. *Usage* shows the files that pages use, in a draft or published version, or the files nothing uses. Pages in the trash don't count, so "unused images" is the list to tidy up.
 
 ## Folders, and the rules they can carry
 
