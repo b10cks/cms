@@ -400,6 +400,19 @@ return [
         'changes' => 'object[]? -- row_changed: each moved field with its `field` (use, avoid, also, note or keep_exact) and `locale`',
     ],
     'AiGlossaryConceptRowsBulkResult' => ['deleted' => 'integer'],
+    'TranslationUnitsPage' => [
+        'data' => '@TranslationUnitResource[]',
+        'links' => 'object',
+        'meta' => 'object',
+    ],
+    'TranslationUnitContent' => [
+        'id' => 'string',
+        'name' => 'string',
+        'full_slug' => 'string',
+        'source_id' => 'string? -- The source entry this translation belongs to.',
+        'trashed' => 'boolean',
+    ],
+    'TranslationUnitsBulkResult' => ['deleted' => 'integer'],
     'AiGlossaryCheckMatch' => [
         'start' => 'integer -- UTF-16 code units, so String.prototype.slice takes it as is.',
         'end' => 'integer',

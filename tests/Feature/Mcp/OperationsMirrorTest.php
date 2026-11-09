@@ -9,8 +9,8 @@ use Tests\TestCase;
 
 class OperationsMirrorTest extends TestCase
 {
-    /** The CMS is ahead of the SDK here until @b10cks/mcp-server gets the content operations lifecycle. */
-    private const NOT_IN_THE_SDK_YET = '/^ai\.(operations|assets)\.|^ai\.(glossaries|teamGlossaries)\.(\w*ConceptRows?|conceptRows|checkText)$/';
+    /** The CMS is ahead of the SDK here until @b10cks/mcp-server gets the content operations lifecycle and translation memory. */
+    private const NOT_IN_THE_SDK_YET = '/^ai\.(operations|assets|translationMemory)\.|^ai\.(glossaries|teamGlossaries)\.(\w*ConceptRows?|conceptRows|checkText)$/';
 
     /** Concept rows replace these here. The published SDK keeps them until its next release. */
     private const ONLY_IN_THE_SDK = '/^ai\.(glossaries|teamGlossaries)\.(terms|createTerm|updateTerm|deleteTerm)$/';

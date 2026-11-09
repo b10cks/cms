@@ -3,6 +3,7 @@
 namespace App\Models\Space;
 
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Carbon;
 
 /**
@@ -19,6 +20,7 @@ use Illuminate\Support\Carbon;
  * @property string $field_path
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
+ * @property-read Content|null $content
  */
 class TranslationUnit extends SpaceModel
 {
@@ -41,4 +43,10 @@ class TranslationUnit extends SpaceModel
         'content_id',
         'field_path',
     ];
+
+    /** The translation entry the unit was published in, trashed ones included. */
+    public function content(): BelongsTo
+    {
+        return $this->belongsTo(Content::class, 'content_id')->withTrashed();
+    }
 }

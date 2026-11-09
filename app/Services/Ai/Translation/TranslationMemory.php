@@ -119,6 +119,19 @@ class TranslationMemory
     }
 
     /**
+     * A person's correction of a stored pair: their text, verified as human.
+     * The newest unit wins an exact match, so it replaces older ones at once.
+     * The entry itself is not changed, so its next publish records what it
+     * holds then.
+     */
+    public function correct(TranslationUnit $unit, string $target): TranslationUnit
+    {
+        $unit->update(['target_text' => self::normalize($target), 'origin' => TranslationUnit::ORIGIN_HUMAN]);
+
+        return $unit;
+    }
+
+    /**
      * Stored translations for texts seen before, newest first wins.
      *
      * @param  array<string, string>  $sources  key => source text

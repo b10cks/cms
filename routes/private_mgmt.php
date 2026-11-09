@@ -16,6 +16,7 @@ use App\Http\Controllers\Mgmt\Ai\AiRunController;
 use App\Http\Controllers\Mgmt\Ai\AiScheduleController;
 use App\Http\Controllers\Mgmt\Ai\AiSkillController;
 use App\Http\Controllers\Mgmt\Ai\AiThreadController;
+use App\Http\Controllers\Mgmt\Ai\AiTranslationMemoryController;
 use App\Http\Controllers\Mgmt\Ai\AssetClassificationController;
 use App\Http\Controllers\Mgmt\Ai\AvailableModelsController;
 use App\Http\Controllers\Mgmt\Ai\SpaceAiConfigController;
@@ -360,6 +361,10 @@ Route::group(['prefix' => 'spaces/{space}', 'middleware' => 'space.member'], fun
     Route::post('ai/changesets/{changeset}/reject', [AiChangesetController::class, 'reject'])->name('spaces.ai.changesets.reject');
     Route::post('ai/suggestions/{suggestion}/accept', [AiGlossarySuggestionController::class, 'accept'])->name('spaces.ai.suggestions.accept');
     Route::post('ai/suggestions/{suggestion}/dismiss', [AiGlossarySuggestionController::class, 'dismiss'])->name('spaces.ai.suggestions.dismiss');
+    Route::get('ai/translation-memory', [AiTranslationMemoryController::class, 'index'])->name('spaces.ai.translation-memory.index');
+    Route::post('ai/translation-memory/bulk', [AiTranslationMemoryController::class, 'bulk'])->name('spaces.ai.translation-memory.bulk');
+    Route::patch('ai/translation-memory/{unit}', [AiTranslationMemoryController::class, 'update'])->name('spaces.ai.translation-memory.update');
+    Route::delete('ai/translation-memory/{unit}', [AiTranslationMemoryController::class, 'destroy'])->name('spaces.ai.translation-memory.destroy');
     Route::get('ai/schedules', [AiScheduleController::class, 'index'])->name('spaces.ai.schedules.index');
     Route::post('ai/schedules', [AiScheduleController::class, 'store'])->name('spaces.ai.schedules.store');
     Route::patch('ai/schedules/{schedule}', [AiScheduleController::class, 'update'])->name('spaces.ai.schedules.update');
