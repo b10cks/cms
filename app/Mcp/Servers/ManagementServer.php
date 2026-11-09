@@ -9,7 +9,6 @@ use App\Mcp\Resources\ContentModelGuideResource;
 use App\Mcp\Tools\AutomationsGuideTool;
 use App\Mcp\Tools\ContentModelGuideTool;
 use App\Mcp\Tools\ListSkillsTool;
-use App\Mcp\Tools\LookupGlossaryTool;
 use App\Mcp\Tools\MgmtCallTool;
 use App\Mcp\Tools\MgmtOperationsTool;
 use App\Mcp\Tools\ReadSkillTool;
@@ -29,9 +28,9 @@ class ManagementServer extends Server
         Before designing or creating blocks, read b10cks_content_model_guide.
         Before creating automation actions or automations (webhooks, emails,
         content actions like cache purges), read b10cks_automations_guide.
-        list_skills, read_skill, search_knowledge, lookup_glossary and search_content
-        give the space's AI skills, reference documents, glossary and published
-        entries, for the token's user.
+        list_skills, read_skill, search_knowledge and search_content give the
+        space's AI skills, reference documents and published entries, for the
+        token's user.
         AI operations (ai.operations.*) write content to drafts and leave asset and data entry changes as proposals. Nothing in that
         lifecycle publishes content. Operations marked PAID in their description call
         a provider. Approving a plan and raising a budget are decisions for a person:
@@ -46,7 +45,6 @@ class ManagementServer extends Server
         ListSkillsTool::class,
         ReadSkillTool::class,
         SearchKnowledgeTool::class,
-        LookupGlossaryTool::class,
         SearchContentTool::class,
     ];
 

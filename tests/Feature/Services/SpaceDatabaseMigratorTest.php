@@ -41,7 +41,7 @@ class SpaceDatabaseMigratorTest extends TestCase
         // An existing space before the AI migration shipped, where creating
         // its tables fails part way.
         $space = Schema::connection('space_file');
-        foreach (['ai_glossary_suggestions', 'ai_changeset_items', 'ai_changesets', 'ai_attachments', 'ai_messages', 'ai_run_events', 'ai_runs', 'ai_conversations'] as $table) {
+        foreach (['ai_changeset_items', 'ai_changesets', 'ai_attachments', 'ai_messages', 'ai_run_events', 'ai_runs', 'ai_conversations'] as $table) {
             $space->drop($table);
         }
         DB::connection('space_file')->table('migrations')->where('migration', self::AI_MIGRATION)->delete();
@@ -61,7 +61,7 @@ class SpaceDatabaseMigratorTest extends TestCase
         $migrator->migrate($connection);
 
         $this->assertTrue($migrator->isInitialized($connection));
-        $this->assertTrue($space->hasTable('ai_glossary_suggestions'));
+        $this->assertTrue($space->hasTable('ai_changeset_items'));
         $this->assertSame([self::AI_MIGRATION], DB::connection('space_file')->table('migrations')->where('migration', 'like', '%create_ai_tables')->pluck('migration')->all());
 
         DB::purge('space_file');

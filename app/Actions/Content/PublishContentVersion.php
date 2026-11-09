@@ -21,8 +21,7 @@ class PublishContentVersion extends BasePublishAction
     public function __construct(
         protected SearchService $searchService,
         protected ContentSchemaValidator $contentSchemaValidator,
-    ) {
-    }
+    ) {}
 
     /**
      * @param  array{version_id: string}  $data
@@ -57,7 +56,7 @@ class PublishContentVersion extends BasePublishAction
         }, self::TRANSACTION_ATTEMPTS);
 
         $this->loadPublishedVersion($content);
-        self::afterPublish($content, $space, $owner);
+        self::afterPublish($content);
         $this->searchService->indexContent($content, $space);
     }
 }

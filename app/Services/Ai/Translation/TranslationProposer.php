@@ -4,15 +4,10 @@ namespace App\Services\Ai\Translation;
 
 use App\Models\Management\Space;
 use App\Models\Space\AiChangesetItem;
-use App\Models\Space\AiRun;
 use App\Models\Space\Content;
 use App\Services\Ai\Changesets\ContentTarget;
 use App\Services\Ai\Changesets\FieldPath;
 use App\Services\Ai\Changesets\TargetSnapshot;
-use App\Services\Ai\Knowledge\GlossaryChecker;
-use App\Services\Ai\Knowledge\GlossaryMatcher;
-use App\Services\Ai\Knowledge\KnowledgeResolver;
-use App\Services\Ai\Knowledge\PolicySnapshot;
 use App\Services\Ai\Run\ToolError;
 use App\Services\Content\ContentHierarchyValidator;
 use App\Services\Content\ContentI18nValidator;
@@ -33,8 +28,6 @@ class TranslationProposer
 {
     public const MAX_UNITS = 200;
 
-    private ?PolicySnapshot $policy = null;
-
     public function __construct(
         private readonly TranslationUnits $units,
         private readonly TranslationLineage $lineage,
@@ -43,21 +36,16 @@ class TranslationProposer
         private readonly ContentI18nValidator $i18nValidator,
         private readonly ContentHierarchyValidator $hierarchy,
         private readonly ContentSchemaValidator $schemaValidator,
-        private readonly GlossaryChecker $checker,
-        private readonly KnowledgeResolver $knowledge,
     ) {}
 
     /**
      * @param  array<string, mixed>  $texts  unit ID => translated text
      * @param  string|null  $name  name of a new translation entry
-     * @param  AiRun|null  $run  the run whose pinned policy checks the wording; null checks against the live state
      *
      * @throws ToolError listing every problem, for the model to fix
      */
-    public function prepare(Space $space, TranslationTask $task, array $texts, ?string $name = null, ?string $slug = null, ?AiRun $run = null): PreparedTranslation
+    public function prepare(Space $space, TranslationTask $task, array $texts, ?string $name = null, ?string $slug = null): PreparedTranslation
     {
-        $this->policy = $this->knowledge->policy($space, $run);
-
         $destination = $task->destination;
         $creating = $destination->translation === null;
         $name = trim((string) $name);
@@ -127,7 +115,7 @@ class TranslationProposer
             $item = $this->createItem($space, $destination, $doc, $name, $slug);
             $lineage = array_map($unitRow, array_map('strval', array_keys($texts)));
 
-            return new PreparedTranslation($destination, [$item], [$lineage], [$this->findings($destination, $lineage)]);
+            return new PreparedTranslation($destination, [$item], [$lineage]);
         }
 
         // A field inside a block the translation lacked is written with its whole block list.
@@ -146,7 +134,6 @@ class TranslationProposer
 
         $items = [];
         $lineage = [];
-        $findings = [];
         foreach ($paths as $path) {
             $covered = array_values(array_filter(array_map('strval', array_keys($texts)), fn (string $id) => $task->units[$id]['field'] === $path || str_starts_with($task->units[$id]['field'], "{$path}.")));
             $rows = array_map($unitRow, $covered);
@@ -163,23 +150,19 @@ class TranslationProposer
                 'after' => $values[$path],
             ];
             $lineage[] = $rows;
-            $findings[] = $this->findings($destination, $rows);
         }
 
-        return new PreparedTranslation($destination, $items, $lineage, $findings);
+        return new PreparedTranslation($destination, $items, $lineage);
     }
 
     /**
-     * Store lineage and glossary findings of the recorded items. Hints are not
-     * stored: they are returned, by item ID, for the agent.
+     * Store the lineage of the recorded items.
      *
      * @param  list<AiChangesetItem>  $items  the recorded items, in the order of `$prepared->items`
-     * @return array<string, list<array<string, string>>>
      */
-    public function persist(PreparedTranslation $prepared, array $items): array
+    public function persist(PreparedTranslation $prepared, array $items): void
     {
         $rows = [];
-        $hints = [];
         foreach ($items as $index => $item) {
             foreach ($prepared->lineage[$index] ?? [] as $unit) {
                 $rows[] = [
@@ -190,31 +173,9 @@ class TranslationProposer
                     ...$unit,
                 ];
             }
-
-            $found = $prepared->findings[$index] ?? [];
-            $findings = [...($item->glossary_findings ?? []), ...GlossaryChecker::blocking($found)];
-            if ($findings !== []) {
-                $item->update(['glossary_findings' => array_values(array_unique($findings, SORT_REGULAR))]);
-            }
-            if (($itemHints = GlossaryChecker::hints($found)) !== []) {
-                $hints[$item->id] = $itemHints;
-            }
-
-            if ($this->policy?->isPinned()) {
-                $source = implode("\n", array_column($prepared->lineage[$index] ?? [], 'source_text'));
-                $applied = GlossaryMatcher::for($this->policy->concepts)->match($source, $prepared->destination->sourceLocale);
-                $item->update(['review' => [
-                    ...($item->review ?? []),
-                    'policy' => $this->policy->provenance($applied),
-                    // Only here are the destination's locales known.
-                    'locales' => ['source' => $prepared->destination->sourceLocale, 'target' => $prepared->destination->locale],
-                ]]);
-            }
         }
 
         $this->lineage->recordProposals($rows);
-
-        return $hints;
     }
 
     /**
@@ -439,26 +400,5 @@ class TranslationProposer
             'target_label' => $name,
             'after' => [...$data, 'content' => $result->content],
         ];
-    }
-
-    /**
-     * @param  list<array{source_text: string, target_text: string}>  $units
-     * @return list<array<string, string>>
-     */
-    private function findings(TranslationDestination $destination, array $units): array
-    {
-        if ($this->policy->concepts === []) {
-            return [];
-        }
-
-        $findings = [];
-        foreach ($units as $unit) {
-            if ($unit['target_text'] === '') {
-                continue;
-            }
-            $findings = [...$findings, ...$this->checker->check($unit['source_text'], $unit['target_text'], $destination->sourceLocale, $destination->locale, $this->policy->concepts)];
-        }
-
-        return array_values(array_unique($findings, SORT_REGULAR));
     }
 }

@@ -2,10 +2,8 @@
 
 namespace App\Http\Controllers\Mgmt\Concerns;
 
-use App\Models\Management\AiGlossary;
 use App\Models\Management\Space;
 use App\Models\Management\Team;
-use App\Services\Ai\Knowledge\AiLayers;
 use Illuminate\Http\Request;
 
 /**
@@ -28,16 +26,5 @@ trait ResolvesAiOwner
         abort_if($team === null, 404);
 
         return $team instanceof Team ? $team : Team::query()->findOrFail($team);
-    }
-
-    /** A glossary this owner may read: its own, or one inherited from its teams. Writes need the owner itself. */
-    protected function readableGlossary(Request $request, string $id): AiGlossary
-    {
-        $owner = $this->aiOwner($request);
-        $this->authorize('viewAny', [AiGlossary::class, $owner]);
-
-        return AiGlossary::query()
-            ->inLayers($owner instanceof Space ? $owner->id : null, app(AiLayers::class)->teamIds($owner))
-            ->findOrFail($id);
     }
 }

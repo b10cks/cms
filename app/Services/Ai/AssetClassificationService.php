@@ -16,9 +16,6 @@ use App\Services\Ai\Assets\AssetStructure;
 use App\Services\Ai\Assets\AssetVision;
 use App\Services\Ai\Assets\ClassificationReport;
 use App\Services\Ai\Exceptions\AiServiceException;
-use App\Services\Ai\Knowledge\GlossaryChecker;
-use App\Services\Ai\Knowledge\GlossaryConcept;
-use App\Services\Ai\Knowledge\KnowledgeResolver;
 use App\Services\Ai\Prompts\SystemPromptBuilder;
 use App\Services\Ai\Run\StartRun;
 use App\Services\Ai\Skills\SkillResolver;
@@ -40,12 +37,6 @@ use Illuminate\Support\Str;
  * {@see classify()} runs inside {@see ClassifyAssetJob}. Valid output is saved
  * even when other requested values are not usable; {@see ClassificationReport}
  * accounts for each of them on the agent run and on the asset's provenance.
- *
- * The glossary reaches the prompt per requested language, and each generated value
- * is checked in its own language under the run's pinned policy. There is no draft and
- * no person in between, so a value with Avoid wording is refused and reported, and
- * stays empty for the next classification, while the rest is saved. It regulates
- * wording only: no term is required, as the image decides what there is to say.
  */
 class AssetClassificationService
 {
@@ -73,8 +64,6 @@ class AssetClassificationService
         private readonly AiRunService $runs,
         private readonly SkillResolver $skills,
         private readonly ModelRegistry $registry,
-        private readonly KnowledgeResolver $knowledge,
-        private readonly GlossaryChecker $checker,
     ) {}
 
     public function isEnabled(Space $space): bool
@@ -290,8 +279,6 @@ class AssetClassificationService
         }
 
         $result = $this->parseOutput($raw, $targetKeys, $tagsByName, $decorative);
-        [$result, $findings] = $this->refuseAvoidedWording($result, $space, $run);
-        $run->result = [...$run->result, 'glossary_findings' => $findings];
         $report = fn (array $written, array $writtenTags) => ClassificationReport::build(
             $languages,
             $targetKeys,
@@ -477,48 +464,6 @@ class AssetClassificationService
             'unknown_tags' => $unknownTags,
             'tags_malformed' => $tagsByName !== [] && ! \is_array($decoded['tags'] ?? null),
         ];
-    }
-
-    /**
-     * Takes every value with Avoid wording of its language out of the output, as
-     * rejected with what to write instead. Only rows with Avoid wording in that
-     * language can match, so a large glossary is narrowed once per language.
-     *
-     * @param  array{fields: array<string, array<string, string>>, rejected: array<string, string>}  $result
-     * @return array{0: array<string, mixed>, 1: list<array<string, string>>} the output and the findings by `key`
-     */
-    private function refuseAvoidedWording(array $result, Space $space, AiRun $run): array
-    {
-        $concepts = $this->knowledge->policy($space, $run)->concepts;
-        $findings = [];
-
-        foreach ($result['fields'] as $language => $values) {
-            $locale = $this->localeOf($space, $language);
-            $rows = array_values(array_filter($concepts, fn (GlossaryConcept $concept) => ($concept->checkedLanguage($locale)->avoid ?? []) !== []));
-
-            foreach ($values as $field => $value) {
-                $found = GlossaryChecker::blocking($this->checker->check('', $value, $locale, $locale, $rows));
-
-                if ($found === []) {
-                    continue;
-                }
-
-                $key = "{$language}.{$field}";
-                unset($result['fields'][$language][$field]);
-                $result['rejected'][$key] = implode(' ', array_map(self::refusal(...), $found));
-                array_push($findings, ...array_map(fn (array $finding) => ['key' => $key, ...$finding], $found));
-            }
-        }
-
-        $result['fields'] = array_filter($result['fields']);
-
-        return [$result, $findings];
-    }
-
-    /** @param  array<string, string>  $finding */
-    private static function refusal(array $finding): string
-    {
-        return "The glossary avoids \"{$finding['found']}\"".(isset($finding['expected']) ? ", write \"{$finding['expected']}\"." : '.');
     }
 
     /** The locale a language key of asset data is written in. */

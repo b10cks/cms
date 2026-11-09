@@ -4,9 +4,6 @@ use App\Http\Controllers\Mgmt\Ai\AiAttachmentController;
 use App\Http\Controllers\Mgmt\Ai\AiChangesetController;
 use App\Http\Controllers\Mgmt\Ai\AiContentFlagsController;
 use App\Http\Controllers\Mgmt\Ai\AiContextController;
-use App\Http\Controllers\Mgmt\Ai\AiGlossaryConceptRowController;
-use App\Http\Controllers\Mgmt\Ai\AiGlossaryController;
-use App\Http\Controllers\Mgmt\Ai\AiGlossarySuggestionController;
 use App\Http\Controllers\Mgmt\Ai\AiKnowledgeDocumentController;
 use App\Http\Controllers\Mgmt\Ai\AiModelsController;
 use App\Http\Controllers\Mgmt\Ai\AiOperationController;
@@ -258,7 +255,7 @@ Route::delete('space-blueprints/{blueprint}', [SystemSpaceBlueprintController::c
     ->name('space-blueprints.destroy');
 
 /**
- * Skills, knowledge documents and glossaries, registered for spaces and teams.
+ * Skills and knowledge documents, registered for spaces and teams.
  */
 $aiKnowledgeRoutes = static function (string $name): void {
     Route::get('ai/skills', [AiSkillController::class, 'index'])->name("{$name}.ai.skills.index");
@@ -276,20 +273,6 @@ $aiKnowledgeRoutes = static function (string $name): void {
     Route::delete('ai/knowledge/{document}', [AiKnowledgeDocumentController::class, 'destroy'])->name("{$name}.ai.knowledge.destroy");
     Route::post('ai/knowledge/{document}/publish', [AiKnowledgeDocumentController::class, 'publish'])->name("{$name}.ai.knowledge.publish");
     Route::post('ai/knowledge/{document}/source', [AiKnowledgeDocumentController::class, 'upload'])->name("{$name}.ai.knowledge.upload");
-
-    Route::get('ai/glossaries', [AiGlossaryController::class, 'index'])->name("{$name}.ai.glossaries.index");
-    Route::post('ai/glossaries', [AiGlossaryController::class, 'store'])->name("{$name}.ai.glossaries.store");
-    Route::patch('ai/glossaries/{glossary}', [AiGlossaryController::class, 'update'])->name("{$name}.ai.glossaries.update");
-    Route::delete('ai/glossaries/{glossary}', [AiGlossaryController::class, 'destroy'])->name("{$name}.ai.glossaries.destroy");
-    Route::post('ai/glossaries/{glossary}/import', [AiGlossaryController::class, 'import'])->name("{$name}.ai.glossaries.import");
-    Route::get('ai/glossaries/{glossary}/export', [AiGlossaryController::class, 'export'])->name("{$name}.ai.glossaries.export");
-    Route::get('ai/glossaries/{glossary}/concept-rows', [AiGlossaryConceptRowController::class, 'index'])->name("{$name}.ai.glossaries.concept-rows.index");
-    Route::post('ai/glossaries/{glossary}/concept-rows', [AiGlossaryConceptRowController::class, 'store'])->name("{$name}.ai.glossaries.concept-rows.store");
-    Route::post('ai/glossaries/{glossary}/concept-rows/bulk', [AiGlossaryConceptRowController::class, 'bulk'])->name("{$name}.ai.glossaries.concept-rows.bulk");
-    Route::get('ai/glossaries/{glossary}/concept-rows/{row}', [AiGlossaryConceptRowController::class, 'show'])->name("{$name}.ai.glossaries.concept-rows.show");
-    Route::patch('ai/glossaries/{glossary}/concept-rows/{row}', [AiGlossaryConceptRowController::class, 'update'])->name("{$name}.ai.glossaries.concept-rows.update");
-    Route::delete('ai/glossaries/{glossary}/concept-rows/{row}', [AiGlossaryConceptRowController::class, 'destroy'])->name("{$name}.ai.glossaries.concept-rows.destroy");
-    Route::post('ai/glossaries/{glossary}/glossary-check', [AiGlossaryConceptRowController::class, 'check'])->name("{$name}.ai.glossaries.check");
 };
 
 Route::group(['prefix' => 'teams/{team}'], function () use ($aiKnowledgeRoutes) {
@@ -355,8 +338,6 @@ Route::group(['prefix' => 'spaces/{space}', 'middleware' => 'space.member'], fun
     Route::get('ai/changesets/{changeset}', [AiChangesetController::class, 'show'])->name('spaces.ai.changesets.show');
     Route::post('ai/changesets/{changeset}/accept', [AiChangesetController::class, 'accept'])->name('spaces.ai.changesets.accept');
     Route::post('ai/changesets/{changeset}/reject', [AiChangesetController::class, 'reject'])->name('spaces.ai.changesets.reject');
-    Route::post('ai/suggestions/{suggestion}/accept', [AiGlossarySuggestionController::class, 'accept'])->name('spaces.ai.suggestions.accept');
-    Route::post('ai/suggestions/{suggestion}/dismiss', [AiGlossarySuggestionController::class, 'dismiss'])->name('spaces.ai.suggestions.dismiss');
     Route::get('ai/translation-memory', [AiTranslationMemoryController::class, 'index'])->name('spaces.ai.translation-memory.index');
     Route::post('ai/translation-memory/bulk', [AiTranslationMemoryController::class, 'bulk'])->name('spaces.ai.translation-memory.bulk');
     Route::patch('ai/translation-memory/{unit}', [AiTranslationMemoryController::class, 'update'])->name('spaces.ai.translation-memory.update');

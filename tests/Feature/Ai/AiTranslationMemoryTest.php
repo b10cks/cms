@@ -205,7 +205,6 @@ class AiTranslationMemoryTest extends TestCase
         $this->assertSame('Warenkorb', $german->fresh()->getCurrentContent()['title']);
         $this->assertSame([], $this->pairs());
         $this->assertSame([], $memory->exact(['title' => 'Shopping cart'], 'en', 'de'));
-        $this->assertSame(['hits' => [], 'rejected' => []], $memory->exactUnderPolicy(['title' => 'Shopping cart'], 'en', 'de', []));
         $this->assertSame([], $memory->fuzzy(['A shopping cart'], 'en', 'de'));
         $this->artisan('ai:backfill-translation-memory', ['space_id' => $this->space->id])->assertSuccessful();
         $this->assertSame([], $this->pairs());

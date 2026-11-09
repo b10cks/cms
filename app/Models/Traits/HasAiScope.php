@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
- * Shared owner columns of skills, knowledge documents and glossaries: a row
+ * Shared owner columns of skills and knowledge documents: a row
  * belongs to one space or one team.
  */
 trait HasAiScope

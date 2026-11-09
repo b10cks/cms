@@ -267,7 +267,7 @@ class AiOperationController extends Controller
      * Items of one review group, or of one changed entry. Translation items carry their source deltas as `translation_units`.
      *
      * @apiQuery group string A `key` from the review groups. Required without `target_id`.
-     * @apiQuery target_id string An entry from changes: its content items, conflicts and flagged wording first.
+     * @apiQuery target_id string An entry from changes: its content items, conflicts first.
      * @apiQuery individual boolean Only items of the group that need an individual decision.
      * @apiQuery page integer
      * @apiQuery per_page integer At most 200.
@@ -292,7 +292,7 @@ class AiOperationController extends Controller
     }
 
     /**
-     * What the operation changed in drafts, an entry at a time, entries with conflicts and flagged wording first. Nothing here needs a decision except a conflict.
+     * What the operation changed in drafts, an entry at a time, entries with conflicts first. Nothing here needs a decision except a conflict.
      *
      * @apiQuery page integer
      * @apiQuery per_page integer At most 200.

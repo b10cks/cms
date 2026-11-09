@@ -10,7 +10,7 @@ use App\Policies\Concerns\AuthorizesWithAbilities;
 
 /**
  * Chat threads are private to their owner until shared with the space.
- * Schedule and suggestion threads belong to those who manage the space's AI.
+ * Schedule threads belong to those who manage the space's AI.
  * Matches {@see AiConversation::scopeVisibleTo()}.
  */
 class AiConversationPolicy

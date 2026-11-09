@@ -3,7 +3,6 @@
 namespace Tests\Feature\Ai;
 
 use App\Enums\AiScope;
-use App\Models\Management\AiGlossary;
 use App\Models\Management\AiKnowledgeDocument;
 use App\Models\Management\AiSkill;
 use App\Models\Management\Space;
@@ -30,16 +29,12 @@ class AiSettingsListTest extends TestCase
 
         foreach ([$space, $team] as $owner) {
             AiKnowledgeDocument::create([...AiKnowledgeDocument::ownerAttributes($owner), 'title' => $owner->name, 'slug' => 'voice', 'type' => 'style', 'draft' => '']);
-            AiGlossary::create([...AiGlossary::ownerAttributes($owner), 'name' => $owner->name]);
         }
 
         $this->assertSame(['space'], $this->getJson("/mgmt/v1/spaces/{$space->id}/ai/knowledge")->assertOk()->json('data.*.scope'));
 
         $documents = $this->getJson("/mgmt/v1/spaces/{$space->id}/ai/knowledge?inherited=1")->assertOk()->json('data');
         $this->assertEqualsCanonicalizing([['space', $space->id], ['team', $team->id]], array_map(fn (array $row) => [$row['scope'], $row['owner_id']], $documents));
-
-        $glossaries = $this->getJson("/mgmt/v1/spaces/{$space->id}/ai/glossaries?inherited=1")->assertOk()->json('data.*.scope');
-        $this->assertEqualsCanonicalizing(['space', 'team'], $glossaries);
     }
 
     #[Test]

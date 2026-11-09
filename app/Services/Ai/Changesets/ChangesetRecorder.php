@@ -8,18 +8,10 @@ use App\Models\Space\AiChangesetItem;
 use App\Models\Space\AiOperation;
 use App\Models\Space\AiOperationItem;
 use App\Models\Space\AiRun;
-use App\Models\Space\Content;
-use App\Models\Space\DataEntry;
-use App\Services\Ai\Knowledge\GlossaryChecker;
-use App\Services\Ai\Knowledge\GlossaryConcept;
-use App\Services\Ai\Knowledge\KnowledgeResolver;
-use App\Services\Ai\Knowledge\PolicySnapshot;
 use App\Services\Ai\Operations\OperationContext;
 use App\Services\Ai\Run\ToolError;
 use App\Services\Ai\Threads\AiThreads;
 use App\Services\Ai\Tools\ProposalTool;
-use App\Services\Asset\AssetMetadataFieldResolver;
-use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
 
 /**
@@ -35,27 +27,7 @@ use Illuminate\Support\Str;
  */
 class ChangesetRecorder
 {
-    /** @var array<string, list<array<string, string>>> item ID => glossary hints, for the agent only */
-    private array $hints = [];
-
-    public function __construct(
-        private readonly GlossaryChecker $checker,
-        private readonly AiThreads $threads,
-        private readonly KnowledgeResolver $knowledge,
-    ) {}
-
-    /**
-     * The hints the last {@see record()} found, by item ID. A hint is told to the
-     * agent and never stored, so no reviewer sees it.
-     *
-     * @return array<string, list<array<string, string>>>
-     */
-    public function takeHints(): array
-    {
-        [$hints, $this->hints] = [$this->hints, []];
-
-        return $hints;
-    }
+    public function __construct(private readonly AiThreads $threads) {}
 
     /**
      * Store items, replacing a still pending change of the same field so the model
@@ -69,7 +41,6 @@ class ChangesetRecorder
      */
     public function record(AiRun $run, array $items, bool $inline = false): array
     {
-        $this->hints = [];
         $direct = [];
         if ($run->operation_id !== null && ($run->setup['operation']['phase'] ?? null) === OperationContext::PHASE_BATCH) {
             $operationParts = AiOperation::query()->find($run->operation_id)?->expectedParts();
@@ -107,20 +78,8 @@ class ChangesetRecorder
             $changeset->forceFill(['run_id' => $run->id])->save();
         }
 
-        $policy = isset($run->setup['policy']['id']) ? $this->knowledge->policy($run->space, $run) : null;
         $created = [];
         foreach ($items as $index => $attributes) {
-            $language = $inline || $changeset->inline ? null : $this->writtenIn($run, $attributes);
-            [$sourceLocale, $targetLocale] = $this->checkedIn($run, $language);
-            if ($policy !== null) {
-                $source = implode("\n", array_filter(Arr::flatten(Arr::wrap($attributes['before'] ?? $attributes['after'] ?? null)), 'is_string'));
-                $activated = $policy->activate($source, $sourceLocale, $targetLocale);
-                $attributes['review'] = [
-                    ...($attributes['review'] ?? []),
-                    'policy' => $policy->provenance(array_column($activated, 'concept')),
-                    ...($language !== null ? ['locales' => ['source' => $language, 'target' => $language]] : []),
-                ];
-            }
             if (($attributes['path'] ?? null) !== null) {
                 $changeset->items()
                     ->where('status', AiChangesetItemStatus::Pending->value)
@@ -130,18 +89,12 @@ class ChangesetRecorder
                     ->delete();
             }
 
-            $findings = $this->findings($run, $policy, (string) $sourceLocale, (string) $targetLocale, $attributes['before'] ?? null, $attributes['after'] ?? null);
-            $item = $changeset->items()->create([
+            $created[] = $changeset->items()->create([
                 'status' => AiChangesetItemStatus::Pending,
                 ...$attributes,
                 // Domain review flags keep the item out of group accepts like any other flag.
                 'flags' => ($attributes['flags'] ?? null) ?: (($attributes['review']['flags'] ?? null) ?: null),
-                'glossary_findings' => GlossaryChecker::blocking($findings) ?: null,
             ]);
-            if (($hints = GlossaryChecker::hints($findings)) !== []) {
-                $this->hints[$item->id] = $hints;
-            }
-            $created[] = $item;
 
             if (isset($direct[$index])) {
                 AiOperationItem::markProposed([$direct[$index]]);
@@ -178,80 +131,5 @@ class ChangesetRecorder
     private function title(AiRun $run): string
     {
         return Str::limit((string) (($run->setup['title'] ?? '') ?: $run->skill ?: $run->surface), 180);
-    }
-
-    /**
-     * The locales a change is checked in: the run's, when it names a translation or the
-     * change has no language of its own, else the language the change is written in.
-     *
-     * @param  string|null  $language  from {@see writtenIn()}
-     * @return array{0: string|null, 1: string|null}
-     */
-    private function checkedIn(AiRun $run, ?string $language): array
-    {
-        $source = $run->setup['glossary']['source_locale'] ?? null;
-        $target = $run->setup['glossary']['target_locale'] ?? null;
-
-        return $language === null || GlossaryConcept::translating((string) $source, (string) $target) ? [$source, $target] : [$language, $language];
-    }
-
-    /**
-     * Only a translation checks an empty field against what the run read. Any other
-     * write has nothing to keep there and answers for its own wording alone: it need
-     * not hold every term of the page or the batch.
-     *
-     * @return list<array<string, string>>
-     */
-    private function findings(AiRun $run, ?PolicySnapshot $policy, string $sourceLocale, string $targetLocale, mixed $before, mixed $after): array
-    {
-        $glossary = $run->setup['glossary'] ?? null;
-        $output = implode("\n", array_filter(Arr::flatten(Arr::wrap($after)), 'is_string'));
-
-        if (! $glossary || $output === '') {
-            return [];
-        }
-
-        $terms = $policy?->concepts ?? GlossaryConcept::listFromFrozen($glossary['concepts'] ?? $glossary['terms'] ?? []);
-        $existing = implode("\n", array_filter(Arr::flatten(Arr::wrap($before)), 'is_string'));
-        $source = $existing !== '' || ! GlossaryConcept::translating($sourceLocale, $targetLocale) ? $existing : (string) $glossary['source'];
-
-        return $this->checker->check($source, $output, $sourceLocale, $targetLocale, $terms);
-    }
-
-    /**
-     * The language a change's copy is written in, as the destination stores it and
-     * never read from the text. Null for values without copy, which keep the run's
-     * pair and record none, so an edit of them is not checked. A data source without
-     * translatable dimensions names no language, so its entries read the run's.
-     *
-     * @param  array<string, mixed>  $attributes
-     */
-    private function writtenIn(AiRun $run, array $attributes): ?string
-    {
-        $default = $run->space->settings->getDefaultLanguage();
-        $path = (string) ($attributes['path'] ?? '');
-
-        return match ((string) $attributes['target_type']) {
-            AiChangesetItem::TARGET_CONTENT => ($attributes['operation'] ?? null) === AiChangesetItem::OPERATION_CREATE
-                ? (((array) ($attributes['after'] ?? []))['language_iso'] ?? $default)
-                : (Content::query()->whereKey($attributes['target_id'] ?? null)->value('language_iso') ?: $default),
-            AiChangesetItem::TARGET_ASSET => str_starts_with($path, 'fields.')
-                ? (($key = explode('.', $path)[1]) === AssetMetadataFieldResolver::DEFAULT_LANGUAGE_KEY ? $default : $key)
-                : null,
-            AiChangesetItem::TARGET_DATA_ENTRY => $this->dataEntryLanguage((string) ($attributes['target_id'] ?? ''), $path) ?? ($run->setup['glossary']['target_locale'] ?? null),
-            default => null,
-        };
-    }
-
-    /** A translatable data source keeps a language per dimension, and `value` in its default one. */
-    private function dataEntryLanguage(string $id, string $path): ?string
-    {
-        $settings = DataEntry::query()->with('dataSource')->find($id)?->dataSource?->settings;
-
-        if (! ($settings['dimensions_translatable'] ?? false)) {
-            return null;
-        }
-
-        return str_starts_with($path, 'dimensions.') ? substr($path, 11) : (($settings['default_dimension_locale'] ?? null) ?: null);
     }
 }

@@ -11,8 +11,8 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 /**
- * What AI left on entries for whoever publishes them: open conflicts, and flagged
- * wording that is still in the draft. It informs and never blocks a publish.
+ * What AI left on entries for whoever publishes them: open conflicts. It informs
+ * and never blocks a publish.
  */
 class AiContentFlagsController extends Controller
 {
@@ -39,7 +39,7 @@ class AiContentFlagsController extends Controller
     }
 
     /**
-     * The conflicts and flagged wording of some entries, named by field.
+     * The open conflicts of some entries, named by field.
      *
      * @apiQuery ids[] string required Entries, at most 50.
      *

@@ -2,7 +2,6 @@
 
 declare(strict_types=1);
 
-use App\Http\Requests\Ai\ImportAiGlossaryRequest;
 use App\Http\Requests\Ai\UploadAiKnowledgeSourceRequest;
 
 // Generated from @b10cks/mcp-server operations.ts + @b10cks/mgmt-client.
@@ -1079,50 +1078,6 @@ return [
         'uri' => '/mgmt/v1/spaces/{spaceId}/ai/knowledge/{id}/source',
         'files' => ['file' => UploadAiKnowledgeSourceRequest::MAX_KB],
     ],
-    'ai.glossaries.list' => [
-        'description' => 'List glossaries of a space.',
-        'required' => ['spaceId'],
-        'accepts' => ['spaceId', 'params'],
-        'method' => 'GET',
-        'uri' => '/mgmt/v1/spaces/{spaceId}/ai/glossaries',
-    ],
-    'ai.glossaries.create' => [
-        'description' => 'Create a glossary in a space.',
-        'required' => ['spaceId', 'payload'],
-        'accepts' => ['spaceId', 'payload'],
-        'method' => 'POST',
-        'uri' => '/mgmt/v1/spaces/{spaceId}/ai/glossaries',
-    ],
-    'ai.glossaries.update' => [
-        'description' => 'Update a glossary of a space.',
-        'required' => ['spaceId', 'id', 'payload'],
-        'accepts' => ['spaceId', 'id', 'payload'],
-        'method' => 'PATCH',
-        'uri' => '/mgmt/v1/spaces/{spaceId}/ai/glossaries/{id}',
-    ],
-    'ai.glossaries.delete' => [
-        'description' => 'Delete a glossary of a space.',
-        'required' => ['spaceId', 'id'],
-        'accepts' => ['spaceId', 'id'],
-        'method' => 'DELETE',
-        'uri' => '/mgmt/v1/spaces/{spaceId}/ai/glossaries/{id}',
-    ],
-    'ai.glossaries.import' => [
-        'description' => 'Import a glossary of a space from a CSV, XLSX or TBX file. CSV and XLSX apply directly, one row per concept, columns as in docs/guides/glossary-sheet.md: missing rows stay, blank cells keep their value and nothing is removed. A header with source_locale is the older term format. In TBX, preferred, deprecated and admitted terms are use, avoid and also. Use id for the glossary. Payload: file as {filename, content_base64}, at most 10 MB. The result counts added, updated and unchanged rows and lists row errors with row, column and message.',
-        'required' => ['spaceId', 'id', 'payload'],
-        'accepts' => ['spaceId', 'id', 'payload'],
-        'method' => 'POST',
-        'uri' => '/mgmt/v1/spaces/{spaceId}/ai/glossaries/{id}/import',
-        'files' => ['file' => ImportAiGlossaryRequest::MAX_KB],
-    ],
-    'ai.glossaries.export' => [
-        'description' => 'Export a glossary of a space as {filename, content_type, content_base64}. CSV and XLSX hold one row per concept and read back as no change. Use id for the glossary. Params: format (csv, xlsx or tbx), template (1 for the columns and one made up row instead of the glossary, csv or xlsx only).',
-        'required' => ['spaceId', 'id'],
-        'accepts' => ['spaceId', 'id', 'params'],
-        'method' => 'GET',
-        'uri' => '/mgmt/v1/spaces/{spaceId}/ai/glossaries/{id}/export',
-        'download' => true,
-    ],
     'ai.teamSkills.list' => [
         'description' => 'List AI skills of a team.',
         'required' => ['teamId'],
@@ -1206,34 +1161,6 @@ return [
         'accepts' => ['teamId', 'id'],
         'method' => 'POST',
         'uri' => '/mgmt/v1/teams/{teamId}/ai/knowledge/{id}/publish',
-    ],
-    'ai.teamGlossaries.list' => [
-        'description' => 'List glossaries of a team.',
-        'required' => ['teamId'],
-        'accepts' => ['teamId', 'params'],
-        'method' => 'GET',
-        'uri' => '/mgmt/v1/teams/{teamId}/ai/glossaries',
-    ],
-    'ai.teamGlossaries.create' => [
-        'description' => 'Create a glossary in a team.',
-        'required' => ['teamId', 'payload'],
-        'accepts' => ['teamId', 'payload'],
-        'method' => 'POST',
-        'uri' => '/mgmt/v1/teams/{teamId}/ai/glossaries',
-    ],
-    'ai.teamGlossaries.update' => [
-        'description' => 'Update a glossary of a team.',
-        'required' => ['teamId', 'id', 'payload'],
-        'accepts' => ['teamId', 'id', 'payload'],
-        'method' => 'PATCH',
-        'uri' => '/mgmt/v1/teams/{teamId}/ai/glossaries/{id}',
-    ],
-    'ai.teamGlossaries.delete' => [
-        'description' => 'Delete a glossary of a team.',
-        'required' => ['teamId', 'id'],
-        'accepts' => ['teamId', 'id'],
-        'method' => 'DELETE',
-        'uri' => '/mgmt/v1/teams/{teamId}/ai/glossaries/{id}',
     ],
     'ai.operations.list' => [
         'description' => 'List the AI operations the caller may see in a space, at most 50, newest first. Params: conversation_id. Reads only.',
@@ -1355,7 +1282,7 @@ return [
         'uri' => '/mgmt/v1/spaces/{spaceId}/ai/operations/{id}/questions/answers',
     ],
     'ai.operations.changes' => [
-        'description' => 'What an operation changed in drafts, an entry at a time, entries with conflicts and flagged wording first, with `summary` (changed, conflicts, flagged). Params: page, per_page (max 200). Reads only.',
+        'description' => 'What an operation changed in drafts, an entry at a time, entries with conflicts first, with `summary` (changed, conflicts). Params: page, per_page (max 200). Reads only.',
         'required' => ['spaceId', 'id'],
         'accepts' => ['spaceId', 'id', 'params'],
         'method' => 'GET',
@@ -1369,7 +1296,7 @@ return [
         'uri' => '/mgmt/v1/spaces/{spaceId}/ai/operations/{id}/review',
     ],
     'ai.operations.reviewItems' => [
-        'description' => 'Items of one review group or of one changed entry, with findings, flags, review.evidence and review.policy. Params: group or target_id (one is required), individual, page, per_page (max 200). Reads only.',
+        'description' => 'Items of one review group or of one changed entry, with flags and review.evidence. Params: group or target_id (one is required), individual, page, per_page (max 200). Reads only.',
         'required' => ['spaceId', 'id'],
         'accepts' => ['spaceId', 'id', 'params'],
         'method' => 'GET',
@@ -1403,48 +1330,6 @@ return [
         'method' => 'GET',
         'uri' => '/mgmt/v1/ai/assets/classify/{runId}',
     ],
-    'ai.glossaries.conceptRows' => [
-        'description' => 'Rows of a glossary: one row per meaning with keep_exact, note, per language use, avoid and also, and coverage. A language with avoid and no use is a ban. meta holds facets and available_locales. Params: search, missing, page, per_page (max 200). Reads only.',
-        'required' => ['spaceId', 'glossaryId'],
-        'accepts' => ['spaceId', 'glossaryId', 'params'],
-        'method' => 'GET',
-        'uri' => '/mgmt/v1/spaces/{spaceId}/ai/glossaries/{glossaryId}/concept-rows',
-    ],
-    'ai.glossaries.createConceptRow' => [
-        'description' => 'Create a glossary row. Writes live knowledge at once and records no revision. Payload: {key?, keep_exact?, note? (at most 200 characters), languages: {locale: {use?, avoid?, also?}}}. A language needs use or avoid, and avoid without use is a ban. 409 code wording_conflict names the concept that holds the wording.',
-        'required' => ['spaceId', 'glossaryId', 'payload'],
-        'accepts' => ['spaceId', 'glossaryId', 'payload'],
-        'method' => 'POST',
-        'uri' => '/mgmt/v1/spaces/{spaceId}/ai/glossaries/{glossaryId}/concept-rows',
-    ],
-    'ai.glossaries.updateConceptRow' => [
-        'description' => 'Update a glossary row. rowId is its concept id. Omitted fields and languages keep their value; a language goes only through remove_languages; the note and keep_exact hold for the whole row. Payload: {key?, keep_exact?, note? (at most 200 characters), languages?: {locale: {use?, avoid?, also?}}, remove_languages?, base? (keep_exact, note and languages as you read them; a change to a field that moved since then is refused with 409 row_changed)}. Returns the row.',
-        'required' => ['spaceId', 'glossaryId', 'rowId', 'payload'],
-        'accepts' => ['spaceId', 'glossaryId', 'rowId', 'payload'],
-        'method' => 'PATCH',
-        'uri' => '/mgmt/v1/spaces/{spaceId}/ai/glossaries/{glossaryId}/concept-rows/{rowId}',
-    ],
-    'ai.glossaries.deleteConceptRow' => [
-        'description' => 'Delete a concept row and all its terms. rowId is its concept id.',
-        'required' => ['spaceId', 'glossaryId', 'rowId'],
-        'accepts' => ['spaceId', 'glossaryId', 'rowId'],
-        'method' => 'DELETE',
-        'uri' => '/mgmt/v1/spaces/{spaceId}/ai/glossaries/{glossaryId}/concept-rows/{rowId}',
-    ],
-    'ai.glossaries.bulkConceptRows' => [
-        'description' => 'Delete selected glossary rows in one transaction. Payload: {row_ids, action: delete}.',
-        'required' => ['spaceId', 'glossaryId', 'payload'],
-        'accepts' => ['spaceId', 'glossaryId', 'payload'],
-        'method' => 'POST',
-        'uri' => '/mgmt/v1/spaces/{spaceId}/ai/glossaries/{glossaryId}/concept-rows/bulk',
-    ],
-    'ai.glossaries.checkText' => [
-        'description' => 'Try a text against saved wording. Makes no provider call and changes nothing. Payload: {text, source_locale, target_locale?, output?, scope?}. scope glossary (the default) reads this one glossary, which need not be what a run uses; scope space reads what a run in this space uses, inherited glossaries included. Returns the rows the text activates with match offsets and the instruction the agent would read, and findings if output is given.',
-        'required' => ['spaceId', 'glossaryId', 'payload'],
-        'accepts' => ['spaceId', 'glossaryId', 'payload'],
-        'method' => 'POST',
-        'uri' => '/mgmt/v1/spaces/{spaceId}/ai/glossaries/{glossaryId}/glossary-check',
-    ],
     'ai.translationMemory.list' => [
         'description' => 'Translation memory of a space: one unit per translated field of a published translation, most recently recorded or corrected first. Runs reuse an exact match without a provider call. Each unit has source_text, target_text, source_locale, target_locale, origin (human or ai_accepted), content_id, field_path and content. Params: source_locale, target_locale, search (part of the source or target text), origin, content_id (a translation entry, or its source entry for all its translations), page, per_page (max 200). Reads only.',
         'required' => ['spaceId'],
@@ -1472,48 +1357,6 @@ return [
         'accepts' => ['spaceId', 'payload'],
         'method' => 'POST',
         'uri' => '/mgmt/v1/spaces/{spaceId}/ai/translation-memory/bulk',
-    ],
-    'ai.teamGlossaries.conceptRows' => [
-        'description' => 'Rows of a glossary: one row per meaning with keep_exact, note, per language use, avoid and also, and coverage. A language with avoid and no use is a ban. meta holds facets and available_locales. Params: search, missing, page, per_page (max 200). Reads only.',
-        'required' => ['teamId', 'glossaryId'],
-        'accepts' => ['teamId', 'glossaryId', 'params'],
-        'method' => 'GET',
-        'uri' => '/mgmt/v1/teams/{teamId}/ai/glossaries/{glossaryId}/concept-rows',
-    ],
-    'ai.teamGlossaries.createConceptRow' => [
-        'description' => 'Create a glossary row. Writes live knowledge at once and records no revision. Payload: {key?, keep_exact?, note? (at most 200 characters), languages: {locale: {use?, avoid?, also?}}}. A language needs use or avoid, and avoid without use is a ban. 409 code wording_conflict names the concept that holds the wording.',
-        'required' => ['teamId', 'glossaryId', 'payload'],
-        'accepts' => ['teamId', 'glossaryId', 'payload'],
-        'method' => 'POST',
-        'uri' => '/mgmt/v1/teams/{teamId}/ai/glossaries/{glossaryId}/concept-rows',
-    ],
-    'ai.teamGlossaries.updateConceptRow' => [
-        'description' => 'Update a glossary row. rowId is its concept id. Omitted fields and languages keep their value; a language goes only through remove_languages; the note and keep_exact hold for the whole row. Payload: {key?, keep_exact?, note? (at most 200 characters), languages?: {locale: {use?, avoid?, also?}}, remove_languages?, base? (keep_exact, note and languages as you read them; a change to a field that moved since then is refused with 409 row_changed)}. Returns the row.',
-        'required' => ['teamId', 'glossaryId', 'rowId', 'payload'],
-        'accepts' => ['teamId', 'glossaryId', 'rowId', 'payload'],
-        'method' => 'PATCH',
-        'uri' => '/mgmt/v1/teams/{teamId}/ai/glossaries/{glossaryId}/concept-rows/{rowId}',
-    ],
-    'ai.teamGlossaries.deleteConceptRow' => [
-        'description' => 'Delete a concept row and all its terms. rowId is its concept id.',
-        'required' => ['teamId', 'glossaryId', 'rowId'],
-        'accepts' => ['teamId', 'glossaryId', 'rowId'],
-        'method' => 'DELETE',
-        'uri' => '/mgmt/v1/teams/{teamId}/ai/glossaries/{glossaryId}/concept-rows/{rowId}',
-    ],
-    'ai.teamGlossaries.bulkConceptRows' => [
-        'description' => 'Delete selected glossary rows in one transaction. Payload: {row_ids, action: delete}.',
-        'required' => ['teamId', 'glossaryId', 'payload'],
-        'accepts' => ['teamId', 'glossaryId', 'payload'],
-        'method' => 'POST',
-        'uri' => '/mgmt/v1/teams/{teamId}/ai/glossaries/{glossaryId}/concept-rows/bulk',
-    ],
-    'ai.teamGlossaries.checkText' => [
-        'description' => 'Try a text against saved wording. Makes no provider call and changes nothing. Payload: {text, source_locale, target_locale?, output?, scope?}. scope glossary (the default) reads this one glossary, which need not be what a run uses; scope space reads what a run in this space uses, inherited glossaries included. Returns the rows the text activates with match offsets and the instruction the agent would read, and findings if output is given.',
-        'required' => ['teamId', 'glossaryId', 'payload'],
-        'accepts' => ['teamId', 'glossaryId', 'payload'],
-        'method' => 'POST',
-        'uri' => '/mgmt/v1/teams/{teamId}/ai/glossaries/{glossaryId}/glossary-check',
     ],
     'ai.schedules.list' => [
         'description' => 'List the scheduled AI agents of a space.',
@@ -1586,7 +1429,7 @@ return [
         'uri' => '/mgmt/v1/spaces/{spaceId}/ai/changesets/{id}',
     ],
     'ai.changesets.accept' => [
-        'description' => 'Accept items of an AI changeset into draft content. Never publishes. Payload: {item_ids?, values?: {item: text}, overrides?: {item: [{finding_id, reason}]}, overwrite?, bulk?}. Findings need a reasoned override; a 422 under overrides.<item>.<finding> names one.',
+        'description' => 'Accept items of an AI changeset into draft content. Never publishes. Payload: {item_ids?, values?: {item: text}, overwrite?, bulk?}.',
         'required' => ['spaceId', 'id', 'payload'],
         'accepts' => ['spaceId', 'id', 'payload'],
         'method' => 'POST',

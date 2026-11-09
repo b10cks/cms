@@ -3,8 +3,6 @@
 namespace Tests\Feature\Mgmt\Content;
 
 use App\Actions\Content\UpdateContent;
-use App\Enums\AiScope;
-use App\Models\Management\AiGlossary;
 use App\Models\Management\Space;
 use App\Models\Space\Block;
 use App\Models\Space\Content;
@@ -18,13 +16,11 @@ use Illuminate\Support\Str;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 use Tests\Traits\SpaceTestingTrait;
-use Tests\Traits\WritesGlossaryRows;
 
 class ContentTranslationTest extends TestCase
 {
     use RefreshDatabase;
     use SpaceTestingTrait;
-    use WritesGlossaryRows;
 
     private Space $space;
 
@@ -106,35 +102,8 @@ class ContentTranslationTest extends TestCase
     }
 
     #[Test]
-    public function status_gives_a_saved_unit_that_breaks_the_glossary_its_findings_for_people_who_may_read_ai_knowledge(): void
+    public function assist_brings_memory_and_other_locales(): void
     {
-        $glossary = AiGlossary::create(['scope' => AiScope::Space, 'space_id' => $this->space->id, 'name' => 'Shop', 'enabled' => true]);
-        $this->glossaryRow($glossary, ['en' => 'cart', 'de' => ['use' => 'Warenkorb', 'avoid' => ['Einkaufswagen']]]);
-        $source = $this->entry('en', ['title' => 'Open the cart', 'summary' => 'Your cart']);
-        $this->entry('de', ['title' => 'Einkaufswagen öffnen', 'summary' => 'Ihr Warenkorb'], $source);
-
-        $this->getJson($this->url("contents/{$source->id}/translation-status?locale=de"))
-            ->assertOk()
-            ->assertJsonPath('data.units.title.findings', [
-                ['type' => 'missing_term', 'term' => 'cart', 'expected' => 'Warenkorb'],
-                ['type' => 'forbidden_variant', 'term' => 'Warenkorb', 'expected' => 'Warenkorb', 'found' => 'Einkaufswagen'],
-            ])
-            ->assertJsonMissingPath('data.units.summary.findings');
-
-        $member = User::factory()->create();
-        $this->assignSpaceRole($this->space, $member, 'member');
-
-        $this->actingAs($member)
-            ->getJson($this->url("contents/{$source->id}/translation-status?locale=de"))
-            ->assertOk()
-            ->assertJsonMissingPath('data.units.title.findings');
-    }
-
-    #[Test]
-    public function assist_brings_glossary_terms_findings_memory_and_other_locales(): void
-    {
-        $glossary = AiGlossary::create(['scope' => AiScope::Space, 'space_id' => $this->space->id, 'name' => 'Shop', 'enabled' => true]);
-        $this->glossaryRow($glossary, ['en' => 'cart', 'de' => 'Warenkorb']);
         $other = strtolower((string) Str::ulid());
         TranslationUnit::query()->forceCreate([
             'source_hash' => TranslationMemory::hash('Your cart'), 'source_locale' => 'en', 'target_locale' => 'de',
@@ -148,9 +117,6 @@ class ContentTranslationTest extends TestCase
             ->assertOk()
             ->assertJsonPath('data.source', 'Your cart')
             ->assertJsonPath('data.target', 'Ihr Wagen')
-            ->assertJsonPath('data.glossary.terms.0.term', 'cart')
-            ->assertJsonPath('data.glossary.terms.0.required', 'Warenkorb')
-            ->assertJsonPath('data.glossary.findings', [['type' => 'missing_term', 'term' => 'cart', 'expected' => 'Warenkorb']])
             ->assertJsonPath('data.locales', [['locale' => 'fr', 'text' => 'Votre panier']]);
 
         $this->assertSame(
@@ -159,19 +125,6 @@ class ContentTranslationTest extends TestCase
         );
 
         $this->postJson($this->url("contents/{$source->id}/translation-assist"), ['locale' => 'de', 'unit' => 'nope'])->assertNotFound();
-    }
-
-    #[Test]
-    public function assist_leaves_the_glossary_out_for_people_who_may_not_read_ai_knowledge(): void
-    {
-        $member = User::factory()->create();
-        $this->assignSpaceRole($this->space, $member, 'member');
-        $source = $this->entry('en', ['title' => 'Open the cart']);
-
-        $this->actingAs($member)
-            ->postJson($this->url("contents/{$source->id}/translation-assist"), ['locale' => 'de', 'unit' => 'title'])
-            ->assertOk()
-            ->assertJsonPath('data.glossary', null);
     }
 
     #[Test]

@@ -9,35 +9,21 @@ use App\Models\Space\Content;
 use App\Models\User;
 use App\Services\Ai\Changesets\ChangeTargets;
 use App\Services\Ai\Contracts\AiToolInterface;
-use App\Services\Ai\Knowledge\GlossaryBrief;
-use App\Services\Ai\Knowledge\PolicySnapshot;
 use App\Services\Ai\Run\ToolError;
 use App\Services\Auth\AuthorizationService;
 use App\Services\Content\ContentI18nService;
 use App\Services\Content\Schema\SchemaField;
-use Closure;
-use Illuminate\Support\Arr;
 
 /**
- * Reads one entry's current (draft) state, with the version to pin a change to. A
- * content entry also lists the glossary terms its text activates and the wording never
- * to write, in its language and in the short form of the prompt, so every task sees them
- * without asking, also a run across entries of different languages.
+ * Reads one entry's current (draft) state, with the version to pin a change to.
  */
 class GetEntryTool implements AiToolInterface
 {
-    /** Characters of an entry searched for terms. */
-    private const MAX_GLOSSARY_SOURCE = 50_000;
-
-    /**
-     * @param  Closure(): PolicySnapshot|null  $policy  the run's pinned policy
-     */
     public function __construct(
         private readonly ChangeTargets $targets,
         private readonly AuthorizationService $auth,
         private readonly Space $space,
         private readonly User $actor,
-        private readonly ?Closure $policy = null,
     ) {}
 
     public function name(): string
@@ -48,9 +34,8 @@ class GetEntryTool implements AiToolInterface
     public function description(): string
     {
         return 'Reads one entry by ID. Content returns its name, slug, block, version_id, the field values of its current draft, '
-            .'`fields` (type and whether it is translatable, per root field), `i18n`: the source entry ID when it is a translation, its translations by language and the languages it has none in, '
-            .'and `glossary`: the glossary terms its text contains and wording never to write in its language, when there are any. '
-            .'data entries return `value` and `dimensions`; assets return their metadata `fields` per locale; '
+            .'`fields` (type and whether it is translatable, per root field), `i18n`: the source entry ID when it is a translation, its translations by language and the languages it has none in. '
+            .'Data entries return `value` and `dimensions`; assets return their metadata `fields` per locale; '
             .'blocks (by ID or slug) return their name, slug, type, description, icon, color, `schema` (field definitions by key) and `editor` (the page layout).';
     }
 
@@ -93,7 +78,6 @@ class GetEntryTool implements AiToolInterface
                     'translatable' => \is_array($field) && (bool) ($field['translatable'] ?? false),
                 ], array_filter($model->block?->schema?->toArray() ?? [], 'is_array')),
                 'i18n' => $this->i18n($model),
-                ...$this->glossary($model, $snapshot->document),
             ];
         }
 
@@ -102,27 +86,6 @@ class GetEntryTool implements AiToolInterface
         }
 
         return ['id' => $model->getKey(), 'target_type' => $type, 'name' => $snapshot->label, ...$snapshot->document];
-    }
-
-    /**
-     * The terms the entry's text activates and wording never to write, for its own language.
-     *
-     * @param  array<string, mixed>  $document
-     * @return array{glossary?: string}
-     */
-    private function glossary(Content $content, array $document): array
-    {
-        if ($this->policy === null) {
-            return [];
-        }
-
-        $locale = $content->language_iso ?: $this->space->settings->getDefaultLanguage();
-        $text = mb_substr(implode("\n", array_filter([$content->name, ...Arr::flatten($document)], 'is_string')), 0, self::MAX_GLOSSARY_SOURCE);
-        $policy = ($this->policy)();
-        $hits = $policy->activate($text, $locale, $locale);
-        $brief = array_filter([GlossaryBrief::render($hits, $locale, $locale, 'this entry'), GlossaryBrief::bans($policy->concepts, $hits, $locale)]);
-
-        return $brief === [] ? [] : ['glossary' => implode("\n\n", $brief)];
     }
 
     /**

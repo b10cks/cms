@@ -3,7 +3,6 @@
 namespace Tests\Feature\Ai;
 
 use App\Enums\AiChangesetItemStatus;
-use App\Models\Management\AiGlossary;
 use App\Models\Management\Space;
 use App\Models\Management\Storage;
 use App\Models\Space\AiChangesetItem;
@@ -21,7 +20,6 @@ use App\Services\Ai\Assets\AssetReviewGroups;
 use App\Services\Ai\Assets\InspectionImages;
 use App\Services\Ai\Changesets\AssetTarget;
 use App\Services\Ai\Contracts\ReportsOutcomes;
-use App\Services\Ai\Knowledge\GlossaryChecker;
 use App\Services\Ai\Run\StartRun;
 use App\Services\Ai\Run\ToolCall;
 use App\Services\Ai\Run\ToolError;
@@ -47,14 +45,12 @@ use Tests\Support\FakeAiDriver;
 use Tests\TestCase;
 use Tests\Traits\FakesAi;
 use Tests\Traits\SpaceTestingTrait;
-use Tests\Traits\WritesGlossaryRows;
 
 class AiAssetOperationsTest extends TestCase
 {
     use FakesAi;
     use RefreshDatabase;
     use SpaceTestingTrait;
-    use WritesGlossaryRows;
 
     private Space $space;
 
@@ -538,66 +534,6 @@ class AiAssetOperationsTest extends TestCase
         $evidence = AiChangesetItem::query()->sole()->review['evidence'];
         $image = collect($this->driver->transcripts[1])->last(fn (array $message) => $message['role'] === 'user')['content'][2];
         $this->assertSame(['basis' => AssetReview::BASIS_IMAGE, 'run_id' => $run->id, 'sha256' => hash('sha256', base64_decode($image['data']))], array_diff_key($evidence, ['message' => true]));
-    }
-
-    #[Test]
-    public function the_model_hears_banned_asset_wording_for_this_call_only_and_corrects_it_once(): void
-    {
-        $glossary = AiGlossary::create([...AiGlossary::ownerAttributes($this->space), 'name' => 'Shop', 'enabled' => true]);
-        $this->glossaryRow($glossary, ['de' => ['use' => 'Matratze', 'avoid' => ['Polsterauflage']]]);
-        $earlier = $this->storedAsset();
-        $asset = $this->storedAsset();
-        $entry = fn (Asset $target, array $fields) => ['id' => $target->id, 'group' => 'Shots', 'reason' => 'A shot.', 'fields' => $fields];
-        $flagged = ['_default' => ['alt' => 'A Polsterauflage in English is fine'], 'de' => ['alt' => 'Eine Polsterauflage']];
-        $this->driver->push(
-            new TurnResult('', [new ToolCall('c1', 'inspect_assets', ['ids' => [$earlier->id, $asset->id]])], new TurnUsage(10, 5)),
-            FakeAiDriver::toolCall('propose_asset_changes', ['assets' => [$entry($earlier, $flagged)]]),
-            function (Transcript $transcript) use ($earlier, $asset, $entry) {
-                $first = json_decode((string) collect($transcript->toArray())->last(fn (array $message) => $message['role'] === 'tool')['content'], true);
-                $this->assertSame($earlier->id, $first['proposed'][0]['id']);
-                $this->assertSame([['path' => 'fields.de.alt', 'type' => 'forbidden_variant', 'term' => 'Matratze', 'expected' => 'Matratze', 'found' => 'Polsterauflage']], $first['proposed'][0]['glossary_findings']);
-                $this->assertStringContainsString('once', $first['glossary_note']);
-
-                return FakeAiDriver::toolCall('propose_asset_changes', ['assets' => [$entry($asset, ['de' => ['alt' => 'Ein Bett']])]]);
-            },
-            function (Transcript $transcript) use ($earlier, $entry) {
-                $second = json_decode((string) collect($transcript->toArray())->last(fn (array $message) => $message['role'] === 'tool')['content'], true);
-                $this->assertArrayNotHasKey('glossary_note', $second, 'An earlier proposal does not come back with a clean one.');
-                $this->assertArrayNotHasKey('glossary_findings', $second['proposed'][0]);
-
-                return FakeAiDriver::toolCall('propose_asset_changes', ['assets' => [$entry($earlier, ['_default' => ['alt' => 'A mattress'], 'de' => ['alt' => 'Eine Matratze']])]]);
-            },
-            FakeAiDriver::text('Done.'),
-        );
-
-        $run = $this->runSkill();
-
-        $this->assertSame('completed', $run->state->value);
-        $items = AiChangesetItem::query()->where('target_id', $earlier->id)->get()->keyBy('path');
-        $this->assertSame('Eine Matratze', $items['fields.de.alt']->after);
-        $this->assertNull($items['fields.de.alt']->glossary_findings);
-        $this->assertSame(['source' => 'de', 'target' => 'de'], $items['fields.de.alt']->review['locales']);
-        $this->assertSame(['source' => 'en', 'target' => 'en'], $items['fields._default.alt']->review['locales'], '`_default` is the default language.');
-        $this->assertSame('image', $items['fields.de.alt']->review['evidence']['basis'], 'A correction keeps its image evidence.');
-    }
-
-    #[Test]
-    public function a_violation_the_model_left_on_an_asset_waits_for_a_reason_from_a_person(): void
-    {
-        $glossary = AiGlossary::create([...AiGlossary::ownerAttributes($this->space), 'name' => 'Shop', 'enabled' => true]);
-        $this->glossaryRow($glossary, ['de' => ['use' => 'Matratze', 'avoid' => ['Polsterauflage']]]);
-        $asset = $this->asset();
-        $run = $this->startRun();
-        $result = $this->changesTool($run)->execute(['assets' => [['id' => $asset->id, 'group' => 'Shots', 'reason' => 'A shot.', 'fields' => ['de' => ['alt' => 'Eine Polsterauflage']]]]]);
-        $item = AiChangesetItem::query()->sole();
-        $this->assertSame([$item->id], $result['proposed'][0]['item_ids']);
-        $accept = fn (array $payload) => $this->postJson($this->url("ai/changesets/{$item->changeset_id}/accept"), ['item_ids' => [$item->id], ...$payload]);
-
-        $accept([])->assertUnprocessable();
-        $this->assertArrayNotHasKey('de', (array) data_get($asset->fresh()->data, 'fields'));
-
-        $accept(['overrides' => [$item->id => [['finding_id' => GlossaryChecker::findingId($item->glossary_findings[0]), 'reason' => 'Product name on the box.']]]])->assertOk();
-        $this->assertSame('Eine Polsterauflage', $asset->fresh()->data['fields']['de']['alt']);
     }
 
     #[Test]

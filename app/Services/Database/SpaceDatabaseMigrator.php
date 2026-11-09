@@ -39,7 +39,7 @@ class SpaceDatabaseMigrator
         '0000_00_00_000009_create_field_plugins_table' => 'field_plugins',
         '0000_00_00_000010_create_content_serials_table' => 'content_serials',
         '0000_00_00_000017_create_translation_units_table' => 'translation_units',
-        '0000_00_00_000018_create_ai_tables' => 'ai_glossary_suggestions',
+        '0000_00_00_000018_create_ai_tables' => 'ai_changeset_items',
         '0000_00_00_000021_add_review_to_ai_changeset_items' => 'ai_changeset_items.review',
         '0000_00_00_000021_create_ai_operations_tables' => 'ai_changeset_items.flags',
         '0000_00_00_000021_create_translation_sources_table' => 'translation_sources',
@@ -47,8 +47,7 @@ class SpaceDatabaseMigrator
 
     public function __construct(
         private readonly DatabaseConnectionService $connections,
-    ) {
-    }
+    ) {}
 
     /**
      * Migrate the space database. Idempotent: already-applied migrations are
@@ -59,7 +58,7 @@ class SpaceDatabaseMigrator
         $databaseName = $this->databaseName($connection);
         $path = base_path(self::MIGRATION_PATH);
 
-        if (!is_dir($path) || empty(glob($path . '/*.php'))) {
+        if (! is_dir($path) || empty(glob($path.'/*.php'))) {
             throw new DatabaseConnectionException(
                 "No space migrations found at {$path}; cannot initialize the space database."
             );
@@ -86,7 +85,7 @@ class SpaceDatabaseMigrator
             // Check if any migrations were actually pending
             $pendingAfter = $this->getPendingMigrations($migrationConnection);
 
-            if (!empty($pendingBefore)) {
+            if (! empty($pendingBefore)) {
                 Log::info('Space database migration finished', [
                     'spaceConnection' => $connection->id,
                     'database' => $databaseName,
@@ -120,13 +119,14 @@ class SpaceDatabaseMigrator
         try {
             // Check if sentinel tables exist
             foreach (self::SENTINEL_TABLES as $table) {
-                if (!Schema::connection($migrationConnection)->hasTable($table)) {
+                if (! Schema::connection($migrationConnection)->hasTable($table)) {
                     return false;
                 }
             }
 
             // Check if all required space migrations have been applied
             $pending = $this->getPendingMigrations($migrationConnection);
+
             return empty($pending);
         } finally {
             $this->forgetConnection($migrationConnection);
@@ -141,7 +141,7 @@ class SpaceDatabaseMigrator
     private function cleanupOrphanedMigrations(string $connectionName): void
     {
         try {
-            if (!Schema::connection($connectionName)->hasTable('migrations')) {
+            if (! Schema::connection($connectionName)->hasTable('migrations')) {
                 return; // No migrations table yet, nothing to clean up
             }
 
@@ -151,7 +151,7 @@ class SpaceDatabaseMigrator
                 $proof = self::PROOF_TABLES[$migrationName] ?? null;
                 [$table, $column] = array_pad(explode('.', (string) $proof, 2), 2, null);
 
-                if ($proof === null || !$schema->hasTable($table) || ($column !== null && !$schema->hasColumn($table, $column))) {
+                if ($proof === null || ! $schema->hasTable($table) || ($column !== null && ! $schema->hasColumn($table, $column))) {
                     continue;
                 }
 
@@ -183,7 +183,7 @@ class SpaceDatabaseMigrator
         try {
             // Get all migration files
             $path = base_path(self::MIGRATION_PATH);
-            $files = glob($path . '/*.php');
+            $files = glob($path.'/*.php');
             $migrationNames = array_map(fn ($f) => basename($f, '.php'), $files ?: []);
             sort($migrationNames);
 
@@ -200,6 +200,7 @@ class SpaceDatabaseMigrator
         } catch (\Throwable $e) {
             // If migrations table doesn't exist, all are pending
             Log::debug('Could not check pending migrations', ['error' => $e->getMessage()]);
+
             return [];
         }
     }
@@ -236,7 +237,7 @@ class SpaceDatabaseMigrator
             'driver' => $connection->driver,
             'config' => $config,
         ]);
-        $admin->id = $connection->id . '_migrate';
+        $admin->id = $connection->id.'_migrate';
 
         $this->connections->getConnection($admin);
 
@@ -246,7 +247,7 @@ class SpaceDatabaseMigrator
     private function assertInitialized(string $connectionName, string $output): void
     {
         foreach (self::SENTINEL_TABLES as $table) {
-            if (!Schema::connection($connectionName)->hasTable($table)) {
+            if (! Schema::connection($connectionName)->hasTable($table)) {
                 throw new DatabaseConnectionException(
                     "Space database migration reported success but the '{$table}' table is missing. Output: {$output}"
                 );

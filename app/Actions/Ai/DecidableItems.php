@@ -10,7 +10,6 @@ use App\Models\Space\AiChangesetItem;
 use App\Models\User;
 use App\Services\Ai\Assets\AssetReview;
 use App\Services\Ai\Changesets\ChangeTargets;
-use App\Services\Ai\Knowledge\GlossaryChecker;
 use App\Services\Auth\AuthorizationService;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\Builder;
@@ -77,14 +76,12 @@ final class DecidableItems
 
     /**
      * Whether a bulk accept must leave the item to an individual decision:
-     * conflicts, glossary violations of what would go live (a hint leaves it in, and
-     * content has a draft), flags (uncertainty, a failed accept) and the asset
-     * domain's own rules (new folders and tags, review flags).
+     * conflicts, flags (uncertainty, a failed accept) and the asset domain's own
+     * rules (new folders and tags, review flags).
      */
     public static function needsIndividualLook(AiChangesetItem $item): bool
     {
         return $item->status === AiChangesetItemStatus::Conflict
-            || ($item->target_type !== AiChangesetItem::TARGET_CONTENT && GlossaryChecker::blocking($item->glossary_findings ?? []) !== [])
             || ($item->flags ?? []) !== []
             || (AssetReview::handles($item->target_type) && AssetReview::excludedFromBulk($item));
     }

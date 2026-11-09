@@ -12,11 +12,11 @@ use App\Models\Management\Team;
 use App\Models\Space\AiRun;
 use App\Models\User;
 use App\Services\Ai\AiRunService;
-use App\Services\Ai\Knowledge\KnowledgeResolver;
 use App\Services\Ai\Run\RunBusy;
 use App\Services\Ai\Run\RunEvent;
 use App\Services\Ai\Run\RunLeaseLost;
 use App\Services\Ai\Run\StartRun;
+use App\Services\Ai\Skills\SkillResolver;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Validation\ValidationException;
@@ -55,7 +55,7 @@ class AiRunServiceTest extends TestCase
     {
         config(['ai.runs.max_steps' => 3]);
         for ($i = 0; $i < 10; $i++) {
-            $this->driver->push(FakeAiDriver::toolCall('lookup_glossary', ['text' => 'hello']));
+            $this->driver->push(FakeAiDriver::toolCall('read_skill', ['name' => 'meta-tags']));
         }
 
         $run = $this->service()->start($this->start());
@@ -75,12 +75,12 @@ class AiRunServiceTest extends TestCase
         $run = $this->service()->start($this->start());
 
         // The worker dies while running the tool, after the provider turn was checkpointed.
-        $policy = app(KnowledgeResolver::class)->policy($this->space, $run);
-        $this->partialMock(KnowledgeResolver::class, function ($mock) use ($policy) {
-            $mock->shouldReceive('policy')->once()->andThrow(new RuntimeException('worker died'));
-            $mock->shouldReceive('policy')->andReturn($policy);
+        $skills = app(SkillResolver::class);
+        $this->partialMock(SkillResolver::class, function ($mock) use ($skills) {
+            $mock->shouldReceive('load')->once()->andThrow(new RuntimeException('worker died'));
+            $mock->shouldReceive('load')->andReturnUsing($skills->load(...));
         });
-        $this->driver->push(FakeAiDriver::toolCall('lookup_glossary', ['text' => 'hello'], 'call_1'), FakeAiDriver::text('Done.'));
+        $this->driver->push(FakeAiDriver::toolCall('read_skill', ['name' => 'meta-tags'], 'call_1'), FakeAiDriver::text('Done.'));
 
         try {
             $this->drain($this->service()->advance($run));
@@ -158,7 +158,7 @@ class AiRunServiceTest extends TestCase
             function () {
                 usleep(300_000);
 
-                return FakeAiDriver::toolCall('lookup_glossary', ['text' => 'hello']);
+                return FakeAiDriver::toolCall('read_skill', ['name' => 'meta-tags']);
             },
             FakeAiDriver::text('Finished in the background.'),
         );
@@ -198,7 +198,7 @@ class AiRunServiceTest extends TestCase
             } catch (RunBusy) {
             }
 
-            return FakeAiDriver::toolCall('lookup_glossary', ['text' => 'hello']);
+            return FakeAiDriver::toolCall('read_skill', ['name' => 'meta-tags']);
         };
         $this->driver->push($intruder, $intruder, FakeAiDriver::text('Done.'));
 

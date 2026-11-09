@@ -4,15 +4,12 @@ namespace App\Services\Ai\Translation;
 
 use App\Models\Management\Space;
 use App\Models\Space\Content;
-use App\Services\Ai\Knowledge\Concepts\GlossaryTextCheck;
-use App\Services\Ai\Knowledge\KnowledgeResolver;
-use App\Services\Ai\Knowledge\PolicySnapshot;
 use App\Services\Ai\Run\ToolError;
 
 /**
  * What a person translating one unit by hand can lean on, without an AI call:
- * the glossary terms in its source and what a draft breaks, similar pairs from
- * translation memory, and the unit's text in the entry's other locales. Every
+ * similar pairs from translation memory and the unit's text in the entry's
+ * other locales. Every
  * text is plain: rich text drops its markup.
  */
 class TranslationAssist
@@ -26,18 +23,15 @@ class TranslationAssist
         private readonly TranslationDestinations $destinations,
         private readonly TranslationUnits $units,
         private readonly TranslationMemory $memory,
-        private readonly KnowledgeResolver $knowledge,
-        private readonly GlossaryTextCheck $check,
     ) {}
 
     /**
-     * @param  string|null  $draft  the translation to check, by default the saved one
-     * @param  bool  $withGlossary  false leaves `glossary` null, for people who may not read the space's AI knowledge
-     * @return array{unit: string, type: string, source: string, target: string, glossary: array{terms: list<array<string, mixed>>, findings: list<array<string, mixed>>|null}|null, memory: list<array<string, mixed>>, locales: list<array{locale: string, text: string}>}|null null for an unknown unit
+     * @param  string|null  $draft  the translation being written, by default the saved one
+     * @return array{unit: string, type: string, source: string, target: string, memory: list<array<string, mixed>>, locales: list<array{locale: string, text: string}>}|null null for an unknown unit
      *
      * @throws ToolError for an unknown locale or an entry with no source to translate from
      */
-    public function for(Space $space, string $contentId, string $locale, string $unitId, ?string $draft, bool $withGlossary): ?array
+    public function for(Space $space, string $contentId, string $locale, string $unitId, ?string $draft): ?array
     {
         $destination = $this->destinations->resolve($space, $contentId, $locale);
         $schema = $destination->source->block?->schema?->toArray() ?? [];
@@ -48,20 +42,9 @@ class TranslationAssist
         }
 
         $plain = fn (string $text) => $unit['type'] === 'richtext' ? self::plain($text) : $text;
-        $source = $plain($unit['value']);
         $target = $plain($draft ?? ($destination->translation ? ($this->units->texts($destination->translation->getCurrentContent(), $schema)[$unitId] ?? '') : ''));
-        $concepts = $this->knowledge->glossaryConcepts($space);
 
-        $glossary = null;
-        if ($withGlossary && ! TranslationUnits::isBlank($source)) {
-            $check = $this->check->run(PolicySnapshot::fromConcepts($concepts), $source, $destination->sourceLocale, $destination->locale, TranslationUnits::isBlank($target) ? null : $target);
-            $glossary = [
-                'terms' => array_map(fn (array $term) => array_intersect_key($term, array_flip(['concept_id', 'term', 'required', 'do_not_translate', 'forbidden', 'note', 'matches'])), $check['terms']),
-                'findings' => $check['findings'],
-            ];
-        }
-
-        $hits = TranslationUnits::isBlank($unit['value']) ? [] : $this->memory->similar($unit['value'], $destination->sourceLocale, $destination->locale, self::MEMORY_LIMIT, $concepts);
+        $hits = TranslationUnits::isBlank($unit['value']) ? [] : $this->memory->similar($unit['value'], $destination->sourceLocale, $destination->locale, self::MEMORY_LIMIT);
         // A match that already stands in the field suggests nothing.
         $hits = array_values(array_filter($hits, fn (array $hit) => $hit['score'] >= self::MEMORY_MIN_SCORE
             && $plain($hit['target']) !== $target));
@@ -76,9 +59,8 @@ class TranslationAssist
         return [
             'unit' => $unitId,
             'type' => $unit['type'],
-            'source' => $source,
+            'source' => $plain($unit['value']),
             'target' => $target,
-            'glossary' => $glossary,
             'memory' => $memory,
             'locales' => $this->otherLocales($destination, $schema, $unitId, $plain),
         ];

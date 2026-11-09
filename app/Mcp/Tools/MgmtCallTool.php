@@ -60,8 +60,6 @@ class MgmtCallTool extends Tool
             'periodId' => 'Subscription period ID.',
             'roleId' => null,
             'blueprintId' => null,
-            'glossaryId' => 'Glossary of a concept row. Never falls back to id.',
-            'rowId' => 'Glossary row: its concept id. Never falls back to id.',
             'questionId' => 'Question group of an operation. Never falls back to id.',
             'runId' => 'Asset classification run. Never falls back to id.',
             'provider' => 'Social login provider name.',

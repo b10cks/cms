@@ -9,7 +9,7 @@ class OperationRegistry
     /**
      * Arguments that never fall back to the generic `id` argument.
      */
-    private const NO_ID_FALLBACK = ['spaceId', 'teamId', 'userId', 'token', 'provider', 'accessToken', 'glossaryId', 'rowId', 'questionId', 'runId'];
+    private const NO_ID_FALLBACK = ['spaceId', 'teamId', 'userId', 'token', 'provider', 'accessToken', 'questionId', 'runId'];
 
     /** @var array<string, array{description?: string, required?: list<string>, accepts?: list<string>, method: string, uri: string, authArg?: string, files?: array<string, int>, filesOptional?: bool, download?: bool}>|null */
     private static ?array $operations = null;

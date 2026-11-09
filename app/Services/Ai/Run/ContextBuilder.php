@@ -8,10 +8,7 @@ use App\Models\Space\AssetFolder;
 use App\Models\Space\Block;
 use App\Models\Space\Content;
 use App\Services\Ai\Attachments\AiAttachments;
-use App\Services\Ai\Knowledge\GlossaryBrief;
-use App\Services\Ai\Knowledge\GlossaryConcept;
 use App\Services\Ai\Knowledge\KnowledgeResolver;
-use App\Services\Ai\Knowledge\PolicySnapshot;
 use App\Services\Ai\Prompts\SystemPromptBuilder;
 use App\Services\Ai\Skills\ResolvedSkill;
 use App\Services\Ai\Skills\SkillResolver;
@@ -24,8 +21,7 @@ use Illuminate\Support\Str;
  * Assembles a run's first messages in a fixed order, stable parts first so
  * provider prompt caching hits: base instructions, trust guard, style guides
  * and the space prompt, skill catalog and task instructions (cache breaks sit after
- * the style guides and after the catalog), matched glossary
- * terms, translation memory examples. A run in a thread then gets the thread's
+ * the style guides and after the catalog), translation memory examples. A run in a thread then gets the thread's
  * earlier turns, after the cached prefix. Screen context, the ledger of earlier
  * proposals and other untrusted data go to the user message, fenced.
  *
@@ -33,16 +29,12 @@ use Illuminate\Support\Str;
  * taken out of the context and frozen on the run. When it knows all of them,
  * the transcript already ends with the answer and no provider call happens.
  *
- * Knowledge, glossary and memory all read one policy snapshot: the operation's,
+ * Knowledge reads one policy snapshot: the operation's,
  * captured at approval, or one pinned here for a standalone run. Returns its
  * reference and the frozen revisions alongside, so the audit shows what the model saw.
  */
 class ContextBuilder
 {
-    private const MAX_GLOSSARY_SOURCE = 50_000;
-
-    private const MAX_FROZEN_TERMS = 500;
-
     private const MAX_EXAMPLE_CHARS = 500;
 
     /** Chips of one type resolved into the context; the rest stay labels. */
@@ -78,13 +70,7 @@ class ContextBuilder
         $referenceLocales = $writing === null ? null : array_values(array_unique([...$writing, $sourceLocale]));
         $styles = $policy->styles($writing);
         $references = $policy->references($referenceLocales);
-        [$context, $exact, $examples, $memoryChecks] = $this->translationMemory($start, $context, $sourceLocale, $targetLocale, $policy->concepts);
-        $glossarySource = mb_substr(trim($start->prompt."\n".implode("\n", $this->strings($context))), 0, self::MAX_GLOSSARY_SOURCE);
-        $matched = $policy->activate($glossarySource, $sourceLocale, $targetLocale);
-        $frozenConcepts = \array_slice(array_values(array_unique(
-            [...array_column($matched, 'concept'), ...array_filter($policy->concepts, fn (GlossaryConcept $concept) => array_filter($concept->languages, fn ($language) => $language->avoid !== []) !== [])],
-            SORT_REGULAR,
-        )), 0, self::MAX_FROZEN_TERMS);
+        [$context, $exact, $examples] = $this->translationMemory($start, $context, $sourceLocale, $targetLocale);
 
         // Stable prefixes end in a cache break: the style guides, then the skill and reference catalogs.
         $system = '';
@@ -92,13 +78,7 @@ class ContextBuilder
         $groups = [
             [$this->base($start, $toolsAvailable), $prompts->untrustedDataGuard(), $this->styleSection($styles), $prompts->customPromptSection()],
             [$this->catalogSection($catalog, $toolsAvailable), $this->referenceSection($references, $toolsAvailable)],
-            [
-                $this->taskSection($start),
-                $start->outputLocales !== null
-                    ? $this->outputGlossarySection($policy, $glossarySource, $writing ?? [])
-                    : $this->glossarySection($matched, $policy->concepts, $sourceLocale, $targetLocale, $writing),
-                $this->memorySection($examples, $sourceLocale, $targetLocale),
-            ],
+            [$this->taskSection($start), $this->memorySection($examples, $sourceLocale, $targetLocale)],
         ];
         foreach ($groups as $index => $group) {
             $text = implode("\n\n", array_filter($group));
@@ -131,14 +111,7 @@ class ContextBuilder
                 'policy' => $policy->reference(),
                 'styles' => array_column($styles, 'id', 'revision_id'),
                 'knowledge' => array_column($references, 'id', 'revision_id'),
-                'glossary' => [
-                    'source_locale' => $sourceLocale,
-                    'target_locale' => $targetLocale,
-                    'source' => $this->checksBannedWordingOnly($start, $context) ? '' : $glossarySource,
-                    'concepts' => array_map(fn (GlossaryConcept $concept) => $concept->toArray(), $frozenConcepts),
-                    ...($start->outputLocales !== null ? ['output_locales' => $start->outputLocales] : []),
-                ],
-                ...($exact !== null ? ['translation_memory' => ['exact' => $exact, 'examples' => \count($examples), ...$memoryChecks]] : []),
+                ...($exact !== null ? ['translation_memory' => ['exact' => $exact, 'examples' => \count($examples)]] : []),
             ],
         ];
     }
@@ -224,24 +197,22 @@ class ContextBuilder
      * for runs that are not translations.
      *
      * @param  array<string, mixed>  $context
-     * @param  list<GlossaryConcept>  $terms
-     * @return array{0: array<string, mixed>, 1: array<string, string>|null, 2: list<array{source: string, target: string}>, 3: array{rejected?: array<string, mixed>}}
+     * @return array{0: array<string, mixed>, 1: array<string, string>|null, 2: list<array{source: string, target: string}>}
      */
-    private function translationMemory(StartRun $start, array $context, string $sourceLocale, string $targetLocale, array $terms): array
+    private function translationMemory(StartRun $start, array $context, string $sourceLocale, string $targetLocale): array
     {
         $key = TranslationMemory::SKILL_FIELDS[$start->skill?->manifest->name ?? ''] ?? null;
         $fields = $key !== null && \is_array($context[$key] ?? null) ? array_filter($context[$key], 'is_string') : null;
 
         if ($fields === null || $fields === [] || $sourceLocale === $targetLocale) {
-            return [$context, null, [], []];
+            return [$context, null, []];
         }
 
-        $memory = $this->memory->exactUnderPolicy($fields, $sourceLocale, $targetLocale, $terms);
-        $exact = $memory['hits'];
+        $exact = $this->memory->exact($fields, $sourceLocale, $targetLocale);
         $context[$key] = array_diff_key($context[$key], $exact);
-        $examples = $context[$key] === [] ? [] : $this->memory->fuzzy(array_values(array_diff_key($fields, $exact)), $sourceLocale, $targetLocale, terms: $terms);
+        $examples = $context[$key] === [] ? [] : $this->memory->fuzzy(array_values(array_diff_key($fields, $exact)), $sourceLocale, $targetLocale);
 
-        return [$context, $exact, $examples, array_filter(['rejected' => $memory['rejected']])];
+        return [$context, $exact, $examples];
     }
 
     /**
@@ -344,46 +315,6 @@ class ContextBuilder
     }
 
     /**
-     * Rows the text activates, and wording never to write when this run writes one
-     * known language. A run across languages gets that per entry from its task tool.
-     *
-     * @param  list<array<string, mixed>>  $hits  from {@see PolicySnapshot::activate()}
-     * @param  list<GlossaryConcept>  $concepts
-     * @param  list<string>|null  $writing
-     */
-    private function glossarySection(array $hits, array $concepts, string $sourceLocale, string $targetLocale, ?array $writing): ?string
-    {
-        $brief = array_filter([
-            GlossaryBrief::render($hits, $sourceLocale, $targetLocale),
-            $writing !== null && \count($writing) === 1 ? GlossaryBrief::bans($concepts, $hits, $writing[0]) : null,
-        ]);
-
-        return $brief === [] ? null : "## Glossary\n".implode("\n\n", $brief);
-    }
-
-    /**
-     * Wording per language, for one answer that writes several. Hints carry no language
-     * of their own, so a term counts in whichever language it matched.
-     *
-     * @param  list<string>  $writing
-     */
-    private function outputGlossarySection(PolicySnapshot $policy, string $hints, array $writing): ?string
-    {
-        $hits = $policy->activate($hints, null);
-        $sections = [];
-
-        foreach ($writing as $locale) {
-            $brief = array_filter([GlossaryBrief::render($hits, null, $locale, 'the hints'), GlossaryBrief::bans($policy->concepts, $hits, $locale)]);
-
-            if ($brief !== []) {
-                $sections[] = "### Writing {$locale}\n".implode("\n\n", $brief);
-            }
-        }
-
-        return $sections === [] ? null : "## Glossary\nThese rules decide your wording in each language, never what you describe. Write what you see; use a listed term only for what is really there.\n\n".implode("\n\n", $sections);
-    }
-
-    /**
      * The locales this run writes in, which pick the style guides. An approved plan
      * names them; a chat turn writes in its target. Null means unknown, for work
      * across languages: every guide applies.
@@ -462,17 +393,6 @@ class ContextBuilder
     }
 
     /**
-     * Metadata generated from a page need not hold every term of that page, so the
-     * meta button's run has nothing to check but the wording it must not use.
-     *
-     * @param  array<string, mixed>  $context
-     */
-    private function checksBannedWordingOnly(StartRun $start, array $context): bool
-    {
-        return $start->skill?->manifest->name === 'meta-tags' && isset($context['page']);
-    }
-
-    /**
      * @param  array<string, mixed>  $context
      * @return array{0: string, 1: string}
      */
@@ -495,17 +415,5 @@ class ContextBuilder
         $id = $context['focused_field']['entry_id'] ?? $context['content_id'] ?? null;
 
         return \is_string($id) && isset($context['content']) ? (Content::query()->whereKey($id)->value('language_iso') ?: null) : null;
-    }
-
-    /**
-     * @return list<string>
-     */
-    private function strings(mixed $value): array
-    {
-        if (\is_string($value)) {
-            return [$value];
-        }
-
-        return \is_array($value) ? array_merge(...array_values(array_map(fn ($item) => $this->strings($item), $value)) ?: [[]]) : [];
     }
 }

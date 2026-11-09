@@ -162,7 +162,7 @@ return [
     // What changed
     'AiOperationChanges' => [
         'data' => '@AiOperationChangedEntry[]',
-        'summary' => ['changed' => 'integer -- Entries with something in their draft.', 'conflicts' => 'integer -- Fields not written because someone changed them.', 'flagged' => 'integer -- Fields whose banned wording or changed protected name is still in the draft.'],
+        'summary' => ['changed' => 'integer -- Entries with something in their draft.', 'conflicts' => 'integer -- Fields not written because someone changed them.'],
         'meta' => ['total' => 'integer', 'page' => 'integer', 'per_page' => 'integer'],
     ],
     'AiOperationChangedEntry' => [
@@ -170,13 +170,11 @@ return [
         'label' => 'string?',
         'written' => 'integer',
         'conflicts' => 'integer',
-        'flagged' => 'integer',
-        'flagged_wording' => 'string[] -- The wording that is still in the draft.',
     ],
 
     // What AI left on an entry for a person
     'AiContentFlagCounts' => [
-        'data' => 'object -- Entry ID => {conflicts: integer, flagged: integer}. Entries with neither are left out.',
+        'data' => 'object -- Entry ID => {conflicts: integer}. Entries without a conflict are left out.',
     ],
     'AiContentFlagEntry' => [
         'content_id' => 'string',
@@ -185,12 +183,10 @@ return [
         'flags' => '@AiContentFlag[]',
     ],
     'AiContentFlag' => [
-        'kind' => 'string -- `flagged`: the wording is in the draft. `conflict`: a person changed the field and it waits for a decision.',
+        'kind' => 'enum:conflict -- A person changed the field and it waits for a decision.',
         'path' => 'string? -- Null for a whole new entry.',
         'field' => 'string? -- The field\'s name.',
-        'wording' => 'string? -- `flagged` only.',
-        'replacement' => 'string? -- `flagged` only: what the glossary has instead, when it has something.',
-        'thread_id' => 'string? -- `conflict` only: the thread that decides it.',
+        'thread_id' => 'string? -- The thread that decides it.',
     ],
 
     // Review of proposals: targets without a draft layer
@@ -220,25 +216,9 @@ return [
         'queued' => 'integer -- Above 0 with status 202: the group went to the queue.',
     ],
     'AiOperationGroupRejected' => ['rejected' => 'integer', 'queued' => 'integer'],
-    'AiGlossaryFinding' => [
-        'id' => 'string -- Names the finding in an accept\'s `overrides`.',
-        'type' => 'enum:missing_term|translated_do_not_translate|forbidden_variant -- `missing_term` is a hint: it needs no override reason and does not stop a bulk accept. The others are violations. On content they are stored for whoever publishes and block nothing.',
-        'term' => 'string',
-        'expected' => 'string? -- For forbidden_variant, the row\'s Use in the output language. Absent for a ban with no Use there.',
-        'found' => 'string?',
-    ],
     'AiReviewFlag' => [
         'code' => 'string -- For example invalid.',
         'message' => 'string?',
-    ],
-    'AiReviewOverride' => [
-        'finding_id' => 'string',
-        'finding' => 'object',
-        'reason' => 'string',
-        'text_sha256' => 'string',
-        'policy_snapshot_id' => 'string?',
-        'reviewer_id' => 'string',
-        'overridden_at' => 'date-time',
     ],
     'AiProposalEvidence' => [
         '#' => 'What an asset proposal rests on. `image` means the provider answered a request holding the image, not that the model understood it.',
@@ -249,28 +229,9 @@ return [
         'sources' => 'string[] -- metadata',
         'quote' => 'string -- instruction',
     ],
-    'AiProposalPolicy' => [
-        '#' => 'The policy snapshot a proposal was made under and the terms it used.',
-        'snapshot_id' => 'string',
-        'fingerprint' => 'string',
-        'terms' => [[
-            'id' => 'string',
-            'concept_id' => 'string?',
-            'status' => 'string?',
-            'version' => 'string',
-        ]],
-    ],
     'AiChangesetItemReview' => [
         '?' => true,
-        'overrides' => '@AiReviewOverride[]',
         'evidence' => '@AiProposalEvidence?',
-        'policy' => '@AiProposalPolicy?',
-        'locales' => [
-            '?' => true,
-            '#' => 'The languages the proposal was written from and in, which an edit is checked in.',
-            'source' => 'string?',
-            'target' => 'string?',
-        ],
     ],
     'AiChangesetTranslationUnit' => [
         'unit_id' => 'string',
@@ -278,7 +239,6 @@ return [
         'source' => 'string',
         'previous_source' => 'string?',
     ],
-    'AiFindingOverride' => ['finding_id' => 'string', 'reason' => 'string -- Why the finding is kept. Required and nonempty.'],
     'AiChangesetAccepted' => [
         'data' => '@AiChangesetResource',
         'accepted' => 'integer',
@@ -330,76 +290,6 @@ return [
         'classification' => '@AiAssetClassificationReport?',
     ],
 
-    // Glossary sheet
-    'AiGlossarySheetImportError' => ['row' => 'integer -- As the spreadsheet numbers it, the header being 1.', 'column' => 'string', 'message' => 'string'],
-    'AiGlossarySheetImportWarning' => ['code' => 'enum:unused_locales', 'locales' => 'string[]', 'message' => 'string'],
-    'AiGlossarySheetImportSummary' => [
-        'total_success' => 'integer -- Rows that applied, changed or not.',
-        'total_changes' => 'integer',
-        'total_errors' => 'integer',
-        'total_deleted' => 'integer',
-        'added' => 'integer? -- CSV and XLSX only, as are updated and unchanged.',
-        'updated' => 'integer?',
-        'unchanged' => 'integer?',
-    ],
-    'AiGlossarySheetImportResult' => [
-        'successes' => 'object[] -- Only the older term import and TBX list these.',
-        'changes' => 'object[]',
-        'ignored_fields' => 'string[] -- Columns b10cks does not know.',
-        'errors' => '@AiGlossarySheetImportError[]',
-        'deleted' => 'object[]',
-        'warnings' => '@AiGlossarySheetImportWarning[]?',
-        'summary' => '@AiGlossarySheetImportSummary',
-    ],
-
-    // Concept rows
-    'AiGlossaryConceptRowLanguage' => [
-        'use' => 'string? -- The wording to write. Null with Avoid set is a ban in this language.',
-        'avoid' => 'string[] -- Wording never to write. A * at the end covers longer forms.',
-        'also' => 'string[] -- How a source may also spell the term. Counts as the term itself.',
-    ],
-    'AiGlossaryConceptRowInput' => [
-        'use' => 'string? -- Null clears it. A language needs Use or Avoid.',
-        'avoid' => 'string[]?',
-        'also' => 'string[]?',
-    ],
-    'AiGlossaryFacet' => ['value' => 'string', 'count' => 'integer'],
-    'AiGlossaryAvailableLocale' => [
-        'code' => 'string',
-        'default' => 'boolean',
-        'enabled' => 'boolean',
-        'unused' => 'boolean -- Stored, but no enabled language can use it.',
-    ],
-    'AiGlossaryConceptRowsPage' => [
-        'data' => '@AiGlossaryConceptRowResource[]',
-        'links' => 'object',
-        'meta' => '@AiGlossaryConceptRowsMeta',
-    ],
-    'AiGlossaryConceptRowsMeta' => [
-        'current_page' => 'integer',
-        'last_page' => 'integer',
-        'per_page' => 'integer',
-        'total' => 'integer',
-        'read_only' => 'boolean -- True for a glossary inherited from a team.',
-        'default_locale' => 'string?',
-        'available_locales' => '@AiGlossaryAvailableLocale[]',
-        'facets' => [
-            'total' => 'integer -- Rows in the whole glossary.',
-            'locales' => '@AiGlossaryFacet[]',
-            'missing' => '@AiGlossaryFacet[] -- Rows with no term for each locale in use, as the `missing` filter counts them. A base language counts for its regions.',
-        ],
-    ],
-    'AiGlossaryConceptConflict' => [
-        'message' => 'string',
-        'code' => 'enum:wording_conflict|key_conflict|term_required|use_avoided|last_language|stale_glossary|row_changed|language_conflict|language_invalid|note_too_long',
-        'locale' => 'string? -- wording_conflict, term_required, use_avoided, language_conflict, language_invalid',
-        'wording' => 'string? -- wording_conflict, use_avoided',
-        'avoid' => 'string? -- use_avoided: the Avoid entry that covers the wording',
-        'key' => 'string? -- key_conflict',
-        'concept' => ['?' => true, 'id' => 'string', 'key' => 'string?', 'term' => 'string'],
-        'changes' => 'object[]? -- row_changed: each moved field with its `field` (use, avoid, also, note or keep_exact) and `locale`',
-    ],
-    'AiGlossaryConceptRowsBulkResult' => ['deleted' => 'integer'],
     'TranslationUnitsPage' => [
         'data' => '@TranslationUnitResource[]',
         'links' => 'object',
@@ -413,30 +303,6 @@ return [
         'trashed' => 'boolean',
     ],
     'TranslationUnitsBulkResult' => ['deleted' => 'integer'],
-    'AiGlossaryCheckMatch' => [
-        'start' => 'integer -- UTF-16 code units, so String.prototype.slice takes it as is.',
-        'end' => 'integer',
-        'text' => 'string',
-    ],
-    'AiGlossaryCheckTerm' => [
-        '#' => 'One activated row, with the fields lookup_glossary returns.',
-        'term' => 'string -- The row\'s wording, or the Avoid wording the text used.',
-        'instruction' => 'string -- The line the agent reads, as in the prompt.',
-        'avoided' => 'boolean? -- The text used only Avoid wording of this row.',
-        'required' => 'string? -- The wording to write.',
-        'do_not_translate' => 'boolean? -- Keep exact: the wording stays as it is.',
-        'forbidden' => 'string[]? -- Wording never to use in the output language.',
-        'note' => 'string?',
-        'concept_id' => 'string?',
-        'row_id' => 'string',
-        'glossary_id' => 'string -- The glossary holding this row. It can be another one with scope space.',
-        'glossary_name' => 'string?',
-        'matches' => '@AiGlossaryCheckMatch[]',
-    ],
-    'AiGlossaryCheckResult' => [
-        'terms' => '@AiGlossaryCheckTerm[]',
-        'findings' => '@AiGlossaryFinding[]? -- Null unless output was sent.',
-    ],
 
     // Automatic asset classification
     'AiAssetClassifyRequest' => [
