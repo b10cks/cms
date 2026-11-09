@@ -111,6 +111,16 @@ A `translations` map holds Use and nothing else, so it changes Use only. Sending
 
 A glossary inherited from a team reads and exports the same, and returns 403 on row writes and 404 on term writes and imports. `meta` holds `read_only`, `default_locale`, `available_locales` and whole-glossary `facets`. In a space, `available_locales` lists the enabled languages, default first, then stored ones, flagged `unused` when no enabled language can use them.
 
+### Translation memory
+
+`…/spaces/{space}/ai/translation-memory` lists the space's translation memory: one unit per translated field of a published translation, pairing its text with the source text it was written against. AI runs reuse an exact match without a provider call, so a wrong pair keeps coming back until it is corrected or removed here. Reading needs `ai.view`, writing `ai.manage`.
+
+A unit holds `source_text`, `target_text`, `source_locale`, `target_locale`, `origin`, `content_id` and `field_path` of the translation entry it was published in, `content` with that entry's `name`, `full_slug`, `source_id` and `trashed`, and timestamps. `origin` is `human` for text a person wrote and `ai_accepted` for AI text a person published. A list takes `source_locale`, `target_locale`, `search` over source and target text, `origin` and `content_id`, which also finds every translation of a source entry, and pages with `per_page` up to 200, most recently recorded or corrected first.
+
+`PATCH …/translation-memory/{unit}` with `target_text` corrects a unit. The pair becomes `origin: human`, since a person wrote the text, and as the newest unit it wins an exact match at once. `DELETE …/translation-memory/{unit}` removes one, `POST …/translation-memory/bulk` with `unit_ids` and `action: delete` removes several, and an unknown id refuses the whole request. To remove every unit a filter matches, list with the filter and send the ids.
+
+Publishing is the verification step. Each publish of a translation records its units again from what the published version holds, field by field: a corrected unit gets the entry's text back and a deleted one returns. Neither endpoint changes the entry, so fix a wrong text in the translation itself as well, or the next publish restores it. `ai:backfill-translation-memory` records from published versions the same way.
+
 ### Streaming imports
 
 Asset metadata, redirects, data entries, icons, content translations and glossary terms all import through `POST …/import` with a multipart `file`.

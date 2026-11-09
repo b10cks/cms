@@ -12400,6 +12400,306 @@
                 ]
             }
         },
+        "/mgmt/v1/spaces/{space}/ai/translation-memory": {
+            "get": {
+                "summary": "Units of the space, most recently recorded or corrected first",
+                "description": "Units of the space, most recently recorded or corrected first.",
+                "tags": [
+                    "Ai"
+                ],
+                "operationId": "get_spaces_by_space_ai_translation_memory",
+                "parameters": [
+                    {
+                        "name": "space",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "The space identifier"
+                    },
+                    {
+                        "name": "source_locale",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "target_locale",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Part of the source or target text."
+                    },
+                    {
+                        "name": "origin",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "`human` or `ai_accepted`."
+                    },
+                    {
+                        "name": "content_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "A translation entry, or the source entry for all its translations."
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "At most 200."
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/TranslationUnitsPage"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/mgmt/v1/spaces/{space}/ai/translation-memory/bulk": {
+            "post": {
+                "summary": "Delete selected units",
+                "description": "Delete selected units. An unknown unit refuses the whole request.",
+                "tags": [
+                    "Ai"
+                ],
+                "operationId": "post_spaces_by_space_ai_translation_memory_bulk",
+                "parameters": [
+                    {
+                        "name": "space",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "The space identifier"
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "unit_ids": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string",
+                                            "maxLength": 64
+                                        }
+                                    },
+                                    "action": {
+                                        "type": "string",
+                                        "enum": [
+                                            "delete"
+                                        ]
+                                    }
+                                },
+                                "required": [
+                                    "unit_ids",
+                                    "action"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/TranslationUnitsBulkResult"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Under `unit_ids` for units this space does not have.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ValidationError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/mgmt/v1/spaces/{space}/ai/translation-memory/{unit}": {
+            "patch": {
+                "summary": "Correct a unit's target text",
+                "description": "Correct a unit's target text. The pair counts as written by a person (`origin: human`) and, being the newest, wins an exact match at once.\n\nThe translation entry is not changed. Its next publish records what it then holds, so fix the entry as well.",
+                "tags": [
+                    "Ai"
+                ],
+                "operationId": "patch_spaces_by_space_ai_translation_memory_by_unit",
+                "parameters": [
+                    {
+                        "name": "space",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "The space identifier"
+                    },
+                    {
+                        "name": "unit",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "The unit identifier"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/TranslationUnitResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Unknown unit.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "summary": "Delete a unit",
+                "description": "Delete a unit. A later publish of its translation records the pair again from what the entry holds.",
+                "tags": [
+                    "Ai"
+                ],
+                "operationId": "delete_spaces_by_space_ai_translation_memory_by_unit",
+                "parameters": [
+                    {
+                        "name": "space",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "The space identifier"
+                    },
+                    {
+                        "name": "unit",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "The unit identifier"
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Resource deleted successfully"
+                    },
+                    "404": {
+                        "description": "Unknown unit.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/mgmt/v1/spaces/{space}/ai/schedules": {
             "get": {
                 "summary": "List schedules",
@@ -31900,6 +32200,83 @@
                     }
                 }
             },
+            "TranslationUnitsPage": {
+                "type": "object",
+                "properties": {
+                    "data": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/TranslationUnitResource"
+                        }
+                    },
+                    "links": {
+                        "type": "object",
+                        "additionalProperties": true
+                    },
+                    "meta": {
+                        "type": "object",
+                        "additionalProperties": true
+                    }
+                }
+            },
+            "TranslationUnitsBulkResult": {
+                "type": "object",
+                "properties": {
+                    "deleted": {
+                        "type": "integer"
+                    }
+                }
+            },
+            "TranslationUnitResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "source_locale": {
+                        "type": "string",
+                        "description": "Lowercase."
+                    },
+                    "target_locale": {
+                        "type": "string",
+                        "description": "Lowercase."
+                    },
+                    "source_text": {
+                        "type": "string",
+                        "description": "The source text the translation was written against."
+                    },
+                    "target_text": {
+                        "type": "string"
+                    },
+                    "origin": {
+                        "type": "string",
+                        "description": "`human`, written or corrected by a person, or `ai_accepted`, AI text a person published."
+                    },
+                    "content_id": {
+                        "type": "string",
+                        "description": "The translation entry the pair was published in."
+                    },
+                    "field_path": {
+                        "type": "string",
+                        "description": "The field within that entry."
+                    },
+                    "content": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/TranslationUnitContent"
+                            }
+                        ],
+                        "nullable": true,
+                        "description": "The entry, null when it no longer exists."
+                    },
+                    "created_at": {
+                        "type": "string"
+                    },
+                    "updated_at": {
+                        "type": "string"
+                    }
+                }
+            },
             "AiScheduleResource": {
                 "type": "object",
                 "properties": {
@@ -35638,6 +36015,28 @@
                         "type": "string",
                         "format": "date-time",
                         "nullable": true
+                    }
+                }
+            },
+            "TranslationUnitContent": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "full_slug": {
+                        "type": "string"
+                    },
+                    "source_id": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "The source entry this translation belongs to."
+                    },
+                    "trashed": {
+                        "type": "boolean"
                     }
                 }
             },
