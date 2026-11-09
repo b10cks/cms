@@ -366,9 +366,12 @@ class ContentSchemaValueMerger
                 }
 
                 $baseId = isset($baseItem['id']) && \is_string($baseItem['id']) && $baseItem['id'] !== '' ? $baseItem['id'] : null;
+                // By id; by position only for items written before ids existed. A
+                // positional item with an id belongs to another base item, or to none.
+                $positional = \is_array($overrideItems[$index] ?? null) ? $overrideItems[$index] : [];
                 $overrideItem = ($baseId !== null && isset($overrideById[$baseId]))
                     ? $overrideById[$baseId]
-                    : (\is_array($overrideItems[$index] ?? null) ? $overrideItems[$index] : []);
+                    : (empty($positional['id']) ? $positional : []);
 
                 $blockSlug = (string) ($baseItem['block'] ?? '');
 
