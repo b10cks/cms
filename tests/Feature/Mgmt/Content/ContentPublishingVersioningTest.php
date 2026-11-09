@@ -621,7 +621,7 @@ class ContentPublishingVersioningTest extends TestCase
         app(UpdateContent::class)->execute(['name' => 'Renamed'], $content, $staleSpace, $this->owner);
 
         $this->assertSame(
-            ['update "spaces" set "content_updated_at" = ? where "spaces"."id" = ? and "spaces"."deleted_at" is null'],
+            ['update "spaces" set "content_updated_at" = ? where "spaces"."id" = ? and "spaces"."deleted_at" is null and ("content_updated_at" is null or "content_updated_at" < ?)'],
             $spaceWrites,
         );
         $this->assertFalse($this->space->fresh()->settings->visual_editor);

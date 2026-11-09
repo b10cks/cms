@@ -238,14 +238,36 @@ class Space extends GlobalModel
      * Bump content_updated_at with a single-column write. touch() saves the
      * whole model, and a stale instance would write its loaded settings back
      * over changes made since.
+     *
+     * The value is the delivery revision (`rv`) and keys the CDN cache, and it
+     * only has whole seconds. A second change within the same second would
+     * keep the revision the first one already got cached under, so the bump
+     * always moves at least one second past the stored value.
+     *
+     * The usual case is one write that moves an older value to now. When the
+     * stored value is already this second (or later), it is read and moved one
+     * second on with a compare-and-set. Losing that race is fine: a concurrent
+     * bump moved the revision after this change committed.
      */
     public function touchContentUpdatedAt(): void
     {
-        $now = $this->freshTimestamp();
+        $row = fn () => static::query()->whereKey($this->getKey())->toBase();
+        $revision = $this->freshTimestamp()->startOfSecond();
 
-        static::query()->whereKey($this->getKey())->toBase()->update(['content_updated_at' => $now]);
+        $moved = $row()
+            ->where(fn ($query) => $query->whereNull('content_updated_at')->orWhere('content_updated_at', '<', $revision))
+            ->update(['content_updated_at' => $revision]);
 
-        $this->content_updated_at = $now;
+        if ($moved === 0) {
+            $stored = $row()->value('content_updated_at');
+            $revision = $this->asDateTime($stored)->addSecond();
+
+            if ($row()->where('content_updated_at', $stored)->update(['content_updated_at' => $revision]) === 0) {
+                $revision = $this->asDateTime($row()->value('content_updated_at'));
+            }
+        }
+
+        $this->content_updated_at = $revision;
         $this->syncOriginalAttribute('content_updated_at');
     }
 
