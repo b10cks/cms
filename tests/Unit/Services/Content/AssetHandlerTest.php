@@ -176,6 +176,17 @@ class AssetHandlerTest extends TestCase
     }
 
     #[Test]
+    public function remapping_maps_a_foreign_id_through_its_full_path(): void
+    {
+        $remapped = (new AssetHandler)->remapContentAssets(
+            ['type' => 'asset', 'id' => 'pasted-1', 'full_path' => 'storage/space/old-1/photo.jpg'],
+            ['old-1' => 'new-1'],
+        );
+
+        $this->assertSame('new-1', $remapped['id']);
+    }
+
+    #[Test]
     public function it_updates_root_level_asset_payloads(): void
     {
         $handler = new AssetHandler;

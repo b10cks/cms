@@ -34,8 +34,9 @@ class AssetHandler
 
     /**
      * Point asset references at other asset ids, e.g. when content moves to a
-     * space where the same assets were created under new keys. Ids missing
-     * from the map stay as they are.
+     * space where the same assets were created under new keys. A reference
+     * maps through the first of its `referencedIds()` in the map; references
+     * with none stay as they are.
      *
      * @param  array<string, string>  $idMap  old asset id => new asset id
      */
@@ -49,11 +50,13 @@ class AssetHandler
             $data,
             ['type' => 'asset'],
             function (array $src) use ($idMap): array {
-                $id = $src['id'] ?? null;
+                foreach ($this->referencedIds($src) as $id) {
+                    if (isset($idMap[$id])) {
+                        return array_replace($src, ['id' => $idMap[$id]]);
+                    }
+                }
 
-                return \is_string($id) && isset($idMap[$id])
-                    ? array_replace($src, ['id' => $idMap[$id]])
-                    : $src;
+                return $src;
             },
         );
     }
