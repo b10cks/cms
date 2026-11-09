@@ -6,25 +6,27 @@ use App\Events\Space\ContentsChanged;
 use App\Models\Management\Space;
 use App\Models\Space\Content;
 use App\Models\Space\Redirect;
+use App\Services\Content\ContentI18nService;
 use App\Services\Content\LocalizedContentSlugService;
 use App\Support\SpaceContext;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 
 /**
- * Recompose every entry's full_slug from its parent chain, adding a 301 from
- * each stale path. Repairs translated children that missed a rename of their
- * translated parent. Idempotent: rows that are already right are left alone.
+ * Bring a space's content tree back to its invariants. Translations filed under
+ * the canonical parent move under the parent's translation, then every
+ * full_slug is recomposed from its parent chain, with a 301 from each stale
+ * path. Idempotent: rows that are already right are left alone.
  */
-class RebuildContentFullSlugsCommand extends Command
+class RepairContentTreeCommand extends Command
 {
-    protected $signature = 'content:rebuild-full-slugs
+    protected $signature = 'content:repair-tree
         {--space= : Limit to a single space (id or slug)}
         {--dry-run : Report what would change and roll every write back}';
 
-    protected $description = 'Recompose full slugs from the parent chain and redirect stale paths';
+    protected $description = 'Re-home translated children and recompose full slugs, redirecting stale paths';
 
-    public function handle(): int
+    public function handle(ContentI18nService $i18n): int
     {
         $query = Space::query()->whereHas('connections');
 
@@ -35,20 +37,20 @@ class RebuildContentFullSlugsCommand extends Command
         $dryRun = (bool) $this->option('dry-run');
         $failed = 0;
 
-        $query->orderBy('id')->chunkById(100, function ($spaces) use ($dryRun, &$failed): void {
+        $query->orderBy('id')->chunkById(100, function ($spaces) use ($i18n, $dryRun, &$failed): void {
             foreach ($spaces as $space) {
                 $restore = SpaceContext::enter($space);
 
                 try {
-                    $stats = $this->rebuild($space, $dryRun);
+                    $stats = $this->repair($space, $i18n, $dryRun);
 
-                    if ($stats['updated'] > 0 && ! $dryRun) {
+                    if ($stats['rehomed'] + $stats['updated'] > 0 && ! $dryRun) {
                         broadcast(new ContentsChanged($space->id));
                         Redirect::broadcastBulkChange($space);
                         $space->touchContentUpdatedAt();
                     }
 
-                    $this->line("  {$space->id}  {$stats['updated']} slug(s) updated, {$stats['redirects_created']} redirect(s), {$stats['errors']} error(s)");
+                    $this->line("  {$space->id}  {$stats['rehomed']} re-homed, {$stats['updated']} slug(s) updated, {$stats['redirects_created']} redirect(s), {$stats['errors']} error(s)");
 
                     if ($stats['errors'] > 0) {
                         $failed++;
@@ -56,7 +58,7 @@ class RebuildContentFullSlugsCommand extends Command
                 } catch (\Throwable $e) {
                     $failed++;
                     $this->error("  failed  {$space->id}: {$e->getMessage()}");
-                    Log::error('Failed to rebuild content full slugs', [
+                    Log::error('Failed to repair the content tree', [
                         'space' => $space->id,
                         'error' => $e->getMessage(),
                     ]);
@@ -70,9 +72,9 @@ class RebuildContentFullSlugsCommand extends Command
     }
 
     /**
-     * @return array{updated: int, redirects_created: int, errors: int}
+     * @return array{rehomed: int, updated: int, redirects_created: int, errors: int}
      */
-    private function rebuild(Space $space, bool $dryRun): array
+    private function repair(Space $space, ContentI18nService $i18n, bool $dryRun): array
     {
         $slugService = new LocalizedContentSlugService($space);
         // The space connection, not the default one DB::transaction() wraps.
@@ -80,8 +82,17 @@ class RebuildContentFullSlugsCommand extends Command
         $connection->beginTransaction();
 
         try {
-            $stats = Content::withoutBroadcasts(fn () => Redirect::withoutBroadcasts(function () use ($slugService): array {
-                $total = ['updated' => 0, 'redirects_created' => 0, 'errors' => 0];
+            $stats = Content::withoutBroadcasts(fn () => Redirect::withoutBroadcasts(function () use ($slugService, $i18n): array {
+                $total = ['rehomed' => 0, 'updated' => 0, 'redirects_created' => 0, 'errors' => 0];
+
+                // Only translations whose canonical entry has translated children.
+                $adopters = Content::query()
+                    ->whereNotNull('i18n_parent_id')
+                    ->whereIn('i18n_parent_id', Content::query()->whereNotNull('i18n_parent_id')->select('parent_id'));
+
+                foreach ($adopters->lazyById() as $translation) {
+                    $total['rehomed'] += $i18n->adoptTranslatedChildren($translation);
+                }
 
                 foreach (Content::query()->whereNull('parent_id')->lazyById() as $root) {
                     foreach ($slugService->processContentChildren($root) as $key => $count) {
