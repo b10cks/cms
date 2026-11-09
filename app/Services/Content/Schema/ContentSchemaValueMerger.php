@@ -28,12 +28,12 @@ class ContentSchemaValueMerger
         $schemaArray = $schema instanceof BlockSchema ? $schema->toArray() : $schema;
         $merged = array_replace_recursive($base, $overrides);
 
-        if (!$localizationOverlay || $schemaArray === []) {
+        if (! $localizationOverlay || $schemaArray === []) {
             return $merged;
         }
 
         foreach ($schemaArray as $fieldKey => $field) {
-            if (!\is_array($field)) {
+            if (! \is_array($field)) {
                 continue;
             }
 
@@ -132,7 +132,7 @@ class ContentSchemaValueMerger
         $baseTable = $this->normalizeTableValue($baseValue);
         $overrideTable = $this->normalizeTableValue($overrideValue);
         $overrideRowsById = collect($overrideTable['rows'])
-            ->filter(fn(array $row): bool => isset($row['id']) && \is_string($row['id']) && $row['id'] !== '')
+            ->filter(fn (array $row): bool => isset($row['id']) && \is_string($row['id']) && $row['id'] !== '')
             ->keyBy('id');
 
         $header = [];
@@ -203,12 +203,12 @@ class ContentSchemaValueMerger
      */
     protected function normalizeColumns(mixed $columns): array
     {
-        if (!\is_array($columns)) {
+        if (! \is_array($columns)) {
             return [];
         }
 
         return array_values(array_filter(array_map(static function (mixed $column): ?array {
-            if (!\is_array($column)) {
+            if (! \is_array($column)) {
                 return null;
             }
 
@@ -231,7 +231,7 @@ class ContentSchemaValueMerger
      */
     protected function normalizeTableValue(mixed $value): array
     {
-        if (!\is_array($value)) {
+        if (! \is_array($value)) {
             return [
                 'header' => [],
                 'rows' => [],
@@ -241,20 +241,20 @@ class ContentSchemaValueMerger
         $header = \is_array($value['header'] ?? null)
             ? array_filter(
                 $value['header'],
-                static fn(mixed $entry, mixed $key): bool => \is_string($key) && \is_string($entry),
+                static fn (mixed $entry, mixed $key): bool => \is_string($key) && \is_string($entry),
                 ARRAY_FILTER_USE_BOTH,
             )
             : [];
 
         $rows = \is_array($value['rows'] ?? null)
             ? array_values(array_filter(array_map(static function (mixed $row): ?array {
-                if (!\is_array($row)) {
+                if (! \is_array($row)) {
                     return null;
                 }
 
                 $rowId = $row['id'] ?? null;
 
-                if (!\is_string($rowId) || $rowId === '') {
+                if (! \is_string($rowId) || $rowId === '') {
                     return null;
                 }
 
@@ -277,7 +277,7 @@ class ContentSchemaValueMerger
         mixed $mergedValue,
         bool $localizationOverlay,
     ): mixed {
-        if (!\is_array($mergedValue)) {
+        if (! \is_array($mergedValue)) {
             return $mergedValue;
         }
 
@@ -297,11 +297,11 @@ class ContentSchemaValueMerger
         // that extra or duplicate items in the override cannot bleed into the result.
         // Only applies when base has items — when base is empty (e.g. first step of a chain
         // merge starting from []) fall through to the positional merge so overrides are kept.
-        if ($localizationOverlay && !empty($baseItems)) {
+        if ($localizationOverlay && ! empty($baseItems)) {
             $result = [];
 
             foreach ($baseItems as $index => $baseItem) {
-                if (!\is_array($baseItem)) {
+                if (! \is_array($baseItem)) {
                     continue;
                 }
 
@@ -314,6 +314,7 @@ class ContentSchemaValueMerger
 
                 if ($blockSlug === '') {
                     $result[] = $baseItem;
+
                     continue;
                 }
 
@@ -328,7 +329,7 @@ class ContentSchemaValueMerger
         }
 
         foreach ($mergedValue as $index => $item) {
-            if (!\is_array($item)) {
+            if (! \is_array($item)) {
                 continue;
             }
 
@@ -380,7 +381,7 @@ class ContentSchemaValueMerger
         $this->blockSchemaCache = Block::query()
             ->select(['slug', 'schema'])
             ->get()
-            ->mapWithKeys(static fn(Block $block): array => [
+            ->mapWithKeys(static fn (Block $block): array => [
                 $block->slug => $block->schema?->toArray() ?? [],
             ])
             ->all();
