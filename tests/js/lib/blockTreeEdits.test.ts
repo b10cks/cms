@@ -164,6 +164,24 @@ describe('planBlockAction', () => {
     expect(edit.operation).toEqual({ type: 'add', index: 2, items: [copy] })
   })
 
+  it('keeps asset, link and reference values in a duplicated block', () => {
+    const image = { type: 'asset', id: 'asset-1', full_path: 'storage/space/asset-1/a.jpg' }
+    const values = {
+      image,
+      gallery: [image],
+      link: { type: 'internal', content: 'entry-2' },
+      related: ['entry-3'],
+    }
+    const root = { ...tree(), aside: [{ id: 'card-1', block: 'card', ...values }] }
+
+    const plan = planBlockAction(root, 'card-1', 'duplicate', rules(), newId)
+    if (plan?.kind !== 'edit') throw new Error('expected an edit')
+
+    const { id, block: _block, ...copied } = plan.edits[0].next[1]
+    expect(id).not.toBe('card-1')
+    expect(copied).toEqual(values)
+  })
+
   it('removes on delete', () => {
     const plan = planBlockAction(tree(), 'hero-1', 'delete', rules(), newId)
 
@@ -308,7 +326,12 @@ describe('checkBlockPaste', () => {
     checkBlockPaste({ spaceId: 'space-1', items }, { ...target, ...overrides })
 
   it('accepts blocks the field allows', () => {
-    expect(paste([{ id: 'b1', block: 'hero' }, { id: 'b2', block: 'card' }])).toBeNull()
+    expect(
+      paste([
+        { id: 'b1', block: 'hero' },
+        { id: 'b2', block: 'card' },
+      ])
+    ).toBeNull()
   })
 
   it('rejects blocks copied in another space', () => {
@@ -318,7 +341,12 @@ describe('checkBlockPaste', () => {
   })
 
   it('rejects the whole paste when one block is not allowed', () => {
-    expect(paste([{ id: 'b1', block: 'hero' }, { id: 'b2', block: 'page' }])).toEqual({
+    expect(
+      paste([
+        { id: 'b1', block: 'hero' },
+        { id: 'b2', block: 'page' },
+      ])
+    ).toEqual({
       reason: 'block',
       slug: 'page',
     })
@@ -336,7 +364,10 @@ describe('checkBlockPaste', () => {
   })
 
   it('rejects more blocks than the field has room for', () => {
-    const items = [{ id: 'b1', block: 'hero' }, { id: 'b2', block: 'hero' }]
+    const items = [
+      { id: 'b1', block: 'hero' },
+      { id: 'b2', block: 'hero' },
+    ]
 
     expect(paste(items, { max: 3 })).toBeNull()
     expect(paste(items, { max: 2 })).toEqual({ reason: 'max', max: 2 })
