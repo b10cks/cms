@@ -419,6 +419,42 @@ describe('mergeLocalizedContentForSchema', () => {
     expect(base.nested.title).toBe('Home')
   })
 
+  describe('rich text', () => {
+    const richtextField = { type: 'richtext', translatable: true } as SchemaType
+    const paragraph = (...content: Array<Record<string, unknown>>) => ({
+      type: 'doc',
+      content: [{ type: 'paragraph', content }],
+    })
+
+    it('takes the translated doc whole, placeholder tokens and all', () => {
+      const translated = paragraph(
+        { type: 'text', text: 'Bij ' },
+        { type: 'placeholderToken', attrs: { key: 'brand.name', label: 'Brand' } },
+        { type: 'text', text: ' krijg je' }
+      )
+
+      const merged = mergeLocalizedContentForSchema(
+        { body: paragraph({ type: 'text', text: 'Bei schlafTEQ bekommst du' }) },
+        { body: translated },
+        { body: richtextField }
+      )
+
+      expect(merged.body).toEqual(translated)
+    })
+
+    it('falls back to the source when the translation has no nodes', () => {
+      const source = paragraph({ type: 'text', text: 'Hallo' })
+
+      expect(
+        mergeLocalizedContentForSchema(
+          { body: source },
+          { body: { type: 'doc', content: [] } },
+          { body: richtextField }
+        ).body
+      ).toEqual(source)
+    })
+  })
+
   describe('translatable tables', () => {
     const tableField = {
       type: 'table',
@@ -437,19 +473,14 @@ describe('mergeLocalizedContentForSchema', () => {
       expect((merged.specs as TableValue).rows[0].cells).toEqual({ name: 'Breite', qty: 3 })
     })
 
-    it('leaves a non-translatable table to the plain merge', () => {
+    it('takes a non-translatable table as a whole value', () => {
       const merged = mergeLocalizedContentForSchema(
         { specs: { rows: [{ id: 'r1', cells: { name: 'Width', qty: 3 } }] } },
         { specs: { rows: [{ id: 'r1', cells: { name: 'Breite' } }] } },
         { specs: { ...tableField, translatable: false } as SchemaType }
       )
 
-      // Plain merge: the overlay row wins field by field, and no normalization
-      // fills the missing cell back in.
-      expect((merged.specs as { rows: Array<{ cells: Record<string, unknown> }> }).rows[0].cells).toEqual({
-        name: 'Breite',
-        qty: 3,
-      })
+      expect(merged.specs).toEqual({ rows: [{ id: 'r1', cells: { name: 'Breite' } }] })
     })
   })
 
