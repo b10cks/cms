@@ -37,7 +37,9 @@ Route::get('contents/{slug}', [ContentController::class, 'show'])
 Route::get('redirects', RedirectController::class)->middleware(['cache.data:60,60'])->name('api.data.redirects.index');
 Route::post('redirects/lookup', RedirectLookupController::class)->name('api.data.redirects.lookup');
 
-Route::get('spaces/me', SpaceController::class)->middleware(['cache.data:60,60'])->name('spaces.show');
+// Clients read the delivery revision here (`syncRevision()`), so a long
+// cache pins every request they make to content that was already replaced.
+Route::get('spaces/me', SpaceController::class)->middleware(['cache.data:5,5,0'])->name('spaces.show');
 
 Route::get('blocks', [BlockController::class, 'index'])->middleware(['cache.data:60,60'])->name('blocks.index');
 Route::get('blocks/{block}', [BlockController::class, 'show'])->middleware(['cache.data:60,60'])->name('blocks.show');
