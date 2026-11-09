@@ -3,6 +3,11 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.11.9-2e5b4feb] — 2026-11-9
+
+- 🐛 Validate table translations merged onto the source table
+- 📝 Record the asset delivery release and the open website cache decision
+
 ## [v2026.11.9-7c0af061] — 2026-11-9
 
 - ⬆️ Update PHP and JS dependencies within their version ranges
