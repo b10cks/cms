@@ -369,12 +369,109 @@ class ContentI18nTest extends TestCase
         $this->assertSame([['id' => 'item-1', 'title' => 'Auswahl', 'block' => 'carousel']], $stored['body']);
     }
 
+    #[Test]
+    public function a_translation_created_under_the_canonical_parent_is_filed_under_the_parents_translation(): void
+    {
+        $this->actingAs($this->owner);
+
+        $enParent = $this->createContent(languageIso: 'en', slug: 'about');
+        $deParent = $this->createContent(languageIso: 'de', slug: 'ueber-uns', i18nParent: $enParent);
+        $enChild = $this->createContent(languageIso: 'en', slug: 'team', parent: $enParent);
+
+        // The localization page sends the canonical entry's parent.
+        $response = $this->postJson(route('mgmt.contents.store', ['space' => $this->space->id]), [
+            'name' => 'Mannschaft',
+            'slug' => 'mannschaft',
+            'block_id' => $this->block->id,
+            'language_iso' => 'de',
+            'parent_id' => $enParent->id,
+            'i18n_parent_id' => $enChild->id,
+            'content' => ['title' => 'Mannschaft'],
+        ]);
+
+        $response->assertCreated();
+        $response->assertJsonPath('data.parent_id', $deParent->id);
+        $response->assertJsonPath('data.full_slug', '/ueber-uns/mannschaft');
+    }
+
+    #[Test]
+    public function creating_a_parents_translation_adopts_the_translations_waiting_under_the_canonical_parent(): void
+    {
+        $this->actingAs($this->owner);
+
+        $enParent = $this->createContent(languageIso: 'en', slug: 'about');
+        $enChild = $this->createContent(languageIso: 'en', slug: 'team', parent: $enParent);
+        $deChild = $this->createContent(languageIso: 'de', slug: 'mannschaft', i18nParent: $enChild, parent: $enParent);
+        $frChild = $this->createContent(languageIso: 'fr', slug: 'equipe', i18nParent: $enChild, parent: $enParent);
+
+        $response = $this->postJson(route('mgmt.contents.store', ['space' => $this->space->id]), [
+            'name' => 'Ueber uns',
+            'slug' => 'ueber-uns',
+            'block_id' => $this->block->id,
+            'language_iso' => 'de',
+            'i18n_parent_id' => $enParent->id,
+            'content' => ['title' => 'Ueber uns'],
+        ]);
+
+        $response->assertCreated();
+        $deChild->refresh();
+        $this->assertSame($response->json('data.id'), $deChild->parent_id);
+        $this->assertSame('/ueber-uns/mannschaft', $deChild->full_slug);
+        $this->assertSame($enParent->id, $frChild->fresh()->parent_id);
+        $this->assertSame($enParent->id, $enChild->fresh()->parent_id);
+    }
+
+    #[Test]
+    public function moving_a_translation_under_a_canonical_parent_files_it_under_the_parents_translation(): void
+    {
+        $this->actingAs($this->owner);
+
+        $enParent = $this->createContent(languageIso: 'en', slug: 'about');
+        $deParent = $this->createContent(languageIso: 'de', slug: 'ueber-uns', i18nParent: $enParent);
+        $enChild = $this->createContent(languageIso: 'en', slug: 'team');
+        $deChild = $this->createContent(languageIso: 'de', slug: 'mannschaft', i18nParent: $enChild);
+
+        $response = $this->patchJson(route('mgmt.contents.update', [
+            'space' => $this->space->id,
+            'content' => $deChild->id,
+        ]), ['parent_id' => $enParent->id]);
+
+        $response->assertOk();
+        $this->assertSame($deParent->id, $deChild->fresh()->parent_id);
+    }
+
+    #[Test]
+    public function a_translation_slug_must_be_unique_among_the_siblings_it_will_be_filed_with(): void
+    {
+        $this->actingAs($this->owner);
+
+        $enParent = $this->createContent(languageIso: 'en', slug: 'about');
+        $deParent = $this->createContent(languageIso: 'de', slug: 'ueber-uns', i18nParent: $enParent);
+        $enChild = $this->createContent(languageIso: 'en', slug: 'team', parent: $enParent);
+        $enCrew = $this->createContent(languageIso: 'en', slug: 'crew', parent: $enParent);
+        $this->createContent(languageIso: 'de', slug: 'mannschaft', i18nParent: $enCrew, parent: $deParent);
+
+        $response = $this->postJson(route('mgmt.contents.store', ['space' => $this->space->id]), [
+            'name' => 'Mannschaft',
+            'slug' => 'mannschaft',
+            'block_id' => $this->block->id,
+            'language_iso' => 'de',
+            'parent_id' => $enParent->id,
+            'i18n_parent_id' => $enChild->id,
+            'content' => ['title' => 'Mannschaft'],
+        ]);
+
+        $response->assertStatus(422);
+        $response->assertJsonValidationErrors(['slug']);
+    }
+
     private function createContent(
         string $languageIso,
         string $slug,
         ?Content $i18nParent = null,
         array $settings = [],
         bool $published = false,
+        ?Content $parent = null,
     ): Content {
         $content = new Content;
         $content->forceFill([
@@ -384,6 +481,7 @@ class ContentI18nTest extends TestCase
             'full_slug' => "/{$slug}",
             'language_iso' => $languageIso,
             'i18n_parent_id' => $i18nParent?->id,
+            'parent_id' => $parent?->id,
             'settings' => $settings,
         ]);
 

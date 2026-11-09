@@ -8,6 +8,7 @@ use App\Models\Space\Content;
 use App\Models\Space\ContentVersion;
 use App\Models\User;
 use App\Services\Content\ContentHierarchyValidator;
+use App\Services\Content\ContentI18nService;
 use App\Services\Content\ContentI18nValidator;
 use App\Services\Content\ContentPositionService;
 use App\Services\Content\Schema\ContentSchemaValidationResult;
@@ -30,6 +31,7 @@ class CreateContent
         private readonly SchemaDefaultsResolver $schemaDefaultsResolver,
         private readonly ContentSerialAssigner $serialAssigner,
         private readonly ContentSlugComposer $slugComposer,
+        private readonly ContentI18nService $contentI18nService,
     ) {}
 
     protected function throwIfValidationFails(
@@ -63,6 +65,10 @@ class CreateContent
         $content->getConnection()->transaction(function () use ($data, $content, $owner, $space, $block, $touchSpace) {
             if (! \Arr::has($data, 'language_iso')) {
                 $data['language_iso'] = $space->settings->getDefaultLanguage();
+            }
+            $isTranslation = ! empty($data['i18n_parent_id']);
+            if ($isTranslation && isset($data['parent_id'])) {
+                $data['parent_id'] = $this->contentI18nService->parentForLanguage($data['parent_id'], $data['language_iso']);
             }
             /** @var Block $block */
             $block ??= Block::query()->findOrFail($data['block_id']);
@@ -147,6 +153,10 @@ class CreateContent
             ], $content->setRelation('block', $block));
             $content->current_version_id = $version->id;
             $content->save();
+
+            if ($isTranslation) {
+                $this->contentI18nService->adoptTranslatedChildren($content);
+            }
 
             if ($sortingEnabled && $requestedPosition !== null) {
                 $this->contentPositionService->placeNewContent($content, $requestedPosition);

@@ -61,10 +61,12 @@ class UpdateContentFullSlugsJobTest extends TestCase
             'parent_id' => $enParent->id,
             'i18n_parent_id' => $enChild->id,
         ]);
+        $enGrandchild = Content::factory()->create(['slug' => 'lead', 'language_iso' => 'en', 'parent_id' => $enChild->id]);
         $deGrandchild = Content::factory()->create([
             'slug' => 'leitung',
             'language_iso' => 'de',
             'parent_id' => $enChild->id,
+            'i18n_parent_id' => $enGrandchild->id,
         ]);
         $this->assertSame('/ueber/mannschaft', $deChild->fresh()->full_slug);
 

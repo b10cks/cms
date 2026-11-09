@@ -36,6 +36,8 @@ This keeps translations cheap to maintain: structural changes to a page happen o
 
 Translations have their own slugs, so `/en/about-us` and `/de/ueber-uns` can both resolve — the Data API matches localized slug paths when a `language` is requested.
 
+A translation sits under its parent's translation in the same language, so its path is built from the translated parent: `/de/ueber-uns/team`, not `/de/about-us/team`. While the parent has no translation in that language, the translation sits under the canonical parent. Creating the parent's translation later moves those waiting translations under it. Renaming a translated parent updates the paths of every translation below it and adds a 301 redirect from each old path.
+
 ## Querying localized content
 
 ```

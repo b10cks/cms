@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Management\Space;
 use App\Models\Space\Block;
 use App\Models\Space\Content;
+use App\Services\Content\ContentI18nService;
 use App\Services\Content\Serial\ContentSerialAssigner;
 use App\Services\Content\Serial\ContentSlugComposer;
 use Illuminate\Http\JsonResponse;
@@ -26,6 +27,7 @@ class ContentSerialPreviewController extends Controller
         Space $space,
         ContentSerialAssigner $assigner,
         ContentSlugComposer $slugComposer,
+        ContentI18nService $i18n,
     ): JsonResponse {
         $this->authorize('create', [Content::class, $space]);
 
@@ -41,11 +43,16 @@ class ContentSerialPreviewController extends Controller
         /** @var Block $block */
         $block = Block::query()->findOrFail($validated['block_id']);
 
-        $parent = ! empty($validated['parent_id'])
-            ? Content::query()->with('current_version')->whereNull('deleted_at')->find($validated['parent_id'])
-            : null;
-
         $languageIso = $validated['language_iso'] ?? $space->settings->getDefaultLanguage();
+
+        // Filed where the create action will file it, see ContentI18nService::parentForLanguage().
+        $parentId = ! empty($validated['i18n_parent_id'])
+            ? $i18n->parentForLanguage($validated['parent_id'] ?? null, $languageIso)
+            : ($validated['parent_id'] ?? null);
+
+        $parent = ! empty($parentId)
+            ? Content::query()->with('current_version')->whereNull('deleted_at')->find($parentId)
+            : null;
 
         // A translation carries the canonical entry's serials rather than
         // drawing its own, so its preview reads them instead of peeking at the

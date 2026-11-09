@@ -210,6 +210,50 @@ class ContentTranslationSlugTest extends TestCase
     }
 
     #[Test]
+    public function the_preview_checks_siblings_under_the_parents_translation_like_create_does(): void
+    {
+        $block = $this->createBlock('simple', []);
+        $enParent = $this->createContent($block, 'About');
+        $deParent = $this->postJson("/mgmt/v1/spaces/{$this->space->id}/contents", [
+            'name' => 'Ueber uns',
+            'block_id' => $block->id,
+            'language_iso' => 'de',
+            'i18n_parent_id' => $enParent->id,
+        ])->assertCreated();
+        $enSeat = $this->postJson("/mgmt/v1/spaces/{$this->space->id}/contents", [
+            'name' => 'Seat',
+            'block_id' => $block->id,
+            'parent_id' => $enParent->id,
+        ])->assertCreated();
+        $this->postJson("/mgmt/v1/spaces/{$this->space->id}/contents", [
+            'name' => 'Stuhl',
+            'block_id' => $block->id,
+            'language_iso' => 'de',
+            'parent_id' => $deParent->json('data.id'),
+            'i18n_parent_id' => $enSeat->json('data.id'),
+        ])->assertCreated();
+        $enChild = $this->postJson("/mgmt/v1/spaces/{$this->space->id}/contents", [
+            'name' => 'Chair',
+            'block_id' => $block->id,
+            'parent_id' => $enParent->id,
+        ])->assertCreated();
+
+        // Both receive the canonical parent, as the localization page sends it.
+        $payload = [
+            'name' => 'Stuhl',
+            'block_id' => $block->id,
+            'language_iso' => 'de',
+            'parent_id' => $enParent->id,
+            'i18n_parent_id' => $enChild->json('data.id'),
+        ];
+        $preview = $this->postJson("/mgmt/v1/spaces/{$this->space->id}/contents/serial-preview", $payload)->assertOk();
+        $created = $this->postJson("/mgmt/v1/spaces/{$this->space->id}/contents", $payload)->assertCreated();
+
+        $this->assertSame('stuhl-2', $preview->json('slug_preview'));
+        $this->assertSame('stuhl-2', $created->json('data.slug'));
+    }
+
+    #[Test]
     public function the_preview_omits_a_serial_the_canonical_does_not_carry_yet(): void
     {
         // The serial field is added after the canonical was created, so the

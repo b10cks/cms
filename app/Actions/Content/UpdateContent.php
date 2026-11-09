@@ -9,6 +9,7 @@ use App\Models\Space\Content;
 use App\Models\Space\ContentVersion;
 use App\Models\User;
 use App\Services\Content\ContentHierarchyValidator;
+use App\Services\Content\ContentI18nService;
 use App\Services\Content\ContentI18nValidator;
 use App\Services\Content\ContentPositionService;
 use App\Services\Content\Schema\ContentSchemaValidationResult;
@@ -28,6 +29,7 @@ class UpdateContent
         protected ContentSchemaValidator $contentSchemaValidator,
         protected ContentPositionService $contentPositionService,
         protected ContentSerialAssigner $serialAssigner,
+        protected ContentI18nService $contentI18nService,
     ) {}
 
     protected function throwIfValidationFails(
@@ -56,6 +58,12 @@ class UpdateContent
         }
 
         $content->loadMissing('block');
+        if (isset($data['parent_id']) && ($data['i18n_parent_id'] ?? $content->i18n_parent_id) !== null) {
+            $data['parent_id'] = $this->contentI18nService->parentForLanguage(
+                $data['parent_id'],
+                $data['language_iso'] ?? $content->language_iso,
+            );
+        }
         $targetParent = array_key_exists('parent_id', $data)
             ? Content::query()->with('block')->find($data['parent_id'])
             : $content->parent()->with('block')->first();

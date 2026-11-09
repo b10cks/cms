@@ -35,6 +35,51 @@ class ContentI18nService
             ->get();
     }
 
+    /**
+     * Where a translation in `$languageIso` belongs when filed under `$parentId`:
+     * that parent's own translation in the language, or the given parent while
+     * none exists. Tree moves follow the same rule.
+     */
+    public function parentForLanguage(?string $parentId, string $languageIso): ?string
+    {
+        if ($parentId === null) {
+            return null;
+        }
+
+        $parent = Content::query()->select(['id', 'i18n_parent_id', 'language_iso'])->find($parentId);
+
+        if (! $parent || $parent->language_iso === $languageIso) {
+            return $parentId;
+        }
+
+        $canonicalId = $this->getCanonicalId($parent);
+
+        return Content::query()
+            ->where(fn ($query) => $query->where('id', $canonicalId)->orWhere('i18n_parent_id', $canonicalId))
+            ->where('language_iso', $languageIso)
+            ->value('id') ?? $parentId;
+    }
+
+    /**
+     * Move the translations in the new translation's language that were filed
+     * under its canonical entry, because it did not exist yet, under the new
+     * translation. Their full_slug follows through the slug propagation job.
+     *
+     * @return int The number of re-homed entries
+     */
+    public function adoptTranslatedChildren(Content $translation): int
+    {
+        if ($translation->i18n_parent_id === null) {
+            return 0;
+        }
+
+        return Content::query()
+            ->where('parent_id', $translation->i18n_parent_id)
+            ->where('language_iso', $translation->language_iso)
+            ->whereNotNull('i18n_parent_id')
+            ->update(['parent_id' => $translation->id]);
+    }
+
     public function findLanguageContent(Collection $family, Content $canonical, string $languageIso): ?Content
     {
         if ($languageIso === $canonical->language_iso) {

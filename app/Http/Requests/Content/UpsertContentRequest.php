@@ -5,6 +5,7 @@ namespace App\Http\Requests\Content;
 use App\Http\Requests\Traits\ExternalIdValidation;
 use App\Models\Space\Content;
 use App\Models\Space\ContentSettings;
+use App\Services\Content\ContentI18nService;
 use App\Services\Content\ContentI18nValidator;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
@@ -33,6 +34,12 @@ class UpsertContentRequest extends FormRequest
         $contentId = $this->route('content');
         $parentId = $this->input('parent_id');
         $languageIso = $this->input('language_iso');
+        $i18nParentId = $this->input('i18n_parent_id', $contentId instanceof Content ? $contentId->i18n_parent_id : null);
+
+        // Sibling uniqueness is checked where the actions will file a translation.
+        if (\is_string($parentId) && \is_string($languageIso) && $i18nParentId !== null) {
+            $parentId = app(ContentI18nService::class)->parentForLanguage($parentId, $languageIso);
+        }
 
         $connectionName = new Content()->getConnectionName();
 

@@ -5,7 +5,6 @@ namespace App\Actions\Content;
 use App\Models\Management\Space;
 use App\Models\Space\Content;
 use App\Models\User;
-use App\Services\Content\ContentI18nService;
 use App\Services\Content\ContentMutationPayloadValidator;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Support\Arr;
@@ -15,7 +14,6 @@ class CreateContentFamily
 {
     public function __construct(
         private readonly CreateContent $createContent,
-        private readonly ContentI18nService $contentI18nService,
         private readonly ContentMutationPayloadValidator $payloadValidator,
     ) {}
 
@@ -54,11 +52,9 @@ class CreateContentFamily
         $payload['block_id'] ??= $canonical->block_id;
         $payload['i18n_parent_id'] = $canonical->id;
 
+        // CreateContent files it under the parent's translation in its language.
         if (! array_key_exists('parent_id', $payload)) {
-            $payload['parent_id'] = $this->resolveParentIdForLanguage(
-                $canonical->parent_id,
-                (string) ($payload['language_iso'] ?? ''),
-            );
+            $payload['parent_id'] = $canonical->parent_id;
         }
 
         return $payload;
@@ -83,26 +79,6 @@ class CreateContentFamily
         if ($errors !== []) {
             throw ValidationException::withMessages($errors);
         }
-    }
-
-    private function resolveParentIdForLanguage(?string $parentId, string $languageIso): ?string
-    {
-        if ($parentId === null || $languageIso === '') {
-            return $parentId;
-        }
-
-        $parent = Content::query()
-            ->where('id', $parentId)
-            ->whereNull('deleted_at')
-            ->first();
-
-        if (! $parent) {
-            return $parentId;
-        }
-
-        $family = $this->contentI18nService->getFamily($parent);
-
-        return $family->firstWhere('language_iso', $languageIso)?->id ?? $parentId;
     }
 
     private function prefixValidationException(ValidationException $exception, string $prefix): ValidationException
