@@ -69,7 +69,22 @@ class ReindexContentReferencesCommandTest extends TestCase
         $this->assertNull($this->space->fresh()->content_updated_at);
     }
 
-    private function createContentReferencing(string $assetId): Content
+    #[Test]
+    public function it_indexes_the_asset_a_reference_with_a_foreign_id_names_in_its_full_path(): void
+    {
+        $assetId = strtolower((string) Str::ulid());
+        $pastedId = strtolower((string) Str::ulid());
+        $content = $this->createContentReferencing($pastedId, "storage/{$this->space->id}/{$assetId}/photo.jpg");
+        ContentVersion::query()->toBase()->update(['asset_ids' => json_encode([$pastedId])]);
+
+        $this->artisan('content:reindex-references', ['--space' => $this->space->id])
+            ->expectsOutputToContain('1 version(s) updated')
+            ->assertSuccessful();
+
+        $this->assertContains($assetId, ContentVersion::query()->find($content->current_version_id)->asset_ids);
+    }
+
+    private function createContentReferencing(string $assetId, ?string $fullPath = null): Content
     {
         $slug = strtolower((string) Str::ulid());
         $content = new Content;
@@ -85,7 +100,7 @@ class ReindexContentReferencesCommandTest extends TestCase
 
         $version = ContentVersion::query()->forceCreate([
             'content_id' => $content->id,
-            'content' => ['hero' => ['type' => 'asset', 'id' => $assetId]],
+            'content' => ['hero' => array_filter(['type' => 'asset', 'id' => $assetId, 'full_path' => $fullPath])],
         ]);
 
         $content->current_version_id = $version->id;
