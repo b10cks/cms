@@ -8,21 +8,15 @@ use App\Enums\AiOperationState;
 use App\Mcp\Servers\ManagementServer;
 use App\Mcp\Support\OperationRegistry;
 use App\Mcp\Tools\MgmtCallTool;
-use App\Models\Management\AiGlossary;
 use App\Models\Management\AssetClassificationRun;
 use App\Models\Management\Space;
-use App\Models\Management\Team;
-use App\Models\Space\AiChangeset;
 use App\Models\Space\AiChangesetItem;
 use App\Models\Space\AiOperation;
 use App\Models\Space\AiOperationItem;
 use App\Models\Space\Block;
 use App\Models\Space\Content;
 use App\Models\Space\ContentVersion;
-use App\Models\Space\DataEntry;
-use App\Models\Space\DataSource;
 use App\Models\User;
-use App\Services\Ai\Knowledge\GlossaryChecker;
 use App\Services\Ai\Operations\OperationPlan;
 use App\Services\Ai\Operations\OperationQuestions;
 use App\Services\Ai\Operations\Tools\ReportItemsTool;
@@ -34,7 +28,6 @@ use Tests\Support\FakeAiDriver;
 use Tests\TestCase;
 use Tests\Traits\FakesAi;
 use Tests\Traits\SpaceTestingTrait;
-use Tests\Traits\WritesGlossaryRows;
 
 /**
  * The content operations lifecycle through b10cks_mgmt_call: each call passes the
@@ -45,11 +38,8 @@ class AiContentOperationsMcpTest extends TestCase
     use FakesAi;
     use RefreshDatabase;
     use SpaceTestingTrait;
-    use WritesGlossaryRows;
 
     private Space $space;
-
-    private AiGlossary $glossary;
 
     private Block $page;
 
@@ -71,7 +61,6 @@ class AiContentOperationsMcpTest extends TestCase
         $this->giveSpaceAiConfig($this->space);
         $this->driver = $this->fakeAi();
 
-        $this->glossary = AiGlossary::create([...AiGlossary::ownerAttributes($this->space), 'name' => 'Shop', 'enabled' => true]);
         $this->page = Block::query()->create([
             'external_id' => (string) Str::uuid(), 'name' => 'Page', 'slug' => 'page', 'type' => 'root',
             'schema' => [
@@ -79,49 +68,6 @@ class AiContentOperationsMcpTest extends TestCase
                 'seo' => ['type' => 'meta', 'name' => 'SEO', 'translatable' => true],
             ],
         ]);
-    }
-
-    #[Test]
-    public function concept_rows_read_write_and_check_through_the_registry(): void
-    {
-        $rowId = $this->glossaryRow($this->glossary, ['de' => 'Altbett']);
-
-        $this->mcp('ai.glossaries.conceptRows', [...$this->glossaryArgs(), 'params' => ['search' => 'altbett']])->assertOk()->assertSee($rowId);
-        $this->mcp('ai.glossaries.updateConceptRow', [...$this->glossaryArgs(), 'rowId' => $rowId, 'payload' => ['note' => 'Beds']])->assertOk()->assertSee('Beds');
-        $this->mcp('ai.glossaries.createConceptRow', [...$this->glossaryArgs(), 'payload' => ['languages' => ['de' => ['use' => 'ALTBETT']]]])
-            ->assertHasErrors(['wording_conflict']);
-        $this->mcp('ai.glossaries.checkText', [...$this->glossaryArgs(), 'payload' => ['text' => 'Ein Altbett', 'source_locale' => 'de']])->assertOk()->assertSee('"start": 4');
-        $this->mcp('ai.glossaries.bulkConceptRows', [...$this->glossaryArgs(), 'payload' => ['row_ids' => [$rowId], 'action' => 'delete']])->assertOk();
-        $this->assertSame(0, $this->glossary->concepts()->count());
-    }
-
-    #[Test]
-    public function identifiers_stay_separate_and_another_owners_rows_fail_as_over_http(): void
-    {
-        $rowId = $this->glossaryRow($this->glossary, ['de' => 'Bett']);
-        $rowArgs = [...$this->glossaryArgs(), 'rowId' => $rowId, 'payload' => ['note' => 'Beds']];
-
-        // `id` never stands in for the glossary or the row.
-        $this->mcp('ai.glossaries.updateConceptRow', ['spaceId' => $this->space->id, 'id' => $this->glossary->id, 'rowId' => $rowId, 'payload' => ['category' => 'Beds']])
-            ->assertHasErrors(['Missing required string argument: glossaryId']);
-        $this->mcp('ai.glossaries.updateConceptRow', [...$this->glossaryArgs(), 'id' => $rowId, 'payload' => ['category' => 'Beds']])
-            ->assertHasErrors(['Missing required string argument: rowId']);
-
-        // A team's glossary is not reachable under a space, and a space's row not under a glossary of a team.
-        $team = Team::factory()->create();
-        $this->assignTeamRole($team, $this->user, 'owner');
-        $foreign = AiGlossary::create([...AiGlossary::ownerAttributes($team), 'name' => 'Team']);
-        $other = AiGlossary::create([...AiGlossary::ownerAttributes($this->space), 'name' => 'Other']);
-
-        $this->mcp('ai.glossaries.updateConceptRow', [...$rowArgs, 'glossaryId' => $foreign->id])->assertHasErrors(['"statusCode": 404']);
-        $this->mcp('ai.glossaries.updateConceptRow', [...$rowArgs, 'glossaryId' => $other->id])->assertHasErrors(['"statusCode": 404']);
-        $this->mcp('ai.teamGlossaries.conceptRows', ['teamId' => $team->id, 'glossaryId' => $foreign->id])->assertOk();
-        $this->mcp('ai.teamGlossaries.updateConceptRow', ['teamId' => $team->id, 'glossaryId' => $foreign->id, 'rowId' => $rowId, 'payload' => ['category' => 'Beds']])
-            ->assertHasErrors(['"statusCode": 404']);
-
-        $outsider = User::factory()->create();
-        ManagementServer::actingAs($outsider)->tool(MgmtCallTool::class, ['operation' => 'ai.glossaries.updateConceptRow', ...$rowArgs])
-            ->assertHasErrors(['Management API request failed']);
     }
 
     #[Test]
@@ -191,7 +137,6 @@ class AiContentOperationsMcpTest extends TestCase
     #[Test]
     public function content_goes_to_a_draft_and_its_changes_read_through_mcp(): void
     {
-        $this->glossaryRow($this->glossary, ['en' => ['use' => 'Mattress', 'avoid' => ['Sleeping pad']]]);
         $entry = $this->entry('en', ['title' => 'Old']);
         $this->driver->push(
             FakeAiDriver::toolCall('propose_update', ['target_type' => 'content', 'id' => $entry->id, 'version_id' => $entry->current_version_id, 'changes' => [['path' => 'title', 'value' => 'The best Sleeping pad']]]),
@@ -202,37 +147,10 @@ class AiContentOperationsMcpTest extends TestCase
         $item = AiChangesetItem::query()->sole();
         $this->assertSame(AiChangesetItemStatus::Accepted, $item->status);
         $args = ['spaceId' => $this->space->id, 'id' => $operation->id];
-        $this->mcp('ai.operations.changes', $args)->assertOk()->assertSee(['"changed": 1', '"flagged": 1', $entry->id]);
-        $this->mcp('ai.operations.reviewItems', [...$args, 'params' => ['target_id' => $entry->id]])->assertOk()->assertSee(['glossary_findings', 'Sleeping pad']);
+        $this->mcp('ai.operations.changes', $args)->assertOk()->assertSee(['"changed": 1', $entry->id]);
+        $this->mcp('ai.operations.reviewItems', [...$args, 'params' => ['target_id' => $entry->id]])->assertOk()->assertSee('The best Sleeping pad');
         $this->assertNull($entry->refresh()->published_at);
         $this->assertNull($entry->published_version_id);
-    }
-
-    #[Test]
-    public function an_override_reason_reaches_the_accept_of_a_proposal(): void
-    {
-        $entry = DataEntry::factory()->create(['data_source_id' => DataSource::factory()->create()->id, 'key' => 'bed', 'value' => 'Old']);
-        $changeset = AiChangeset::query()->create(['space_id' => $this->space->id, 'actor_id' => $this->user->id, 'title' => 'Run']);
-        $item = $changeset->items()->create([
-            'operation' => AiChangesetItem::OPERATION_UPDATE, 'target_type' => AiChangesetItem::TARGET_DATA_ENTRY, 'target_id' => $entry->id, 'target_label' => $entry->key,
-            'path' => 'value', 'field_type' => 'text', 'before' => 'Old', 'after' => 'The best Sleeping pad', 'status' => AiChangesetItemStatus::Pending,
-            'glossary_findings' => [['type' => 'forbidden_variant', 'term' => 'Mattress', 'found' => 'Sleeping pad', 'expected' => 'Mattress']],
-        ]);
-        $findingId = GlossaryChecker::findingId($item->glossary_findings[0]);
-        $args = ['spaceId' => $this->space->id, 'id' => $item->changeset_id];
-
-        $this->mcp('ai.changesets.get', $args)->assertOk()->assertSee(['glossary_findings', $findingId, 'review']);
-        $this->mcp('ai.changesets.accept', [...$args, 'payload' => ['item_ids' => [$item->id]]])
-            ->assertHasErrors(["overrides.{$item->id}.{$findingId}"]);
-        $this->mcp('ai.changesets.accept', [...$args, 'payload' => ['item_ids' => [$item->id], 'overrides' => [$item->id => [['finding_id' => $findingId, 'reason' => '   ']]]]])
-            ->assertHasErrors(['overrides']);
-
-        $this->mcp('ai.changesets.accept', [...$args, 'payload' => ['item_ids' => [$item->id], 'overrides' => [$item->id => [['finding_id' => $findingId, 'reason' => 'Supplier wording.']]]]])
-            ->assertOk()->assertSee('"accepted": 1');
-
-        $item->refresh();
-        $this->assertSame(AiChangesetItemStatus::Accepted, $item->status);
-        $this->assertSame('Supplier wording.', $item->review['overrides'][0]['reason']);
     }
 
     #[Test]
@@ -276,12 +194,6 @@ class AiContentOperationsMcpTest extends TestCase
         $this->mcp('ai.operations.approve', [...$args, 'payload' => ['plan_hash' => OperationPlan::hash($model->plan), 'scope_hash' => $model->counts['scope_hash'], 'max_usd' => 1]])->assertOk();
 
         return $model->refresh();
-    }
-
-    /** @return array{spaceId: string, glossaryId: string} */
-    private function glossaryArgs(): array
-    {
-        return ['spaceId' => $this->space->id, 'glossaryId' => $this->glossary->id];
     }
 
     /** @param  array<string, mixed>  $arguments */

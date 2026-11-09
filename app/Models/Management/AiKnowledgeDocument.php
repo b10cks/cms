@@ -5,7 +5,7 @@ namespace App\Models\Management;
 use App\Enums\AiKnowledgeType;
 use App\Enums\AiScope;
 use App\Models\Traits\HasAiScope;
-use App\Services\Ai\Knowledge\GlossaryMatcher;
+use App\Services\Ai\Knowledge\PolicySnapshot;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -72,7 +72,7 @@ class AiKnowledgeDocument extends GlobalModel
 
     public function setLocaleAttribute(?string $locale): void
     {
-        $this->attributes['locale'] = $locale !== null && $locale !== '' ? GlossaryMatcher::normalizeLocale($locale) : null;
+        $this->attributes['locale'] = $locale !== null && $locale !== '' ? PolicySnapshot::normalizeLocale($locale) : null;
     }
 
     public function revisions(): HasMany

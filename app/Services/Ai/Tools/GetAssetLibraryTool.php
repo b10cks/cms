@@ -14,10 +14,7 @@ use App\Services\Ai\Assets\AssetPlan;
 use App\Services\Ai\Assets\AssetReview;
 use App\Services\Ai\Assets\AssetStructure;
 use App\Services\Ai\Contracts\AiToolInterface;
-use App\Services\Ai\Knowledge\GlossaryBrief;
-use App\Services\Ai\Knowledge\KnowledgeResolver;
 use App\Services\Ai\Run\ToolError;
-use App\Services\Asset\AssetMetadataFieldResolver;
 use App\Services\Auth\AuthorizationService;
 
 /**
@@ -42,7 +39,6 @@ class GetAssetLibraryTool implements AiToolInterface
         private readonly AuthorizationService $auth,
         private readonly AssetFieldRules $rules,
         private readonly AssetStructure $structure,
-        private readonly KnowledgeResolver $knowledge,
     ) {}
 
     public function name(): string
@@ -52,7 +48,7 @@ class GetAssetLibraryTool implements AiToolInterface
 
     public function description(): string
     {
-        return 'Returns the asset library conventions: metadata languages (`_default` is the default language), `glossary` with wording never to write per language, folders with their paths, asset counts, '
+        return 'Returns the asset library conventions: metadata languages (`_default` is the default language), folders with their paths, asset counts, '
             .'AI-writable and required fields, existing tags by use, proposed new folders and tags with their new:<ID> refs, '
             .'and the plan of this run (what it may overwrite, remove or move). '
             .'Pass folder_id to list only that folder and its subfolders. Call it before proposing tags, folders or moves. '
@@ -94,8 +90,7 @@ class GetAssetLibraryTool implements AiToolInterface
             : [[], self::page(0, 0, 0)];
 
         return [
-            'languages' => $languages = $this->languages(),
-            ...$this->glossary($languages),
+            'languages' => $this->languages(),
             'fields' => $this->fields(null),
             'folders' => $folders,
             'folders_page' => $foldersPage,
@@ -115,24 +110,6 @@ class GetAssetLibraryTool implements AiToolInterface
         }
 
         return array_intersect_key($names, array_flip($this->rules->languages($this->space)));
-    }
-
-    /**
-     * Wording never to write, per language key of the library.
-     *
-     * @param  array<string, string>  $languages
-     * @return array{glossary?: array<string, string>}
-     */
-    private function glossary(array $languages): array
-    {
-        $concepts = $this->knowledge->policy($this->space, $this->run)->concepts;
-        $bans = [];
-        foreach (array_keys($languages) as $key) {
-            $bans[$key] = GlossaryBrief::bans($concepts, [], $key === AssetMetadataFieldResolver::DEFAULT_LANGUAGE_KEY ? $this->space->settings->getDefaultLanguage() : $key);
-        }
-        $bans = array_filter($bans);
-
-        return $bans === [] ? [] : ['glossary' => $bans];
     }
 
     /** @return list<array{key: string, label: string, required: bool, ai: bool}> */

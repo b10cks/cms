@@ -5,13 +5,11 @@ namespace Tests\Feature\Ai;
 use App\Enums\AiChangesetItemStatus;
 use App\Enums\AiChangesetStatus;
 use App\Enums\AiRunState;
-use App\Enums\AiThreadKind;
 use App\Jobs\RunAgentJob;
 use App\Models\Management\AiSchedule;
 use App\Models\Management\Space;
 use App\Models\Space\AiChangeset;
 use App\Models\Space\AiConversation;
-use App\Models\Space\AiGlossarySuggestion;
 use App\Models\Space\AiMessage;
 use App\Models\Space\AiRun;
 use App\Models\Space\AiRunEvent;
@@ -61,14 +59,11 @@ class AiSpaceDatabaseTest extends TestCase
         $reviewing = $this->thread(AiRunState::Completed);
         $changeset = AiChangeset::create(['space_id' => $this->space->id, 'run_id' => $reviewing->runs()->value('id'), 'actor_id' => $this->user->id, 'title' => 'Edits', 'status' => AiChangesetStatus::Open]);
         $changeset->items()->create(['target_type' => 'content', 'target_id' => 'c1', 'path' => 'title', 'after' => 'New', 'status' => AiChangesetItemStatus::Pending]);
-        $suggestions = AiConversation::create(['space_id' => $this->space->id, 'kind' => AiThreadKind::Suggestions, 'surface' => 'learning', 'last_activity_at' => now()]);
-        AiGlossarySuggestion::create(['space_id' => $this->space->id, 'source_locale' => 'en', 'term' => 'Checkout', 'status' => AiGlossarySuggestion::STATUS_PENDING]);
 
-        $rows = collect($this->getJson("/mgmt/v1/spaces/{$this->space->id}/ai/threads")->assertOk()->assertJsonPath('meta.attention', 3)->json('data'))->keyBy('id');
+        $rows = collect($this->getJson("/mgmt/v1/spaces/{$this->space->id}/ai/threads")->assertOk()->assertJsonPath('meta.attention', 2)->json('data'))->keyBy('id');
 
         $this->assertSame(['needs_input', 0], [$rows[$waiting->id]['status'], $rows[$waiting->id]['entry_count']]);
         $this->assertSame(['needs_review', 1], [$rows[$reviewing->id]['status'], $rows[$reviewing->id]['entry_count']]);
-        $this->assertSame(['needs_review', 1], [$rows[$suggestions->id]['status'], $rows[$suggestions->id]['entry_count']]);
         $this->assertFalse(Schema::hasTable('ai_runs'));
     }
 

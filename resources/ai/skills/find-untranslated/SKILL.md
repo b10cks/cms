@@ -3,7 +3,7 @@ name: find-untranslated
 description: Finds content with missing, empty or outdated translations in a language and writes the translations to their drafts.
 b10cks:
   surfaces: [cmdk, bulk:content]
-  tools: [find_translation_work, get_translation_task, propose_translation, get_entry, lookup_glossary, search_knowledge, read_knowledge]
+  tools: [find_translation_work, get_translation_task, propose_translation, get_entry, search_knowledge, read_knowledge]
   output: text
 ---
 
@@ -25,7 +25,7 @@ The tools choose the destination row, create missing translation entries in the 
 - `stale`: the source changed from `previous_source` to `source`. Revise `current` to match the new source, and keep the wording of `current` wherever the source did not change, since an editor may have written it.
 - `same_as_source`: translate it, unless the text is a name, code or term that stays the same in the target language. Then leave the unit out.
 - Use `memory` as the translation when a unit has one, unless the surrounding text needs a different form.
-- Follow `glossary`: use the required wording, keep `do_not_translate` terms as they are, avoid `forbidden` variants. `examples` show how this space translated similar text before.
+- `examples` show how this space translated similar text before.
 - Rich text units are HTML. Keep every tag, attribute, link target, placeholder (such as `{name}` or `%s`) and inline code exactly, and translate only the text between them.
 - Keep the register (formal or informal) and the tone of the source. Search the knowledge base for style guides when the request mentions one.
 

@@ -277,7 +277,7 @@ class ManagementServerTest extends TestCase
             'executionId', 'releaseId', 'commentId', 'templateId', 'configId', 'backupId',
             'migrationId', 'inviteId', 'noteId', 'iconId', 'collectionId', 'shareId',
             'packageId', 'notificationId', 'periodId', 'roleId', 'blueprintId',
-            'fieldPluginId', 'glossaryId', 'importId', 'revisionId', 'rowId', 'questionId', 'scanId', 'runId',
+            'fieldPluginId', 'importId', 'revisionId', 'questionId', 'scanId', 'runId',
         ];
 
         foreach (OperationRegistry::all() as $name => $operation) {

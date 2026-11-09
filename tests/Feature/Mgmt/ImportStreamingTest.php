@@ -4,7 +4,6 @@ namespace Tests\Feature\Mgmt;
 
 use App\Http\Controllers\Mgmt\AssetDataImportController;
 use App\Http\Controllers\Mgmt\Concerns\RespondsWithImportRun;
-use App\Models\Management\AiGlossary;
 use App\Models\Management\Space;
 use App\Models\Space\Asset;
 use App\Models\Space\DataSource;
@@ -263,24 +262,6 @@ class ImportStreamingTest extends TestCase
         $this->assertSame('error', end($events)['type']);
         $this->assertSame('Failed to import icons: disk full', end($events)['message']);
         $this->assertNotNull($icon->fresh()?->id);
-    }
-
-    #[Test]
-    public function a_glossary_import_streams_progress_and_keeps_its_json_envelope_otherwise(): void
-    {
-        $glossary = AiGlossary::create([...AiGlossary::ownerAttributes($this->space), 'name' => 'Shop', 'enabled' => true]);
-        $csv = "source_locale,term,case_sensitive,do_not_translate,forbidden,note\nen,Checkout,0,0,,\nen,Cart,0,0,,\n";
-
-        $response = $this->stream("ai/glossaries/{$glossary->id}/import", [
-            'file' => UploadedFile::fake()->createWithContent('terms.csv', $csv),
-        ]);
-
-        $this->assertSame(['processed' => 2, 'total' => 2], $this->progress($response)[1]);
-        $this->assertSame(2, $this->doneData($response)['summary']['total_success']);
-
-        $this->post($this->url("ai/glossaries/{$glossary->id}/import"), [
-            'file' => UploadedFile::fake()->createWithContent('terms.csv', $csv),
-        ], ['Accept' => 'application/json'])->assertOk()->assertJsonPath('data.summary.total_success', 2);
     }
 
     private function url(string $path): string

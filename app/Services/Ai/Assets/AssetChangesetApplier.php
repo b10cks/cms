@@ -2,7 +2,6 @@
 
 namespace App\Services\Ai\Assets;
 
-use App\Actions\Ai\AcceptanceReview;
 use App\Actions\Ai\DecidableItems;
 use App\Enums\AiChangesetItemStatus;
 use App\Models\Management\Space;
@@ -61,17 +60,10 @@ class AssetChangesetApplier
 
     private bool $bulk = false;
 
-    /** @var array<string, list<array{finding_id: string, reason: string}>> */
-    private array $overrides = [];
-
-    /** @var array<string, list<array<string, mixed>>> */
-    private array $overrideRecords = [];
-
     public function __construct(
         private readonly AuthorizationService $auth,
         private readonly AssetFieldRules $rules,
         private readonly AssetStructure $structure,
-        private readonly AcceptanceReview $review,
     ) {}
 
     /**
@@ -79,29 +71,25 @@ class AssetChangesetApplier
      * @param  bool  $overwrite  apply conflicting field and folder items over the current value
      * @param  array<string, string>  $values  reviewer edits of text proposals, item ID => text
      * @param  bool  $bulk  leave an item that came to need an individual look since it was selected
-     * @param  array<string, list<array{finding_id: string, reason: string}>>  $overrides  reasons for keeping deterministic findings; bulk decisions take none
-     * @return array{accepted: int, conflicts: int, blocked: int, edited: Collection<int, AiChangesetItem>}
+     * @return array{accepted: int, conflicts: int, blocked: int}
      *
      * @throws AuthorizationException when the user may not create a folder or tag that is needed
      */
-    public function accept(Collection $items, Space $space, User $user, bool $overwrite = false, array $values = [], bool $bulk = false, array $overrides = []): array
+    public function accept(Collection $items, Space $space, User $user, bool $overwrite = false, array $values = [], bool $bulk = false): array
     {
         $this->selected = $items->pluck('id')->flip()->map(fn () => true)->all();
         $this->runs = [];
         $this->changesets = [];
         $this->accepted = $this->conflicts = $this->blocked = 0;
         $this->bulk = $bulk;
-        $this->overrides = $overrides;
         $this->authorizeCreation($items, $space, $user);
-        $edited = collect();
-
         try {
             foreach ($items->whereIn('target_type', AssetReview::STRUCTURE_TYPES) as $item) {
                 $this->structureItem($item, $space, $user);
             }
 
             foreach ($items->where('target_type', AiChangesetItem::TARGET_ASSET)->groupBy('target_id') as $assetId => $group) {
-                $edited = $edited->merge($this->asset((string) $assetId, $group->values(), $space, $user, $overwrite, $values));
+                $this->asset((string) $assetId, $group->values(), $space, $user, $overwrite, $values);
             }
         } finally {
             foreach (array_keys($this->changesets) as $id) {
@@ -109,7 +97,7 @@ class AssetChangesetApplier
             }
         }
 
-        return ['accepted' => $this->accepted, 'conflicts' => $this->conflicts, 'blocked' => $this->blocked, 'edited' => $edited];
+        return ['accepted' => $this->accepted, 'conflicts' => $this->conflicts, 'blocked' => $this->blocked];
     }
 
     /** A folder or tag proposal the reviewer accepted on its own. */
@@ -118,7 +106,7 @@ class AssetChangesetApplier
         $ids = $this->lockSet(collect([$item]));
 
         $this->decide(function () use ($item, $ids, $space, $user): void {
-            $proposal = $this->checked($this->eligible(DecidableItems::lockOpen($ids), [$item->id]), [], $user)->first();
+            $proposal = $this->eligible(DecidableItems::lockOpen($ids), [$item->id])->first();
             if ($proposal === null) {
                 return;
             }
@@ -133,17 +121,18 @@ class AssetChangesetApplier
     /**
      * @param  Collection<int, AiChangesetItem>  $selected
      * @param  array<string, string>  $values
-     * @return Collection<int, AiChangesetItem> applied items the reviewer edited
      */
-    private function asset(string $assetId, Collection $selected, Space $space, User $user, bool $overwrite, array $values): Collection
+    private function asset(string $assetId, Collection $selected, Space $space, User $user, bool $overwrite, array $values): void
     {
         $ids = $this->lockSet($selected);
         $selectedIds = $selected->pluck('id')->all();
 
-        return $this->decide(function () use ($assetId, $ids, $selectedIds, $space, $user, $overwrite, $values): Collection {
-            $items = $this->checked($this->eligible(DecidableItems::lockOpen($ids), $selectedIds), $values, $user);
+        $this->decide(function () use ($assetId, $ids, $selectedIds, $space, $user, $overwrite, $values): void {
+            $items = $this->eligible(DecidableItems::lockOpen($ids), $selectedIds);
 
-            return $items->isEmpty() ? collect() : $this->decideAsset($assetId, $items, $space, $user, $overwrite, $values);
+            if ($items->isNotEmpty()) {
+                $this->decideAsset($assetId, $items, $space, $user, $overwrite, $values);
+            }
         });
     }
 
@@ -153,16 +142,15 @@ class AssetChangesetApplier
      *
      * @param  Collection<int, AiChangesetItem>  $items
      * @param  array<string, string>  $values
-     * @return Collection<int, AiChangesetItem> applied items the reviewer edited
      */
-    private function decideAsset(string $assetId, Collection $items, Space $space, User $user, bool $overwrite, array $values): Collection
+    private function decideAsset(string $assetId, Collection $items, Space $space, User $user, bool $overwrite, array $values): void
     {
         $asset = Asset::query()->lockForUpdate()->find($assetId);
 
         if (! $asset) {
             $items->each(fn (AiChangesetItem $item) => $this->conflict($item, null, AssetReview::PROBLEM_CHANGED, 'The asset no longer exists.'));
 
-            return collect();
+            return;
         }
 
         $fields = \is_array(data_get($asset->data, 'fields')) ? $asset->data['fields'] : [];
@@ -196,7 +184,7 @@ class AssetChangesetApplier
 
         $ready = $this->completeBundles($ready);
         if ($ready->isEmpty()) {
-            return collect();
+            return;
         }
 
         // Metadata must fit the folder the asset ends up in.
@@ -216,7 +204,7 @@ class AssetChangesetApplier
                 $this->conflict($item, $item->before, AssetReview::PROBLEM_INVALID, implode(' ', $problems));
             });
 
-            return collect();
+            return;
         }
 
         $tags = array_values(array_filter((array) ($asset->tags ?? []), 'is_string'));
@@ -240,8 +228,6 @@ class AssetChangesetApplier
         $asset->save();
 
         $ready->each(fn (AiChangesetItem $item) => $this->accepted($item, $user));
-
-        return $ready->filter(fn (AiChangesetItem $item) => $item->final !== null)->values();
     }
 
     /**
@@ -461,7 +447,6 @@ class AssetChangesetApplier
 
     private function accepted(AiChangesetItem $item, User $user): void
     {
-        AcceptanceReview::record($item, $this->overrideRecords);
         $review = $item->review ?? [];
         unset($review['problem']);
 
@@ -527,21 +512,6 @@ class AssetChangesetApplier
         if (! $this->auth->canInSpace($user, $space, $ability)) {
             throw new AuthorizationException('You cannot create the folders or tags these changes need.');
         }
-    }
-
-    /**
-     * What an accept may apply now.
-     *
-     * @param  Collection<int, AiChangesetItem>  $items
-     * @param  array<string, string>  $values
-     * @return Collection<int, AiChangesetItem>
-     */
-    private function checked(Collection $items, array $values, User $user): Collection
-    {
-        $checked = $this->review->check($items, $values, $this->overrides, $user, $this->bulk);
-        $this->overrideRecords = [...$this->overrideRecords, ...$checked['overrides']];
-
-        return $checked['ready'];
     }
 
     /**

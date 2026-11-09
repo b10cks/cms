@@ -3,8 +3,6 @@
 namespace App\Services\Ai\Knowledge;
 
 use App\Enums\AiKnowledgeType;
-use App\Models\Management\AiGlossary;
-use App\Models\Management\AiGlossaryConcept;
 use App\Models\Management\AiKnowledgeDocument;
 use App\Models\Management\AiKnowledgeRevision;
 use App\Models\Management\Space;
@@ -18,7 +16,7 @@ use Illuminate\Support\Facades\DB;
 /**
  * Resolves knowledge for a space through space, owning team and ancestor teams
  * (nearest first). Only enabled, published documents count; the nearest document
- * with a slug and the nearest wording per locale shadow the rest.
+ * with a slug shadows the rest.
  */
 class KnowledgeResolver
 {
@@ -48,61 +46,18 @@ class KnowledgeResolver
     }
 
     /**
-     * The rows of every enabled glossary a space uses. A language whose wording a glossary
-     * in a nearer layer already holds drops out of this row, and a row with no language
-     * left drops out whole.
-     *
-     * @return list<GlossaryConcept>
-     */
-    public function glossaryConcepts(Space $space): array
-    {
-        $glossaries = $this->glossaries($space);
-
-        if ($glossaries->isEmpty()) {
-            return [];
-        }
-
-        $order = $glossaries->pluck('id')->flip();
-        $seen = [];
-        $concepts = [];
-
-        AiGlossaryConcept::query()
-            ->whereIn('glossary_id', $glossaries->pluck('id'))
-            ->with('terms')
-            ->orderBy('id')
-            ->get()
-            ->sortBy(fn (AiGlossaryConcept $concept) => $order[$concept->glossary_id])
-            ->each(function (AiGlossaryConcept $model) use (&$seen, &$concepts) {
-                $concept = GlossaryConcept::fromModel($model);
-                $kept = array_filter($concept->languages, static function (GlossaryWording $language) use (&$seen, $concept) {
-                    $key = $language->locale.'|'.mb_strtolower($language->name());
-                    $seen[$key] ??= $concept->glossaryId;
-
-                    return $seen[$key] === $concept->glossaryId;
-                });
-
-                if ($kept !== []) {
-                    $concepts[] = new GlossaryConcept($kept, $concept->keepExact, $concept->note, $concept->id, $concept->glossaryId);
-                }
-            });
-
-        return $concepts;
-    }
-
-    /**
      * The policy as it stands now, unstored: for callers without a run, like MCP.
      * One read transaction, so a publication cannot land between its reads.
      */
     public function livePolicy(Space $space): PolicySnapshot
     {
-        return DB::connection((new AiGlossary)->getConnectionName())->transaction(function () use ($space) {
+        return DB::connection((new AiKnowledgeDocument)->getConnectionName())->transaction(function () use ($space) {
             $documents = $this->documents($space)->load('publishedRevision:id,document_id,revision,hash');
             $styles = AiKnowledgeRevision::query()
                 ->whereIn('id', $documents->where('type', AiKnowledgeType::Style)->pluck('published_revision_id'))
                 ->pluck('markdown', 'id');
 
             return PolicySnapshot::fromParts([
-                'concepts' => array_map(static fn (GlossaryConcept $concept) => $concept->toArray(), $this->glossaryConcepts($space)),
                 'documents' => $documents->map(fn (AiKnowledgeDocument $document) => [
                     'id' => $document->id,
                     'slug' => $document->slug,
@@ -210,21 +165,5 @@ class KnowledgeResolver
         $row = AiPolicySnapshot::query()->findOrFail($id);
 
         return $this->loaded[$id] = PolicySnapshot::fromPayload($row->payload, $row->id, $row->fingerprint);
-    }
-
-    /**
-     * @return Collection<int, AiGlossary> nearest layer first
-     */
-    private function glossaries(Space $space): Collection
-    {
-        $teamIds = $this->layers->teamIds($space);
-        $rank = $this->layers->rank($teamIds);
-
-        return AiGlossary::query()
-            ->inLayers($space->id, $teamIds)
-            ->where('enabled', true)
-            ->get()
-            ->sortBy(fn (AiGlossary $glossary) => $rank($glossary->scope, $glossary->space_id ?? $glossary->team_id))
-            ->values();
     }
 }

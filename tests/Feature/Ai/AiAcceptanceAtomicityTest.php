@@ -25,13 +25,11 @@ use App\Models\Space\DataEntry;
 use App\Models\Space\DataSource;
 use App\Models\Space\TranslationSource;
 use App\Models\User;
-use App\Services\Ai\Learning\EditLearning;
 use Illuminate\Database\Events\QueryExecuted;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
-use Illuminate\Support\Facades\Exceptions;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use PHPUnit\Framework\Attributes\Test;
@@ -309,7 +307,7 @@ class AiAcceptanceAtomicityTest extends TestCase
     }
 
     #[Test]
-    public function a_reviewers_edit_is_applied_recorded_and_its_learning_cannot_undo_the_commit(): void
+    public function a_reviewers_edit_is_applied_and_recorded(): void
     {
         $content = $this->page(['title' => 'Hello', 'summary' => 'World']);
         $changeset = $this->changeset();
@@ -327,9 +325,6 @@ class AiAcceptanceAtomicityTest extends TestCase
             'created_at' => now(),
             'updated_at' => now(),
         ]);
-        $this->mock(EditLearning::class)->shouldReceive('fromAcceptedEdits')->once()->andThrow(new RuntimeException('Learning is down.'));
-        $this->app->forgetInstance(AcceptAiChangesetItems::class);
-        Exceptions::fake();
 
         $this->postJson($this->url("ai/changesets/{$changeset->id}/accept"), ['item_ids' => [$item->id], 'values' => [$item->id => 'Hello, reviewed']])
             ->assertOk()
@@ -340,7 +335,6 @@ class AiAcceptanceAtomicityTest extends TestCase
         $this->assertSame('Hello, reviewed', $item->refresh()->final);
         $this->assertSame('Hello there', $item->after);
         $this->assertSame(1, TranslationSource::query()->where('changeset_item_id', $item->id)->where('origin', TranslationSource::ORIGIN_REVIEW)->where('content_id', $content->id)->count());
-        Exceptions::assertReported(RuntimeException::class);
     }
 
     #[Test]

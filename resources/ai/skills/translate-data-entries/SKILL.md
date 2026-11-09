@@ -16,6 +16,5 @@ Rules:
 - Never rename, add or drop keys
 - Values are usually short labels or phrases; translate each in the most natural form for its role
 - Keep HTML tags, template placeholders (such as {variable}) and special characters as they are
-- Follow the glossary when one is given
 
 Output only the flat JSON object: no markdown fences, no wrapper keys, no explanations.

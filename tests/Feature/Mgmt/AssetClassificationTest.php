@@ -3,7 +3,6 @@
 namespace Tests\Feature\Mgmt;
 
 use App\Jobs\Space\ClassifyAssetJob;
-use App\Models\Management\AiGlossary;
 use App\Models\Management\AssetClassificationRun;
 use App\Models\Management\Space;
 use App\Models\Management\Storage;
@@ -28,18 +27,14 @@ use Tests\Support\FakeAiDriver;
 use Tests\TestCase;
 use Tests\Traits\FakesAi;
 use Tests\Traits\SpaceTestingTrait;
-use Tests\Traits\WritesGlossaryRows;
 
 class AssetClassificationTest extends TestCase
 {
     use FakesAi;
     use RefreshDatabase;
     use SpaceTestingTrait;
-    use WritesGlossaryRows;
 
     private FakeAiDriver $driver;
-
-    private string $cheapRow;
 
     protected User $user;
 
@@ -667,135 +662,20 @@ class AssetClassificationTest extends TestCase
     }
 
     #[Test]
-    public function generated_copy_is_checked_per_language_and_only_violations_are_refused(): void
+    public function an_edit_saved_while_the_model_writes_stays(): void
     {
         $this->mockRegistry(supportsVision: true);
-        $glossary = $this->classificationGlossary();
-        $this->glossaryRow($glossary, ['de' => ['avoid' => ['klimaneutral*']]]);
         $asset = $this->createAsset(['metadata' => ['width' => 100, 'height' => 100], 'tags' => []]);
         $this->storeImage($asset);
-        $this->driver->push(FakeAiDriver::text(json_encode([
-            '_default.title' => 'Office chair',
-            '_default.alt' => 'A cheap chair',
-            'de.title' => 'Ein cheap Stuhl',
-            'de.alt' => 'Ein klimaneutraler Stuhl',
-        ])));
-        $classification = AssetClassificationRun::query()->create(['space_id' => $this->space->id, 'queued' => 1, 'enqueuing' => false]);
+        $this->driver->push(function () use ($asset) {
+            $asset->fresh()->forceFill(['data' => ['fields' => ['de' => ['title' => 'Von Hand']]]])->save();
 
-        (new ClassifyAssetJob($this->space, $this->user->id, $asset->id, ['_default', 'de'], runId: $classification->id))->handle();
-
-        $fields = $asset->fresh()->data['fields'];
-        $this->assertSame(['title' => 'Office chair'], $fields['_default']);
-        $this->assertSame(['title' => 'Ein cheap Stuhl'], $fields['de'], 'English wording is no rule in German, and the valid value stays.');
-        $this->assertSame('partial', $asset->fresh()->metadata['ai_classification']['report']['status']);
-        $this->assertCount(1, $this->driver->transcripts, 'One pass: a refused value stays empty for the next classification.');
-
-        $report = $this->getJson("/mgmt/v1/ai/assets/classify/{$classification->id}?spaceId={$this->space->id}")
-            ->assertOk()
-            ->assertJsonPath('data.updated', 1)
-            ->assertJsonPath('data.field_report.partial', 1)
-            ->json('data.field_report.assets.0');
-        $this->assertEqualsCanonicalizing(['_default.title', 'de.title'], $report['written']);
-        $this->assertEqualsCanonicalizing([
-            ['key' => '_default.alt', 'reason' => 'The glossary avoids "cheap", write "affordable".'],
-            ['key' => 'de.alt', 'reason' => 'The glossary avoids "klimaneutraler".'],
-        ], $report['rejected']);
-        $run = AiRun::query()->where('surface', 'asset')->sole();
-        $this->assertEqualsCanonicalizing(['_default.alt', 'de.alt'], array_column($run->result['glossary_findings'], 'key'));
-    }
-
-    #[Test]
-    public function the_model_reads_the_wording_of_each_requested_language_before_it_writes(): void
-    {
-        $this->mockRegistry(supportsVision: true);
-        $glossary = $this->classificationGlossary();
-        $this->glossaryRow($glossary, ['en' => 'mattress', 'de' => 'Matratze']);
-        $this->glossaryRow($glossary, ['fr' => ['avoid' => ['matelas']]]);
-        $asset = $this->createAsset(['metadata' => ['width' => 100, 'height' => 100], 'data' => ['fields' => ['_default' => ['title' => 'A mattress']]]]);
-        $this->storeImage($asset);
-        $this->driver->push(FakeAiDriver::text(json_encode(['de.alt' => 'Ein Stuhl'])));
+            return FakeAiDriver::text(json_encode(['de.alt' => 'Ein Stuhl', 'de.title' => 'Generiert']));
+        });
 
         (new ClassifyAssetJob($this->space, $this->user->id, $asset->id, ['de']))->handle();
 
-        $system = collect($this->driver->transcripts[0])->firstWhere('role', 'system')['content'];
-        $this->assertStringContainsString('### Writing de', $system);
-        $this->assertStringContainsString('"mattress": write "Matratze" in de', $system, 'A hint in another language still names the wording to write.');
-        $this->assertStringContainsString('never what you describe', $system);
-        $this->assertStringNotContainsString('cheap', $system, 'English wording is not asked of a German answer.');
-        $this->assertStringNotContainsString('matelas', $system);
-
-        $this->driver->push(FakeAiDriver::text(json_encode(['_default.alt' => 'A chair', 'de.title' => 'Stuhl'])));
-        $second = $this->createAsset(['metadata' => ['width' => 100, 'height' => 100], 'tags' => []]);
-        $this->storeImage($second);
-
-        (new ClassifyAssetJob($this->space, $this->user->id, $second->id, ['_default', 'de']))->handle();
-
-        $system = collect($this->driver->transcripts[1])->firstWhere('role', 'system')['content'];
-        $this->assertStringContainsString('### Writing en', $system);
-        $this->assertStringContainsString('"cheap" (write "affordable")', $system);
-    }
-
-    #[Test]
-    public function the_default_language_key_is_checked_in_the_language_of_the_space(): void
-    {
-        $this->mockRegistry(supportsVision: true);
-        $this->space->settings = [...$this->space->settings->toArray(), 'default_language' => 'de', 'languages' => []];
-        $this->space->save();
-        $glossary = $this->classificationGlossary();
-        $this->glossaryRow($glossary, ['de' => ['use' => 'CO2-arm', 'avoid' => ['klimaneutral*']]]);
-        $asset = $this->createAsset(['metadata' => ['width' => 100, 'height' => 100], 'tags' => []]);
-        $this->storeImage($asset);
-        $this->driver->push(FakeAiDriver::text(json_encode(['_default.title' => 'Klimaneutrale Lampe', '_default.alt' => 'A cheap lamp'])));
-
-        (new ClassifyAssetJob($this->space, $this->user->id, $asset->id, ['_default']))->handle();
-
-        $this->assertSame(['alt' => 'A cheap lamp'], $asset->fresh()->data['fields']['_default']);
-        $this->assertSame('The glossary avoids "Klimaneutrale", write "CO2-arm".', $asset->fresh()->metadata['ai_classification']['report']['rejected'][0]['reason']);
-    }
-
-    #[Test]
-    public function the_pinned_policy_decides_and_an_edit_saved_meanwhile_stays(): void
-    {
-        $this->mockRegistry(supportsVision: true);
-        $glossary = $this->classificationGlossary();
-        $asset = $this->createAsset(['metadata' => ['width' => 100, 'height' => 100], 'tags' => []]);
-        $this->storeImage($asset);
-        $this->driver->push(function () use ($glossary, $asset) {
-            $this->glossaryRow($glossary, ['de' => ['avoid' => ['Stuhl']]]);
-            $this->changeGlossaryRow($glossary, $this->cheapRow, ['en' => ['use' => 'affordable']]);
-            $asset->fresh()->forceFill(['data' => ['fields' => ['de' => ['title' => 'Von Hand']]]])->save();
-
-            return FakeAiDriver::text(json_encode([
-                '_default.alt' => 'A cheap chair',
-                'de.alt' => 'Ein Stuhl',
-                'de.title' => 'Generiert',
-            ]));
-        });
-
-        (new ClassifyAssetJob($this->space, $this->user->id, $asset->id, ['_default', 'de']))->handle();
-
-        $fields = $asset->fresh()->data['fields'];
-        $this->assertArrayNotHasKey('_default', $fields, 'The ban the run started with still holds.');
-        $this->assertSame(['title' => 'Von Hand', 'alt' => 'Ein Stuhl'], $fields['de'], 'A ban added later is not this run\'s, and the edit stays.');
-    }
-
-    #[Test]
-    public function refusing_every_value_saves_nothing_and_keeps_what_was_there(): void
-    {
-        $this->mockRegistry(supportsVision: true);
-        $this->classificationGlossary();
-        $asset = $this->createAsset(['metadata' => ['width' => 100, 'height' => 100], 'tags' => [], 'data' => ['fields' => ['_default' => ['alt' => 'A chair']]]]);
-        $this->storeImage($asset);
-        $this->driver->push(FakeAiDriver::text(json_encode(['_default.alt' => 'A cheap chair'])));
-        $classification = AssetClassificationRun::query()->create(['space_id' => $this->space->id, 'queued' => 1, 'enqueuing' => false]);
-
-        (new ClassifyAssetJob($this->space, $this->user->id, $asset->id, ['_default'], overwrite: true, runId: $classification->id))->handle();
-
-        $this->assertSame('A chair', $asset->fresh()->data['fields']['_default']['alt']);
-        $this->getJson("/mgmt/v1/ai/assets/classify/{$classification->id}?spaceId={$this->space->id}")
-            ->assertJsonPath('data.skipped', 1)
-            ->assertJsonPath('data.field_report.none', 1)
-            ->assertJsonPath('data.field_report.assets.0.rejected.0.key', '_default.alt');
+        $this->assertSame(['title' => 'Von Hand', 'alt' => 'Ein Stuhl'], $asset->fresh()->data['fields']['de']);
     }
 
     #[Test]
@@ -851,14 +731,6 @@ class AssetClassificationTest extends TestCase
         $tags = AiRun::query()->where('surface', 'asset')->sole()->result['classification']['tags'];
         $this->assertSame(['Made up'], $tags['unknown']);
         $this->assertSame(['shown' => 200, 'total' => 207, 'truncated' => true], $tags['taxonomy']);
-    }
-
-    private function classificationGlossary(): AiGlossary
-    {
-        $glossary = AiGlossary::create([...AiGlossary::ownerAttributes($this->space), 'name' => 'Shop', 'enabled' => true]);
-        $this->cheapRow = $this->glossaryRow($glossary, ['en' => ['use' => 'affordable', 'avoid' => ['cheap']]]);
-
-        return $glossary;
     }
 
     private function storeImage(Asset $asset): void

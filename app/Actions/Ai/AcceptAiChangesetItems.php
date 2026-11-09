@@ -17,10 +17,8 @@ use App\Services\Ai\Assets\AssetReview;
 use App\Services\Ai\Changesets\BlockTarget;
 use App\Services\Ai\Changesets\CanonicalJson;
 use App\Services\Ai\Changesets\ChangeTargets;
-use App\Services\Ai\Changesets\ContentFlags;
 use App\Services\Ai\Changesets\ContentTarget;
 use App\Services\Ai\Changesets\FieldPath;
-use App\Services\Ai\Learning\EditLearning;
 use App\Services\Ai\Run\ToolError;
 use App\Services\Ai\Threads\AiThreads;
 use App\Services\Ai\Tools\ProposalTool;
@@ -44,7 +42,7 @@ use Illuminate\Validation\ValidationException;
  * Each entry is one transaction: its items are locked and re-read, the entry is
  * written, and the decision recorded, so neither a lost worker nor a competing
  * decision can leave a written entry with an open proposal, or write it twice.
- * What follows a commit (recount, learning, broadcasts) cannot undo it. See
+ * What follows a commit (recount, broadcasts) cannot undo it. See
  * {@see DecidableItems} for the lock order.
  */
 class AcceptAiChangesetItems
@@ -60,12 +58,9 @@ class AcceptAiChangesetItems
         private readonly ChangeTargets $targets,
         private readonly AuthorizationService $auth,
         private readonly CreateContent $createContent,
-        private readonly EditLearning $learning,
         private readonly AiThreads $threads,
         private readonly AssetChangesetApplier $assets,
         private readonly TranslationLineage $lineage,
-        private readonly AcceptanceReview $review,
-        private readonly ContentFlags $flags,
     ) {}
 
     /**
@@ -73,48 +68,40 @@ class AcceptAiChangesetItems
      * @param  bool  $overwrite  apply conflicting items over the current value
      * @param  array<string, string>  $values  reviewer edits of text proposals, item ID => text to apply instead
      * @param  bool  $bulk  a group or "accept all" decision: items that need an individual look are left open, and an entry that fails validation is flagged instead of failing the rest
-     * @param  array<string, list<array{finding_id: string, reason: string}>>  $overrides  reasons for keeping deterministic findings of proposals, item ID => findings; bulk decisions take none
      * @return array{accepted: int, conflicts: int, failed: int, blocked: int}
      *
      * @throws AuthorizationException when the user may not edit one of the targets
-     * @throws ValidationException when a deterministic finding of an applied proposal has no override
+     * @throws ValidationException when an entry fails validation outside a bulk decision
      */
-    public function handle(AiChangeset $changeset, Space $space, User $user, ?array $itemIds = null, bool $overwrite = false, array $values = [], bool $bulk = false, array $overrides = []): array
+    public function handle(AiChangeset $changeset, Space $space, User $user, ?array $itemIds = null, bool $overwrite = false, array $values = [], bool $bulk = false): array
     {
         $items = DecidableItems::query($changeset, $itemIds)->get();
         $bulk = $bulk || $itemIds === null;
         if ($bulk) {
             $items = $items->reject(fn (AiChangesetItem $item) => DecidableItems::needsIndividualLook($item))->values();
             $overwrite = false;
-            $overrides = [];
         }
         DecidableItems::authorize($items, $space, $user, $this->targets, $this->auth);
 
         $assetItems = $items->filter(fn (AiChangesetItem $item) => AssetReview::handles($item->target_type));
         $items = $items->reject(fn (AiChangesetItem $item) => AssetReview::handles($item->target_type));
         $result = ['accepted' => 0, 'conflicts' => 0, 'failed' => 0, 'blocked' => 0];
-        $edited = collect();
 
         try {
             if ($assetItems->isNotEmpty()) {
-                $assets = $this->assets->accept($assetItems, $space, $user, $overwrite, $values, $bulk, $overrides);
-                $result = [...$result, 'accepted' => $assets['accepted'], 'conflicts' => $assets['conflicts'], 'blocked' => $assets['blocked']];
-                $edited = $assets['edited'];
+                $assets = $this->assets->accept($assetItems, $space, $user, $overwrite, $values, $bulk);
+                $result = [...$result, ...$assets];
             }
 
             foreach ($items->groupBy(fn (AiChangesetItem $item) => "{$item->target_type}:".($item->target_id ?? $item->id)) as $group) {
-                $decided = $this->decide($group->pluck('id')->all(), $space, $user, "AI: {$changeset->title}", $overwrite, $values, $bulk, $overrides);
+                $decided = $this->decide($group->pluck('id')->all(), $space, $user, "AI: {$changeset->title}", $overwrite, $values, $bulk);
                 $result['accepted'] += $decided['accepted'];
                 $result['conflicts'] += $decided['conflicts'];
                 $result['failed'] += $decided['failed'];
-                $edited = $edited->merge($decided['edited']);
             }
         } finally {
             // Entries decided before a later one threw stay decided and count.
             DecidableItems::settle($changeset->id);
-            if ($edited->isNotEmpty()) {
-                rescue(fn () => $this->learning->fromAcceptedEdits($space, $user, $edited));
-            }
             rescue(fn () => $this->threads->changedByRun($changeset->run_id));
         }
 
@@ -126,20 +113,17 @@ class AcceptAiChangesetItems
      *
      * @param  list<string>  $ids
      * @param  array<string, string>  $values
-     * @param  array<string, list<array{finding_id: string, reason: string}>>  $overrides
-     * @return array{accepted: int, conflicts: int, failed: int, edited: Collection<int, AiChangesetItem>}
+     * @return array{accepted: int, conflicts: int, failed: int}
      */
-    private function decide(array $ids, Space $space, User $user, string $message, bool $overwrite, array $values, bool $bulk, array $overrides): array
+    private function decide(array $ids, Space $space, User $user, string $message, bool $overwrite, array $values, bool $bulk): array
     {
         try {
             // Muted, as the entry's save would announce a state not yet committed.
-            $decided = Content::withoutBroadcasts(fn () => DecidableItems::transaction(function () use ($ids, $space, $user, $message, $overwrite, $values, $bulk, $overrides) {
+            $decided = Content::withoutBroadcasts(fn () => DecidableItems::transaction(function () use ($ids, $space, $user, $message, $overwrite, $values, $bulk) {
                 $items = DecidableItems::lockOpen($ids);
                 if ($bulk) {
                     $items = $items->reject(fn (AiChangesetItem $item) => DecidableItems::needsIndividualLook($item))->values();
                 }
-                $checked = $this->review->check($items, $values, $overrides, $user, $bulk);
-                $items = $checked['ready'];
 
                 /** @var AiChangesetItem|null $first */
                 $first = $items->first();
@@ -151,28 +135,22 @@ class AcceptAiChangesetItems
                     default => $this->update($items, $space, $user, $message, $overwrite, $values),
                 };
 
-                $applied->each(function (AiChangesetItem $item) use ($user, $checked) {
-                    AcceptanceReview::record($item, $checked['overrides']);
-                    $item->update([
-                        'status' => AiChangesetItemStatus::Accepted,
-                        'decided_by_id' => $user->id,
-                        'decided_at' => now(),
-                        'open_findings' => ContentFlags::openCount($item),
-                    ]);
-                });
-                $this->flags->supersede($applied);
+                $applied->each(fn (AiChangesetItem $item) => $item->update([
+                    'status' => AiChangesetItemStatus::Accepted,
+                    'decided_by_id' => $user->id,
+                    'decided_at' => now(),
+                ]));
 
-                $edited = $applied->filter(fn (AiChangesetItem $item) => $item->final !== null)->values();
-                $this->lineage->recordEdits($edited->where('target_type', AiChangesetItem::TARGET_CONTENT)->values());
+                $this->lineage->recordEdits($applied->filter(fn (AiChangesetItem $item) => $item->target_type === AiChangesetItem::TARGET_CONTENT && $item->final !== null)->values());
 
-                return ['accepted' => $applied->count(), 'conflicts' => $conflicted->count(), 'edited' => $edited, 'content' => $content];
+                return ['accepted' => $applied->count(), 'conflicts' => $conflicted->count(), 'content' => $content];
             }));
         } catch (ValidationException $e) {
             if (! $bulk) {
                 throw $e;
             }
 
-            return ['accepted' => 0, 'conflicts' => 0, 'failed' => $this->flagInvalid($ids, $e), 'edited' => collect()];
+            return ['accepted' => 0, 'conflicts' => 0, 'failed' => $this->flagInvalid($ids, $e)];
         }
 
         if ($decided['content'] !== null) {

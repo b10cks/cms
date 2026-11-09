@@ -8,7 +8,7 @@ use App\Models\User;
 use App\Policies\Concerns\AuthorizesWithAbilities;
 
 /**
- * Skills, knowledge documents and glossaries belong to a space or a team.
+ * Skills and knowledge documents belong to a space or a team.
  * Spaces use `ai.view` / `ai.manage`; teams use `team.view` / `team.ai.manage`.
  * Rows are always loaded through the owner (`ownedBy`), so a row of another
  * owner is never reachable through these checks.

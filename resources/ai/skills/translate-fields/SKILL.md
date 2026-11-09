@@ -3,7 +3,7 @@ name: translate-fields
 description: Translates a set of content fields from one language to another, keeping keys, markup and placeholders intact.
 b10cks:
   surfaces: [translate, cmdk, bulk:content]
-  tools: [get_entry, find_translation_work, get_translation_task, propose_translation, lookup_glossary, search_knowledge]
+  tools: [get_entry, find_translation_work, get_translation_task, propose_translation, search_knowledge]
   output: schema.json
 ---
 
@@ -20,7 +20,6 @@ Rules:
 - Keep HTML tags, template placeholders (such as {variable}) and special characters as they are
 - Keep markdown syntax, inline code and formatting markers unless the surrounding language requires translation
 - Use correct grammar, punctuation and capitalization, and keep the register (formal or informal) of the original
-- Follow the glossary when one is given
 
 When the context holds `fields`, output only the flat JSON object: no markdown fences, no wrapper keys, no explanations. Do not call tools.
 
@@ -32,4 +31,4 @@ When the context holds `targets`, or the request is a task instead of a `fields`
 2. For each of them call `get_translation_task`, then `propose_translation` with its units, `source_version_id` and `version_id`. A `missing` translation also needs the entry `name` in the target language.
 3. Leave entries with status `current` or `skipped` as they are.
 
-Translate units with the rules above. For a `stale` unit, revise `current` to match the change from `previous_source` to `source` and keep its wording where the source did not change. Use a unit's `memory` when it has one, and follow the `glossary` the task returns. The tools write to the right translation entry; when one returns an error, fix what it names or leave the entry. Finish with a short summary of what you wrote and what you left, with the reason.
+Translate units with the rules above. For a `stale` unit, revise `current` to match the change from `previous_source` to `source` and keep its wording where the source did not change. Use a unit's `memory` when it has one. The tools write to the right translation entry; when one returns an error, fix what it names or leave the entry. Finish with a short summary of what you wrote and what you left, with the reason.

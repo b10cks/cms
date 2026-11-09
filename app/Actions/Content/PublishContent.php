@@ -21,8 +21,7 @@ class PublishContent extends BasePublishAction
         protected SearchService $searchService,
         protected ContentSchemaValidator $contentSchemaValidator,
         protected ContentSerialAssigner $serialAssigner,
-    ) {
-    }
+    ) {}
 
     public function execute(array $data, Content $content, Space $space, Authenticatable|User|null $owner): void
     {
@@ -44,7 +43,7 @@ class PublishContent extends BasePublishAction
             'publish',
         );
 
-        if (!$contentValidation->isValid()) {
+        if (! $contentValidation->isValid()) {
             throw ValidationException::withMessages($contentValidation->errors);
         }
 
@@ -75,7 +74,7 @@ class PublishContent extends BasePublishAction
 
         if ($success) {
             $this->loadPublishedVersion($content);
-            self::afterPublish($content, $space, $owner);
+            self::afterPublish($content);
         }
     }
 

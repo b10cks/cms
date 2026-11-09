@@ -2,14 +2,10 @@
 
 namespace App\Http\Controllers\Mgmt\Ai;
 
-use App\Actions\Ai\AcceptAiGlossarySuggestion;
-use App\Enums\AiThreadKind;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Ai\UpdateAiThreadRequest;
 use App\Http\Resources\Management\Ai\AiAttachmentResource;
 use App\Http\Resources\Management\Ai\AiChangesetResource;
-use App\Http\Resources\Management\Ai\AiGlossaryResource;
-use App\Http\Resources\Management\Ai\AiGlossarySuggestionResource;
 use App\Http\Resources\Management\Ai\AiRunResource;
 use App\Http\Resources\Management\Ai\AiThreadResource;
 use App\Models\Management\AiKnowledgeDocument;
@@ -18,7 +14,6 @@ use App\Models\Space\AiAttachment;
 use App\Models\Space\AiChangeset;
 use App\Models\Space\AiChangesetItem;
 use App\Models\Space\AiConversation;
-use App\Models\Space\AiGlossarySuggestion;
 use App\Models\Space\AiMessage;
 use App\Models\Space\AiRun;
 use App\Models\User;
@@ -31,7 +26,7 @@ use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 /**
  * The threads a member can see: their own chats, chats shared with the
- * space, and with `ai.manage` the schedule and suggestion threads. Status is
+ * space, and with `ai.manage` the schedule threads. Status is
  * derived per row in SQL, see {@see AiConversation::scopeWithStatus()}.
  */
 class AiThreadController extends Controller
@@ -67,20 +62,15 @@ class AiThreadController extends Controller
         return AiThreadResource::collection($threads)->additional(['meta' => ['attention' => $attention, 'settled' => $settled]]);
     }
 
-    public function show(Request $request, Space $space, string $thread, ChangeTargets $targets, AuthorizationService $auth, AcceptAiGlossarySuggestion $suggestions): JsonResponse
+    public function show(Request $request, Space $space, string $thread, ChangeTargets $targets, AuthorizationService $auth): JsonResponse
     {
         $model = $this->findThread($request, $space, $thread);
-        $data = [...(new AiThreadResource($model))->resolve($request), 'context' => $model->context];
 
-        if ($model->kind === AiThreadKind::Suggestions) {
-            $pending = AiGlossarySuggestion::query()->where('space_id', $space->id)->where('status', AiGlossarySuggestion::STATUS_PENDING)->with('actor')->latest()->limit(self::LIST_LIMIT)->get();
-            $data['suggestions'] = AiGlossarySuggestionResource::collection($pending);
-            $data['glossaries'] = AiGlossaryResource::collection($pending->isNotEmpty() ? $suggestions->glossariesFor($space, $request->user()) : collect());
-        } else {
-            $data['turns'] = $this->turns($model, $space, $request->user(), $targets, $auth);
-        }
-
-        return response()->json(['data' => $data]);
+        return response()->json(['data' => [
+            ...(new AiThreadResource($model))->resolve($request),
+            'context' => $model->context,
+            'turns' => $this->turns($model, $space, $request->user(), $targets, $auth),
+        ]]);
     }
 
     public function update(UpdateAiThreadRequest $request, Space $space, string $thread, AiThreads $threads): AiThreadResource

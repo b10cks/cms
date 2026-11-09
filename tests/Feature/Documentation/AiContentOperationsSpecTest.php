@@ -57,8 +57,8 @@ class AiContentOperationsSpecTest extends TestCase
         $this->assertSame('integer', $item['attempts']['type']);
 
         $review = $schemas['AiChangesetItemReview']['properties'];
-        $this->assertSame(['overrides', 'evidence', 'policy', 'locales'], array_keys($review));
-        $this->assertSame(['changed', 'conflicts', 'flagged'], array_keys($schemas['AiOperationChanges']['properties']['summary']['properties']));
+        $this->assertSame(['evidence'], array_keys($review));
+        $this->assertSame(['changed', 'conflicts'], array_keys($schemas['AiOperationChanges']['properties']['summary']['properties']));
 
         $run = $schemas['AiRunResource']['properties'];
         $this->assertSame('#/components/schemas/AiProviderRetry', $run['provider_retry']['allOf'][0]['$ref']);
@@ -77,7 +77,6 @@ class AiContentOperationsSpecTest extends TestCase
         $accept = $paths['/mgmt/v1/spaces/{space}/ai/changesets/{changeset}/accept']['post'];
         $body = $accept['requestBody']['content']['application/json']['schema']['properties'];
         $this->assertSame('object', $body['values']['type']);
-        $this->assertSame('#/components/schemas/AiFindingOverride', $body['overrides']['additionalProperties']['items']['$ref']);
         $this->assertSame('#/components/schemas/ValidationError', $schema($accept, '422')['$ref']);
 
         $approve = $paths[self::OPERATIONS.'/approve']['post'];

@@ -3,7 +3,6 @@
 namespace Tests\Feature\Mgmt;
 
 use App\Events\Space\DataSourceContentChanged;
-use App\Models\Management\AiGlossary;
 use App\Models\Management\Space;
 use App\Models\Space\DataEntry;
 use App\Models\Space\DataSource;
@@ -15,14 +14,12 @@ use Tests\Support\FakeAiDriver;
 use Tests\TestCase;
 use Tests\Traits\FakesAi;
 use Tests\Traits\SpaceTestingTrait;
-use Tests\Traits\WritesGlossaryRows;
 
 class DataEntryTranslationStreamTest extends TestCase
 {
     use FakesAi;
     use LazilyRefreshDatabase;
     use SpaceTestingTrait;
-    use WritesGlossaryRows;
 
     #[Test]
     public function it_counts_translated_entries_and_broadcasts_the_change(): void
@@ -57,36 +54,6 @@ class DataEntryTranslationStreamTest extends TestCase
         $this->assertStringContainsString('"translated_count":2', $body);
         $this->assertSame('Hallo', DataEntry::where('key', 'hello')->first()->dimensions['de']);
         Event::assertDispatched(DataSourceContentChanged::class);
-    }
-
-    #[Test]
-    public function blocking_findings_come_back_with_the_result_and_the_text_stays_saved(): void
-    {
-        $owner = User::factory()->create();
-        $space = Space::factory()->create(['settings' => ['default_language' => 'en', 'languages' => [['code' => 'de', 'name' => 'Deutsch', 'fallback_language' => null]]]]);
-        $this->assignSpaceRole($space, $owner, 'owner');
-        $this->setUpSpaceTesting($space);
-        $this->fakeAi()->push(FakeAiDriver::text('{"hello":"Schlafunterlage"}'));
-        $this->giveSpaceAiConfig($space);
-        $this->glossaryRow(
-            AiGlossary::create([...AiGlossary::ownerAttributes($space), 'name' => 'Shop', 'enabled' => true]),
-            ['de' => ['use' => 'Matratze', 'avoid' => ['Schlafunterlage']]],
-        );
-
-        $dataSource = DataSource::factory()->create([
-            'dimensions' => [['key' => 'en', 'label' => 'English'], ['key' => 'de', 'label' => 'German']],
-            'settings' => ['dimensions_translatable' => true, 'default_dimension_locale' => 'en'],
-        ]);
-        DataEntry::factory()->create(['data_source_id' => $dataSource->id, 'key' => 'hello', 'value' => 'Hello', 'dimensions' => []]);
-
-        $body = $this->actingAs($owner)->postJson(
-            route('mgmt.data-sources.entries.translate-missing-dimensions.stream', ['space' => $space->id, 'data_source' => $dataSource->id]),
-            ['target_dimension' => 'de'],
-        )->streamedContent();
-
-        $this->assertStringContainsString('"translated_count":1', $body);
-        $this->assertStringContainsString('"found":"Schlafunterlage"', $body);
-        $this->assertSame('Schlafunterlage', DataEntry::where('key', 'hello')->first()->dimensions['de']);
     }
 
     #[Test]

@@ -3,7 +3,7 @@ name: asset-organization
 description: Organizes assets from what their images show. Fills empty metadata, adds tags and, as the approved plan allows, proposes new tags, folders and moves.
 b10cks:
   surfaces: [bulk:assets, cmdk]
-  tools: [get_asset_library, inspect_assets, propose_asset_structure, propose_asset_changes, lookup_glossary, search_knowledge, read_knowledge, ask_questions]
+  tools: [get_asset_library, inspect_assets, propose_asset_structure, propose_asset_changes, search_knowledge, read_knowledge, ask_questions]
   output: text
 ---
 
@@ -16,7 +16,7 @@ The tools hold the rules of this run: which assets you may touch, which fields y
 1. **Read the conventions.** Call `get_asset_library`, with the scope's folder ID when the context names one. Search or page through partial tag and folder results before concluding a term or folder is missing. Done when you know the languages, the fields marked `ai` per folder, the relevant tags, the proposed folders and tags, and what the `plan` allows.
 2. **Inspect a small group.** Call `inspect_assets` with up to 6 assets of your scope. The images arrive with your next turn; wait for them before proposing. Done when you have looked at every delivered image and noted assets under `skipped` or `deferred`. Inspect deferred assets in a later turn.
 3. **Extend the structure, if a group needs it.** When two or more inspected assets share a subject that no existing tag covers, or belong together and no existing folder fits, call `propose_asset_structure` with them as examples. Done when every new tag or folder you will use has a `new:` ref.
-4. **Propose for what you saw.** Call `propose_asset_changes` after the images arrive, before inspecting more: one entry per asset with all its changes, or the asset under `unchanged` with a reason. For a change requiring no image, declare `basis: metadata` with the existing source fields, or `basis: instruction` with the user's exact instruction. Flag uncertain applicability. Fix what comes back under `errors`. When an asset comes back with `glossary_findings`, send that asset once more with the named fields reworded, keeping what the image shows: write the `expected` wording only where it names what is there. Do this once; what stays flagged waits for a person. Done when every inspected asset is proposed, unchanged or skipped.
+4. **Propose for what you saw.** Call `propose_asset_changes` after the images arrive, before inspecting more: one entry per asset with all its changes, or the asset under `unchanged` with a reason. For a change requiring no image, declare `basis: metadata` with the existing source fields, or `basis: instruction` with the user's exact instruction. Flag uncertain applicability. Fix what comes back under `errors`. Done when every inspected asset is proposed, unchanged or skipped.
 5. Repeat steps 2 to 4 until every asset of the scope is proposed, unchanged or skipped.
 6. **Summarize.** Say how many assets you proposed changes for, left unchanged and skipped (with the skip reasons), which new tags and folders you proposed and why, and what you flagged for a person to check.
 

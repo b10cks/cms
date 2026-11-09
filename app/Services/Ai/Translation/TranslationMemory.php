@@ -7,8 +7,6 @@ use App\Models\Space\AiChangesetItem;
 use App\Models\Space\Content;
 use App\Models\Space\TranslationSource;
 use App\Models\Space\TranslationUnit;
-use App\Services\Ai\Knowledge\GlossaryChecker;
-use App\Services\Ai\Knowledge\GlossaryConcept;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
@@ -16,9 +14,8 @@ use Illuminate\Support\Str;
  * The space's translation memory. Units pair the published value of a
  * translated field with the source text that value was written against (its
  * lineage), which can be older than the canonical's text; runs use exact
- * matches instead of a provider call and fuzzy matches as examples. Runs read both
- * under the terminology of their policy, so a pair a later term change invalidated
- * is not reused.
+ * matches instead of a provider call and fuzzy matches as examples. Stored pairs
+ * are trusted as published.
  *
  * Publication by a person is what makes a pair verified, so only a translation's
  * publish records units, from its published version. An AI draft is never read
@@ -37,7 +34,6 @@ class TranslationMemory
     public function __construct(
         private readonly TranslationUnits $units,
         private readonly TranslationLineage $lineage,
-        private readonly GlossaryChecker $checker,
     ) {}
 
     public static function hash(string $text): string
@@ -170,75 +166,19 @@ class TranslationMemory
     }
 
     /**
-     * Stored translations free of deterministic glossary violations, newest
-     * compliant one first, human wording included.
-     *
-     * @param  array<string, string>  $sources  key => source text
-     * @param  list<GlossaryConcept>  $terms
-     * @return array{hits: array<string, string>, rejected: array<string, list<array<string, string>>>}
-     */
-    public function exactUnderPolicy(array $sources, string $sourceLocale, string $targetLocale, array $terms): array
-    {
-        $hashes = [];
-        foreach ($sources as $key => $text) {
-            if (self::normalize($text) !== '') {
-                $hashes[$key] = self::hash($text);
-            }
-        }
-
-        $result = ['hits' => [], 'rejected' => []];
-        if ($hashes === []) {
-            return $result;
-        }
-
-        $rows = TranslationUnit::query()
-            ->whereIn('source_hash', array_values(array_unique($hashes)))
-            ->where('source_locale', strtolower($sourceLocale))
-            ->where('target_locale', strtolower($targetLocale))
-            ->orderByDesc('updated_at')
-            ->orderByDesc('id')
-            ->get(['source_hash', 'source_text', 'target_text'])
-            ->groupBy('source_hash');
-
-        foreach ($hashes as $key => $hash) {
-            $findings = [];
-
-            foreach (($rows[$hash] ?? collect())->unique('target_text') as $unit) {
-                $problems = GlossaryChecker::blocking($this->checker->check($unit->source_text, $unit->target_text, $sourceLocale, $targetLocale, $terms));
-
-                if ($problems === []) {
-                    $result['hits'][$key] = $unit->target_text;
-                    $findings = [];
-
-                    break;
-                }
-
-                $findings = $findings === [] ? $problems : $findings;
-            }
-
-            if ($findings !== []) {
-                $result['rejected'][$key] = $findings;
-            }
-        }
-
-        return $result;
-    }
-
-    /**
      * Similar earlier translations to show the model as examples. MySQL
      * FULLTEXT finds candidates (LIKE elsewhere); word overlap ranks them.
      *
      * @param  list<string>  $sources
-     * @param  list<GlossaryConcept>|null  $terms  policy every example must pass; null trusts stored pairs
      * @return list<array{source: string, target: string}>
      */
-    public function fuzzy(array $sources, string $sourceLocale, string $targetLocale, int $limit = 8, ?array $terms = null): array
+    public function fuzzy(array $sources, string $sourceLocale, string $targetLocale, int $limit = 8): array
     {
         $exact = array_flip(array_map(self::hash(...), $sources));
 
         return array_map(
             fn (array $hit) => ['source' => $hit['unit']->source_text, 'target' => $hit['unit']->target_text],
-            $this->ranked(implode("\n", $sources), $sourceLocale, $targetLocale, $limit, $terms, $exact),
+            $this->ranked(implode("\n", $sources), $sourceLocale, $targetLocale, $limit, $exact),
         );
     }
 
@@ -248,10 +188,9 @@ class TranslationMemory
      * the longer of the two texts, so a short field never scores high against
      * a long paragraph that happens to hold its words.
      *
-     * @param  list<GlossaryConcept>|null  $terms  policy every pair must pass; null trusts stored pairs
      * @return list<array{score: float, source: string, target: string, origin: string, content_id: string|null, field_path: string|null}>
      */
-    public function similar(string $source, string $sourceLocale, string $targetLocale, int $limit = 5, ?array $terms = null): array
+    public function similar(string $source, string $sourceLocale, string $targetLocale, int $limit = 5): array
     {
         $hash = self::hash($source);
         $words = \count($this->words(mb_substr($source, 0, 2000)));
@@ -265,7 +204,7 @@ class TranslationMemory
             'origin' => $hit['unit']->origin,
             'content_id' => $hit['unit']->content_id,
             'field_path' => $hit['unit']->field_path,
-        ], $this->ranked($source, $sourceLocale, $targetLocale, $limit, $terms));
+        ], $this->ranked($source, $sourceLocale, $targetLocale, $limit));
         usort($hits, fn (array $a, array $b) => $b['score'] <=> $a['score']);
 
         return $hits;
@@ -274,11 +213,10 @@ class TranslationMemory
     /**
      * Candidates for a text ranked by word overlap, an exact match first.
      *
-     * @param  list<GlossaryConcept>|null  $terms
      * @param  array<string, mixed>  $exclude  source hashes to leave out
      * @return list<array{unit: TranslationUnit, score: int}>
      */
-    private function ranked(string $text, string $sourceLocale, string $targetLocale, int $limit, ?array $terms, array $exclude = []): array
+    private function ranked(string $text, string $sourceLocale, string $targetLocale, int $limit, array $exclude = []): array
     {
         $text = mb_substr($text, 0, 2000);
         $words = $this->words($text);
@@ -314,8 +252,6 @@ class TranslationMemory
             })
             ->filter(fn (array $hit) => $hit['score'] > 0)
             ->sortByDesc('score')
-            ->lazy()
-            ->filter(fn (array $hit) => $terms === null || GlossaryChecker::blocking($this->checker->check($hit['unit']->source_text, $hit['unit']->target_text, $sourceLocale, $targetLocale, $terms)) === [])
             ->take($limit)
             ->values()
             ->all();

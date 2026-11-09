@@ -64,8 +64,7 @@ class ProposeUpdateTool extends ProposalTool implements ReportsOutcomes
             .'Content only: to add a block to a block list, pass {path: <block list field>, insert: {block: <slug>, values: {<field>: <value>}}, after: <block id> or "start"} (without after it goes last); '
             .'to remove one, pass {path: <block list field>, remove: <block id>}. Find slugs and their fields with get_block_list and get_block_schemas. '
             .'Content needs the version_id get_entry returned: a field a person changed after you read it is not written and comes back under `conflicts`. It stays open for that person: do not write it again, and mention it in your summary. The other fields are written. The result holds the new version_id for further changes. Invalid changes come back as errors to fix. '
-            .'A metadata field keeps every key you do not name, so pass only the keys you write. '
-            .'Banned wording or a changed protected name comes back under `glossary_findings`, and wording the glossary requires but your text lacks under `glossary_hints`. Read the note in the result.';
+            .'A metadata field keeps every key you do not name, so pass only the keys you write.';
     }
 
     public function inputSchema(): array
@@ -194,7 +193,6 @@ class ProposeUpdateTool extends ProposalTool implements ReportsOutcomes
         return [
             'proposed' => \count($items),
             'item_ids' => array_map(fn (AiChangesetItem $item) => $item->id, $items),
-            ...$this->findingsResult($items, written: false),
             ...($inserted !== [] ? ['inserted_blocks' => $inserted] : []),
         ];
     }

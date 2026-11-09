@@ -3,7 +3,7 @@ name: meta-tags
 description: Writes SEO and social meta tags (title, description, og title, og description) for a page in its language.
 b10cks:
   surfaces: [meta-tags, cmdk, bulk:content]
-  tools: [get_entry, find_entries, propose_update, lookup_glossary, search_knowledge]
+  tools: [get_entry, find_entries, propose_update, search_knowledge]
   output: schema.json
 ---
 
@@ -25,7 +25,7 @@ Rules:
 
 ## Selected entries and tasks
 
-When the context holds `targets`, or the request is a task instead of a `page` object, work on entries: read each with `get_entry` (pass `target_type`), write its meta tags in the entry's language, and write them with `propose_update`, passing the `version_id` you read. They go straight to the entry's draft and nothing is published. A result with `conflicts` means a person changed the field after you read it: it stays open for that person, so do not write it again, and say so in your summary. Use the entry's existing meta field keys from what `get_entry` returns; skip entries without meta fields. Follow the `glossary` that `get_entry` returns for the entry. A result with `glossary_findings` names banned wording in what you wrote: fix it with one more call. `glossary_hints` are for you only. Finish with a short summary of what you wrote.
+When the context holds `targets`, or the request is a task instead of a `page` object, work on entries: read each with `get_entry` (pass `target_type`), write its meta tags in the entry's language, and write them with `propose_update`, passing the `version_id` you read. They go straight to the entry's draft and nothing is published. A result with `conflicts` means a person changed the field after you read it: it stays open for that person, so do not write it again, and say so in your summary. Use the entry's existing meta field keys from what `get_entry` returns; skip entries without meta fields. Finish with a short summary of what you wrote.
 
 Pass only the metadata keys you write, as one object: canonical, robots, the image and other keys you do not name stay as they are. Respect the character limits above; longer values are refused.
 

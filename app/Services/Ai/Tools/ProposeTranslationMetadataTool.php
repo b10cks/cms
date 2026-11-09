@@ -6,11 +6,8 @@ use App\Models\Space\AiChangesetItem;
 use App\Models\Space\AiOperationItem;
 use App\Services\Ai\Changesets\ContentTarget;
 use App\Services\Ai\Changesets\FieldPath;
-use App\Services\Ai\Changesets\ProposalCopy;
 use App\Services\Ai\Changesets\TargetSnapshot;
 use App\Services\Ai\Contracts\ReportsOutcomes;
-use App\Services\Ai\Knowledge\GlossaryChecker;
-use App\Services\Ai\Knowledge\KnowledgeResolver;
 use App\Services\Ai\Metadata\MetadataOutputs;
 use App\Services\Ai\Operations\OperationContext;
 use App\Services\Ai\Run\ToolError;
@@ -127,26 +124,18 @@ class ProposeTranslationMetadataTool extends ProposalTool implements ReportsOutc
         $types = app(ContentTarget::class)->validate($this->space, $snapshot, $patches);
         $derived = $context->derivedFrom(AiChangesetItem::TARGET_CONTENT, $destination->source->id);
         $paths = array_map('strval', array_keys($patches));
-        $write = $this->writeContent(function () use ($destination, $snapshot, $paths, $patches, $types, $derived) {
-            $items = $this->record(array_map(fn (string $path) => [
-                'operation' => AiChangesetItem::OPERATION_UPDATE,
-                'target_type' => AiChangesetItem::TARGET_CONTENT,
-                'target_id' => $snapshot->model->getKey(),
-                'target_label' => $snapshot->label,
-                'base_version_id' => $snapshot->versionId,
-                'path' => $path,
-                'field_type' => $types[$path] ?? null,
-                'before' => FieldPath::get($snapshot->document, $path),
-                'after' => $patches[$path],
-                ...$derived,
-            ], $paths));
-
-            foreach ($items as $recorded) {
-                $this->review($destination, $recorded);
-            }
-
-            return $items;
-        });
+        $write = $this->writeContent(fn () => $this->record(array_map(fn (string $path) => [
+            'operation' => AiChangesetItem::OPERATION_UPDATE,
+            'target_type' => AiChangesetItem::TARGET_CONTENT,
+            'target_id' => $snapshot->model->getKey(),
+            'target_label' => $snapshot->label,
+            'base_version_id' => $snapshot->versionId,
+            'path' => $path,
+            'field_type' => $types[$path] ?? null,
+            'before' => FieldPath::get($snapshot->document, $path),
+            'after' => $patches[$path],
+            ...$derived,
+        ], $paths)));
 
         $conflicted = [...$write['conflicts']->pluck('path')->all(), ...array_map('strval', array_keys($left))];
         foreach ($report['written'] as $part) {
@@ -212,28 +201,6 @@ class ProposeTranslationMetadataTool extends ProposalTool implements ReportsOutc
         }
 
         return [$patches, $report];
-    }
-
-    /**
-     * The checks a change gets under the pinned policy, in the locale it is
-     * really written in. Generated text need not hold every term of the page,
-     * so its findings are wording it must not use.
-     */
-    private function review(TranslationDestination $destination, AiChangesetItem $item): void
-    {
-        $policy = app(KnowledgeResolver::class)->policy($this->space, $this->run);
-        $output = ProposalCopy::text($item->after);
-        $found = app(GlossaryChecker::class)->check('', $output, $destination->sourceLocale, $destination->locale, $policy->concepts);
-        $findings = array_values(array_unique([...($item->glossary_findings ?? []), ...GlossaryChecker::blocking($found)], SORT_REGULAR));
-        $this->addHints([$item->id => GlossaryChecker::hints($found)]);
-
-        $item->update([
-            'glossary_findings' => $findings ?: null,
-            ...($policy->isPinned() ? ['review' => [
-                ...($item->review ?? []),
-                'locales' => ['source' => $destination->locale, 'target' => $destination->locale],
-            ]] : []),
-        ]);
     }
 
     private function report(TranslationDestination $destination, string $part, string $outcome, ?string $reason, ?string $note = null): void

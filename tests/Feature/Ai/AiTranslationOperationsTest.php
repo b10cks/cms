@@ -4,8 +4,6 @@ namespace Tests\Feature\Ai;
 
 use App\Actions\Content\UpdateContent;
 use App\Enums\AiChangesetItemStatus;
-use App\Enums\AiScope;
-use App\Models\Management\AiGlossary;
 use App\Models\Management\Space;
 use App\Models\Space\AiChangeset;
 use App\Models\Space\AiChangesetItem;
@@ -38,14 +36,12 @@ use Tests\Support\FakeAiDriver;
 use Tests\TestCase;
 use Tests\Traits\FakesAi;
 use Tests\Traits\SpaceTestingTrait;
-use Tests\Traits\WritesGlossaryRows;
 
 class AiTranslationOperationsTest extends TestCase
 {
     use FakesAi;
     use RefreshDatabase;
     use SpaceTestingTrait;
-    use WritesGlossaryRows;
 
     private Space $space;
 
@@ -410,10 +406,8 @@ class AiTranslationOperationsTest extends TestCase
     }
 
     #[Test]
-    public function the_task_brings_glossary_terms_and_translation_memory_and_a_hint_goes_to_the_agent_alone(): void
+    public function the_task_brings_translation_memory_for_its_units(): void
     {
-        $glossary = AiGlossary::create(['scope' => AiScope::Space, 'space_id' => $this->space->id, 'name' => 'Shop', 'enabled' => true]);
-        $this->glossaryRow($glossary, ['en' => 'cart', 'de' => 'Warenkorb']);
         TranslationUnit::query()->forceCreate([
             'source_hash' => TranslationMemory::hash('Your cart'), 'source_locale' => 'en', 'target_locale' => 'de',
             'source_text' => 'Your cart', 'target_text' => 'Ihr Warenkorb', 'origin' => 'human',
@@ -424,16 +418,7 @@ class AiTranslationOperationsTest extends TestCase
 
         $task = $this->tool(GetTranslationTaskTool::class, $run)->execute(['id' => $source->id, 'language' => 'de']);
         $this->assertSame('Ihr Warenkorb', collect($task['units'])->firstWhere('id', 'summary')['memory']);
-        $this->assertStringContainsString('- "cart": write "Warenkorb" in de', $task['glossary']);
-
-        $result = $this->tool(ProposeTranslationTool::class, $run)->execute([
-            'source_id' => $source->id, 'language' => 'de', 'source_version_id' => $source->current_version_id, 'name' => 'Wagen',
-            'units' => ['title' => 'Den Wagen öffnen', 'summary' => 'Ihr Warenkorb'],
-        ]);
-
-        $this->assertArrayNotHasKey('glossary_findings', $result);
-        $this->assertSame([['type' => 'missing_term', 'term' => 'cart', 'expected' => 'Warenkorb']], $result['glossary_hints']);
-        $this->assertNull(AiChangesetItem::query()->sole()->glossary_findings);
+        $this->assertArrayNotHasKey('memory', collect($task['units'])->firstWhere('id', 'title'));
     }
 
     #[Test]

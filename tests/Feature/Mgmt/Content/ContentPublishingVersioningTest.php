@@ -630,7 +630,7 @@ class ContentPublishingVersioningTest extends TestCase
     }
 
     #[Test]
-    public function publishing_a_draft_runs_nineteen_queries_and_broadcasts_once(): void
+    public function publishing_a_draft_runs_seventeen_queries_and_broadcasts_once(): void
     {
         $content = Content::query()->findOrFail($this->createVersionedContent(
             publishedContent: ['summary' => 'Published summary'],
@@ -647,14 +647,12 @@ class ContentPublishingVersioningTest extends TestCase
 
         // Was 26 with two broadcasts: a clean save, repeated version loads, the space
         // settings write and two automation lookups for a space without automations.
-        // 18 since the AI learning loop looks for accepted AI items of the entry,
-        // 19 since a moved version checks the entry's open AI flags.
-        $this->assertCount(19, DB::getQueryLog());
+        $this->assertCount(17, DB::getQueryLog());
         $this->assertSame(1, $broadcasts);
     }
 
     #[Test]
-    public function saving_a_draft_runs_twenty_nine_queries(): void
+    public function saving_a_draft_runs_twenty_eight_queries(): void
     {
         $this->actingAs($this->owner);
 
@@ -672,8 +670,7 @@ class ContentPublishingVersioningTest extends TestCase
 
         // Was 34: i18n validation twice, a version preload, a block reload in the
         // broadcast and two automation lookups for a space without automations.
-        // 29 since a moved version checks the entry's open AI flags.
-        $this->assertCount(29, DB::getQueryLog());
+        $this->assertCount(28, DB::getQueryLog());
     }
 
     private function createVersionedContent(

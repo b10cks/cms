@@ -8,8 +8,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
 
 /**
  * A thread row. Needs {@see AiConversation::scopeWithStatus()} and the owner
- * loaded. The detail view adds `context` and `turns`, or for the suggestions
- * thread `suggestions` and `glossaries`.
+ * loaded. The detail view adds `context` and `turns`.
  *
  * @mixin AiConversation
  */

@@ -83,7 +83,7 @@ trait ProposesTranslations
         $work = app(TranslationWork::class);
         [$task] = $work->tasks($this->space, [$destination], $plan, $this->run);
         $proposer = app(TranslationProposer::class);
-        $prepared = $proposer->prepare($this->space, $task, $texts, $name, $slug, $this->run);
+        $prepared = $proposer->prepare($this->space, $task, $texts, $name, $slug);
         $derived = $operation?->derivedFrom(AiChangesetItem::TARGET_CONTENT, $destination->source->id) ?? [];
 
         $left = $translation ? $this->leftForPerson($translation->id, array_map('strval', array_filter(array_column($prepared->items, 'path')))) : [];
@@ -95,7 +95,7 @@ trait ProposesTranslations
             ? ['written' => collect(), 'conflicts' => collect(), 'version_id' => $translation?->current_version_id]
             : $this->writeContent(function () use ($prepared, $proposer, $derived, &$recorded) {
                 $recorded = $this->record(array_map(fn (array $item) => [...$item, ...$derived], $prepared->items));
-                $this->addHints($proposer->persist($prepared, $recorded));
+                $proposer->persist($prepared, $recorded);
 
                 return $recorded;
             });
