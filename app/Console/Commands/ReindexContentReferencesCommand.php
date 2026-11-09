@@ -9,14 +9,17 @@ use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 
 /**
- * Rebuild the asset, link and relation ids stored on content versions. Asset
- * usage counts, the delete guard and delivery asset resolution all read them.
+ * Rebuild the asset, link and relation ids stored on content versions, and
+ * point asset references with a foreign id at the asset their `full_path`
+ * names. Asset usage counts, the delete guard and delivery asset resolution
+ * all read them. Covers every version, draft or published, in every language.
  * Idempotent: rows that are already right are left alone.
  */
 class ReindexContentReferencesCommand extends Command
 {
     protected $signature = 'content:reindex-references
-        {--space= : Limit to a single space (id or slug)}';
+        {--space= : Limit to a single space (id or slug)}
+        {--dry-run : Report what would change and write nothing}';
 
     protected $description = 'Rebuild asset, link and relation ids on content versions';
 
@@ -28,22 +31,25 @@ class ReindexContentReferencesCommand extends Command
             $query->where(fn ($q) => $q->where('id', $spaceArg)->orWhere('slug', $spaceArg));
         }
 
+        $dryRun = (bool) $this->option('dry-run');
         $failed = 0;
 
-        $query->orderBy('id')->chunkById(100, function ($spaces) use ($indexer, &$failed): void {
+        $query->orderBy('id')->chunkById(100, function ($spaces) use ($indexer, $dryRun, &$failed): void {
             foreach ($spaces as $space) {
                 $restore = SpaceContext::enter($space);
 
                 try {
-                    $changed = $indexer->reindex();
+                    $stats = $indexer->reindex($dryRun);
 
                     // Delivery resolves assets through these ids, so a repaired
-                    // row changes the payload the CDN has cached.
-                    if ($changed > 0) {
+                    // row changes the payload the CDN has cached. One bump per
+                    // space: the revision is space-wide, and one per entry
+                    // would push it minutes past the clock.
+                    if ($stats['versions'] > 0 && ! $dryRun) {
                         $space->touchContentUpdatedAt();
                     }
 
-                    $this->line("  {$space->id}  {$changed} version(s) updated");
+                    $this->line(($dryRun ? '  dry run' : '')."  {$space->id}  {$stats['versions']} version(s) updated, {$stats['payloads']} with asset references rewritten in {$stats['contents']} entries");
                 } catch (\Throwable $e) {
                     $failed++;
                     $this->error("  failed  {$space->id}: {$e->getMessage()}");

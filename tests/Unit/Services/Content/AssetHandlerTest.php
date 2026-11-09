@@ -109,6 +109,62 @@ class AssetHandlerTest extends TestCase
     }
 
     #[Test]
+    public function extraction_also_keeps_the_asset_id_named_by_the_full_path(): void
+    {
+        $assetIds = (new AssetHandler)->extractContentAssets(['image' => [
+            'type' => 'asset',
+            'id' => '01m5ba8pv7mv38safa2yt4zc5f',
+            'full_path' => 'storage-01/01kkk9mqjw2kn06vknz28t7ncg/01m58s7v6hxmf6b2vmb34hkhwv/032A9365.jpg',
+        ]]);
+
+        $this->assertSame(['01m5ba8pv7mv38safa2yt4zc5f', '01m58s7v6hxmf6b2vmb34hkhwv'], $assetIds);
+    }
+
+    #[Test]
+    public function a_reference_with_a_foreign_id_resolves_through_its_full_path_and_gets_the_real_id(): void
+    {
+        $asset = new class extends Asset
+        {
+            public function getUrl(): ?string
+            {
+                return null;
+            }
+        };
+        $asset->forceFill(['id' => 'asset-01', 'storage_id' => 'storage-01', 'path' => 'space-01/asset-01/renamed.jpg', 'filename' => 'renamed', 'metadata' => []]);
+        $stale = ['type' => 'asset', 'id' => 'pasted-01', 'full_path' => 'storage-01/space-01/asset-01/old.jpg', 'filename' => 'old'];
+        $handler = new AssetHandler;
+
+        foreach ([$handler->updateContentAssets($stale, collect([$asset])), $handler->replaceContentAssets([], $stale, collect([$asset]))] as $result) {
+            $this->assertSame('asset-01', $result['id']);
+            $this->assertSame('renamed', $result['filename']);
+            $this->assertSame('storage-01/space-01/asset-01/renamed.jpg', $result['full_path']);
+        }
+    }
+
+    #[Test]
+    public function the_reference_id_wins_over_the_full_path_when_both_name_an_asset(): void
+    {
+        $remapped = new class extends Asset
+        {
+            public function getUrl(): ?string
+            {
+                return null;
+            }
+        };
+        $remapped->forceFill(['id' => 'new-01', 'filename' => 'new', 'metadata' => []]);
+        $original = (clone $remapped)->forceFill(['id' => 'old-01', 'filename' => 'old']);
+
+        $result = (new AssetHandler)->replaceContentAssets([], [
+            'type' => 'asset',
+            'id' => 'new-01',
+            'full_path' => 'storage-01/space-01/old-01/old.jpg',
+        ], collect([$remapped, $original]));
+
+        $this->assertSame('new-01', $result['id']);
+        $this->assertSame('new', $result['filename']);
+    }
+
+    #[Test]
     public function remapping_rewrites_known_asset_ids_and_keeps_the_rest_of_the_node(): void
     {
         $payload = ['hero' => ['type' => 'asset', 'id' => 'old-1', 'data' => ['alt' => 'Hero']], 'other' => ['type' => 'asset', 'id' => 'unknown']];
@@ -117,6 +173,17 @@ class AssetHandlerTest extends TestCase
 
         $this->assertSame(['type' => 'asset', 'id' => 'new-1', 'data' => ['alt' => 'Hero']], $remapped['hero']);
         $this->assertSame($payload['other'], $remapped['other']);
+    }
+
+    #[Test]
+    public function remapping_maps_a_foreign_id_through_its_full_path(): void
+    {
+        $remapped = (new AssetHandler)->remapContentAssets(
+            ['type' => 'asset', 'id' => 'pasted-1', 'full_path' => 'storage/space/old-1/photo.jpg'],
+            ['old-1' => 'new-1'],
+        );
+
+        $this->assertSame('new-1', $remapped['id']);
     }
 
     #[Test]

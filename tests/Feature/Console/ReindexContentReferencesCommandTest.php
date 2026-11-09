@@ -4,6 +4,7 @@ namespace Tests\Feature\Console;
 
 use App\Console\Commands\ReindexContentReferencesCommand;
 use App\Models\Management\Space;
+use App\Models\Space\Asset;
 use App\Models\Space\Block;
 use App\Models\Space\Content;
 use App\Models\Space\ContentVersion;
@@ -69,7 +70,44 @@ class ReindexContentReferencesCommandTest extends TestCase
         $this->assertNull($this->space->fresh()->content_updated_at);
     }
 
-    private function createContentReferencing(string $assetId): Content
+    #[Test]
+    public function it_points_a_foreign_asset_id_at_the_full_path_asset_once(): void
+    {
+        $asset = Asset::factory()->create();
+        $pastedId = strtolower((string) Str::ulid());
+        $content = $this->createContentReferencing($pastedId, "storage/{$this->space->id}/{$asset->id}/photo.jpg");
+
+        $this->artisan('content:reindex-references', ['--space' => $this->space->id])
+            ->expectsOutputToContain('1 version(s) updated, 1 with asset references rewritten in 1 entries')
+            ->assertSuccessful();
+
+        $version = ContentVersion::query()->find($content->current_version_id);
+        $this->assertSame($asset->id, $version->content['hero']['id']);
+        $this->assertSame([$asset->id], $version->asset_ids);
+        $this->assertNotNull($this->space->fresh()->content_updated_at);
+
+        $this->artisan('content:reindex-references', ['--space' => $this->space->id])
+            ->expectsOutputToContain('0 version(s) updated')
+            ->assertSuccessful();
+    }
+
+    #[Test]
+    public function a_dry_run_reports_the_rewrite_and_changes_nothing(): void
+    {
+        $asset = Asset::factory()->create();
+        $pastedId = strtolower((string) Str::ulid());
+        $content = $this->createContentReferencing($pastedId, "storage/{$this->space->id}/{$asset->id}/photo.jpg");
+        $before = ContentVersion::query()->toBase()->find($content->current_version_id);
+
+        $this->artisan('content:reindex-references', ['--space' => $this->space->id, '--dry-run' => true])
+            ->expectsOutputToContain('1 with asset references rewritten in 1 entries')
+            ->assertSuccessful();
+
+        $this->assertEquals($before, ContentVersion::query()->toBase()->find($content->current_version_id));
+        $this->assertNull($this->space->fresh()->content_updated_at);
+    }
+
+    private function createContentReferencing(string $assetId, ?string $fullPath = null): Content
     {
         $slug = strtolower((string) Str::ulid());
         $content = new Content;
@@ -85,7 +123,7 @@ class ReindexContentReferencesCommandTest extends TestCase
 
         $version = ContentVersion::query()->forceCreate([
             'content_id' => $content->id,
-            'content' => ['hero' => ['type' => 'asset', 'id' => $assetId]],
+            'content' => ['hero' => array_filter(['type' => 'asset', 'id' => $assetId, 'full_path' => $fullPath])],
         ]);
 
         $content->current_version_id = $version->id;

@@ -4581,6 +4581,10 @@
       "storage": "Speicher",
       "traffic": "Traffic",
       "ai": "KI-Guthaben"
+    },
+    "appUpdate": {
+      "message": "Eine neue Version von b10cks ist verfügbar. Speichere deine Arbeit und lade dann neu.",
+      "reload": "Neu laden"
     }
   },
   "dashboard": {

@@ -6,6 +6,7 @@ use App\Models\Management\Space;
 use App\Models\Space\Block;
 use App\Models\Space\Content;
 use App\Models\Space\ContentVersion;
+use App\Services\Content\AssetReferenceResolver;
 use App\Services\Content\ContentI18nResolver;
 use Illuminate\Support\Arr;
 
@@ -17,7 +18,11 @@ class ContentSchemaValidator
         protected readonly FieldVisibilityPruner $pruner,
         protected readonly OptionChoiceResolver $optionChoiceResolver,
         protected readonly ContentSchemaValueMerger $contentSchemaValueMerger,
+        protected readonly AssetReferenceResolver $assetReferences,
     ) {}
+
+    /** @var array<string, int> Reference ids of the submission that name no asset, while it is validated. */
+    private array $danglingAssetIds = [];
 
     public function validateSubmission(
         Space $space,
@@ -59,6 +64,10 @@ class ContentSchemaValidator
             $sanitizedContent = $this->stripLocalizedOverlayFields($tree, $sanitizedContent);
         }
 
+        // Every stored asset reference names its asset by `id`, whatever the
+        // client sent; one that names none is a field error below.
+        ['content' => $sanitizedContent, 'dangling' => $dangling] = $this->assetReferences->normalize($sanitizedContent);
+
         $sanitizedTree = $this->builder->build(
             $block,
             $sanitizedContent,
@@ -70,12 +79,18 @@ class ContentSchemaValidator
             ),
         );
 
-        return new ContentSchemaValidationResult(
-            content: $sanitizedContent,
-            tree: $sanitizedTree,
-            errors: $this->collectErrors($sanitizedTree, $mode, $ignoreAbsentNonTranslatableFields),
-            warnings: $this->collectWarnings($sanitizedTree, $mode, $ignoreAbsentNonTranslatableFields),
-        );
+        $this->danglingAssetIds = array_flip($dangling);
+
+        try {
+            return new ContentSchemaValidationResult(
+                content: $sanitizedContent,
+                tree: $sanitizedTree,
+                errors: $this->collectErrors($sanitizedTree, $mode, $ignoreAbsentNonTranslatableFields),
+                warnings: $this->collectWarnings($sanitizedTree, $mode, $ignoreAbsentNonTranslatableFields),
+            );
+        } finally {
+            $this->danglingAssetIds = [];
+        }
     }
 
     public function validateVersion(
@@ -693,6 +708,10 @@ class ContentSchemaValidator
     {
         if (! is_array($value) || ($value['type'] ?? null) !== 'asset' || empty($value['id'])) {
             return [sprintf('%s must reference an asset.', $field->getLabel())];
+        }
+
+        if (\is_string($value['id']) && isset($this->danglingAssetIds[$value['id']])) {
+            return [sprintf('%s references an asset that does not exist.', $field->getLabel())];
         }
 
         return [];

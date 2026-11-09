@@ -179,7 +179,12 @@ describe('hasClipboardItem', () => {
 
   it('is recomputed when another tab writes the storage mirror', async () => {
     const store = clipboard()
-    writeRaw({ type: 'blocks-editor-clipboard-item', data: { id: 'b1' }, timestamp: 0, spaceId: SPACE })
+    writeRaw({
+      type: 'blocks-editor-clipboard-item',
+      data: { id: 'b1' },
+      timestamp: 0,
+      spaceId: SPACE,
+    })
 
     window.dispatchEvent(new StorageEvent('storage', { key: 'blocks-clipboard' }))
     await Promise.resolve()
@@ -188,7 +193,12 @@ describe('hasClipboardItem', () => {
   })
 
   it('is recomputed when clipboard-read permission is granted', async () => {
-    writeRaw({ type: 'blocks-editor-clipboard-item', data: { id: 'b1' }, timestamp: 0, spaceId: SPACE })
+    writeRaw({
+      type: 'blocks-editor-clipboard-item',
+      data: { id: 'b1' },
+      timestamp: 0,
+      spaceId: SPACE,
+    })
 
     permission.value = 'granted'
     await nextTick()
@@ -202,7 +212,12 @@ describe('hasClipboardItem', () => {
     focused.value = false
     await nextTick()
 
-    writeRaw({ type: 'blocks-editor-clipboard-item', data: { id: 'b1' }, timestamp: 0, spaceId: SPACE })
+    writeRaw({
+      type: 'blocks-editor-clipboard-item',
+      data: { id: 'b1' },
+      timestamp: 0,
+      spaceId: SPACE,
+    })
     focused.value = true
     await nextTick()
     await Promise.resolve()
@@ -448,18 +463,41 @@ describe('pasteItem', () => {
     expect(new Set([pasted.id, child.id, grandchild.id]).size).toBe(3)
   })
 
-  // Asset values carry the asset's id; rewriting it would break the image.
-  it('keeps the ids of references inside a block', async () => {
+  // The id is the reference: renewing it points the value at nothing.
+  const image = { type: 'asset', id: 'asset-1', full_path: 'storage/space/asset-1/a.jpg' }
+  const card = (id: string) => ({
+    id,
+    block: 'card',
+    image,
+    gallery: [image, { ...image, id: 'asset-2', full_path: 'storage/space/asset-2/b.jpg' }],
+    link: { type: 'internal', content: 'entry-1' },
+    related: ['entry-2'],
+    parent_id: 'p1',
+  })
+  const references = (block: Record<string, unknown>) => {
+    const { id: _id, ...rest } = block
+    return rest
+  }
+
+  it('keeps asset, link and reference values inside a pasted block', async () => {
     const store = clipboard()
 
-    await store.copyItem(
-      { id: 'b1', block: 'card', image: { id: 'asset-1', type: 'asset' }, parent_id: 'p1' },
-      SPACE
-    )
+    await store.copyItem(card('b1'), SPACE)
     const pasted = (await store.pasteItem()) as Record<string, unknown>
 
-    expect(pasted.image).toEqual({ id: 'asset-1', type: 'asset' })
-    expect(pasted.parent_id).toBe('p1')
+    expect(references(pasted)).toEqual(references(card('b1')))
+  })
+
+  it('keeps asset, link and reference values in every block of a multi-block paste', async () => {
+    const store = clipboard()
+
+    await store.copyItem([card('b1'), { id: 'b2', block: 'list', items: [card('b3')] }], SPACE)
+    const [first, list] = (await store.pasteItem()) as Record<string, unknown>[]
+    const nested = (list.items as Record<string, unknown>[])[0]
+
+    expect(references(first)).toEqual(references(card('b1')))
+    expect(references(nested)).toEqual(references(card('b3')))
+    expect(nested.id).not.toBe('b3')
   })
 
   it('returns a list for a multi-block clipboard, each with a new id', async () => {
@@ -572,7 +610,12 @@ describe('lifecycle', () => {
 
     vi.useFakeTimers()
     permission.value = 'granted'
-    writeRaw({ type: 'blocks-editor-clipboard-item', data: { id: 'b1' }, timestamp: 0, spaceId: SPACE })
+    writeRaw({
+      type: 'blocks-editor-clipboard-item',
+      data: { id: 'b1' },
+      timestamp: 0,
+      spaceId: SPACE,
+    })
     await vi.advanceTimersByTimeAsync(5000)
 
     // No timer survives the last consumer: the poll used to run for the
