@@ -139,6 +139,9 @@ class AiRunService
         $toolsAvailable = $driver->supportsToolCalls($model);
         $toolNames = $toolsAvailable ? RunToolFactory::namesFor($manifest?->tools) : [];
         $built = $this->context->build($start, $toolsAvailable && $toolNames !== []);
+        if ($built['frozen']['knowledge'] === []) {
+            $toolNames = array_values(array_diff($toolNames, RunToolFactory::KNOWLEDGE_TOOLS));
+        }
 
         $output = $this->outputFor($manifest, $start);
         $options = new RunOptions(

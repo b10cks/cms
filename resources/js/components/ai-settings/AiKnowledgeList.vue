@@ -52,6 +52,7 @@ interface KnowledgeRow {
   canOpen: boolean
   enabled: boolean
   status: { label: string; variant: 'success' | 'warning' | 'destructive' | 'secondary' }[]
+  description: string | null
   meta: string | null
 }
 
@@ -61,6 +62,7 @@ const rows = computed<KnowledgeRow[]>(() => {
     id: doc.id,
     kind: 'document',
     name: doc.title,
+    description: doc.description !== doc.title ? doc.description : null,
     type: doc.type,
     scope: doc.scope,
     owned: isOwnedBy(doc, props.owner),
@@ -88,6 +90,7 @@ const rows = computed<KnowledgeRow[]>(() => {
     id: glossary.id,
     kind: 'glossary',
     name: glossary.name,
+    description: null,
     type: 'glossary',
     scope: glossary.scope,
     owned: isOwnedBy(glossary, props.owner),
@@ -191,6 +194,12 @@ const toggle = (row: KnowledgeRow, enabled: boolean) => {
                 {{ row.name }}
               </RouterLink>
               <span v-else>{{ row.name }}</span>
+              <div
+                v-if="row.description"
+                class="line-clamp-1 text-sm font-normal text-muted"
+              >
+                {{ row.description }}
+              </div>
             </TableCell>
             <TableCell class="text-sm">{{ $t(`components.aiSettings.knowledge.types.${row.type}`) }}</TableCell>
             <TableCell>

@@ -5121,6 +5121,8 @@
         "title": "Wissen",
         "description": "Styleguides werden immer befolgt. Dokumente werden durchsucht, wenn eine Aufgabe sie braucht. Glossare legen fest, welche Begriffe die KI verwenden, unübersetzt lassen oder vermeiden muss.",
         "editorHint": "Schreibe Markdown oder lade eine PDF- oder Word-Datei hoch. Läufe nutzen die veröffentlichte Revision.",
+        "descriptionLabel": "Beschreibung",
+        "descriptionHint": "Ein Satz dazu, was es abdeckt und wann man es liest. KI-Läufe wählen Referenzdokumente danach aus.",
         "markdown": "Markdown",
         "upload": "PDF oder DOCX hochladen",
         "empty": "Noch kein Wissen.",

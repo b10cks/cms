@@ -1037,7 +1037,7 @@ return [
         'uri' => '/mgmt/v1/spaces/{spaceId}/ai/knowledge',
     ],
     'ai.knowledge.create' => [
-        'description' => 'Create a knowledge document in a space.',
+        'description' => 'Create a knowledge document in a space. Payload: title, slug, type (style or reference), description (required, at most 200 characters, what runs list reference documents by), optional locale, enabled and draft. A style draft holds at most 20,000 characters.',
         'required' => ['spaceId', 'payload'],
         'accepts' => ['spaceId', 'payload'],
         'method' => 'POST',
@@ -1051,7 +1051,7 @@ return [
         'uri' => '/mgmt/v1/spaces/{spaceId}/ai/knowledge/{id}',
     ],
     'ai.knowledge.update' => [
-        'description' => 'Update a knowledge document of a space.',
+        'description' => 'Update a knowledge document of a space. A description cannot be emptied, and a style draft holds at most 20,000 characters.',
         'required' => ['spaceId', 'id', 'payload'],
         'accepts' => ['spaceId', 'id', 'payload'],
         'method' => 'PATCH',
@@ -1065,7 +1065,7 @@ return [
         'uri' => '/mgmt/v1/spaces/{spaceId}/ai/knowledge/{id}',
     ],
     'ai.knowledge.publish' => [
-        'description' => 'Publish the draft of a knowledge document as a new revision.',
+        'description' => 'Publish the draft of a knowledge document as a new revision. A style draft over 20,000 characters is refused.',
         'required' => ['spaceId', 'id'],
         'accepts' => ['spaceId', 'id'],
         'method' => 'POST',
@@ -1173,7 +1173,7 @@ return [
         'uri' => '/mgmt/v1/teams/{teamId}/ai/knowledge',
     ],
     'ai.teamKnowledge.create' => [
-        'description' => 'Create a knowledge document in a team.',
+        'description' => 'Create a knowledge document in a team. Payload: title, slug, type (style or reference), description (required, at most 200 characters, what runs list reference documents by), optional locale, enabled and draft. A style draft holds at most 20,000 characters.',
         'required' => ['teamId', 'payload'],
         'accepts' => ['teamId', 'payload'],
         'method' => 'POST',
@@ -1187,7 +1187,7 @@ return [
         'uri' => '/mgmt/v1/teams/{teamId}/ai/knowledge/{id}',
     ],
     'ai.teamKnowledge.update' => [
-        'description' => 'Update a knowledge document of a team.',
+        'description' => 'Update a knowledge document of a team. A description cannot be emptied, and a style draft holds at most 20,000 characters.',
         'required' => ['teamId', 'id', 'payload'],
         'accepts' => ['teamId', 'id', 'payload'],
         'method' => 'PATCH',
@@ -1201,7 +1201,7 @@ return [
         'uri' => '/mgmt/v1/teams/{teamId}/ai/knowledge/{id}',
     ],
     'ai.teamKnowledge.publish' => [
-        'description' => 'Publish the draft of a knowledge document as a new revision.',
+        'description' => 'Publish the draft of a knowledge document as a new revision. A style draft over 20,000 characters is refused.',
         'required' => ['teamId', 'id'],
         'accepts' => ['teamId', 'id'],
         'method' => 'POST',

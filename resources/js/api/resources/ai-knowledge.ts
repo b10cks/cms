@@ -48,6 +48,8 @@ export interface AiKnowledgeDocumentResource {
   owner_id: string
   slug: string
   title: string
+  /** One line on what it covers, at most 200 characters. Runs list reference documents by it. */
+  description: string
   type: AiKnowledgeType
   enabled: boolean
   draft?: string
@@ -60,6 +62,7 @@ export interface AiKnowledgeDocumentResource {
 
 export interface AiKnowledgeDocumentPayload {
   title?: string
+  description?: string
   slug?: string
   type?: AiKnowledgeType
   enabled?: boolean

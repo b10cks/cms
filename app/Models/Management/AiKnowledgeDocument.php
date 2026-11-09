@@ -23,6 +23,7 @@ use Illuminate\Validation\ValidationException;
  * @property string|null $space_id
  * @property string $slug
  * @property string $title
+ * @property string $description one line on what it covers; runs list reference documents by it
  * @property AiKnowledgeType $type
  * @property string|null $locale language it applies to; null applies to every language
  * @property bool $enabled
@@ -51,6 +52,7 @@ class AiKnowledgeDocument extends GlobalModel
         'space_id',
         'slug',
         'title',
+        'description',
         'type',
         'locale',
         'enabled',

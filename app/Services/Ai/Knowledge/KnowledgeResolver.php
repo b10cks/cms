@@ -107,6 +107,7 @@ class KnowledgeResolver
                     'id' => $document->id,
                     'slug' => $document->slug,
                     'title' => $document->title,
+                    'description' => $document->description,
                     'type' => $document->type->value,
                     'locale' => $document->locale,
                     'revision_id' => $document->published_revision_id,

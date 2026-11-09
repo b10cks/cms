@@ -5035,6 +5035,8 @@
         "title": "Knowledge",
         "description": "Style guides are always followed. Documents are searched when a task needs them. Glossaries set the terms the AI must use, keep untranslated or avoid.",
         "editorHint": "Write markdown or upload a PDF or Word file. Runs use the published revision.",
+        "descriptionLabel": "Descripción",
+        "descriptionHint": "Una frase sobre lo que cubre y cuándo leerlo. Las ejecuciones de IA eligen los documentos de referencia por ella.",
         "markdown": "Markdown",
         "upload": "Upload PDF or DOCX",
         "empty": "No knowledge yet.",

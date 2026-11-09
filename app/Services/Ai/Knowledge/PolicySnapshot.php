@@ -15,12 +15,12 @@ use LogicException;
  */
 final readonly class PolicySnapshot
 {
-    /** 2 holds one row per meaning under `concepts`. 1 held a row per language under `terms`, read by {@see FrozenGlossaryRow}. */
+    /** 2 holds one row per meaning under `concepts`. 1 held a row per language under `terms` and is no longer read. */
     public const VERSION = 2;
 
     /**
      * @param  list<GlossaryConcept>  $concepts
-     * @param  list<array{id: string, slug: string, title: string, type: string, locale: string|null, revision_id: string, revision: int, hash: string, markdown?: string}>  $documents  `markdown` for style guides, which enter prompts whole
+     * @param  list<array{id: string, slug: string, title: string, description?: string, type: string, locale: string|null, revision_id: string, revision: int, hash: string, markdown?: string}>  $documents  `markdown` for style guides, which enter prompts whole; `description` is missing in snapshots from before it existed
      */
     private function __construct(
         public ?string $id,

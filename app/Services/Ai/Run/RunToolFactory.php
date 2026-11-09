@@ -77,6 +77,9 @@ class RunToolFactory
         ProposeAssetChangesTool::NAME,
     ];
 
+    /** Offered only when the run has reference documents in scope. */
+    public const KNOWLEDGE_TOOLS = ['search_knowledge', 'read_knowledge'];
+
     public function __construct(
         private readonly AuthorizationService $auth,
         private readonly SkillResolver $skills,

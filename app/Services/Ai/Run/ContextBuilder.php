@@ -86,12 +86,12 @@ class ContextBuilder
             SORT_REGULAR,
         )), 0, self::MAX_FROZEN_TERMS);
 
-        // Stable prefixes end in a cache break: the style guides, then the skill catalog.
+        // Stable prefixes end in a cache break: the style guides, then the skill and reference catalogs.
         $system = '';
         $breaks = [];
         $groups = [
             [$this->base($start, $toolsAvailable), $prompts->untrustedDataGuard(), $this->styleSection($styles), $prompts->customPromptSection()],
-            [$this->catalogSection($catalog, $toolsAvailable)],
+            [$this->catalogSection($catalog, $toolsAvailable), $this->referenceSection($references, $toolsAvailable)],
             [
                 $this->taskSection($start),
                 $start->outputLocales !== null
@@ -293,6 +293,27 @@ class ContextBuilder
         }
 
         return implode("\n\n", $parts);
+    }
+
+    /**
+     * One line per reference document in scope, so the agent knows what exists before it reads.
+     *
+     * @param  list<array<string, mixed>>  $references
+     */
+    private function referenceSection(array $references, bool $toolsAvailable): ?string
+    {
+        if ($references === [] || ! $toolsAvailable) {
+            return null;
+        }
+
+        $lines = ['## Reference documents', 'Read one with `read_knowledge` when the task needs its facts, or find a section with `search_knowledge`.'];
+        foreach ($references as $reference) {
+            $label = $reference['locale'] !== null ? "{$reference['title']}, {$reference['locale']}" : $reference['title'];
+            $description = (string) ($reference['description'] ?? '');
+            $lines[] = "- {$reference['slug']} ({$label}): ".($description !== '' ? $description : $reference['title']);
+        }
+
+        return implode("\n", $lines);
     }
 
     /**

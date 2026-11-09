@@ -389,6 +389,27 @@ class AiPolicySnapshotTest extends TestCase
     }
 
     #[Test]
+    public function a_run_lists_its_reference_documents_and_offers_the_knowledge_tools_only_with_some(): void
+    {
+        $bare = $this->startRun(['source_locale' => 'en', 'target_locale' => 'de']);
+        $this->assertNotContains('search_knowledge', $bare->setup['tools']);
+        $this->assertNotContains('read_knowledge', $bare->setup['tools']);
+        $this->assertStringNotContainsString('## Reference documents', json_encode($bare->transcript[0]['content'], JSON_UNESCAPED_UNICODE));
+
+        $this->publishedDocument('warranty', AiKnowledgeType::Reference, 'Ten years.', 'de', 'Warranty periods per product line.');
+        $this->publishedDocument('specs', AiKnowledgeType::Reference, 'Sizes.');
+        $this->publishedDocument('faq-fr', AiKnowledgeType::Reference, 'Questions.', 'fr', 'French FAQ.');
+        $run = $this->startRun(['source_locale' => 'en', 'target_locale' => 'de']);
+        $system = json_encode($run->transcript[0]['content'], JSON_UNESCAPED_UNICODE);
+
+        $this->assertContains('search_knowledge', $run->setup['tools']);
+        $this->assertContains('read_knowledge', $run->setup['tools']);
+        $this->assertStringContainsString('- warranty (warranty, de): Warranty periods per product line.', $system);
+        $this->assertStringContainsString('- specs (specs): specs', $system, 'Without a description the title stands in.');
+        $this->assertStringNotContainsString('faq-fr', $system);
+    }
+
+    #[Test]
     public function a_task_in_another_language_brings_the_guide_the_run_prompt_left_out_whole(): void
     {
         $german = 'German guide. '.str_repeat('Schreib kurz und klar. ', 400);
@@ -606,12 +627,26 @@ class AiPolicySnapshotTest extends TestCase
     }
 
     #[Test]
+    public function every_knowledge_document_needs_a_description_of_up_to_200_characters(): void
+    {
+        $payload = ['title' => 'Warranty', 'slug' => 'warranty', 'type' => 'reference'];
+
+        $this->postJson($this->url('ai/knowledge'), $payload)->assertJsonValidationErrors('description');
+        $this->postJson($this->url('ai/knowledge'), [...$payload, 'description' => str_repeat('a', 201)])->assertJsonValidationErrors('description');
+        $id = $this->postJson($this->url('ai/knowledge'), [...$payload, 'description' => 'Warranty periods.'])
+            ->assertCreated()->assertJsonPath('data.description', 'Warranty periods.')->json('data.id');
+
+        $this->patchJson($this->url("ai/knowledge/{$id}"), ['description' => ''])->assertJsonValidationErrors('description');
+        $this->patchJson($this->url("ai/knowledge/{$id}"), ['title' => 'Guarantee'])->assertOk()->assertJsonPath('data.description', 'Warranty periods.');
+    }
+
+    #[Test]
     public function knowledge_documents_take_an_optional_language(): void
     {
-        $id = $this->postJson($this->url('ai/knowledge'), ['title' => 'Guide', 'slug' => 'guide', 'type' => 'style', 'locale' => 'de_AT', 'draft' => 'x'])
+        $id = $this->postJson($this->url('ai/knowledge'), ['title' => 'Guide', 'description' => 'How we write in Austria.', 'slug' => 'guide', 'type' => 'style', 'locale' => 'de_AT', 'draft' => 'x'])
             ->assertCreated()->assertJsonPath('data.locale', 'de-at')->json('data.id');
         $this->patchJson($this->url("ai/knowledge/{$id}"), ['locale' => null])->assertOk()->assertJsonPath('data.locale', null);
-        $this->postJson($this->url('ai/knowledge'), ['title' => 'Bad', 'slug' => 'bad', 'type' => 'style', 'locale' => 'not a locale'])->assertUnprocessable();
+        $this->postJson($this->url('ai/knowledge'), ['title' => 'Bad', 'description' => 'Bad.', 'slug' => 'bad', 'type' => 'style', 'locale' => 'not a locale'])->assertUnprocessable();
     }
 
     private function url(string $path): string
@@ -619,9 +654,9 @@ class AiPolicySnapshotTest extends TestCase
         return "/mgmt/v1/spaces/{$this->space->id}/{$path}";
     }
 
-    private function publishedDocument(string $slug, AiKnowledgeType $type, string $text, ?string $locale = null): AiKnowledgeDocument
+    private function publishedDocument(string $slug, AiKnowledgeType $type, string $text, ?string $locale = null, string $description = ''): AiKnowledgeDocument
     {
-        $document = AiKnowledgeDocument::create([...AiKnowledgeDocument::ownerAttributes($this->space), 'slug' => $slug, 'title' => $slug, 'type' => $type, 'locale' => $locale, 'enabled' => true, 'draft' => $text]);
+        $document = AiKnowledgeDocument::create([...AiKnowledgeDocument::ownerAttributes($this->space), 'slug' => $slug, 'title' => $slug, 'description' => $description, 'type' => $type, 'locale' => $locale, 'enabled' => true, 'draft' => $text]);
         app(PublishAiKnowledgeDocument::class)->handle($document, $this->user);
 
         return $document->refresh();

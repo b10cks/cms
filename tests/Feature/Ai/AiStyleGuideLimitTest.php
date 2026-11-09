@@ -37,13 +37,13 @@ class AiStyleGuideLimitTest extends TestCase
     {
         $long = str_repeat('a', AiKnowledgeDocument::MAX_STYLE_CHARS + 1);
 
-        $this->postJson($this->url, ['title' => 'Dutch', 'slug' => 'dutch', 'type' => 'style', 'locale' => 'nl', 'draft' => $long])
+        $this->postJson($this->url, ['title' => 'Dutch', 'description' => 'How we write Dutch.', 'slug' => 'dutch', 'type' => 'style', 'locale' => 'nl', 'draft' => $long])
             ->assertUnprocessable()
             ->assertJsonValidationErrors(['draft' => 'A style guide can hold at most 20,000 characters. This draft has 20,001.']);
         $this->assertSame(0, AiKnowledgeDocument::count());
 
-        $this->postJson($this->url, ['title' => 'Specs', 'slug' => 'specs', 'type' => 'reference', 'draft' => $long])->assertCreated();
-        $id = $this->postJson($this->url, ['title' => 'Dutch', 'slug' => 'dutch', 'type' => 'style', 'draft' => str_repeat('ä', AiKnowledgeDocument::MAX_STYLE_CHARS)])
+        $this->postJson($this->url, ['title' => 'Specs', 'description' => 'Product specifications.', 'slug' => 'specs', 'type' => 'reference', 'draft' => $long])->assertCreated();
+        $id = $this->postJson($this->url, ['title' => 'Dutch', 'description' => 'How we write Dutch.', 'slug' => 'dutch', 'type' => 'style', 'draft' => str_repeat('ä', AiKnowledgeDocument::MAX_STYLE_CHARS)])
             ->assertCreated()->json('data.id');
 
         $this->patchJson("{$this->url}/{$id}", ['draft' => $long])->assertJsonValidationErrors('draft');

@@ -50,7 +50,7 @@ class AiKnowledgeDocumentController extends Controller
 
         $document = new AiKnowledgeDocument([
             ...AiKnowledgeDocument::ownerAttributes($owner),
-            ...$request->safe()->only(['title', 'slug', 'type', 'locale', 'enabled']),
+            ...$request->safe()->only(['title', 'description', 'slug', 'type', 'locale', 'enabled']),
             'draft' => (string) $request->input('draft', ''),
             'created_by' => $request->user()->id,
             'updated_by' => $request->user()->id,
@@ -74,7 +74,7 @@ class AiKnowledgeDocumentController extends Controller
             $this->ensureUniqueSlug($this->aiOwner($request), $request->input('slug'), $model->id);
         }
 
-        $model->fill($request->safe()->only(['title', 'slug', 'type', 'locale', 'enabled']));
+        $model->fill($request->safe()->only(['title', 'description', 'slug', 'type', 'locale', 'enabled']));
         if ($request->has('draft')) {
             $model->draft = (string) $request->input('draft', '');
         }
