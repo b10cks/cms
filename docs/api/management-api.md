@@ -111,6 +111,12 @@ A `translations` map holds Use and nothing else, so it changes Use only. Sending
 
 A glossary inherited from a team reads and exports the same, and returns 403 on row writes and 404 on term writes and imports. `meta` holds `read_only`, `default_locale`, `available_locales` and whole-glossary `facets`. In a space, `available_locales` lists the enabled languages, default first, then stored ones, flagged `unused` when no enabled language can use them.
 
+### Knowledge documents
+
+`…/spaces/{space}/ai/knowledge` and `…/teams/{team}/ai/knowledge` hold style guides (`type: style`) and reference documents (`type: reference`). Both are a Markdown `draft` that `POST …/knowledge/{id}/publish` freezes into a revision. A `locale` scopes a document to one language: a run writing `nl-NL` reads a guide stored as `nl-NL`, else one stored as `nl`, and a guide without a locale applies to every language.
+
+Every run in a style guide's scope reads it whole, so a style guide holds at most 20,000 characters. A create or update whose style `draft` is longer, or that turns a longer document into a style guide, returns 422 on `draft` with the limit and the draft's length, and nothing is saved. Publishing a longer draft, for example one extracted from an upload, returns the same 422 and leaves the published revision as it was. An older guide over the limit takes other edits while its draft stays unchanged. Reference documents are chunked for search and have no such limit.
+
 ### Translation memory
 
 `…/spaces/{space}/ai/translation-memory` lists the space's translation memory: one unit per translated field of a published translation, pairing its text with the source text it was written against. AI runs reuse an exact match without a provider call, so a wrong pair keeps coming back until it is corrected or removed here. Reading needs `ai.view`, writing `ai.manage`.

@@ -21,6 +21,8 @@ For long-running translations, asset metadata and page metadata, use `ai.operati
 
 `ai.glossaries.import` and `ai.glossaries.export` read and write the [glossary sheet](glossary-sheet.md), and `export` takes `template` for an empty one. `conceptRows`, `createConceptRow`, `updateConceptRow`, `deleteConceptRow` and `bulkConceptRows` edit a glossary per row and apply at once. `ai.teamGlossaries.*` offers the same for a team. `checkText` tries a text against saved wording without a provider call, in one glossary or with `scope: space` what a run in the space uses. Deterministic glossary overrides take written reasons, and edited proposals can require a semantic recheck before a second explicit accept.
 
+`ai.knowledge.*` manages style guides and reference documents. A style guide holds at most 20,000 characters, since every run in its scope reads it whole: `create`, `update` and `publish` refuse a longer style draft with a 422 naming the limit and the draft's length. See [knowledge documents](../api/management-api.md#knowledge-documents).
+
 `ai.translationMemory.list`, `update`, `delete` and `bulk` read and correct the space's [translation memory](../api/management-api.md#translation-memory), the published pairs runs reuse without a provider call. A correction becomes `origin: human`. The entry is not changed, and its next publish records what it holds then, so a corrected or deleted pair comes back unless the translation is fixed too.
 
 These operations use the same policies and validation as HTTP. An owner's token can approve plans and extend budgets, so the client must obtain editor approval before those calls. The sibling SDK and stdio package are separate integrations; this CMS change does not update them.

@@ -71,6 +71,7 @@ Good rules are ones someone could check by reading the text:
 **Do**
 
 - Keep it to about a page. Each extra paragraph is paid for on every run and dilutes the rest.
+- Stay under 20,000 characters. A style guide reaches the AI whole on every run, so a longer one cannot be saved or published.
 - Give an example when a rule is hard to state.
 - Say when a rule applies only to one language.
 
