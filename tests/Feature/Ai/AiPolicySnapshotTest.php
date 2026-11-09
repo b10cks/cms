@@ -389,9 +389,10 @@ class AiPolicySnapshotTest extends TestCase
     }
 
     #[Test]
-    public function a_task_in_another_language_brings_the_guide_the_run_prompt_left_out(): void
+    public function a_task_in_another_language_brings_the_guide_the_run_prompt_left_out_whole(): void
     {
-        $this->publishedDocument('guide-de', AiKnowledgeType::Style, 'German guide.', 'de');
+        $german = 'German guide. '.str_repeat('Schreib kurz und klar. ', 400);
+        $this->publishedDocument('guide-de', AiKnowledgeType::Style, $german, 'de');
         $this->publishedDocument('guide-fr', AiKnowledgeType::Style, 'French guide.', 'fr');
         $run = $this->startRun();
         $this->assertSame([], $run->setup['styles']);
@@ -399,7 +400,7 @@ class AiPolicySnapshotTest extends TestCase
         $task = $this->task($run, $this->entry('en', ['title' => 'Hello']));
 
         $this->assertSame(['guide-de'], array_column($task['style_guides'], 'title'));
-        $this->assertSame('German guide.', $task['style_guides'][0]['text']);
+        $this->assertSame($german, $task['style_guides'][0]['text']);
     }
 
     #[Test]

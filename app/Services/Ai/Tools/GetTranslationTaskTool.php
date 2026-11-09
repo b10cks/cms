@@ -39,8 +39,6 @@ class GetTranslationTaskTool implements AiToolInterface, ReportsOutcomes
 
     private const PAGE = 100;
 
-    private const MAX_GUIDE_CHARS = 8000;
-
     /** @var list<array{target_type: string, target_id: string, outcome: string, reason: string|null, part: string}> */
     private array $outcomes = [];
 
@@ -163,7 +161,7 @@ class GetTranslationTaskTool implements AiToolInterface, ReportsOutcomes
                 'title' => $guide['title'],
                 'locale' => $guide['locale'],
                 'revision_id' => $guide['revision_id'],
-                'text' => mb_substr((string) ($guide['markdown'] ?? ''), 0, self::MAX_GUIDE_CHARS),
+                'text' => (string) ($guide['markdown'] ?? ''),
             ], array_values($guides))] : []),
             'examples' => $units === [] ? [] : $this->memory->fuzzy(array_values($sources), $destination->sourceLocale, $destination->locale, terms: $policy->concepts),
             ...$this->metadata($plan, $destination),
