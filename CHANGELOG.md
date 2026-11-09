@@ -3,6 +3,18 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.11.9-3f39b47b] — 2026-11-9
+
+- 📝 Mark the overlay structure PR merged and the tree repair as next
+- 📝 Record the translated slug work and the overlay structure PR
+- 🔨 Re-home translated children in content:repair-tree
+- 🐛 File every translation under its parent's translation
+- 🔨 Add content:rebuild-full-slugs to repair stale full slugs
+- 🐛 Propagate translated parent slugs to children filed under the canonical parent
+- 🐛 Store an overlay translation's nested items with the canonical block type
+- 🐛 Keep the canonical structure when an overlay translation stores a stale block
+- 🎨 Format the schema value merger and validator with Pint
+
 ## [v2026.11.9-2e5b4feb] — 2026-11-9
 
 - 🐛 Validate table translations merged onto the source table
