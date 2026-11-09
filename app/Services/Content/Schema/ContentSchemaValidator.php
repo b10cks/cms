@@ -17,8 +17,7 @@ class ContentSchemaValidator
         protected readonly FieldVisibilityPruner $pruner,
         protected readonly OptionChoiceResolver $optionChoiceResolver,
         protected readonly ContentSchemaValueMerger $contentSchemaValueMerger,
-    ) {
-    }
+    ) {}
 
     public function validateSubmission(
         Space $space,
@@ -31,6 +30,18 @@ class ContentSchemaValidator
     ): ContentSchemaValidationResult {
         $submittedContent = $this->restoreReadonlyValues($block, $submittedContent, $content);
         $effectiveBase = $this->resolveEffectiveBase($space, $content, $languageIso, $i18nParentId);
+        $ignoreAbsentNonTranslatableFields = $effectiveBase['mode'] === 'overlay'
+            && (($content?->i18n_parent_id ?? null) !== null || $i18nParentId !== null);
+
+        // An overlay translation never stores a nested block type of its own.
+        if ($ignoreAbsentNonTranslatableFields) {
+            $submittedContent = $this->contentSchemaValueMerger->alignOverlayStructure(
+                $block->schema?->toArray() ?? [],
+                $effectiveBase['content'],
+                $submittedContent,
+            );
+        }
+
         $effectiveContent = $this->contentSchemaValueMerger->mergeForSchema(
             $block->schema?->toArray() ?? [],
             $effectiveBase['content'],
@@ -42,8 +53,6 @@ class ContentSchemaValidator
             $submittedContent,
             $effectiveContent,
         );
-        $ignoreAbsentNonTranslatableFields = $effectiveBase['mode'] === 'overlay'
-            && (($content?->i18n_parent_id ?? null) !== null || $i18nParentId !== null);
         $sanitizedContent = $this->pruner->prune($tree);
 
         if ($ignoreAbsentNonTranslatableFields) {
@@ -160,14 +169,14 @@ class ContentSchemaValidator
 
         $resolverContent = $content;
 
-        if (!$resolverContent && $i18nParentId) {
+        if (! $resolverContent && $i18nParentId) {
             $resolverContent = Content::query()
                 ->where('id', $i18nParentId)
                 ->whereNull('deleted_at')
                 ->first();
         }
 
-        if (!$resolverContent) {
+        if (! $resolverContent) {
             return [
                 'content' => [],
                 'mode' => 'independent',
@@ -199,12 +208,11 @@ class ContentSchemaValidator
         ContentSchemaTree $tree,
         string $mode = 'publish',
         bool $ignoreAbsentNonTranslatableFields = false,
-    ): array
-    {
+    ): array {
         $errors = [];
 
         foreach ($tree->flatten() as $node) {
-            if (!$node->visible) {
+            if (! $node->visible) {
                 continue;
             }
 
@@ -225,12 +233,11 @@ class ContentSchemaValidator
         ContentSchemaTree $tree,
         string $mode = 'save',
         bool $ignoreAbsentNonTranslatableFields = false,
-    ): array
-    {
+    ): array {
         $warnings = [];
 
         foreach ($tree->flatten() as $node) {
-            if (!$node->visible) {
+            if (! $node->visible) {
                 continue;
             }
 
@@ -251,8 +258,7 @@ class ContentSchemaValidator
         ContentSchemaNode $node,
         string $mode = 'publish',
         bool $ignoreAbsentNonTranslatableFields = false,
-    ): array
-    {
+    ): array {
         $field = $node->field;
         $type = $field->getType();
         $value = $node->effectiveValue;
@@ -305,8 +311,7 @@ class ContentSchemaValidator
         ContentSchemaNode $node,
         string $mode = 'save',
         bool $ignoreAbsentNonTranslatableFields = false,
-    ): array
-    {
+    ): array {
         $field = $node->field;
         $value = $node->effectiveValue;
 
@@ -368,7 +373,7 @@ class ContentSchemaValidator
             ($pattern = Arr::get($validation, 'pattern'))
             && is_string($pattern)
             && ($pregPattern = $this->toPregPattern($pattern)) !== null
-            && !preg_match($pregPattern, (string) $text)
+            && ! preg_match($pregPattern, (string) $text)
         ) {
             $messages[] = sprintf('%s has an invalid format.', $field->getLabel());
         }
@@ -386,7 +391,7 @@ class ContentSchemaValidator
             return $pattern;
         }
 
-        $wrapped = '/' . str_replace('/', '\/', $pattern) . '/u';
+        $wrapped = '/'.str_replace('/', '\/', $pattern).'/u';
 
         return @preg_match($wrapped, '') !== false ? $wrapped : null;
     }
@@ -396,7 +401,7 @@ class ContentSchemaValidator
      */
     protected function validateNumber(SchemaField $field, mixed $value): array
     {
-        if (!is_numeric($value)) {
+        if (! is_numeric($value)) {
             return [sprintf('%s must be a number.', $field->getLabel())];
         }
 
@@ -483,6 +488,7 @@ class ContentSchemaValidator
         foreach ($value as $code => $amount) {
             if (! in_array($code, $currencies, true)) {
                 $messages[] = sprintf('%s contains an unexpected currency "%s".', $field->getLabel(), $code);
+
                 continue;
             }
 
@@ -509,7 +515,7 @@ class ContentSchemaValidator
         $allowed = $this->optionChoiceResolver->resolveAllowedValues($field);
         $source = $field->getAttribute('source', 'self');
 
-        if ((! empty($allowed) || $source === 'datasource') && !in_array($value, $allowed, true)) {
+        if ((! empty($allowed) || $source === 'datasource') && ! in_array($value, $allowed, true)) {
             return [sprintf('%s must be one of the allowed options.', $field->getLabel())];
         }
 
@@ -521,7 +527,7 @@ class ContentSchemaValidator
      */
     protected function validateOptions(SchemaField $field, mixed $value): array
     {
-        if (!is_array($value)) {
+        if (! is_array($value)) {
             return [sprintf('%s must be an option collection.', $field->getLabel())];
         }
 
@@ -537,7 +543,7 @@ class ContentSchemaValidator
         $source = $field->getAttribute('source', 'self');
 
         foreach ($value as $entry) {
-            if (!is_string($entry) || ((! empty($allowed) || $source === 'datasource') && !in_array($entry, $allowed, true))) {
+            if (! is_string($entry) || ((! empty($allowed) || $source === 'datasource') && ! in_array($entry, $allowed, true))) {
                 $messages[] = sprintf('%s contains an invalid option.', $field->getLabel());
             }
         }
@@ -550,7 +556,7 @@ class ContentSchemaValidator
      */
     protected function validateLink(SchemaField $field, mixed $value): array
     {
-        if (!is_array($value) || !isset($value['type'])) {
+        if (! is_array($value) || ! isset($value['type'])) {
             return [sprintf('%s must be a valid link.', $field->getLabel())];
         }
 
@@ -559,7 +565,7 @@ class ContentSchemaValidator
             ? []
             : [sprintf('%s must contain a valid URL.', $field->getLabel())],
             'email' => $this->validateEmailLink($field, $value),
-            'internal' => !empty($value['content'])
+            'internal' => ! empty($value['content'])
             ? []
             : [sprintf('%s must reference content.', $field->getLabel())],
             default => [sprintf('%s contains an unsupported link type.', $field->getLabel())],
@@ -568,7 +574,7 @@ class ContentSchemaValidator
 
     protected function isValidLinkUrl(mixed $url): bool
     {
-        if (!is_string($url) || trim($url) === '') {
+        if (! is_string($url) || trim($url) === '') {
             return false;
         }
 
@@ -661,7 +667,7 @@ class ContentSchemaValidator
      */
     protected function validateDate(SchemaField $field, mixed $value): array
     {
-        if (!is_string($value) || strtotime($value) === false) {
+        if (! is_string($value) || strtotime($value) === false) {
             return [sprintf('%s must be a valid date.', $field->getLabel())];
         }
 
@@ -685,7 +691,7 @@ class ContentSchemaValidator
      */
     protected function validateAsset(SchemaField $field, mixed $value): array
     {
-        if (!is_array($value) || ($value['type'] ?? null) !== 'asset' || empty($value['id'])) {
+        if (! is_array($value) || ($value['type'] ?? null) !== 'asset' || empty($value['id'])) {
             return [sprintf('%s must reference an asset.', $field->getLabel())];
         }
 
@@ -697,7 +703,7 @@ class ContentSchemaValidator
      */
     protected function validateMultiAssets(SchemaField $field, mixed $value): array
     {
-        if (!is_array($value)) {
+        if (! is_array($value)) {
             return [sprintf('%s must be an asset collection.', $field->getLabel())];
         }
 
@@ -721,7 +727,7 @@ class ContentSchemaValidator
      */
     protected function validateReferences(SchemaField $field, mixed $value): array
     {
-        if (!is_array($value)) {
+        if (! is_array($value)) {
             return [sprintf('%s must be a reference collection.', $field->getLabel())];
         }
 
@@ -734,7 +740,7 @@ class ContentSchemaValidator
         );
 
         foreach ($value as $reference) {
-            if (!is_string($reference) || $reference === '') {
+            if (! is_string($reference) || $reference === '') {
                 $messages[] = sprintf('%s contains an invalid reference.', $field->getLabel());
             }
         }
@@ -747,7 +753,7 @@ class ContentSchemaValidator
      */
     protected function validateBlocks(SchemaField $field, mixed $value): array
     {
-        if (!is_array($value)) {
+        if (! is_array($value)) {
             return [sprintf('%s must be a block collection.', $field->getLabel())];
         }
 
@@ -765,14 +771,14 @@ class ContentSchemaValidator
      */
     protected function validateMeta(SchemaField $field, mixed $value): array
     {
-        if (!is_array($value)) {
+        if (! is_array($value)) {
             return [sprintf('%s must be a metadata object.', $field->getLabel())];
         }
 
         $messages = [];
 
         foreach (['title', 'description', 'canonical', 'robots', 'ogTitle', 'ogDescription'] as $key) {
-            if (isset($value[$key]) && !is_string($value[$key])) {
+            if (isset($value[$key]) && ! is_string($value[$key])) {
                 $messages[] = sprintf('%s.%s must be a string.', $field->getLabel(), $key);
             }
         }
@@ -810,6 +816,7 @@ class ContentSchemaValidator
         foreach ($value['header'] as $headerKey => $headerValue) {
             if (! is_string($headerKey) || ! array_key_exists($headerKey, $columns)) {
                 $messages[] = sprintf('%s contains an unknown header column.', $field->getLabel());
+
                 continue;
             }
 
@@ -834,6 +841,7 @@ class ContentSchemaValidator
         foreach ($value['rows'] as $row) {
             if (! is_array($row)) {
                 $messages[] = sprintf('%s contains an invalid row.', $field->getLabel());
+
                 continue;
             }
 
@@ -841,6 +849,7 @@ class ContentSchemaValidator
 
             if (! is_string($rowId) || $rowId === '') {
                 $messages[] = sprintf('%s rows must have a unique string id.', $field->getLabel());
+
                 continue;
             }
 
@@ -853,6 +862,7 @@ class ContentSchemaValidator
 
             if (! is_array($cells)) {
                 $messages[] = sprintf('%s row cells must be an object.', $field->getLabel());
+
                 continue;
             }
 
@@ -861,6 +871,7 @@ class ContentSchemaValidator
 
                 if (! $column) {
                     $messages[] = sprintf('%s contains a cell for an unknown column.', $field->getLabel());
+
                     continue;
                 }
 
@@ -976,6 +987,7 @@ class ContentSchemaValidator
                 }
 
                 $content[$key] = $items;
+
                 continue;
             }
 

@@ -325,6 +325,50 @@ class ContentI18nTest extends TestCase
         $response->assertJsonPath('data.1.content.title', 'Inicio');
     }
 
+    #[Test]
+    public function saving_an_overlay_translation_stores_the_canonical_block_type_of_a_nested_item(): void
+    {
+        $this->actingAs($this->owner);
+
+        foreach (['carousel' => 'products', 'productCarousel' => 'limit'] as $slug => $ownField) {
+            Block::query()->create([
+                'external_id' => (string) Str::uuid(),
+                'name' => ucfirst($slug),
+                'slug' => $slug,
+                'type' => 'nestable',
+                'schema' => [
+                    'title' => ['type' => 'text', 'name' => 'Title', 'translatable' => true],
+                    $ownField => ['type' => 'text', 'name' => ucfirst($ownField)],
+                ],
+                'editor' => [['header' => 'General', 'items' => ['title', $ownField]]],
+            ]);
+        }
+        $this->block->update([
+            'schema' => ['body' => ['type' => 'blocks', 'name' => 'Body']],
+            'editor' => [['header' => 'General', 'items' => ['body']]],
+        ]);
+        $canonical = $this->createContent(languageIso: 'en', slug: 'studio');
+        $canonical->current_version->forceFill(['content' => ['body' => [
+            ['id' => 'item-1', 'block' => 'carousel', 'title' => 'Picks', 'products' => 'a,b,c'],
+        ]]])->save();
+
+        // An editor still holding the copy taken while the item was a productCarousel.
+        $response = $this->postJson(route('mgmt.contents.store', ['space' => $this->space->id]), [
+            'name' => 'Studio',
+            'slug' => 'studio-de',
+            'block_id' => $this->block->id,
+            'language_iso' => 'de',
+            'i18n_parent_id' => $canonical->id,
+            'content' => ['body' => [
+                ['id' => 'item-1', 'block' => 'productCarousel', 'title' => 'Auswahl', 'limit' => '12'],
+            ]],
+        ]);
+
+        $response->assertCreated();
+        $stored = ContentVersion::query()->findOrFail($response->json('data.current_version_id'))->content;
+        $this->assertSame([['id' => 'item-1', 'title' => 'Auswahl', 'block' => 'carousel']], $stored['body']);
+    }
+
     private function createContent(
         string $languageIso,
         string $slug,
