@@ -32,6 +32,16 @@ class ContentSlugService
         return ($oldFullSlug !== $content->full_slug) ? $oldFullSlug : null;
     }
 
+    /**
+     * The entries whose full_slug is built from this one's.
+     *
+     * @return iterable<Content>
+     */
+    protected function childrenOf(Content $content): iterable
+    {
+        return $content->children()->get();
+    }
+
     protected function formatChildRedirectSlug(string $basePath, Content $child): string
     {
         return $basePath;
@@ -86,10 +96,7 @@ class ContentSlugService
             'errors' => 0,
         ];
 
-        // Get all direct children
-        $children = $content->children()->get();
-
-        foreach ($children as $child) {
+        foreach ($this->childrenOf($content) as $child) {
             try {
                 // Update the child's full_slug
                 $oldFullSlug = $this->updateFullSlug($child);

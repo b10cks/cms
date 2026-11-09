@@ -82,6 +82,28 @@ class LocalizedContentSlugService extends ContentSlugService
         return $translatedParent ?? $parent;
     }
 
+    /**
+     * A translated child may hang under the translated parent or, when it was
+     * added after the family, under the canonical parent. Both build their path
+     * from this translation, see {@see resolveTranslatedParent()}.
+     */
+    protected function childrenOf(Content $content): iterable
+    {
+        if ($content->i18n_parent_id === null) {
+            return parent::childrenOf($content);
+        }
+
+        return Content::query()
+            ->where('parent_id', $content->id)
+            ->orWhere(fn ($query) => $query
+                ->where('parent_id', $content->i18n_parent_id)
+                ->where('language_iso', $content->language_iso))
+            ->orderBy('position')
+            ->orderBy('name')
+            ->orderBy('id')
+            ->get();
+    }
+
     protected function formatChildRedirectSlug(string $basePath, Content $child): string
     {
         return $this->formatRedirectSlug($basePath, $child->language_iso);

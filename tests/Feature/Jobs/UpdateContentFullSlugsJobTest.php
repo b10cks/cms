@@ -45,4 +45,34 @@ class UpdateContentFullSlugsJobTest extends TestCase
         Event::assertDispatchedTimes(ContentsChanged::class, 1);
         Event::assertDispatchedTimes(SpaceModelsChanged::class, 1);
     }
+
+    #[Test]
+    public function a_translated_parent_rename_reaches_translated_children_filed_under_the_canonical_parent(): void
+    {
+        $space = Space::factory()->create();
+        $this->setUpSpaceTesting($space);
+
+        $enParent = Content::factory()->create(['slug' => 'about', 'language_iso' => 'en']);
+        $deParent = Content::factory()->create(['slug' => 'ueber', 'language_iso' => 'de', 'i18n_parent_id' => $enParent->id]);
+        $enChild = Content::factory()->create(['slug' => 'team', 'language_iso' => 'en', 'parent_id' => $enParent->id]);
+        $deChild = Content::factory()->create([
+            'slug' => 'mannschaft',
+            'language_iso' => 'de',
+            'parent_id' => $enParent->id,
+            'i18n_parent_id' => $enChild->id,
+        ]);
+        $deGrandchild = Content::factory()->create([
+            'slug' => 'leitung',
+            'language_iso' => 'de',
+            'parent_id' => $enChild->id,
+        ]);
+        $this->assertSame('/ueber/mannschaft', $deChild->fresh()->full_slug);
+
+        $deParent->update(['slug' => 'ueber-uns']);
+        (new UpdateContentFullSlugsJob($deParent, $space))->handle();
+
+        $this->assertSame('/ueber-uns/mannschaft', $deChild->fresh()->full_slug);
+        $this->assertSame('/ueber-uns/mannschaft/leitung', $deGrandchild->fresh()->full_slug);
+        $this->assertSame('/about/team', $enChild->fresh()->full_slug);
+    }
 }
