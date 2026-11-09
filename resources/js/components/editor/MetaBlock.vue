@@ -8,7 +8,6 @@ import MetaPreview from '~/components/editor/meta/MetaPreview.vue'
 import type { MetaPreviewData } from '~/components/editor/meta/types'
 import RobotsDirectiveEditor from '~/components/editor/RobotsDirectiveEditor.vue'
 import AiConfigMenuItems from '~/components/ai/AiConfigMenuItems.vue'
-import AiRunFindings from '~/components/ai/AiRunFindings.vue'
 import Icon from '~/components/Icon.vue'
 import SplitButton from '~/components/ui/button/SplitButton.vue'
 import { FormField, InputField, TextField } from '~/components/ui/form'
@@ -374,8 +373,6 @@ const updateCanonicalValue = (value: LinkValue | null): void => {
       </div>
     </div>
     <MetaPreview :data="previewData" />
-
-    <AiRunFindings :findings="metaRun.findings.value" />
 
     <InputField
       v-model="localValue.title"

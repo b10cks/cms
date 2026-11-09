@@ -21,13 +21,9 @@ export function aiSettingsRoutes(owner: AiOwner) {
       params: { ...params, documentId },
       query,
     }),
-    glossary: (glossaryId: string) => ({
-      name: isSpace ? 'space-settings-ai-glossary' : 'team-ai-glossary',
-      params: { ...params, glossaryId },
-    }),
   }
 }
 
-/** Whether a listed skill, document or glossary belongs to the owner, rather than a team above it. */
+/** Whether a listed skill or document belongs to the owner, rather than a team above it. */
 export const isOwnedBy = (row: { scope: AiScope; owner_id: string }, owner: AiOwner) =>
   row.scope === owner.kind && row.owner_id === owner.id

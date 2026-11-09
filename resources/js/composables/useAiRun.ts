@@ -1,6 +1,5 @@
 import { api } from '~/api'
 import type {
-  AiGlossaryFinding,
   AiQuestionnaire,
   AiQuestionnaireAnswers,
   AiProviderRetryNotice,
@@ -66,7 +65,6 @@ export function useAiRun(spaceId: MaybeRefOrGetter<string>) {
   const questionnaire = shallowRef<AiQuestionnaire | null>(null)
   const result = shallowRef<AiRunResult | null>(null)
   const partial = ref(false)
-  const findings = shallowRef<AiGlossaryFinding[]>([])
   const sources = shallowRef<AiSource[]>([])
   const proposals = shallowRef<AiProposal[]>([])
   const error = shallowRef<AiRunError | null>(null)
@@ -124,9 +122,6 @@ export function useAiRun(spaceId: MaybeRefOrGetter<string>) {
       case 'source':
         sources.value = [...sources.value, event.source]
         break
-      case 'glossary_findings':
-        findings.value = event.findings
-        break
       case 'proposal':
         proposals.value = [...proposals.value, event.proposal]
         break
@@ -141,7 +136,6 @@ export function useAiRun(spaceId: MaybeRefOrGetter<string>) {
       case 'completed':
         result.value = event.result
         partial.value = event.partial
-        findings.value = event.result.glossary_findings
         finish('completed')
         break
       case 'error':
@@ -162,7 +156,6 @@ export function useAiRun(spaceId: MaybeRefOrGetter<string>) {
     } else if (run.state === 'completed') {
       result.value = run.result
       partial.value = run.partial
-      findings.value = run.result?.glossary_findings ?? []
       finish('completed')
     } else if (run.state === 'failed' || run.state === 'cancelled') {
       error.value = error.value ?? { message: t('composables.aiRun.failed'), reason: run.error ?? undefined }
@@ -264,7 +257,6 @@ export function useAiRun(spaceId: MaybeRefOrGetter<string>) {
     questionnaire.value = null
     result.value = null
     partial.value = false
-    findings.value = []
     sources.value = []
     proposals.value = []
     error.value = null
@@ -341,7 +333,6 @@ export function useAiRun(spaceId: MaybeRefOrGetter<string>) {
     questionnaire,
     result,
     partial: readonly(partial),
-    findings,
     sources,
     proposals,
     error,

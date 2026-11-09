@@ -54,7 +54,7 @@ describe('useAiRun', () => {
         { type: 'moved_to_background', run_id: 'run-1', seq: 3 },
       ])
     )
-    const result = { text: 'Hello world', data: null, glossary_findings: [] }
+    const result = { text: 'Hello world', data: null }
     api.getRunEvents.mockResolvedValue({
       data: [
         { type: 'moved_to_background', run_id: 'run-1', seq: 3 },
@@ -97,7 +97,7 @@ describe('useAiRun', () => {
         { type: 'run_started', run_id: 'run-1', seq: 1, skill: null, surface: 'cmdk' },
         { ...retry(1), seq: 2 },
         { type: 'text_delta', run_id: 'run-1', seq: 3, text: 'Hello' },
-        { type: 'completed', run_id: 'run-1', seq: 4, result: { text: 'Hello', data: null, glossary_findings: [] }, partial: false, usage: {} },
+        { type: 'completed', run_id: 'run-1', seq: 4, result: { text: 'Hello', data: null }, partial: false, usage: {} },
       ])
     )
     const scope = effectScope()
@@ -144,7 +144,7 @@ describe('useAiRun', () => {
 
   it('collects the proposals a run records into its changeset', async () => {
     const proposal = { changeset_id: 'cs-1', item_id: 'item-1', target_type: 'selection', target_id: null, path: null }
-    const result = { text: 'Shorter.', data: null, glossary_findings: [] }
+    const result = { text: 'Shorter.', data: null }
     fetchMock.mockResolvedValue(
       sse([
         { type: 'run_started', run_id: 'run-1', seq: 1, skill: 'shorten', surface: 'selection' },

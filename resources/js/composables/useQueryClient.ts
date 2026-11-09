@@ -184,7 +184,7 @@ export const queryKeys = {
       operationItems: (operationId: string) => [...all(), 'operations', 'detail', operationId, 'items'] as const,
     }
   },
-  /** Skills, knowledge and glossaries of a space or team. */
+  /** Skills and knowledge of a space or team. */
   aiKnowledge: (owner: AiOwner) => {
     const all = () => [`${owner.kind}s`, owner.id, 'ai'] as const
     return {
@@ -193,8 +193,6 @@ export const queryKeys = {
       skill: (id: string) => [...all(), 'skills', id] as const,
       documents: () => [...all(), 'knowledge'] as const,
       document: (id: string) => [...all(), 'knowledge', id] as const,
-      glossaries: () => [...all(), 'glossaries'] as const,
-      glossaryConceptRows: (glossaryId: string) => [...all(), 'glossaries', glossaryId, 'concept-rows'] as const,
     }
   },
   migrations: spaceEntityKeys('migrations'),

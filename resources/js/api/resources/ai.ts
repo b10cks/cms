@@ -198,12 +198,12 @@ export class Ai {
     return this.client.post<{ data: AiPreflight }>(`/mgmt/v1/spaces/${this.spaceId}/ai/preflight`, payload)
   }
 
-  /** Open conflicts and flagged wording per entry, optionally of one release. */
+  /** Open conflicts per entry, optionally of one release. */
   public async contentFlags(releaseId?: string): Promise<{ data: AiContentFlagMap }> {
     return this.client.get<{ data: AiContentFlagMap }>(`/mgmt/v1/spaces/${this.spaceId}/ai/content-flags`, releaseId ? { release_id: releaseId } : undefined)
   }
 
-  /** The conflicts and flagged wording of some entries, named by field. */
+  /** The conflicts of some entries, named by field. */
   public async contentFlagDetails(ids: string[]): Promise<{ data: AiContentFlagEntry[] }> {
     return this.client.get<{ data: AiContentFlagEntry[] }>(`/mgmt/v1/spaces/${this.spaceId}/ai/content-flags/details`, { ids })
   }
@@ -255,7 +255,7 @@ export class Ai {
     )
   }
 
-  /** What an operation changed in drafts, a page of entries, conflicts and flagged wording first. */
+  /** What an operation changed in drafts, a page of entries, conflicts first. */
   public async getOperationChanges(operationId: string, params: { page: number; per_page: number }): Promise<AiOperationChangesPage> {
     return this.client.get<AiOperationChangesPage>(`/mgmt/v1/spaces/${this.spaceId}/ai/operations/${operationId}/changes`, params)
   }
@@ -294,16 +294,6 @@ export class Ai {
       `/mgmt/v1/spaces/${this.spaceId}/ai/operations/${operationId}/review/reject`,
       { group }
     )
-  }
-
-  public async acceptSuggestion(suggestionId: string, glossaryId: string): Promise<void> {
-    await this.client.post(`/mgmt/v1/spaces/${this.spaceId}/ai/suggestions/${suggestionId}/accept`, {
-      glossary_id: glossaryId,
-    })
-  }
-
-  public async dismissSuggestion(suggestionId: string): Promise<void> {
-    await this.client.post(`/mgmt/v1/spaces/${this.spaceId}/ai/suggestions/${suggestionId}/dismiss`)
   }
 
   public async getSchedules(): Promise<AiSchedules> {

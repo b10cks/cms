@@ -45,7 +45,7 @@ describe('useAssetAiClassification', () => {
     expect(warning).not.toHaveBeenCalled()
   })
 
-  it('warns when images have values left open, such as refused glossary wording', async () => {
+  it('warns when images have values left open', async () => {
     getClassificationRun.mockResolvedValue(progress({ partial: 1, none: 1 }))
 
     await finish()

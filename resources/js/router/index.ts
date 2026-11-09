@@ -161,12 +161,6 @@ const routes: RouteRecordRaw[] = [
             component: () => import('~/pages/teams/ai-document.vue'),
             meta: { settingsNav: 'team-ai' },
           },
-          {
-            path: 'ai/glossaries/:glossaryId',
-            name: 'team-ai-glossary',
-            component: () => import('~/pages/teams/ai-glossary.vue'),
-            meta: { settingsNav: 'team-ai' },
-          },
         ],
       },
     ],
@@ -452,20 +446,6 @@ const routes: RouteRecordRaw[] = [
         name: 'space-settings-ai-document',
         component: () => import('~/pages/[space]/settings/ai-document.vue'),
         meta: { settingsNav: 'space-settings-ai-knowledge' },
-      },
-      {
-        path: 'ai-knowledge/glossaries/:glossaryId',
-        name: 'space-settings-ai-glossary',
-        component: () => import('~/pages/[space]/settings/ai-glossary.vue'),
-        meta: { settingsNav: 'space-settings-ai-knowledge' },
-      },
-      {
-        path: 'ai-glossaries',
-        name: 'space-settings-ai-glossaries',
-        redirect: (to) => ({
-          name: 'space-settings-ai-knowledge',
-          params: { space: to.params.space },
-        }),
       },
       {
         path: 'ai-schedules',

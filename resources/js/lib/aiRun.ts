@@ -27,37 +27,9 @@ export interface AiQuestionnaire {
 
 export type AiQuestionnaireAnswers = Record<string, string | null>
 
-export interface AiGlossaryFinding {
-  type: 'missing_term' | 'translated_do_not_translate' | 'forbidden_variant'
-  term: string
-  expected?: string
-  found?: string
-}
-
-/**
- * Missing required wording is a hint: exact matching can't tell an inflected form
- * from a wrong word. It takes no reason and stops no bulk accept. The client side
- * of `GlossaryChecker::isBlocking()`.
- */
-export const isGlossaryHint = ({ type }: Pick<AiGlossaryFinding, 'type'>) => type === 'missing_term'
-
-/** The sentence for a finding. Banned wording without a known replacement doesn't offer one. */
-export const glossaryFindingText = (
-  finding: AiGlossaryFinding,
-  t: (key: string, params: Record<string, string>) => string
-) => {
-  const key = finding.type === 'forbidden_variant' && !finding.expected ? 'forbidden_variant_bare' : finding.type
-  return t(`components.aiActions.findings.${key}`, {
-    term: finding.term,
-    expected: finding.expected ?? '',
-    found: finding.found ?? '',
-  })
-}
-
 export interface AiRunResult<TData = unknown> {
   text: string
   data: TData | null
-  glossary_findings: AiGlossaryFinding[]
 }
 
 export interface AiRunUsage {
@@ -154,7 +126,6 @@ export type AiRunEvent =
   | (EventBase & { type: 'source'; source: AiSource })
   | (EventBase & { type: 'proposal'; proposal: AiProposal })
   | (EventBase & { type: 'questionnaire'; questionnaire: AiQuestionnaire })
-  | (EventBase & { type: 'glossary_findings'; findings: AiGlossaryFinding[] })
   | (EventBase & { type: 'usage' } & AiRunUsage)
   | (EventBase & {
       type: 'provider_retry_scheduled'
@@ -179,7 +150,6 @@ const EVENT_TYPES: ReadonlySet<string> = new Set<AiRunEventType>([
   'source',
   'proposal',
   'questionnaire',
-  'glossary_findings',
   'usage',
   'provider_retry_scheduled',
   'moved_to_background',
