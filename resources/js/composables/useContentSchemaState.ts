@@ -3,7 +3,12 @@ import type { Ref } from 'vue'
 import { isProxy, toRaw } from 'vue'
 
 import { focusField } from '~/lib/fieldFocus'
-import { ensureTableValue, getTableColumns, normalizeSchemaTypeName } from '~/lib/tableField'
+import {
+  ensureTableValue,
+  getTableColumns,
+  mergeLocalizedTableValue,
+  normalizeSchemaTypeName,
+} from '~/lib/tableField'
 import type { ContentResource } from '~/types/contents'
 
 type ScopeValue = Record<string, unknown>
@@ -509,8 +514,14 @@ const validateScope = (
     }
 
     // Validate what will actually be saved — the pruned local scope visibility
-    // was decided from — rather than the source document.
-    const value = values?.[key]
+    // was decided from — rather than the source document. A table translation
+    // stores only the header labels and text cells it localizes, so it is
+    // checked merged onto the source table, as the server does.
+    const localValue = values?.[key]
+    const value =
+      ignoreAbsentNonTranslatableFields && type === 'table' && localValue != null
+        ? mergeLocalizedTableValue(effectiveScope?.[key], localValue, field as TableSchema)
+        : localValue
     const validation = field.validation || {}
 
     if (!ignoreCurrentField && field.required && isEmpty(value)) {

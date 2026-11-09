@@ -1155,6 +1155,39 @@ describe('useContentSchemaState', () => {
           }).sanitizedContent.value
         ).toEqual({ body: [{ block: 'hero' }, { block: 'hero' }] })
       })
+
+      it('validates a partial table translation merged onto the source table', () => {
+        const hours = field('table', {
+          name: 'Opening Hours',
+          translatable: true,
+          has_thead: true,
+          columns: [
+            { key: 'day', label: 'Day', type: 'text' },
+            { key: 'hours', label: 'Hours', type: 'text' },
+          ],
+        })
+        const source = {
+          header: { day: 'Day', hours: 'Hours' },
+          rows: [{ id: 'r1', cells: { day: 'Monday', hours: '9-17' } }],
+        }
+
+        expect(
+          errorsFor({
+            content: { hours: { header: { day: 'Tag' } } },
+            schema: { hours },
+            effective: { hours: source },
+            ignoreAbsent: true,
+          })
+        ).toEqual({})
+        expect(
+          errorsFor({
+            content: { hours: { rows: [{ id: 'r1', cells: { day: 'Montag' } }] } },
+            schema: { hours },
+            effective: { hours: source },
+            ignoreAbsent: true,
+          })
+        ).toEqual({})
+      })
     })
 
     it('falls back to the raw content and warns when pruning blows up', () => {
