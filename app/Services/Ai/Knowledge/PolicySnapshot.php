@@ -42,18 +42,19 @@ final readonly class PolicySnapshot
     /**
      * @param  array<string, mixed>  $payload
      *
-     * @throws LogicException for a snapshot newer than this code
+     * @throws LogicException for a snapshot of another version than this code reads
      */
     public static function fromPayload(array $payload, ?string $id, string $fingerprint): self
     {
-        if (($payload['version'] ?? 0) > self::VERSION) {
-            throw new LogicException("Policy snapshot version {$payload['version']} is newer than this code.");
+        $version = $payload['version'] ?? 0;
+        if ($version !== self::VERSION) {
+            throw new LogicException("Policy snapshot version {$version} is not read by this code, which reads version ".self::VERSION.'.');
         }
 
         return new self(
             $id,
             $fingerprint,
-            GlossaryConcept::listFromFrozen($payload['concepts'] ?? $payload['terms'] ?? []),
+            GlossaryConcept::listFromFrozen($payload['concepts'] ?? []),
             $payload['documents'] ?? [],
         );
     }

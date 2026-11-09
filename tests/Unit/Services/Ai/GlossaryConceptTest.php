@@ -8,6 +8,7 @@ use App\Services\Ai\Knowledge\GlossaryConcept;
 use App\Services\Ai\Knowledge\LegacyGlossaryRows;
 use App\Services\Ai\Knowledge\PolicySnapshot;
 use App\Services\Ai\Tools\LookupGlossaryTool;
+use LogicException;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -157,99 +158,12 @@ class GlossaryConceptTest extends TestCase
         ], $concepts['x']['languages'], 'A ban names wording of its own language only.');
     }
 
-    /**
-     * @param  list<array<string, mixed>>  $terms
-     */
-    private function frozen(array $terms): PolicySnapshot
-    {
-        return PolicySnapshot::fromPayload(['version' => 1, 'terms' => $terms, 'documents' => []], 'snapshot', 'fingerprint');
-    }
-
-    /**
-     * @param  array<string, mixed>  $fields
-     * @return array<string, mixed>
-     */
-    private function frozenRow(string $term, string $locale, array $fields = []): array
-    {
-        return ['term' => $term, 'source_locale' => $locale, 'translations' => [], 'case_sensitive' => false, 'do_not_translate' => false, 'forbidden' => [], 'note' => null, ...$fields];
-    }
-
     #[Test]
-    public function a_frozen_row_keeps_its_own_case_and_its_avoid_counts_in_every_output_language(): void
+    public function a_snapshot_from_before_rows_became_concepts_is_refused(): void
     {
-        $policy = $this->frozen([$this->frozenRow('US', 'en', ['case_sensitive' => true, 'forbidden' => ['basket']])]);
+        $this->expectException(LogicException::class);
 
-        $this->assertSame([], $policy->activate('Tell us more', 'en', 'de'), 'A case-sensitive row is not found in other case.');
-        $this->assertSame(
-            [['type' => GlossaryChecker::FORBIDDEN_VARIANT, 'term' => 'US', 'found' => 'basket']],
-            (new GlossaryChecker)->check('Tell us more', 'Mein basket', 'en', 'de', $policy->concepts),
-        );
-        $this->assertSame([], (new GlossaryChecker)->check('Tell us more', 'Mein BASKET', 'en', 'de', $policy->concepts), 'Case holds for its Avoid too.');
-    }
-
-    #[Test]
-    public function a_frozen_ban_counts_in_its_own_language_and_a_linked_row_answers_for_itself(): void
-    {
-        $policy = $this->frozen([
-            $this->frozenRow('Billig', 'de', ['forbidden' => ['Billig', 'Billig*']]),
-            $this->frozenRow('cart', 'en', ['forbidden' => ['basket'], 'concept_id' => 'c1', 'id' => 't1', 'note' => 'Shop', 'translations' => ['de' => 'Warenkorb']]),
-            $this->frozenRow('Warenkorb', 'de', ['forbidden' => ['Korb'], 'concept_id' => 'c1', 'id' => 't2']),
-        ]);
-        $checker = new GlossaryChecker;
-
-        $found = static fn (array $findings) => array_column($findings, 'found');
-
-        $this->assertSame(['Billigware'], $found($checker->check('', 'Billigware', 'de', 'de', $policy->concepts)));
-        $this->assertSame([], $checker->check('', 'Billigware', 'de', 'en', $policy->concepts), 'A ban is per language.');
-        $this->assertSame([], $checker->check('', 'a basket', 'en', 'de', $policy->concepts), 'A linked row counts in its own language only.');
-        $this->assertSame(['Korb'], $found($checker->check('', 'ein Korb', 'en', 'de', $policy->concepts)));
-        $this->assertSame(['basket'], $found($checker->check('', 'a basket', 'de', 'en-GB', $policy->concepts)), 'The same language in another region counts.');
-
-        [$hit] = $policy->activate('Your cart', 'en', 'de');
-        $this->assertSame(
-            '"cart": write "Warenkorb" in de; never use "Korb"; note: Shop',
-            GlossaryBrief::instruction(GlossaryBrief::rule($hit, 'en', 'de')),
-            'The brief reads the linked language, as it did.',
-        );
-    }
-
-    #[Test]
-    public function a_frozen_row_finds_in_a_sibling_region_and_its_translations_stay_one_way(): void
-    {
-        $policy = $this->frozen([$this->frozenRow('Lift', 'en-GB', ['translations' => ['de' => 'Aufzug']])]);
-
-        $this->assertSame(['Lift'], array_map(static fn (array $hit) => $hit['wording']->name(), $policy->activate('The Lift', 'en-US', 'de')), 'A row without a concept matched within its language.');
-        $this->assertSame([], $policy->activate('Der Aufzug', 'de', 'en'), 'A translation names what to write. It is no source wording.');
-
-        $current = PolicySnapshot::fromConcepts([GlossaryConcept::of(['en-gb' => ['use' => 'Lift'], 'de' => ['use' => 'Aufzug']])]);
-        $this->assertSame([], $current->activate('The Lift', 'en-US', 'de'), 'A current row keeps the exact or base rule.');
-        $this->assertCount(1, $current->activate('Der Aufzug', 'de', 'en-GB'));
-    }
-
-    #[Test]
-    public function a_frozen_row_survives_being_frozen_again_into_a_run(): void
-    {
-        $row = $this->frozenRow('US', 'en', ['case_sensitive' => true, 'forbidden' => ['basket'], 'id' => 't1']);
-        [$concept] = $this->frozen([$row])->concepts;
-        [$again] = GlossaryConcept::listFromFrozen([$concept->toArray()]);
-
-        $this->assertSame($row, $again->toArray());
-        $this->assertTrue($again->caseSensitive);
-        $this->assertCount(1, (new GlossaryChecker)->check('', 'basket', 'en', 'de', [$again]));
-    }
-
-    #[Test]
-    public function a_frozen_snapshot_names_findings_as_they_were_named(): void
-    {
-        $policy = $this->frozen([
-            $this->frozenRow('cart', 'en', ['translations' => ['de' => 'Warenkorb'], 'forbidden' => ['Korb'], 'id' => 't1']),
-        ]);
-
-        $this->assertSame(
-            [['type' => GlossaryChecker::MISSING_TERM, 'term' => 'cart', 'expected' => 'Warenkorb'], ['type' => GlossaryChecker::FORBIDDEN_VARIANT, 'term' => 'cart', 'expected' => 'Warenkorb', 'found' => 'Korb']],
-            (new GlossaryChecker)->check('Your cart', 'Ihr Korb', 'en', 'de', $policy->concepts),
-            'An override names a finding by its identity, so that stays too.',
-        );
+        PolicySnapshot::fromPayload(['version' => 1, 'terms' => [['term' => 'cart', 'source_locale' => 'en']], 'documents' => []], 'snapshot', 'fingerprint');
     }
 
     #[Test]
@@ -287,19 +201,5 @@ class GlossaryConceptTest extends TestCase
         $brief = (string) GlossaryBrief::render(PolicySnapshot::fromConcepts($twins)->activate('a cart', 'en', 'de'), 'en', 'de');
 
         $this->assertSame(1, substr_count($brief, '- "cart": write "Warenkorb" in de'));
-    }
-
-    #[Test]
-    public function an_older_row_keeps_its_case_setting_where_it_differs_from_keep_exact(): void
-    {
-        $cases = static fn (array $row) => LegacyGlossaryRows::concepts([['id' => 'r', 'source_locale' => 'en', 'term' => 'cart', ...$row]])[0]['case_sensitive'];
-
-        $this->assertTrue($cases(['case_sensitive' => true]));
-        $this->assertFalse($cases(['do_not_translate' => true]));
-        $this->assertNull($cases(['case_sensitive' => true, 'do_not_translate' => true]));
-        $this->assertNull($cases([]));
-
-        $this->assertTrue(GlossaryConcept::of(['en' => ['use' => 'x']], keepExact: true)->caseSensitive);
-        $this->assertFalse(GlossaryConcept::of(['en' => ['use' => 'x']], keepExact: true, caseSensitive: false)->caseSensitive);
     }
 }

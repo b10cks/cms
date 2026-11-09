@@ -8,18 +8,12 @@ use App\Http\Controllers\Mgmt\Concerns\RespondsWithImportRun;
 use App\Http\Requests\Ai\ExportAiGlossaryRequest;
 use App\Http\Requests\Ai\ImportAiGlossaryRequest;
 use App\Http\Requests\Ai\SaveAiGlossaryRequest;
-use App\Http\Requests\Ai\SaveAiGlossaryTermRequest;
 use App\Http\Resources\Management\Ai\AiGlossaryResource;
-use App\Http\Resources\Management\Ai\AiGlossaryTermResource;
 use App\Models\Management\AiGlossary;
-use App\Models\Management\AiGlossaryTerm;
 use App\Models\Management\Space;
 use App\Models\Management\Team;
 use App\Services\Ai\Knowledge\AiLayers;
-use App\Services\Ai\Knowledge\Concepts\GlossaryConcepts;
-use App\Services\Ai\Knowledge\GlossaryMatcher;
 use App\Services\Ai\Knowledge\GlossaryTransfer;
-use App\Services\Ai\Knowledge\LegacyGlossaryRows;
 use App\Services\ImportExport\ImportRun;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -27,11 +21,7 @@ use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
-/**
- * Glossaries with CSV, XLSX and TBX import and export. The term endpoints are the older
- * shape the published SDK still calls: one language of a row at a time. They read and
- * write the row through the same writer as {@see AiGlossaryConceptRowController}.
- */
+/** Glossaries with CSV, XLSX and TBX import and export. Rows are edited through {@see AiGlossaryConceptRowController}. */
 class AiGlossaryController extends Controller
 {
     use ResolvesAiOwner;
@@ -80,90 +70,6 @@ class AiGlossaryController extends Controller
         return response()->json(null, 204);
     }
 
-    public function terms(Request $request, Space|Team|string $owner, string $glossary): AnonymousResourceCollection
-    {
-        $model = $this->readableGlossary($request, $glossary);
-        $search = trim((string) $request->query('search', ''));
-
-        return AiGlossaryTermResource::collection(
-            AiGlossaryTerm::query()->inGlossary($model->id)
-                ->with('concept.terms')
-                ->when($search !== '', fn ($query) => $query->where(fn ($found) => $found
-                    ->where('preferred', 'like', '%'.addcslashes($search, '%_\\').'%')
-                    ->orWhereIn('id', $this->bansNamed($model, $search))))
-                ->orderBy('preferred')
-                ->paginate($this->perPage($request, 50, 200)),
-        );
-    }
-
-    /**
-     * Terms that show a ban's first Avoid wording as their `term`. It sits in JSON, with
-     * Unicode escaped, so it is compared here.
-     *
-     * @return list<string>
-     */
-    private function bansNamed(AiGlossary $glossary, string $search): array
-    {
-        return AiGlossaryTerm::query()->inGlossary($glossary->id)->whereNull('preferred')->get(['id', 'forbidden'])
-            ->filter(fn (AiGlossaryTerm $term) => mb_stripos((string) ($term->forbidden[0] ?? ''), $search) !== false)
-            ->pluck('id')->all();
-    }
-
-    /**
-     * Create a row from one language in the older term shape.
-     *
-     * @apiResponse 201 data:@AiGlossaryTermResource
-     * @apiResponse 409 @AiGlossaryConceptConflict `wording_conflict`. Nothing changes.
-     * @apiResponse 422 @AiGlossaryConceptConflict `language_invalid`, `term_required`, `use_avoided`, or `note_too_long` for a note over 200 characters.
-     */
-    public function storeTerm(SaveAiGlossaryTermRequest $request, Space|Team|string $owner, string $glossary): JsonResponse
-    {
-        $model = $this->findGlossary($request, $glossary, 'manage');
-        $fields = $request->validated();
-        $id = GlossaryConcepts::transaction($model, fn (GlossaryConcepts $concepts) => $concepts->create(LegacyGlossaryRows::input($fields)));
-
-        return (new AiGlossaryTermResource($this->termIn($model, $id, $fields['source_locale'])))->response()->setStatusCode(201);
-    }
-
-    /**
-     * Change one language of a row in the older term shape.
-     *
-     * `translations` changes Use only. A language it omits loses its Use and keeps its Avoid and Also written as. A language with neither goes. The row endpoints remove a language outright.
-     *
-     * @apiResponse 200 data:@AiGlossaryTermResource
-     * @apiResponse 409 @AiGlossaryConceptConflict `wording_conflict`, or `language_conflict` when `source_locale` names a language the row already has. Nothing changes.
-     * @apiResponse 422 @AiGlossaryConceptConflict `language_invalid`, `term_required`, `use_avoided`, or `note_too_long` for a new or changed note over 200 characters.
-     */
-    public function updateTerm(SaveAiGlossaryTermRequest $request, Space|Team|string $owner, string $glossary, string $term): AiGlossaryTermResource
-    {
-        $model = $this->findGlossary($request, $glossary, 'manage');
-        $found = AiGlossaryTerm::query()->inGlossary($model->id)->findOrFail($term);
-        $fields = $request->validated();
-        GlossaryConcepts::transaction($model, fn (GlossaryConcepts $concepts) => $concepts->update($found->concept_id, LegacyGlossaryRows::termChange($concepts, $found->concept_id, $found->id, $fields)));
-
-        return new AiGlossaryTermResource($this->termIn($model, $found->concept_id, $fields['source_locale'] ?? $found->locale));
-    }
-
-    /**
-     * Delete one language of a row. The last language takes the row with it.
-     */
-    public function destroyTerm(Request $request, Space|Team|string $owner, string $glossary, string $term): JsonResponse
-    {
-        $model = $this->findGlossary($request, $glossary, 'manage');
-        $found = AiGlossaryTerm::query()->inGlossary($model->id)->findOrFail($term);
-
-        GlossaryConcepts::transaction($model, function (GlossaryConcepts $concepts) use ($found): void {
-            $languages = $concepts->rowLanguages($found->concept_id);
-            $locale = LegacyGlossaryRows::localeOf($languages, $found->id);
-
-            \count($languages) === 1
-                ? $concepts->remove($found->concept_id)
-                : $concepts->update($found->concept_id, ['remove_languages' => [$locale]]);
-        });
-
-        return response()->json(null, 204);
-    }
-
     /**
      * Imports a CSV, XLSX or TBX file. CSV and XLSX apply directly, one row per concept:
      * missing rows stay, blank cells keep their value and nothing is removed. A bad row
@@ -205,13 +111,5 @@ class AiGlossaryController extends Controller
         $this->authorize($ability, [AiGlossary::class, $owner]);
 
         return AiGlossary::query()->ownedBy($owner)->findOrFail($id);
-    }
-
-    private function termIn(AiGlossary $glossary, string $conceptId, string $locale): AiGlossaryTerm
-    {
-        return AiGlossaryTerm::query()->inGlossary($glossary->id)->with('concept.terms')
-            ->where('concept_id', $conceptId)
-            ->where('locale', GlossaryMatcher::normalizeLocale($locale))
-            ->firstOrFail();
     }
 }

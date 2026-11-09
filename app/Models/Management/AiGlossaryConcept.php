@@ -14,26 +14,15 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string $glossary_id
  * @property string|null $key
  * @property string|null $note
- * @property bool $keep_exact
- * @property bool|null $case_sensitive only where a row of the older format differs from Keep exact, see {@see caseSensitive()}
+ * @property bool $keep_exact also decides whether Use and Avoid match with exact case
  */
 class AiGlossaryConcept extends GlobalModel
 {
     use HasUlids;
 
-    protected $fillable = ['glossary_id', 'key', 'note', 'keep_exact', 'case_sensitive'];
+    protected $fillable = ['glossary_id', 'key', 'note', 'keep_exact'];
 
-    protected $casts = ['keep_exact' => 'boolean', 'case_sensitive' => 'boolean'];
-
-    /**
-     * Whether Use and Avoid match with exact case. Keep exact decides, unless the older
-     * format set its own value: a checkbox apart from Keep exact shipped there, so customer
-     * rows can have either without the other. No new-format control writes this.
-     */
-    public function caseSensitive(): bool
-    {
-        return $this->case_sensitive ?? $this->keep_exact;
-    }
+    protected $casts = ['keep_exact' => 'boolean'];
 
     public function glossary(): BelongsTo
     {

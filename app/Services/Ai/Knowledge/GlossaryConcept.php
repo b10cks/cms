@@ -4,28 +4,22 @@ namespace App\Services\Ai\Knowledge;
 
 use App\Models\Management\AiGlossaryConcept;
 use App\Models\Management\AiGlossaryTerm;
+use LogicException;
 
 /**
  * One glossary row, frozen into a run as plain data. Prompts, lookup, the checker and
  * translation memory all ask {@see languageFor()}, so they agree on which language of
  * the row counts for a locale: the exact one, else its base language. A language
  * replaces its base whole. A sibling region never stands in, nor a region for its base.
- * A policy pinned before rows became concepts keeps its old rules in {@see FrozenGlossaryRow}.
- *
- * Case follows Keep exact. A row from the older format can carry its own case setting,
- * see {@see AiGlossaryConcept::caseSensitive()}.
+ * Keep exact also makes Use and Avoid match with exact case.
  */
 readonly class GlossaryConcept
 {
     /** @var array<string, GlossaryWording> by normalized locale */
     public array $languages;
 
-    /** Whether this row's Use and Avoid match with exact case. */
-    public bool $caseSensitive;
-
     /**
      * @param  iterable<GlossaryWording>  $languages
-     * @param  bool|null  $caseSensitive  null follows Keep exact
      */
     public function __construct(
         iterable $languages,
@@ -33,9 +27,7 @@ readonly class GlossaryConcept
         public ?string $note = null,
         public ?string $id = null,
         public ?string $glossaryId = null,
-        ?bool $caseSensitive = null,
     ) {
-        $this->caseSensitive = $caseSensitive ?? $keepExact;
         $byLocale = [];
 
         foreach ($languages as $language) {
@@ -51,7 +43,7 @@ readonly class GlossaryConcept
      *
      * @param  array<string, array{use?: string|null, avoid?: list<string>|null, also?: list<string>|null}>  $languages
      */
-    public static function of(array $languages, bool $keepExact = false, ?string $note = null, ?string $id = null, ?string $glossaryId = null, ?bool $caseSensitive = null): self
+    public static function of(array $languages, bool $keepExact = false, ?string $note = null, ?string $id = null, ?string $glossaryId = null): self
     {
         $wordings = [];
 
@@ -64,7 +56,7 @@ readonly class GlossaryConcept
             );
         }
 
-        return new self($wordings, $keepExact, $note, $id, $glossaryId, $caseSensitive);
+        return new self($wordings, $keepExact, $note, $id, $glossaryId);
     }
 
     /** A stored concept with its terms loaded. */
@@ -77,20 +69,22 @@ readonly class GlossaryConcept
             array_values(array_filter($term->aliases ?? [], 'is_string')),
         ));
 
-        return new self($wordings, $concept->keep_exact, $concept->note, $concept->id, $concept->glossary_id, $concept->caseSensitive());
+        return new self($wordings, $concept->keep_exact, $concept->note, $concept->id, $concept->glossary_id);
     }
 
     /**
-     * Rows as frozen into a snapshot or a run. Those from before version 2 hold one row
-     * per language and keep the rules they were pinned under, see {@see FrozenGlossaryRow}.
+     * Rows as frozen into a snapshot or a run. A `case_sensitive` key an older snapshot
+     * holds is ignored: case follows Keep exact.
      *
      * @param  list<array<string, mixed>>  $rows
      * @return list<self>
+     *
+     * @throws LogicException for rows frozen before they became concepts (one row per language)
      */
     public static function listFromFrozen(array $rows): array
     {
         if (isset($rows[0]) && ! \array_key_exists('languages', $rows[0])) {
-            return FrozenGlossaryRow::list($rows);
+            throw new LogicException('This work was pinned to a glossary from before rows became concepts, which is no longer read. Start it again.');
         }
 
         return array_map(static fn (array $row) => self::of(
@@ -99,7 +93,6 @@ readonly class GlossaryConcept
             $row['note'] ?? null,
             $row['id'] ?? null,
             $row['glossary_id'] ?? null,
-            $row['case_sensitive'] ?? null,
         ), $rows);
     }
 
@@ -114,7 +107,6 @@ readonly class GlossaryConcept
             'id' => $this->id,
             'glossary_id' => $this->glossaryId,
             'keep_exact' => $this->keepExact,
-            ...($this->caseSensitive !== $this->keepExact ? ['case_sensitive' => $this->caseSensitive] : []),
             'note' => $this->note,
             'languages' => array_map(static fn (GlossaryWording $language) => ['use' => $language->use, 'avoid' => $language->avoid, 'also' => $language->also], $this->languages),
         ];

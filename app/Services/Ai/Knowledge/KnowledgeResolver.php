@@ -82,7 +82,7 @@ class KnowledgeResolver
                 });
 
                 if ($kept !== []) {
-                    $concepts[] = new GlossaryConcept($kept, $concept->keepExact, $concept->note, $concept->id, $concept->glossaryId, $concept->caseSensitive);
+                    $concepts[] = new GlossaryConcept($kept, $concept->keepExact, $concept->note, $concept->id, $concept->glossaryId);
                 }
             });
 

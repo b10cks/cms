@@ -281,10 +281,6 @@ $aiKnowledgeRoutes = static function (string $name): void {
     Route::post('ai/glossaries', [AiGlossaryController::class, 'store'])->name("{$name}.ai.glossaries.store");
     Route::patch('ai/glossaries/{glossary}', [AiGlossaryController::class, 'update'])->name("{$name}.ai.glossaries.update");
     Route::delete('ai/glossaries/{glossary}', [AiGlossaryController::class, 'destroy'])->name("{$name}.ai.glossaries.destroy");
-    Route::get('ai/glossaries/{glossary}/terms', [AiGlossaryController::class, 'terms'])->name("{$name}.ai.glossaries.terms.index");
-    Route::post('ai/glossaries/{glossary}/terms', [AiGlossaryController::class, 'storeTerm'])->name("{$name}.ai.glossaries.terms.store");
-    Route::patch('ai/glossaries/{glossary}/terms/{term}', [AiGlossaryController::class, 'updateTerm'])->name("{$name}.ai.glossaries.terms.update");
-    Route::delete('ai/glossaries/{glossary}/terms/{term}', [AiGlossaryController::class, 'destroyTerm'])->name("{$name}.ai.glossaries.terms.destroy");
     Route::post('ai/glossaries/{glossary}/import', [AiGlossaryController::class, 'import'])->name("{$name}.ai.glossaries.import");
     Route::get('ai/glossaries/{glossary}/export', [AiGlossaryController::class, 'export'])->name("{$name}.ai.glossaries.export");
     Route::get('ai/glossaries/{glossary}/concept-rows', [AiGlossaryConceptRowController::class, 'index'])->name("{$name}.ai.glossaries.concept-rows.index");

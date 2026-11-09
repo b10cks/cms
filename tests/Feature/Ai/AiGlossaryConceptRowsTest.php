@@ -10,12 +10,10 @@ use App\Models\Management\Space;
 use App\Models\Management\Team;
 use App\Models\User;
 use App\Services\Ai\Knowledge\Concepts\GlossaryConcepts;
-use Illuminate\Database\Events\TransactionBeginning;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Event;
 use Illuminate\Testing\TestResponse;
 use Laravel\Sanctum\Sanctum;
 use PHPUnit\Framework\Attributes\Test;
@@ -513,178 +511,6 @@ class AiGlossaryConceptRowsTest extends TestCase
     }
 
     #[Test]
-    public function the_older_term_endpoints_read_and_write_through_the_row(): void
-    {
-        $terms = "{$this->base}/terms";
-
-        $id = $this->postJson($terms, [
-            'source_locale' => 'en', 'term' => 'cart', 'translations' => ['de' => 'Warenkorb'],
-            'forbidden' => ['basket'], 'note' => 'Shop', 'do_not_translate' => true, 'source_aliases' => ['carts'],
-        ])->assertCreated()
-            ->assertJsonPath('data.term', 'cart')
-            ->assertJsonPath('data.translations.de', 'Warenkorb')
-            ->assertJsonPath('data.do_not_translate', true)
-            ->json('data.id');
-
-        $conceptId = AiGlossaryTerm::query()->findOrFail($id)->concept_id;
-        $this->getJson("{$this->base}/concept-rows/{$conceptId}")->assertOk()
-            ->assertJsonPath('data.keep_exact', true)
-            ->assertJsonPath('data.note', 'Shop')
-            ->assertJsonPath('data.languages.en.use', 'cart')
-            ->assertJsonPath('data.languages.en.also', ['carts'])
-            ->assertJsonPath('data.languages.de.use', 'Warenkorb');
-
-        // A new or changed note is refused by the writer, and an unchanged long one stays whatever its length.
-        $this->postJson($terms, ['source_locale' => 'en', 'term' => 'long', 'note' => str_repeat('x', 201)])
-            ->assertUnprocessable()->assertJsonPath('code', 'note_too_long');
-        $this->patchJson("{$terms}/{$id}", ['note' => str_repeat('x', 201)])
-            ->assertUnprocessable()->assertJsonPath('code', 'note_too_long');
-        $this->assertSame('Shop', AiGlossaryConcept::query()->findOrFail($conceptId)->note);
-
-        $older = str_repeat('y', 2001);
-        AiGlossaryConcept::query()->whereKey($conceptId)->update(['note' => $older]);
-        $this->patchJson("{$terms}/{$id}", ['note' => $older])->assertOk();
-        $this->assertSame($older, AiGlossaryConcept::query()->findOrFail($conceptId)->note);
-        AiGlossaryConcept::query()->whereKey($conceptId)->update(['note' => 'Shop']);
-
-        // A wording another row holds is refused here too, where this used to store a second term.
-        $this->postJson($terms, ['source_locale' => 'en', 'term' => 'CART'])->assertConflict()->assertJsonPath('code', 'wording_conflict');
-
-        $this->patchJson("{$terms}/{$id}", ['term' => 'trolley', 'translations' => ['fr' => 'Panier']])->assertOk()
-            ->assertJsonPath('data.term', 'trolley')
-            ->assertJsonPath('data.translations.fr', 'Panier')
-            ->assertJsonMissingPath('data.translations.de');
-        $this->assertSame(1, AiGlossaryConcept::query()->count());
-
-        $this->getJson("{$terms}?search=troll")->assertOk()->assertJsonPath('data.0.id', $id);
-
-        $french = AiGlossaryTerm::query()->where('locale', 'fr')->firstOrFail();
-        $this->deleteJson("{$terms}/{$french->id}")->assertNoContent();
-        $this->getJson("{$this->base}/concept-rows/{$conceptId}")->assertOk()->assertJsonMissingPath('data.languages.fr');
-
-        $german = AiGlossaryTerm::query()->where('locale', 'de')->firstOrFail();
-        $this->assertNull($german->preferred, 'The map dropped its Use. The Avoid it held stays.');
-        $this->assertSame(['basket'], $german->forbidden);
-
-        $this->deleteJson("{$terms}/{$german->id}")->assertNoContent();
-        $this->deleteJson("{$terms}/{$id}")->assertNoContent();
-        $this->assertSame(0, AiGlossaryConcept::query()->count(), 'The last language takes the row with it.');
-    }
-
-    #[Test]
-    public function the_older_case_setting_stays_apart_from_keep_exact(): void
-    {
-        $terms = "{$this->base}/terms";
-        $cart = $this->postJson($terms, [
-            'source_locale' => 'en', 'term' => 'Cart', 'case_sensitive' => true, 'forbidden' => ['cart'], 'translations' => ['de' => 'Warenkorb'],
-        ])->assertCreated()->assertJsonPath('data.case_sensitive', true)->assertJsonPath('data.do_not_translate', false);
-        $this->postJson($terms, ['source_locale' => 'en', 'term' => 'Apple', 'case_sensitive' => true])->assertCreated();
-        $acme = $this->postJson($terms, ['source_locale' => 'en', 'term' => 'Acme', 'do_not_translate' => true])->assertCreated()
-            ->assertJsonPath('data.case_sensitive', false)->assertJsonPath('data.do_not_translate', true);
-
-        $check = fn (string $text, string $output) => $this->postJson("{$this->base}/glossary-check", ['text' => $text, 'source_locale' => 'en', 'target_locale' => 'de', 'output' => $output])->assertOk();
-
-        // Translating stays allowed, which Keep exact would have stopped.
-        $check('Your Cart', 'Ihr Warenkorb')->assertJsonPath('data.terms.0.required', 'Warenkorb')->assertJsonPath('data.findings', []);
-        $this->assertSame([], $check('an apple a day', 'ein Apfel')->json('data.terms'), 'Apple does not match apple.');
-        $this->assertSame('Acme', $check('acme tools', 'ACME Werkzeuge')->assertJsonPath('data.findings', [])->json('data.terms.0.term'), 'Keep exact without the case setting ignores case.');
-
-        // Either flag alone leaves the other as it reads.
-        $this->patchJson("{$terms}/{$acme->json('data.id')}", ['do_not_translate' => false])->assertOk()->assertJsonPath('data.case_sensitive', false);
-        $this->patchJson("{$terms}/{$cart->json('data.id')}", ['do_not_translate' => true])->assertOk()->assertJsonPath('data.case_sensitive', true);
-        $this->patchJson("{$terms}/{$cart->json('data.id')}", ['do_not_translate' => false])->assertOk()
-            ->assertJsonPath('data.case_sensitive', true)->assertJsonPath('data.do_not_translate', false);
-
-        // A person turning Keep exact on in the editor gets what the switch says.
-        $concept = AiGlossaryTerm::query()->findOrFail($acme->json('data.id'))->concept_id;
-        $this->patchJson("{$this->base}/concept-rows/{$concept}", ['keep_exact' => true])->assertOk();
-        $this->assertTrue(AiGlossaryConcept::query()->findOrFail($concept)->caseSensitive());
-    }
-
-    #[Test]
-    public function an_older_term_sent_back_as_read_keeps_what_its_map_cannot_show(): void
-    {
-        $id = $this->glossaryRow($this->glossary, [
-            'en' => ['use' => 'cart'],
-            'de' => ['avoid' => ['Korb']],
-            'fr' => ['use' => 'panier', 'avoid' => ['caddie']],
-            'it' => ['use' => 'carrello', 'also' => ['carrelli']],
-            'es' => 'carrito',
-        ]);
-        $english = AiGlossaryTerm::query()->where('concept_id', $id)->where('locale', 'en')->firstOrFail();
-        $term = "{$this->base}/terms/{$english->id}";
-
-        $read = $this->getJson("{$this->base}/terms?search=cart")->assertOk()->json('data.0');
-        $this->assertSame(['es', 'fr', 'it'], array_keys($read['translations']), 'A ban has no Use to show.');
-        $this->patchJson($term, $read)->assertOk();
-        $this->assertSame(['Korb'], AiGlossaryTerm::query()->where('concept_id', $id)->where('locale', 'de')->firstOrFail()->forbidden);
-
-        $this->patchJson($term, ['translations' => []])->assertOk()->assertJsonPath('data.translations', ['it' => 'carrello']);
-        $left = AiGlossaryTerm::query()->where('concept_id', $id)->get()->keyBy('locale');
-        $this->assertSame(['de', 'en', 'fr', 'it'], $left->keys()->sort()->values()->all(), 'Only the language with nothing else goes.');
-        $this->assertNull($left['fr']->preferred);
-        $this->assertSame(['caddie'], $left['fr']->forbidden);
-        $this->assertSame('carrello', $left['it']->preferred, 'Also written as cannot stand without a Use, so that language stays whole.');
-    }
-
-    #[Test]
-    public function changing_the_forbidden_list_of_an_older_ban_keeps_the_wording_it_shows(): void
-    {
-        $id = $this->glossaryRow($this->glossary, ['de' => ['avoid' => ['Billig']]]);
-        $term = "{$this->base}/terms/".AiGlossaryTerm::query()->where('concept_id', $id)->firstOrFail()->id;
-        $row = fn () => $this->getJson("{$this->base}/concept-rows/{$id}")->assertOk()->json('data.languages.de');
-
-        $this->patchJson($term, ['forbidden' => ['Billig', 'Ramsch']])->assertOk()->assertJsonPath('data.term', 'Billig');
-        $this->assertNull($row()['use'], 'Still listed, so still a ban.');
-
-        $this->patchJson($term, ['forbidden' => ['Schrott']])->assertOk()->assertJsonPath('data.term', 'Billig');
-        $this->assertSame(['use' => 'Billig', 'avoid' => ['Schrott'], 'also' => []], $row());
-
-        $ban = $this->glossaryRow($this->glossary, ['fr' => ['avoid' => ['Camelote']]]);
-        $this->patchJson("{$this->base}/terms/".AiGlossaryTerm::query()->where('concept_id', $ban)->firstOrFail()->id, ['forbidden' => []])
-            ->assertOk()->assertJsonPath('data.term', 'Camelote')->assertJsonPath('data.forbidden', []);
-        $this->getJson("{$this->base}/concept-rows/{$ban}")->assertJsonPath('data.languages.fr.use', 'Camelote');
-    }
-
-    #[Test]
-    public function moving_a_term_onto_a_language_of_its_row_is_refused_and_changes_nothing(): void
-    {
-        $id = $this->glossaryRow($this->glossary, ['en' => 'cart', 'de' => ['use' => 'Warenkorb', 'avoid' => ['Korb']]]);
-        $english = AiGlossaryTerm::query()->where('concept_id', $id)->where('locale', 'en')->firstOrFail();
-        $version = $this->glossary->fresh()->write_version;
-
-        $this->patchJson("{$this->base}/terms/{$english->id}", ['source_locale' => 'de', 'term' => 'trolley'])
-            ->assertConflict()->assertJsonPath('code', 'language_conflict')->assertJsonPath('locale', 'de');
-
-        $terms = AiGlossaryTerm::query()->where('concept_id', $id)->get()->keyBy('locale');
-        $this->assertSame('cart', $terms['en']->preferred);
-        $this->assertSame('Warenkorb', $terms['de']->preferred);
-        $this->assertSame(['Korb'], $terms['de']->forbidden);
-        $this->assertSame($version, $this->glossary->fresh()->write_version);
-    }
-
-    #[Test]
-    public function deleting_a_last_language_counts_the_row_under_the_lock(): void
-    {
-        $id = $this->glossaryRow($this->glossary, ['en' => 'cart']);
-        $english = AiGlossaryTerm::query()->where('concept_id', $id)->firstOrFail();
-
-        // Another request adds a language after this one read the term and before it holds the lock.
-        $added = false;
-        Event::listen(TransactionBeginning::class, function () use (&$added, $id): void {
-            if (! $added) {
-                $added = true;
-                AiGlossaryTerm::query()->create(['concept_id' => $id, 'locale' => 'de', 'preferred' => 'Warenkorb']);
-            }
-        });
-
-        $this->deleteJson("{$this->base}/terms/{$english->id}")->assertNoContent();
-
-        $this->assertTrue($added);
-        $this->assertSame(['de'], AiGlossaryTerm::query()->where('concept_id', $id)->pluck('locale')->all(), 'The language added meanwhile keeps the row.');
-    }
-
-    #[Test]
     public function a_use_its_own_avoid_would_flag_is_refused_by_the_checker_rule(): void
     {
         $this->rowsPost(['en' => ['use' => 'Cart', 'avoid' => ['cart']]])->assertUnprocessable()
@@ -715,15 +541,6 @@ class AiGlossaryConceptRowsTest extends TestCase
     }
 
     #[Test]
-    public function the_older_term_list_finds_a_ban_by_the_wording_it_shows(): void
-    {
-        $this->glossaryRow($this->glossary, ['de' => ['avoid' => ['Müll*']], 'en' => ['use' => 'waste']]);
-
-        $this->assertSame(['Müll*'], array_column($this->getJson("{$this->base}/terms?search=m%C3%BCll")->assertOk()->json('data'), 'term'));
-        $this->assertSame(['waste'], array_column($this->getJson("{$this->base}/terms?search=wast")->assertOk()->json('data'), 'term'));
-    }
-
-    #[Test]
     public function an_inherited_glossary_exports_and_its_writes_stay_with_its_owner(): void
     {
         $team = Team::factory()->create();
@@ -734,9 +551,7 @@ class AiGlossaryConceptRowsTest extends TestCase
 
         $this->assertStringContainsString('Lieferung', $this->get("{$base}/export?format=csv")->assertOk()->streamedContent());
         $this->assertStringContainsString('Lieferung', $this->get("{$base}/export?format=tbx")->assertOk()->getContent());
-        $this->getJson("{$base}/terms")->assertOk()->assertJsonCount(2, 'data');
 
-        $this->postJson("{$base}/terms", ['source_locale' => 'en', 'term' => 'parcel'])->assertNotFound();
         $this->post("{$base}/import", ['file' => UploadedFile::fake()->createWithContent('rows.csv', "term:en\nparcel\n")], ['Accept' => 'application/json'])->assertNotFound();
 
         $other = AiGlossary::create([...AiGlossary::ownerAttributes(Team::factory()->create()), 'name' => 'Elsewhere']);
@@ -744,12 +559,11 @@ class AiGlossaryConceptRowsTest extends TestCase
     }
 
     #[Test]
-    public function a_language_code_the_table_cannot_hold_is_refused_on_every_endpoint(): void
+    public function a_language_code_the_table_cannot_hold_is_refused(): void
     {
-        $this->postJson("{$this->base}/terms", ['source_locale' => 'not a locale', 'term' => 'cart'])->assertUnprocessable()->assertJsonPath('code', 'language_invalid');
-        $id = $this->postJson("{$this->base}/terms", ['source_locale' => 'en', 'term' => 'cart'])->assertCreated()->json('data.id');
-        $this->patchJson("{$this->base}/terms/{$id}", ['translations' => [str_repeat('x', 21) => 'Warenkorb']])->assertUnprocessable()->assertJsonPath('code', 'language_invalid');
-        $this->patchJson("{$this->base}/terms/{$id}", ['source_locale' => ''])->assertUnprocessable();
+        $this->rowsPost(['not a locale' => ['use' => 'cart']])->assertJsonValidationErrors('languages');
+        $id = $this->rowsPost(['en' => ['use' => 'cart']])->assertCreated()->json('data.id');
+        $this->patchJson("{$this->base}/concept-rows/{$id}", ['languages' => [str_repeat('x', 21) => ['use' => 'Warenkorb']]])->assertJsonValidationErrors('languages');
         $this->assertSame(1, AiGlossaryTerm::query()->count());
     }
 

@@ -17,8 +17,8 @@ use Illuminate\Support\Str;
  * Nothing is thrown away: the old table stays as `ai_glossary_terms_legacy`, unread, so
  * a conversion can be compared and undone. A later release can drop it. A term keeps the
  * ID of the old row that held its language, and a language that only a translation named
- * gets a new one. `case_sensitive` was a setting apart from Keep exact and stays one on
- * the concept where the two differ.
+ * gets a new one. `2026_11_10_110000` drops the old table and `case_sensitive` again:
+ * case follows Keep exact.
  *
  * MySQL commits every schema change on its own, so each one is checked by itself, and
  * running this again after a failure picks up where it stopped. Language codes the new
@@ -158,7 +158,7 @@ return new class extends Migration
             $terms = [];
 
             foreach (LegacyGlossaryRows::concepts($rows) as $concept) {
-                $values = ['note' => $concept['note'], 'keep_exact' => $concept['keep_exact'], 'case_sensitive' => $concept['case_sensitive']];
+                $values = ['note' => $concept['note'], 'keep_exact' => $concept['keep_exact']];
 
                 if (isset($held[$concept['id']])) {
                     DB::table('ai_glossary_concepts')->where('id', $concept['id'])->update($values);

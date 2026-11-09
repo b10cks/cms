@@ -5,9 +5,6 @@ namespace Tests\Feature\Ai;
 use App\Models\Management\AiGlossary;
 use App\Models\Management\AiGlossaryConcept;
 use App\Models\Management\Space;
-use App\Services\Ai\Knowledge\GlossaryChecker;
-use App\Services\Ai\Knowledge\GlossaryConcept;
-use App\Services\Ai\Knowledge\PolicySnapshot;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -24,7 +21,8 @@ class AiGlossaryNormalizeMigrationTest extends TestCase
     private function oldTables(string $glossaryId, string $conceptId): void
     {
         Schema::drop('ai_glossary_terms');
-        Schema::drop('ai_glossary_terms_legacy');
+        // The later cleanup migration dropped it from the current schema.
+        Schema::dropIfExists('ai_glossary_terms_legacy');
         Schema::create('ai_glossary_terms', function (Blueprint $table) {
             $table->ulid('id')->primary();
             $table->foreignUlid('glossary_id')->constrained('ai_glossaries')->cascadeOnDelete();
@@ -116,29 +114,21 @@ class AiGlossaryNormalizeMigrationTest extends TestCase
     }
 
     #[Test]
-    public function the_case_setting_and_long_translations_convert_exactly(): void
+    public function keep_exact_and_long_translations_convert_exactly(): void
     {
         $glossary = $this->oldGlossary();
         $long = str_repeat('Größenänderung ', 40);
-        $this->oldRow($glossary, '01J00000000000000000000004', ['term' => 'Cart', 'case_sensitive' => true, 'forbidden' => '["cart"]', 'translations' => json_encode(['de' => $long], JSON_THROW_ON_ERROR)]);
+        $this->oldRow($glossary, '01J00000000000000000000004', ['term' => 'Cart', 'forbidden' => '["cart"]', 'translations' => json_encode(['de' => $long], JSON_THROW_ON_ERROR)]);
         $this->oldRow($glossary, '01J00000000000000000000005', ['term' => 'Acme', 'do_not_translate' => true]);
         $this->oldRow($glossary, '01J00000000000000000000006', ['term' => 'Müll', 'forbidden' => '["Schrott","Müll"]']);
 
         $this->migration()->up();
 
         $cart = AiGlossaryConcept::query()->with('terms')->findOrFail('01J00000000000000000000004');
-        $this->assertTrue($cart->caseSensitive());
         $this->assertFalse($cart->keep_exact, 'Translation stays allowed.');
         $this->assertSame($long, $cart->terms->firstWhere('locale', 'de')->preferred);
 
-        $checks = PolicySnapshot::fromConcepts([GlossaryConcept::fromModel($cart)]);
-        $this->assertCount(1, $checks->activate('Your Cart', 'en', 'de'));
-        $this->assertCount(1, (new GlossaryChecker)->check('', 'your cart', 'en', 'en', $checks->concepts), 'Its Avoid in other case still flags.');
-        $this->assertSame([], (new GlossaryChecker)->check('', 'your Cart', 'en', 'en', $checks->concepts));
-
-        $acme = AiGlossaryConcept::query()->findOrFail('01J00000000000000000000005');
-        $this->assertTrue($acme->keep_exact);
-        $this->assertFalse($acme->caseSensitive());
+        $this->assertTrue(AiGlossaryConcept::query()->findOrFail('01J00000000000000000000005')->keep_exact);
 
         $ban = AiGlossaryConcept::query()->with('terms')->findOrFail('01J00000000000000000000006')->terms->first();
         $this->assertSame(['Müll', 'Schrott'], $ban->forbidden, 'A ban goes by its term, so that stays first.');
@@ -174,7 +164,7 @@ class AiGlossaryNormalizeMigrationTest extends TestCase
         $migration = $this->migration();
 
         // Stopped after adding note, before keep_exact.
-        Schema::table('ai_glossary_concepts', fn (Blueprint $table) => $table->dropColumn(['keep_exact', 'case_sensitive']));
+        Schema::table('ai_glossary_concepts', fn (Blueprint $table) => $table->dropColumn('keep_exact'));
         $this->assertTrue(Schema::hasColumn('ai_glossary_concepts', 'note'));
         Schema::rename('ai_glossary_terms', 'ai_glossary_terms_held');
 

@@ -28,7 +28,7 @@ use Illuminate\Support\Facades\DB;
  * @phpstan-type Fields array{use: string|null, avoid: list<string>, also: list<string>}
  * @phpstan-type LanguageInput array{use?: string|null, avoid?: list<string>|null, also?: list<string>|null}
  * @phpstan-type RowBase array{keep_exact?: bool, note?: string|null, languages?: array<string, LanguageInput>}
- * @phpstan-type ConceptInput array{key?: string|null, keep_exact?: bool, case_sensitive?: bool, note?: string|null, languages?: array<string, LanguageInput>, remove_languages?: list<string>, base?: RowBase}
+ * @phpstan-type ConceptInput array{key?: string|null, keep_exact?: bool, note?: string|null, languages?: array<string, LanguageInput>, remove_languages?: list<string>, base?: RowBase}
  */
 final class GlossaryConcepts
 {
@@ -136,26 +136,6 @@ final class GlossaryConcepts
             'key' => $this->concepts[$rowId]->key ?? null,
             'terms' => array_map(static fn (AiGlossaryTerm $term) => self::wordingOf(self::fieldsOf($term)), $this->requireRow($rowId)),
         ];
-    }
-
-    /**
-     * What each language of a row holds now, for a caller that decides under the lock.
-     *
-     * @return array<string, array{id: string, use: string|null, avoid: list<string>, also: list<string>}> by normalized locale
-     *
-     * @throws ModelNotFoundException for an unknown row
-     */
-    public function rowLanguages(string $rowId): array
-    {
-        return array_map(static fn (AiGlossaryTerm $term) => ['id' => $term->id, ...self::fieldsOf($term)], $this->requireRow($rowId));
-    }
-
-    /** Whether the row matches with exact case now. */
-    public function rowCaseSensitive(string $rowId): bool
-    {
-        $this->requireRow($rowId);
-
-        return $this->concepts[$rowId]->caseSensitive();
     }
 
     /** How many stored things the queued writes touch. Zero means commit() has nothing to do. */
@@ -315,14 +295,13 @@ final class GlossaryConcepts
         }
 
         $held = $conceptId !== null ? $this->concepts[$conceptId] : null;
-        $caseSetting = self::caseSetting($held, $input);
 
         // Everything that can refuse runs before anything changes.
         $this->assertNoteFits($held, $input);
         $this->assertWritable($conceptId, $stored, $languages, $next, $input, $creating);
-        $this->assertUseNotAvoided($stored, $languages, $next, $held?->caseSensitive(), $caseSetting ?? (bool) ($input['keep_exact'] ?? $held->keep_exact ?? false));
+        $this->assertUseNotAvoided($stored, $languages, $next, $held?->keep_exact, (bool) ($input['keep_exact'] ?? $held->keep_exact ?? false));
 
-        $conceptId = $this->writeConcept($conceptId, $input, $caseSetting);
+        $conceptId = $this->writeConcept($conceptId, $input);
 
         foreach (array_intersect_key($stored, $removals) as $locale => $term) {
             $this->dropTerm($conceptId, $locale, $term);
@@ -333,24 +312,6 @@ final class GlossaryConcepts
         }
 
         return $conceptId;
-    }
-
-    /**
-     * The older format's case value, stored only where it differs from Keep exact. Changing
-     * Keep exact without naming case goes back to Keep exact deciding, so a person who
-     * turns it on gets exact case.
-     *
-     * @param  ConceptInput  $input
-     */
-    private static function caseSetting(?AiGlossaryConcept $held, array $input): ?bool
-    {
-        $keepExact = (bool) ($input['keep_exact'] ?? $held->keep_exact ?? false);
-
-        if (\array_key_exists('case_sensitive', $input)) {
-            return $input['case_sensitive'] === $keepExact ? null : (bool) $input['case_sensitive'];
-        }
-
-        return $held !== null && $held->keep_exact === $keepExact ? $held->case_sensitive : null;
     }
 
     /**
@@ -495,7 +456,7 @@ final class GlossaryConcepts
     /**
      * @param  ConceptInput  $input
      */
-    private function writeConcept(?string $conceptId, array $input, ?bool $caseSetting): string
+    private function writeConcept(?string $conceptId, array $input): string
     {
         $concept = $conceptId !== null ? $this->concepts[$conceptId] : new AiGlossaryConcept(['glossary_id' => $this->glossary->id, 'keep_exact' => false]);
 
@@ -516,8 +477,6 @@ final class GlossaryConcepts
         if (\array_key_exists('keep_exact', $input)) {
             $concept->keep_exact = (bool) $input['keep_exact'];
         }
-
-        $concept->case_sensitive = $caseSetting;
 
         if ($concept->isDirty()) {
             $this->changedConcepts[$concept->id] = true;
@@ -592,7 +551,7 @@ final class GlossaryConcepts
         }
 
         foreach (array_chunk($updated, self::CHUNK) as $chunk) {
-            (clone $concepts)->upsert(array_map(fn (AiGlossaryConcept $concept) => $this->conceptRow($concept, $now), $chunk), ['id'], ['key', 'note', 'keep_exact', 'case_sensitive', 'updated_at']);
+            (clone $concepts)->upsert(array_map(fn (AiGlossaryConcept $concept) => $this->conceptRow($concept, $now), $chunk), ['id'], ['key', 'note', 'keep_exact', 'updated_at']);
         }
 
         [$updated, $added] = $this->byExistence($this->changedTerms);
@@ -632,7 +591,7 @@ final class GlossaryConcepts
      */
     private function conceptRow(AiGlossaryConcept $concept, string $now): array
     {
-        return ['id' => $concept->id, 'glossary_id' => $concept->glossary_id, 'key' => $concept->key, 'note' => $concept->note, 'keep_exact' => (int) $concept->keep_exact, 'case_sensitive' => $concept->case_sensitive === null ? null : (int) $concept->case_sensitive, 'created_at' => $now, 'updated_at' => $now];
+        return ['id' => $concept->id, 'glossary_id' => $concept->glossary_id, 'key' => $concept->key, 'note' => $concept->note, 'keep_exact' => (int) $concept->keep_exact, 'created_at' => $now, 'updated_at' => $now];
     }
 
     /**

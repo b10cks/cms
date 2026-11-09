@@ -28,9 +28,9 @@ final class GlossaryMatcher
                     'wording' => $wording,
                     // In this order, so wording listed twice counts as the term's own.
                     'patterns' => [
-                        ...($wording->use !== null ? [[self::pattern($wording->use, $concept->caseSensitive), false]] : []),
+                        ...($wording->use !== null ? [[self::pattern($wording->use, $concept->keepExact), false]] : []),
                         ...array_map(static fn (string $also) => [self::pattern($also, false), false], $wording->also),
-                        ...array_map(static fn (string $avoid) => [self::avoidPattern($avoid, $concept->caseSensitive), true], array_filter($wording->avoid, static fn (string $avoid) => trim($avoid) !== '')),
+                        ...array_map(static fn (string $avoid) => [self::avoidPattern($avoid, $concept->keepExact), true], array_filter($wording->avoid, static fn (string $avoid) => trim($avoid) !== '')),
                     ],
                 ];
             }

@@ -75,7 +75,7 @@ final class GlossaryChecker
             $protected = $concept->protectedWording($wording, $sourceLocale, $targetLocale);
 
             if ($protected !== null) {
-                if (! GlossaryMatcher::contains($output, $protected, $concept->caseSensitive)) {
+                if (! GlossaryMatcher::contains($output, $protected, $concept->keepExact)) {
                     $findings[] = ['type' => self::TRANSLATED_DNT, 'term' => $wording->name(), 'expected' => $protected];
                 }
 
@@ -84,7 +84,7 @@ final class GlossaryChecker
 
             $required = $concept->requiredWording($wording, $sourceLocale, $targetLocale);
 
-            if ($required !== null && ! GlossaryMatcher::contains($output, $required, $concept->caseSensitive)) {
+            if ($required !== null && ! GlossaryMatcher::contains($output, $required, $concept->keepExact)) {
                 $findings[] = ['type' => self::MISSING_TERM, 'term' => $wording->name(), 'expected' => $required];
             }
         }
@@ -93,7 +93,7 @@ final class GlossaryChecker
             $target = $concept->checkedLanguage($targetLocale);
 
             foreach ($target->avoid ?? [] as $variant) {
-                $matched = GlossaryMatcher::findBanned($output, $variant, $concept->caseSensitive);
+                $matched = GlossaryMatcher::findBanned($output, $variant, $concept->keepExact);
 
                 if ($matched !== null) {
                     $findings[] = [

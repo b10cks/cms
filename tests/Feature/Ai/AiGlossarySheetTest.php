@@ -401,8 +401,7 @@ class AiGlossarySheetTest extends TestCase
         $this->assertSame([2, 3, 4], array_column($response->json('data.errors'), 'row'));
         $this->assertStringContainsString('not valid', $response->json('data.errors.0.message'));
         $this->assertSame(['cart', 'lamp'], array_column($response->json('data.successes'), 'term'));
-        $this->assertTrue($this->term('cart')->concept->caseSensitive(), 'An older file sets the case setting too.');
-        $this->assertFalse($this->term('cart')->concept->keep_exact);
+        $this->assertFalse($this->term('cart')->concept->keep_exact, 'An old case_sensitive column is not read: case follows Keep exact.');
     }
 
     #[Test]

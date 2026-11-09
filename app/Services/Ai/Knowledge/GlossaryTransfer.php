@@ -230,7 +230,7 @@ class GlossaryTransfer
                     $row['translations'][substr($heading, 12)] = $value;
                 } elseif ($heading === 'forbidden') {
                     $row['forbidden'] = $value === '' ? [] : array_map('trim', explode('|', $value));
-                } elseif (\in_array($heading, ['case_sensitive', 'do_not_translate'], true)) {
+                } elseif ($heading === 'do_not_translate') {
                     $row[$heading] = \in_array(strtolower($value), ['1', 'true', 'yes', 'x'], true);
                 } else {
                     $row[$heading] = $value;
