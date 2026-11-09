@@ -3,6 +3,16 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.11.9-7c0af061] — 2026-11-9
+
+- ⬆️ Update PHP and JS dependencies within their version ranges
+- 📝 Document asset change signals, the usage filter and asset data updates
+- ✨ Filter the asset library by used and unused files
+- ✨ Signal content_published automations when a shown asset changes
+- 🐛 Deliver asset texts in the requested language for untranslated entries
+- 🐛 Cache spaces/me for 5 seconds so syncRevision reads a current revision
+- 🐛 Give every content change its own delivery revision
+
 ## [v2026.11.6-43268821] — 2026-11-6
 
 - 📝 Record the large-page AI translation fix waiting on review
