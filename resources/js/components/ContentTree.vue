@@ -16,7 +16,6 @@ import { api } from '~/api'
 import CreateContentDialog from '~/components/content/CreateContentDialog.vue'
 import AiBulkDialog from '~/components/ai/AiBulkDialog.vue'
 import PublishDialog from '~/components/content/PublishDialog.vue'
-import { flagCountsLine } from '~/lib/aiContentFlags'
 import Icon from '~/components/Icon.vue'
 import NuxtImg from '~/components/NuxtImg.vue'
 import SpaceBadge from '~/components/space/SpaceBadge.vue'
@@ -1074,7 +1073,7 @@ watch(data, (_, previous) => {
 /** Figures of a row: the entry and its translations, which are no rows of their own. */
 const rowFlags = (item: FlatContentMenuItem) => {
   const totals = flagTotalsOf([item.id, ...(item.i18n ?? []).map((translation) => translation.id)])
-  return totals.entries > 0 ? flagCountsLine(t, totals) : null
+  return totals.entries > 0 ? t('components.contentFlags.conflicts', { count: totals.conflicts }, totals.conflicts) : null
 }
 
 // Flags never block: the dialog names them and publishes on one more click.

@@ -161,8 +161,6 @@
   "changes": {
     "fields": "Felder von {name}",
     "conflicts": "{count} Konflikt | {count} Konflikte",
-    "flagged": "{count} markiert | {count} markiert",
-    "flaggedWording": "Markiert: {wording}",
     "written": "{count} Feld geschrieben | {count} Felder geschrieben",
     "history": "Verlauf"
   }
