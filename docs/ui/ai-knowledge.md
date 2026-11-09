@@ -39,7 +39,7 @@ When a run starts, it takes the published versions of everything that applies an
 | | Reaches the AI | Checked afterwards? | Costs on every run? |
 | --- | --- | --- | --- |
 | Style guide | Always, in full | No | Yes, its full length |
-| Document | When the AI searches for it, as short excerpts | No | No |
+| Document | Its title and description on every run, its text when the AI reads it | No | One line |
 | Glossary | Only the rows the text touches, plus a short list of banned wording | Yes, for wording | Very little |
 | Skill | Its instructions when it runs, its name and description otherwise | The tools enforce their own rules | Only when used |
 
@@ -86,7 +86,9 @@ Good rules are ones someone could check by reading the text:
 
 A document is reference material the AI searches when a task needs it: specifications, policies, positioning, FAQs. Write Markdown directly, or upload a PDF, Word, Markdown or text file of up to 20 MB. After an upload, the text is extracted into the draft. Read it, fix what came out wrong, and press **Publish**.
 
-The search matches words. It does not guess meaning, and each hit is a short excerpt under its heading.
+Every run lists the documents in its scope by title and description, so the AI knows what exists before it reads one. Write the description as one sentence on what the document covers and when to read it, like "Warranty periods per product line and how to claim them." It is what the AI decides by. Documents from before descriptions existed start with their title as description, so give them a real one.
+
+To find a section inside a long document, the AI can also search. The search matches words. It does not guess meaning, and each hit is a short excerpt under its heading.
 
 **Do**
 

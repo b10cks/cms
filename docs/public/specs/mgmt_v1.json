@@ -3703,6 +3703,10 @@
                                         "type": "string",
                                         "maxLength": 255
                                     },
+                                    "description": {
+                                        "type": "string",
+                                        "maxLength": 200
+                                    },
                                     "slug": {
                                         "type": "string",
                                         "maxLength": 120,
@@ -3729,7 +3733,10 @@
                                         "maxLength": 500000,
                                         "nullable": true
                                     }
-                                }
+                                },
+                                "required": [
+                                    "description"
+                                ]
                             }
                         }
                     }
@@ -3837,6 +3844,10 @@
                                         "type": "string",
                                         "maxLength": 255
                                     },
+                                    "description": {
+                                        "type": "string",
+                                        "maxLength": 200
+                                    },
                                     "slug": {
                                         "type": "string",
                                         "maxLength": 120,
@@ -3863,7 +3874,10 @@
                                         "maxLength": 500000,
                                         "nullable": true
                                     }
-                                }
+                                },
+                                "required": [
+                                    "description"
+                                ]
                             }
                         }
                     }
@@ -4302,436 +4316,6 @@
                 "responses": {
                     "204": {
                         "description": "Resource deleted successfully"
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            }
-        },
-        "/mgmt/v1/teams/{team}/ai/glossaries/{glossary}/terms": {
-            "get": {
-                "summary": "List terms",
-                "description": "",
-                "tags": [
-                    "Ai"
-                ],
-                "operationId": "get_teams_by_team_ai_glossaries_by_glossary_terms",
-                "parameters": [
-                    {
-                        "name": "glossary",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        },
-                        "description": "The glossary identifier"
-                    },
-                    {
-                        "name": "team",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        },
-                        "description": "The team identifier"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Successful response",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "description": "Paginated resource collection",
-                                    "properties": {
-                                        "data": {
-                                            "type": "array",
-                                            "description": "Collection of resources",
-                                            "items": {
-                                                "$ref": "#/components/schemas/AiGlossaryTermResource"
-                                            }
-                                        },
-                                        "links": {
-                                            "type": "object",
-                                            "description": "Pagination links",
-                                            "properties": {
-                                                "first": {
-                                                    "type": "string",
-                                                    "format": "uri",
-                                                    "description": "URL to the first page"
-                                                },
-                                                "last": {
-                                                    "type": "string",
-                                                    "format": "uri",
-                                                    "description": "URL to the last page"
-                                                },
-                                                "prev": {
-                                                    "type": "string",
-                                                    "format": "uri",
-                                                    "nullable": true,
-                                                    "description": "URL to the previous page"
-                                                },
-                                                "next": {
-                                                    "type": "string",
-                                                    "format": "uri",
-                                                    "nullable": true,
-                                                    "description": "URL to the next page"
-                                                }
-                                            }
-                                        },
-                                        "meta": {
-                                            "type": "object",
-                                            "description": "Pagination metadata",
-                                            "properties": {
-                                                "current_page": {
-                                                    "type": "integer",
-                                                    "description": "Current page number"
-                                                },
-                                                "from": {
-                                                    "type": "integer",
-                                                    "nullable": true,
-                                                    "description": "Index of first item on current page"
-                                                },
-                                                "last_page": {
-                                                    "type": "integer",
-                                                    "description": "Total number of pages"
-                                                },
-                                                "per_page": {
-                                                    "type": "integer",
-                                                    "description": "Number of items per page"
-                                                },
-                                                "to": {
-                                                    "type": "integer",
-                                                    "nullable": true,
-                                                    "description": "Index of last item on current page"
-                                                },
-                                                "total": {
-                                                    "type": "integer",
-                                                    "description": "Total number of items"
-                                                }
-                                            }
-                                        }
-                                    },
-                                    "required": [
-                                        "data",
-                                        "links",
-                                        "meta"
-                                    ]
-                                }
-                            }
-                        }
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            },
-            "post": {
-                "summary": "Create a row from one language in the older term shape",
-                "description": "Create a row from one language in the older term shape.",
-                "tags": [
-                    "Ai"
-                ],
-                "operationId": "post_teams_by_team_ai_glossaries_by_glossary_terms",
-                "parameters": [
-                    {
-                        "name": "glossary",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        },
-                        "description": "The glossary identifier"
-                    },
-                    {
-                        "name": "team",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        },
-                        "description": "The team identifier"
-                    }
-                ],
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "type": "object",
-                                "properties": {
-                                    "source_locale": {
-                                        "type": "string",
-                                        "maxLength": 20
-                                    },
-                                    "term": {
-                                        "type": "string",
-                                        "maxLength": 255
-                                    },
-                                    "translations": {
-                                        "type": "array",
-                                        "items": {
-                                            "type": "string",
-                                            "maxLength": 255,
-                                            "nullable": true
-                                        }
-                                    },
-                                    "case_sensitive": {
-                                        "type": "boolean"
-                                    },
-                                    "do_not_translate": {
-                                        "type": "boolean"
-                                    },
-                                    "forbidden": {
-                                        "type": "array",
-                                        "items": {
-                                            "type": "string",
-                                            "maxLength": 255
-                                        }
-                                    },
-                                    "note": {
-                                        "type": "string",
-                                        "nullable": true
-                                    },
-                                    "source_aliases": {
-                                        "type": "array",
-                                        "items": {
-                                            "type": "string",
-                                            "maxLength": 255
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "201": {
-                        "description": "Successful response",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/components/schemas/AiGlossaryTermResource"
-                                        }
-                                    },
-                                    "required": [
-                                        "data"
-                                    ]
-                                }
-                            }
-                        }
-                    },
-                    "409": {
-                        "description": "`wording_conflict`. Nothing changes.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/AiGlossaryConceptConflict"
-                                }
-                            }
-                        }
-                    },
-                    "422": {
-                        "description": "`language_invalid`, `term_required`, `use_avoided`, or `note_too_long` for a note over 200 characters.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/AiGlossaryConceptConflict"
-                                }
-                            }
-                        }
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            }
-        },
-        "/mgmt/v1/teams/{team}/ai/glossaries/{glossary}/terms/{term}": {
-            "patch": {
-                "summary": "Change one language of a row in the older term shape",
-                "description": "Change one language of a row in the older term shape.\n\n`translations` changes Use only. A language it omits loses its Use and keeps its Avoid and Also written as. A language with neither goes. The row endpoints remove a language outright.",
-                "tags": [
-                    "Ai"
-                ],
-                "operationId": "patch_teams_by_team_ai_glossaries_by_glossary_terms_by_term",
-                "parameters": [
-                    {
-                        "name": "glossary",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        },
-                        "description": "The glossary identifier"
-                    },
-                    {
-                        "name": "term",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        },
-                        "description": "The term identifier"
-                    },
-                    {
-                        "name": "team",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        },
-                        "description": "The team identifier"
-                    }
-                ],
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "type": "object",
-                                "properties": {
-                                    "source_locale": {
-                                        "type": "string",
-                                        "maxLength": 20
-                                    },
-                                    "term": {
-                                        "type": "string",
-                                        "maxLength": 255
-                                    },
-                                    "translations": {
-                                        "type": "array",
-                                        "items": {
-                                            "type": "string",
-                                            "maxLength": 255,
-                                            "nullable": true
-                                        }
-                                    },
-                                    "case_sensitive": {
-                                        "type": "boolean"
-                                    },
-                                    "do_not_translate": {
-                                        "type": "boolean"
-                                    },
-                                    "forbidden": {
-                                        "type": "array",
-                                        "items": {
-                                            "type": "string",
-                                            "maxLength": 255
-                                        }
-                                    },
-                                    "note": {
-                                        "type": "string",
-                                        "nullable": true
-                                    },
-                                    "source_aliases": {
-                                        "type": "array",
-                                        "items": {
-                                            "type": "string",
-                                            "maxLength": 255
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "Successful response",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/components/schemas/AiGlossaryTermResource"
-                                        }
-                                    },
-                                    "required": [
-                                        "data"
-                                    ]
-                                }
-                            }
-                        }
-                    },
-                    "409": {
-                        "description": "`wording_conflict`, or `language_conflict` when `source_locale` names a language the row already has. Nothing changes.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/AiGlossaryConceptConflict"
-                                }
-                            }
-                        }
-                    },
-                    "422": {
-                        "description": "`language_invalid`, `term_required`, `use_avoided`, or `note_too_long` for a new or changed note over 200 characters.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/AiGlossaryConceptConflict"
-                                }
-                            }
-                        }
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            },
-            "delete": {
-                "summary": "Delete one language of a row",
-                "description": "Delete one language of a row. The last language takes the row with it.",
-                "tags": [
-                    "Ai"
-                ],
-                "operationId": "delete_teams_by_team_ai_glossaries_by_glossary_terms_by_term",
-                "parameters": [
-                    {
-                        "name": "glossary",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        },
-                        "description": "The glossary identifier"
-                    },
-                    {
-                        "name": "term",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        },
-                        "description": "The term identifier"
-                    },
-                    {
-                        "name": "team",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        },
-                        "description": "The team identifier"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Successful response"
                     }
                 },
                 "security": [
@@ -9182,6 +8766,10 @@
                                         "type": "string",
                                         "maxLength": 255
                                     },
+                                    "description": {
+                                        "type": "string",
+                                        "maxLength": 200
+                                    },
                                     "slug": {
                                         "type": "string",
                                         "maxLength": 120,
@@ -9208,7 +8796,10 @@
                                         "maxLength": 500000,
                                         "nullable": true
                                     }
-                                }
+                                },
+                                "required": [
+                                    "description"
+                                ]
                             }
                         }
                     }
@@ -9316,6 +8907,10 @@
                                         "type": "string",
                                         "maxLength": 255
                                     },
+                                    "description": {
+                                        "type": "string",
+                                        "maxLength": 200
+                                    },
                                     "slug": {
                                         "type": "string",
                                         "maxLength": 120,
@@ -9342,7 +8937,10 @@
                                         "maxLength": 500000,
                                         "nullable": true
                                     }
-                                }
+                                },
+                                "required": [
+                                    "description"
+                                ]
                             }
                         }
                     }
@@ -9781,436 +9379,6 @@
                 "responses": {
                     "204": {
                         "description": "Resource deleted successfully"
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            }
-        },
-        "/mgmt/v1/spaces/{space}/ai/glossaries/{glossary}/terms": {
-            "get": {
-                "summary": "List terms",
-                "description": "",
-                "tags": [
-                    "Ai"
-                ],
-                "operationId": "get_spaces_by_space_ai_glossaries_by_glossary_terms",
-                "parameters": [
-                    {
-                        "name": "glossary",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        },
-                        "description": "The glossary identifier"
-                    },
-                    {
-                        "name": "space",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        },
-                        "description": "The space identifier"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Successful response",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "description": "Paginated resource collection",
-                                    "properties": {
-                                        "data": {
-                                            "type": "array",
-                                            "description": "Collection of resources",
-                                            "items": {
-                                                "$ref": "#/components/schemas/AiGlossaryTermResource"
-                                            }
-                                        },
-                                        "links": {
-                                            "type": "object",
-                                            "description": "Pagination links",
-                                            "properties": {
-                                                "first": {
-                                                    "type": "string",
-                                                    "format": "uri",
-                                                    "description": "URL to the first page"
-                                                },
-                                                "last": {
-                                                    "type": "string",
-                                                    "format": "uri",
-                                                    "description": "URL to the last page"
-                                                },
-                                                "prev": {
-                                                    "type": "string",
-                                                    "format": "uri",
-                                                    "nullable": true,
-                                                    "description": "URL to the previous page"
-                                                },
-                                                "next": {
-                                                    "type": "string",
-                                                    "format": "uri",
-                                                    "nullable": true,
-                                                    "description": "URL to the next page"
-                                                }
-                                            }
-                                        },
-                                        "meta": {
-                                            "type": "object",
-                                            "description": "Pagination metadata",
-                                            "properties": {
-                                                "current_page": {
-                                                    "type": "integer",
-                                                    "description": "Current page number"
-                                                },
-                                                "from": {
-                                                    "type": "integer",
-                                                    "nullable": true,
-                                                    "description": "Index of first item on current page"
-                                                },
-                                                "last_page": {
-                                                    "type": "integer",
-                                                    "description": "Total number of pages"
-                                                },
-                                                "per_page": {
-                                                    "type": "integer",
-                                                    "description": "Number of items per page"
-                                                },
-                                                "to": {
-                                                    "type": "integer",
-                                                    "nullable": true,
-                                                    "description": "Index of last item on current page"
-                                                },
-                                                "total": {
-                                                    "type": "integer",
-                                                    "description": "Total number of items"
-                                                }
-                                            }
-                                        }
-                                    },
-                                    "required": [
-                                        "data",
-                                        "links",
-                                        "meta"
-                                    ]
-                                }
-                            }
-                        }
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            },
-            "post": {
-                "summary": "Create a row from one language in the older term shape",
-                "description": "Create a row from one language in the older term shape.",
-                "tags": [
-                    "Ai"
-                ],
-                "operationId": "post_spaces_by_space_ai_glossaries_by_glossary_terms",
-                "parameters": [
-                    {
-                        "name": "glossary",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        },
-                        "description": "The glossary identifier"
-                    },
-                    {
-                        "name": "space",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        },
-                        "description": "The space identifier"
-                    }
-                ],
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "type": "object",
-                                "properties": {
-                                    "source_locale": {
-                                        "type": "string",
-                                        "maxLength": 20
-                                    },
-                                    "term": {
-                                        "type": "string",
-                                        "maxLength": 255
-                                    },
-                                    "translations": {
-                                        "type": "array",
-                                        "items": {
-                                            "type": "string",
-                                            "maxLength": 255,
-                                            "nullable": true
-                                        }
-                                    },
-                                    "case_sensitive": {
-                                        "type": "boolean"
-                                    },
-                                    "do_not_translate": {
-                                        "type": "boolean"
-                                    },
-                                    "forbidden": {
-                                        "type": "array",
-                                        "items": {
-                                            "type": "string",
-                                            "maxLength": 255
-                                        }
-                                    },
-                                    "note": {
-                                        "type": "string",
-                                        "nullable": true
-                                    },
-                                    "source_aliases": {
-                                        "type": "array",
-                                        "items": {
-                                            "type": "string",
-                                            "maxLength": 255
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "201": {
-                        "description": "Successful response",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/components/schemas/AiGlossaryTermResource"
-                                        }
-                                    },
-                                    "required": [
-                                        "data"
-                                    ]
-                                }
-                            }
-                        }
-                    },
-                    "409": {
-                        "description": "`wording_conflict`. Nothing changes.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/AiGlossaryConceptConflict"
-                                }
-                            }
-                        }
-                    },
-                    "422": {
-                        "description": "`language_invalid`, `term_required`, `use_avoided`, or `note_too_long` for a note over 200 characters.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/AiGlossaryConceptConflict"
-                                }
-                            }
-                        }
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            }
-        },
-        "/mgmt/v1/spaces/{space}/ai/glossaries/{glossary}/terms/{term}": {
-            "patch": {
-                "summary": "Change one language of a row in the older term shape",
-                "description": "Change one language of a row in the older term shape.\n\n`translations` changes Use only. A language it omits loses its Use and keeps its Avoid and Also written as. A language with neither goes. The row endpoints remove a language outright.",
-                "tags": [
-                    "Ai"
-                ],
-                "operationId": "patch_spaces_by_space_ai_glossaries_by_glossary_terms_by_term",
-                "parameters": [
-                    {
-                        "name": "glossary",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        },
-                        "description": "The glossary identifier"
-                    },
-                    {
-                        "name": "term",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        },
-                        "description": "The term identifier"
-                    },
-                    {
-                        "name": "space",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        },
-                        "description": "The space identifier"
-                    }
-                ],
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "type": "object",
-                                "properties": {
-                                    "source_locale": {
-                                        "type": "string",
-                                        "maxLength": 20
-                                    },
-                                    "term": {
-                                        "type": "string",
-                                        "maxLength": 255
-                                    },
-                                    "translations": {
-                                        "type": "array",
-                                        "items": {
-                                            "type": "string",
-                                            "maxLength": 255,
-                                            "nullable": true
-                                        }
-                                    },
-                                    "case_sensitive": {
-                                        "type": "boolean"
-                                    },
-                                    "do_not_translate": {
-                                        "type": "boolean"
-                                    },
-                                    "forbidden": {
-                                        "type": "array",
-                                        "items": {
-                                            "type": "string",
-                                            "maxLength": 255
-                                        }
-                                    },
-                                    "note": {
-                                        "type": "string",
-                                        "nullable": true
-                                    },
-                                    "source_aliases": {
-                                        "type": "array",
-                                        "items": {
-                                            "type": "string",
-                                            "maxLength": 255
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "Successful response",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/components/schemas/AiGlossaryTermResource"
-                                        }
-                                    },
-                                    "required": [
-                                        "data"
-                                    ]
-                                }
-                            }
-                        }
-                    },
-                    "409": {
-                        "description": "`wording_conflict`, or `language_conflict` when `source_locale` names a language the row already has. Nothing changes.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/AiGlossaryConceptConflict"
-                                }
-                            }
-                        }
-                    },
-                    "422": {
-                        "description": "`language_invalid`, `term_required`, `use_avoided`, or `note_too_long` for a new or changed note over 200 characters.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/AiGlossaryConceptConflict"
-                                }
-                            }
-                        }
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            },
-            "delete": {
-                "summary": "Delete one language of a row",
-                "description": "Delete one language of a row. The last language takes the row with it.",
-                "tags": [
-                    "Ai"
-                ],
-                "operationId": "delete_spaces_by_space_ai_glossaries_by_glossary_terms_by_term",
-                "parameters": [
-                    {
-                        "name": "glossary",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        },
-                        "description": "The glossary identifier"
-                    },
-                    {
-                        "name": "term",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        },
-                        "description": "The term identifier"
-                    },
-                    {
-                        "name": "space",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        },
-                        "description": "The space identifier"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Successful response"
                     }
                 },
                 "security": [
@@ -31101,6 +30269,9 @@
                     "title": {
                         "type": "string"
                     },
+                    "description": {
+                        "type": "string"
+                    },
                     "type": {
                         "type": "string"
                     },
@@ -31160,122 +30331,6 @@
                     },
                     "updated_at": {
                         "nullable": true
-                    }
-                }
-            },
-            "AiGlossaryTermResource": {
-                "type": "object",
-                "properties": {
-                    "id": {
-                        "type": "string"
-                    },
-                    "source_locale": {
-                        "type": "string"
-                    },
-                    "term": {
-                        "nullable": true
-                    },
-                    "translations": {
-                        "type": "object",
-                        "additionalProperties": {
-                            "type": "string"
-                        }
-                    },
-                    "case_sensitive": {
-                        "type": "boolean",
-                        "description": "Whether Use and Avoid match with exact case. Follows do_not_translate unless this format set it apart."
-                    },
-                    "do_not_translate": {
-                        "type": "boolean"
-                    },
-                    "forbidden": {
-                        "type": "array",
-                        "items": {
-                            "type": "string"
-                        }
-                    },
-                    "note": {
-                        "type": "string",
-                        "nullable": true
-                    },
-                    "concept_id": {
-                        "type": "string",
-                        "description": "Links the language variants of one concept."
-                    },
-                    "source_aliases": {
-                        "type": "array",
-                        "items": {
-                            "type": "string"
-                        },
-                        "description": "Other spellings of the term in a source. They count as the term itself."
-                    }
-                }
-            },
-            "AiGlossaryConceptConflict": {
-                "type": "object",
-                "properties": {
-                    "message": {
-                        "type": "string"
-                    },
-                    "code": {
-                        "type": "string",
-                        "enum": [
-                            "wording_conflict",
-                            "key_conflict",
-                            "term_required",
-                            "use_avoided",
-                            "last_language",
-                            "stale_glossary",
-                            "row_changed",
-                            "language_conflict",
-                            "language_invalid",
-                            "note_too_long"
-                        ]
-                    },
-                    "locale": {
-                        "type": "string",
-                        "nullable": true,
-                        "description": "wording_conflict, term_required, use_avoided, language_conflict, language_invalid"
-                    },
-                    "wording": {
-                        "type": "string",
-                        "nullable": true,
-                        "description": "wording_conflict, use_avoided"
-                    },
-                    "avoid": {
-                        "type": "string",
-                        "nullable": true,
-                        "description": "use_avoided: the Avoid entry that covers the wording"
-                    },
-                    "key": {
-                        "type": "string",
-                        "nullable": true,
-                        "description": "key_conflict"
-                    },
-                    "concept": {
-                        "type": "object",
-                        "nullable": true,
-                        "properties": {
-                            "id": {
-                                "type": "string"
-                            },
-                            "key": {
-                                "type": "string",
-                                "nullable": true
-                            },
-                            "term": {
-                                "type": "string"
-                            }
-                        }
-                    },
-                    "changes": {
-                        "type": "array",
-                        "items": {
-                            "type": "object",
-                            "additionalProperties": true
-                        },
-                        "nullable": true,
-                        "description": "row_changed: each moved field with its `field` (use, avoid, also, note or keep_exact) and `locale`"
                     }
                 }
             },
@@ -31447,6 +30502,74 @@
                             "type": "string"
                         },
                         "description": "By available locale: `own`, `fallback` (a base language serves it) or `missing`."
+                    }
+                }
+            },
+            "AiGlossaryConceptConflict": {
+                "type": "object",
+                "properties": {
+                    "message": {
+                        "type": "string"
+                    },
+                    "code": {
+                        "type": "string",
+                        "enum": [
+                            "wording_conflict",
+                            "key_conflict",
+                            "term_required",
+                            "use_avoided",
+                            "last_language",
+                            "stale_glossary",
+                            "row_changed",
+                            "language_conflict",
+                            "language_invalid",
+                            "note_too_long"
+                        ]
+                    },
+                    "locale": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "wording_conflict, term_required, use_avoided, language_conflict, language_invalid"
+                    },
+                    "wording": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "wording_conflict, use_avoided"
+                    },
+                    "avoid": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "use_avoided: the Avoid entry that covers the wording"
+                    },
+                    "key": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "key_conflict"
+                    },
+                    "concept": {
+                        "type": "object",
+                        "nullable": true,
+                        "properties": {
+                            "id": {
+                                "type": "string"
+                            },
+                            "key": {
+                                "type": "string",
+                                "nullable": true
+                            },
+                            "term": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "changes": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "additionalProperties": true
+                        },
+                        "nullable": true,
+                        "description": "row_changed: each moved field with its `field` (use, avoid, also, note or keep_exact) and `locale`"
                     }
                 }
             },
