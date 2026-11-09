@@ -3,12 +3,14 @@
 namespace Tests\Feature\Mgmt\Content;
 
 use App\Models\Management\Space;
+use App\Models\Space\Asset;
 use App\Models\Space\Block;
 use App\Models\Space\Content;
 use App\Models\Space\ContentVersion;
 use App\Models\User;
 use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
 use Illuminate\Support\Str;
+use Illuminate\Testing\TestResponse;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 use Tests\Traits\SpaceTestingTrait;
@@ -642,6 +644,89 @@ class ContentSchemaValidationTest extends TestCase
         $this->assertSame('frosted', $canonical->current_version->content['variant']);
     }
 
+    #[Test]
+    public function a_saved_asset_reference_keeps_an_id_that_names_an_asset(): void
+    {
+        $asset = Asset::factory()->create();
+
+        $this->storeImagePage(['type' => 'asset', 'id' => $asset->id, 'full_path' => 'storage/space/'.strtolower((string) Str::ulid()).'/a.jpg'])
+            ->assertCreated();
+
+        $this->assertSame($asset->id, $this->storedImage()['id']);
+    }
+
+    #[Test]
+    public function a_saved_asset_reference_with_a_foreign_id_takes_the_id_of_its_full_path_asset(): void
+    {
+        $asset = Asset::factory()->create();
+
+        $this->storeImagePage(['type' => 'asset', 'id' => strtolower((string) Str::ulid()), 'full_path' => "storage/space/{$asset->id}/a.jpg"])
+            ->assertCreated();
+
+        $this->assertSame($asset->id, $this->storedImage()['id']);
+    }
+
+    #[Test]
+    public function a_saved_asset_reference_that_names_no_asset_is_rejected_on_its_field(): void
+    {
+        $this->storeImagePage(['type' => 'asset', 'id' => strtolower((string) Str::ulid()), 'full_path' => 'storage/space/'.strtolower((string) Str::ulid()).'/a.jpg'])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['content.image']);
+
+        $this->assertSame(0, Content::query()->count());
+    }
+
+    #[Test]
+    public function publishing_an_entry_with_a_pasted_asset_id_stores_the_real_one(): void
+    {
+        $this->actingAs($this->owner);
+        $asset = Asset::factory()->create();
+        $content = $this->createContent([
+            'summary' => 'A',
+            'image' => ['type' => 'asset', 'id' => strtolower((string) Str::ulid()), 'full_path' => "storage/space/{$asset->id}/a.jpg"],
+        ], $this->imagePageBlock());
+
+        $this->postJson(route('mgmt.contents.publish', [
+            'space' => $this->space->id,
+            'content' => $content->id,
+        ]))->assertOk();
+
+        $this->assertSame($asset->id, $content->refresh()->load('published_version')->published_version->content['image']['id']);
+    }
+
+    /** @param  array<string, mixed>  $image */
+    private function storeImagePage(array $image): TestResponse
+    {
+        $this->actingAs($this->owner);
+
+        return $this->postJson(route('mgmt.contents.store', ['space' => $this->space->id]), [
+            'name' => 'Image page',
+            'slug' => 'image-page',
+            'block_id' => $this->imagePageBlock()->id,
+            'language_iso' => 'en',
+            'content' => ['summary' => 'A', 'image' => $image],
+        ]);
+    }
+
+    /** @return array<string, mixed> */
+    private function storedImage(): array
+    {
+        return Content::query()->firstOrFail()->load('current_version')->current_version->content['image'];
+    }
+
+    private function imagePageBlock(): Block
+    {
+        return Block::query()->firstOrCreate(['slug' => 'image-page'], [
+            'external_id' => (string) Str::uuid(),
+            'name' => 'Image page',
+            'type' => 'root',
+            'schema' => [
+                'summary' => ['type' => 'text', 'name' => 'Summary'],
+                'image' => ['type' => 'asset', 'name' => 'Image'],
+            ],
+        ]);
+    }
+
     protected function createContent(
         array $contentData,
         ?Block $block = null,
@@ -653,7 +738,7 @@ class ContentSchemaValidationTest extends TestCase
             'block_id' => ($block ?? $this->pageBlock)->id,
             'name' => 'Page',
             'slug' => strtolower((string) Str::random(8)),
-            'full_slug' => '/' . strtolower((string) Str::random(8)),
+            'full_slug' => '/'.strtolower((string) Str::random(8)),
             'language_iso' => $languageIso,
             'i18n_parent_id' => $i18nParent?->id,
         ]);

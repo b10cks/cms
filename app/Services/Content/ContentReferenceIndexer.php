@@ -2,7 +2,6 @@
 
 namespace App\Services\Content;
 
-use App\Models\Space\Asset;
 use App\Models\Space\ContentVersion;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Collection;
@@ -20,7 +19,10 @@ class ContentReferenceIndexer
 {
     private const REFERENCE_COLUMNS = ['asset_ids', 'link_ids', 'relation_ids'];
 
-    public function __construct(private readonly AssetHandler $assets) {}
+    public function __construct(
+        private readonly AssetHandler $assets,
+        private readonly AssetReferenceResolver $resolver,
+    ) {}
 
     /**
      * Versions changed counts any column; payloads counts the versions whose
@@ -43,7 +45,9 @@ class ContentReferenceIndexer
                 'block' => fn (BelongsTo $query) => $query->withTrashed(),
             ])])
             ->chunkById(200, function (Collection $versions) use ($dryRun, &$versionsChanged, &$payloadsChanged, &$contents): void {
-                $known = $this->existingAssetIds($versions);
+                $known = $this->resolver->existing($versions->flatMap(
+                    fn (ContentVersion $version): array => $this->assets->extractContentAssets($version->content ?? []),
+                ));
 
                 foreach ($versions as $version) {
                     $before = $version->only(self::REFERENCE_COLUMNS);
@@ -82,24 +86,5 @@ class ContentReferenceIndexer
             });
 
         return ['versions' => $versionsChanged, 'payloads' => $payloadsChanged, 'contents' => \count($contents)];
-    }
-
-    /**
-     * Which of the asset ids the versions' payloads name exist in this space,
-     * trashed ones included: a trashed asset is still the one meant.
-     *
-     * @param  Collection<int, ContentVersion>  $versions
-     * @return list<string>
-     */
-    private function existingAssetIds(Collection $versions): array
-    {
-        $candidates = $versions
-            ->flatMap(fn (ContentVersion $version): array => $this->assets->extractContentAssets($version->content ?? []))
-            ->unique()
-            ->values();
-
-        return $candidates->isEmpty()
-            ? []
-            : Asset::withTrashed()->whereIn('id', $candidates)->pluck('id')->all();
     }
 }

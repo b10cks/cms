@@ -87,6 +87,23 @@ class AssetHandler
         );
     }
 
+    /**
+     * Reference ids that are not among `$assetIds`, so name no asset.
+     *
+     * @param  list<string>  $assetIds
+     * @return list<string>
+     */
+    public function unknownReferenceIds(array $data, array $assetIds): array
+    {
+        return array_values(array_diff(
+            array_filter(
+                $this->extractMatchingField($data, ['type' => 'asset'], 'id'),
+                static fn (mixed $id): bool => \is_string($id),
+            ),
+            $assetIds,
+        ));
+    }
+
     public function updateContentAssets(array $data, Collection $assets): array
     {
         $assets = $assets->reverse()->keyBy('id');

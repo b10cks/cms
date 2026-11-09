@@ -8,6 +8,7 @@ use App\Models\Management\Space;
 use App\Models\Space\AiChangesetItem;
 use App\Models\Space\AiOperation;
 use App\Models\Space\AiOperationItem;
+use App\Models\Space\Asset;
 use App\Models\Space\Block;
 use App\Models\Space\Content;
 use App\Models\Space\ContentVersion;
@@ -36,7 +37,7 @@ class AiMetadataOperationsTest extends TestCase
     use RefreshDatabase;
     use SpaceTestingTrait;
 
-    private const UNRELATED = ['canonical' => 'https://example.test/about', 'robots' => 'noindex', 'ogImage' => ['type' => 'asset', 'id' => 'asset-1']];
+    private const UNRELATED = ['canonical' => 'https://example.test/about', 'robots' => 'noindex', 'ogImage' => ['type' => 'asset', 'id' => '01k0s6v4rsjjjgkhepj496dj5e']];
 
     private const FOUR_KEYS = ['title', 'description', 'ogTitle', 'ogDescription'];
 
@@ -54,6 +55,8 @@ class AiMetadataOperationsTest extends TestCase
         $this->space = Space::factory()->create(['settings' => ['default_language' => 'en', 'languages' => [['code' => 'de', 'name' => 'German']]]]);
         $this->assignSpaceRole($this->space, $this->user, 'owner');
         $this->setUpSpaceTesting($this->space);
+        // UNRELATED's ogImage must name a real asset, or saving it is a validation error.
+        Asset::factory()->create(['id' => '01k0s6v4rsjjjgkhepj496dj5e']);
         app()->instance('currentSpace', $this->space);
         $this->giveSpaceAiConfig($this->space);
         $this->driver = $this->fakeAi();
