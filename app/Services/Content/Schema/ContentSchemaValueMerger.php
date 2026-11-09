@@ -26,11 +26,18 @@ class ContentSchemaValueMerger
         bool $localizationOverlay = false,
     ): array {
         $schemaArray = $schema instanceof BlockSchema ? $schema->toArray() : $schema;
-        $merged = array_replace_recursive($base, $overrides);
+        $replaced = array_replace_recursive($base, $overrides);
 
         if (! $localizationOverlay || $schemaArray === []) {
-            return $merged;
+            return $replaced;
         }
+
+        // In overlay mode the base owns the structure: `block`, `id` and any key
+        // its schema does not define come from the base alone, so a translation
+        // that stores a stale block type or another block's fields cannot leak
+        // them into the result. An empty base (the first step of a chain merge
+        // starting from []) contributes no structure, so the layer is kept whole.
+        $merged = $base === [] ? $replaced : $base;
 
         foreach ($schemaArray as $fieldKey => $field) {
             if (! \is_array($field)) {
@@ -41,11 +48,11 @@ class ContentSchemaValueMerger
             $isTranslatable = (bool) ($field['translatable'] ?? false);
 
             // blocks: nested schema-aware merge, handles its own recursion
-            if ($type === 'blocks' && array_key_exists($fieldKey, $merged)) {
+            if ($type === 'blocks' && array_key_exists($fieldKey, $replaced)) {
                 $merged[$fieldKey] = $this->mergeNestedBlockItems(
                     $base[$fieldKey] ?? null,
                     $overrides[$fieldKey] ?? null,
-                    $merged[$fieldKey],
+                    $replaced[$fieldKey],
                     $localizationOverlay,
                 );
 
@@ -76,9 +83,11 @@ class ContentSchemaValueMerger
                 // value. A null or missing base means this layer didn't contribute (e.g. an
                 // overlay language that stores null for non-translatable fields, or a field
                 // added to the schema after the base variant was created). In those cases
-                // the array_replace_recursive result (override's value) is kept instead.
+                // the override's value is kept instead.
                 if ($hasBase && $baseVal !== null) {
                     $merged[$fieldKey] = $baseVal;
+                } elseif (array_key_exists($fieldKey, $replaced)) {
+                    $merged[$fieldKey] = $replaced[$fieldKey];
                 }
 
                 continue;

@@ -273,6 +273,49 @@ class ContentI18nResolverTest extends TestCase
         ], $resolved->effectiveContent['roster']);
     }
 
+    #[Test]
+    public function overlay_resolution_keeps_the_canonical_block_type_of_a_nested_item(): void
+    {
+        $this->createNestedBlock('carousel', [
+            'title' => ['type' => 'text', 'name' => 'Title', 'translatable' => true],
+            'products' => ['type' => 'text', 'name' => 'Products'],
+        ]);
+        $this->createNestedBlock('productCarousel', [
+            'title' => ['type' => 'text', 'name' => 'Title', 'translatable' => true],
+            'limit' => ['type' => 'number', 'name' => 'Limit'],
+        ]);
+        $this->block->update([
+            'schema' => ['body' => ['type' => 'blocks', 'name' => 'Body']],
+            'editor' => [['header' => 'General', 'items' => ['body']]],
+        ]);
+
+        $canonical = $this->createPublishedContent('en', 'studio', ['body' => [
+            ['id' => 'item-1', 'block' => 'carousel', 'title' => 'Picks', 'products' => 'a,b,c'],
+        ]]);
+        // A copy taken while the item was still a productCarousel.
+        $this->createPublishedContent('de', 'studio-de', ['body' => [
+            ['id' => 'item-1', 'block' => 'productCarousel', 'title' => 'Auswahl', 'limit' => 12],
+        ]], $canonical);
+
+        $resolved = app(ContentI18nResolver::class)->resolve($this->space, $canonical, 'de', 'published');
+
+        $this->assertSame([
+            ['id' => 'item-1', 'block' => 'carousel', 'title' => 'Auswahl', 'products' => 'a,b,c'],
+        ], $resolved->effectiveContent['body']);
+    }
+
+    private function createNestedBlock(string $slug, array $schema): void
+    {
+        Block::query()->create([
+            'external_id' => (string) Str::uuid(),
+            'name' => ucfirst($slug),
+            'slug' => $slug,
+            'type' => 'nestable',
+            'schema' => $schema,
+            'editor' => [['header' => 'General', 'items' => array_keys($schema)]],
+        ]);
+    }
+
     private function createPublishedContent(
         string $languageIso,
         string $slug,
