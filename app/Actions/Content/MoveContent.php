@@ -7,6 +7,7 @@ use App\Models\Space\Block;
 use App\Models\Space\Content;
 use App\Models\Space\ContentVersion;
 use App\Services\Content\ContentHierarchyValidator;
+use App\Services\Content\ContentI18nService;
 use App\Services\Content\ContentPositionService;
 use App\Services\Content\Serial\ContentSerialAssigner;
 
@@ -16,12 +17,14 @@ class MoveContent
         protected ContentHierarchyValidator $contentHierarchyValidator,
         protected ContentPositionService $contentPositionService,
         protected ContentSerialAssigner $serialAssigner,
+        protected ContentI18nService $contentI18nService,
     ) {}
 
     public function execute(Content $content, ?string $parentId, ?int $position, Space $space): void
     {
         $content->getConnection()->transaction(function () use ($content, $parentId, $position, $space) {
             $content->loadMissing('block');
+            $parentId = $this->contentI18nService->parentForLanguage($parentId, $content->language_iso);
 
             // Validate parent exists if provided
             $parent = null;
@@ -57,12 +60,38 @@ class MoveContent
 
             // Resequence siblings only when the destination is manually sorted;
             // otherwise the move is a pure reparent and the configured sort applies.
-            if ($this->contentPositionService->allowsManualSort($space, $parent)) {
+            // Decided once from the canonical destination; translations follow suit.
+            $sortingEnabled = $this->contentPositionService->allowsManualSort($space, $parent);
+            if ($sortingEnabled) {
                 $this->contentPositionService->moveItemToPosition($content, $parentId, $position);
+            }
+
+            if ($content->i18n_parent_id === null) {
+                $this->moveTranslations($content, $parentId, $position, $sortingEnabled);
             }
 
             $space->touchContentUpdatedAt();
         });
+    }
+
+    /**
+     * Translations follow their canonical entry, as in a tree move, each under
+     * the destination's translation in its language or the destination itself.
+     */
+    protected function moveTranslations(Content $content, ?string $parentId, ?int $position, bool $sortingEnabled): void
+    {
+        foreach (Content::query()->where('i18n_parent_id', $content->id)->get() as $translation) {
+            $translationParentId = $this->contentI18nService->parentForLanguage($parentId, $translation->language_iso);
+
+            if ($translation->parent_id !== $translationParentId) {
+                $translation->parent_id = $translationParentId;
+                $translation->save();
+            }
+
+            if ($sortingEnabled) {
+                $this->contentPositionService->moveItemToPosition($translation, $translationParentId, $position);
+            }
+        }
     }
 
     /**
