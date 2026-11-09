@@ -1,18 +1,18 @@
 ---
-description: "Start AI tasks from where you work, see what gets written where, and handle plans, budgets, flags and conflicts."
+description: "Start AI tasks from where you work, see what gets written where, and handle plans, budgets and conflicts."
 ---
 
 # Working with AI
 
 AI in b10cks sits inside the screens you already use. It helps with a sentence, a page, or thousands of entries, and it never publishes anything. A person always does that.
 
-An administrator switches AI on under **Settings → AI**. To teach it your voice and your terms, see [Skills, knowledge and glossary](ai-knowledge.md).
+An administrator switches AI on under **Settings → AI**. To teach it your voice and your terms, see [Skills and knowledge](ai-knowledge.md).
 
 ## Where to start a task
 
 | You are | Do this | Good for |
 | --- | --- | --- |
-| Editing text | Select the text and choose an action | Rewrite, shorten, expand, fix grammar, apply the glossary, translate |
+| Editing text | Select the text and choose an action | Rewrite, shorten, expand, fix grammar, translate |
 | Anywhere | Open the command palette and ask, or pick a skill | Questions and one-off jobs |
 | In a list of entries, assets or data entries | Select some and press **Ask AI** | The same job across many items |
 | In the translation or meta tags tools | Use the AI button there | Filling in translations and search-engine text |
@@ -32,7 +32,7 @@ The rule is that AI writes directly to anything with a draft, and everything els
 
 Publishing is the review for content. Read the draft as you would a colleague's, compare it in version history if you want to see what changed, and publish when you're happy. If you don't like a change, restore an earlier version. There is no separate undo for a whole AI task.
 
-Proposals are grouped, so you can accept similar changes together after looking at examples, or open any single one. Conflicts and anything flagged are left out of a group accept and need their own look.
+Proposals are grouped, so you can accept similar changes together after looking at examples, or open any single one. Conflicts are left out of a group accept and need their own look.
 
 ## Small tasks and big ones
 
@@ -57,22 +57,17 @@ Every run has a spending limit. When a planned task reaches its budget it pauses
 
 The whole space also draws on the AI allowance of its plan, shown under [Settings → AI](settings.md#ai).
 
-## Flags and conflicts
+## Conflicts
 
-Two things can leave an entry needing your attention. Both show in the content tree and when you publish.
+Someone changed a field after the AI read it. Your colleague's text stays, the AI doesn't overwrite it, and it continues with the other fields. The field stays closed to AI tasks until a person decides. Conflicts show in the content tree and when you publish.
 
-**Flagged wording.** The text holds wording the [glossary](ai-knowledge.md#glossaries) says to avoid, or a protected name was changed. The AI gets one chance to fix it before it is flagged. The flag says what to write instead, if the glossary has a replacement. You can still publish: you get a confirmation, and nothing is blocked. Flags clear when the wording leaves the field or the draft is published.
-
-**Conflicts.** Someone changed a field after the AI read it. Your colleague's text stays, the AI doesn't overwrite it, and it continues with the other fields. The field stays closed to AI tasks until a person decides.
-
-Flags check wording, and nothing more. A text with no flags can still be wrong, so read what you publish.
+Nothing checks the AI's wording afterwards. Your style guides steer it, but a draft can still use a word you avoid or get a fact wrong, so read what you publish.
 
 ## Getting better results
 
 - **Say what done looks like.** "Every product has a German description under 60 words" works better than "translate the products".
 - **Try a small selection first.** Read those drafts before you run a thousand entries.
-- **Fix the cause, not the output.** If you correct the same word twice, add it to the glossary. If you correct the same habit twice, add it to the style guide. [Which one?](ai-knowledge.md#when-to-use-what)
-- **Watch the suggestions thread.** When editors change the AI's wording, the terms they chose wait there for someone to add to the glossary.
+- **Fix the cause, not the output.** If you correct the same word or habit twice, add it to the style guide. [Which one?](ai-knowledge.md#when-to-use-what)
 - **Use schedules for jobs that recur**, such as new entries with missing translations, under **Settings → AI → Schedules**.
 
 ## Things to keep in mind
@@ -84,7 +79,6 @@ Flags check wording, and nothing more. A text with no flags can still be wrong, 
 
 ## Related
 
-- [Skills, knowledge and glossary](ai-knowledge.md)
-- [Glossary sheets](../guides/glossary-sheet.md)
+- [Skills and knowledge](ai-knowledge.md)
 - [Versions and publishing](../concepts/versions-and-publishing.md)
 - [MCP server](../guides/mcp-server.md), for using b10cks from your own AI assistant

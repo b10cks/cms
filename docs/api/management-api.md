@@ -78,7 +78,7 @@ Long-running AI work uses `…/ai/operations`. Create a draft with a frozen scop
 
 Once approved, an operation changes content without waiting for anyone: updates and new locale entries go straight to drafts under the actor who started it, and nothing is published. A person publishes a draft when happy, and each entry's version history is how to go back. `GET …/ai/operations/{id}/changes` lists what changed, an entry at a time, with `summary` holding the figures and entries with conflicts and flagged wording first. `GET …/review/items?target_id=` returns the items of one entry. A field someone changed after the agent read it is never overwritten: its item stays open as a `conflict` for a person, the agent is told, further writes to that field are refused until a person decides, and the rest continues. Resolve a conflict per item through `…/ai/changesets/{id}/accept` (`overwrite`) or `…/reject`. `GET …/ai/content-flags` returns open conflicts and flagged wording per entry (`release_id` limits it to a release), and `GET …/ai/content-flags/details?ids[]=` names them by field. Flagged wording clears when it leaves the field or the draft is published, and neither blocks a publish.
 
-Assets, asset folders and tags, data entries and blocks go live when written, so changes to them stay proposals. `…/review` lists them in groups, and `…/review/accept` and `…/review/reject` decide them. Their deterministic violations (banned wording, protected names) need a correction or a recorded override reason. On content these findings block nothing: they are stored on the item for whoever publishes. A hint about missing required wording (`missing_term`) goes to the agent in its tool result only. It is never stored or listed.
+Assets, asset folders and tags, data entries and blocks go live when written, so changes to them stay proposals. `…/review` lists them in groups, and `…/review/accept` and `…/review/reject` decide them.
 
 Translation plans can include metadata generated from the translated draft. Translation memory learns only from what a person published.
 
@@ -89,23 +89,9 @@ The same lifecycle is available through the CMS's MCP registry. Tokens carry the
 Search reindex (`POST …/search/reindex`), redirects import/export and stat resets, icon import ([both streamable](#streaming-imports)), backups, migrations, subscription management, audit logs, presence endpoints for collaboration.
 
 
-### Glossary concept rows
+### Glossary (removed)
 
-`…/ai/glossaries/{glossary}/concept-rows` reads and writes a glossary as one row per meaning, for spaces and teams. A row's `id` is its concept id. Every write to a glossary goes through one writer: these endpoints, imports of every format, the older term endpoints below and accepted AI suggestions.
-
-A row holds `key`, `keep_exact`, `note`, `coverage` and `languages`, which has per locale `use`, `avoid` and `also`. A language with `avoid` and `use: null` is a ban. `note` is one per row: a write reaches all its languages. A new or changed note over 200 characters returns 422 `note_too_long`, on every write path, and a longer older note stays readable and may be sent back unchanged. Omitted fields and languages keep their value, and a language goes only through `remove_languages`.
-
-A change may send `base`, the row's `keep_exact`, `note` and `languages` as you read them. If a field this write changes has moved since then, it returns 409 `row_changed`, with `changes` naming each `field` and `locale`, and nothing is saved. Fields it does not change still merge, and writing the value already stored replaces nothing. Without `base`, the last write wins.
-
-A wording another concept uses in that locale returns 409 `wording_conflict`, naming the concept. A language with neither Use nor Avoid returns 422 `term_required`, and a Use its own Avoid would flag returns 422 `use_avoided`, with `locale`, `wording` and `avoid`. That reads the check's own rule: case and a `*` count, so `Cart` with Avoid `cart` is fine with `keep_exact` and refused without, and `Händler` with Avoid `Händler*` is always refused. An older row that already holds such a pair keeps it and takes other edits until that pair changes. A language code that is not valid returns 422 `language_invalid`. Nothing changes.
-
-`GET …/concept-rows/{row}` returns one row. A list takes `search` and `missing`, and `facets` in its response covers the whole glossary: `total`, the locales, and per locale in `missing` how many rows have no term there.
-
-`POST …/concept-rows/bulk` deletes selected rows in one transaction. `POST …/glossary-check` tries a text against saved wording without a provider call: it returns the activated rows with match offsets in UTF-16 code units, the `instruction` the agent would read and, if `output` is sent, the findings. `scope` is `glossary`, this one glossary and the default, or `space`, what a run in this space uses: every enabled glossary, inherited ones included. A team has no runs, so `space` is a 422 there.
-
-The older `…/ai/glossaries/{glossary}/terms` endpoints are gone: use the row endpoints. Case follows `keep_exact` everywhere, and the separate `case_sensitive` setting is gone with them.
-
-A glossary inherited from a team reads and exports the same, and returns 403 on row writes and 404 on imports. `meta` holds `read_only`, `default_locale`, `available_locales` and whole-glossary `facets`. In a space, `available_locales` lists the enabled languages, default first, then stored ones, flagged `unused` when no enabled language can use them.
+The glossary endpoints are gone: `…/ai/glossaries`, its concept rows, the check, import and export, and glossary suggestions. Wording rules live in [style guides](#knowledge-documents) now, one per language where they differ. Nothing checks AI output against them, and translation memory reuses stored pairs as they are. The drop migration wrote each glossary as JSON to `glossary-archive/` on the transfers disk before removing the tables.
 
 ### Knowledge documents
 
@@ -125,16 +111,11 @@ Publishing is the verification step. Each publish of a translation records its u
 
 ### Streaming imports
 
-Asset metadata, redirects, data entries, icons, content translations and glossary terms all import through `POST …/import` with a multipart `file`.
+Asset metadata, redirects, data entries, icons and content translations all import through `POST …/import` with a multipart `file`.
 
 Send `Accept: text/event-stream` for large files. The response is server-sent events: `status` events whose `message` is JSON `{processed, total}`, then a `done` event carrying the result in `data`, or an `error` event with `message`. A file that fails validation is an `error` event on a stream and a 422 otherwise.
 
 Without that header the result is one JSON response, which has to finish within the request time limit (30 seconds through the CDN).
-
-A glossary CSV or XLSX applies directly in the format described in [Glossary sheets](../guides/glossary-sheet.md). Its result adds `summary.added`, `summary.updated`, `summary.unchanged` and `warnings`, `errors` hold `row`, `column` and `message`, and unknown columns are listed once in `ignored_fields`. A row with no change counts as unchanged. Each such import writes one audit log entry with its actor, file name and counts. A header with `source_locale` keeps the older term import, and it and TBX return the plain result. In TBX, preferred, deprecated and admitted terms map to `use`, `avoid` and `also`. In both of those, a line or entry updates the row holding its first language's wording. Another of its languages finds a row only if that row has no wording in the first language. Otherwise the line is new and a wording it shares with that row is a row error, so nothing it did not name is replaced. In both of those, a language code that is not valid or wording over 255 characters is an error on that row, and the rest applies. A `case_sensitive` column in a `source_locale` file is not read: case follows `do_not_translate`, which is Keep exact.
-
-`GET …/ai/glossaries/{glossary}/export?format=csv|xlsx|tbx` downloads the glossary, and `&template=1` the columns with one made up row (`csv` and `xlsx` only).
-
 
 The complete, always-current endpoint list with request/response schemas is the generated OpenAPI spec — see [Generated OpenAPI specs](openapi.md). Generate it on your instance with:
 

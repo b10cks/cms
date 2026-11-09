@@ -20,7 +20,7 @@ An editor states an outcome, approves a concrete plan and gets complete, reviewa
 
 Assets: the selected folder and its descendants. Inspect images, existing metadata and tags, and propose new terms or folders only when grouped assets justify them, extending existing conventions first. By default fill empty metadata and add tags; overwrites, removals and moves only when the approved plan allows them. Unsupported files are reported. Metadata is validated against the destination folder's rules, and a move and its metadata are accepted together.
 
-Translation: missing locale entries, empty translatable fields and stale translations after source changes. Locale creation and relationships are code. Review shows the source delta and the current translation; updates touch only affected fields and keep unrelated human changes, markup, placeholders and non-translatable fields. The existing glossary and translation memory apply.
+Translation: missing locale entries, empty translatable fields and stale translations after source changes. Locale creation and relationships are code. Review shows the source delta and the current translation; updates touch only affected fields and keep unrelated human changes, markup, placeholders and non-translatable fields. Style guides and translation memory apply.
 
 ## Skill or code
 
@@ -39,7 +39,7 @@ The rule: skills own editorial policy; deterministic code owns everything that h
 | Permission | Code (policies, batch recheck) | Rechecked before every batch and between agent steps |
 | Budget, pause, extension | Code (`AiOperations`) | Shared budget across batches; a spent budget pauses, only an API call extends |
 | Accounting, checkpoints, retries | Code (ledger, `ReportsOutcomes`) | A change to the entry marks it when recorded; tools report the rest, per locale for translations; an entry without an outcome is retried, then failed |
-| Which items a group accept may take | Code (`OperationReview`) | Conflicts, glossary findings and flagged items are excluded |
+| Which items a group accept may take | Code (`OperationReview`) | Conflicts and flagged items are excluded |
 
 Considered and rejected:
 
