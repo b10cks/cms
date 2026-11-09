@@ -465,6 +465,28 @@ class ContentI18nTest extends TestCase
         $response->assertJsonValidationErrors(['slug']);
     }
 
+    #[Test]
+    public function moving_an_entry_moves_its_translations_under_the_destinations_translations(): void
+    {
+        $this->actingAs($this->owner);
+
+        $enParent = $this->createContent(languageIso: 'en', slug: 'about');
+        $deParent = $this->createContent(languageIso: 'de', slug: 'ueber-uns', i18nParent: $enParent);
+        $enItem = $this->createContent(languageIso: 'en', slug: 'team');
+        $deItem = $this->createContent(languageIso: 'de', slug: 'mannschaft', i18nParent: $enItem);
+        $frItem = $this->createContent(languageIso: 'fr', slug: 'equipe', i18nParent: $enItem);
+
+        $this->postJson(route('mgmt.contents.move', [
+            'space' => $this->space->id,
+            'content' => $enItem->id,
+        ]), ['parent_id' => $enParent->id])->assertOk();
+
+        $this->assertSame($enParent->id, $enItem->fresh()->parent_id);
+        $this->assertSame($deParent->id, $deItem->fresh()->parent_id);
+        $this->assertSame('/ueber-uns/mannschaft', $deItem->fresh()->full_slug);
+        $this->assertSame($enParent->id, $frItem->fresh()->parent_id);
+    }
+
     private function createContent(
         string $languageIso,
         string $slug,

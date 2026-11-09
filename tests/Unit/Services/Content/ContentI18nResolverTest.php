@@ -304,6 +304,34 @@ class ContentI18nResolverTest extends TestCase
         ], $resolved->effectiveContent['body']);
     }
 
+    #[Test]
+    public function overlay_resolution_never_gives_a_nested_item_another_items_translation(): void
+    {
+        $this->createNestedBlock('teaser', [
+            'title' => ['type' => 'text', 'name' => 'Title', 'translatable' => true],
+        ]);
+        $this->block->update([
+            'schema' => ['body' => ['type' => 'blocks', 'name' => 'Body']],
+            'editor' => [['header' => 'General', 'items' => ['body']]],
+        ]);
+
+        $canonical = $this->createPublishedContent('en', 'home', ['body' => [
+            ['id' => 'item-a', 'block' => 'teaser', 'title' => 'One'],
+            ['id' => 'item-b', 'block' => 'teaser', 'title' => 'Two'],
+        ]]);
+        // Only the second item is translated, and it sits at index 0.
+        $this->createPublishedContent('de', 'start', ['body' => [
+            ['id' => 'item-b', 'block' => 'teaser', 'title' => 'Zwei'],
+        ]], $canonical);
+
+        $resolved = app(ContentI18nResolver::class)->resolve($this->space, $canonical, 'de', 'published');
+
+        $this->assertSame([
+            ['id' => 'item-a', 'block' => 'teaser', 'title' => 'One'],
+            ['id' => 'item-b', 'block' => 'teaser', 'title' => 'Zwei'],
+        ], $resolved->effectiveContent['body']);
+    }
+
     private function createNestedBlock(string $slug, array $schema): void
     {
         Block::query()->create([

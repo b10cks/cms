@@ -73,4 +73,10 @@ if [ "${B10CKS_AUTO_SETUP:-false}" = "true" ]; then
     fi
 fi
 
+# A command (an ECS run-task override, `docker run … php artisan …`) runs
+# instead of the server, so one-off maintenance needs no task definition.
+if [ "$#" -gt 0 ]; then
+    exec "$@"
+fi
+
 exec /usr/bin/supervisord -c "${B10CKS_SUPERVISORD_CONF:-/etc/supervisord.conf}" -n

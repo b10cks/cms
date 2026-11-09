@@ -150,28 +150,19 @@ class ContentTreeOperationService
                     continue;
                 }
 
-                $translatedParent = $targetParent ? $parentFamily->get($languageIso) : null;
-                if ($targetParent && ! $translatedParent) {
-                    $warnings[] = $this->makeWarning(
-                        'missing-parent-translation',
-                        $languageIso,
-                        null,
-                        'Skipped a translated move because the destination parent does not exist in that language.',
-                    );
-
-                    continue;
-                }
+                // Under the destination's translation, or under the destination
+                // itself while it has none (ContentI18nService::parentForLanguage()).
+                $translatedParent = $targetParent ? ($parentFamily->get($languageIso) ?? $targetParent) : null;
 
                 $translatedAfter = $after ? $afterFamily->get($languageIso) : null;
-                if ($after && ! $translatedAfter) {
+                if ($after && $translatedAfter?->parent_id !== $translatedParent?->id) {
+                    $translatedAfter = null;
                     $warnings[] = $this->makeWarning(
                         'missing-after-translation',
                         $languageIso,
                         null,
-                        'Skipped a translated move because the sibling anchor does not exist in that language.',
+                        'Placed the translations last because the sibling anchor has no translation beside them.',
                     );
-
-                    continue;
                 }
 
                 $this->ensureAfterTargetIsCompatible($translatedItems, $translatedParent?->id, $translatedAfter);
