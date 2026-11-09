@@ -3,6 +3,23 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.11.9-0e7e8ec6] — 2026-11-9
+
+- 📝 Record the asset reference boundary and the production repair commands
+- ✅ Cover asset, link and reference values on paste and duplicate
+- 🐛 Store every asset reference under the id of its asset
+- ✨ Offer a reload when the server runs a newer release than the tab
+- 🔨 Rewrite foreign asset ids in stored content on reindex
+- 🐛 Remap pasted asset references during space migration
+- 📝 Record the asset reference fix and the reindex it needs
+- 🐛 Resolve asset references through their full_path when the id is foreign
+- 📝 Record the i18n follow-ups and the open repair run
+- 🐛 Move an entry's translations with it through the move endpoint
+- 🐛 Move translations along even when the destination has no translation
+- 🐛 Match overlay nested items by id, by position only without one
+- 🔧 Run a given command instead of the server in the container entrypoint
+- ✨ Deliver each entry's canonical id
+
 ## [v2026.11.9-3f39b47b] — 2026-11-9
 
 - 📝 Mark the overlay structure PR merged and the tree repair as next
