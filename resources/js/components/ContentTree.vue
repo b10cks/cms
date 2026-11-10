@@ -20,6 +20,7 @@ import Icon from '~/components/Icon.vue'
 import NuxtImg from '~/components/NuxtImg.vue'
 import SpaceBadge from '~/components/space/SpaceBadge.vue'
 import { AvatarList } from '~/components/ui/avatar'
+import { Badge } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
 import {
   DropdownMenu,
@@ -40,6 +41,7 @@ import { useHoverPrefetch } from '~/composables/useHoverPrefetch'
 import { queryKeys } from '~/composables/useQueryClient'
 import { normalizeLanguageIso } from '~/lib/content-i18n'
 import { fuzzyMatch, prepareFuzzyQuery, prepareFuzzyTarget } from '~/lib/fuzzy-match'
+import { languageName } from '~/lib/languageNames'
 import { useMountOnFirstOpen } from '~/lib/mountOnFirstOpen'
 import { buildPreviewUrl } from '~/lib/preview-url'
 import { isEditableTarget } from '~/lib/shortcuts'
@@ -87,7 +89,7 @@ const props = defineProps<{
 
 const route = useRoute()
 const router = useRouter()
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const queryClient = useQueryClient()
 const { useAccessControl } = useAuthorization()
 const { alert } = useAlertDialog()
@@ -755,6 +757,13 @@ const toggleItemSelection = (id: string) => {
   selectedItemId.value = id
 }
 
+/** Rows shown in a language other than the space default: entries made in that language. */
+const isOtherLanguage = (item: FlatContentMenuItem) =>
+  !!item.lang && item.lang !== selectedSpace.value?.settings.default_language
+
+const languageLabel = (languageIso: string) =>
+  languageName(languageIso, selectedSpace.value?.settings.languages, locale.value)
+
 const resolveLocaleTargetId = (item: FlatContentMenuItem) => {
   const currentLanguage =
     typeof route.query.lang === 'string' ? normalizeLanguageIso(route.query.lang) : null
@@ -820,6 +829,7 @@ const handleCreateSubmit = async (payload: CreateContentPayload) => {
       block_id: payload.block_id,
       name: payload.name,
       slug: payload.slug,
+      language_iso: payload.language_iso,
       content: payload.content,
       settings: payload.settings,
     },
@@ -3030,17 +3040,36 @@ defineExpose({ initCreate })
               :style="{ color: item.value.color }"
             />
 
-            <RenamableTitle
-              :ref="setTitleRef(item.value.id)"
-              :name="item.value.name"
-              :highlight="searchHighlightMap.get(item.value.id)"
-              :disabled="!canManageContent"
-              class="w-full min-w-6 truncate text-left"
-              :save="(name) => renameContent(name, item.value.id)"
-              @update="handleEditCancel"
-              @edit-start="handleEditStart(item.value.id)"
-              @cancel="handleEditCancel"
-            />
+            <span class="flex w-full min-w-6 items-center gap-2">
+              <RenamableTitle
+                :ref="setTitleRef(item.value.id)"
+                :name="item.value.name"
+                :highlight="searchHighlightMap.get(item.value.id)"
+                :disabled="!canManageContent"
+                :class="[
+                  'min-w-6 truncate text-left',
+                  !isOtherLanguage(item.value) && 'w-full',
+                ]"
+                :save="(name) => renameContent(name, item.value.id)"
+                @update="handleEditCancel"
+                @edit-start="handleEditStart(item.value.id)"
+                @cancel="handleEditCancel"
+              />
+              <SimpleTooltip
+                v-if="isOtherLanguage(item.value) && currentlyEditingId !== item.value.id"
+                :tooltip="
+                  $t('labels.contentTree.languageOnly', { language: languageLabel(item.value.lang) })
+                "
+              >
+                <Badge
+                  type="outline"
+                  size="2xs"
+                  class="shrink-0 !bg-transparent !text-muted"
+                >
+                  {{ item.value.lang }}
+                </Badge>
+              </SimpleTooltip>
+            </span>
 
             <div class="ml-auto pl-3 flex items-center gap-2">
               <AvatarList

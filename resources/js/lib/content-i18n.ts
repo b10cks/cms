@@ -21,13 +21,27 @@ export function normalizeLanguageIso(languageIso: string | null | undefined): st
   return normalized.length > 0 ? normalized : undefined
 }
 
+/**
+ * The language an entry opens in: the space default, unless the entry has no
+ * version there because it was created in another language. Then that one.
+ */
 export function getContentDefaultLanguage(
   defaultLanguage: string | null | undefined,
   languageVersions: ContentLanguageVersion[] | null | undefined,
   fallbackLanguage: string | null | undefined
 ): string {
+  const spaceDefault = normalizeLanguageIso(defaultLanguage)
+  const hasNoDefaultVersion = languageVersions?.some(
+    (version) => version.language_iso === spaceDefault && version.exists === false
+  )
+  const canonicalLanguage = languageVersions?.find((version) => version.is_canonical)?.language_iso
+
+  if (hasNoDefaultVersion && canonicalLanguage) {
+    return canonicalLanguage
+  }
+
   return (
-    normalizeLanguageIso(defaultLanguage) ||
+    spaceDefault ||
     languageVersions?.find((version) => version.is_default)?.language_iso ||
     normalizeLanguageIso(fallbackLanguage) ||
     'en'

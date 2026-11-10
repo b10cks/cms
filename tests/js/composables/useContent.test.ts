@@ -55,6 +55,7 @@ const menuItem = (overrides: Partial<FlatContentMenuItem> = {}): FlatContentMenu
   name: 'Home',
   slug: 'home',
   block_id: 'b1',
+  lang: 'en',
   position: 0,
   type: 'root',
   color: null,

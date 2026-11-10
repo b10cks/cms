@@ -64,6 +64,7 @@ const languageVersion = (languageIso: string, isDefault = false): ContentLanguag
   exists: true,
   content_id: `content-${languageIso}`,
   is_default: isDefault,
+  is_canonical: isDefault,
   is_current: false,
   status: 'draft',
   published_at: null,

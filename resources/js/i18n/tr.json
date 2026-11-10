@@ -945,6 +945,8 @@
         }
       },
       "localization": {
+        "noVersion": "Sürüm yok",
+        "onlyLanguage": "Bu içerik yalnızca {language} dilinde var, bu yüzden diğer diller onu göstermez.",
         "pageTitle": "Yerelleştirme",
         "label": "Yerelleştirme",
         "language": "Dil",
@@ -967,6 +969,7 @@
         }
       },
       "createContent": "Yeni İçerik Oluştur",
+      "createContentIn": "Yeni içerik oluştur, dil:",
       "create": {
         "selectContentType": "İçerik türünü seç",
         "loadingRestrictions": "Alt içerik kısıtlamaları yükleniyor...",
@@ -975,6 +978,7 @@
         "slugFromPattern": "Bu içerik türünün kalıbından oluşturuldu: {pattern}",
         "slugAuto": "Otomatik olarak oluşturuldu — değiştirmek için kendinkini yazın.",
         "slugManual": "Özel bağlantı adresi.",
+        "languageOnly": "Yalnızca {language}. Diğer dillerde sürümü olmaz.",
         "slugReset": "Otomatik bağlantı adresini kullan",
         "slugPending": "Girdiyi oluşturduğunuzda üretilir"
       },
@@ -1167,6 +1171,7 @@
       }
     },
     "contentTree": {
+      "languageOnly": "{language} dilinde oluşturuldu, varsayılan dilde sürümü yok",
       "label": "İçerik ağacı",
       "actions": {
         "view": "Görüntüle",

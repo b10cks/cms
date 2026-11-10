@@ -62,6 +62,16 @@ describe('getContentDefaultLanguage', () => {
     expect(getContentDefaultLanguage(null, [], 'IT')).toBe('it')
     expect(getContentDefaultLanguage(null, null, null)).toBe('en')
   })
+
+  it('opens an entry created in another language in that language', () => {
+    const versions = [
+      version('en', { is_default: true, exists: false }),
+      version('de', { exists: true, is_canonical: true }),
+      version('fr', { exists: true }),
+    ]
+
+    expect(getContentDefaultLanguage('en', versions, 'fr')).toBe('de')
+  })
 })
 
 describe('resolveContentLanguage', () => {

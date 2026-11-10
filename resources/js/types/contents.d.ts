@@ -61,6 +61,8 @@ export interface ContentLanguageVersion {
   exists: boolean
   content_id: string | null
   is_default: boolean
+  /** The version the entry was created in, usually the default language. */
+  is_canonical: boolean
   is_current: boolean
   status: 'missing' | 'draft' | 'published' | 'changed'
   published_at: string | null
@@ -140,6 +142,8 @@ export interface ContentTreeCreateOperation {
   name: string
   /** Omitted when the block composes its slug from a pattern. */
   slug?: string
+  /** Defaults to the space's default language. */
+  language_iso?: string
   content?: Record<string, unknown>
   settings?: Partial<ContentSettings>
 }

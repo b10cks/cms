@@ -945,6 +945,8 @@
         }
       },
       "localization": {
+        "noVersion": "Aucune version",
+        "onlyLanguage": "Cette entrée existe uniquement en {language}, les autres langues ne l'affichent pas.",
         "pageTitle": "Localisation",
         "label": "Localisation",
         "language": "Langue",
@@ -967,6 +969,7 @@
         }
       },
       "createContent": "Créer un nouveau contenu",
+      "createContentIn": "Créer un contenu en",
       "create": {
         "selectContentType": "Sélectionner le type de contenu",
         "loadingRestrictions": "Chargement des restrictions de contenu enfant...",
@@ -975,6 +978,7 @@
         "slugFromPattern": "Construit à partir du modèle de ce type de contenu : {pattern}",
         "slugAuto": "Généré automatiquement — saisissez le vôtre pour remplacer.",
         "slugManual": "Slug personnalisé.",
+        "languageOnly": "Uniquement en {language}. Aucune version dans les autres langues.",
         "slugReset": "Utiliser le slug automatique",
         "slugPending": "Généré lors de la création de l'entrée"
       },
@@ -1167,6 +1171,7 @@
       }
     },
     "contentTree": {
+      "languageOnly": "Créé en {language}, sans version dans la langue par défaut",
       "label": "Arborescence du contenu",
       "actions": {
         "view": "Afficher",
