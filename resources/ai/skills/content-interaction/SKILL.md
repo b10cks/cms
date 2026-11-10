@@ -3,7 +3,7 @@ name: content-interaction
 description: Edits the current entry's fields from a request, returning the complete updated field values as JSON.
 b10cks:
   surfaces: [canvas]
-  tools: [get_block_list, get_block_schemas, search_assets, get_mentioned_content, get_entry, search_knowledge, read_knowledge, lookup_glossary, ask_questions]
+  tools: [get_block_list, get_block_schemas, search_assets, get_mentioned_content, get_entry, search_knowledge, read_knowledge, ask_questions]
   output: json
 ---
 

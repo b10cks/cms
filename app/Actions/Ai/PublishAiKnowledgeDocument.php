@@ -11,7 +11,8 @@ use Illuminate\Support\Facades\DB;
 
 /**
  * Freezes a document's draft into a revision. Reference documents are chunked
- * by heading for retrieval. Runs keep the revision they started with.
+ * by heading for retrieval; a style guide over the limit is refused. Runs keep
+ * the revision they started with.
  */
 class PublishAiKnowledgeDocument
 {
@@ -27,6 +28,8 @@ class PublishAiKnowledgeDocument
             if ($current && $current->hash === $hash) {
                 return $current;
             }
+
+            $document->ensureDraftFits();
 
             $revision = $document->revisions()->create([
                 'revision' => (int) $document->revisions()->max('revision') + 1,

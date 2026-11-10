@@ -10,10 +10,10 @@ use Tests\TestCase;
 class OperationsMirrorTest extends TestCase
 {
     /** The CMS is ahead of the SDK here until @b10cks/mcp-server gets the content operations lifecycle and translation memory. */
-    private const NOT_IN_THE_SDK_YET = '/^ai\.(operations|assets|translationMemory)\.|^ai\.(glossaries|teamGlossaries)\.(\w*ConceptRows?|conceptRows|checkText)$/';
+    private const NOT_IN_THE_SDK_YET = '/^ai\.(operations|assets|translationMemory)\./';
 
-    /** Concept rows replace these here. The published SDK keeps them until its next release. */
-    private const ONLY_IN_THE_SDK = '/^ai\.(glossaries|teamGlossaries)\.(terms|createTerm|updateTerm|deleteTerm)$/';
+    /** The CMS dropped the glossary; the SDK still has to drop its glossary operations and `lookup_glossary`. */
+    private const ONLY_IN_THE_SDK = '/^ai\.(glossaries|teamGlossaries)\.|^lookup_glossary$/';
 
     #[Test]
     public function the_operation_registry_mirrors_the_sdk_mcp_server(): void

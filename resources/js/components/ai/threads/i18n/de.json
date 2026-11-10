@@ -1,16 +1,7 @@
 {
   "provenance": {
     "title": "Verwendetes Wissen",
-    "writtenUnder": "Geschrieben mit Wissensstand {id} | Geschrieben mit Wissensstand {id}, mit {count} Begriff | Geschrieben mit Wissensstand {id}, mit {count} Begriffen"
-  },
-  "overrides": {
-    "intro": "Korrigiere den Text, oder sag, warum das jeweils so bleiben soll.",
-    "placeholder": "Warum diese Formulierung bleibt",
-    "missing": "Schreib einen Grund, oder korrigiere den Text.",
-    "ofProposal": "Im vorgeschlagenen Text gefunden. Deine Bearbeitung wird eigens geprüft.",
-    "groupHeld": "Eine bearbeitete Änderung braucht zuerst eine Korrektur oder einen Grund. Sonst wurde nichts übernommen.",
-    "keptLabel": "Bewusst beibehaltene Befunde",
-    "kept": "Beibehalten: {finding} Grund:"
+    "writtenUnder": "Geschrieben mit Wissensstand {id}"
   },
   "evidence": {
     "image": "Basiert auf dem Bild, das beim Modell angekommen ist.",

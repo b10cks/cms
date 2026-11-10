@@ -10,10 +10,9 @@ import type {
 import { toastError } from '~/lib/toast-error'
 
 /**
- * Queries and mutations for the skills, knowledge documents and glossaries of
- * a space or team. Document and glossary lists include the team layers above
- * the owner, which are read-only here. Every mutation refreshes the owner's AI
- * queries.
+ * Queries and mutations for the skills and knowledge documents of a space or
+ * team. The document list includes the team layers above the owner, which are
+ * read-only here. Every mutation refreshes the owner's AI queries.
  */
 export function useAiKnowledge(owner: MaybeRefOrGetter<AiOwner>) {
   const { t } = useI18n()
@@ -65,18 +64,11 @@ export function useAiKnowledge(owner: MaybeRefOrGetter<AiOwner>) {
       refetchInterval: (query) => (query.state.data?.extraction_status === 'pending' ? 3000 : false),
     })
 
-  const useGlossariesQuery = () =>
-    useQuery({
-      queryKey: computed(() => keys.value.glossaries()),
-      queryFn: async () => (await resource().glossaries(true)).data,
-    })
-
   return {
     useSkillsQuery,
     useSkillQuery,
     useDocumentsQuery,
     useDocumentQuery,
-    useGlossariesQuery,
     useCreateSkillMutation: () =>
       mutation((payload: AiSkillPayload) => resource().createSkill(payload), 'composables.aiKnowledge.saved', 'composables.aiKnowledge.saveError'),
     useUpdateSkillMutation: () =>
@@ -114,17 +106,5 @@ export function useAiKnowledge(owner: MaybeRefOrGetter<AiOwner>) {
       ),
     useDeleteDocumentMutation: () =>
       mutation((id: string) => resource().deleteDocument(id), 'composables.aiKnowledge.deleted', 'composables.aiKnowledge.deleteError'),
-    useCreateGlossaryMutation: () =>
-      mutation((name: string) => resource().createGlossary({ name }), 'composables.aiKnowledge.saved', 'composables.aiKnowledge.saveError'),
-    useUpdateGlossaryMutation: () =>
-      mutation(
-        ({ id, payload }: { id: string; payload: { name?: string; enabled?: boolean } }) =>
-          resource().updateGlossary(id, payload),
-        null,
-        'composables.aiKnowledge.saveError'
-      ),
-    useDeleteGlossaryMutation: () =>
-      mutation((id: string) => resource().deleteGlossary(id), 'composables.aiKnowledge.deleted', 'composables.aiKnowledge.deleteError'),
-    exportUrl: (glossaryId: string, format: 'csv' | 'xlsx' | 'tbx') => resource().exportUrl(glossaryId, format),
   }
 }

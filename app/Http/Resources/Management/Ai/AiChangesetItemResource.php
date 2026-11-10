@@ -3,7 +3,6 @@
 namespace App\Http\Resources\Management\Ai;
 
 use App\Models\Space\AiChangesetItem;
-use App\Services\Ai\Knowledge\GlossaryChecker;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -19,7 +18,6 @@ use Illuminate\Http\Resources\Json\JsonResource;
  * @resourceProperty final shape=any The accepted value, when an editor changed it.
  * @resourceProperty current shape=any The value now.
  * @resourceProperty status shape=enum:pending|accepted|rejected|conflict
- * @resourceProperty glossary_findings shape=@AiGlossaryFinding[] Deterministic findings. On content they are stored for whoever publishes. On a proposal, accepting the text needs an override with a reason for each violation. Hints about missing required wording go to the agent only and are never listed, including ones stored before that rule.
  * @resourceProperty flags shape=@AiReviewFlag[] Reasons this item needs an individual look. Never part of a group accept.
  * @resourceProperty operation_item_id shape=string?
  * @resourceProperty translation_units shape=@AiChangesetTranslationUnit[]
@@ -50,8 +48,6 @@ class AiChangesetItemResource extends JsonResource
             'final' => $this->final,
             'current' => $this->current,
             'status' => $this->status->value,
-            // `id` names a finding in an accept's `overrides`.
-            'glossary_findings' => array_map(fn (array $finding) => ['id' => GlossaryChecker::findingId($finding), ...$finding], $this->resource->standingFindings()),
             // Reasons this item needs an individual look; never part of a group accept.
             'flags' => $this->flags ?? [],
             'operation_item_id' => $this->operation_item_id,

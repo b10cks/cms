@@ -27,17 +27,16 @@ const mountNotice = async (contentIds: string[]) => {
 }
 
 describe('ContentFlagsNotice', () => {
-  it('names the wording and the field, links to the field and says publishing can go on', async () => {
-    contentFlags.mockResolvedValue({ data: { one: { conflicts: 0, flagged: 1 } } })
+  it('names the conflict and the field, links to the field and says publishing can go on', async () => {
+    contentFlags.mockResolvedValue({ data: { one: { conflicts: 1 } } })
     contentFlagDetails.mockResolvedValue({
-      data: [{ content_id: 'one', name: 'Home', language_iso: 'de', flags: [{ kind: 'flagged', path: 'body.01b.title', field: 'Title', wording: 'klimaneutral', replacement: 'CO2-arm' }] }],
+      data: [{ content_id: 'one', name: 'Home', language_iso: 'de', flags: [{ kind: 'conflict', path: 'body.01b.title', field: 'Title', thread_id: null }] }],
     })
 
     const wrapper = await mountNotice(['one'])
 
     const row = wrapper.get('[data-content-flag-row]')
-    expect(row.text()).toContain('Flagged: "klimaneutral" in Title')
-    expect(row.text()).toContain('Use "CO2-arm" instead.')
+    expect(row.text()).toContain("A person's change in Title waits for a decision")
     expect(row.get('a').attributes('href')).toBe('/space/content/one?field=body.01b.title')
     expect(wrapper.text()).toContain('You can still publish.')
     expect(contentFlagDetails).toHaveBeenCalledWith(['one'])
@@ -45,7 +44,7 @@ describe('ContentFlagsNotice', () => {
 
   it('shows nothing and asks for nothing when the entries have no flags', async () => {
     contentFlagDetails.mockClear()
-    contentFlags.mockResolvedValue({ data: { other: { conflicts: 1, flagged: 0 } } })
+    contentFlags.mockResolvedValue({ data: { other: { conflicts: 1 } } })
 
     const wrapper = await mountNotice(['one'])
 

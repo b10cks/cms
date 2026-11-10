@@ -26,7 +26,6 @@ use App\Services\Ai\Tools\GetEntryTool;
 use App\Services\Ai\Tools\GetMentionedContentTool;
 use App\Services\Ai\Tools\GetTranslationTaskTool;
 use App\Services\Ai\Tools\InspectAssetsTool;
-use App\Services\Ai\Tools\LookupGlossaryTool;
 use App\Services\Ai\Tools\ProposeAssetChangesTool;
 use App\Services\Ai\Tools\ProposeAssetStructureTool;
 use App\Services\Ai\Tools\ProposeCreateTool;
@@ -63,7 +62,6 @@ class RunToolFactory
         'read_skill_file',
         'search_knowledge',
         'read_knowledge',
-        'lookup_glossary',
         AskQuestionsTool::NAME,
         'find_entries',
         ProposeUpdateTool::NAME,
@@ -76,6 +74,9 @@ class RunToolFactory
         ProposeAssetStructureTool::NAME,
         ProposeAssetChangesTool::NAME,
     ];
+
+    /** Offered only when the run has reference documents in scope. */
+    public const KNOWLEDGE_TOOLS = ['search_knowledge', 'read_knowledge'];
 
     public function __construct(
         private readonly AuthorizationService $auth,
@@ -138,13 +139,12 @@ class RunToolFactory
             'get_block_schemas' => new AuthorizedTool((new GetBlockSchemasTool)->setSpace($space), $can('content.view')),
             'search_assets' => new AuthorizedTool((new SearchAssetsTool)->setSpace($space), $can('assets.view')),
             'get_mentioned_content' => new AuthorizedTool((new GetMentionedContentTool)->setSpace($space), $can('content.view')),
-            'get_entry' => new GetEntryTool($this->targets, $this->auth, $space, $actor, fn () => $this->knowledge->policy($space, $run)),
+            'get_entry' => new GetEntryTool($this->targets, $this->auth, $space, $actor),
             'search_content' => new AuthorizedTool(new SearchContentTool($this->contentSearch, $space), $can('content.view')),
             'read_skill' => new ReadSkillTool($loadSkill),
             'read_skill_file' => new ReadSkillFileTool($loadSkill),
             'search_knowledge' => new SearchKnowledgeTool($this->search, $knowledge, $sources),
             'read_knowledge' => new ReadKnowledgeTool($knowledge, $sources),
-            'lookup_glossary' => new LookupGlossaryTool(fn () => $this->knowledge->policy($space, $run)),
             AskQuestionsTool::NAME => new AskQuestionsTool,
             'find_entries' => new FindEntriesTool($this->scope, $this->targets, $this->auth, $space, $actor),
             GetAssetLibraryTool::NAME => app(GetAssetLibraryTool::class, ['run' => $run ?? throw new LogicException('Asset tools need a run.'), 'space' => $space, 'actor' => $actor]),

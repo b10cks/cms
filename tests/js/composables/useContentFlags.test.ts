@@ -24,7 +24,7 @@ describe('useContentFlags', () => {
     )
     await flushPromises()
 
-    await expect(flags.freshTotals(['a'])).resolves.toEqual({ conflicts: 0, flagged: 0, entries: 0 })
+    await expect(flags.freshTotals(['a'])).resolves.toEqual({ conflicts: 0, entries: 0 })
     wrapper.unmount()
   })
 })

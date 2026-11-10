@@ -16,7 +16,6 @@ use App\Services\Ai\Changesets\ChangeTargets;
 use App\Services\Ai\Changesets\FieldPath;
 use App\Services\Ai\Contracts\AiToolInterface;
 use App\Services\Ai\Contracts\ProposesChanges;
-use App\Services\Ai\Learning\EditLearning;
 use App\Services\Ai\Run\ToolError;
 use App\Services\Auth\AuthorizationService;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -37,18 +36,8 @@ abstract class ProposalTool implements AiToolInterface, ProposesChanges
     /** What an agent reads when its change was not written, in every content tool's result. */
     protected const CONFLICT_NOTE = 'A person changed these fields after you read them. They stay as the person left them and are open for that person, so do not write them again, and say so in your summary. Everything else was handled as usual.';
 
-    /** What an agent reads when its text breaks the glossary, in every write tool's result. */
-    protected const FINDINGS_NOTE = 'The change is in place. Fix the wording for the same fields with one more call, once. If it still fits afterwards, leave it: it stays flagged for whoever publishes.';
-
-    protected const PROPOSAL_FINDINGS_NOTE = 'The proposal is open and flagged, and a person has to give a reason to accept it as it is. Fix the wording for the same fields with one more call, once.';
-
-    protected const HINTS_NOTE = 'Hints for you only, never shown to anyone: the glossary lists wording that is not in your text. An inflected form of it is fine, so change nothing unless the wording is really missing.';
-
     /** @var list<array{changeset_id: string, item_id: string, target_type: string, target_id: string|null, path: string|null}> */
     private array $proposals = [];
-
-    /** @var array<string, list<array<string, string>>> item ID => glossary hints of this call */
-    private array $hints = [];
 
     public function __construct(
         protected readonly AiRun $run,
@@ -123,7 +112,6 @@ abstract class ProposalTool implements AiToolInterface, ProposesChanges
     protected function record(array $items): array
     {
         $created = $this->recorder->record($this->run, $items);
-        $this->hints = [...$this->hints, ...$this->recorder->takeHints()];
 
         foreach ($created as $item) {
             $this->proposals[] = [
@@ -160,11 +148,9 @@ abstract class ProposalTool implements AiToolInterface, ProposesChanges
                 app(AcceptAiChangesetItems::class)->handle($changeset, $this->space, $this->actor, array_map(fn (AiChangesetItem $item) => $item->id, $items));
 
                 $fresh = AiChangesetItem::query()->whereKey(array_map(fn (AiChangesetItem $item) => $item->id, $items))->orderBy('id')->get();
-                $written = $fresh->where('status', AiChangesetItemStatus::Accepted)->values();
-                app(EditLearning::class)->supersede($written);
 
                 return [
-                    'written' => $written,
+                    'written' => $fresh->where('status', AiChangesetItemStatus::Accepted)->values(),
                     'conflicts' => $fresh->where('status', AiChangesetItemStatus::Conflict)->values(),
                     'version_id' => Content::query()->whereKey($fresh->first()?->target_id)->value('current_version_id'),
                 ];
@@ -209,45 +195,6 @@ abstract class ProposalTool implements AiToolInterface, ProposesChanges
     }
 
     /**
-     * Hints a tool found after recording, for the agent's result.
-     *
-     * @param  array<string, list<array<string, string>>>  $hints  item ID => hints
-     */
-    protected function addHints(array $hints): void
-    {
-        $this->hints = [...$this->hints, ...$hints];
-    }
-
-    /**
-     * What the agent is told about glossary wording: the blocking findings of the items
-     * and this call's hints, with what to do about them. Empty when there is nothing.
-     *
-     * @param  iterable<AiChangesetItem>  $items
-     * @param  bool  $written  whether the items are in a draft or open proposals
-     * @return array<string, mixed>
-     */
-    protected function findingsResult(iterable $items, bool $written = true): array
-    {
-        $findings = [];
-        $hints = [];
-
-        foreach ($items as $item) {
-            array_push($findings, ...($item->glossary_findings ?? []));
-            array_push($hints, ...($this->hints[$item->id] ?? []));
-        }
-        $this->hints = [];
-
-        $findings = array_values(array_unique($findings, SORT_REGULAR));
-        $hints = array_values(array_unique($hints, SORT_REGULAR));
-
-        return [
-            ...($findings !== [] ? ['glossary_findings' => $findings] : []),
-            ...($hints !== [] ? ['glossary_hints' => $hints] : []),
-            ...($findings !== [] || $hints !== [] ? ['glossary_note' => trim(($findings !== [] ? ($written ? self::FINDINGS_NOTE : self::PROPOSAL_FINDINGS_NOTE).' ' : '').($hints !== [] ? self::HINTS_NOTE : ''))] : []),
-        ];
-    }
-
-    /**
      * What the result of a write tells the agent.
      *
      * @param  array{written: Collection<int, AiChangesetItem>, conflicts: Collection<int, AiChangesetItem>, version_id: string|null}  $write
@@ -262,7 +209,6 @@ abstract class ProposalTool implements AiToolInterface, ProposesChanges
         ];
 
         return [
-            ...$this->findingsResult($write['written']->concat($write['conflicts'])),
             'written' => $write['written']->count(),
             'item_ids' => $write['written']->pluck('id')->all(),
             'version_id' => $write['version_id'],

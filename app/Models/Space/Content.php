@@ -10,7 +10,6 @@ use App\Events\Space\ContentUpdated;
 use App\Jobs\Content\UpdateContentFullSlugsJob;
 use App\Models\Traits\HasPurifiedAttributes;
 use App\Models\Traits\SpaceAuditable;
-use App\Services\Ai\Changesets\ContentFlags;
 use App\Services\Automation\Enums\TriggerType;
 use App\Services\Content\ContentMenuCache;
 use App\Services\Content\LocalizedContentSlugService;
@@ -213,11 +212,6 @@ class Content extends SpaceModel
         static::saved(function (Content $content) {
             $space = request('space') ?? SpaceContext::current();
 
-            if ($content->wasChanged(['current_version_id', 'published_version_id'])) {
-                // Never lets a flag's bookkeeping fail someone's save.
-                rescue(fn () => app(ContentFlags::class)->versionMoved($content));
-            }
-
             if ($content->isDirty('slug') || $content->isDirty('parent_id') || $content->isDirty('language_iso')) {
                 UpdateContentFullSlugsJob::dispatch($content, $space)->afterCommit();
             }
@@ -230,8 +224,6 @@ class Content extends SpaceModel
 
         static::softDeleted(function (Content $content) {
             $space = request('space') ?? SpaceContext::current();
-
-            rescue(fn () => app(ContentFlags::class)->deleted($content));
 
             if ($space) {
                 // Returns the entry's serial numbers to the pool when the space

@@ -37,19 +37,15 @@ export function useTranslationStatus(
   })
 }
 
-/**
- * Glossary, memory and other locales for the unit being translated, checked
- * against `text`, the unsaved draft. Unit and text are debounced together so a
- * switch of field never pairs the new unit with the old text.
- */
+/** Memory and other locales for the unit being translated, debounced so moving through fields stays cheap. */
 export function useTranslationAssist(
   spaceId: MaybeRefOrGetter<string>,
   contentId: MaybeRefOrGetter<string | null | undefined>,
   locale: MaybeRefOrGetter<string | null | undefined>,
-  target: MaybeRefOrGetter<{ unit: string; text: string } | null>
+  unit: MaybeRefOrGetter<string | null>
 ) {
   const debounced = refDebounced(
-    computed(() => toValue(target)),
+    computed(() => toValue(unit)),
     400
   )
 
@@ -59,18 +55,17 @@ export function useTranslationAssist(
       'assist',
       toValue(contentId),
       toValue(locale),
-      debounced.value?.unit,
-      debounced.value?.text,
+      debounced.value,
     ]),
     queryFn: async () => {
       const id = toValue(contentId)
       const targetLocale = toValue(locale)
-      const request = debounced.value
-      if (!id || !targetLocale || !request) throw new Error('An entry, a locale and a unit are required.')
+      const unitId = debounced.value
+      if (!id || !targetLocale || !unitId) throw new Error('An entry, a locale and a unit are required.')
 
       const response = await api
         .forSpace(toValue(spaceId))
-        .contents.translationAssist(id, { locale: targetLocale, ...request })
+        .contents.translationAssist(id, { locale: targetLocale, unit: unitId })
       return response.data
     },
     enabled: computed(() => !!toValue(contentId) && !!toValue(locale) && !!debounced.value),

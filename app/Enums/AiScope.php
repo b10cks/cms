@@ -2,7 +2,7 @@
 
 namespace App\Enums;
 
-/** Where a skill, knowledge document or glossary lives. Built-ins are the `system` layer on disk. */
+/** Where a skill or knowledge document lives. Built-ins are the `system` layer on disk. */
 enum AiScope: string
 {
     case Space = 'space';

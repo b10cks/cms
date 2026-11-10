@@ -7,7 +7,7 @@ import type { AiChangeset, AiChangesetItem, AiReviewGroup } from '~/lib/aiChange
 
 const acceptChangeset = vi.fn()
 const getOperationReview = vi.fn()
-const getOperationChanges = vi.fn().mockResolvedValue({ data: [], summary: { changed: 0, conflicts: 0, flagged: 0 }, meta: { total: 0, page: 1, per_page: 25 } })
+const getOperationChanges = vi.fn().mockResolvedValue({ data: [], summary: { changed: 0, conflicts: 0 }, meta: { total: 0, page: 1, per_page: 25 } })
 const getOperationReviewItems = vi.fn()
 const acceptOperationGroup = vi.fn()
 
@@ -19,9 +19,6 @@ vi.mock('~/api', () => ({
 }))
 
 const AiThreadChangeset = (await import('~/components/ai/threads/AiThreadChangeset.vue')).default
-
-const FINDING = { id: 'f1', type: 'forbidden_variant', term: 'Trial', expected: 'Probe', found: 'Test' } as const
-const HINT = { id: 'h1', type: 'missing_term', term: 'partner', expected: 'Partner' } as const
 
 const item = (id: string, overrides: Partial<AiChangesetItem> = {}): AiChangesetItem => ({
   id,
@@ -37,7 +34,6 @@ const item = (id: string, overrides: Partial<AiChangesetItem> = {}): AiChangeset
   final: null,
   current: null,
   status: 'pending',
-  glossary_findings: [],
   decided_at: null,
   ...overrides,
 })
@@ -55,8 +51,6 @@ const changeset = (items: AiChangesetItem[]): AiChangeset => ({
 
 const accepted = (extra: object = {}) => ({ data: {}, accepted: 1, conflicts: 0, failed: 0, blocked: 0, ...extra })
 const leftOpen = (extra: object = {}) => ({ data: {}, accepted: 0, conflicts: 0, failed: 0, blocked: 0, ...extra })
-const missingReason = (itemId: string, findingId: string, message: string) =>
-  Object.assign(new Error('The given data was invalid.'), { status: 422, data: { errors: { [`overrides.${itemId}.${findingId}`]: [message] } } })
 
 const mountWith = async (value: AiChangeset) => {
   acceptChangeset.mockReset()
@@ -95,105 +89,12 @@ describe('what a proposal rests on', () => {
 
   it('shows the policy a proposal was written under on request', async () => {
     const wrapper = await mountWith(
-      changeset([item('a', { review: { policy: { snapshot_id: 'snapshot-1', fingerprint: 'x', terms: [] } } })])
+      changeset([item('a', { review: { policy: { snapshot_id: 'snapshot-1', fingerprint: 'x' } } })])
     )
 
     expect(wrapper.find('[data-item-provenance]').exists()).toBe(false)
     await wrapper.get('[data-item="a"] [data-item-review] button[aria-expanded]').trigger('click')
     expect(wrapper.get('[data-item-provenance]').text()).toContain('snapshot')
-  })
-})
-
-describe('a stored glossary hint', () => {
-  it('is not listed, asks no reason, counts as no warning and goes out with a bulk accept', async () => {
-    const wrapper = await mountWith(changeset([item('a', { glossary_findings: [HINT] })]))
-
-    expect(wrapper.text()).not.toContain('Partner')
-    expect(wrapper.find('[data-finding-overrides]').exists()).toBe(false)
-    expect(wrapper.text()).not.toContain('glossary warning')
-
-    acceptChangeset.mockResolvedValue(accepted())
-    await clickAccept(wrapper, 'a')
-    expect(acceptChangeset).toHaveBeenCalledWith('changeset-1', expect.not.objectContaining({ overrides: expect.anything() }))
-  })
-})
-
-describe('keeping a deterministic finding', () => {
-  it('sends nothing without a written reason, then sends the reason with the decision', async () => {
-    const wrapper = await mountWith(changeset([item('a', { glossary_findings: [FINDING] })]))
-
-    await clickAccept(wrapper, 'a')
-    expect(acceptChangeset).not.toHaveBeenCalled()
-    expect(wrapper.find('[data-override-missing]').exists()).toBe(true)
-
-    await wrapper.get('[data-override-reason]').setValue('   ')
-    await clickAccept(wrapper, 'a')
-    expect(acceptChangeset).not.toHaveBeenCalled()
-
-    acceptChangeset.mockResolvedValue(accepted())
-    await wrapper.get('[data-override-reason]').setValue(' Supplier wording. ')
-    await clickAccept(wrapper, 'a')
-    expect(acceptChangeset).toHaveBeenCalledWith('changeset-1', {
-      item_ids: ['a'],
-      overwrite: false,
-      overrides: { a: [{ finding_id: 'f1', reason: 'Supplier wording.' }] },
-    })
-  })
-
-  it('collects a reason for a finding only the 422 of an edit names, without losing the edit', async () => {
-    const wrapper = await mountWith(changeset([item('a')]))
-    await startEdit(wrapper, 'a', 'Mein Text')
-
-    acceptChangeset.mockRejectedValueOnce(missingReason('a', 'new1', 'forbidden_variant: Test (expected Probe) needs a correction.'))
-    await clickAccept(wrapper, 'a')
-
-    expect(toast.error).not.toHaveBeenCalled()
-    expect(wrapper.get('[data-finding="new1"]').text()).toContain('forbidden_variant: Test')
-    expect((wrapper.get('[data-item="a"] textarea').element as HTMLTextAreaElement).value).toBe('Mein Text')
-
-    await clickAccept(wrapper, 'a')
-    expect(acceptChangeset).toHaveBeenCalledTimes(1)
-
-    acceptChangeset.mockResolvedValueOnce(accepted())
-    await wrapper.get('[data-override-reason]').setValue('Kept on purpose.')
-    await clickAccept(wrapper, 'a')
-    expect(acceptChangeset).toHaveBeenLastCalledWith('changeset-1', {
-      item_ids: ['a'],
-      overwrite: false,
-      values: { a: 'Mein Text' },
-      overrides: { a: [{ finding_id: 'new1', reason: 'Kept on purpose.' }] },
-    })
-  })
-
-  it('does not hold an edit to the findings of the text it replaced', async () => {
-    const wrapper = await mountWith(changeset([item('a', { glossary_findings: [FINDING] })]))
-    await wrapper.get('[data-override-reason]').setValue('For the proposal.')
-    await startEdit(wrapper, 'a', 'Korrigiert')
-
-    expect(wrapper.find('[data-finding-overrides]').exists()).toBe(false)
-    expect(wrapper.find('[data-findings-of-proposal]').exists()).toBe(true)
-
-    acceptChangeset.mockResolvedValue(accepted())
-    await clickAccept(wrapper, 'a')
-    expect(acceptChangeset).toHaveBeenCalledWith('changeset-1', { item_ids: ['a'], overwrite: false, values: { a: 'Korrigiert' } })
-  })
-
-  it('keeps the reason through a conflict, for the repost that overwrites', async () => {
-    const pending = item('a', { glossary_findings: [FINDING] })
-    const wrapper = await mountWith(changeset([pending]))
-    await wrapper.get('[data-override-reason]').setValue('Supplier wording.')
-
-    acceptChangeset.mockResolvedValueOnce(leftOpen({ conflicts: 1 }))
-    await clickAccept(wrapper, 'a')
-    await wrapper.setProps({ changeset: changeset([{ ...pending, status: 'conflict', current: 'Changed' }]) })
-
-    acceptChangeset.mockResolvedValueOnce(accepted())
-    await clickAccept(wrapper, 'a')
-    expect(acceptChangeset).toHaveBeenLastCalledWith('changeset-1', {
-      item_ids: ['a'],
-      overwrite: true,
-      overrides: { a: [{ finding_id: 'f1', reason: 'Supplier wording.' }] },
-    })
   })
 })
 
@@ -220,21 +121,6 @@ describe('an edit', () => {
     await clickAccept(wrapper, 'a')
     expect(acceptChangeset).toHaveBeenCalledWith('changeset-1', { item_ids: ['a'], overwrite: false })
   })
-
-  it('shows the kept reasons on an accepted edit', async () => {
-    const wrapper = await mountWith(
-      changeset([
-        item('a', {
-          status: 'accepted',
-          final: text,
-          review: { overrides: [{ finding_id: 'f1', finding: FINDING, reason: 'Supplier wording.' }] },
-        }),
-      ])
-    )
-
-    expect(wrapper.get('[data-override-kept]').text()).toContain('Supplier wording.')
-    expect(wrapper.find('[data-override-reason]').exists()).toBe(false)
-  })
 })
 
 describe('bulk acceptance', () => {
@@ -256,16 +142,16 @@ describe('bulk acceptance', () => {
   it('counts what the server leaves out as individual', async () => {
     const wrapper = await mountWith(
       changeset([
-        item('a', { glossary_findings: [FINDING] }),
+        item('a'),
         item('b', { flags: [{ code: 'invalid', message: 'Invalid.' }] }),
         item('c', { status: 'conflict', current: 'Changed' }),
-        item('d', { glossary_findings: [HINT] }),
+        item('d'),
         item('e'),
         item('f'),
       ])
     )
 
-    expect(wrapper.text()).toContain('3 changes left for you')
+    expect(wrapper.text()).toContain('2 changes left for you')
   })
 
   it('keeps an edit Accept all left open', async () => {
@@ -281,7 +167,7 @@ describe('bulk acceptance', () => {
     expect((wrapper.get('[data-item="a"] textarea').element as HTMLTextAreaElement).value).toBe('Mein Text')
   })
 
-  it('holds a group accept back while an edit in it needs a reason, so the proposal cannot replace it', async () => {
+  it('sends an edit in a group before the group accept, so the proposal cannot replace it', async () => {
     const key = 'update|content|title|text'
     const example = item('a')
     getOperationReview.mockReset().mockResolvedValue({ data: [reviewGroup(key, [example])] })
@@ -294,18 +180,11 @@ describe('bulk acceptance', () => {
     await startEdit(wrapper, 'a', 'Mein Text')
     await group.get('[role="checkbox"]').trigger('click')
 
-    acceptChangeset.mockRejectedValueOnce(missingReason('a', 'new1', 'Needs a reason.'))
-    await wrapper.get('[data-action="accept-groups"]').trigger('click')
-    await flushPromises()
-
-    expect(acceptOperationGroup).not.toHaveBeenCalled()
-    expect(toast.warning).toHaveBeenCalled()
-
     acceptChangeset.mockResolvedValueOnce(accepted())
-    await wrapper.get('[data-override-reason]').setValue('Kept on purpose.')
     await wrapper.get('[data-action="accept-groups"]').trigger('click')
     await flushPromises()
-    expect(acceptOperationGroup).toHaveBeenCalledTimes(1)
-    expect(acceptChangeset).toHaveBeenCalledTimes(2)
+
+    expect(acceptChangeset).toHaveBeenCalledWith('changeset-1', { item_ids: ['a'], overwrite: false, values: { a: 'Mein Text' } })
+    expect(acceptChangeset.mock.invocationCallOrder[0]).toBeLessThan(acceptOperationGroup.mock.invocationCallOrder[0])
   })
 })

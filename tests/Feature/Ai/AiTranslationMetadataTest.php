@@ -3,10 +3,8 @@
 namespace Tests\Feature\Ai;
 
 use App\Actions\Content\UpdateContent;
-use App\Enums\AiChangesetItemStatus;
 use App\Enums\AiOperationItemStatus;
 use App\Enums\AiOperationState;
-use App\Models\Management\AiGlossary;
 use App\Models\Management\Space;
 use App\Models\Space\AiChangesetItem;
 use App\Models\Space\AiOperation;
@@ -30,14 +28,12 @@ use Tests\Support\FakeAiDriver;
 use Tests\TestCase;
 use Tests\Traits\FakesAi;
 use Tests\Traits\SpaceTestingTrait;
-use Tests\Traits\WritesGlossaryRows;
 
 class AiTranslationMetadataTest extends TestCase
 {
     use FakesAi;
     use RefreshDatabase;
     use SpaceTestingTrait;
-    use WritesGlossaryRows;
 
     private const UNRELATED = ['canonical' => 'https://example.test/about', 'robots' => 'noindex', 'ogImage' => ['type' => 'asset', 'id' => '01k0s6v4rsjjjgkhepj496dj5e']];
 
@@ -420,29 +416,6 @@ class AiTranslationMetadataTest extends TestCase
         $this->assertSame('Über uns', $this->item($row->id, 'title')->after);
         $this->assertSame('Das Modell Comfort', $this->item($row->id, 'summary')->after);
         $this->assertEquals(['title' => 'Comfort', 'description' => 'Das Modell', 'robots' => 'index'], array_intersect_key($row->fresh()->getCurrentContent()['seo'], ['title' => 1, 'description' => 1, 'robots' => 1]));
-    }
-
-    #[Test]
-    public function generated_metadata_keeps_its_locales_and_findings_under_the_pinned_policy(): void
-    {
-        $glossary = AiGlossary::create([...AiGlossary::ownerAttributes($this->space), 'name' => 'Shop', 'enabled' => true]);
-        $this->glossaryRow($glossary, ['fr' => 'matelas'], ['note' => 'Not for trade.']);
-        $this->glossaryRow($glossary, ['fr' => ['use' => 'lit', 'avoid' => ['couchette']]]);
-        $source = $this->entry('en', ['title' => 'Mattress', 'seo' => ['title' => 'English']]);
-        $this->driver->push(
-            $this->translate($source, 'fr', ['title' => 'Le matelas'], name: 'Matelas'),
-            FakeAiDriver::toolCall(GetTranslationTaskTool::NAME, ['id' => $source->id, 'language' => 'fr']),
-            fn (Transcript $transcript) => $this->writeMetadata($source, 'fr', $this->lastResult($transcript)['draft']['version_id'], ['seo' => ['title' => 'Le matelas et la couchette']]),
-            FakeAiDriver::text('Done.'),
-        );
-
-        $operation = $this->approve(['summary' => 'x', 'locales' => ['fr'], 'include' => ['missing'], 'metadata' => ['keys' => ['title']]]);
-
-        $seo = $this->item(Content::query()->where('language_iso', 'fr')->sole()->id, 'seo');
-        $this->assertSame(AiChangesetItemStatus::Accepted, $seo->status);
-        $this->assertSame($operation->policy_snapshot_id, $seo->review['policy']['snapshot_id']);
-        $this->assertSame('fr', $seo->review['locales']['target']);
-        $this->assertSame('forbidden_variant', $seo->glossary_findings[0]['type']);
     }
 
     private function url(string $path): string

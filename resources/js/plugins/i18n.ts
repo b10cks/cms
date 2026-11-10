@@ -3,7 +3,6 @@ import type { Composer } from 'vue-i18n'
 import { createI18n } from 'vue-i18n'
 
 import en from '~/i18n/en.json'
-import enGlossaryImport from '~/i18n/modules/glossary-import/en.json'
 
 export type MessageSchema = typeof en
 
@@ -59,7 +58,7 @@ export const i18n = createI18n({
   },
   // Only the fallback ships in the entry chunk. Every other catalog is its own
   // chunk, loaded by setLocale before it switches.
-  messages: { en: { ...en, glossaryImport: enGlossaryImport } },
+  messages: { en },
 })
 
 const composer = i18n.global as unknown as Composer<{
@@ -80,11 +79,6 @@ const catalogLoaders: Record<Exclude<LocaleCode, 'en'>, () => Promise<{ default:
   es: () => import('~/i18n/es.json'),
 }
 
-// Feature modules keep their copy out of the big catalogs. Locales without one fall back to English.
-const moduleLoaders: Partial<Record<LocaleCode, () => Promise<{ default: Record<string, unknown> }>>> = {
-  de: () => import('~/i18n/modules/glossary-import/de.json'),
-}
-
 const pendingCatalogs = new Map<LocaleCode, Promise<void>>([['en', Promise.resolve()]])
 const isCatalogReady = (locale: LocaleCode) => composer.availableLocales.includes(locale)
 
@@ -93,13 +87,9 @@ export function loadLocaleMessages(locale: LocaleCode): Promise<void> {
   let pending = pendingCatalogs.get(locale)
 
   if (!pending) {
-    pending = Promise.all([
-      catalogLoaders[locale as Exclude<LocaleCode, 'en'>](),
-      moduleLoaders[locale]?.(),
-    ]).then(
-      ([{ default: messages }, glossaryImport]) => {
+    pending = catalogLoaders[locale as Exclude<LocaleCode, 'en'>]().then(
+      ({ default: messages }) => {
         composer.setLocaleMessage(locale, messages)
-        if (glossaryImport) composer.mergeLocaleMessage(locale, { glossaryImport: glossaryImport.default })
       },
       (error: unknown) => {
         // Forget the failure so a later switch can retry the chunk.

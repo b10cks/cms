@@ -1,8 +1,5 @@
 <?php
 
-use App\Services\Ai\Knowledge\Concepts\GlossaryLocales;
-use App\Services\Ai\Knowledge\GlossaryMatcher;
-use App\Services\Ai\Knowledge\LegacyGlossaryRows;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
@@ -17,18 +14,25 @@ use Illuminate\Support\Str;
  * Nothing is thrown away: the old table stays as `ai_glossary_terms_legacy`, unread, so
  * a conversion can be compared and undone. A later release can drop it. A term keeps the
  * ID of the old row that held its language, and a language that only a translation named
- * gets a new one. `case_sensitive` was a setting apart from Keep exact and stays one on
- * the concept where the two differ.
+ * gets a new one. `2026_11_10_110000` drops the old table and `case_sensitive` again:
+ * case follows Keep exact.
  *
  * MySQL commits every schema change on its own, so each one is checked by itself, and
  * running this again after a failure picks up where it stopped. Language codes the new
  * table cannot hold stop this before anything changes, with the rows to fix.
+ *
+ * The glossary code this used is gone since `2026_11_10_120000` dropped the feature, so
+ * the reading of old rows lives here, as it was then.
  */
 return new class extends Migration
 {
     private const CHUNK = 500;
 
     private const LISTED_PROBLEMS = 50;
+
+    private const CODE = '/^[A-Za-z]{2,3}([-_][A-Za-z0-9]{2,8})*$/';
+
+    private const MAX_CODE_LENGTH = 20;
 
     public function up(): void
     {
@@ -115,7 +119,7 @@ return new class extends Migration
 
             foreach ($codes as $field => $values) {
                 foreach ($values as $code) {
-                    if (! GlossaryLocales::isValidCode(GlossaryMatcher::normalizeLocale($code))) {
+                    if (! self::isValidCode(self::locale($code))) {
                         $count++;
 
                         if (\count($problems) < self::LISTED_PROBLEMS) {
@@ -157,8 +161,8 @@ return new class extends Migration
             $newConcepts = [];
             $terms = [];
 
-            foreach (LegacyGlossaryRows::concepts($rows) as $concept) {
-                $values = ['note' => $concept['note'], 'keep_exact' => $concept['keep_exact'], 'case_sensitive' => $concept['case_sensitive']];
+            foreach (self::legacyConcepts($rows) as $concept) {
+                $values = ['note' => $concept['note'], 'keep_exact' => $concept['keep_exact']];
 
                 if (isset($held[$concept['id']])) {
                     DB::table('ai_glossary_concepts')->where('id', $concept['id'])->update($values);
@@ -245,5 +249,106 @@ return new class extends Migration
         foreach (Schema::getForeignKeys($table) as $foreignKey) {
             Schema::table($table, fn (Blueprint $blueprint) => $blueprint->dropForeign($foreignKey['name'] ?: $foreignKey['columns']));
         }
+    }
+
+    private static function locale(string $code): string
+    {
+        return strtolower(str_replace('_', '-', trim($code)));
+    }
+
+    private static function isValidCode(string $code): bool
+    {
+        return \strlen($code) <= self::MAX_CODE_LENGTH && preg_match(self::CODE, $code) === 1;
+    }
+
+    /**
+     * Old rows, one per language with a `term` and a `translations` map, as concepts.
+     * A row's own language wins over a translation another row held, and a translation
+     * that disagrees stays as Also written as. Avoid wording of a row with no concept
+     * counts in every output language. A ban's term is its first Avoid entry.
+     *
+     * @param  list<array<string, mixed>>  $rows
+     * @return list<array{id: string|null, keep_exact: bool, note: string|null, term_ids: array<string, string>, languages: array<string, array{use: string|null, avoid: list<string>, also: list<string>}>}>
+     */
+    private static function legacyConcepts(array $rows): array
+    {
+        $groups = [];
+
+        foreach ($rows as $index => $row) {
+            $groups[$row['concept_id'] ?? 'row:'.($row['id'] ?? $index)][] = $row;
+        }
+
+        return array_map(self::legacyConcept(...), array_values($groups));
+    }
+
+    /**
+     * @param  non-empty-list<array<string, mixed>>  $rows
+     * @return array{id: string|null, keep_exact: bool, note: string|null, term_ids: array<string, string>, languages: array<string, array{use: string|null, avoid: list<string>, also: list<string>}>}
+     */
+    private static function legacyConcept(array $rows): array
+    {
+        usort($rows, static fn (array $a, array $b) => [self::locale((string) $a['source_locale']), (string) $a['term']] <=> [self::locale((string) $b['source_locale']), (string) $b['term']]);
+
+        $linked = ($rows[0]['concept_id'] ?? null) !== null;
+        $languages = [];
+        $termIds = [];
+
+        foreach ($rows as $row) {
+            $avoid = self::strings($row['forbidden'] ?? []);
+            $banned = \in_array($row['term'], $avoid, true);
+            self::addLanguage($languages, (string) $row['source_locale'], $banned ? null : (string) $row['term'], $banned ? array_values(array_unique([$row['term'], ...$avoid])) : $avoid, self::strings($row['source_aliases'] ?? []));
+
+            if (isset($row['id'])) {
+                $termIds[self::locale((string) $row['source_locale'])] ??= (string) $row['id'];
+            }
+        }
+
+        foreach ($rows as $row) {
+            $avoid = self::strings($row['forbidden'] ?? []);
+            $spreads = ! $linked && ! \in_array($row['term'], $avoid, true);
+
+            foreach (array_filter(\is_array($row['translations'] ?? null) ? $row['translations'] : [], static fn ($value) => \is_string($value) && trim($value) !== '') as $locale => $wording) {
+                self::addLanguage($languages, (string) $locale, $wording, $spreads ? $avoid : [], []);
+            }
+        }
+
+        return [
+            'id' => $rows[0]['concept_id'] ?? $rows[0]['id'] ?? null,
+            'keep_exact' => array_filter($rows, static fn (array $row) => (bool) ($row['do_not_translate'] ?? false)) !== [],
+            'term_ids' => $termIds,
+            'note' => array_values(array_filter(array_map(static fn (array $row) => (string) ($row['note'] ?? ''), $rows)))[0] ?? null,
+            'languages' => array_map(static function (array $language) {
+                $language['avoid'] = array_values(array_filter($language['avoid'], static fn (string $wording) => $wording !== $language['use']));
+
+                return $language;
+            }, $languages),
+        ];
+    }
+
+    /**
+     * @param  array<string, array{use: string|null, avoid: list<string>, also: list<string>}>  $languages
+     * @param  list<string>  $avoid
+     * @param  list<string>  $also
+     */
+    private static function addLanguage(array &$languages, string $code, ?string $use, array $avoid, array $also): void
+    {
+        $locale = self::locale($code);
+        $held = $languages[$locale] ?? ['use' => $use, 'avoid' => [], 'also' => []];
+
+        if ($use !== null && $held['use'] !== $use) {
+            $also[] = $use;
+        }
+
+        $languages[$locale] = [
+            'use' => $held['use'],
+            'avoid' => array_values(array_unique([...$held['avoid'], ...$avoid])),
+            'also' => array_values(array_unique([...$held['also'], ...$also])),
+        ];
+    }
+
+    /** @return list<string> */
+    private static function strings(mixed $values): array
+    {
+        return array_values(array_filter(\is_array($values) ? $values : [], static fn ($value) => \is_string($value) && trim($value) !== ''));
     }
 };

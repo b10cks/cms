@@ -132,13 +132,9 @@ abstract class BasePublishAction
      * Hand the published entry to the AI listener once the publish commits,
      * so a family publish sees every member's new version.
      */
-    public static function afterPublish(Content $content, Space $space, Authenticatable|User|null $owner): void
+    public static function afterPublish(Content $content): void
     {
-        $content->getConnection()->afterCommit(static fn () => app(LearnFromPublishedContent::class)->handle(
-            $content,
-            $space,
-            $owner instanceof User ? $owner : null,
-        ));
+        $content->getConnection()->afterCommit(static fn () => app(LearnFromPublishedContent::class)->handle($content));
     }
 
     protected function loadPublishedVersion(Content $content): void

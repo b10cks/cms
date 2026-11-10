@@ -48,7 +48,7 @@ const { mutateAsync: publishDocument, isPending: isPublishing } = knowledge.useP
 const { mutate: uploadSource, isPending: isUploading } = knowledge.useUploadDocumentSourceMutation()
 const { mutateAsync: deleteDocument } = knowledge.useDeleteDocumentMutation()
 
-const form = ref({ title: '', type: props.initialType ?? ('reference' as AiKnowledgeType), draft: '' })
+const form = ref({ title: '', description: '', type: props.initialType ?? ('reference' as AiKnowledgeType), draft: '' })
 const saved = ref('')
 const snapshot = () => JSON.stringify(form.value)
 const isDirty = computed(() => snapshot() !== saved.value)
@@ -56,6 +56,7 @@ const isDirty = computed(() => snapshot() !== saved.value)
 const fill = (doc: AiKnowledgeDocumentResource | undefined) => {
   form.value = {
     title: doc?.title ?? '',
+    description: doc?.description ?? '',
     type: doc?.type ?? props.initialType ?? 'reference',
     draft: doc?.draft ?? '',
   }
@@ -87,12 +88,14 @@ const header = computed(() => {
 
 useSeoMeta({ title: header })
 
+const canSave = computed(() => form.value.title.trim() !== '' && form.value.description.trim() !== '')
+
 const isSaving = computed(() => isCreating.value || isUpdating.value || isPublishing.value)
 
 /** Saves the draft; a new document is created and the route moves to its ID. */
 const save = async (): Promise<string | null> => {
-  if (!form.value.title.trim()) return null
-  const payload: AiKnowledgeDocumentPayload = { ...form.value, title: form.value.title.trim() }
+  if (!canSave.value) return null
+  const payload: AiKnowledgeDocumentPayload = { ...form.value, title: form.value.title.trim(), description: form.value.description.trim() }
 
   if (isNew.value) {
     const { data } = await createDocument({ ...payload, slug: slugify(payload.title ?? '') })
@@ -168,7 +171,7 @@ const statusBadge = computed(() => {
         <div class="flex items-center gap-2">
           <Button
             variant="outline"
-            :disabled="!form.title.trim() || isSaving || (!isNew && !isDirty)"
+            :disabled="!canSave || isSaving || (!isNew && !isDirty)"
             :loading="isCreating || isUpdating"
             @click="save"
           >
@@ -176,7 +179,7 @@ const statusBadge = computed(() => {
           </Button>
           <Button
             variant="primary"
-            :disabled="!form.title.trim() || isSaving"
+            :disabled="!canSave || isSaving"
             :loading="isPublishing"
             @click="publish"
           >
@@ -226,6 +229,17 @@ const statusBadge = computed(() => {
             :disabled="!canManage"
           />
         </div>
+
+        <InputField
+          id="knowledge-description"
+          v-model="form.description"
+          name="description"
+          :label="$t('components.aiSettings.knowledge.descriptionLabel')"
+          :description="$t('components.aiSettings.knowledge.descriptionHint')"
+          :disabled="!canManage"
+          maxlength="200"
+          required
+        />
 
         <div
           v-if="!isNew && canManage"

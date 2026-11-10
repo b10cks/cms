@@ -65,7 +65,6 @@ function guideSidebar(prefix = ''): DefaultTheme.SidebarItem[] {
       items: sorted([
         { text: 'CLI', link: `${prefix}/guides/cli` },
         { text: 'Field Plugins', link: `${prefix}/guides/field-plugins` },
-        { text: 'Glossary Sheets', link: `${prefix}/guides/glossary-sheet` },
         { text: 'Management Client', link: `${prefix}/guides/management-client` },
         { text: 'MCP Server (AI Assistants)', link: `${prefix}/guides/mcp-server` },
       ]),
@@ -106,7 +105,7 @@ function uiSidebar(prefix = ''): DefaultTheme.SidebarItem[] {
         { text: 'Content', link: `${prefix}/ui/content` },
         { text: 'Mass Edit', link: `${prefix}/ui/mass-edit` },
         { text: 'Working with AI', link: `${prefix}/ui/ai` },
-        { text: 'Skills, knowledge and glossary', link: `${prefix}/ui/ai-knowledge` },
+        { text: 'Skills and knowledge', link: `${prefix}/ui/ai-knowledge` },
         { text: 'Canvas', link: `${prefix}/ui/canvas` },
         { text: 'Block library', link: `${prefix}/ui/blocks` },
         { text: 'Asset manager', link: `${prefix}/ui/assets` },

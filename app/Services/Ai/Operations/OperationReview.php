@@ -15,7 +15,6 @@ use App\Models\Space\AiOperation;
 use App\Models\User;
 use App\Services\Ai\Assets\AssetReview;
 use App\Services\Ai\Assets\AssetReviewGroups;
-use App\Services\Ai\Changesets\ContentFlags;
 use App\Services\Ai\Threads\AiThreads;
 use App\Services\Ai\Translation\TranslationLineage;
 use Illuminate\Support\Collection;
@@ -23,8 +22,8 @@ use Illuminate\Support\Facades\Cache;
 
 /**
  * What a person sees of an operation's changeset. Content is in its drafts, so
- * {@see changes()} lists it per entry, conflicts and flagged wording first. Those
- * are the only things that need a person, and a conflict is resolved on its item.
+ * {@see changes()} lists it per entry, conflicts first. Those are the only things
+ * that need a person, and a conflict is resolved on its item.
  *
  * Everything else is a proposal, in groups: by operation, target type, field path
  * (block and entry IDs folded to `*`) and field type, so "Value of 2,000 data
@@ -34,8 +33,8 @@ use Illuminate\Support\Facades\Cache;
  *
  * A group accept takes only pending items that need no individual look, see
  * {@see DecidableItems::needsIndividualLook()}, and a move with its metadata
- * together or not at all. Conflicts, findings, flagged items and new folders
- * and tags stay for item-by-item review through the changeset endpoints.
+ * together or not at all. Conflicts, flagged items and new folders and tags
+ * stay for item-by-item review through the changeset endpoints.
  * Decisions over more than `ai.operations.review_sync_limit` items run on
  * the queue in bounded slices ({@see DecideAiOperationGroupJob}).
  */
@@ -121,9 +120,9 @@ final class OperationReview
 
     /**
      * What the operation changed in drafts: the figures for the receipt and a page
-     * of entries, those with conflicts first, then flagged wording, then by name.
+     * of entries, those with conflicts first, then by name.
      *
-     * @return array{summary: array{changed: int, conflicts: int, flagged: int}, entries: list<array{target_id: string|null, label: string|null, written: int, conflicts: int, flagged: int, flagged_wording: list<string>}>, total: int}
+     * @return array{summary: array{changed: int, conflicts: int}, entries: list<array{target_id: string|null, label: string|null, written: int, conflicts: int}>, total: int}
      */
     public function changes(AiOperation $operation, int $page, int $perPage): array
     {
@@ -134,9 +133,6 @@ final class OperationReview
                 'label' => $items->first()->target_label,
                 'written' => $items->filter(fn (AiChangesetItem $item) => $item->status === AiChangesetItemStatus::Accepted)->count(),
                 'conflicts' => $items->filter(fn (AiChangesetItem $item) => $item->status === AiChangesetItemStatus::Conflict)->count(),
-                'flagged' => $items->filter(self::isFlagged(...))->count(),
-                'flagged_wording' => $items->flatMap(fn (AiChangesetItem $item) => $item->status === AiChangesetItemStatus::Accepted ? $item->standingFindings() : [])
-                    ->map(ContentFlags::wording(...))->unique()->values()->all(),
             ])
             ->values();
 
@@ -144,10 +140,9 @@ final class OperationReview
             'summary' => [
                 'changed' => $entries->where('written', '>', 0)->count(),
                 'conflicts' => $entries->sum('conflicts'),
-                'flagged' => $entries->sum('flagged'),
             ],
             'entries' => $entries
-                ->sortBy([['conflicts', 'desc'], ['flagged', 'desc'], ['label', 'asc']])
+                ->sortBy([['conflicts', 'desc'], ['label', 'asc']])
                 ->forPage($page, $perPage)
                 ->values()
                 ->all(),
@@ -156,7 +151,7 @@ final class OperationReview
     }
 
     /**
-     * Content items of one entry: conflicts first, then flagged wording.
+     * Content items of one entry, conflicts first.
      *
      * @return array{items: Collection<int, AiChangesetItem>, total: int}
      */
@@ -169,20 +164,10 @@ final class OperationReview
             ->where('target_id', $targetId)
             ->orderBy('id')
             ->get()
-            ->sortBy(fn (AiChangesetItem $item) => match (true) {
-                $item->status === AiChangesetItemStatus::Conflict => 0,
-                self::isFlagged($item) => 1,
-                default => 2,
-            })
+            ->sortBy(fn (AiChangesetItem $item) => $item->status === AiChangesetItemStatus::Conflict ? 0 : 1)
             ->values();
 
         return ['items' => $items->forPage($page, $perPage)->values(), 'total' => $items->count()];
-    }
-
-    /** Wording to fix before publishing, on what is in the draft or waits as a conflict. */
-    private static function isFlagged(AiChangesetItem $item): bool
-    {
-        return $item->status !== AiChangesetItemStatus::Rejected && $item->standingFindings() !== [];
     }
 
     /** @return Collection<int, AiChangesetItem> */
@@ -194,7 +179,7 @@ final class OperationReview
             ->where('changeset_id', $changeset->id)
             ->where('target_type', AiChangesetItem::TARGET_CONTENT)
             ->orderBy('id')
-            ->get(['id', 'target_type', 'target_id', 'target_label', 'status', 'glossary_findings', 'open_findings']);
+            ->get(['id', 'target_type', 'target_id', 'target_label', 'status']);
     }
 
     /**
@@ -369,7 +354,7 @@ final class OperationReview
             ->where('changeset_id', $changeset->id)
             ->where('target_type', '!=', AiChangesetItem::TARGET_CONTENT)
             ->orderBy('id')
-            ->get(['id', 'operation', 'target_type', 'target_id', 'path', 'field_type', 'status', 'glossary_findings', 'flags', 'review'])
+            ->get(['id', 'operation', 'target_type', 'target_id', 'path', 'field_type', 'status', 'flags', 'review'])
             ->map(function (AiChangesetItem $item) {
                 $normalized = self::normalizePath($item->path);
                 $label = null;

@@ -17,6 +17,7 @@ class AiKnowledgeDocumentResource extends JsonResource
             'owner_id' => $this->space_id ?? $this->team_id,
             'slug' => $this->slug,
             'title' => $this->title,
+            'description' => $this->description,
             'type' => $this->type->value,
             'locale' => $this->locale,
             'enabled' => $this->enabled,

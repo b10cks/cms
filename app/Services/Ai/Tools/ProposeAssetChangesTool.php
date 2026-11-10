@@ -74,8 +74,7 @@ class ProposeAssetChangesTool extends AssetProposalTool implements ReportsOutcom
             .'Fields that already have a value, tag removals and moves are refused unless the plan allows them. '
             .'Pass all changes of an asset in one entry: a later entry for the same asset replaces the earlier one. '
             .'List assets that need nothing under `unchanged` with a reason. Refused assets come back under `errors` to fix. '
-            .'When a batch entry has `owed` parts, only those count: `outputs` in the result says what each asset still owes and which parts were refused. '
-            .'Banned wording or a changed protected name comes back on the asset under `glossary_findings`, with the field and the wording to write. Read `glossary_note` in the result.';
+            .'When a batch entry has `owed` parts, only those count: `outputs` in the result says what each asset still owes and which parts were refused.';
     }
 
     public function inputSchema(): array
@@ -140,7 +139,6 @@ class ProposeAssetChangesTool extends AssetProposalTool implements ReportsOutcom
         }
 
         $proposed = [];
-        $recorded = [];
         $kept = [];
         $errors = [];
 
@@ -151,8 +149,7 @@ class ProposeAssetChangesTool extends AssetProposalTool implements ReportsOutcom
                 $items = $this->propose($id, \is_array($entry) ? $entry : []);
                 $owing = isset($this->reports[$id]);
                 if ($items !== []) {
-                    array_push($recorded, ...$items);
-                    $proposed[] = ['id' => $id, 'item_ids' => array_map(fn (AiChangesetItem $item) => $item->id, $items), ...$this->fieldFindings($items)];
+                    $proposed[] = ['id' => $id, 'item_ids' => array_map(fn (AiChangesetItem $item) => $item->id, $items)];
                     if (! $owing) {
                         $this->outcome($id, ReportsOutcomes::PROPOSED, null);
                     }
@@ -184,28 +181,7 @@ class ProposeAssetChangesTool extends AssetProposalTool implements ReportsOutcom
             }
         }
 
-        // Each asset already names its own flagged fields; what remains is what to do about them.
-        $glossary = array_diff_key($this->findingsResult($recorded, written: false), ['glossary_findings' => true]);
-
-        return ['proposed' => $proposed, 'unchanged' => $kept, 'errors' => $errors, ...($this->reports !== [] ? ['outputs' => $this->reports] : []), ...$glossary];
-    }
-
-    /**
-     * What this call's proposal for one asset breaks, by field.
-     *
-     * @param  list<AiChangesetItem>  $items
-     * @return array{glossary_findings?: list<array<string, string|null>>}
-     */
-    private function fieldFindings(array $items): array
-    {
-        $findings = [];
-        foreach ($items as $item) {
-            foreach ($item->glossary_findings ?? [] as $finding) {
-                $findings[] = ['path' => $item->path, ...$finding];
-            }
-        }
-
-        return $findings === [] ? [] : ['glossary_findings' => $findings];
+        return ['proposed' => $proposed, 'unchanged' => $kept, 'errors' => $errors, ...($this->reports !== [] ? ['outputs' => $this->reports] : [])];
     }
 
     /**

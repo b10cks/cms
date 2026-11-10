@@ -5,32 +5,31 @@ namespace App\Services\Ai\Knowledge;
 use LogicException;
 
 /**
- * The knowledge and glossary policy one run or operation works under: resolved
- * terms including manual edits, and style and reference revisions. Prompts, tools
- * and checks all read from one of these, so a change to live knowledge reaches only
- * work started after it.
+ * The knowledge policy one run or operation works under: style and reference
+ * revisions. Prompts and tools read from one of these, so a change to live
+ * knowledge reaches only work started after it.
  *
  * `id` is null for an unstored view of the live state: callers without a run
  * (MCP) and runs started before snapshots existed.
  */
 final readonly class PolicySnapshot
 {
-    /** 2 holds one row per meaning under `concepts`. 1 held a row per language under `terms`, read by {@see FrozenGlossaryRow}. */
-    public const VERSION = 2;
+    /** 3 holds documents only. 2 also held `concepts`, which are ignored now. 1 is no longer read. */
+    public const VERSION = 3;
+
+    private const READABLE = [2, 3];
 
     /**
-     * @param  list<GlossaryConcept>  $concepts
-     * @param  list<array{id: string, slug: string, title: string, type: string, locale: string|null, revision_id: string, revision: int, hash: string, markdown?: string}>  $documents  `markdown` for style guides, which enter prompts whole
+     * @param  list<array{id: string, slug: string, title: string, description?: string, type: string, locale: string|null, revision_id: string, revision: int, hash: string, markdown?: string}>  $documents  `markdown` for style guides, which enter prompts whole; `description` is missing in snapshots from before it existed
      */
     private function __construct(
         public ?string $id,
         public string $fingerprint,
-        public array $concepts,
         public array $documents,
     ) {}
 
     /**
-     * @param  array<string, mixed>  $parts  concepts (as arrays) and documents, in any order
+     * @param  array<string, mixed>  $parts  documents, in any order
      */
     public static function fromParts(array $parts): self
     {
@@ -42,35 +41,27 @@ final readonly class PolicySnapshot
     /**
      * @param  array<string, mixed>  $payload
      *
-     * @throws LogicException for a snapshot newer than this code
+     * @throws LogicException for a snapshot of a version this code does not read
      */
     public static function fromPayload(array $payload, ?string $id, string $fingerprint): self
     {
-        if (($payload['version'] ?? 0) > self::VERSION) {
-            throw new LogicException("Policy snapshot version {$payload['version']} is newer than this code.");
+        $version = $payload['version'] ?? 0;
+        if (! \in_array($version, self::READABLE, true)) {
+            throw new LogicException("Policy snapshot version {$version} is not read by this code, which reads version ".self::VERSION.'.');
         }
 
-        return new self(
-            $id,
-            $fingerprint,
-            GlossaryConcept::listFromFrozen($payload['concepts'] ?? $payload['terms'] ?? []),
-            $payload['documents'] ?? [],
-        );
+        return new self($id, $fingerprint, $payload['documents'] ?? []);
     }
 
-    /**
-     * Rows alone, for callers that hold no resolved policy.
-     *
-     * @param  list<GlossaryConcept>  $concepts
-     */
-    public static function fromConcepts(array $concepts): self
+    /** `de_AT` and `DE-at` are the same locale. */
+    public static function normalizeLocale(string $locale): string
     {
-        return new self(null, '', $concepts, []);
+        return strtolower(str_replace('_', '-', trim($locale)));
     }
 
     public function withId(string $id): self
     {
-        return new self($id, $this->fingerprint, $this->concepts, $this->documents);
+        return new self($id, $this->fingerprint, $this->documents);
     }
 
     public function isPinned(): bool
@@ -95,7 +86,6 @@ final readonly class PolicySnapshot
     {
         return [
             'version' => self::VERSION,
-            'concepts' => array_map(static fn (GlossaryConcept $concept) => $concept->toArray(), $this->concepts),
             'documents' => $this->documents,
         ];
     }
@@ -144,41 +134,6 @@ final readonly class PolicySnapshot
     }
 
     /**
-     * Rows a source text activates, each with its language that counts in the target
-     * locale, the one whose Avoid wording the output must not hold. `spans` says where in
-     * the text, and marks a match on Avoid wording.
-     *
-     * @return list<array{concept: GlossaryConcept, wording: GlossaryWording, target: GlossaryWording|null, spans: list<array{start: int, end: int, text: string, avoid: bool}>}>
-     */
-    public function activate(string $text, ?string $sourceLocale, ?string $targetLocale = null): array
-    {
-        $target = $targetLocale !== null && $targetLocale !== '' ? $targetLocale : null;
-
-        return array_map(
-            static fn (array $hit) => [...$hit, 'target' => $target !== null ? $hit['concept']->languageFor($target) : null],
-            GlossaryMatcher::for($this->concepts)->find($text, $sourceLocale),
-        );
-    }
-
-    /**
-     * Provenance a proposal records: this snapshot and the rows it applied.
-     *
-     * @param  list<GlossaryConcept>  $concepts
-     * @return array{snapshot_id: string|null, fingerprint: string, terms: list<array<string, string|null>>}
-     */
-    public function provenance(array $concepts): array
-    {
-        return [
-            'snapshot_id' => $this->id,
-            'fingerprint' => $this->fingerprint,
-            'terms' => array_map(static fn (GlossaryConcept $concept) => [
-                'concept_id' => $concept->id,
-                'version' => self::versionOf($concept->toArray()),
-            ], $concepts),
-        ];
-    }
-
-    /**
      * For each locale: the items of exactly that locale, else of its base language.
      * Items without a locale apply everywhere. A sibling region never stands in.
      *
@@ -197,13 +152,13 @@ final readonly class PolicySnapshot
         $present = [];
         foreach ($items as $item) {
             if ($item['locale'] !== null) {
-                $present[GlossaryMatcher::normalizeLocale($item['locale'])] = true;
+                $present[self::normalizeLocale($item['locale'])] = true;
             }
         }
 
         $selected = [];
         foreach ($locales as $locale) {
-            $locale = GlossaryMatcher::normalizeLocale($locale);
+            $locale = self::normalizeLocale($locale);
             $base = explode('-', $locale)[0];
             $choice = isset($present[$locale]) ? $locale : (isset($present[$base]) ? $base : null);
             if ($choice !== null) {
@@ -211,7 +166,7 @@ final readonly class PolicySnapshot
             }
         }
 
-        return array_values(array_filter($items, static fn (array $item) => $item['locale'] === null || isset($selected[GlossaryMatcher::normalizeLocale($item['locale'])])));
+        return array_values(array_filter($items, static fn (array $item) => $item['locale'] === null || isset($selected[self::normalizeLocale($item['locale'])])));
     }
 
     /**
@@ -228,11 +183,6 @@ final readonly class PolicySnapshot
 
         return [
             'version' => self::VERSION,
-            'concepts' => $by($parts['concepts'] ?? [], static function (array $row): string {
-                $locale = array_key_first($row['languages']);
-
-                return $locale.'|'.mb_strtolower((string) ($row['languages'][$locale]['use'] ?? $row['languages'][$locale]['avoid'][0] ?? '')).'|'.$row['id'];
-            }),
             'documents' => $by($parts['documents'] ?? [], static fn (array $row) => "{$row['type']}|{$row['slug']}"),
         ];
     }
@@ -243,14 +193,6 @@ final readonly class PolicySnapshot
     private static function fingerprintOf(array $payload): string
     {
         return hash('sha256', self::canonical($payload));
-    }
-
-    /**
-     * @param  array<string, mixed>  $data
-     */
-    private static function versionOf(array $data): string
-    {
-        return hash('sha256', self::canonical($data));
     }
 
     /** Key order must not change a hash: MySQL JSON columns reorder object keys. */

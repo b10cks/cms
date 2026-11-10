@@ -27,9 +27,6 @@ use App\Services\Ai\Contracts\ProvidesSources;
 use App\Services\Ai\Contracts\ReportsOutcomes;
 use App\Services\Ai\Exceptions\AiServiceException;
 use App\Services\Ai\Exceptions\ProviderCallFailed;
-use App\Services\Ai\Knowledge\GlossaryChecker;
-use App\Services\Ai\Knowledge\GlossaryConcept;
-use App\Services\Ai\Knowledge\KnowledgeResolver;
 use App\Services\Ai\Operations\OperationContext;
 use App\Services\Ai\Operations\OperationTools;
 use App\Services\Ai\Run\ContextBuilder;
@@ -59,7 +56,6 @@ use App\Services\Auth\AuthorizationService;
 use Closure;
 use Generator;
 use Illuminate\Database\UniqueConstraintViolationException;
-use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -109,9 +105,7 @@ class AiRunService
         private readonly ContextBuilder $context,
         private readonly RunToolFactory $tools,
         private readonly AuthorizationService $auth,
-        private readonly GlossaryChecker $checker,
         private readonly AiThreads $threads,
-        private readonly KnowledgeResolver $knowledge,
     ) {}
 
     /**
@@ -139,6 +133,9 @@ class AiRunService
         $toolsAvailable = $driver->supportsToolCalls($model);
         $toolNames = $toolsAvailable ? RunToolFactory::namesFor($manifest?->tools) : [];
         $built = $this->context->build($start, $toolsAvailable && $toolNames !== []);
+        if ($built['frozen']['knowledge'] === []) {
+            $toolNames = array_values(array_diff($toolNames, RunToolFactory::KNOWLEDGE_TOOLS));
+        }
 
         $output = $this->outputFor($manifest, $start);
         $options = new RunOptions(
@@ -669,12 +666,7 @@ class AiRunService
             $data = array_replace($remembered, $data);
         }
 
-        $findings = $this->glossaryFindings($run, $text, $data);
-        if ($findings !== []) {
-            yield $this->emit($run, RunEventType::GlossaryFindings, ['findings' => $findings]);
-        }
-
-        $events = $this->fenced($run, function () use ($run, $transcript, $text, $data, $findings, $partial) {
+        $events = $this->fenced($run, function () use ($run, $transcript, $text, $data, $partial) {
             $events = [];
             if ($run->surface === self::SELECTION_SURFACE && trim($text) !== '') {
                 $events[] = $this->emit($run, RunEventType::Proposal, ['proposal' => $this->proposeSelection($run, $text)]);
@@ -684,7 +676,7 @@ class AiRunService
                 $this->recordTranslations($run, $data);
             }
 
-            $run->result = ['text' => $text, 'data' => $data, 'glossary_findings' => $findings];
+            $run->result = ['text' => $text, 'data' => $data];
             $run->partial = $partial;
             $this->finish($run, AiRunState::Completed);
             $this->checkpoint($run, $transcript);
@@ -964,15 +956,6 @@ class AiRunService
             return;
         }
 
-        // A newer translation of the same field supersedes what an earlier one would teach.
-        AiChangesetItem::query()
-            ->where('target_type', AiChangesetItem::TARGET_CONTENT)
-            ->where('target_id', $contentId)
-            ->whereIn('path', array_column($items, 'path'))
-            ->where('status', AiChangesetItemStatus::Accepted->value)
-            ->whereNull('learned_at')
-            ->update(['learned_at' => now()]);
-
         app(ChangesetRecorder::class)->record($run, $items, inline: true);
     }
 
@@ -1072,34 +1055,6 @@ class AiRunService
             'output_tokens' => $run->output_tokens,
             'cost_usd' => $run->cost_usd,
         ];
-    }
-
-    /**
-     * @param  array<mixed>|null  $data
-     * @return list<array<string, string>>
-     */
-    private function glossaryFindings(AiRun $run, string $text, ?array $data): array
-    {
-        $glossary = $run->setup['glossary'] ?? null;
-
-        // An answer across languages has no one language to check it in. Its caller checks each value.
-        if (! $glossary || isset($glossary['output_locales'])) {
-            return [];
-        }
-
-        $terms = isset($run->setup['policy']['id'])
-            ? $this->knowledge->policy($run->space, $run)->concepts
-            : GlossaryConcept::listFromFrozen($glossary['concepts'] ?? $glossary['terms'] ?? []);
-
-        $output = $data !== null ? implode("\n", array_filter(Arr::flatten($data), 'is_string')) : $text;
-
-        return GlossaryChecker::blocking($this->checker->check(
-            (string) $glossary['source'],
-            $output,
-            (string) $glossary['source_locale'],
-            (string) $glossary['target_locale'],
-            $terms,
-        ));
     }
 
     private function driverFor(AiRun $run, Space $space): AiDriverInterface

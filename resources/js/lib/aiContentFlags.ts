@@ -1,23 +1,19 @@
 /**
  * What AI left on entries for whoever publishes them, see `ContentFlags` on the
- * server: open conflicts, and flagged wording that is still in the draft. It
- * informs and never blocks a publish.
+ * server: open conflicts. It informs and never blocks a publish.
  */
 
 export interface AiContentFlagCounts {
   conflicts: number
-  flagged: number
 }
 
 /** Entry ID => its figures. Entries with nothing open are left out. */
 export type AiContentFlagMap = Record<string, AiContentFlagCounts>
 
 export interface AiContentFlag {
-  kind: 'flagged' | 'conflict'
+  kind: 'conflict'
   path: string | null
   field: string | null
-  wording?: string
-  replacement?: string
   thread_id?: string | null
 }
 
@@ -34,29 +30,17 @@ export interface AiContentFlagTotals extends AiContentFlagCounts {
 }
 
 export function flagTotals(flags: AiContentFlagMap | undefined, ids: readonly string[]): AiContentFlagTotals {
-  const totals: AiContentFlagTotals = { conflicts: 0, flagged: 0, entries: 0 }
+  const totals: AiContentFlagTotals = { conflicts: 0, entries: 0 }
   if (!flags) return totals
 
   for (const id of ids) {
     const counts = flags[id]
     if (!counts) continue
     totals.conflicts += counts.conflicts
-    totals.flagged += counts.flagged
     totals.entries += 1
   }
 
   return totals
-}
-
-/** "1 conflict, 2 flagged wordings": the tree mark's label and tooltip. */
-export function flagCountsLine(
-  t: (key: string, named: Record<string, unknown>, plural: number) => string,
-  { conflicts, flagged }: AiContentFlagCounts
-): string {
-  return [
-    ...(conflicts > 0 ? [t('components.contentFlags.conflicts', { count: conflicts }, conflicts)] : []),
-    ...(flagged > 0 ? [t('components.contentFlags.flagged', { count: flagged }, flagged)] : []),
-  ].join(', ')
 }
 
 /** The editor link to a flagged field; the editor opens the block and focuses the field. */

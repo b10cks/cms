@@ -8,7 +8,6 @@ import type {
   AiGroupRejectResult,
   AiReviewGroup,
 } from '~/lib/aiChangesets'
-import { overrideErrors } from '~/lib/aiChangesets'
 import type { AiQuestionnaireAnswers } from '~/lib/aiRun'
 import type { AiThreadListParams, AiThreadPatch } from '~/lib/aiThreads'
 import { toastError } from '~/lib/toast-error'
@@ -18,8 +17,8 @@ const QUEUED_POLL_MS = 3000
 
 /**
  * The space's AI threads and the decisions made in them: changeset accept and
- * reject, questionnaire answers, glossary suggestions. Live updates arrive
- * over the space's `ai` channel, which useSpaceBroadcasts subscribes to.
+ * reject and questionnaire answers. Live updates arrive over the space's `ai`
+ * channel, which useSpaceBroadcasts subscribes to.
  */
 export function useAiThreads(spaceId: MaybeRefOrGetter<string>) {
   const { t } = useI18n()
@@ -104,8 +103,7 @@ export function useAiThreads(spaceId: MaybeRefOrGetter<string>) {
     },
     onError: (error: unknown) => {
       void refresh()
-      // Missing override reasons show on their findings.
-      if (Object.keys(overrideErrors(error)).length === 0) toastError(t, 'components.aiChangeset.acceptFailed', error)
+      toastError(t, 'components.aiChangeset.acceptFailed', error)
     },
   })
 
@@ -234,19 +232,6 @@ export function useAiThreads(spaceId: MaybeRefOrGetter<string>) {
     onError: (error: unknown) => toastError(t, 'components.aiThreads.cancelFailed', error),
   })
 
-  const acceptSuggestionMutation = useMutation({
-    mutationFn: ({ suggestionId, glossaryId }: { suggestionId: string; glossaryId: string }) =>
-      resource().acceptSuggestion(suggestionId, glossaryId),
-    onSuccess: refresh,
-    onError: (error: unknown) => toastError(t, 'components.aiThreads.suggestions.acceptFailed', error),
-  })
-
-  const dismissSuggestionMutation = useMutation({
-    mutationFn: (suggestionId: string) => resource().dismissSuggestion(suggestionId),
-    onSuccess: refresh,
-    onError: (error: unknown) => toastError(t, 'components.aiThreads.suggestions.dismissFailed', error),
-  })
-
   /** Upload a file for the next message; the composer tracks progress itself. */
   const uploadAttachment = (file: File, options: { onProgress?: (progress: number) => void; signal?: AbortSignal }) =>
     resource().uploadAttachment(file, options)
@@ -268,7 +253,5 @@ export function useAiThreads(spaceId: MaybeRefOrGetter<string>) {
     refreshGroupTargets,
     answerMutation,
     cancelMutation,
-    acceptSuggestionMutation,
-    dismissSuggestionMutation,
   }
 }

@@ -9,7 +9,6 @@ use App\Models\User;
 use App\Services\Ai\Changesets\FieldPath;
 use App\Services\Ai\Contracts\AiToolInterface;
 use App\Services\Ai\Contracts\ReportsOutcomes;
-use App\Services\Ai\Knowledge\GlossaryBrief;
 use App\Services\Ai\Knowledge\KnowledgeResolver;
 use App\Services\Ai\Operations\OperationContext;
 use App\Services\Ai\Run\ToolError;
@@ -26,9 +25,8 @@ use App\Services\Auth\AuthorizationService;
 /**
  * Reads the translation work for one entry and locale: the units to
  * translate with their reason, the current translation and, for stale units,
- * the source text it was translated from. Matched glossary terms and translation
- * memory come with it, for the units of this read, all under the policy the run
- * pinned.
+ * the source text it was translated from. Translation memory comes with it for
+ * the units of this read, and style guides from the policy the run pinned.
  *
  * A plan that generates metadata adds `draft`, the locale's text as it stands, and
  * `metadata` with what is owed and whether it can be written yet.
@@ -38,8 +36,6 @@ class GetTranslationTaskTool implements AiToolInterface, ReportsOutcomes
     public const NAME = 'get_translation_task';
 
     private const PAGE = 100;
-
-    private const MAX_GUIDE_CHARS = 8000;
 
     /** @var list<array{target_type: string, target_id: string, outcome: string, reason: string|null, part: string}> */
     private array $outcomes = [];
@@ -67,8 +63,8 @@ class GetTranslationTaskTool implements AiToolInterface, ReportsOutcomes
         return 'Reads what to translate for one entry (any language version of it) into one language. Returns the source and its version_id, the destination '
             .'(the translation entry and its version_id, or create when the language has none), and the units to translate: id, label, reason '
             .'(missing, empty, stale, same_as_source), source text, the current translation, and for stale units previous_source, the text the translation was made from. '
-            .'Units with `memory` have an earlier translation of the same text that a person published and that passes the glossary; `memory_rejected` lists why an earlier one no longer does. '
-            .'Also returns matching glossary terms and similar earlier translations as examples. '
+            .'Units with `memory` have an earlier translation of the same text that a person published. '
+            .'Also returns similar earlier translations as examples. '
             .'When the plan generates metadata, `draft` holds the locale\'s `texts` per unit and its `version_id`, and `metadata` lists what is `owed`, per field `path` and `key`, and whether it is `ready`.';
     }
 
@@ -116,13 +112,9 @@ class GetTranslationTaskTool implements AiToolInterface, ReportsOutcomes
         $units = \array_slice(array_values($task->units), $offset, self::PAGE);
         $sources = array_column($units, 'source', 'id');
         $policy = $this->knowledge->policy($this->space, $this->run);
-        $memory = $this->memory->exactUnderPolicy($sources, $destination->sourceLocale, $destination->locale, $policy->concepts);
+        $memory = $this->memory->exact($sources, $destination->sourceLocale, $destination->locale);
         $source = $destination->source;
         $translation = $destination->translation;
-
-        $hits = $policy->activate(implode("\n", $sources), $destination->sourceLocale, $destination->locale);
-        $glossary = GlossaryBrief::render($hits, $destination->sourceLocale, $destination->locale, 'this entry');
-        $bans = GlossaryBrief::bans($policy->concepts, $hits, $destination->locale);
 
         $inPrompt = $this->run?->setup['styles'] ?? [];
         $guides = array_filter($policy->styles([$destination->locale]), fn (array $guide) => $guide['locale'] !== null && ! isset($inPrompt[$guide['revision_id']]));
@@ -152,20 +144,18 @@ class GetTranslationTaskTool implements AiToolInterface, ReportsOutcomes
                 'source' => $unit['source'],
                 'previous_source' => $unit['previous_source'] ?? null,
                 'current' => $unit['current'] !== '' ? $unit['current'] : null,
-                'memory' => $memory['hits'][$unit['id']] ?? null,
-                'memory_rejected' => $memory['rejected'][$unit['id']] ?? null,
+                'memory' => $memory[$unit['id']] ?? null,
             ], fn ($value) => $value !== null), $units),
             'more_units' => max(0, \count($task->units) - $offset - \count($units)),
             'kept' => array_count_values($task->held),
-            ...($glossary !== null || $bans !== null ? ['glossary' => implode("\n\n", array_filter([$glossary, $bans]))] : []),
             // A chat turn's prompt holds only its own language's guide.
             ...($guides !== [] ? ['style_guides' => array_map(fn (array $guide) => [
                 'title' => $guide['title'],
                 'locale' => $guide['locale'],
                 'revision_id' => $guide['revision_id'],
-                'text' => mb_substr((string) ($guide['markdown'] ?? ''), 0, self::MAX_GUIDE_CHARS),
+                'text' => (string) ($guide['markdown'] ?? ''),
             ], array_values($guides))] : []),
-            'examples' => $units === [] ? [] : $this->memory->fuzzy(array_values($sources), $destination->sourceLocale, $destination->locale, terms: $policy->concepts),
+            'examples' => $units === [] ? [] : $this->memory->fuzzy(array_values($sources), $destination->sourceLocale, $destination->locale),
             ...$this->metadata($plan, $destination),
         ];
     }

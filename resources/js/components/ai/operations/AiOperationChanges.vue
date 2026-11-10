@@ -11,8 +11,7 @@ import { entryHistoryLink, entryLink } from '~/lib/aiChangesets'
 
 /**
  * What an operation changed in drafts, an entry at a time, entries with
- * conflicts and flagged wording first. Those are the only things that need a
- * person. Each entry links to its draft and its history, and opens into its
+ * conflicts first. Those are the only things that need a person. Each entry links to its draft and its history, and opens into its
  * fields, loaded on request.
  */
 const props = defineProps<{
@@ -47,12 +46,6 @@ const toggle = (entry: AiChangedEntry) => {
 
 const draftLink = (entry: AiChangedEntry) => entryLink(props.spaceId, { targetType: 'content', targetId: entry.target_id })
 const historyLink = (entry: AiChangedEntry) => entryHistoryLink(props.spaceId, { targetType: 'content', targetId: entry.target_id })
-
-/** The wording itself where the data has it, so the row needs no opening. */
-const flaggedText = (entry: AiChangedEntry) =>
-  entry.flagged_wording.length > 0
-    ? t('changes.flaggedWording', { wording: entry.flagged_wording.map((wording) => `"${wording}"`).join(', ') })
-    : t('changes.flagged', { count: formatNumber(entry.flagged) }, entry.flagged)
 
 const busy = computed(() => decisions.acceptMutation.isPending.value || rejectMutation.isPending.value)
 const reject = (item: Item) => rejectMutation.mutate({ changesetId: props.changesetId, decision: { item_ids: [item.id] } })
@@ -106,14 +99,6 @@ const reject = (item: Item) => rejectMutation.mutate({ changesetId: props.change
               data-entry-conflicts
             >
               {{ t('changes.conflicts', { count: formatNumber(entry.conflicts) }, entry.conflicts) }}
-            </span>
-            <span
-              v-if="entry.flagged > 0"
-              class="max-w-64 truncate text-warning-ink"
-              :title="flaggedText(entry)"
-              data-entry-flagged
-            >
-              {{ flaggedText(entry) }}
             </span>
             <span class="text-muted">{{ t('changes.written', { count: formatNumber(entry.written) }, entry.written) }}</span>
             <RouterLink

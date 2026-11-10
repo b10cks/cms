@@ -5,18 +5,16 @@ namespace App\Services\Ai\Threads;
 use App\Enums\AiThreadKind;
 use App\Events\Ai\AiThreadChanged;
 use App\Models\Management\AiSchedule;
-use App\Models\Management\Space;
 use App\Models\Space\AiConversation;
 use App\Models\Space\AiRun;
 use App\Models\Space\Content;
 use App\Services\Ai\Run\StartRun;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 
 /**
  * Finds or creates the thread a run belongs to and tells clients when a
- * thread changed. User-started runs open a chat thread; each schedule and the
- * space's learning suggestions have one standing thread.
+ * thread changed. User-started runs open a chat thread; each schedule has one
+ * standing thread.
  */
 class AiThreads
 {
@@ -56,15 +54,6 @@ class AiThreads
             'title' => $schedule->name,
             'last_activity_at' => now(),
         ]);
-    }
-
-    /** The space's suggestions thread; the lock keeps two learning jobs from creating two. */
-    public function suggestions(Space $space): AiConversation
-    {
-        return Cache::lock("ai-suggestions-thread:{$space->id}", 10)->block(5, fn () => AiConversation::query()->firstOrCreate(
-            ['space_id' => $space->id, 'kind' => AiThreadKind::Suggestions->value],
-            ['surface' => 'learning', 'title' => 'Glossary suggestions', 'last_activity_at' => now()],
-        ));
     }
 
     /**

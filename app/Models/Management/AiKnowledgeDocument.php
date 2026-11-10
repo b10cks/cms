@@ -5,11 +5,12 @@ namespace App\Models\Management;
 use App\Enums\AiKnowledgeType;
 use App\Enums\AiScope;
 use App\Models\Traits\HasAiScope;
-use App\Services\Ai\Knowledge\GlossaryMatcher;
+use App\Services\Ai\Knowledge\PolicySnapshot;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Validation\ValidationException;
 
 /**
  * A style guide or reference document. Editors change the markdown draft;
@@ -22,6 +23,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property string|null $space_id
  * @property string $slug
  * @property string $title
+ * @property string $description one line on what it covers; runs list reference documents by it
  * @property AiKnowledgeType $type
  * @property string|null $locale language it applies to; null applies to every language
  * @property bool $enabled
@@ -38,12 +40,19 @@ class AiKnowledgeDocument extends GlobalModel
     use HasUlids;
     use SoftDeletes;
 
+    /**
+     * Characters a style guide may hold. Every run in its scope reads it whole, in the
+     * system prompt or from `get_translation_task`, so the limit is enforced on write.
+     */
+    public const MAX_STYLE_CHARS = 20_000;
+
     protected $fillable = [
         'scope',
         'team_id',
         'space_id',
         'slug',
         'title',
+        'description',
         'type',
         'locale',
         'enabled',
@@ -63,7 +72,7 @@ class AiKnowledgeDocument extends GlobalModel
 
     public function setLocaleAttribute(?string $locale): void
     {
-        $this->attributes['locale'] = $locale !== null && $locale !== '' ? GlossaryMatcher::normalizeLocale($locale) : null;
+        $this->attributes['locale'] = $locale !== null && $locale !== '' ? PolicySnapshot::normalizeLocale($locale) : null;
     }
 
     public function revisions(): HasMany
@@ -74,5 +83,22 @@ class AiKnowledgeDocument extends GlobalModel
     public function publishedRevision(): BelongsTo
     {
         return $this->belongsTo(AiKnowledgeRevision::class, 'published_revision_id');
+    }
+
+    /**
+     * Refuses a style guide draft over {@see MAX_STYLE_CHARS} with a 422 on `draft`.
+     *
+     * @throws ValidationException
+     */
+    public function ensureDraftFits(): void
+    {
+        $length = mb_strlen($this->draft);
+        if ($this->type !== AiKnowledgeType::Style || $length <= self::MAX_STYLE_CHARS) {
+            return;
+        }
+
+        throw ValidationException::withMessages(['draft' => [
+            \sprintf('A style guide can hold at most %s characters. This draft has %s.', number_format(self::MAX_STYLE_CHARS), number_format($length)),
+        ]]);
     }
 }

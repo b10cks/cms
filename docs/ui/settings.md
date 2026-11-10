@@ -138,7 +138,7 @@ Everything here is the space-wide default. Individual folders in the media libra
 
 **AI model** picks which model does the work. The list shows each model's provider, how much text it can consider at once, and a token multiplier that tells you how expensive it is relative to the others, along with tags such as *Free*, *New*, or *Premium*. A cheap fast model is fine for translations. A stronger one earns its cost on long-form drafting.
 
-**AI instructions** is a free-text field where you describe how the AI should behave with this configuration: tone of voice, style rules, things it must never do. It applies to every AI request that uses the configuration. For rules that should hold whichever configuration is picked, use a [style guide](ai-knowledge.md#style-guides), and put vocabulary in a [glossary](ai-knowledge.md#glossaries), where it gets checked. "Professional but approachable. Active voice. Never write in the first person. Always give a concrete example." beats correcting the same thing by hand fifty times.
+**AI instructions** is a free-text field where you describe how the AI should behave with this configuration: tone of voice, style rules, things it must never do. It applies to every AI request that uses the configuration. For rules that should hold whichever configuration is picked, use a [style guide](ai-knowledge.md#style-guides). "Professional but approachable. Active voice. Never write in the first person. Always give a concrete example." beats correcting the same thing by hand fifty times.
 
 **Temperature** is a slider from precise to creative. Low values make the model predictable and repetitive, which is what you want for translations and rewrites. Higher values make it more inventive, which suits brainstorming and headlines.
 
@@ -148,7 +148,7 @@ Everything here is the space-wide default. Individual folders in the media libra
 
 **AI usage** shows what the current billing period has spent against your plan's allowance, updating live, with the date it resets. This is the one allowance that genuinely stops when it is used up, so it is worth glancing at.
 
-**Skills**, **Knowledge** and **Schedules** have their own entries in the menu. Skills are how the AI does a task, knowledge is style guides, documents and glossaries, and schedules run a skill on a timetable. [Skills, knowledge and glossary](ai-knowledge.md) explains each one and when to use which.
+**Skills**, **Knowledge** and **Schedules** have their own entries in the menu. Skills are how the AI does a task, knowledge is style guides and documents, and schedules run a skill on a timetable. [Skills and knowledge](ai-knowledge.md) explains each one and when to use which.
 
 ## People
 

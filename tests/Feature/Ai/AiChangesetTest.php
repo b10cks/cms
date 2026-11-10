@@ -112,26 +112,24 @@ class AiChangesetTest extends TestCase
     }
 
     #[Test]
-    public function a_bulk_accept_of_open_items_leaves_flags_and_invalid_entries_for_a_person_and_content_findings_stop_nothing(): void
+    public function a_bulk_accept_of_open_items_leaves_flags_and_invalid_entries_for_a_person(): void
     {
-        $pages = array_map(fn (int $index) => $this->publishedPage(['title' => "Page {$index}", 'summary' => 'World']), range(1, 4));
+        $pages = array_map(fn (int $index) => $this->publishedPage(['title' => "Page {$index}", 'summary' => 'World']), range(1, 3));
         $changeset = AiChangeset::query()->create(['space_id' => $this->space->id, 'actor_id' => $this->user->id, 'title' => 'From before direct writes']);
-        [$clean, $finding, $flagged, $invalid] = array_map(fn (Content $page) => $changeset->items()->create([
+        [$clean, $flagged, $invalid] = array_map(fn (Content $page) => $changeset->items()->create([
             'operation' => AiChangesetItem::OPERATION_UPDATE, 'target_type' => 'content', 'target_id' => $page->id, 'target_label' => $page->name,
             'base_version_id' => $page->current_version_id, 'path' => 'summary', 'field_type' => 'text', 'before' => 'World', 'after' => "Summary of {$page->name}", 'status' => AiChangesetItemStatus::Pending,
         ]), $pages);
-        $finding->update(['glossary_findings' => [['type' => 'forbidden_variant', 'term' => 'World']]]);
         $flagged->update(['flags' => [['code' => 'uncertain', 'message' => 'The page has two topics.']]]);
         // Longer than the title's 60 characters, as if the schema had changed since.
-        $invalid->update(['path' => 'title', 'before' => 'Page 4', 'after' => str_repeat('x', 70)]);
+        $invalid->update(['path' => 'title', 'before' => 'Page 3', 'after' => str_repeat('x', 70)]);
 
         $this->postJson($this->url("ai/changesets/{$changeset->id}/accept"), ['bulk' => true])
             ->assertOk()
-            ->assertJsonPath('accepted', 2)
+            ->assertJsonPath('accepted', 1)
             ->assertJsonPath('failed', 1);
 
         $this->assertSame(AiChangesetItemStatus::Accepted, $clean->refresh()->status);
-        $this->assertSame(AiChangesetItemStatus::Accepted, $finding->refresh()->status);
         foreach ([$flagged, $invalid] as $item) {
             $this->assertSame(AiChangesetItemStatus::Pending, $item->refresh()->status);
         }
@@ -230,20 +228,21 @@ class AiChangesetTest extends TestCase
     }
 
     #[Test]
-    public function a_stored_missing_term_hint_is_never_listed(): void
+    public function an_edited_selection_proposal_is_accepted_with_the_edited_value(): void
     {
-        $page = $this->publishedPage(['title' => 'Hello', 'summary' => 'World']);
-        $changeset = AiChangeset::query()->create(['space_id' => $this->space->id, 'actor_id' => $this->user->id, 'title' => 'Before hints were agent only']);
-        $changeset->items()->create([
-            'operation' => AiChangesetItem::OPERATION_UPDATE, 'target_type' => 'content', 'target_id' => $page->id, 'target_label' => $page->name,
-            'base_version_id' => $page->current_version_id, 'path' => 'summary', 'field_type' => 'text', 'before' => 'World', 'after' => 'Welt', 'status' => AiChangesetItemStatus::Pending,
-            'glossary_findings' => [['type' => 'missing_term', 'term' => 'World', 'expected' => 'Erde'], ['type' => 'forbidden_variant', 'term' => 'World', 'found' => 'Welt']],
-        ]);
+        $this->driver->push(FakeAiDriver::text('Go to the cart'));
+        $runs = app(AiRunService::class);
+        $run = $runs->start(new StartRun($this->space, $this->user, 'selection', prompt: 'Rewrite', context: ['selection' => 'Go to checkout']));
+        iterator_to_array($runs->advance($run), false);
+        $changeset = AiChangeset::query()->sole();
+        $item = $changeset->items()->sole();
 
-        $this->getJson($this->url("ai/changesets/{$changeset->id}"))
-            ->assertOk()
-            ->assertJsonCount(1, 'data.items.0.glossary_findings')
-            ->assertJsonPath('data.items.0.glossary_findings.0.type', 'forbidden_variant');
+        $this->postJson($this->url("ai/changesets/{$changeset->id}/accept"), [
+            'item_ids' => [$item->id],
+            'values' => [$item->id => 'Go to the basket'],
+        ])->assertOk();
+
+        $this->assertSame(['accepted', 'Go to the basket'], [$item->fresh()->status->value, $item->fresh()->final]);
     }
 
     #[Test]

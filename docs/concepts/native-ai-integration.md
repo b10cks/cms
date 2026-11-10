@@ -12,12 +12,12 @@ AI in b10cks should feel like part of each feature, not a chat box next to it. O
 
 1. One agent and one run service. Entry points stay inside features (field actions, rich text selection, bulk selections, data sources, canvas, assets). The only global surfaces are Cmd+K and the threads dock (V2.1, replaces the inbox).
 2. The AI writes content straight to drafts, field by field, pinned to the version it read, and a person publishes when happy. A field someone changed since stays open as a conflict for a person, and agents may not write it until that person decides. Assets, folders, tags, data entries and blocks have no draft, so changes to them stay proposals a person accepts, and each goes through the normal write path. See [W8](../milestones/reliable-ai-content-operations/w8-direct-writes.md).
-3. Knowledge is typed: a structured glossary, always-on style guides, and reference documents retrieved on demand with citations.
+3. Knowledge is typed: always-on style guides, one per language where wording differs, and reference documents listed by description and read on demand with citations. The structured glossary was removed on 2026-11-10.
 4. Skills and knowledge live in the management DB and resolve space, owning team, ancestor teams (nearest first), system. The nearest entry with the same name or slug shadows the rest.
 5. Retrieval starts with MySQL FULLTEXT and title/slug ranking. No embeddings until retrieval checks show misses.
 6. Skills use the Agent Skills format (`SKILL.md` with `name` and `description` frontmatter) plus an optional `b10cks:` frontmatter block. Today's AI features become built-in skills.
-7. The glossary is enforced: matched terms are injected, output is checked deterministically and violations are flagged, never silently fixed.
-8. Translation memory lives in the space DB and is never shared across spaces. Editor corrections of AI output produce glossary suggestions in the inbox.
+7. No deterministic wording check. Style guides steer the output and a person reads the draft before publishing (glossary and its checker removed 2026-11-10).
+8. Translation memory lives in the space DB and is never shared across spaces. Stored pairs are reused as they are.
 9. Background and scheduled runs need a preflight estimate and hard caps. Scheduled runs act as their creator, rechecked on every run.
 10. Rich text gets selection actions with inline proposals. No ghost-text autocomplete.
 11. Quality is covered by unit tests with a fake driver. No model evals.
@@ -104,7 +104,7 @@ The same `advance()` runs in two places; only the event transport differs.
 
 ### Events
 
-`run_started`, `text_delta`, `tool_started`, `tool_finished`, `source`, `proposal`, `questionnaire`, `glossary_findings`, `usage`, `moved_to_background`, `completed`, `error`.
+`run_started`, `text_delta`, `tool_started`, `tool_finished`, `source`, `proposal`, `questionnaire`, `usage`, `moved_to_background`, `completed`, `error`.
 
 Every event has `run_id` and a monotonically increasing `seq`. Background events are stored in `ai_run_events` and broadcast in small batches (IDs and short deltas; Reverb drops messages over 10KB). Clients catch up with `GET /runs/{run}/events?after={seq}`.
 
@@ -115,12 +115,12 @@ Assembles the prompt in a fixed order, stable parts first so provider prompt cac
 1. Base instructions for the surface.
 2. Resolved style guides.
 3. Skill catalog (names and descriptions) and, for an explicitly invoked skill, its full instructions.
-4. Glossary terms that match the source text.
+4. Reference document catalog (slug, title, locale, description).
 5. Translation memory hits (W3).
 6. Screen context: block schema, current content, selection, mentioned entries.
 7. Untrusted data, fenced with the existing random-suffix tags.
 
-The run freezes the resolved skill, style, glossary and document revision IDs at start. The audit shows exactly what the model saw.
+The run freezes the resolved skill, style and document revision IDs at start. The audit shows exactly what the model saw.
 
 ## Tools
 
@@ -134,7 +134,6 @@ A curated set of typed tools, not the 268 operations of the MCP registry. Large 
 | `get_entry` | W1 | Read one entry's current version (drafts as the actor may see them) |
 | `read_skill`, `read_skill_file` | W1 | Progressive skill loading |
 | `search_knowledge`, `read_knowledge` | W1 | Bounded excerpts with source metadata |
-| `lookup_glossary` | W1 | Terms for a text and locale pair |
 | `ask_questions` | W1 | Pause for structured user input |
 | `propose_update`, `propose_create` | W2 | Write proposals into the run's changeset |
 | `find_entries` | W2 | Resolve a scope (folder, block type, locale gaps) for bulk work |
@@ -153,7 +152,7 @@ description: Writes product descriptions in our voice from specs and bullet poin
 b10cks:
   surfaces: [field:richtext, field:textarea, selection, bulk:content, cmdk]
   blocks: [product]          # optional filter by block slug
-  tools: [get_entry, search_knowledge, lookup_glossary]
+  tools: [get_entry, search_knowledge]
   output: text               # text | richtext | json schema reference
   config: product-copy       # optional SpaceAiConfig name
 ---
@@ -178,7 +177,7 @@ Feature screens stop hardcoding AI buttons. They call `GET /mgmt/v1/spaces/{spac
 
 The six existing features move onto the run service as built-ins with output schemas: content interaction, content tree generation, meta tags, field translation, data entry translation, asset classification. Their parsing (`lib/aiJson.ts`, `AssetClassificationService::parseResponse`) moves behind those schemas. The legacy endpoints stay until their callers are migrated within W1, then they are removed.
 
-Additional built-ins in W1: rewrite, shorten, expand, fix grammar, apply glossary, translate selection.
+Additional built-ins in W1: rewrite, shorten, expand, fix grammar, translate selection.
 
 ## Knowledge base
 
@@ -187,34 +186,24 @@ Additional built-ins in W1: rewrite, shorten, expand, fix grammar, apply glossar
 | Type | Behaviour |
 | --- | --- |
 | Style guide | Markdown, always in the prompt for its scope |
-| Reference document | Markdown (written in-app or extracted from PDF/DOCX), chunked by heading on publish, retrieved with `search_knowledge` |
-| Glossary | Structured terms, matched against the source text and enforced |
+| Reference document | Markdown (written in-app or extracted from PDF/DOCX), listed by description, read with `read_knowledge`, chunked by heading on publish for `search_knowledge` |
 
 ### Tables (management DB)
 
 - `ai_knowledge_documents`: scope, team/space ID, slug, title, type (`style`, `reference`), enabled, editable markdown draft, published revision ID, source file (private storage) for uploads, audit actors.
 - `ai_knowledge_revisions`: immutable markdown, revision number, hash, publisher, time.
 - `ai_knowledge_chunks`: revision ID, heading path, text, position. FULLTEXT index on text and heading.
-- `ai_glossaries`: scope, team/space ID, name, enabled.
-- `ai_glossary_terms`: glossary ID, source locale, term, translations per locale (JSON), case sensitive, do-not-translate, forbidden variants (JSON), note.
-
-### Glossary enforcement
-
-- A matcher is built per resolved term set and cached by the set's hash. Matching is locale-aware and respects case sensitivity and word boundaries.
-- Only matched terms enter the prompt.
-- After generation a deterministic checker verifies required target terms, preserved do-not-translate terms and absent forbidden variants. Violations (banned wording, a changed protected name) come back to the agent in the result of its write, which may fix them once, and are flagged on the field for whoever publishes. A missing required term is a hint for the agent only: it is returned as `glossary_hints` and never stored. A banned entry ending in `*` matches inflected forms. The prompt carries per term only the wording to write and the banned wording, `get_entry` lists the terms of the entry it reads, and `lookup_glossary` holds notes and definitions. Only a term's own wording triggers the required and protected checks; aliases add it to the prompt and lookups. Pure PHP, unit-tested without a model.
 
 ### Ingestion
 
 - Markdown editor in-app.
 - PDF and DOCX upload: stored privately, text extracted by a queued job into the draft. DOCX via `ZipArchive` and XML. PDF library is an open decision.
-- Glossary import and export as CSV, XLSX and TBX, reusing the existing import infrastructure.
 - No URL crawling in V2.
 
 ## Changesets (W2)
 
 - `ai_changesets`: space ID, run ID, actor, title, status (`open`, `partially_applied`, `applied`, `discarded`), counts.
-- `ai_changeset_items`: changeset ID, target type and ID, base version ID, field path (block IDs, never array indexes), before, after, status (`pending`, `accepted`, `rejected`, `conflict`), glossary findings.
+- `ai_changeset_items`: changeset ID, target type and ID, base version ID, field path (block IDs, never array indexes), before, after, status (`pending`, `accepted`, `rejected`, `conflict`).
 
 Write tools validate patches against the block schema with the same rules content saves use. Invalid patches return to the model as tool errors and never reach review.
 
@@ -232,7 +221,7 @@ Settled with Mike on 2026-10-27. Every AI conversation and run lives in a thread
 - Every user-started run belongs to a thread. Without a `conversation_id` the server creates one. Inline surfaces (rich text selection, single-field actions) create it `quiet`: listed, never raising attention or opening the dock. Internal runs (learning extraction, automatic asset classification) get no thread.
 - Each schedule has one standing thread (`kind = schedule`); each run appends a turn. Learning suggestions live in one standing thread per space (`kind = suggestions`). Both are visible to members with `ai.manage`.
 - Chat threads are private to their owner. The owner can share one with the space; then every member who can view the space sees it under "Shared", anyone with edit rights on an entry can accept or reject its cards, and only the owner sends follow-ups.
-- A turn is one run: the prompt, the streamed steps, the answer, a questionnaire if it paused, and its changeset as cards. One card per entry with per-field accept and reject as icon buttons; a field shows a status badge only once decided. Cross-locale changes show source and translation side by side; same-locale edits keep the word diff. A turn touching more than five entries renders one summary card (counts, glossary warnings, Accept all, Reject all) with the entries as collapsed rows, 50 at a time; its Accept all leaves conflicts, glossary violations and flagged changes open. An operation's changeset is one card of review groups: a checkbox per group, up to three examples, the changes left to an individual decision and every change on request, a page at a time. Only selected groups are accepted. Translations show per unit the source change since the current translation was made, the current and the proposed translation. Asset proposals show tags and folders by name and the reason; new folders and tags are accepted one by one.
+- A turn is one run: the prompt, the streamed steps, the answer, a questionnaire if it paused, and its changeset as cards. One card per entry with per-field accept and reject as icon buttons; a field shows a status badge only once decided. Cross-locale changes show source and translation side by side; same-locale edits keep the word diff. A turn touching more than five entries renders one summary card (counts, Accept all, Reject all) with the entries as collapsed rows, 50 at a time; its Accept all leaves conflicts and flagged changes open. An operation's changeset is one card of review groups: a checkbox per group, up to three examples, the changes left to an individual decision and every change on request, a page at a time. Only selected groups are accepted. Translations show per unit the source change since the current translation was made, the current and the proposed translation. Asset proposals show tags and folders by name and the reason; new folders and tags are accepted one by one.
 - Composer: a new thread attaches the current screen (open entry, data source, selection) as a removable chip. In an existing thread, a screen that isn't attached shows as a ghost chip to click. `@` mentions entries, assets and knowledge documents, `/` picks a skill, the model picker stays. Skills are not offered as chips (see the UI section below).
 - Cmd+K stays the command palette. Free text offers "Ask AI: …", and skill items start a thread in the dock with the current screen attached. Feature buttons start threads; the dock opens for them only when there is something to review or answer, except bulk starts, which open the dock on the running thread.
 - Status, derived and never stored, in priority order: `needs_input` (a run awaits answers), `needs_review` (an open non-inline changeset, or pending suggestions), `running`, `failed` (latest run failed), `done`. The list pins `needs_input` and `needs_review` on top, then sorts by last activity. Threads are settled by hand (stored as `archived_at`) and sit in the collapsed "Settled" shelf; a new turn in a settled thread unsettles it. Search matches the title.
@@ -252,7 +241,7 @@ A run in a thread sees the thread's earlier user and assistant messages as conve
 All under `spaces/{space}`, behind `space.member`.
 
 - `GET ai/threads?archived=0|1&search=` lists the threads the user can see, at most 100, needs-you first then by `last_activity_at`. Each row: `id`, `kind`, `title`, `status`, `shared`, `quiet`, `archived`, `last_activity_at`, `owner` (`id`, `name`, or null), `is_owner`, `entry_count` (entries with pending items). `meta.attention` counts visible, unarchived, non-quiet threads in `needs_input` or `needs_review`.
-- `GET ai/threads/{thread}` returns the row plus `context` and `turns`: per run in start order `{ run, prompt, answer, changeset, steps, answers, sources }`. `steps` lists the tool calls that got a result (`id`, `name`, `ok`) and `answers` the questionnaire answers (`question`, `answer` as option label or own text, null when skipped), both read from the run's transcript, so stored turns show their work log like the live one. `sources` are the knowledge documents the run read, kept once each in the run's `setup.sources` and returned with the document's `scope` and `team_id` for linking (null once the document is gone), where `run` is `AiRunResource` (with questionnaire and error) and `changeset` is `AiChangesetResource` with items filtered to target types the user may view. The suggestions thread instead carries `suggestions` and `glossaries`, the payload the inbox used to return.
+- `GET ai/threads/{thread}` returns the row plus `context` and `turns`: per run in start order `{ run, prompt, answer, changeset, steps, answers, sources }`. `steps` lists the tool calls that got a result (`id`, `name`, `ok`) and `answers` the questionnaire answers (`question`, `answer` as option label or own text, null when skipped), both read from the run's transcript, so stored turns show their work log like the live one. `sources` are the knowledge documents the run read, kept once each in the run's `setup.sources` and returned with the document's `scope` and `team_id` for linking (null once the document is gone), where `run` is `AiRunResource` (with questionnaire and error) and `changeset` is `AiChangesetResource` with items filtered to target types the user may view.
 - `PATCH ai/threads/{thread}` with `title`, `shared` (owner only) and `archived` (owner, or `ai.manage` for schedule and suggestion threads).
 - `POST ai/runs` returns or streams the run with its `conversation_id`, including when the server created the thread.
 - Removed: `GET ai/inbox`. Changeset accept and reject and suggestion accept stay as they are.
@@ -263,7 +252,7 @@ All under `spaces/{space}`, behind `space.member`.
 Settled with Mike: copy T3 Code's thread list and composer as closely as the CMS allows, minimal and quiet. Reference source: `pingdotgg/t3code`, `apps/web/src/components/sidebar/SidebarThreadRow.tsx`, `SidebarListMarkers.tsx`, `SidebarThreadHeader.tsx`, `chat/ComposerSurface.tsx`, `chat/ComposerControl.tsx`, `chat/ModelListRow.tsx`, `chat/ComposerPrimaryActions.tsx`.
 
 - List header: a ghost search row (search icon and "Search" placeholder, looks like a row until focused) and a small pencil (square-pen) icon button that starts a new thread. No "New thread" button, no "Show archived" switch.
-- Rows are inbox cards: line one is the context (the attached entry or data source, "Schedule", "Glossary suggestions", or the skill) in muted 13px, with the status on the right: icon plus label in the status color (`Input`, `Review`, `Working`, `Failed`, `Done`), or the relative time when there is nothing to report. Line two is the title, 15px, medium weight. Line three, only when there is something, is muted meta ("7 entries to review", "Shared by Anna"). Active row gets the selected fill; no borders, no dots.
+- Rows are inbox cards: line one is the context (the attached entry or data source, "Schedule", or the skill) in muted 13px, with the status on the right: icon plus label in the status color (`Input`, `Review`, `Working`, `Failed`, `Done`), or the relative time when there is nothing to report. Line two is the title, 15px, medium weight. Line three, only when there is something, is muted meta ("7 entries to review", "Shared by Anna"). Active row gets the selected fill; no borders, no dots.
 - Settle replaces archive. Hovering a row swaps the status for a "Settle" button (check icon); a settled thread leaves the list and joins the "Settled" shelf at the bottom: a collapsible section header with a muted count, collapsed by default, expanded state remembered. Settled rows recede (muted, normal weight) and offer "Unsettle" on hover. Settling is manual. The API keeps the field name `archived`.
 - Composer: one rounded-2xl surface with a hairline outline and a soft shadow, the editor on top, a footer row with small ghost controls: attach (paperclip), the config picker, and on the right the round send button (stop while running). Chips of attached context and files sit in a strip above the editor.
 - Config picker: a ghost trigger with the config name and a small chevron, no border, 13px, muted until hovered. The list shows each config as a row: name, the model in muted 13px below, a check on the selected one.
@@ -289,14 +278,13 @@ Settled with Mike: copy T3 Code's thread list and composer as closely as the CMS
 - Space migration: run `spaces:repair-databases` by hand after the tag; hosted deploys do not run space migrations.
 - Translation operations (2026-10-31). Three tools carry bulk translation, and the translation skills use them instead of `propose_update`:
   - `find_translation_work` pages through a scope and reports per entry and locale `missing`, `outdated`, `current`, `pending_review` or `skipped`.
-  - `get_translation_task` returns the units to translate with a reason (`missing`, `empty`, `stale`, `same_as_source`), the current translation, the previous source text for stale units, TM exact hits per unit, fuzzy examples and matched glossary terms.
+  - `get_translation_task` returns the units to translate with a reason (`missing`, `empty`, `stale`, `same_as_source`), the current translation, the previous source text for stale units, TM exact hits per unit and fuzzy examples.
   - `propose_translation` records the proposal.
   - Code resolves the destination (`TranslationDestinations`): the family's row in that locale, or a create item under the parent's row in that locale. Code also accepts only listed units, so human translations of an unchanged source are never proposed over, and refuses dropped placeholders, tags, link targets and inline code.
   - Empty fields that a fallback locale fills are left alone. Overlay translations get a block stub for a block they lack.
   - `propose_create` with a non-default `language` needs `translation_of` and takes the same path.
   - Staleness uses lineage in the space table `translation_sources`: AI proposals record their source text when they are made. Any other value gets its lineage from history: the source version current when the value first appeared, read once and stored.
   - An approved run can freeze `setup.translation` (`locales`, `include`), which the tools enforce.
-- Learning loop: when an accepted AI item was edited before acceptance, or an AI-written field is edited before publish, a small model extracts candidate term pairs from the AI text versus the final text. Candidates already in the glossary are dropped; the rest become inbox suggestions that someone with `ai.manage` accepts into space or team scope.
 
 ## Scheduled agents (W3)
 
@@ -304,12 +292,12 @@ Settled with Mike: copy T3 Code's thread list and composer as closely as the CMS
 
 ## MCP and content as knowledge (W4)
 
-- `ManagementServer` gains `list_skills`, `read_skill`, `search_knowledge` and `lookup_glossary`, resolved through the same layers for the token's user.
+- `ManagementServer` gains `list_skills`, `read_skill` and `search_knowledge`, resolved through the same layers for the token's user.
 - `search_content` uses the existing `SearchService` (MySQL FULLTEXT or OpenSearch), limited to what the actor can read.
 
 ## Permissions, budgets and audit
 
-- New ability `ai.manage` for team and space skills, knowledge and glossaries. Accepting changeset items needs the same rights as editing the target. Schedules need `ai.manage`.
+- New ability `ai.manage` for team and space skills and knowledge. Accepting changeset items needs the same rights as editing the target. Schedules need `ai.manage`.
 - Budgets in `config/ai.php` with per-skill overrides: max steps, max tokens, max USD per run, inline wall time, per-space concurrent background runs. The `aiCredit` quota remains the outer limit.
 - `ai_runs` is the audit: actor, surface, skill and frozen revisions, config and model, state, transcript checkpoint, pending questionnaire, usage and cost, result or error, timestamps.
 
@@ -320,7 +308,7 @@ Settled with Mike: copy T3 Code's thread list and composer as closely as the CMS
 - Proposals render in place for inline runs and as cards in their thread otherwise, both on the history diff renderers.
 - The dock state (open, width, active thread, pending draft) lives in one module store; the dock is mounted once in the space layout.
 - Helpers live in `resources/js/lib/`, not in sibling composables (auto-import trap).
-- Settings: Skills, Knowledge and Glossaries pages per space and per team, following DESIGN.md (`SettingsSection`, `wide` for tables, `Panel`).
+- Settings: Skills and Knowledge pages per space and per team, following DESIGN.md (`SettingsSection`, `wide` for tables, `Panel`).
 - All strings in `en` and `de`; other locales copy `en`.
 
 ## Known traps
@@ -339,7 +327,7 @@ Settled with Mike: copy T3 Code's thread list and composer as closely as the CMS
 1. PDF text extraction uses `smalot/pdfparser`. No image change.
 2. Run cost: live budget caps use tokens times `ModelRegistry` pricing, because the OpenAI client drops OpenRouter's cost field. A queued job reconciles `ai_runs.cost` afterwards from OpenRouter's generation lookup (W5).
 3. Prompt caching: `cache_control` breakpoints after the style guides and after the skill catalog for Anthropic and Gemini models via OpenRouter, verified against reported cached tokens (W5).
-4. Glossaries have no revisions. A run freezes a snapshot of the terms it matched.
+4. Glossaries were removed on 2026-11-10. Policy snapshots from version 3 hold documents only; version 2 snapshots load with their concepts ignored.
 5. `search_content` covers published entries only. Drafts stay reachable through `get_entry` and mentions.
 6. Read access for `search_content` is the space-wide `content.view` ability.
 7. Rich text selection proposals apply in the open editor and are recorded as single-entry changeset items. A server-side apply would race unsaved edits and live collaborators.

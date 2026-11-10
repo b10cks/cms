@@ -43,12 +43,11 @@ const item = (id: string, entry: string, overrides: Partial<AiChangesetItem> = {
   final: null,
   current: null,
   status: 'pending',
-  glossary_findings: [],
   decided_at: null,
   ...overrides,
 })
 
-const noChanges = { data: [], summary: { changed: 0, conflicts: 0, flagged: 0 }, meta: { total: 0, page: 1, per_page: 25 } }
+const noChanges = { data: [], summary: { changed: 0, conflicts: 0 }, meta: { total: 0, page: 1, per_page: 25 } }
 
 const changeset = (items: AiChangesetItem[]): AiChangeset => ({
   id: 'changeset-1',
@@ -99,13 +98,13 @@ describe('AiThreadChangeset', () => {
     const wrapper = await mountChangeset(
       changeset([
         item('item-1', 'a', written),
-        item('item-2', 'b', { ...written, glossary_findings: [{ id: 'f', type: 'forbidden_variant', term: 'cart', found: 'trolley' }] }),
+        item('item-2', 'b', written),
         item('item-3', 'c', { target_type: 'content', status: 'conflict', current: 'Typed by a person' }),
       ])
     )
 
-    expect(wrapper.get('[data-changes-summary]').text()).toBe('Changed 2 entries, 1 conflict, 1 flagged. Nothing is published.')
-    expect(wrapper.findAll('[data-entry]').map((entry) => entry.attributes('data-entry'))).toEqual(['content:c', 'content:b', 'content:a'])
+    expect(wrapper.get('[data-changes-summary]').text()).toBe('Changed 2 entries, 1 conflict. Nothing is published.')
+    expect(wrapper.findAll('[data-entry]').map((entry) => entry.attributes('data-entry'))).toEqual(['content:c', 'content:a', 'content:b'])
 
     const done = wrapper.get('[data-item="item-1"]')
     expect(done.text()).toContain('Written to draft')
@@ -114,10 +113,7 @@ describe('AiThreadChangeset', () => {
     expect(wrapper.get('[data-entry="content:a"] h3 a').attributes('href')).toBe('/space-1/content/a')
     expect(wrapper.get('[data-entry="content:a"] [data-entry-history]').attributes('href')).toBe('/space-1/content/a/versions')
 
-    // Flagged wording shows with no reason to give, and a conflict keeps its resolve flow.
-    const flagged = wrapper.get('[data-item="item-2"]')
-    expect(flagged.text()).toContain('trolley')
-    expect(flagged.find('[data-override-reason]').exists()).toBe(false)
+    // A conflict keeps its resolve flow.
     expect(wrapper.get('[data-item="item-3"] [data-action="accept"]').attributes('title')).toBe('Use AI version')
     expect(wrapper.get('[data-item="item-3"] [data-action="reject"]').attributes('title')).toBe('Keep current')
   })
@@ -226,20 +222,20 @@ describe('AiThreadChangeset', () => {
     })
     getOperationChanges.mockResolvedValue({
       data: [
-        { target_id: 'a', label: 'Entry a', written: 1, conflicts: 1, flagged: 0, flagged_wording: [] },
-        { target_id: 'b', label: 'Entry b', written: 2, conflicts: 0, flagged: 3, flagged_wording: ['klimaneutral', 'gratis'] },
-        { target_id: 'c', label: 'Entry c', written: 1, conflicts: 0, flagged: 0, flagged_wording: [] },
+        { target_id: 'a', label: 'Entry a', written: 1, conflicts: 1 },
+        { target_id: 'b', label: 'Entry b', written: 2, conflicts: 0 },
+        { target_id: 'c', label: 'Entry c', written: 1, conflicts: 0 },
       ],
-      summary: { changed: 3, conflicts: 1, flagged: 3 },
+      summary: { changed: 3, conflicts: 1 },
       meta: { total: 3, page: 1, per_page: 25 },
     })
     const wrapper = await mountChangeset({ ...changeset([]), operation_id: 'operation-1', item_count: 7, pending_count: 1 })
 
-    expect(wrapper.get('[data-changes-summary]').text()).toBe('Changed 3 entries, 1 conflict, 3 flagged. Nothing is published.')
+    expect(wrapper.get('[data-changes-summary]').text()).toBe('Changed 3 entries, 1 conflict. Nothing is published.')
     const rows = wrapper.findAll('[data-changed-entry]')
     expect(rows.map((row) => row.attributes('data-changed-entry'))).toEqual(['a', 'b', 'c'])
     expect(rows[0].get('[data-entry-conflicts]').text()).toBe('1 conflict')
-    expect(rows[1].get('[data-entry-flagged]').text()).toBe('Flagged: "klimaneutral", "gratis"')
+    expect(rows[1].find('[data-entry-conflicts]').exists()).toBe(false)
     expect(rows[2].get('[data-entry-history]').attributes('href')).toBe('/space-1/content/c/versions')
     expect(wrapper.find('[data-action="accept-groups"]').exists()).toBe(false)
     expect(getOperationEntryItems).not.toHaveBeenCalled()

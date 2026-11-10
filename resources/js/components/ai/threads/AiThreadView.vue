@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import AiOperationPanel from '~/components/ai/operations/AiOperationPanel.vue'
-import AiSuggestionActions from '~/components/ai/AiSuggestionActions.vue'
 import type { AiThreadMessage } from '~/components/ai/threads/AiThreadComposer.vue'
 import AiThreadComposer from '~/components/ai/threads/AiThreadComposer.vue'
 import AiThreadTurn from '~/components/ai/threads/AiThreadTurn.vue'
@@ -73,14 +72,10 @@ const {
   updateMutation,
   answerMutation,
   cancelMutation,
-  acceptSuggestionMutation,
-  dismissSuggestionMutation,
 } = useAiThreads(() => props.spaceId)
 const { data: thread, isLoading } = useThreadQuery(() => props.threadId)
 const { useThreadOperationsQuery } = useAiOperations(() => props.spaceId)
-const { data: operations } = useThreadOperationsQuery(() =>
-  thread.value && thread.value.kind !== 'suggestions' ? props.threadId : null
-)
+const { data: operations } = useThreadOperationsQuery(() => (thread.value ? props.threadId : null))
 /** Operation changesets arrive on their thread turn; they are reviewed in the operation's panel instead. */
 const operationChangesets = computed(() => {
   const ids = new Set((operations.value ?? []).map((operation) => operation.id))
@@ -281,9 +276,6 @@ const patch = (change: { shared?: boolean; archived?: boolean }) => {
 }
 
 const showComposer = computed(() => isNew.value || (isChat.value && isOwner.value))
-const suggestionsBusy = computed(
-  () => acceptSuggestionMutation.isPending.value || dismissSuggestionMutation.isPending.value
-)
 </script>
 
 <template>
@@ -415,41 +407,6 @@ const suggestionsBusy = computed(
               <Skeleton class="ml-auto h-9 w-2/3 rounded-xl" />
               <Skeleton class="h-4 w-full" />
               <Skeleton class="h-4 w-4/5" />
-            </template>
-
-            <template v-else-if="thread?.kind === 'suggestions'">
-              <p
-                v-if="!thread.suggestions?.length"
-                class="text-sm text-muted"
-              >
-                {{ $t('components.aiThreads.suggestions.empty') }}
-              </p>
-              <MessageScrollerItem
-                v-for="suggestion in thread.suggestions"
-                :key="suggestion.id"
-                :message-id="suggestion.id"
-              >
-                <section class="grid gap-2 rounded-xl border border-border bg-card p-4 shadow-soft-sm">
-                  <h3 class="font-semibold text-primary">{{ suggestion.term }}</h3>
-                  <p class="text-sm text-muted">
-                    {{ Object.entries(suggestion.translations).map(([code, value]) => `${code.toUpperCase()} ${value}`).join(', ') }}
-                  </p>
-                  <p
-                    v-if="suggestion.evidence"
-                    class="text-sm"
-                  >
-                    {{ $t('components.aiThreads.suggestions.evidence', { ai: suggestion.evidence.ai, final: suggestion.evidence.final }) }}
-                  </p>
-                  <AiSuggestionActions
-                    :space-id="spaceId"
-                    :term="suggestion.term"
-                    :glossaries="thread.glossaries ?? []"
-                    :disabled="suggestionsBusy"
-                    @accept="(glossaryId) => acceptSuggestionMutation.mutate({ suggestionId: suggestion.id, glossaryId })"
-                    @dismiss="dismissSuggestionMutation.mutate(suggestion.id)"
-                  />
-                </section>
-              </MessageScrollerItem>
             </template>
 
             <template v-else>

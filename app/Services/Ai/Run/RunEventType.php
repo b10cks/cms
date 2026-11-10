@@ -11,7 +11,6 @@ enum RunEventType: string
     case Source = 'source';
     case Proposal = 'proposal';
     case Questionnaire = 'questionnaire';
-    case GlossaryFindings = 'glossary_findings';
     case Usage = 'usage';
     case MovedToBackground = 'moved_to_background';
     case ProviderRetryScheduled = 'provider_retry_scheduled';

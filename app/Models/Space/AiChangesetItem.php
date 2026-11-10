@@ -3,8 +3,6 @@
 namespace App\Models\Space;
 
 use App\Enums\AiChangesetItemStatus;
-use App\Services\Ai\Changesets\ContentFlags;
-use App\Services\Ai\Knowledge\GlossaryChecker;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Carbon;
@@ -29,9 +27,7 @@ use Illuminate\Support\Carbon;
  * @property mixed $final
  * @property mixed $current
  * @property AiChangesetItemStatus $status
- * @property list<array<string, mixed>>|null $glossary_findings a finding whose wording left the field carries `cleared`
- * @property int $open_findings flagged wording still in the draft, see {@see ContentFlags}
- * @property array<string, mixed>|null $review group, reason, flags, depends_on, bundle and labels (see AssetReview), policy provenance, the locales a proposal is written in, overrides (see AcceptanceReview)
+ * @property array<string, mixed>|null $review group, reason, flags, depends_on, bundle and labels (see AssetReview)
  * @property string|null $decided_by_id
  * @property Carbon|null $decided_at
  * @property Carbon|null $learned_at
@@ -78,8 +74,6 @@ class AiChangesetItem extends SpaceDatabaseModel
         'final',
         'current',
         'status',
-        'glossary_findings',
-        'open_findings',
         'review',
         'decided_by_id',
         'decided_at',
@@ -94,8 +88,6 @@ class AiChangesetItem extends SpaceDatabaseModel
         'final' => 'json',
         'current' => 'json',
         'status' => AiChangesetItemStatus::class,
-        'glossary_findings' => 'array',
-        'open_findings' => 'integer',
         'review' => 'array',
         'decided_at' => 'datetime',
         'learned_at' => 'datetime',
@@ -106,25 +98,6 @@ class AiChangesetItem extends SpaceDatabaseModel
     public function changeset(): BelongsTo
     {
         return $this->belongsTo(AiChangeset::class, 'changeset_id');
-    }
-
-    /**
-     * The blocking findings that still stand. On written content that is what is
-     * still in the draft; on anything else, the findings as recorded.
-     *
-     * @return list<array<string, mixed>>
-     */
-    public function standingFindings(): array
-    {
-        $blocking = GlossaryChecker::blocking($this->glossary_findings ?? []);
-
-        if ($this->target_type !== self::TARGET_CONTENT || $this->status !== AiChangesetItemStatus::Accepted) {
-            return $blocking;
-        }
-
-        return $this->open_findings > 0
-            ? array_values(array_filter($blocking, fn (array $finding) => ! ($finding['cleared'] ?? false)))
-            : [];
     }
 
     public function isOpen(): bool

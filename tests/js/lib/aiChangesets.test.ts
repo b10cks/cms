@@ -9,8 +9,6 @@ import {
   attentionFirst,
   changesSummary,
   entryHistoryLink,
-  needsIndividualLook,
-  overrideErrors,
   translationUnitValue,
 } from '~/lib/aiChangesets'
 
@@ -28,7 +26,6 @@ const item = (overrides: Partial<AiChangesetItem>): AiChangesetItem => ({
   final: null,
   current: null,
   status: 'pending',
-  glossary_findings: [],
   decided_at: null,
   ...overrides,
 })
@@ -114,33 +111,17 @@ describe('translationUnitValue', () => {
 })
 
 describe('review helpers', () => {
-  it('leaves a glossary hint in a bulk accept and a violation of a proposal out of it', () => {
-    const asset = { target_type: 'asset' as const }
-    expect(needsIndividualLook(item({ ...asset, glossary_findings: [{ id: 'h', type: 'missing_term', term: 'a', expected: 'b' }] }))).toBe(false)
-    expect(needsIndividualLook(item({ ...asset, glossary_findings: [{ id: 'v', type: 'translated_do_not_translate', term: 'a', expected: 'a' }] }))).toBe(true)
-    // Content has a draft, so a finding holds nothing back.
-    expect(needsIndividualLook(item({ target_type: 'content', glossary_findings: [{ id: 'v', type: 'translated_do_not_translate', term: 'a', expected: 'a' }] }))).toBe(false)
-  })
-
   it('sums up what happened to content and puts what needs a person first', () => {
-    const flagged = { id: 'v', type: 'forbidden_variant' as const, term: 'a', found: 'b' }
     const items = [
       item({ id: '1', target_type: 'content', target_id: 'a', status: 'accepted' }),
-      item({ id: '2', target_type: 'content', target_id: 'a', status: 'accepted', glossary_findings: [flagged] }),
+      item({ id: '2', target_type: 'content', target_id: 'a', status: 'accepted' }),
       item({ id: '3', target_type: 'content', target_id: 'b', status: 'conflict' }),
-      item({ id: '4', target_type: 'asset', target_id: 'c', status: 'pending', glossary_findings: [flagged] }),
+      item({ id: '4', target_type: 'asset', target_id: 'c', status: 'pending' }),
     ]
 
-    expect(changesSummary(items)).toEqual({ changed: 1, conflicts: 1, flagged: 1 })
+    expect(changesSummary(items)).toEqual({ changed: 1, conflicts: 1 })
     expect(attentionFirst(groupChangesetItems(items)).map((entry) => entry.targetId)).toEqual(['b', 'a', 'c'])
     expect(entryHistoryLink('space-1', { targetType: 'content', targetId: 'a' })).toBe('/space-1/content/a/versions')
     expect(entryHistoryLink('space-1', { targetType: 'asset', targetId: 'c' })).toBeNull()
-  })
-
-  it('reads missing overrides from a 422 and nothing else from it', () => {
-    const error = { data: { errors: { 'overrides.item-1.abc': ['Needs a reason.'], 'overrides.item-1.0.reason': ['Required.'], items: ['Invalid.'] } } }
-
-    expect(overrideErrors(error)).toEqual({ 'item-1': [{ id: 'abc', message: 'Needs a reason.' }] })
-    expect(overrideErrors(new Error('Server error'))).toEqual({})
   })
 })

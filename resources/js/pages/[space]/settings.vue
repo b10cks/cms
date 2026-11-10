@@ -13,7 +13,7 @@ const items = computed(() => access.filterVisibleItems(spaceSettingsNavigationIt
 const { preloadRoute, cancelPreload } = useRoutePreload()
 const linkTo = (routeName: string) => ({ name: routeName, params: { space: spaceId.value } })
 
-/** Detail pages (a skill, a glossary) name the nav entry they belong to in `meta.settingsNav`. */
+/** Detail pages (a skill, a document) name the nav entry they belong to in `meta.settingsNav`. */
 const activeNavItem = computed(() =>
   typeof route.meta.settingsNav === 'string' ? route.meta.settingsNav : route.name
 )

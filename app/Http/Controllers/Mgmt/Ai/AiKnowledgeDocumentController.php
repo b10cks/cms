@@ -48,13 +48,15 @@ class AiKnowledgeDocumentController extends Controller
         $this->authorize('manage', [AiKnowledgeDocument::class, $owner]);
         $this->ensureUniqueSlug($owner, $request->input('slug'));
 
-        $document = AiKnowledgeDocument::create([
+        $document = new AiKnowledgeDocument([
             ...AiKnowledgeDocument::ownerAttributes($owner),
-            ...$request->safe()->only(['title', 'slug', 'type', 'locale', 'enabled']),
+            ...$request->safe()->only(['title', 'description', 'slug', 'type', 'locale', 'enabled']),
             'draft' => (string) $request->input('draft', ''),
             'created_by' => $request->user()->id,
             'updated_by' => $request->user()->id,
         ]);
+        $document->ensureDraftFits();
+        $document->save();
 
         return new AiKnowledgeDocumentResource($document->load('publishedRevision'));
     }
@@ -72,9 +74,13 @@ class AiKnowledgeDocumentController extends Controller
             $this->ensureUniqueSlug($this->aiOwner($request), $request->input('slug'), $model->id);
         }
 
-        $model->fill($request->safe()->only(['title', 'slug', 'type', 'locale', 'enabled']));
+        $model->fill($request->safe()->only(['title', 'description', 'slug', 'type', 'locale', 'enabled']));
         if ($request->has('draft')) {
             $model->draft = (string) $request->input('draft', '');
+        }
+        // An older guide over the limit takes other edits while its draft stays as it is.
+        if ($model->isDirty(['draft', 'type'])) {
+            $model->ensureDraftFits();
         }
         $model->updated_by = $request->user()->id;
         $model->save();

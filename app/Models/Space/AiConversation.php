@@ -17,8 +17,7 @@ use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Support\Carbon;
 
 /**
- * A thread: one user's chat, a schedule's standing thread or the space's
- * suggestions thread. Each run in it is a turn and appends its prompt and
+ * A thread: one user's chat or a schedule's standing thread. Each run in it is a turn and appends its prompt and
  * answer as messages. Its status is derived, see {@see scopeWithStatus()}.
  *
  * @property string $id
@@ -70,7 +69,7 @@ class AiConversation extends SpaceDatabaseModel
 
     /**
      * Threads of the space the user can see: their own chats and shared ones,
-     * schedule and suggestion threads with `ai.manage`.
+     * schedule threads with `ai.manage`.
      */
     public function scopeVisibleTo(Builder $query, User $user, bool $managesAi): void
     {
@@ -78,7 +77,7 @@ class AiConversation extends SpaceDatabaseModel
             ->where(fn (Builder $chat) => $chat
                 ->where('kind', AiThreadKind::Chat->value)
                 ->where(fn (Builder $mine) => $mine->where('user_id', $user->id)->orWhere('shared', true)))
-            ->when($managesAi, fn (Builder $standing) => $standing->orWhereIn('kind', [AiThreadKind::Schedule->value, AiThreadKind::Suggestions->value])));
+            ->when($managesAi, fn (Builder $standing) => $standing->orWhere('kind', AiThreadKind::Schedule->value)));
     }
 
     /**
@@ -109,14 +108,8 @@ class AiConversation extends SpaceDatabaseModel
                 ->where(fn (QueryBuilder $run) => $run->whereNull('ai_changesets.operation_id')->whereColumn('ai_runs.conversation_id', 'ai_conversations.id'))
                 ->orWhereColumn('ai_operations.conversation_id', 'ai_conversations.id'))
             ->where('ai_changesets.inline', false)
-            ->where(fn (QueryBuilder $open) => $open
-                ->whereIn('ai_changeset_items.status', self::OPEN_ITEMS)
-                ->orWhere('ai_changeset_items.open_findings', '>', 0));
-        $suggestions = self::pendingSuggestions()->selectRaw('count(*)');
-        $query->selectRaw(
-            '(case when '.self::wrap('ai_conversations.kind').' = ? then ('.$suggestions->toSql().') else ('.$entries->toSql().') end) as entry_count',
-            [AiThreadKind::Suggestions->value, ...$suggestions->getBindings(), ...$entries->getBindings()],
-        );
+            ->whereIn('ai_changeset_items.status', self::OPEN_ITEMS);
+        $query->selectRaw('('.$entries->toSql().') as entry_count', $entries->getBindings());
     }
 
     /** Pinned first (waiting for answers, then for review), then by last activity. */
@@ -183,28 +176,16 @@ class AiConversation extends SpaceDatabaseModel
         return self::runsInState(AiRunState::AwaitingInput);
     }
 
-    private static function pendingSuggestions(): QueryBuilder
-    {
-        return self::table('ai_glossary_suggestions')
-            ->whereColumn('ai_glossary_suggestions.space_id', 'ai_conversations.space_id')
-            ->where('ai_glossary_suggestions.status', AiGlossarySuggestion::STATUS_PENDING);
-    }
-
     /**
      * A background changeset in the thread, its own or that of an operation the
-     * thread holds, that is open or still has flagged wording in a draft, or for
-     * the suggestions thread a pending suggestion of the space.
+     * thread holds, that is open.
      *
      * @return array{0: string, 1: list<mixed>}
      */
     private static function reviewSql(): array
     {
         $open = [AiChangesetStatus::Open->value, AiChangesetStatus::PartiallyApplied->value];
-        $needsYou = fn (QueryBuilder $changeset) => $changeset
-            ->whereIn('ai_changesets.status', $open)
-            ->orWhereExists(self::table('ai_changeset_items')->selectRaw('1')
-                ->whereColumn('ai_changeset_items.changeset_id', 'ai_changesets.id')
-                ->where('ai_changeset_items.open_findings', '>', 0));
+        $needsYou = fn (QueryBuilder $changeset) => $changeset->whereIn('ai_changesets.status', $open);
         $changesets = self::table('ai_changesets')->selectRaw('1')
             ->join('ai_runs', 'ai_runs.id', '=', 'ai_changesets.run_id')
             ->whereColumn('ai_runs.conversation_id', 'ai_conversations.id')
@@ -215,14 +196,10 @@ class AiConversation extends SpaceDatabaseModel
             ->join('ai_operations', 'ai_operations.id', '=', 'ai_changesets.operation_id')
             ->whereColumn('ai_operations.conversation_id', 'ai_conversations.id')
             ->where($needsYou);
-        [$suggestions, $suggestionBindings] = self::existsSql(self::pendingSuggestions()->selectRaw('1'));
         [$runReview, $runBindings] = self::existsSql($changesets);
         [$operationReview, $operationBindings] = self::existsSql($operations);
 
-        return [
-            '(case when '.self::wrap('ai_conversations.kind')." = ? then {$suggestions} else ({$runReview} or {$operationReview}) end)",
-            [AiThreadKind::Suggestions->value, ...$suggestionBindings, ...$runBindings, ...$operationBindings],
-        ];
+        return ["({$runReview} or {$operationReview})", [...$runBindings, ...$operationBindings]];
     }
 
     /** A query on the space connection the threads live on. */

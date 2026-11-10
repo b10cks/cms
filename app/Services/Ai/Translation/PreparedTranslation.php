@@ -8,13 +8,11 @@ final readonly class PreparedTranslation
     /**
      * @param  list<array<string, mixed>>  $items  change set item attributes, in record order
      * @param  list<list<array{field_path: string, source_text: string, target_text: string, reason: string, previous_source_text: string|null}>>  $lineage  per item, its units
-     * @param  list<list<array<string, string>>>  $findings  per item, glossary findings
      */
     public function __construct(
         public TranslationDestination $destination,
         public array $items,
         public array $lineage,
-        public array $findings,
     ) {}
 
     /**
@@ -27,7 +25,7 @@ final readonly class PreparedTranslation
         $kept = array_keys(array_filter($this->items, fn (array $item) => ! isset($left[$item['path'] ?? ''])));
         $pick = fn (array $list) => array_values(array_intersect_key($list, array_flip($kept)));
 
-        return new self($this->destination, $pick($this->items), $pick($this->lineage), $pick($this->findings));
+        return new self($this->destination, $pick($this->items), $pick($this->lineage));
     }
 
     /**

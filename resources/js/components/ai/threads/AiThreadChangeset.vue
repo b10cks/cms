@@ -2,11 +2,9 @@
 import AiOperationReview from '~/components/ai/threads/AiOperationReview.vue'
 import AiThreadEntryCard from '~/components/ai/threads/AiThreadEntryCard.vue'
 import { provideItemDecisions } from '~/components/ai/threads/useItemDecisions'
-import Icon from '~/components/Icon.vue'
 import { Button } from '~/components/ui/button'
 import type { AiChangeset, AiChangesetItem, AiDecision } from '~/lib/aiChangesets'
 import { attentionFirst, changesLine, changesSummary, groupChangesetItems, isOpenItem, needsIndividualLook } from '~/lib/aiChangesets'
-import { isGlossaryHint } from '~/lib/aiRun'
 import { itemLocales, SUMMARY_ENTRY_LIMIT } from '~/lib/aiThreads'
 import { languageName } from '~/lib/languageNames'
 
@@ -42,10 +40,7 @@ const summary = computed(() => entries.value.length > SUMMARY_ENTRY_LIMIT)
 const busy = computed(() => acceptMutation.isPending.value || rejectMutation.isPending.value)
 
 const proposals = computed(() => items.value.filter((item) => item.target_type !== 'content' && isOpenItem(item)))
-const counts = computed(() => ({
-  findings: proposals.value.reduce((sum, item) => sum + item.glossary_findings.filter((finding) => !isGlossaryHint(finding)).length, 0),
-  individual: proposals.value.filter(needsIndividualLook).length,
-}))
+const individualCount = computed(() => proposals.value.filter(needsIndividualLook).length)
 
 const shownRows = ref(ROW_PAGE)
 const rows = computed(() => entries.value.slice(0, shownRows.value))
@@ -60,10 +55,7 @@ const locales = (item: AiChangesetItem) => {
   }
 }
 
-/**
- * Applies what needs no individual look, with its edits. The server leaves an
- * edit open when it has findings; it stays on its card.
- */
+/** Applies what needs no individual look, with its edits. */
 const acceptAll = async () => {
   const values = decisions.editsOf(proposals.value.filter((item) => !needsIndividualLook(item)))
   try {
@@ -127,13 +119,6 @@ const reject = (decision: AiDecision) => rejectMutation.mutate({ changesetId: pr
         <div>
           <h3 class="font-semibold text-primary">{{ changeset.title }}</h3>
         </div>
-        <p
-          v-if="counts.findings > 0"
-          class="flex items-center gap-2 text-sm text-warning"
-        >
-          <Icon name="lucide:triangle-alert" />
-          {{ $t('components.aiThreads.summary.findings', { count: counts.findings }) }}
-        </p>
         <div
           v-if="proposals.length > 0"
           class="flex gap-2"
@@ -156,10 +141,10 @@ const reject = (decision: AiDecision) => rejectMutation.mutate({ changesetId: pr
             {{ $t('components.aiChangeset.rejectAll') }}
           </Button>
           <span
-            v-if="counts.individual > 0"
+            v-if="individualCount > 0"
             class="ml-auto self-center text-sm text-muted tabular-nums"
           >
-            {{ $t('components.aiThreads.review.individualTotal', { count: counts.individual }) }}
+            {{ $t('components.aiThreads.review.individualTotal', { count: individualCount }) }}
           </span>
         </div>
       </header>

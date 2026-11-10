@@ -120,7 +120,7 @@ const choose = (team: TeamResource) => {
   selectTeam(team.id)
 
   if (routeTeamId.value && routeTeamId.value !== team.id) {
-    // Section pages keep their section; detail pages (a skill, a glossary) fall back to the overview.
+    // Section pages keep their section; detail pages (a skill, a document) fall back to the overview.
     const keepSection = Object.keys(route.params).length === 1 && typeof route.name === 'string'
     router.push({
       name: keepSection ? (route.name as string) : 'team-overview',

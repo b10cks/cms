@@ -2,32 +2,21 @@
 import { useReviewI18n } from '~/components/ai/threads/useReviewI18n'
 import Icon from '~/components/Icon.vue'
 import type { AiChangesetItem } from '~/lib/aiChangesets'
-import { glossaryFindingText, type AiGlossaryFinding } from '~/lib/aiRun'
 
-/**
- * What a proposal rests on, and the reasons a reviewer gave for keeping
- * findings once they are committed.
- */
+/** What a proposal rests on and the knowledge it was written under. */
 const props = defineProps<{
   item: AiChangesetItem
 }>()
 
-const { t: globalT } = useI18n()
 const { t } = useReviewI18n()
 const provenanceOpen = ref(false)
 
 const evidence = computed(() => props.item.review?.evidence ?? null)
-const overrides = computed(() => props.item.review?.overrides ?? [])
-
-const overrideLabel = (finding: AiGlossaryFinding | undefined) =>
-  finding
-    ? glossaryFindingText(finding, globalT)
-    : ''
 
 /** The versions it was written under. */
 const provenance = computed(() => {
   const { policy } = props.item.review ?? {}
-  return policy ? [t('provenance.writtenUnder', { id: policy.snapshot_id.slice(0, 8), count: policy.terms?.length ?? 0 }, policy.terms?.length ?? 0)] : []
+  return policy ? [t('provenance.writtenUnder', { id: policy.snapshot_id.slice(0, 8) })] : []
 })
 </script>
 
@@ -76,20 +65,5 @@ const provenance = computed(() => {
       <template v-else-if="evidence.basis === 'metadata'">{{ t('evidence.metadata', { sources: (evidence.sources ?? []).join(', ') }) }}</template>
       <template v-else>{{ t('evidence.instruction', { quote: evidence.quote ?? '' }) }}</template>
     </p>
-
-    <ul
-      v-if="overrides.length > 0"
-      class="grid gap-1 text-sm"
-      :aria-label="t('overrides.keptLabel')"
-    >
-      <li
-        v-for="override in overrides"
-        :key="override.finding_id"
-        data-override-kept
-      >
-        <span class="text-muted">{{ t('overrides.kept', { finding: overrideLabel(override.finding) }) }}</span>
-        {{ override.reason }}
-      </li>
-    </ul>
   </div>
 </template>

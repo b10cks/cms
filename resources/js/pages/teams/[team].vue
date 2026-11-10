@@ -26,7 +26,7 @@ const counts = computed<Record<string, number | undefined>>(() => ({
 const { preloadRoute, cancelPreload } = useRoutePreload()
 const linkTo = (routeName: string) => ({ name: routeName, params: { team: teamId.value } })
 
-/** Detail pages (a skill, a glossary) name the nav entry they belong to in `meta.settingsNav`. */
+/** Detail pages (a skill, a document) name the nav entry they belong to in `meta.settingsNav`. */
 const activeNavItem = computed(() =>
   typeof route.meta.settingsNav === 'string' ? route.meta.settingsNav : route.name
 )

@@ -119,7 +119,7 @@ class AiDirectWritesTest extends TestCase
 
         $this->getJson($this->url("ai/operations/{$operation->id}/changes"))
             ->assertOk()
-            ->assertJsonPath('summary', ['changed' => 3, 'conflicts' => 0, 'flagged' => 0])
+            ->assertJsonPath('summary', ['changed' => 3, 'conflicts' => 0])
             ->assertJsonPath('meta.total', 3);
         // Nothing in the thread waits for anyone.
         $this->getJson($this->url('ai/threads'))->assertJsonPath('meta.attention', 0);
@@ -230,7 +230,7 @@ class AiDirectWritesTest extends TestCase
 
         // Conflicts come first in what a person sees.
         $this->getJson($this->url("ai/operations/{$operation->id}/changes"))
-            ->assertJsonPath('summary', ['changed' => 1, 'conflicts' => 1, 'flagged' => 0])
+            ->assertJsonPath('summary', ['changed' => 1, 'conflicts' => 1])
             ->assertJsonPath('data.0.target_id', $raced->id)
             ->assertJsonPath('data.0.conflicts', 1);
         $this->getJson($this->url('ai/threads'))->assertJsonPath('data.0.status', 'needs_review');

@@ -184,7 +184,7 @@ beforeEach(() => {
   savePlan.mockReset()
   extendBudget.mockReset()
   getOperationReview.mockReset()
-  getOperationChanges.mockReset().mockResolvedValue({ data: [], summary: { changed: 0, conflicts: 0, flagged: 0 }, meta: { total: 0, page: 1, per_page: 25 } })
+  getOperationChanges.mockReset().mockResolvedValue({ data: [], summary: { changed: 0, conflicts: 0 }, meta: { total: 0, page: 1, per_page: 25 } })
   items.mockReset()
   getRun.mockReset()
   blocksIndex.mockReset()
@@ -530,19 +530,19 @@ describe('AiOperationPanel', () => {
     unverified.unmount()
   })
 
-  it('says what happened in the receipt: changed entries, conflicts, flagged wording and what waits', async () => {
+  it('says what happened in the receipt: changed entries, conflicts and what waits', async () => {
     getOperationReview.mockResolvedValue({
       data: [
         { key: 'a', operation: 'update', target_type: 'asset', path: 'title', label: null, field_type: 'text', counts: { pending: 5, conflict: 1, accepted: 3, rejected: 1 }, bulk: 5, individual: 1, queued: null, examples: [] },
       ],
     })
-    getOperationChanges.mockResolvedValue({ data: [], summary: { changed: 412, conflicts: 3, flagged: 7 }, meta: { total: 412, page: 1, per_page: 1 } })
+    getOperationChanges.mockResolvedValue({ data: [], summary: { changed: 412, conflicts: 3 }, meta: { total: 412, page: 1, per_page: 1 } })
     const changeset = { id: 'c1', title: 'Change', status: 'open' as const, inline: false, operation_id: 'op-1', item_count: 10, pending_count: 6, created_at: '2026-10-31T10:00:00Z' }
     const wrapper = await mountPanel(operation({ state: 'completed', approved_plan: operation().plan, changeset_id: 'c1', changeset }))
     await flushPromises()
     const receipt = wrapper.get('[data-operation-receipt]')
 
-    expect(receipt.get('[data-changes-happened]').text()).toBe('Changed 412 entries, 3 conflicts, 7 flagged')
+    expect(receipt.get('[data-changes-happened]').text()).toBe('Changed 412 entries, 3 conflicts')
     expect(receipt.get('[data-proposals-waiting]').text()).toContain('6 asset or data entry changes wait for you')
     expect(receipt.text()).toContain('Nothing is published')
     wrapper.unmount()

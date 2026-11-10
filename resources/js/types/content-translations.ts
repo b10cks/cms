@@ -50,8 +50,6 @@ export interface ContentTranslationUnitStatus {
   status: ContentTranslationUnitState
   /** For `stale`: the source text the saved translation was written against. */
   previous_source?: string
-  /** What the saved translation breaks in the glossary; only for people with `ai.view`. */
-  findings?: ContentTranslationGlossaryFinding[]
 }
 
 export interface ContentTranslationStatus {
@@ -60,27 +58,6 @@ export interface ContentTranslationStatus {
   translation_id: string | null
   /** Keyed by unit ID: `title`, `body.<block id>.text`, `seo.title`, `prices.rows.<row id>.label`. */
   units: Record<string, ContentTranslationUnitStatus>
-}
-
-export interface ContentTranslationGlossaryTerm {
-  concept_id?: string
-  term: string
-  /** The Use wording the translation must hold. */
-  required?: string
-  /** Keep exact: the name stays as written. */
-  do_not_translate?: true
-  /** Avoid wording. */
-  forbidden?: string[]
-  note?: string
-  /** Where the term sits in `source`, in UTF-16 offsets. */
-  matches: Array<{ start: number; end: number; text: string }>
-}
-
-export interface ContentTranslationGlossaryFinding {
-  type: 'missing_term' | 'translated_do_not_translate' | 'forbidden_variant'
-  term: string
-  expected?: string
-  found?: string
 }
 
 export interface ContentTranslationMemoryMatch {
@@ -101,12 +78,6 @@ export interface ContentTranslationAssist {
   type: string
   source: string
   target: string
-  /** Null for people without the `ai.view` ability. */
-  glossary: {
-    terms: ContentTranslationGlossaryTerm[]
-    /** Null when there is no target text to check. */
-    findings: ContentTranslationGlossaryFinding[] | null
-  } | null
   memory: ContentTranslationMemoryMatch[]
   locales: Array<{ locale: string; text: string }>
 }

@@ -19,7 +19,9 @@ The HTTP endpoint uses the CMS's current operation registry. The separately vers
 
 For long-running translations, asset metadata and page metadata, use `ai.operations.*`. Create and review a frozen scope and plan before obtaining editor approval for the budget. The CMS prepares proposals; people accept draft changes and control publication. Read coverage from `counts.coverage`. Grouped questions can resume answered outputs without replacing completed work.
 
-`ai.glossaries.import` and `ai.glossaries.export` read and write the [glossary sheet](glossary-sheet.md), and `export` takes `template` for an empty one. `conceptRows`, `createConceptRow`, `updateConceptRow`, `deleteConceptRow` and `bulkConceptRows` edit a glossary per row and apply at once. `ai.teamGlossaries.*` offers the same for a team. `checkText` tries a text against saved wording without a provider call, in one glossary or with `scope: space` what a run in the space uses. Deterministic glossary overrides take written reasons, and edited proposals can require a semantic recheck before a second explicit accept.
+The glossary operations (`ai.glossaries.*`, `ai.teamGlossaries.*`, `lookup_glossary`) are gone. Wording rules live in per-language style guides.
+
+`ai.knowledge.*` manages style guides and reference documents. Each needs a `description` of at most 200 characters, which runs use to list reference documents. A style guide holds at most 20,000 characters, since every run in its scope reads it whole: `create`, `update` and `publish` refuse a longer style draft with a 422 naming the limit and the draft's length. See [knowledge documents](../api/management-api.md#knowledge-documents).
 
 `ai.translationMemory.list`, `update`, `delete` and `bulk` read and correct the space's [translation memory](../api/management-api.md#translation-memory), the published pairs runs reuse without a provider call. A correction becomes `origin: human`. The entry is not changed, and its next publish records what it holds then, so a corrected or deleted pair comes back unless the translation is fixed too.
 
@@ -119,10 +121,9 @@ The server exposes nine tools and two resources:
 | `list_skills` | Lists the AI skills available in a space (space, team and built-in skills, after shadowing) |
 | `read_skill` | Loads one skill's full instructions and the names of its supporting files |
 | `search_knowledge` | Searches the space's published reference documents and returns short excerpts with their source |
-| `lookup_glossary` | Finds glossary terms in a text and returns a plain instruction, the required wording for a target locale, terms to keep exactly, wording never to use and the row's note |
 | `search_content` | Searches the space's published entries and returns short excerpts with entry ID, name and path |
 
-The five AI tools take a `spaceId` and run as the token's user, through the same skill and knowledge layers (space, owning team, ancestor teams, built-ins) that the in-app AI uses. They need the `space.view` ability on that space, and `search_content` also needs `content.view`. The local stdio server has no user, so these tools only work over the HTTP endpoint.
+The four AI tools take a `spaceId` and run as the token's user, through the same skill and knowledge layers (space, owning team, ancestor teams, built-ins) that the in-app AI uses. They need the `space.view` ability on that space, and `search_content` also needs `content.view`. The local stdio server has no user, so these tools only work over the HTTP endpoint.
 
 The guides are also published as the MCP resources `b10cks://content-model-guide` and `b10cks://automations-guide`, so clients that surface resources can pin them into context. Assistants are instructed to read them before designing blocks or creating automations — they encode the same rules the API validates (slug format, translatable/indexable constraints, trigger/action config schemas) plus patterns from production projects, which turns "make me a hero block" or "add a cache-clear action to articles" from trial-and-error into a one-shot call.
 
