@@ -16,6 +16,7 @@ class AutomationMessage extends Mailable
     public function __construct(
         public string $subjectLine,
         public string $body,
+        public ?string $spaceName = null,
     ) {
     }
 
@@ -39,6 +40,14 @@ class AutomationMessage extends Mailable
             }
 
             $mailMessage->line($line);
+        }
+
+        // The mail leaves from the platform address with text a space wrote.
+        // Naming the space keeps it from passing as a message of the platform.
+        if ($this->spaceName !== null) {
+            $mailMessage->line(__('This message was sent by an automation of the space ":space".', [
+                'space' => strtr($this->spaceName, ['\\' => '\\\\', '[' => '\[']),
+            ]));
         }
 
         return $this->markdown(

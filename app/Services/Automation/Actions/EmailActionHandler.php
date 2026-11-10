@@ -5,9 +5,21 @@ namespace App\Services\Automation\Actions;
 use App\Mail\Automation\AutomationMessage;
 use App\Services\Automation\Enums\ActionType;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\RateLimiter;
 
+/**
+ * Sends from the platform address to addresses the space chooses, so both
+ * the size of one mail and the volume per space are bounded, and every mail
+ * names the space it comes from.
+ */
 class EmailActionHandler extends BaseActionHandler
 {
+    /** To, cc and bcc of one mail together. */
+    public const int MAX_RECIPIENTS = 20;
+
+    /** Recipients one space may mail per hour across all its automations. */
+    public const int HOURLY_RECIPIENT_LIMIT = 200;
+
     public function __construct()
     {
         $this->type = ActionType::EMAIL;
@@ -26,6 +38,17 @@ class EmailActionHandler extends BaseActionHandler
         $this->assertResolvedTemplate($subject, 'subject');
         $this->assertResolvedTemplate($body, 'body');
 
+        $recipients = count($to) + count($cc) + count($bcc);
+        if ($recipients > self::MAX_RECIPIENTS) {
+            throw new \RuntimeException('Unable to send automation email: more than '.self::MAX_RECIPIENTS.' recipients.');
+        }
+
+        $volume = 'automation-mail|'.data_get($context, 'space.id');
+        if (RateLimiter::attempts($volume) + $recipients > self::HOURLY_RECIPIENT_LIMIT) {
+            throw new \RuntimeException('Unable to send automation email: the hourly limit of '.self::HOURLY_RECIPIENT_LIMIT.' recipients for this space is reached.');
+        }
+        RateLimiter::increment($volume, 3600, $recipients);
+
         try {
             $message = Mail::to($to);
 
@@ -41,7 +64,7 @@ class EmailActionHandler extends BaseActionHandler
                 $message->replyTo($email);
             }
 
-            $message->send(new AutomationMessage($subject, $body));
+            $message->send(new AutomationMessage($subject, $body, data_get($context, 'space.name')));
 
             return true;
 
