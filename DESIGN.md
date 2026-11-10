@@ -200,6 +200,14 @@ Settled 2026-10-27. Concept: "Threads" in `docs/concepts/native-ai-integration.m
 - The focused field gets an assist panel to the right of the columns, only when the editor is at least 1100px wide: the field name as title, then Glossary (source term and the wording to use, a 14px warning triangle on a broken term), Memory (cards on `bg-surface`, entry name and score, score in `text-success-ink` from 90%, click to use), Other languages, and Length. Empty sections hide; memory under 30% or already in the field is not shown. Settled 2026-11-06. Rejected: memory and glossary chips inline under the field (6).
 - What a translation breaks shows under its field, one `text-sm text-warning-ink` line per problem with a 14px `lucide:triangle-alert`: glossary wording, keep-exact terms, length over the schema maximum with the count on the right. One problem is one line. Flags never block. Settled 2026-11-06. Rejected: a summary panel above the fields with jump links (5).
 
+## Language-only entries
+
+Settled 2026-11-10. An entry created in a language other than the space default exists only there and gets no translations.
+
+- The create dialog puts the language in its title, "Create new content in [German]", as the normal select at its own width and the compact 32px size, so it sits on the title line, only in spaces with more than one language. Picking another language adds one muted line under the title saying the entry gets no other versions (8). Rejected: a quiet select on the `state-selected` wash, its fill doesn't match the other selects (8, "make sure its the normal select"); the 36px field, too large beside the title (8, "larger than usual"); a Language select beside Content type (6); asking "every language or one" first (5).
+- The tree keeps the entry where it sits and marks it with a 10px outline language code right after the name, muted, its tooltip naming the language. The name truncates before the code. Title and code share one full-width span, so the row indents like every other row (9). Rejected: the code in the right cluster before the status dot (4, "aligned/inline with the name"); a language scope select above the tree (7); a separate "Only in one language" section (5).
+- The editor's language switcher stays. The languages the entry has no version in are disabled and read "No version", and a muted note under a separator says why (8). Rejected: a fixed "German only" label in place of the switcher (7), and a badge by the title with no switcher (5).
+
 ## Narrow screens
 
 - Below `md` the asset folders, tags and collections move into a left sheet opened by "Browse folders". Below `md` the team nav is a horizontal scroller above the page. The content editor has no phone layout yet.
