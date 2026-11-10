@@ -43,7 +43,7 @@ class ContentResource extends JsonResource
     public function toArray(Request $request)
     {
         $resolved = $this->resolveContent($request);
-        $row = $resolved->targetContent ?? $resolved->fallbackContent ?? $resolved->canonicalContent;
+        $row = $resolved->resolvedRow;
         $row->loadMissing('block');
 
         $this->additional([
@@ -144,7 +144,7 @@ class ContentResource extends JsonResource
 
         $result = [
             ...$content,
-            'block' => ($resolved->targetContent ?? $resolved->fallbackContent ?? $resolved->canonicalContent)
+            'block' => $resolved->resolvedRow
                 ->loadMissing('block')
                 ->block
                 ?->slug,
@@ -190,7 +190,9 @@ class ContentResource extends JsonResource
     {
         return SimpleContentResource::collection(
             $resolved->familyContents
-                ->filter(fn (Content $content) => $content->published_at !== null && $content->id !== $currentRow->id)
+                ->filter(fn (Content $content) => $content->published_at !== null
+                    && $content->published_version_id !== null
+                    && $content->id !== $currentRow->id)
                 ->values()
         );
     }

@@ -80,7 +80,15 @@ class ContentI18nResolver
         );
         $versionsByContentId = $this->resolveVersionsForFamilies($familiesByCanonicalId, $versionScope, $withRelations);
 
-        return $normalizedItems->map(function (array $item) use ($space, $canonicalsById, $familiesByCanonicalId, $effectiveModesByCanonicalId, $versionsByContentId, $withRelations): ResolvedContent {
+        // An unpublished row keeps its last published version, and a family
+        // holds every translation. In the published scope only published rows
+        // may be the target, a fallback layer or the row the response describes.
+        $servable = fn (?Content $row): ?Content => $versionScope === 'published' && $row !== null
+            && ($row->published_at === null || $row->published_version_id === null)
+                ? null
+                : $row;
+
+        return $normalizedItems->map(function (array $item) use ($space, $canonicalsById, $familiesByCanonicalId, $effectiveModesByCanonicalId, $versionsByContentId, $withRelations, $servable): ResolvedContent {
             /** @var Content $content */
             $content = $item['content'];
             $requestedLanguage = \in_array($item['target_language'], $space->settings->getEnabledLanguages(), true)
@@ -129,7 +137,7 @@ class ContentI18nResolver
             })->values();
 
             $effectiveMode = $effectiveModesByCanonicalId->get($canonical->id, $space->settings->getI18nMode());
-            $targetContent = $this->contentI18nService->findLanguageContent($family, $resolvedCanonical, $requestedLanguage);
+            $targetContent = $servable($this->contentI18nService->findLanguageContent($family, $resolvedCanonical, $requestedLanguage));
             $targetVersion = $targetContent ? $versionsByContentId->get($targetContent->id) : null;
             $blockSchema = $resolvedCanonical->block?->schema?->toArray() ?? [];
 
@@ -148,13 +156,13 @@ class ContentI18nResolver
                     $requestedLanguage,
                     $versionsByContentId,
                     $targetContent,
-                );
+                )->filter(fn (array $layer): bool => $servable($layer['content']) !== null)->values();
                 $fallbackContent = $fallbackChain->first()['content'] ?? null;
                 $fallbackVersion = $fallbackChain->first()['version'] ?? null;
             }
 
             if ($resolvedRow === null) {
-                $resolvedRow = $fallbackContent ?? $canonical;
+                $resolvedRow = $fallbackContent ?? $servable($canonical) ?? $content;
                 $resolvedLanguage = $resolvedRow->language_iso;
             }
 
@@ -164,7 +172,7 @@ class ContentI18nResolver
                 ? $this->mergeBaseChain(
                     $fallbackChain,
                     $blockSchema,
-                    $targetVersion ? null : ($family->firstWhere('id', $resolvedCanonical->id) ?? $resolvedCanonical),
+                    $targetVersion ? null : $servable($family->firstWhere('id', $resolvedCanonical->id) ?? $resolvedCanonical),
                 )
                 : [];
 
