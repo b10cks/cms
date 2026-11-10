@@ -103,8 +103,6 @@ class TeamPolicy
 
     private function organisationId(Team $team): string
     {
-        $ancestorIds = TeamScope::for($team)->ancestorIds;
-
-        return $ancestorIds === [] ? $team->id : end($ancestorIds);
+        return TeamScope::forOrganisationOf($team)->team->id;
     }
 }

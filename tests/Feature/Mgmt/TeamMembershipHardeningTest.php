@@ -386,6 +386,25 @@ class TeamMembershipHardeningTest extends TestCase
             ->assertJsonPath('data.status', 'declined');
     }
 
+    #[Test]
+    public function a_user_outside_the_organisation_cannot_be_attached_without_an_invite(): void
+    {
+        $owner = User::factory()->create();
+        $stranger = User::factory()->create();
+        $team = Team::factory()->create();
+        $this->assignTeamRole($team, $owner, 'owner');
+
+        $this->actingAs($owner)
+            ->postJson(route('mgmt.teams.users.store', $team), ['user_id' => $stranger->id, 'role' => 'member'])
+            ->assertUnprocessable();
+
+        $this->actingAs($owner)
+            ->patchJson(route('mgmt.teams.users.update', [$team, $stranger->id]), ['role' => 'member'])
+            ->assertUnprocessable();
+
+        $this->assertFalse($team->users()->where('users.id', $stranger->id)->exists());
+    }
+
     // ── Audit trail ───────────────────────────────────────────────────────
 
     #[Test]
@@ -395,6 +414,7 @@ class TeamMembershipHardeningTest extends TestCase
         $member = User::factory()->create();
         $team = Team::factory()->create();
         $this->assignTeamRole($team, $owner, 'owner');
+        $this->assignTeamRole(Team::factory()->create(['parent_id' => $team->id]), $member, 'member');
 
         AuditLog::query()->delete();
 
