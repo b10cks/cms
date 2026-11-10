@@ -3,6 +3,23 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.11.10-191e959a] — 2026-11-10
+
+- 📝 Record the glossary removal branch
+- 📝 Regenerate the API spec without the glossary
+- 🗃️ Archive and drop the glossary tables
+- 🔥 Remove the AI glossary from runs, tools, reviews and the API
+- 🌐 Remove glossary copy from all locales and reword what mentions it
+- 🔥 Remove the glossary editor, glossary suggestions and findings on AI proposals
+- 🔥 Count only conflicts in content flags and operation changes
+- 🔥 Drop glossary terms and checks from the translation editor
+- 📝 Remove the glossary from the docs
+- 📝 Document knowledge descriptions and the glossary cleanup, regenerate the API spec
+- ✨ List reference documents in every run by their description
+- 🔥 Remove the older glossary term endpoints, case_sensitive and version 1 snapshots
+- 📝 Document the style guide limit and record the branch
+- ✨ Give every style guide to the model whole, up to 20,000 characters
+
 ## [v2026.11.10-b0883032] — 2026-11-10
 
 - 📝 Record the translation memory management branch
