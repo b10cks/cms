@@ -969,7 +969,6 @@
         }
       },
       "createContent": "Yeni İçerik Oluştur",
-      "createContentIn": "Yeni içerik oluştur, dil:",
       "create": {
         "selectContentType": "İçerik türünü seç",
         "loadingRestrictions": "Alt içerik kısıtlamaları yükleniyor...",
@@ -980,7 +979,8 @@
         "slugManual": "Özel bağlantı adresi.",
         "languageOnly": "Yalnızca {language}. Diğer dillerde sürümü olmaz.",
         "slugReset": "Otomatik bağlantı adresini kullan",
-        "slugPending": "Girdiyi oluşturduğunuzda üretilir"
+        "slugPending": "Girdiyi oluşturduğunuzda üretilir",
+        "languageHint": "Girdinin dili. Yalnızca o dilde bulunan bir girdi için başka bir dil seçin."
       },
       "blankTemplate": "Boş",
       "templates": "Şablonlar",

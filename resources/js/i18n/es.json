@@ -969,7 +969,6 @@
         }
       },
       "createContent": "Crear contenido nuevo",
-      "createContentIn": "Crear contenido nuevo en",
       "create": {
         "selectContentType": "Seleccionar tipo de contenido",
         "loadingRestrictions": "Cargando restricciones de contenido hijo...",
@@ -980,7 +979,8 @@
         "slugManual": "Slug personalizado.",
         "languageOnly": "Solo en {language}. No tendrá versiones en otros idiomas.",
         "slugReset": "Usar el slug automático",
-        "slugPending": "Generado al crear la entrada"
+        "slugPending": "Generado al crear la entrada",
+        "languageHint": "Idioma de la entrada. Elige otro para una entrada que solo exista en ese idioma."
       },
       "blankTemplate": "En blanco",
       "templates": "Plantillas",

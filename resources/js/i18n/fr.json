@@ -969,7 +969,6 @@
         }
       },
       "createContent": "Créer un nouveau contenu",
-      "createContentIn": "Créer un contenu en",
       "create": {
         "selectContentType": "Sélectionner le type de contenu",
         "loadingRestrictions": "Chargement des restrictions de contenu enfant...",
@@ -980,7 +979,8 @@
         "slugManual": "Slug personnalisé.",
         "languageOnly": "Uniquement en {language}. Aucune version dans les autres langues.",
         "slugReset": "Utiliser le slug automatique",
-        "slugPending": "Généré lors de la création de l'entrée"
+        "slugPending": "Généré lors de la création de l'entrée",
+        "languageHint": "Langue de l'entrée. Choisissez-en une autre pour une entrée qui n'existe que dans cette langue."
       },
       "blankTemplate": "Vierge",
       "templates": "Modèles",

@@ -4,17 +4,24 @@ import { refDebounced } from '@vueuse/core'
 import Icon from '~/components/Icon.vue'
 import { Button } from '~/components/ui/button'
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuTrigger,
+} from '~/components/ui/dropdown-menu'
+import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
-  DialogHeaderCombined,
   DialogTitle,
 } from '~/components/ui/dialog'
 import { FormField, InputField } from '~/components/ui/form'
 import { Input } from '~/components/ui/input'
 import IconName from '~/components/ui/IconName.vue'
+import { SimpleTooltip } from '~/components/ui/tooltip'
 import {
   Select,
   SelectContent,
@@ -22,7 +29,6 @@ import {
   SelectItem,
   SelectLabel,
   SelectTrigger,
-  SelectValue,
 } from '~/components/ui/select'
 import {
   createContentDefaultsBlockLookup,
@@ -67,17 +73,28 @@ const languageOptions = computed(() => {
     (code) => ({ code, label: languageName(code, settings.languages, locale.value) })
   )
 })
+/** Only spaces that allow single-language entries offer a choice of language. */
+const canPickLanguage = computed(
+  () => !!space.value?.settings?.language_only_entries && languageOptions.value.length > 1
+)
 /** The language the entry is created in, the space default unless picked otherwise. */
 const pickedLanguage = ref<string | null>(null)
 // Same slug rules the content wizard uses, so both creation paths agree. The
 // language decides whether "Über" becomes "ueber" or "uber".
-const contentLanguage = computed(() => pickedLanguage.value ?? defaultLanguage.value)
+const contentLanguage = computed(() =>
+  canPickLanguage.value
+    ? (pickedLanguage.value ?? parentLanguage.value ?? defaultLanguage.value)
+    : defaultLanguage.value
+)
 const isOtherLanguage = computed(
   () => !!contentLanguage.value && contentLanguage.value !== defaultLanguage.value
 )
 const contentLanguageLabel = computed(
   () => languageOptions.value.find(({ code }) => code === contentLanguage.value)?.label ?? ''
 )
+const pickLanguage = (value: unknown) => {
+  pickedLanguage.value = String(value)
+}
 
 const content = ref<CreateContentPayload>({
   block_id: '',
@@ -87,6 +104,13 @@ const content = ref<CreateContentPayload>({
 
 const parentContentId = computed(() => (open.value && props.parentId ? props.parentId : null))
 const { data: parentContent, isLoading: isLoadingParentContent } = useContentQuery(parentContentId)
+/** Children of an entry made in another language start in that language too. */
+const parentLanguage = computed(() => {
+  const parent = parentContent.value
+  if (!parent || parent.i18n_parent_id || parent.language_iso === defaultLanguage.value) return null
+
+  return parent.language_iso
+})
 const canonicalParentContentId = computed(() =>
   parentContent.value && parentContent.value.i18n_parent_id
     ? parentContent.value.i18n_parent_id
@@ -319,38 +343,12 @@ watch(open, (isOpen, wasOpen) => {
         class="grid gap-4"
         @submit.prevent="handleCreate(content)"
       >
-        <DialogHeader v-if="languageOptions.length > 1">
-          <div class="flex items-center gap-2">
-            <DialogTitle>{{ $t('labels.contents.createContentIn') }}</DialogTitle>
-            <Select
-              :model-value="contentLanguage ?? undefined"
-              @update:model-value="pickedLanguage = String($event)"
-            >
-              <SelectTrigger
-                :aria-label="$t('labels.contents.localization.language')"
-                class="h-8! w-auto! rounded-md!"
-              >
-                <SelectValue>{{ contentLanguageLabel }}</SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem
-                  v-for="option in languageOptions"
-                  :key="option.code"
-                  :value="option.code"
-                >
-                  {{ option.label }}
-                </SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+        <DialogHeader>
+          <DialogTitle>{{ $t('labels.contents.createContent') }}</DialogTitle>
           <DialogDescription v-if="isOtherLanguage">
             {{ $t('labels.contents.create.languageOnly', { language: contentLanguageLabel }) }}
           </DialogDescription>
         </DialogHeader>
-        <DialogHeaderCombined
-          v-else
-          :title="$t('labels.contents.createContent')"
-        />
         <div class="grid gap-6">
           <div
             v-if="props.parentId && isLoadingParentRestrictions"
@@ -528,6 +526,39 @@ watch(open, (isOpen, wasOpen) => {
           </div>
         </div>
         <DialogFooter>
+          <DropdownMenu v-if="canPickLanguage">
+            <SimpleTooltip
+              as-child
+              :tooltip="$t('labels.contents.create.languageHint')"
+            >
+              <DropdownMenuTrigger as-child>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  class="mr-auto text-muted"
+                  :aria-label="$t('labels.contents.localization.language')"
+                >
+                  <Icon name="lucide:languages" />
+                  {{ contentLanguageLabel }}
+                </Button>
+              </DropdownMenuTrigger>
+            </SimpleTooltip>
+            <DropdownMenuContent align="start">
+              <DropdownMenuRadioGroup
+                :model-value="contentLanguage ?? undefined"
+                @update:model-value="pickLanguage"
+              >
+                <DropdownMenuRadioItem
+                  v-for="option in languageOptions"
+                  :key="option.code"
+                  :value="option.code"
+                >
+                  {{ option.label }}
+                </DropdownMenuRadioItem>
+              </DropdownMenuRadioGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
           <Button
             type="button"
             variant="outline"

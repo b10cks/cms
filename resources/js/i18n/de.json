@@ -978,7 +978,6 @@
         }
       },
       "createContent": "Neuen Inhalt erstellen",
-      "createContentIn": "Neuen Inhalt erstellen auf",
       "create": {
         "selectContentType": "Inhaltstyp wählen",
         "loadingRestrictions": "Child-Content-Einschränkungen werden geladen...",
@@ -989,7 +988,8 @@
         "slugManual": "Eigener Slug.",
         "languageOnly": "Nur auf {language}. Andere Sprachen bekommen keine Version davon.",
         "slugReset": "Automatischen Slug verwenden",
-        "slugPending": "Wird beim Anlegen erzeugt"
+        "slugPending": "Wird beim Anlegen erzeugt",
+        "languageHint": "Sprache des Eintrags. Wähle eine andere für einen Eintrag, der nur in dieser Sprache existiert."
       },
       "blankTemplate": "Leer",
       "templates": "Vorlagen",
