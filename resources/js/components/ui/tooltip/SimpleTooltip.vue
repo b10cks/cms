@@ -8,6 +8,10 @@ import {
   TooltipTrigger,
 } from '~/components/ui/tooltip/index'
 
+// Attributes go to the trigger, so a wrapping trigger such as a dropdown's can
+// put its handlers and aria state on the slotted element.
+defineOptions({ inheritAttrs: false })
+
 const props = withDefaults(
   defineProps<{
     tooltip: string
@@ -41,6 +45,7 @@ const openOnKeyboardFocus = (event: FocusEvent) => {
       ignore-non-keyboard-focus
     >
       <TooltipTrigger
+        v-bind="$attrs"
         :as-child="asChild"
         :type="asChild ? undefined : 'button'"
         @focusin="openOnKeyboardFocus"

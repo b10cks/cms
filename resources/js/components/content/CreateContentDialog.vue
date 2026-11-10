@@ -527,11 +527,11 @@ watch(open, (isOpen, wasOpen) => {
         </div>
         <DialogFooter>
           <DropdownMenu v-if="canPickLanguage">
-            <SimpleTooltip
-              as-child
-              :tooltip="$t('labels.contents.create.languageHint')"
-            >
-              <DropdownMenuTrigger as-child>
+            <DropdownMenuTrigger as-child>
+              <SimpleTooltip
+                as-child
+                :tooltip="$t('labels.contents.create.languageHint')"
+              >
                 <Button
                   type="button"
                   variant="ghost"
@@ -542,8 +542,8 @@ watch(open, (isOpen, wasOpen) => {
                   <Icon name="lucide:languages" />
                   {{ contentLanguageLabel }}
                 </Button>
-              </DropdownMenuTrigger>
-            </SimpleTooltip>
+              </SimpleTooltip>
+            </DropdownMenuTrigger>
             <DropdownMenuContent align="start">
               <DropdownMenuRadioGroup
                 :model-value="contentLanguage ?? undefined"
