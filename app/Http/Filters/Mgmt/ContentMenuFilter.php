@@ -48,8 +48,21 @@ class ContentMenuFilter extends ExtendedFilter
 
         $filters = $this->getFilters();
 
+        // One row per family: its default-language row, or the entry itself
+        // when the family has none (an entry made in another language).
         if (! array_key_exists('language_iso', $filters)) {
-            $builder->where('language_iso', $this->space->settings->getDefaultLanguage());
+            $defaultLanguage = $this->space->settings->getDefaultLanguage();
+
+            $builder->where(fn ($query) => $query
+                ->where('language_iso', $defaultLanguage)
+                ->orWhere(fn ($query) => $query
+                    ->whereNull('i18n_parent_id')
+                    ->whereNotExists(fn ($sub) => $sub
+                        ->selectRaw('1')
+                        ->from('contents as default_translations')
+                        ->whereColumn('default_translations.i18n_parent_id', 'contents.id')
+                        ->where('default_translations.language_iso', $defaultLanguage)
+                        ->whereNull('default_translations.deleted_at'))));
         }
 
         return $builder;

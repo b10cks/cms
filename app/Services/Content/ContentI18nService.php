@@ -123,7 +123,7 @@ class ContentI18nService
         $familyByLanguage = $family->keyBy('language_iso');
         $defaultLanguage = $space->settings->getDefaultLanguage();
 
-        return array_map(function (string $languageIso) use ($space, $content, $familyByLanguage, $defaultLanguage): array {
+        return array_map(function (string $languageIso) use ($space, $content, $canonical, $familyByLanguage, $defaultLanguage): array {
             /** @var Content|null $row */
             $row = $familyByLanguage->get($languageIso);
 
@@ -133,6 +133,9 @@ class ContentI18nService
                 'exists' => $row !== null,
                 'content_id' => $row?->id,
                 'is_default' => $languageIso === $defaultLanguage,
+                // The version the entry was created in. Usually the default
+                // language, but an entry can start in any enabled language.
+                'is_canonical' => $row !== null && $row->id === $canonical->id,
                 'is_current' => $content->language_iso === $languageIso,
                 // Same three states the content header shows: live, live with a
                 // draft staged on top, or not live at all.
