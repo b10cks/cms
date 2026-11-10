@@ -43,7 +43,13 @@ class LoginOneTimeTokenController extends AuthController
                 ], 423);
             }
 
-            if (!app(\App\Services\Auth\TwoFactorAuthService::class)->verifyTotp($user, $totpCode)) {
+            if ($lockout = $this->totpLockoutResponse($user)) {
+                $this->logoutSession($request);
+
+                return $lockout;
+            }
+
+            if (!app(\App\Services\Auth\TwoFactorAuthService::class)->attemptTotp($user, $totpCode)) {
                 $this->logoutSession($request);
 
                 return response()->json([

@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Services\Auth\TwoFactorAuthService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -42,5 +44,21 @@ abstract class AuthController extends Controller
             $request->session()->invalidate();
             $request->session()->regenerateToken();
         }
+    }
+
+    /** The 429 a sign-in gets while the account's TOTP attempts are used up, else null. */
+    protected function totpLockoutResponse(User $user): ?JsonResponse
+    {
+        $seconds = app(TwoFactorAuthService::class)->totpLockoutSeconds($user);
+
+        if ($seconds === 0) {
+            return null;
+        }
+
+        return response()->json([
+            'message' => __('auth.too_many_verification_attempts', ['seconds' => $seconds]),
+            'error_code' => 'TOO_MANY_ATTEMPTS',
+            'retry_after' => $seconds,
+        ], 429);
     }
 }

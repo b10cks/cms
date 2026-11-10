@@ -4,6 +4,7 @@ namespace App\Services\Auth;
 
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\RateLimiter;
 
 class TwoFactorAuthService
 {
@@ -12,6 +13,8 @@ class TwoFactorAuthService
     private const string VERIFICATION_GRACE_PERIOD_KEY = 'auth.2fa_verified_until.';
     private const int TOTP_PERIOD = 30;
     private const int TOTP_DIGITS = 6;
+    private const int TOTP_MAX_ATTEMPTS = 5;
+    private const int TOTP_LOCKOUT_SECONDS = 900;
 
     public function generateSecret(): string
     {
@@ -37,6 +40,45 @@ class TwoFactorAuthService
         }
 
         return false;
+    }
+
+    /**
+     * verifyTotp() with a failure counter per account, for the sign-in paths.
+     * The per-minute request throttles leave room to walk the six digits, and
+     * three codes are valid at any moment. The counter is the one the step-up
+     * header check uses (ThrottlesStepUpVerification), so both share a budget.
+     * A locked account fails every attempt, see totpLockoutSeconds().
+     */
+    public function attemptTotp(User $user, string $code): bool
+    {
+        $key = $this->totpAttemptsKey($user);
+
+        if (RateLimiter::tooManyAttempts($key, self::TOTP_MAX_ATTEMPTS)) {
+            return false;
+        }
+
+        if ($this->verifyTotp($user, $code)) {
+            RateLimiter::clear($key);
+
+            return true;
+        }
+
+        RateLimiter::hit($key, self::TOTP_LOCKOUT_SECONDS);
+
+        return false;
+    }
+
+    /** Seconds until the account may try a code again, or 0 when it is not locked. */
+    public function totpLockoutSeconds(User $user): int
+    {
+        $key = $this->totpAttemptsKey($user);
+
+        return RateLimiter::tooManyAttempts($key, self::TOTP_MAX_ATTEMPTS) ? RateLimiter::availableIn($key) : 0;
+    }
+
+    private function totpAttemptsKey(User $user): string
+    {
+        return "step-up:totp:{$user->getKey()}";
     }
 
     public function verify(string $secret, string $code): bool

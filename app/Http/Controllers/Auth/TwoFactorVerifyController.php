@@ -26,47 +26,25 @@ class TwoFactorVerifyController extends AuthController
             ], 400);
         }
 
-        $code = $request->input('code');
-
-        if ($this->verifyTotpCode($user, $code)) {
-            $this->twoFactorService->setGracePeriod($request, $user, config('auth.2fa_grace_period', 30));
-
-            return response()->json([
-                'message' => __('auth.2fa_verified'),
-            ]);
+        if ($lockout = $this->totpLockoutResponse($user)) {
+            return $lockout;
         }
 
-        if ($this->verifyBackupCode($user, $code)) {
+        // A TOTP or a backup code; a used backup code is removed.
+        $backupCodes = count($user->two_factor_backup_codes ?? []);
+
+        if ($this->twoFactorService->attemptTotp($user, (string) $request->input('code'))) {
             $this->twoFactorService->setGracePeriod($request, $user, config('auth.2fa_grace_period', 30));
 
             return response()->json([
-                'message' => __('auth.2fa_verified_backup_code_used'),
+                'message' => count($user->two_factor_backup_codes ?? []) < $backupCodes
+                    ? __('auth.2fa_verified_backup_code_used')
+                    : __('auth.2fa_verified'),
             ]);
         }
 
         return response()->json([
             'message' => __('auth.invalid_2fa_code'),
         ], 422);
-    }
-
-    private function verifyTotpCode($user, string $code): bool
-    {
-        return $this->twoFactorService->verify($user->two_factor_secret, $code);
-    }
-
-    private function verifyBackupCode($user, string $code): bool
-    {
-        $backupCodes = $user->two_factor_backup_codes;
-
-        if (!$this->twoFactorService->verifyBackupCode($backupCodes, $code)) {
-            return false;
-        }
-
-        $updatedCodes = $this->twoFactorService->removeUsedBackupCode($backupCodes, $code);
-        $user->forceFill([
-            'two_factor_backup_codes' => $updatedCodes,
-        ])->save();
-
-        return true;
     }
 }

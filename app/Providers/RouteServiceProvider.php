@@ -12,6 +12,7 @@ use Illuminate\Routing\Middleware\ThrottleRequests;
 use Illuminate\Routing\Middleware\ThrottleRequestsWithRedis;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Str;
 
 class RouteServiceProvider extends ServiceProvider
 {
@@ -58,19 +59,25 @@ class RouteServiceProvider extends ServiceProvider
             ];
         });
 
-        RateLimiter::for('login', function (Request $request) {
-            return [
-                Limit::perMinute(60)->by("login|{$request->ip()}"),
-                Limit::perMinute(5)->by("login|{$request->input('email')}"),
-            ];
-        });
+        // The per-account limit is keyed on the address as the database matches
+        // it (case-insensitive), and only exists when one was sent: the social
+        // and SAML routes share this limiter and would otherwise all count
+        // against one empty key.
+        $emailLimit = static function (Request $request, string $name, int $perMinute): array {
+            $email = Str::lower(trim((string) $request->input('email')));
 
-        RateLimiter::for('one-time', function (Request $request) {
-            return [
-                Limit::perMinute(5)->by("one-time|{$request->ip()}"),
-                Limit::perMinute(1)->by("one-time|{$request->input('email')}"),
-            ];
-        });
+            return $email === '' ? [] : [Limit::perMinute($perMinute)->by("{$name}|{$email}")];
+        };
+
+        RateLimiter::for('login', fn (Request $request) => [
+            Limit::perMinute(60)->by("login|{$request->ip()}"),
+            ...$emailLimit($request, 'login', 5),
+        ]);
+
+        RateLimiter::for('one-time', fn (Request $request) => [
+            Limit::perMinute(5)->by("one-time|{$request->ip()}"),
+            ...$emailLimit($request, 'one-time', 1),
+        ]);
 
         RateLimiter::for('shares', function (Request $request) {
             return Limit::perMinute(60)->by("shares|{$request->ip()}");
