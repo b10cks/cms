@@ -10,11 +10,16 @@ class EnsureRevision
 {
     public function handle(Request $request, Closure $next)
     {
-        if (!$request->query('rv')) {
-            /** @var Space $space */
-            $space = app('currentSpace');
+        /** @var Space $space */
+        $space = app('currentSpace');
+        $revision = $request->query('rv');
+
+        // A revision the space has not reached yet is answered like a missing
+        // one. Served as asked, the response would sit in the CDN under that
+        // revision and come back as current once the space gets there.
+        if (! $revision || (is_numeric($revision) && (int) $revision > $space->rv)) {
             $params = $request->query();
-            $params['rv'] = $space->content_updated_at?->timestamp ?? $space->updated_at->timestamp;
+            $params['rv'] = $space->rv;
             $url = $request->path() . '?' . http_build_query($params);
 
             // No $secure argument: it is an absolute override, not a hint, so
@@ -25,6 +30,7 @@ class EnsureRevision
                 'x-b10cks-version' => config('app.version'),
             ]);
         }
+
         return $next($request);
     }
 }

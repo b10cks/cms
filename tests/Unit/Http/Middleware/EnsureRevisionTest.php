@@ -62,4 +62,25 @@ class EnsureRevisionTest extends TestCase
     {
         $this->assertStringStartsWith('https://', $this->redirectLocation('local', 'https://cms.example.com'));
     }
+
+    #[Test]
+    public function it_redirects_a_revision_from_the_future_to_the_current_one(): void
+    {
+        $current = app('currentSpace')->rv;
+
+        $response = $this->middleware->handle(
+            Request::create('http://localhost:8000/contents/home?rv='.($current + 3600)),
+            fn () => response('unreachable'),
+        );
+
+        $this->assertSame(301, $response->getStatusCode());
+        $this->assertStringContainsString("rv={$current}", $response->getTargetUrl());
+
+        $served = $this->middleware->handle(
+            Request::create("http://localhost:8000/contents/home?rv={$current}"),
+            fn () => response('served'),
+        );
+
+        $this->assertSame('served', $served->getContent());
+    }
 }

@@ -219,7 +219,7 @@ class Content extends SpaceModel
         });
 
         static::saved(function (Content $content) {
-            $space = request('space') ?? SpaceContext::current();
+            $space = SpaceContext::resolve();
 
             if ($content->isDirty('slug') || $content->isDirty('parent_id') || $content->isDirty('language_iso')) {
                 UpdateContentFullSlugsJob::dispatch($content, $space)->afterCommit();
@@ -232,7 +232,7 @@ class Content extends SpaceModel
         });
 
         static::softDeleted(function (Content $content) {
-            $space = request('space') ?? SpaceContext::current();
+            $space = SpaceContext::resolve();
 
             if ($space) {
                 // Returns the entry's serial numbers to the pool when the space
@@ -247,7 +247,7 @@ class Content extends SpaceModel
         });
 
         static::restored(function (Content $content) {
-            $space = request('space') ?? SpaceContext::current();
+            $space = SpaceContext::resolve();
 
             if ($space) {
                 app(ContentSerialAssigner::class)->restoreFor($space, $content);
@@ -257,7 +257,7 @@ class Content extends SpaceModel
         });
 
         static::forceDeleted(function (Content $content) {
-            $space = request('space') ?? SpaceContext::current();
+            $space = SpaceContext::resolve();
 
             // Same rule as trashing: under `reuse` the reservations return to
             // the pool; under `preserve` the rows stay behind on purpose, so a
@@ -271,8 +271,7 @@ class Content extends SpaceModel
 
     protected static function scheduleContentMenuInvalidation(): void
     {
-        $spaceId = request('space')?->id
-            ?? (app()->bound('currentSpace') ? app('currentSpace')->id : null);
+        $spaceId = SpaceContext::resolve()?->id;
 
         if (! $spaceId) {
             return;

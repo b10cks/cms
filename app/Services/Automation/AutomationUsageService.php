@@ -187,14 +187,16 @@ class AutomationUsageService
 
     protected function withExecutionSnapshot(Automation $automation, array $context): array
     {
-        return array_replace_recursive($context, [
-            'execution_snapshot' => [
-                'version' => 1,
-                'automation' => $this->automationSnapshot($automation),
-                'action' => $this->actionSnapshot($automation),
-                'space' => $this->spaceSnapshot($automation),
-            ],
-        ]);
+        // Assigned, not merged: the context carries the caller's trigger
+        // payload, and a merge would let its keys into the action config.
+        $context['execution_snapshot'] = [
+            'version' => 1,
+            'automation' => $this->automationSnapshot($automation),
+            'action' => $this->actionSnapshot($automation),
+            'space' => $this->spaceSnapshot($automation),
+        ];
+
+        return $context;
     }
 
     protected function automationSnapshot(Automation $automation): array

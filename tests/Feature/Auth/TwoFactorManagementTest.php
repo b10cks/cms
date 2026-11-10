@@ -253,4 +253,23 @@ class TwoFactorManagementTest extends TestCase
 
         $this->assertFalse($user->fresh()->hasEnabledTwoFactor());
     }
+
+    #[Test]
+    public function repeated_wrong_codes_at_sign_in_lock_the_second_factor_out(): void
+    {
+        $user = $this->userWithTwoFactor();
+        $this->withoutMiddleware(ThrottleRequests::class);
+
+        $signIn = fn (string $code) => $this
+            ->withHeader('X-TOTP-Code', $code)
+            ->postJson(route('auth.token.login'), ['email' => $user->email, 'password' => self::PASSWORD]);
+
+        for ($attempt = 0; $attempt < 5; $attempt++) {
+            $signIn('00000'.$attempt)->assertStatus(403);
+        }
+
+        // A backup code is a valid second factor, but not during the lockout.
+        $signIn('AAAAAAAA')->assertStatus(429)->assertJsonPath('error_code', 'TOO_MANY_ATTEMPTS');
+        $this->assertGuest('web');
+    }
 }

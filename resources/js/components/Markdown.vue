@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import { marked } from 'marked'
-import { sanitizeHtml } from '~/lib/sanitize'
+import { sanitizeMarkdownHtml } from '~/lib/sanitize'
 
 const props = defineProps<{ content: string }>()
 const router = useRouter()
 
 const html = computed(() => {
   // marked passes raw HTML through untouched, so sanitize before v-html.
-  return sanitizeHtml(marked.parse(props.content as string) as string)
+  return sanitizeMarkdownHtml(marked.parse(props.content as string) as string)
 })
 
 function onClick(e: MouseEvent) {

@@ -5,6 +5,7 @@ namespace App\Policies;
 use App\Models\Management\Team;
 use App\Models\User;
 use App\Policies\Concerns\AuthorizesWithAbilities;
+use App\Services\Team\TeamScope;
 
 class TeamPolicy
 {
@@ -29,6 +30,27 @@ class TeamPolicy
     public function createChild(User $user, Team $parent): bool
     {
         return $this->canInTeam($user, $parent, 'team.children.manage');
+    }
+
+    /**
+     * Team roles inherit downward, so a move hands the moved subtree to the
+     * owners of the destination. It needs owner rank on the moved team and
+     * child management on the destination. A sub-team stays inside its
+     * organisation, and only root moves a team to the top level.
+     */
+    public function move(User $user, Team $team, ?Team $parent): bool
+    {
+        if ($user->isElevatedRoot()) {
+            return true;
+        }
+
+        if ($parent === null) {
+            return false;
+        }
+
+        return $this->hasAnyTeamRole($user, $team, ['owner'])
+            && $this->createChild($user, $parent)
+            && ($team->parent_id === null || $this->organisationId($team) === $this->organisationId($parent));
     }
 
     public function update(User $user, Team $team): bool
@@ -77,5 +99,10 @@ class TeamPolicy
     public function manageSaml(User $user, Team $team): bool
     {
         return $user->isElevatedRoot() || $this->hasAnyTeamRole($user, $team, ['owner']);
+    }
+
+    private function organisationId(Team $team): string
+    {
+        return TeamScope::forOrganisationOf($team)->team->id;
     }
 }

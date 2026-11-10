@@ -64,13 +64,17 @@ jobs:
         # own: an old run re-tried from the Actions UI would otherwise republish its
         # version over the current one. Tags are lightweight, so creatordate is the
         # tagged commit's date — tagging an older commit correctly loses the race too.
+        # The tag reaches the script through the environment. Interpolated into
+        # the script text, a tag name with shell syntax would run as code.
+        env:
+          TAG: ${{ steps.version.outputs.tag }}
         run: |
           newest="$(git for-each-ref --sort=-creatordate --format='%(refname:short)' 'refs/tags/v*' | head -n1)"
-          if [ "$newest" = "${{ steps.version.outputs.tag }}" ]; then
+          if [ "$newest" = "$TAG" ]; then
             echo "is_latest=true" >> $GITHUB_OUTPUT
           else
             echo "is_latest=false" >> $GITHUB_OUTPUT
-            echo "::notice::${newest} is newer than ${{ steps.version.outputs.tag }} — publishing the version tag only, leaving latest alone"
+            echo "::notice::${newest} is newer than ${TAG} — publishing the version tag only, leaving latest alone"
           fi
 
       - name: Setup Bun
@@ -190,14 +194,18 @@ jobs:
           push-to-registry: true
 
       - name: Build webhost package
-        run: ./scripts/build-webhost-package.sh "${{ steps.version.outputs.version }}"
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: ./scripts/build-webhost-package.sh "$VERSION"
 
       - name: Generate SHA256SUMS
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
         run: |
           cd dist
           sha256sum \
-            "b10cks-cms-webhost-${{ steps.version.outputs.version }}.tar.gz" \
-            "b10cks-cms-webhost-${{ steps.version.outputs.version }}.zip" \
+            "b10cks-cms-webhost-${VERSION}.tar.gz" \
+            "b10cks-cms-webhost-${VERSION}.zip" \
             > SHA256SUMS
 
       - name: Create GitHub release

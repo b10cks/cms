@@ -15,8 +15,6 @@ class CurrentSpaceResolver
      */
     public function resolve(): ?Space
     {
-        $space = request()?->route('space');
-
-        return $space instanceof Space ? $space : SpaceContext::current();
+        return SpaceContext::resolve();
     }
 }

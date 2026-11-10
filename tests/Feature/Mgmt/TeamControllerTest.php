@@ -112,6 +112,39 @@ class TeamControllerTest extends TestCase
     }
 
     #[Test]
+    public function an_admin_cannot_move_a_team_under_a_team_they_own(): void
+    {
+        $user = User::factory()->create();
+        $team = Team::factory()->create();
+        $own = Team::factory()->create();
+        $this->assignTeamRole($team, $user, 'admin');
+        $this->assignTeamRole($own, $user, 'owner');
+
+        $this->actingAs($user)->patchJson(route('mgmt.teams.update', $team), [
+            'parent_id' => $own->id,
+        ])->assertForbidden();
+
+        $this->assertNull($team->fresh()->parent_id);
+    }
+
+    #[Test]
+    public function a_sub_team_cannot_leave_its_organisation(): void
+    {
+        $user = User::factory()->create();
+        $organisation = Team::factory()->create();
+        $team = Team::factory()->create(['parent_id' => $organisation->id]);
+        $own = Team::factory()->create();
+        $this->assignTeamRole($team, $user, 'owner');
+        $this->assignTeamRole($own, $user, 'owner');
+
+        $this->actingAs($user)->patchJson(route('mgmt.teams.update', $team), [
+            'parent_id' => $own->id,
+        ])->assertForbidden();
+
+        $this->assertSame($organisation->id, $team->fresh()->parent_id);
+    }
+
+    #[Test]
     public function non_root_cannot_move_a_team_to_the_top_level(): void
     {
         $user = User::factory()->create();

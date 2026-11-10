@@ -333,6 +333,17 @@ class CommentControllerTest extends TestCase
     }
 
     #[Test]
+    public function viewer_cannot_create_comment()
+    {
+        $this->actingAs($this->viewer);
+
+        $this->postJson(route('mgmt.comments.store', [
+            'space' => $this->space->id,
+            'content' => $this->content->id,
+        ]), ['body' => 'Not allowed'])->assertForbidden();
+    }
+
+    #[Test]
     public function viewer_cannot_update_comment()
     {
         $this->actingAs($this->owner);

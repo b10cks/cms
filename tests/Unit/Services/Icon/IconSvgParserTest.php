@@ -136,6 +136,32 @@ class IconSvgParserTest extends TestCase
     // -------------------------------------------------------------------------
 
     #[Test]
+    public function it_escapes_cdata_and_keeps_descriptions_text_only(): void
+    {
+        $result = $this->parser->parse(
+            '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">'
+            .'<desc><g><![CDATA[><img src=x onerror=alert(1)>]]></g>note</desc><path d="M0 0"/></svg>'
+        );
+
+        $this->assertStringNotContainsString('<img', $result['body']);
+        $this->assertStringNotContainsString('CDATA', $result['body']);
+        $this->assertStringNotContainsString('<g>', $result['body']);
+        $this->assertStringContainsString('note', $result['body']);
+    }
+
+    #[Test]
+    public function it_removes_external_references_under_any_namespace_prefix(): void
+    {
+        $result = $this->parser->parse(
+            '<svg xmlns="http://www.w3.org/2000/svg" xmlns:x="http://www.w3.org/1999/xlink" viewBox="0 0 24 24">'
+            .'<use x:href="https://evil.example/a.svg#a"/><use x:href="#local"/></svg>'
+        );
+
+        $this->assertStringNotContainsString('evil.example', $result['body']);
+        $this->assertStringContainsString('#local', $result['body']);
+    }
+
+    #[Test]
     public function it_removes_script_elements(): void
     {
         $svg = '<svg viewBox="0 0 24 24"><script>alert(1)</script><path d="M0 0"/></svg>';

@@ -36,7 +36,7 @@ class SlugLanguage
      */
     public function current(): ?string
     {
-        $space = request('space') ?? SpaceContext::current();
+        $space = SpaceContext::resolve();
 
         if ($space === null) {
             return null;

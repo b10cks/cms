@@ -232,6 +232,7 @@ class PublicAssetShareController extends Controller
         $this->ensureUnlocked($share, $request);
 
         abort_unless($share->allow_individual_downloads, 403, 'Individual downloads are disabled for this share.');
+        abort_if($share->isExhausted(), 403, 'The download limit for this share has been reached.');
 
         /** @var Asset|null $model */
         $model = $this->packageService

@@ -66,7 +66,7 @@ class InviteToTeamNotification extends Notification implements ShouldQueue
             ]))))
             ->when(
                 $this->invite->message,
-                fn ($mail) => $mail->line(new HtmlString('<blockquote style="border-left: 4px solid #ccc; padding-left: 16px; margin-left: 0;">'.e($this->invite->message).'</blockquote>'))
+                fn ($mail) => $mail->line($this->quoteForMail($this->invite->message))
             )
             ->line(new HtmlString(__('notifications.inviteTeam.start')))
             ->action(__('notifications.inviteTeam.action'), $acceptUrl)

@@ -67,4 +67,20 @@ final readonly class TeamScope
 
         return new self($team, $teamIds, $ancestorIds, $spaceIds, $parents);
     }
+
+    /** The scope of the top-level team above the given one: its organisation. */
+    public static function forOrganisationOf(Team $team): self
+    {
+        $ancestorIds = self::for($team)->ancestorIds;
+        $root = $ancestorIds === [] ? $team : Team::query()->find(end($ancestorIds));
+
+        return self::for($root ?? $team);
+    }
+
+    /** Whether the user holds a direct role on any team or space of this scope. */
+    public function includesUser(string $userId): bool
+    {
+        return DB::table('team_user')->whereIn('team_id', $this->teamIds)->where('user_id', $userId)->exists()
+            || DB::table('space_user')->whereIn('space_id', $this->spaceIds)->where('user_id', $userId)->exists();
+    }
 }

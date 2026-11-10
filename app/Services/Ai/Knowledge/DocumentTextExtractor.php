@@ -11,6 +11,8 @@ class DocumentTextExtractor
 {
     public const MAX_CHARS = 500_000;
 
+    private const int MAX_DOCX_BODY_BYTES = 50 * 1024 * 1024;
+
     public function extract(string $path, string $extension): string
     {
         $text = match (strtolower($extension)) {
@@ -42,7 +44,16 @@ class DocumentTextExtractor
             throw new RuntimeException('The DOCX file cannot be opened.');
         }
 
-        $xml = $zip->getFromName('word/document.xml');
+        // The body is read and parsed in memory, and a few megabytes of zip
+        // can declare gigabytes of XML.
+        $size = $zip->statName('word/document.xml')['size'] ?? 0;
+        if ($size > self::MAX_DOCX_BODY_BYTES) {
+            $zip->close();
+
+            throw new RuntimeException('The DOCX document body is too large.');
+        }
+
+        $xml = $zip->getFromName('word/document.xml', self::MAX_DOCX_BODY_BYTES);
         $zip->close();
 
         if ($xml === false) {

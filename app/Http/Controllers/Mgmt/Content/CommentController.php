@@ -25,6 +25,7 @@ class CommentController extends Controller
     public function index(Space $space, Content $content, Request $request): ResourceCollection
     {
         $this->authorize('view', [$content, $space]);
+        $this->authorize('viewAny', [Comment::class, $space]);
 
         $comments = Comment::filter(CommentFilter::fromRequest($request))
             ->where('content_id', $content->id)
@@ -58,6 +59,7 @@ class CommentController extends Controller
     public function mentionable(Space $space, Content $content, PeopleDirectoryService $people): JsonResponse
     {
         $this->authorize('view', [$content, $space]);
+        $this->authorize('viewAny', [Comment::class, $space]);
 
         $members = $people->paginateForSpace($space, ['segment' => 'members', 'per_page' => PHP_INT_MAX])['data'];
 
@@ -78,6 +80,7 @@ class CommentController extends Controller
     public function store(Space $space, Content $content, CreateCommentRequest $request): CommentResource
     {
         $this->authorize('view', [$content, $space]);
+        $this->authorize('create', [Comment::class, $space]);
 
         $data = $request->validated();
         $data['content_id'] = $content->id;
@@ -108,6 +111,7 @@ class CommentController extends Controller
     public function show(Space $space, Content $content, Comment $comment): CommentResource
     {
         $this->authorize('view', [$content, $space]);
+        $this->authorize('viewAny', [Comment::class, $space]);
 
         return new CommentResource(
             $comment->load([

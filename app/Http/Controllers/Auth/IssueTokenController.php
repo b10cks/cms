@@ -57,7 +57,13 @@ class IssueTokenController extends AuthController
                 ], 423);
             }
 
-            if (!$this->twoFactorService->verifyTotp($user, $totpCode)) {
+            if ($lockout = $this->totpLockoutResponse($user)) {
+                $this->logoutSession($request);
+
+                return $lockout;
+            }
+
+            if (!$this->twoFactorService->attemptTotp($user, $totpCode)) {
                 $this->logoutSession($request);
 
                 return response()->json([

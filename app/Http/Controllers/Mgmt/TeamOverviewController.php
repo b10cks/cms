@@ -22,8 +22,7 @@ class TeamOverviewController extends Controller
 
     /**
      * What a move to `parent_id` would change. Authorized like the move itself
-     * (TeamController::update): update on the team, createChild on the target,
-     * and the top level is root-only.
+     * (TeamController::update), see TeamPolicy::move.
      */
     public function movePreview(Request $request, Team $team, TeamMovePreviewService $preview): JsonResponse
     {
@@ -32,18 +31,13 @@ class TeamOverviewController extends Controller
         $request->validate(['parent_id' => 'nullable|string']);
         $parentId = $request->input('parent_id');
 
-        if ($parentId === null) {
-            abort_unless($request->user()->is_root, 403);
-            $parent = null;
-        } else {
-            $parent = Team::query()->findOrFail($parentId);
-            $this->authorize('createChild', $parent);
+        $parent = $parentId === null ? null : Team::query()->findOrFail($parentId);
+        $this->authorize('move', [$team, $parent]);
 
-            if (in_array($parent->id, TeamScope::for($team)->teamIds, true)) {
-                throw ValidationException::withMessages([
-                    'parent_id' => 'A team cannot move under itself or one of its sub-teams.',
-                ]);
-            }
+        if ($parent !== null && in_array($parent->id, TeamScope::for($team)->teamIds, true)) {
+            throw ValidationException::withMessages([
+                'parent_id' => 'A team cannot move under itself or one of its sub-teams.',
+            ]);
         }
 
         return response()->json(['data' => $preview->preview($team, $parent)]);

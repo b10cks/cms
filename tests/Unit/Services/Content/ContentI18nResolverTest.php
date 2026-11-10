@@ -332,6 +332,30 @@ class ContentI18nResolverTest extends TestCase
         ], $resolved->effectiveContent['body']);
     }
 
+    #[Test]
+    public function the_published_scope_ignores_unpublished_family_rows(): void
+    {
+        $canonical = $this->createPublishedContent('en', 'about', ['title' => 'About']);
+        $withdrawn = $this->createPublishedContent('de', 'ueber-uns', ['title' => 'Zurückgezogen'], $canonical);
+        $withdrawn->forceFill(['published_at' => null])->save();
+
+        $resolved = app(ContentI18nResolver::class)->resolve($this->space, $canonical, 'de', 'published');
+
+        $this->assertNull($resolved->targetContent);
+        $this->assertSame($canonical->id, $resolved->resolvedRow->id);
+        $this->assertSame(['title' => 'About'], $resolved->effectiveContent);
+
+        // de-at falls back to de, which may not contribute as a layer either.
+        $viaFallback = app(ContentI18nResolver::class)->resolve($this->space, $canonical, 'de-at', 'published');
+
+        $this->assertSame($canonical->id, $viaFallback->fallbackContent?->id);
+        $this->assertSame(['title' => 'About'], $viaFallback->effectiveContent);
+
+        $draft = app(ContentI18nResolver::class)->resolve($this->space, $canonical, 'de', 'current');
+
+        $this->assertSame($withdrawn->id, $draft->targetContent?->id);
+    }
+
     private function createNestedBlock(string $slug, array $schema): void
     {
         Block::query()->create([

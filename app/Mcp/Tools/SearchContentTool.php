@@ -10,6 +10,8 @@ class SearchContentTool extends AiToolBridge
 {
     protected string $name = 'search_content';
 
+    protected string $ability = 'content.view';
+
     protected string $description = 'Search the published entries of a space and return short excerpts with entry ID, name and path. Needs the content.view ability.';
 
     protected function toolName(): string

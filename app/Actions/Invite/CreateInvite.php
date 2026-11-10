@@ -27,7 +27,12 @@ class CreateInvite
         // normalized so duplicate detection behaves the same way.
         $data['email'] = mb_strtolower(trim($data['email'] ?? ''));
 
-        $inviteeId = User::where('email', $data['email'])->first()?->id;
+        // Bound to an account only when that account has shown it reads the
+        // address. An account a team's IdP provisioned under this address
+        // would otherwise see the invite in-app, could decline it, and by
+        // reading the notification keep the mail from being sent.
+        $invitee = User::where('email', $data['email'])->first();
+        $inviteeId = $invitee?->ownsVerifiedEmail() ? $invitee->id : null;
 
         $space = ! empty($data['space_id']) ? Space::query()->findOrFail($data['space_id']) : null;
         $team = $space?->team;

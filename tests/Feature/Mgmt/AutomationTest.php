@@ -346,6 +346,55 @@ class AutomationTest extends TestCase
     }
 
     #[Test]
+    public function a_trigger_payload_cannot_add_recipients_to_an_email_action(): void
+    {
+        Mail::fake();
+
+        $action = AutomationAction::factory()->email()->create([
+            'space_id' => $this->space->id,
+            'config' => ['to' => ['ops@example.com'], 'cc' => [], 'bcc' => [], 'reply_to' => [], 'subject' => 'Hi', 'body' => 'Body'],
+        ]);
+        $automation = Automation::factory()->create([
+            'space_id' => $this->space->id,
+            'action_id' => $action->id,
+            'trigger_type' => 'manual',
+        ]);
+
+        $context = $this->app->make(AutomationUsageService::class)->startExecution($automation, [
+            'execution_snapshot' => ['action' => ['config' => ['bcc' => ['intruder@example.com']]]],
+        ])->context;
+
+        $this->assertSame([], data_get($context, 'execution_snapshot.action.config.bcc'));
+    }
+
+    #[Test]
+    public function an_email_action_refuses_more_recipients_than_one_mail_may_have(): void
+    {
+        Mail::fake();
+
+        $action = AutomationAction::factory()->email()->create([
+            'space_id' => $this->space->id,
+            'config' => [
+                'to' => array_map(fn (int $i): string => "user{$i}@example.com", range(1, 21)),
+                'subject' => 'Hi',
+                'body' => 'Body',
+            ],
+        ]);
+        $automation = Automation::factory()->create([
+            'space_id' => $this->space->id,
+            'action_id' => $action->id,
+            'trigger_type' => 'manual',
+        ]);
+
+        try {
+            $this->app->make(BaseAutomationProcessor::class)->process($automation->id, ['source' => 'manual']);
+        } catch (\Throwable) {
+        }
+
+        Mail::assertNothingSent();
+    }
+
+    #[Test]
     public function queued_executions_keep_using_the_snapshotted_action_definition_after_edits(): void
     {
         Mail::fake();

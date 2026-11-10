@@ -24,12 +24,16 @@ class SpaceInvoiceController extends Controller
     {
         $this->authorize('viewBilling', $space);
 
-        $customerId = Subscription::where('space_id', $space->id)
-            ->whereNotNull('ls_customer_id')
-            ->latest()
-            ->value('ls_customer_id');
+        // Invoices are read per subscription of this space. A customer can pay
+        // for several spaces, so its invoices are not this space's invoices.
+        $subscriptionIds = Subscription::where('space_id', $space->id)
+            ->whereNotNull('lemon_squeezy_id')
+            ->pluck('lemon_squeezy_id')
+            ->map(fn ($id): string => (string) $id)
+            ->unique()
+            ->values();
 
-        if (! $this->ls->isConfigured() || ! $customerId) {
+        if (! $this->ls->isConfigured() || $subscriptionIds->isEmpty()) {
             return InvoiceResource::collection([]);
         }
 
@@ -37,9 +41,14 @@ class SpaceInvoiceController extends Controller
             // A failing closure leaves the cache untouched, so errors are
             // never cached — only successful responses are kept for 5 minutes.
             $invoices = Cache::remember(
-                "ls.invoices.{$space->id}.{$customerId}",
+                "ls.invoices.{$space->id}.".sha1($subscriptionIds->implode(',')),
                 now()->addMinutes(5),
-                fn () => collect($this->ls->listInvoices(['filter[customer_id]' => $customerId]))
+                fn () => $subscriptionIds
+                    ->flatMap(fn (string $id): array => array_filter(
+                        $this->ls->listInvoices(['filter[subscription_id]' => $id]),
+                        // The filter is LemonSqueezy's; the match is checked here too.
+                        fn (array $invoice): bool => (string) data_get($invoice, 'attributes.subscription_id') === $id,
+                    ))
                     ->map(fn (array $invoice) => $this->ls->normalizeInvoice($invoice))
                     ->sortByDesc('created_at')
                     ->values()

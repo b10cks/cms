@@ -8,6 +8,7 @@ use App\Models\Space\Content;
 use App\Models\User;
 use App\Notifications\Space\CommentReplyNotification;
 use App\Notifications\Space\MentionNotification;
+use App\Services\Auth\AuthorizationService;
 use Illuminate\Support\Str;
 
 /**
@@ -49,6 +50,7 @@ class CommentObserver
         if ($comment->parent_id && ($parent = $comment->parent)) {
             if ($parent->author_id && ! in_array($parent->author_id, $notifiedUserIds, true)) {
                 $this->notify(
+                    $space,
                     $parent->author_id,
                     new CommentReplyNotification($spaceData, $contentData, $authorData, $comment->item_id, $comment->field, $excerpt)
                 );
@@ -63,6 +65,7 @@ class CommentObserver
             }
 
             $this->notify(
+                $space,
                 $userId,
                 new MentionNotification($spaceData, $contentData, $authorData, $comment->item_id, $comment->field, $excerpt)
             );
@@ -70,9 +73,17 @@ class CommentObserver
         }
     }
 
-    private function notify(string $userId, object $notification): void
+    /**
+     * A mention is an id in the comment body, so it can name anyone. Only
+     * people who can read the entry are notified.
+     */
+    private function notify(Space $space, string $userId, object $notification): void
     {
-        User::find($userId)?->notify($notification);
+        $user = User::find($userId);
+
+        if ($user && app(AuthorizationService::class)->canInSpace($user, $space, 'content.view')) {
+            $user->notify($notification);
+        }
     }
 
     /** The body stores mentions as `@<id>`; a person reading a notification needs the name. */

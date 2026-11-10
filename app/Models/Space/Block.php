@@ -7,6 +7,7 @@ use App\Models\Traits\BroadcastsSpaceModelEvents;
 use App\Models\Traits\HasPurifiedAttributes;
 use App\Models\Traits\SpaceAuditable;
 use App\Services\Content\ContentMenuCache;
+use App\Support\SpaceContext;
 use CodersCantina\Filter\Filterable;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
@@ -140,8 +141,7 @@ class Block extends SpaceModel
 
     protected static function scheduleContentMenuInvalidation(): void
     {
-        $spaceId = request('space')?->id
-            ?? (app()->bound('currentSpace') ? app('currentSpace')->id : null);
+        $spaceId = SpaceContext::resolve()?->id;
 
         if (! $spaceId) {
             return;
