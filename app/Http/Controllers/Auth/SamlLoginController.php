@@ -102,6 +102,15 @@ class SamlLoginController extends AuthController
         $_GET['SigAlg'] = $request->query('SigAlg');
         $_GET['Signature'] = $request->query('Signature');
 
+        // The library checks a signature only when one is sent, unless the
+        // provider demands signed messages. Without this an unsigned request
+        // naming the IdP would end the session of whoever opens the link.
+        if (! $request->filled('Signature')) {
+            Log::warning('SAML logout rejected', ['team_id' => $team->id, 'errors' => ['unsigned message']]);
+
+            return redirect()->to('/login');
+        }
+
         try {
             $auth = $this->samlLoginService->authFor($provider);
             $redirectUrl = $auth->processSLO(false, null, true, function (): void {

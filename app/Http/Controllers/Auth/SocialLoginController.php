@@ -35,6 +35,8 @@ class SocialLoginController extends AuthController
 
     private const string LINK_RETURN_TO = 'auth.social.link_return_to';
 
+    private const string LINK_INTENT = 'auth.social.link_intent';
+
     private const string VERIFICATION_CACHE_PREFIX = 'email_verification:';
 
     private const int VERIFICATION_CACHE_TTL = 3600;
@@ -77,6 +79,7 @@ class SocialLoginController extends AuthController
             self::LINK_RETURN_TO,
             $this->safeReturnPath($request->query('return', '/account/settings/security'))
         );
+        $request->session()->put(self::LINK_INTENT, "{$provider}:{$request->user()->id}");
 
         return Socialite::driver($provider)
             ->redirectUrl(route('auth.social.link.callback', ['provider' => $provider]))
@@ -87,6 +90,13 @@ class SocialLoginController extends AuthController
     public function linkCallback(Request $request, string $provider): RedirectResponse
     {
         abort_unless($this->isSupportedProvider($provider), 404);
+
+        // The sign-in redirect stores the same OAuth state and needs no step-up,
+        // so a valid state alone does not show that the link flow was started.
+        abort_unless(
+            $request->session()->pull(self::LINK_INTENT) === "{$provider}:{$request->user()->id}",
+            403
+        );
 
         $returnPath = $this->safeReturnPath($request->session()->pull(self::LINK_RETURN_TO));
 
@@ -186,7 +196,11 @@ class SocialLoginController extends AuthController
 
         $user = User::findOrFail($userId);
 
-        if (! $this->twoFactorService->verifyTotp($user, $request->string('code')->toString())) {
+        if ($lockout = $this->totpLockoutResponse($user)) {
+            return $lockout;
+        }
+
+        if (! $this->twoFactorService->attemptTotp($user, $request->string('code')->toString())) {
             return response()->json([
                 'message' => __('auth.invalid_2fa_code'),
                 'error_code' => 'INVALID_TOTP_CODE',
@@ -300,7 +314,14 @@ class SocialLoginController extends AuthController
     ): User {
         [$firstname, $lastname] = $this->namesFrom($socialUser);
         $invite = $this->pendingInvite($request);
-        $verifiedByInvite = $invite && strcasecmp($invite->email, $email) === 0;
+        // The invite id alone is no proof: the inviter sees it. Only the
+        // mailed token shows that this person reads the invited address.
+        $inviteToken = $request->session()->get(self::INVITE_TOKEN);
+        $verifiedByInvite = $invite
+            && $invite->isPending()
+            && is_string($inviteToken)
+            && hash_equals((string) $invite->token, $inviteToken)
+            && strcasecmp($invite->email, $email) === 0;
 
         // Same gate as RegisterController: once a self-hosted instance has its
         // first account, only invitees may create new ones. Without this the

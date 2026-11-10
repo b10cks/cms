@@ -127,6 +127,20 @@ class SocialLoginLinkingTest extends TestCase
         $this->actingAs($user)->get($url)->assertRedirect('https://accounts.google.test/o/oauth2');
     }
 
+    #[Test]
+    public function the_link_callback_refuses_a_flow_the_link_redirect_did_not_start(): void
+    {
+        config(['services.google.client_id' => 'id', 'services.google.client_secret' => 'secret']);
+        $user = User::factory()->create()->fresh();
+
+        // The public sign-in redirect leaves a valid OAuth state in the session.
+        $this->actingAs($user)
+            ->get(route('auth.social.link.callback', ['provider' => 'google', 'code' => 'c', 'state' => 's']))
+            ->assertForbidden();
+
+        $this->assertSame(0, $user->socialLinks()->count());
+    }
+
     protected function tearDown(): void
     {
         Mockery::close();
