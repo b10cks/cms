@@ -7,13 +7,18 @@ use App\Services\Token\TokenUsageService;
 use Closure;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\RateLimiter;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Symfony\Component\HttpKernel\Exception\TooManyRequestsHttpException;
 use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
 
 class AuthenticateDataApi
 {
     public const string TOKEN_ID_ATTRIBUTE = 'data_api.token_id';
+
+    /** Rejected tokens one address may send per minute. */
+    private const int UNKNOWN_TOKEN_LIMIT = 60;
 
     /**
      * Delivery surface (path segment after api/v1) → ability resource.
@@ -44,8 +49,22 @@ class AuthenticateDataApi
             throw new AuthenticationException('No API token provided');
         }
 
+        // The route throttle runs after this middleware and is keyed on the
+        // token, so requests with an unknown token would otherwise cost a
+        // lookup each without any limit.
+        $failures = 'api|unknown-token|'.$request->ip();
+        if (RateLimiter::tooManyAttempts($failures, self::UNKNOWN_TOKEN_LIMIT)) {
+            throw new TooManyRequestsHttpException(RateLimiter::availableIn($failures));
+        }
+
         $usageService = app(abstract: TokenUsageService::class);
-        $token = $this->validateToken($plainTextToken, $usageService);
+        try {
+            $token = $this->validateToken($plainTextToken, $usageService);
+        } catch (UnauthorizedHttpException $e) {
+            RateLimiter::hit($failures);
+
+            throw $e;
+        }
         $this->authorizeRequest($request, $token);
         $request->attributes->set(self::TOKEN_ID_ATTRIBUTE, $token->id);
         app()->offsetSet('currentSpace', $token->space);
