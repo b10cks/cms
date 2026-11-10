@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useQuery, useQueryClient } from '@tanstack/vue-query'
+import { queryOptions, useQueries, useQueryClient } from '@tanstack/vue-query'
 import { refDebounced, useStorage } from '@vueuse/core'
 import { toRaw } from 'vue'
 
@@ -176,19 +176,25 @@ const sourceChainIds = computed(() =>
     .map((version) => version.content_id)
     .filter((contentId): contentId is string => !!contentId)
 )
-const { data: sourceChainContents } = useQuery({
-  queryKey: computed(
-    () => ['localization-source-chain', spaceId.value, sourceChainIds.value] as const
-  ),
-  // Read the ids from the key, not the live computed: a language switch changes
-  // them mid-fetch and would cache an empty chain under the old key.
-  queryFn: async ({ queryKey: [, , contentIds] }) =>
-    Promise.all(
-      contentIds.map(async (contentId) => {
-        const response = await spaceAPI.value.contents.get(contentId)
-        return response.data
+// Each source language reads the shared content detail cache, so a save or
+// publish in the editor shows up here instead of a private stale copy.
+// Undefined until every language in the chain has loaded.
+const sourceChainContents = useQueries({
+  queries: computed(() =>
+    sourceChainIds.value.map((contentId) =>
+      queryOptions({
+        queryKey: queryKeys.contents(spaceId.value).detail(contentId),
+        queryFn: async ({ signal }) => {
+          const response = await spaceAPI.value.contents.get(contentId, {}, { signal })
+          return response.data
+        },
       })
-    ),
+    )
+  ),
+  combine: (results) => {
+    const contents = results.flatMap((result) => (result.data ? [result.data] : []))
+    return contents.length === results.length ? contents : undefined
+  },
 })
 
 /**
@@ -560,9 +566,7 @@ const isLoading = computed(
   () =>
     !canonicalContent.value ||
     (!!translatableId.value && !translatableOriginalContent.value) ||
-    sourceChainIds.value.some(
-      (contentId) => !(sourceChainContents.value || []).some((content) => content.id === contentId)
-    ) ||
+    (sourceChainIds.value.length > 0 && !sourceChainContents.value) ||
     !block.value ||
     !translatableContent.value
 )
