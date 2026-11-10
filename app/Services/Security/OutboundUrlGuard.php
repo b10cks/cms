@@ -193,25 +193,26 @@ class OutboundUrlGuard
     {
         $normalized = strtolower(trim($ip, '[]'));
 
-        foreach (['::ffff:', '::'] as $prefix) {
-            if (str_starts_with($normalized, $prefix)) {
-                $candidate = substr($normalized, strlen($prefix));
+        $packed = @inet_pton($normalized);
 
-                if (filter_var($candidate, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4) !== false) {
-                    return $candidate;
-                }
-            }
+        if ($packed === false || strlen($packed) !== 16) {
+            return $ip;
         }
 
-        // NAT64 (64:ff9b::/96) embeds the IPv4 address in the low 32 bits.
-        if (str_starts_with($normalized, '64:ff9b::')) {
-            $packed = @inet_pton($normalized);
+        // Compared on the bytes, so the hex spelling `::a9fe:a9fe` is the same
+        // address as `::169.254.169.254`. Each prefix carries the IPv4 address
+        // in the low 32 bits: IPv4-compatible (::/96), IPv4-mapped
+        // (::ffff:0:0/96), NAT64 (64:ff9b::/96) and local-use NAT64
+        // (64:ff9b:1::/48). The unspecified and loopback addresses stay IPv6.
+        $prefix = substr($packed, 0, 12);
+        $embedsIpv4 = match (true) {
+            $prefix === str_repeat("\0", 12) => ! in_array($packed, [str_repeat("\0", 16), str_repeat("\0", 15)."\1"], true),
+            $prefix === str_repeat("\0", 10)."\xff\xff",
+            $prefix === "\0\x64\xff\x9b".str_repeat("\0", 8),
+            str_starts_with($packed, "\0\x64\xff\x9b\0\x01") => true,
+            default => false,
+        };
 
-            if ($packed !== false && strlen($packed) === 16) {
-                return inet_ntop(substr($packed, 12, 4));
-            }
-        }
-
-        return $ip;
+        return $embedsIpv4 ? inet_ntop(substr($packed, 12, 4)) : $ip;
     }
 }

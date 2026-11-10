@@ -44,7 +44,9 @@ class IconSvgParser
     ];
 
     /** Attributes that reference other resources; only internal `#fragment` refs are kept. */
-    private const REFERENCE_ATTRIBUTES = ['href', 'xlink:href', 'src'];
+    private const REFERENCE_ATTRIBUTES = ['href', 'src'];
+
+    private const TEXT_ONLY_ELEMENTS = ['title', 'desc', 'metadata'];
 
     /**
      * @return array{body: string, width: int, height: int}
@@ -60,7 +62,10 @@ class IconSvgParser
         $previous = libxml_use_internal_errors(true);
 
         $doc = new DOMDocument();
-        $loaded = $doc->loadXML($svg, LIBXML_NONET | LIBXML_NOERROR | LIBXML_NOWARNING);
+        $loaded = // NOCDATA turns CDATA sections into text nodes, which serialize escaped. Kept
+        // as CDATA, `<![CDATA[><img onerror=…>]]>` comes out verbatim and an HTML
+        // parser, where the body ends up via innerHTML, reads it as markup.
+        $doc->loadXML($svg, LIBXML_NONET | LIBXML_NOERROR | LIBXML_NOWARNING | LIBXML_NOCDATA);
 
         libxml_clear_errors();
         libxml_use_internal_errors($previous);
@@ -173,11 +178,14 @@ class IconSvgParser
 
     private function sanitizeChildren(DOMNode $node): void
     {
+        // An HTML parser switches to HTML inside these, so they hold text only.
+        $textOnly = in_array(strtolower($node->localName ?? $node->nodeName), self::TEXT_ONLY_ELEMENTS, true);
+
         foreach (iterator_to_array($node->childNodes) as $child) {
             if ($child instanceof DOMElement) {
                 $name = strtolower($child->localName ?? $child->nodeName);
 
-                if (!in_array($name, self::ALLOWED_ELEMENTS, true)) {
+                if ($textOnly || !in_array($name, self::ALLOWED_ELEMENTS, true)) {
                     $node->removeChild($child);
                     continue;
                 }
@@ -194,6 +202,7 @@ class IconSvgParser
     {
         foreach (iterator_to_array($element->attributes ?? []) as $attribute) {
             $name = strtolower($attribute->nodeName);
+            $localName = strtolower($attribute->localName ?? $name);
             $value = $attribute->nodeValue ?? '';
 
             // Event handlers (onload, onclick, …).
@@ -203,7 +212,8 @@ class IconSvgParser
             }
 
             // Resource references: keep only internal fragment links (e.g. url(#id), #gradient).
-            if (in_array($name, self::REFERENCE_ATTRIBUTES, true)) {
+            // Matched by local name: any prefix can be bound to the XLink namespace.
+            if (in_array($localName, self::REFERENCE_ATTRIBUTES, true)) {
                 if (!str_starts_with(ltrim($value), '#')) {
                     $element->removeAttributeNode($attribute);
                 }

@@ -55,7 +55,8 @@ class ImageTransformationManager extends Manager
      * Returns null when even a single frame is over the cap, true when only the
      * first frame fits (a long animation decodes every frame into memory), and
      * false when the whole source can be decoded. Unknown dimensions pass, so
-     * the driver can still try formats getimagesize doesn't understand.
+     * the driver can still try formats getimagesize doesn't understand. SVG is
+     * the exception, see svgPixels().
      */
     private function firstFrameOnly(string $tempFile): ?bool
     {
@@ -85,7 +86,69 @@ class ImageTransformationManager extends Manager
 
         $info = @getimagesize($path);
 
-        return $info !== false && isset($info[0], $info[1]) && $maxPixels < $info[0] * $info[1];
+        if ($info !== false && isset($info[0], $info[1])) {
+            return $maxPixels < $info[0] * $info[1];
+        }
+
+        $svgPixels = $this->svgPixels($path);
+
+        return $svgPixels !== null && $maxPixels < $svgPixels;
+    }
+
+    /**
+     * The pixels an SVG rasterizes to, which getimagesize cannot tell: the size
+     * its root element declares through width and height or the viewBox. Null
+     * when the file is not an SVG. An SVG that declares no size counts as
+     * unbounded, since its drawing then decides how large it renders.
+     */
+    private function svgPixels(string $path): ?float
+    {
+        $reader = new \XMLReader;
+
+        if (! @$reader->open($path, null, LIBXML_NONET | LIBXML_NOERROR | LIBXML_NOWARNING)) {
+            return null;
+        }
+
+        try {
+            while (@$reader->read()) {
+                if ($reader->nodeType !== \XMLReader::ELEMENT) {
+                    continue;
+                }
+
+                if (strtolower($reader->localName) !== 'svg') {
+                    return null;
+                }
+
+                $width = $this->svgLength($reader->getAttribute('width'));
+                $height = $this->svgLength($reader->getAttribute('height'));
+
+                if ($width !== null && $height !== null) {
+                    return $width * $height;
+                }
+
+                $viewBox = preg_split('/[\s,]+/', trim((string) $reader->getAttribute('viewBox'))) ?: [];
+
+                return count($viewBox) === 4 && is_numeric($viewBox[2]) && is_numeric($viewBox[3])
+                    ? abs((float) $viewBox[2] * (float) $viewBox[3])
+                    : INF;
+            }
+        } finally {
+            $reader->close();
+        }
+
+        return null;
+    }
+
+    /** An absolute SVG length in pixels, or null for a missing or relative one. */
+    private function svgLength(?string $value): ?float
+    {
+        if (! preg_match('/^\s*([0-9]*\.?[0-9]+(?:e[+-]?[0-9]+)?)\s*(px|pt|pc|mm|cm|in)?\s*$/i', (string) $value, $match)) {
+            return null;
+        }
+
+        $perUnit = ['px' => 1.0, 'pt' => 4 / 3, 'pc' => 16.0, 'mm' => 96 / 25.4, 'cm' => 96 / 2.54, 'in' => 96.0];
+
+        return (float) $match[1] * $perUnit[strtolower($match[2] ?? 'px')];
     }
 
     /**

@@ -1053,7 +1053,9 @@ class AssetService
         $originalFilename = $file->getClientOriginalName();
         $extension = $file->getClientOriginalExtension();
         $mimeType = $file->getMimeType();
-        $uniqueFilename = $asset->filename.'_'.Str::random(8);
+        // Rows written before filenames were purified can still hold path
+        // separators, so the stored name is not trusted as a path segment.
+        $uniqueFilename = $this->sanitizeFilename($asset->filename.'.x').'_'.Str::random(8);
         $relativePath = "{$space->id}/{$asset->id}/{$uniqueFilename}.{$extension}";
 
         $checksum = $this->writeStreamWithChecksum($file, $filesystem, $relativePath);
@@ -1088,6 +1090,12 @@ class AssetService
         // The old main file was already moved into the version's versioned path
         // by snapshotVersion(); only the (unversioned) old thumbnails need cleanup.
         foreach (array_unique(array_filter(array_column($oldThumbnails, 'path'))) as $oldFile) {
+            // Thumbnail paths were once client-settable. Never delete outside
+            // the asset's own directory.
+            if (! $asset->ownsStoragePath($storage->space_id, $oldFile)) {
+                continue;
+            }
+
             try {
                 if ($filesystem->fileExists($oldFile)) {
                     $filesystem->delete($oldFile);

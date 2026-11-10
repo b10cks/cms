@@ -65,6 +65,22 @@ class SourcePixelLimitTest extends TestCase
         $this->assertNull($this->process('still.gif'));
     }
 
+    #[Test]
+    public function an_svg_is_measured_by_the_size_it_declares(): void
+    {
+        $exceeds = function (string $root): bool {
+            Storage::disk('images')->put('icon.svg', "<?xml version=\"1.0\"?>\n<!-- c -->\n{$root}<rect width=\"9\" height=\"9\"/></svg>");
+
+            return app(ImageTransformationManager::class)->exceedsSourcePixelLimit(Storage::disk('images')->path('icon.svg'));
+        };
+
+        $this->assertFalse($exceeds('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10">'));
+        $this->assertTrue($exceeds('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100000 100000">'));
+        $this->assertTrue($exceeds('<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100">'));
+        // No declared size: the drawing decides how large it renders.
+        $this->assertTrue($exceeds('<svg xmlns="http://www.w3.org/2000/svg">'));
+    }
+
     /** @return array{data: string, format: string, mime: string}|null */
     private function process(string $path): ?array
     {

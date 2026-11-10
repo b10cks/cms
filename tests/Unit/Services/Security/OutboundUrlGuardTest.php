@@ -35,6 +35,9 @@ class OutboundUrlGuardTest extends TestCase
             'ipv4 mapped ipv6 loopback' => ['http://[::ffff:127.0.0.1]/'],
             'ipv4 compatible ipv6' => ['http://[::10.0.0.5]/'],
             'nat64 metadata' => ['http://[64:ff9b::169.254.169.254]/'],
+            'ipv4 compatible ipv6 in hex' => ['http://[::a9fe:a9fe]/'],
+            'ipv4 compatible loopback in hex' => ['http://[::7f00:1]/'],
+            'local-use nat64 metadata' => ['http://[64:ff9b:1::a9fe:a9fe]/'],
             // PHP's own filter calls these public. They are routable only
             // inside somebody's network.
             'carrier grade nat' => ['http://100.64.0.1/'],
