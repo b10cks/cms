@@ -4814,11 +4814,13 @@
         "copy": "Copiar elemento",
         "cut": "Cortar elemento",
         "delete": "Eliminar elemento",
+        "deleteSelected": "Eliminar los elementos seleccionados",
         "paste": "Pegar elemento",
         "reorder": "Arrastra para reordenar o usa las teclas de flecha"
       },
       "moved": "Movido a la posición {position} de {count}",
       "removed": "{name} eliminado",
+      "removedMany": "{count} elementos eliminados",
       "richtext": {
         "addHtmlClass": "Añadir Clase HTML",
         "removeHtmlClass": "Quitar clase HTML",

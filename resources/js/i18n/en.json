@@ -4814,11 +4814,13 @@
         "copy": "Copy item",
         "cut": "Cut item",
         "delete": "Delete item",
+        "deleteSelected": "Delete selected items",
         "paste": "Paste item",
         "reorder": "Drag to reorder, or use the arrow keys"
       },
       "moved": "Moved to position {position} of {count}",
       "removed": "Removed {name}",
+      "removedMany": "Removed {count} items",
       "richtext": {
         "addHtmlClass": "Add HTML Class",
         "removeHtmlClass": "Remove HTML class",

@@ -4823,11 +4823,13 @@
         "copy": "Element kopieren",
         "cut": "Element ausschneiden",
         "delete": "Element löschen",
+        "deleteSelected": "Ausgewählte Elemente löschen",
         "paste": "Element einfügen",
         "reorder": "Ziehen zum Sortieren oder mit den Pfeiltasten verschieben"
       },
       "moved": "Auf Position {position} von {count} verschoben",
       "removed": "{name} entfernt",
+      "removedMany": "{count} Elemente entfernt",
       "richtext": {
         "addHtmlClass": "HTML-Klasse hinzufügen",
         "removeHtmlClass": "HTML-Klasse entfernen",

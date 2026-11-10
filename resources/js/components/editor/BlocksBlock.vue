@@ -415,33 +415,43 @@ const dismissUndoToasts = () => {
 watch(() => editedContent.value?.id, dismissUndoToasts)
 onBeforeUnmount(dismissUndoToasts)
 
-const restoreItem = (item: Record<string, unknown>, index: number) => {
-  if (!canAdd.value) {
+/** Puts removed items back on their old indexes, given in ascending order. */
+const restoreItems = (entries: Array<{ item: Record<string, unknown>; index: number }>) => {
+  const previousItems = [...blockItems.value]
+  // A discard or a collaborator's undo may have brought some back already.
+  const missing = entries.filter(
+    ({ item }) =>
+      !(typeof item.id === 'string' && item.id !== '' && previousItems.some((entry) => entry.id === item.id))
+  )
+  if (missing.length === 0) return
+
+  if (props.readOnly || (maxItems.value !== null && previousItems.length + missing.length > maxItems.value)) {
     toast.error(String($t('labels.contents.paste.tooMany', { max: maxItems.value })))
     return
   }
 
-  const previousItems = [...blockItems.value]
-  const hasId = typeof item.id === 'string' && item.id !== ''
-  // A discard or a collaborator's undo may have brought it back already.
-  if (hasId && previousItems.some((entry) => entry.id === item.id)) return
-
-  const position = Math.min(index, previousItems.length)
   const updatedItems = [...previousItems]
-  updatedItems.splice(position, 0, item)
+  const positions: number[] = []
+  for (const { item, index } of missing) {
+    const position = Math.min(index, updatedItems.length)
+    const snapshot = [...updatedItems]
+    updatedItems.splice(position, 0, item)
+    positions.push(position)
+    emitBlockOperation(
+      typeof item.id === 'string' && item.id !== ''
+        ? { type: 'add', index: position, items: [item] }
+        : { type: 'replace', items: [...updatedItems] },
+      snapshot
+    )
+  }
 
-  emitBlockOperation(
-    hasId
-      ? { type: 'add', index: position, items: [item] }
-      : { type: 'replace', items: updatedItems },
-    previousItems
-  )
   emit('update:modelValue', updatedItems)
-  selectedIndexes.value = selectedIndexes.value.map((selected) =>
-    selected >= position ? selected + 1 : selected
+  selectedIndexes.value = positions.reduce(
+    (selected, position) => selected.map((index) => (index >= position ? index + 1 : index)),
+    selectedIndexes.value
   )
 
-  nextTick(() => focusHandle(position))
+  nextTick(() => focusHandle(positions[0]))
 }
 
 const deleteItem = (index: number) => {
@@ -465,12 +475,40 @@ const deleteItem = (index: number) => {
   undoToasts.push(
     toast(String($t('actions.blocks.removed', { name: getItemLabel(removed) })), {
       duration: 8000,
-      action: { label: String($t('actions.undo')), onClick: () => restoreItem(removed, index) },
+      action: { label: String($t('actions.undo')), onClick: () => restoreItems([{ item: removed, index }]) },
     })
   )
 
   // The closing menu hands focus back after the row is gone, and its trigger went with the row.
   nextTick(() => setTimeout(() => focusHandle(index)))
+}
+
+/** Removes every selected item at once, with one undo that puts them all back. */
+const deleteSelectedItems = () => {
+  const indexes = [...selectedIndexes.value].sort((a, b) => a - b)
+  if (indexes.length === 0) return
+
+  const previousItems = [...blockItems.value]
+  const removed = indexes.map((index) => ({ index, item: previousItems[index] }))
+  const removedIndexes = new Set(indexes)
+  const updatedItems = previousItems.filter((_, index) => !removedIndexes.has(index))
+
+  const removedIds = removed.map(({ item }) => item.id)
+  if (removedIds.every((id): id is string => typeof id === 'string' && id !== '')) {
+    emitBlockOperation({ type: 'remove', itemIds: removedIds }, previousItems)
+  } else {
+    emitBlockOperation({ type: 'replace', items: updatedItems }, previousItems)
+  }
+
+  blockItems.value = updatedItems
+  selectedIndexes.value = []
+
+  undoToasts.push(
+    toast(String($t('actions.blocks.removedMany', { count: removed.length })), {
+      duration: 8000,
+      action: { label: String($t('actions.undo')), onClick: () => restoreItems(removed) },
+    })
+  )
 }
 
 const getClipboardLabel = (items: Array<Record<string, unknown>>) => {
@@ -852,6 +890,17 @@ const getItemRingStyle = (content: Record<string, unknown>, index: number) => {
             @click="cutItems()"
           >
             <Icon name="lucide:scissors" />
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="xs"
+            class="hover:text-destructive-ink"
+            :aria-label="$t('actions.blocks.tooltips.deleteSelected')"
+            :title="$t('actions.blocks.tooltips.deleteSelected')"
+            @click="deleteSelectedItems()"
+          >
+            <Icon name="lucide:trash-2" />
           </Button>
           <Button
             type="button"

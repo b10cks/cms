@@ -4814,11 +4814,13 @@
         "copy": "Öğeyi kopyala",
         "cut": "Öğeyi kes",
         "delete": "Öğeyi sil",
+        "deleteSelected": "Seçili öğeleri sil",
         "paste": "Öğeyi yapıştır",
         "reorder": "Sıralamak için sürükleyin veya ok tuşlarını kullanın"
       },
       "moved": "{count} içinde {position}. konuma taşındı",
       "removed": "{name} kaldırıldı",
+      "removedMany": "{count} öğe kaldırıldı",
       "richtext": {
         "addHtmlClass": "HTML Sınıfı Ekle",
         "removeHtmlClass": "HTML sınıfını kaldır",
