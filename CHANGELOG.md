@@ -3,6 +3,16 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.11.10-446038c7] — 2026-11-10
+
+- ⬆️ Bump versions
+- 📝 Record the language-only amendments branch
+- ✨ Delete all selected items in a blocks field at once
+- 💄 Move the create dialog's language choice to a quiet footer button
+- ✨ Gate single-language entries behind a space setting
+- 🐛 Sort single-language entries among their tree siblings
+- 📝 Record the language-only entries release and the localization source fix
+
 ## [v2026.11.10-9efad849] — 2026-11-10
 
 - ♻️ Define the content detail query once
