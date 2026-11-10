@@ -306,9 +306,10 @@ class ContentFilter extends AdvancedFilter
 
     /**
      * When combined with a `language` or `language_iso` filter, also include canonical
-     * rows that have no translation in the requested language. The i18n resolver will
-     * apply overlay/fallback logic to these rows so they are still returned in the
-     * response for the requested language.
+     * rows in the requested language's fallback languages that have no translation in
+     * the requested language. The i18n resolver will apply overlay/fallback logic to
+     * these rows so they are still returned in the response for the requested language.
+     * Entries created in another language exist only there and are never included.
      *
      * Without this flag, `?language=de` only returns rows where `language_iso = de`,
      * silently omitting content that would be served via fallback.
@@ -316,7 +317,7 @@ class ContentFilter extends AdvancedFilter
      * Example:
      * - `?language=de&include_fallback=true`
      *
-     * @filterDescription Include canonical content without a translation in the requested language.
+     * @filterDescription Include content from the requested language's fallback languages that has no translation in the requested language.
      *
      * @filterType boolean
      *
@@ -338,10 +339,15 @@ class ContentFilter extends AdvancedFilter
             return;
         }
 
-        $this->builder->where(function ($query) use ($requestedLanguage) {
+        $fallbackLanguages = $this->fallbackChain($requestedLanguage);
+
+        $this->builder->where(function ($query) use ($requestedLanguage, $fallbackLanguages) {
             $query->where('contents.language_iso', $requestedLanguage)
-                ->orWhere(function ($q) use ($requestedLanguage) {
+                ->orWhere(function ($q) use ($requestedLanguage, $fallbackLanguages) {
+                    // Only entries the requested language falls back to: one
+                    // made in another language never stands in for this one.
                     $q->whereNull('contents.i18n_parent_id')
+                        ->whereIn('contents.language_iso', $fallbackLanguages)
                         ->whereNotIn('contents.id', function ($sub) use ($requestedLanguage) {
                             $sub->select('i18n_parent_id')
                                 ->from('contents')
@@ -358,6 +364,25 @@ class ContentFilter extends AdvancedFilter
      * compare a non-ASCII parameter against them (error 3988) instead of
      * matching nothing, so such a value empties the result up front.
      */
+    /**
+     * The languages `$languageIso` falls back to, in order, ending at the default language.
+     *
+     * @return list<string>
+     */
+    private function fallbackChain(string $languageIso): array
+    {
+        $settings = app('currentSpace')->settings;
+        $chain = [];
+        $language = $settings->getFallbackLanguage($languageIso);
+
+        while ($language !== null && $language !== $languageIso && ! \in_array($language, $chain, true)) {
+            $chain[] = $language;
+            $language = $settings->getFallbackLanguage($language);
+        }
+
+        return $chain;
+    }
+
     private function matchesNothingUnlessAscii(mixed $value): bool
     {
         if (! \is_string($value) || Str::isAscii($value)) {

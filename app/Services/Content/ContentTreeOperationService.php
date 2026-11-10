@@ -41,8 +41,12 @@ class ContentTreeOperationService
         $defaultLanguage = $space->settings->getDefaultLanguage();
         $parentFamily = $parent ? $this->contentI18nService->getFamily($parent)->keyBy('language_iso') : collect();
         $canonicalParent = $parent ? $parentFamily->get($defaultLanguage) ?? $parent : null;
+        // An entry made in another language still hangs under the canonical
+        // parent, where the tree shows it; its path follows the parent's
+        // translation (see LocalizedContentSlugService::resolveTranslatedParent).
+        $languageIso = $attributes['language_iso'] ?? $defaultLanguage;
 
-        $create = function () use ($attributes, $canonicalParent, $defaultLanguage, $space, $owner): array {
+        $create = function () use ($attributes, $canonicalParent, $languageIso, $space, $owner): array {
             $canonical = new Content;
             $this->createContent->execute(
                 [
@@ -52,9 +56,9 @@ class ContentTreeOperationService
                     // No slug means the block builds one from its slug pattern,
                     // which CreateContent applies after allocating serials.
                     'slug' => filled($attributes['slug'] ?? null)
-                        ? $this->makeUniqueSlug($attributes['slug'], $canonicalParent?->id, $defaultLanguage)
+                        ? $this->makeUniqueSlug($attributes['slug'], $canonicalParent?->id, $languageIso)
                         : null,
-                    'language_iso' => $defaultLanguage,
+                    'language_iso' => $languageIso,
                     'content' => $attributes['content'] ?? [],
                     'settings' => $attributes['settings'] ?? [],
                     'position' => $attributes['position'] ?? null,
@@ -73,7 +77,7 @@ class ContentTreeOperationService
         return $this->withSiblingSlugLock(
             $space,
             $canonicalParent?->id,
-            $defaultLanguage,
+            $languageIso,
             fn (): array => (new Content)->getConnection()->transaction($create),
         );
     }

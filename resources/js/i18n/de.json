@@ -954,6 +954,8 @@
         }
       },
       "localization": {
+        "noVersion": "Keine Version",
+        "onlyLanguage": "Diesen Eintrag gibt es nur auf {language}, andere Sprachen zeigen ihn nicht.",
         "pageTitle": "Lokalisierung",
         "label": "Lokalisierung",
         "language": "Sprache",
@@ -976,6 +978,7 @@
         }
       },
       "createContent": "Neuen Inhalt erstellen",
+      "createContentIn": "Neuen Inhalt erstellen auf",
       "create": {
         "selectContentType": "Inhaltstyp wählen",
         "loadingRestrictions": "Child-Content-Einschränkungen werden geladen...",
@@ -984,6 +987,7 @@
         "slugFromPattern": "Aus dem Muster dieses Inhaltstyps: {pattern}",
         "slugAuto": "Wird automatisch erzeugt – zum Überschreiben einfach eintippen.",
         "slugManual": "Eigener Slug.",
+        "languageOnly": "Nur auf {language}. Andere Sprachen bekommen keine Version davon.",
         "slugReset": "Automatischen Slug verwenden",
         "slugPending": "Wird beim Anlegen erzeugt"
       },
@@ -1176,6 +1180,7 @@
       }
     },
     "contentTree": {
+      "languageOnly": "Auf {language} erstellt, ohne Version in der Standardsprache",
       "label": "Inhaltsbaum",
       "actions": {
         "view": "Ansehen",

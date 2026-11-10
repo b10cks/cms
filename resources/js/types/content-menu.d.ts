@@ -3,6 +3,8 @@ interface FlatContentMenuItem {
   name: string
   slug: string
   block_id: string
+  /** The row's language: the default one, or the language an entry was created in. */
+  lang: string
   position: number
   type: 'root' | 'nestable' | 'single' | 'universal'
   color: string | null

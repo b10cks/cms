@@ -7,6 +7,7 @@ const item = (id: string, pid: string | null, position: number): FlatContentMenu
   name: id,
   slug: id,
   block_id: 'b1',
+  lang: 'en',
   position,
   type: 'root',
   color: null,

@@ -39,7 +39,9 @@ class ContentI18nValidator
             if ($i18nParentId !== null) {
                 $errors['i18n_parent_id'] = 'The default language row must remain the canonical page in its family.';
             }
-        } elseif ($i18nParentId === null) {
+        } elseif ($i18nParentId === null && $content?->i18n_parent_id !== null) {
+            // An entry may start in any enabled language and live only there;
+            // a translation can't be cut loose from its family though.
             $errors['i18n_parent_id'] = 'Non-default language rows must belong to a canonical page family.';
         }
 

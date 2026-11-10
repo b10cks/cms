@@ -146,7 +146,7 @@
                             "type": "boolean",
                             "example": true
                         },
-                        "description": "Include canonical content without a translation in the requested language.",
+                        "description": "Include content from the requested language's fallback languages that has no translation in the requested language.",
                         "example": true
                     },
                     {

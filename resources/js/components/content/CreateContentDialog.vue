@@ -3,7 +3,15 @@ import { refDebounced } from '@vueuse/core'
 
 import Icon from '~/components/Icon.vue'
 import { Button } from '~/components/ui/button'
-import { Dialog, DialogContent, DialogFooter, DialogHeaderCombined } from '~/components/ui/dialog'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogHeaderCombined,
+  DialogTitle,
+} from '~/components/ui/dialog'
 import { FormField, InputField } from '~/components/ui/form'
 import { Input } from '~/components/ui/input'
 import IconName from '~/components/ui/IconName.vue'
@@ -14,6 +22,7 @@ import {
   SelectItem,
   SelectLabel,
   SelectTrigger,
+  SelectValue,
 } from '~/components/ui/select'
 import {
   createContentDefaultsBlockLookup,
@@ -23,6 +32,7 @@ import {
   resolveCreateContentBlocks,
   resolvePreferredCreateContentBlock,
 } from '~/lib/content-children'
+import { languageName } from '~/lib/languageNames'
 import type { CreateContentPayload } from '~/types/contents'
 
 const open = defineModel<boolean>('open')
@@ -45,12 +55,29 @@ const { data: blocks } = useBlocksQuery({ per_page: 1000 })
 const { useContentQuery, useSerialPreviewQuery } = useContent(props.spaceId)
 const { useContentMenuQuery } = useContentMenu(props.spaceId)
 const { data: contentMenu } = useContentMenuQuery(computed(() => !!open.value))
-// Same slug rules the content wizard uses, so both creation paths agree.
-// New entries are created in the space's default language, which is what
-// decides whether "Über" becomes "ueber" or "uber".
-const contentLanguage = computed(() => space.value?.settings?.default_language ?? null)
 const { slugify } = useContentWizardSlug()
-const { $t } = useI18n()
+const { $t, locale } = useI18n()
+
+const defaultLanguage = computed(() => space.value?.settings?.default_language ?? null)
+const languageOptions = computed(() => {
+  const settings = space.value?.settings
+  if (!settings?.default_language) return []
+
+  return [settings.default_language, ...(settings.languages ?? []).map(({ code }) => code)].map(
+    (code) => ({ code, label: languageName(code, settings.languages, locale.value) })
+  )
+})
+/** The language the entry is created in, the space default unless picked otherwise. */
+const pickedLanguage = ref<string | null>(null)
+// Same slug rules the content wizard uses, so both creation paths agree. The
+// language decides whether "Über" becomes "ueber" or "uber".
+const contentLanguage = computed(() => pickedLanguage.value ?? defaultLanguage.value)
+const isOtherLanguage = computed(
+  () => !!contentLanguage.value && contentLanguage.value !== defaultLanguage.value
+)
+const contentLanguageLabel = computed(
+  () => languageOptions.value.find(({ code }) => code === contentLanguage.value)?.label ?? ''
+)
 
 const content = ref<CreateContentPayload>({
   block_id: '',
@@ -93,6 +120,7 @@ const handleCreate = async (editContent: CreateContentPayload) => {
   const payload: CreateContentPayload = {
     ...editContent,
     parent_id: props.parentId,
+    ...(contentLanguage.value ? { language_iso: contentLanguage.value } : {}),
   }
 
   // In auto mode the server composes the slug: only it knows the allocated
@@ -129,6 +157,7 @@ const resetForm = () => {
   }
   selectedTemplate.value = null
   slugMode.value = 'auto'
+  pickedLanguage.value = null
 }
 
 // Single blocks exist once per tree, so the ones already placed drop out of
@@ -176,6 +205,7 @@ const { data: serialPreview, isFetching: isPreviewFetching } = useSerialPreviewQ
   computed(() => ({
     block_id: blockId.value,
     parent_id: props.parentId ?? null,
+    language_iso: contentLanguage.value,
     name: debouncedName.value,
   })),
   computed(() => Boolean(open.value && blockId.value))
@@ -289,7 +319,38 @@ watch(open, (isOpen, wasOpen) => {
         class="grid gap-4"
         @submit.prevent="handleCreate(content)"
       >
-        <DialogHeaderCombined :title="$t('labels.contents.createContent')" />
+        <DialogHeader v-if="languageOptions.length > 1">
+          <div class="flex items-center gap-2">
+            <DialogTitle>{{ $t('labels.contents.createContentIn') }}</DialogTitle>
+            <Select
+              :model-value="contentLanguage ?? undefined"
+              @update:model-value="pickedLanguage = String($event)"
+            >
+              <SelectTrigger
+                :aria-label="$t('labels.contents.localization.language')"
+                class="h-8! w-auto! rounded-md!"
+              >
+                <SelectValue>{{ contentLanguageLabel }}</SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem
+                  v-for="option in languageOptions"
+                  :key="option.code"
+                  :value="option.code"
+                >
+                  {{ option.label }}
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <DialogDescription v-if="isOtherLanguage">
+            {{ $t('labels.contents.create.languageOnly', { language: contentLanguageLabel }) }}
+          </DialogDescription>
+        </DialogHeader>
+        <DialogHeaderCombined
+          v-else
+          :title="$t('labels.contents.createContent')"
+        />
         <div class="grid gap-6">
           <div
             v-if="props.parentId && isLoadingParentRestrictions"

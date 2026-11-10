@@ -45,6 +45,8 @@ class ContentTreeOperationsRequest extends FormRequest
             // Omitted when the block composes its slug from a pattern, which
             // can only happen server-side once serials have been allocated.
             'operations.*.slug' => ['sometimes', 'nullable', 'string', 'max:75'],
+            // A created entry starts in the default language unless one is picked.
+            'operations.*.language_iso' => ['sometimes', 'string', 'max:5'],
             'operations.*.content' => ['sometimes', 'array'],
             'operations.*.settings' => ['sometimes', 'array'],
         ];

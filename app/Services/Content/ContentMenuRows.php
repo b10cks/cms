@@ -34,6 +34,7 @@ class ContentMenuRows
                 'name',
                 'slug',
                 'block_id',
+                'language_iso',
                 'settings',
                 'current_version_id',
                 'published_version_id',

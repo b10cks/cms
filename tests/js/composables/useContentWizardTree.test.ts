@@ -31,6 +31,7 @@ const item = (over: Partial<FlatContentMenuItem> & { id: string }): FlatContentM
   name: over.id,
   slug: over.id,
   block_id: 'article',
+  lang: 'en',
   position: 0,
   type: 'universal',
   color: null,

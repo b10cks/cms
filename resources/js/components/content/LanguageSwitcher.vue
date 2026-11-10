@@ -7,6 +7,7 @@ import {
   Select,
   SelectContent,
   SelectItem,
+  SelectSeparator,
   SelectTrigger,
   SelectValue,
 } from '~/components/ui/select'
@@ -56,6 +57,13 @@ const currentLanguage = computed(() => {
 })
 
 const isSwitcherDisabled = computed(() => languageVersions.value.length <= 1)
+
+/** Created outside the default language, so it has no other versions. */
+const onlyLanguage = computed(() => {
+  const existing = languageVersions.value.filter((version) => version.exists)
+
+  return existing.length === 1 && !existing[0].is_default ? existing[0] : null
+})
 
 watch(
   [languageVersions, defaultLanguage, resolvedLanguage],
@@ -127,6 +135,7 @@ const handleLanguageChange = async (value: string | number | null) => {
         v-for="version in languageVersions"
         :key="version.language_iso"
         :value="version.language_iso"
+        :disabled="!!onlyLanguage && !version.exists"
       >
         <div class="flex min-w-0 items-center justify-between gap-2">
           <ContentStateBadge
@@ -134,9 +143,25 @@ const handleLanguageChange = async (value: string | number | null) => {
             size="indicator"
           />
           <span class="truncate font-medium">{{ version.label }}</span>
-          <span class="font-mono text-2xs opacity-50">[{{ version.language_iso }}]</span>
+          <span
+            v-if="onlyLanguage && !version.exists"
+            class="ml-auto pl-4 font-normal text-input-muted"
+          >
+            {{ $t('labels.contents.localization.noVersion') }}
+          </span>
+          <span
+            v-else
+            class="font-mono text-2xs opacity-50"
+            >[{{ version.language_iso }}]</span
+          >
         </div>
       </SelectItem>
+      <template v-if="onlyLanguage">
+        <SelectSeparator />
+        <p class="max-w-64 px-2 py-1.5 text-sm text-input-muted">
+          {{ $t('labels.contents.localization.onlyLanguage', { language: onlyLanguage.label }) }}
+        </p>
+      </template>
     </SelectContent>
   </Select>
 </template>

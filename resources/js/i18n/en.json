@@ -945,6 +945,8 @@
         }
       },
       "localization": {
+        "noVersion": "No version",
+        "onlyLanguage": "This entry exists only in {language}, so other languages don't show it.",
         "pageTitle": "Localization",
         "label": "Localization",
         "language": "Language",
@@ -967,6 +969,7 @@
         }
       },
       "createContent": "Create New Content",
+      "createContentIn": "Create new content in",
       "create": {
         "selectContentType": "Select content type",
         "loadingRestrictions": "Loading child content restrictions...",
@@ -975,6 +978,7 @@
         "slugFromPattern": "Built from this content type's pattern: {pattern}",
         "slugAuto": "Generated automatically — type your own to override.",
         "slugManual": "Custom slug.",
+        "languageOnly": "Only in {language}. It gets no versions in other languages.",
         "slugReset": "Use the automatic slug",
         "slugPending": "Generated when you create the entry"
       },
@@ -1167,6 +1171,7 @@
       }
     },
     "contentTree": {
+      "languageOnly": "Created in {language}, no default-language version",
       "label": "Content tree",
       "actions": {
         "view": "View",
