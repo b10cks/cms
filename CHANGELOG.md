@@ -3,6 +3,30 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.11.10-d42176ea] — 2026-11-10
+
+- 📝 Drop the stale language-only amendments entry from the status
+- 📝 Record security round 4, its draft advisories and the open decisions
+- 🔒 Render Markdown without images, media or inline CSS
+- 🔒 Refuse the public Reverb secret at setup and keep tag names out of release scripts
+- 🔒 Harden icon SVG sanitizing, SVG rasterizing, asset replace paths and the URL guard
+- 🔒 Tie social linking, invite verification and SAML logout to real proof
+- 🔒 Count failed second-factor codes at sign-in and fix the login throttle keys
+- 🔒 Close four smaller authorization gaps in the Management API
+- 🔒 Attach only people of the organisation to a team without an invite
+- 🔒 List only the invoices of the space's own subscriptions
+- 🔒 Enforce comment abilities, notify only readers and close mail quotes
+- 🔒 Bound automation mail and keep trigger payloads out of the action config
+- 🔒 Stop single-file share downloads once the download limit is reached
+- 🔒 Let only content editors join the live collaboration channels
+- 🔒 Redirect delivery revisions from the future and throttle unknown tokens
+- 🔒 Keep unpublished translations out of published delivery responses
+- 🔒 Require owner rank and the same organisation to move a team
+- 📝 Record the language switch commits
+- 💄 Make single-language entries obvious and switchable
+- ✨ Let an entry without translations switch its language
+- 🐛 Open the create dialog's language menu again
+
 ## [v2026.11.10-446038c7] — 2026-11-10
 
 - ⬆️ Bump versions
