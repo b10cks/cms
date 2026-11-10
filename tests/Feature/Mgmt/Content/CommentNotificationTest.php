@@ -38,6 +38,7 @@ class CommentNotificationTest extends TestCase
         $this->member = User::factory()->create();
 
         $this->space = Space::factory()->create();
+        $this->assignSpaceRole($this->space, $this->member, 'viewer');
         $this->setUpSpaceTesting($this->space);
 
         $block = Block::forceCreate([
@@ -80,6 +81,20 @@ class CommentNotificationTest extends TestCase
         ]);
 
         Notification::assertSentTo($this->member, MentionNotification::class);
+    }
+
+    #[Test]
+    public function it_does_not_notify_a_mentioned_user_outside_the_space(): void
+    {
+        Notification::fake();
+        $outsider = User::factory()->create();
+
+        $this->createComment([
+            'author_id' => $this->author->id,
+            'body' => "Hey @{$outsider->id}, take a look",
+        ]);
+
+        Notification::assertNotSentTo($outsider, MentionNotification::class);
     }
 
     #[Test]

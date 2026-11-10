@@ -72,7 +72,7 @@ class MentionNotification extends Notification implements ShouldQueue
                 'author' => $this->author['display_name'],
                 'content' => $this->content['name'] ?? $this->space['name'],
             ]))))
-            ->line(new HtmlString('<blockquote style="border-left: 4px solid #ccc; padding-left: 16px; margin-left: 0;">'.e($this->excerpt).'</blockquote>'))
+            ->line($this->quoteForMail($this->excerpt))
             ->action(__('notifications.commentMention.action'), $url)
             ->salutation(' ');
     }
