@@ -1,9 +1,8 @@
 <script setup lang="ts">
-import { queryOptions, useQueries, useQueryClient } from '@tanstack/vue-query'
+import { useQueries, useQueryClient } from '@tanstack/vue-query'
 import { refDebounced, useStorage } from '@vueuse/core'
 import { toRaw } from 'vue'
 
-import { api } from '~/api'
 import ContentPageHeaderPortals from '~/components/content/ContentPageHeaderPortals.vue'
 import Icon from '~/components/Icon.vue'
 import FlattenedLocalization from '~/components/localization/FlattenedLocalization.vue'
@@ -47,9 +46,8 @@ const { settings } = useSpaceSettings(spaceId.value)
 
 const { useSpaceQuery } = useSpaces()
 const { data: currentSpace } = useSpaceQuery(spaceId.value)
-const { useContentQuery, useSerialPreviewQuery } = useContent(spaceId)
+const { contentQueryOptions, useContentQuery, useSerialPreviewQuery } = useContent(spaceId)
 const { slugify } = useContentWizardSlug()
-const spaceAPI = computed(() => api.forSpace(spaceId.value))
 const { data: routeContent } = useContentQuery(canonicalContentId)
 
 const canonicalContent = computed(() => {
@@ -180,17 +178,7 @@ const sourceChainIds = computed(() =>
 // publish in the editor shows up here instead of a private stale copy.
 // Undefined until every language in the chain has loaded.
 const sourceChainContents = useQueries({
-  queries: computed(() =>
-    sourceChainIds.value.map((contentId) =>
-      queryOptions({
-        queryKey: queryKeys.contents(spaceId.value).detail(contentId),
-        queryFn: async ({ signal }) => {
-          const response = await spaceAPI.value.contents.get(contentId, {}, { signal })
-          return response.data
-        },
-      })
-    )
-  ),
+  queries: computed(() => sourceChainIds.value.map((contentId) => contentQueryOptions(contentId))),
   combine: (results) => {
     const contents = results.flatMap((result) => (result.data ? [result.data] : []))
     return contents.length === results.length ? contents : undefined

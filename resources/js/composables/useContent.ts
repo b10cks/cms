@@ -1,4 +1,10 @@
-import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
+import {
+  keepPreviousData,
+  queryOptions,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/vue-query'
 import { toast } from 'vue-sonner'
 
 import { api } from '~/api'
@@ -137,35 +143,26 @@ export function useContent(spaceId: MaybeRef<string>) {
     })
   }
 
-  const getContent = async (id: string, signal?: AbortSignal) => {
-    const response = await spaceAPI.value.contents.get(id, {}, { signal })
-    return response.data
-  }
-
-  // Query to fetch a single content item
-  const useContentQuery = (id: MaybeRef<string | null | undefined>) => {
-    const resolvedId = computed(() => toValue(id) || '')
-
-    return useQuery({
-      queryKey: computed(() => queryKeys.contents(spaceId).detail(resolvedId.value)),
+  /** Key and fetcher of one content entry, shared by every reader of the detail cache. */
+  const contentQueryOptions = (id: string) =>
+    queryOptions({
+      queryKey: queryKeys.contents(spaceId).detail(id),
       queryFn: async ({ signal }) => {
-        const contentId = toValue(id)
-        if (!contentId) {
-          throw new Error('Content ID is required')
-        }
-
-        return getContent(contentId, signal)
+        const response = await spaceAPI.value.contents.get(id, {}, { signal })
+        return response.data
       },
-      enabled: computed(() => !!toValue(id)),
     })
-  }
+
+  const useContentQuery = (id: MaybeRef<string | null | undefined>) =>
+    useQuery(
+      computed(() => {
+        const contentId = toValue(id) || ''
+        return { ...contentQueryOptions(contentId), enabled: !!contentId }
+      })
+    )
 
   /** The content from the cache `useContentQuery` fills, fetched only when it holds none. */
-  const fetchContent = (id: string) =>
-    queryClient.ensureQueryData({
-      queryKey: queryKeys.contents(spaceId).detail(id),
-      queryFn: ({ signal }) => getContent(id, signal),
-    })
+  const fetchContent = (id: string) => queryClient.ensureQueryData(contentQueryOptions(id))
 
   // Query to fetch children of a specific content item.
   // Keyed by the params it actually sends, and caching the same envelope shape
@@ -791,6 +788,7 @@ export function useContent(spaceId: MaybeRef<string>) {
   return {
     // Queries
     useContentsQuery,
+    contentQueryOptions,
     useContentQuery,
     fetchContent,
     useContentChildrenQuery,
