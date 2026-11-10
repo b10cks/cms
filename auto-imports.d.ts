@@ -113,6 +113,7 @@ declare global {
   const useAiUsage: typeof import('./resources/js/composables/useAiModels').useAiUsage
   const useAlertDialog: typeof import('./resources/js/composables/useAlertDialog').useAlertDialog
   const useApiClient: typeof import('./resources/js/composables/useApiClient').useApiClient
+  const useAppUpdateNotice: typeof import('./resources/js/composables/useAppUpdateNotice').useAppUpdateNotice
   const useAssetAiClassification: typeof import('./resources/js/composables/useAssetAiClassification').useAssetAiClassification
   const useAssetBulkOperations: typeof import('./resources/js/composables/useAssetBulkOperations').useAssetBulkOperations
   const useAssetCollections: typeof import('./resources/js/composables/useAssetCollections').useAssetCollections
@@ -438,7 +439,6 @@ declare module 'vue' {
     readonly useAiConfigs: UnwrapRef<typeof import('./resources/js/composables/useAiModels')['useAiConfigs']>
     readonly useAiEnabled: UnwrapRef<typeof import('./resources/js/composables/useAiEnabled')['useAiEnabled']>
     readonly useAiErrorToast: UnwrapRef<typeof import('./resources/js/composables/useAiErrorToast')['useAiErrorToast']>
-    readonly useAiGlossaryConceptRows: UnwrapRef<typeof import('./resources/js/composables/useAiGlossaryConceptRows')['useAiGlossaryConceptRows']>
     readonly useAiKnowledge: UnwrapRef<typeof import('./resources/js/composables/useAiKnowledge')['useAiKnowledge']>
     readonly useAiMentions: UnwrapRef<typeof import('./resources/js/composables/useAiMentions')['useAiMentions']>
     readonly useAiModels: UnwrapRef<typeof import('./resources/js/composables/useAiModels')['useAiModels']>
@@ -453,6 +453,7 @@ declare module 'vue' {
     readonly useAiUsage: UnwrapRef<typeof import('./resources/js/composables/useAiModels')['useAiUsage']>
     readonly useAlertDialog: UnwrapRef<typeof import('./resources/js/composables/useAlertDialog')['useAlertDialog']>
     readonly useApiClient: UnwrapRef<typeof import('./resources/js/composables/useApiClient')['useApiClient']>
+    readonly useAppUpdateNotice: UnwrapRef<typeof import('./resources/js/composables/useAppUpdateNotice')['useAppUpdateNotice']>
     readonly useAssetAiClassification: UnwrapRef<typeof import('./resources/js/composables/useAssetAiClassification')['useAssetAiClassification']>
     readonly useAssetBulkOperations: UnwrapRef<typeof import('./resources/js/composables/useAssetBulkOperations')['useAssetBulkOperations']>
     readonly useAssetCollections: UnwrapRef<typeof import('./resources/js/composables/useAssetCollections')['useAssetCollections']>
