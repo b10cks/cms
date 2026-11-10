@@ -2446,6 +2446,8 @@
         "description": "Configure language settings for your content.",
         "languages": "Languages",
         "languagesDescription": "Add and manage supported languages for your content.",
+        "languageOnlyEntries": "Allow entries in a single language",
+        "languageOnlyEntriesDescription": "New entries can be created in any language. Such an entry exists only in that language and gets no translations. Turning this off keeps existing entries.",
         "defaultLanguage": "Default Language",
         "defaultLanguagePlaceholder": "e.g. en",
         "defaultLanguageDescription": "This language will be used as the default for content creation. It is recommended to set this to your primary audience's language. It will be used for AI translations as well.",

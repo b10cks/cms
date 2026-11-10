@@ -43,6 +43,9 @@ class ContentI18nValidator
             // An entry may start in any enabled language and live only there;
             // a translation can't be cut loose from its family though.
             $errors['i18n_parent_id'] = 'Non-default language rows must belong to a canonical page family.';
+        } elseif ($i18nParentId === null && $content === null && ! $space->settings->allowsLanguageOnlyEntries()) {
+            // Only new entries: turning the setting off keeps existing ones editable.
+            $errors['language_iso'] ??= 'New entries in other languages are turned off for this space.';
         }
 
         if ($i18nParentId !== null) {

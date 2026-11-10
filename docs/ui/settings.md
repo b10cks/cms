@@ -85,6 +85,8 @@ This block is the one to plan before you write content, because it shapes your w
 - **Fallback** is the language used when a field has no translation. Usually the default language, but a chain such as Swiss German falling back to German rather than English is often more useful.
 - **Hidden** keeps a language out of the pickers in the app. Useful for a language somebody is preparing but nobody should be filling in yet.
 
+**Allow entries in a single language** lets editors pick another language when they create an entry, for a page that only one market needs, such as a German campaign with no English original. Such an entry exists only in its language, gets no translations, and is marked with its language code in the content tree. Off by default. Turning it off stops new ones; existing entries stay and remain editable.
+
 **Site locales** map an address segment to a language, which decouples the shape of your URLs from the languages in the CMS. One language can be served under several segments, so German content can appear under `at-de`, `ch-de`, and `de-de` while being maintained exactly once. Each entry has the segment, the language it renders, and an optional display name like "Austria (DE)". Leave the list empty and the slug strategy below decides instead.
 
 **Slug strategy** decides whether a language code is put in front of your addresses:

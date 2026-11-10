@@ -36,6 +36,7 @@ class SpaceSettings extends Settings
         'slug_strategy' => 'prepend_translations',
         'filter_hidden_blocks' => false,
         'content_sorting' => false,
+        'language_only_entries' => false,
         'serial_gaps' => 'preserve',
         'ai' => [
             'asset_classification' => [
@@ -189,6 +190,10 @@ class SpaceSettings extends Settings
                 'boolean',
             ],
             'content_sorting' => [
+                ...$sometimes,
+                'boolean',
+            ],
+            'language_only_entries' => [
                 ...$sometimes,
                 'boolean',
             ],
@@ -404,6 +409,10 @@ class SpaceSettings extends Settings
                 'description' => 'Whether manual drag-and-drop ordering of content is enabled for the space. '
                     .'When disabled, content is ordered alphabetically by name.',
             ],
+            'language_only_entries' => [
+                'description' => 'Whether new entries may be created in a non-default language, existing only there '
+                    .'with no translations. Turning it off keeps existing entries of that kind.',
+            ],
             'serial_gaps' => [
                 'description' => 'What happens to the number of a deleted entry in auto-generated serial fields.',
                 'example' => 'preserve',
@@ -508,6 +517,11 @@ class SpaceSettings extends Settings
     public function isContentSortingEnabled(): bool
     {
         return (bool) ($this->attributes['content_sorting'] ?? false);
+    }
+
+    public function allowsLanguageOnlyEntries(): bool
+    {
+        return (bool) ($this->attributes['language_only_entries'] ?? false);
     }
 
     /**

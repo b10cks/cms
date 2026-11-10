@@ -2446,6 +2446,8 @@
         "description": "Configure la configuración de idiomas para su contenido.",
         "languages": "Idiomas",
         "languagesDescription": "Añada y gestione idiomas soportados para su contenido.",
+        "languageOnlyEntries": "Permitir entradas en un solo idioma",
+        "languageOnlyEntriesDescription": "Las entradas nuevas se pueden crear en cualquier idioma. Una entrada así existe solo en ese idioma y no tiene traducciones. Al desactivarlo, las entradas existentes se conservan.",
         "defaultLanguage": "Idioma Predeterminado",
         "defaultLanguagePlaceholder": "ej. es",
         "defaultLanguageDescription": "Este idioma se usará como predeterminado para la creación de contenido. Se recomienda configurarlo al idioma de su audiencia principal. También se usará para las traducciones de IA.",

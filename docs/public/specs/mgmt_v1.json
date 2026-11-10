@@ -6929,6 +6929,9 @@
                                             "content_sorting": {
                                                 "type": "boolean"
                                             },
+                                            "language_only_entries": {
+                                                "type": "boolean"
+                                            },
                                             "serial_gaps": {
                                                 "type": "string",
                                                 "enum": [

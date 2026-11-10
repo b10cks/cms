@@ -40,6 +40,7 @@ class LanguageOnlyContentTest extends TestCase
             'settings' => [
                 'default_language' => 'en',
                 'i18n_mode' => 'overlay',
+                'language_only_entries' => true,
                 'content_sorting' => true,
                 'languages' => [
                     ['code' => 'de', 'name' => 'German', 'fallback_language' => null],
@@ -87,6 +88,28 @@ class LanguageOnlyContentTest extends TestCase
             'language_iso' => 'en',
             'i18n_parent_id' => $campaign->id,
         ])->assertJsonValidationErrors(['i18n_parent_id']);
+    }
+
+    #[Test]
+    public function entries_in_another_language_need_the_space_setting(): void
+    {
+        $settings = $this->space->settings;
+        $settings->language_only_entries = false;
+        $this->space->settings = $settings;
+        $this->space->save();
+        $campaign = $this->createContent('de', 'sommeraktion');
+
+        $this->postJson(route('mgmt.contents.store', ['space' => $this->space->id]), [
+            'name' => 'Herbstaktion',
+            'slug' => 'herbstaktion',
+            'block_id' => $this->block->id,
+            'language_iso' => 'de',
+        ])->assertJsonValidationErrors(['language_iso']);
+
+        // Existing ones stay editable.
+        $this->patchJson(route('mgmt.contents.update', ['space' => $this->space->id, 'content' => $campaign->id]), [
+            'name' => 'Sommeraktion 2027',
+        ])->assertOk();
     }
 
     #[Test]

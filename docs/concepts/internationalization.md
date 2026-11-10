@@ -32,6 +32,10 @@ Which fields a translation can override is controlled by the block schema: only 
 
 This keeps translations cheap to maintain: structural changes to a page happen once, on the canonical entry, and every language picks them up automatically.
 
+### Entries in a single language
+
+With **Allow entries in a single language** on in the space settings, an entry can be created in any enabled language instead of the default one. It is its own canonical entry in that language and never gets translations. Delivery returns it only for its own language, also with `include_fallback=true`, and never as a fallback for another language. In the content tree it sits among its siblings and sorts with them by hand like any other entry.
+
 ## Localized slugs
 
 Translations have their own slugs, so `/en/about-us` and `/de/ueber-uns` can both resolve — the Data API matches localized slug paths when a `language` is requested.

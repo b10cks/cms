@@ -2446,6 +2446,8 @@
         "description": "Configurez les paramètres de langue pour votre contenu.",
         "languages": "Langues",
         "languagesDescription": "Ajoutez et gérez les langues prises en charge pour votre contenu.",
+        "languageOnlyEntries": "Autoriser les entrées dans une seule langue",
+        "languageOnlyEntriesDescription": "Les nouvelles entrées peuvent être créées dans n'importe quelle langue. Une telle entrée n'existe que dans cette langue et n'a pas de traductions. Désactiver l'option conserve les entrées existantes.",
         "defaultLanguage": "Langue par défaut",
         "defaultLanguagePlaceholder": "ex. fr",
         "defaultLanguageDescription": "Cette langue sera utilisée par défaut pour la création de contenu. Il est recommandé de la définir sur la langue de votre public principal. Elle sera également utilisée pour les traductions IA.",

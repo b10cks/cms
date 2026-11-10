@@ -79,6 +79,8 @@ interface SpaceSettings {
   site_locales?: SpaceSiteLocale[]
   filter_hidden_blocks?: boolean
   content_sorting?: boolean
+  /** New entries may be created in a non-default language, existing only there. */
+  language_only_entries?: boolean
   serial_gaps?: 'preserve' | 'reuse'
   onboarding_dismissed_at?: string | null
   sitemap?: SpaceSitemapSettings

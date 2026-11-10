@@ -2,13 +2,15 @@
 import { deepClone } from '@vue/devtools-shared'
 
 import { Button } from '~/components/ui/button'
-import { FormField, SelectField } from '~/components/ui/form'
+import { FormField, Label, SelectField } from '~/components/ui/form'
 import { Input } from '~/components/ui/input'
 import { SettingsSection } from '~/components/ui/settings-section'
 import SettingsTable, {
   type ColumnDefinition,
   type TableItem,
 } from '~/components/ui/settings-table.vue'
+import { Switch } from '~/components/ui/switch'
+import { TooltipIcon } from '~/components/ui/tooltip'
 
 const { t } = useI18n()
 const props = defineProps<{ space: SpaceResource }>()
@@ -39,6 +41,7 @@ const siteLocales = ref<SpaceSiteLocale[]>(deepClone(props.space.settings.site_l
 const defaultLanguage = ref(props.space.settings.default_language || 'en')
 const slugStrategy = ref(props.space.settings.slug_strategy || 'never')
 const i18nMode = ref(props.space.settings.i18n_mode || 'overlay')
+const languageOnlyEntries = ref(props.space.settings.language_only_entries ?? false)
 const errors = ref<Record<string, string[]>>({})
 
 const slugStrategyOptions = [
@@ -199,6 +202,7 @@ const saveSettings = async () => {
           default_language: defaultLanguage.value,
           i18n_mode: i18nMode.value,
           slug_strategy: slugStrategy.value,
+          language_only_entries: languageOnlyEntries.value,
         },
       },
     })
@@ -278,6 +282,23 @@ const saveSettings = async () => {
         {{ getError('settings.languages') }}
       </p>
     </FormField>
+    <div class="flex items-center gap-2">
+      <Switch
+        id="language-only-entries"
+        v-model="languageOnlyEntries"
+        :aria-label="$t('labels.settings.i18n.languageOnlyEntries')"
+      />
+      <Label
+        for="language-only-entries"
+        class="text-sm font-medium"
+        :label="$t('labels.settings.i18n.languageOnlyEntries')"
+      />
+      <TooltipIcon>
+        <span class="block max-w-xs whitespace-pre-line">
+          {{ $t('labels.settings.i18n.languageOnlyEntriesDescription') }}
+        </span>
+      </TooltipIcon>
+    </div>
     <FormField
       name="site-locales"
       :label="$t('labels.settings.i18n.siteLocales.title')"

@@ -2456,6 +2456,8 @@
         "description": "Konfiguriere Spracheinstellungen für deinen Inhalt.",
         "languages": "Sprachen",
         "languagesDescription": "Füge unterstützte Sprachen für deinen Content hinzu und verwalte sie.",
+        "languageOnlyEntries": "Einträge in nur einer Sprache erlauben",
+        "languageOnlyEntriesDescription": "Neue Einträge können in jeder Sprache angelegt werden. Ein solcher Eintrag existiert nur in dieser Sprache und bekommt keine Übersetzungen. Beim Ausschalten bleiben bestehende Einträge erhalten.",
         "defaultLanguage": "Standardsprache",
         "defaultLanguagePlaceholder": "z. B. en",
         "defaultLanguageDescription": "Diese Sprache wird als Standard für die Content-Erstellung verwendet. Es wird empfohlen, dies auf die Sprache deines Hauptpublikums einzustellen. Sie wird auch für KI-Übersetzungen verwendet.",

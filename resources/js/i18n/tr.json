@@ -2446,6 +2446,8 @@
         "description": "İçeriğiniz için dil ayarlarını yapılandırın.",
         "languages": "Diller",
         "languagesDescription": "İçeriğiniz için desteklenen dilleri ekleyin ve yönetin.",
+        "languageOnlyEntries": "Tek dilde girdilere izin ver",
+        "languageOnlyEntriesDescription": "Yeni girdiler herhangi bir dilde oluşturulabilir. Böyle bir girdi yalnızca o dilde bulunur ve çeviri almaz. Kapatıldığında mevcut girdiler korunur.",
         "defaultLanguage": "Varsayılan Dil",
         "defaultLanguagePlaceholder": "örn. en",
         "defaultLanguageDescription": "Bu dil içerik oluşturma için varsayılan olarak kullanılacaktır. Birincil hedef kitlenizin diline ayarlamanız önerilir. AI çevirileri için de kullanılacaktır.",
