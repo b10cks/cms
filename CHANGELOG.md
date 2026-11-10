@@ -3,6 +3,12 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.11.10-b0883032] — 2026-11-10
+
+- 📝 Record the translation memory management branch
+- 📝 Document the translation memory endpoints and regenerate the API spec
+- ✨ Let people list, correct and delete translation memory pairs
+
 ## [v2026.11.9-df172646] — 2026-11-9
 
 - 📝 Record the localization preview merge release
