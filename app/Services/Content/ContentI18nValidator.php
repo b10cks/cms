@@ -10,6 +10,7 @@ class ContentI18nValidator
     public function __construct(
         private readonly ContentI18nService $contentI18nService,
         private readonly ChildContentRuleService $childContentRuleService,
+        private readonly LocalizedContentSlugService $slugService,
     ) {}
 
     public function validate(
@@ -46,6 +47,13 @@ class ContentI18nValidator
         } elseif ($i18nParentId === null && $content === null && ! $space->settings->allowsLanguageOnlyEntries()) {
             // Only new entries: turning the setting off keeps existing ones editable.
             $errors['language_iso'] ??= 'New entries in other languages are turned off for this space.';
+        }
+
+        if ($content !== null && $content->i18n_parent_id === null && $languageIso !== $content->language_iso) {
+            $switchError = $this->languageSwitchError($space, $content, $languageIso);
+            if ($switchError !== null) {
+                $errors['language_iso'] ??= $switchError;
+            }
         }
 
         if ($i18nParentId !== null) {
@@ -107,6 +115,35 @@ class ContentI18nValidator
         }
 
         return $errors;
+    }
+
+    /**
+     * Moving an original to another language. Only an entry without
+     * translations may move, since they hang off a default-language original,
+     * and only into a language where its path is free.
+     */
+    private function languageSwitchError(Space $space, Content $content, string $languageIso): ?string
+    {
+        if (Content::query()->where('i18n_parent_id', $content->id)->whereNull('deleted_at')->exists()) {
+            return 'An entry with translations keeps its language.';
+        }
+
+        if ($languageIso !== $space->settings->getDefaultLanguage() && ! $space->settings->allowsLanguageOnlyEntries()) {
+            return 'New entries in other languages are turned off for this space.';
+        }
+
+        $probe = $content->replicate();
+        $probe->language_iso = $languageIso;
+        $this->slugService->updateFullSlug($probe);
+
+        $taken = Content::query()
+            ->whereNull('deleted_at')
+            ->where('language_iso', $languageIso)
+            ->where('full_slug', $probe->full_slug)
+            ->whereKeyNot($content->id)
+            ->exists();
+
+        return $taken ? 'Another entry in this language already uses this path.' : null;
     }
 
     private function childSettingDiffers(mixed $submitted, mixed $canonical): bool

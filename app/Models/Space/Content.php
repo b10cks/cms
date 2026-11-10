@@ -202,8 +202,17 @@ class Content extends SpaceModel
 
             $slugService = app(LocalizedContentSlugService::class);
             $oldFullSlug = $slugService->updateFullSlug($content);
+            // The stored path has no locale, so a language switch moves the
+            // public URL even when the path stays the same.
+            $languageChanged = $content->exists && $content->isDirty('language_iso');
+            if ($languageChanged) {
+                $oldFullSlug ??= $content->full_slug;
+            }
             if (! empty($oldFullSlug)) {
-                $redirectSource = $slugService->formatRedirectSlug($oldFullSlug, $content->language_iso);
+                $redirectSource = $slugService->formatRedirectSlug(
+                    $oldFullSlug,
+                    $languageChanged ? $content->getOriginal('language_iso') : $content->language_iso,
+                );
                 $redirectTarget = $slugService->formatRedirectSlug($content->full_slug, $content->language_iso);
                 $slugService->createRedirect($redirectSource, $redirectTarget);
             }

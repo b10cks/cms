@@ -7,6 +7,7 @@ use App\Models\Space\Block;
 use App\Models\Space\Content;
 use App\Models\Space\ContentVersion;
 use App\Models\User;
+use App\Services\Content\LocalizedContentSlugService;
 use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
@@ -233,6 +234,53 @@ class LanguageOnlyContentTest extends TestCase
         $this->assertFalse($versions['en']['exists']);
         $this->assertFalse($versions['en']['is_canonical']);
         $this->assertTrue($versions['de']['is_canonical']);
+    }
+
+    #[Test]
+    public function an_entry_without_translations_can_switch_its_language(): void
+    {
+        $campaign = $this->createContent('de', 'sommeraktion');
+        $expectedSource = app(LocalizedContentSlugService::class)->formatRedirectSlug('/sommeraktion', 'de');
+
+        $this->patchJson($this->updateRoute($campaign), ['language_iso' => 'en'])
+            ->assertOk()
+            ->assertJsonPath('data.language_iso', 'en');
+
+        $this->assertDatabaseHas('redirects', ['source' => $expectedSource, 'target' => '/sommeraktion'], $campaign->getConnectionName());
+
+        // Back to German needs the space setting; the default language never does.
+        $settings = $this->space->settings;
+        $settings->language_only_entries = false;
+        $this->space->settings = $settings;
+        $this->space->save();
+
+        $this->patchJson($this->updateRoute($campaign), ['language_iso' => 'de'])
+            ->assertJsonValidationErrors(['language_iso']);
+    }
+
+    #[Test]
+    public function an_entry_with_translations_keeps_its_language(): void
+    {
+        $home = $this->createContent('en', 'home');
+        $this->createContent('de', 'startseite', i18nParent: $home);
+
+        $this->patchJson($this->updateRoute($home), ['language_iso' => 'de'])
+            ->assertJsonValidationErrors(['language_iso']);
+    }
+
+    #[Test]
+    public function a_language_switch_needs_a_free_path_in_that_language(): void
+    {
+        $this->createContent('de', 'aktion');
+        $campaign = $this->createContent('en', 'aktion');
+
+        $this->patchJson($this->updateRoute($campaign), ['language_iso' => 'de'])
+            ->assertJsonValidationErrors(['language_iso']);
+    }
+
+    private function updateRoute(Content $content): string
+    {
+        return route('mgmt.contents.update', ['space' => $this->space->id, 'content' => $content->id]);
     }
 
     private function createContent(string $languageIso, string $slug, ?Content $i18nParent = null, int $position = 0): Content
