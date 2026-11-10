@@ -25,6 +25,8 @@ export interface SelectOption<T = unknown> {
 const props = defineProps<{
   id?: string
   label?: string
+  /** Keeps the label for screen readers only, and the description in view. */
+  hideLabel?: boolean
   required?: boolean
   tooltip?: string
   description?: string
@@ -113,6 +115,7 @@ const handleClear = () => {
   <FormField
     :id="id"
     :label="label"
+    :hide-label="hideLabel"
     :name="name"
     :required="required"
     :tooltip="tooltip"

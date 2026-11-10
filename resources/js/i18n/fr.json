@@ -977,10 +977,12 @@
         "slugFromPattern": "Construit à partir du modèle de ce type de contenu : {pattern}",
         "slugAuto": "Généré automatiquement — saisissez le vôtre pour remplacer.",
         "slugManual": "Slug personnalisé.",
-        "languageOnly": "Uniquement en {language}. Aucune version dans les autres langues.",
+        "languageOnly": "Elle ne reçoit aucune version dans d'autres langues. Vous pourrez changer sa langue plus tard dans Configuration.",
         "slugReset": "Utiliser le slug automatique",
         "slugPending": "Généré lors de la création de l'entrée",
-        "languageHint": "Langue de l'entrée. Choisissez-en une autre pour une entrée qui n'existe que dans cette langue."
+        "languageHint": "Langue de l'entrée. Choisissez-en une autre pour une entrée qui n'existe que dans cette langue.",
+        "languageOnlyTitle": "Uniquement en {language}",
+        "submitOnly": "Créer uniquement en {language}"
       },
       "blankTemplate": "Vierge",
       "templates": "Modèles",
@@ -1073,7 +1075,21 @@
           "minutes": "{count} minute | {count} minutes",
           "seconds": "{count} seconde | {count} secondes",
           "tags": "{count} tag | {count} tags",
-          "notSet": "Non défini"
+          "notSet": "Non défini",
+          "language": "Langue"
+        },
+        "language": {
+          "label": "Langue",
+          "only": "Uniquement en {language}",
+          "descriptionDefault": "Reçoit des versions dans d'autres langues. Choisissez une autre langue pour une entrée qui n'existe que dans celle-ci.",
+          "descriptionOnly": "N'existe que dans cette langue. Passez à la langue par défaut pour lui donner des versions dans d'autres langues.",
+          "hasTranslations": "A des versions dans d'autres langues, elle garde donc sa langue.",
+          "saveFirst": "Enregistrez vos modifications avant de changer de langue.",
+          "confirmOnlyTitle": "Passer uniquement en {language} ?",
+          "confirmOnly": "L'entrée passe en {language} et ne reçoit aucune version dans d'autres langues. Son URL change et l'ancienne redirige vers la nouvelle.",
+          "confirmDefaultTitle": "Passer en {language} ?",
+          "confirmDefault": "L'entrée passe en {language} et peut recevoir des versions dans d'autres langues. Son contenu reste tel quel. Son URL change et l'ancienne redirige vers la nouvelle.",
+          "confirmLabel": "Changer de langue"
         }
       },
       "tabs": {

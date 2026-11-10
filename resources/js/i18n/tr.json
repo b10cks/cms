@@ -977,10 +977,12 @@
         "slugFromPattern": "Bu içerik türünün kalıbından oluşturuldu: {pattern}",
         "slugAuto": "Otomatik olarak oluşturuldu — değiştirmek için kendinkini yazın.",
         "slugManual": "Özel bağlantı adresi.",
-        "languageOnly": "Yalnızca {language}. Diğer dillerde sürümü olmaz.",
+        "languageOnly": "Başka dillerde sürüm almaz. Dilini daha sonra Yapılandırma altında değiştirebilirsiniz.",
         "slugReset": "Otomatik bağlantı adresini kullan",
         "slugPending": "Girdiyi oluşturduğunuzda üretilir",
-        "languageHint": "Girdinin dili. Yalnızca o dilde bulunan bir girdi için başka bir dil seçin."
+        "languageHint": "Girdinin dili. Yalnızca o dilde bulunan bir girdi için başka bir dil seçin.",
+        "languageOnlyTitle": "Yalnızca {language}",
+        "submitOnly": "Yalnızca {language} olarak oluştur"
       },
       "blankTemplate": "Boş",
       "templates": "Şablonlar",
@@ -1073,7 +1075,21 @@
           "minutes": "{count} dakika",
           "seconds": "{count} saniye",
           "tags": "{count} etiket",
-          "notSet": "Ayarlanmadı"
+          "notSet": "Ayarlanmadı",
+          "language": "Dil"
+        },
+        "language": {
+          "label": "Dil",
+          "only": "Yalnızca {language}",
+          "descriptionDefault": "Başka dillerde sürümler alır. Yalnızca başka bir dilde var olan bir giriş için o dili seçin.",
+          "descriptionOnly": "Yalnızca bu dilde var. Başka dillerde sürüm alabilmesi için varsayılan dile geçin.",
+          "hasTranslations": "Başka dillerde sürümleri olduğu için dilini korur.",
+          "saveFirst": "Dili değiştirmeden önce değişikliklerinizi kaydedin.",
+          "confirmOnlyTitle": "Yalnızca {language} diline geçilsin mi?",
+          "confirmOnly": "Giriş {language} diline geçer ve başka dillerde sürüm almaz. URL’si değişir, eskisi yenisine yönlendirir.",
+          "confirmDefaultTitle": "{language} diline geçilsin mi?",
+          "confirmDefault": "Giriş {language} diline geçer ve başka dillerde sürüm alabilir. İçeriği olduğu gibi kalır. URL’si değişir, eskisi yenisine yönlendirir.",
+          "confirmLabel": "Dili değiştir"
         }
       },
       "tabs": {

@@ -977,10 +977,12 @@
         "slugFromPattern": "Built from this content type's pattern: {pattern}",
         "slugAuto": "Generated automatically — type your own to override.",
         "slugManual": "Custom slug.",
-        "languageOnly": "Only in {language}. It gets no versions in other languages.",
+        "languageOnly": "It gets no versions in other languages. You can switch its language later under Config.",
         "slugReset": "Use the automatic slug",
         "slugPending": "Generated when you create the entry",
-        "languageHint": "Language of the entry. Pick another one for an entry that exists only in that language."
+        "languageHint": "Language of the entry. Pick another one for an entry that exists only in that language.",
+        "languageOnlyTitle": "Only in {language}",
+        "submitOnly": "Create in {language} only"
       },
       "blankTemplate": "Blank",
       "templates": "Templates",
@@ -1073,7 +1075,21 @@
           "minutes": "{count} minute | {count} minutes",
           "seconds": "{count} second | {count} seconds",
           "tags": "{count} tag | {count} tags",
-          "notSet": "Not set"
+          "notSet": "Not set",
+          "language": "Language"
+        },
+        "language": {
+          "label": "Language",
+          "only": "Only in {language}",
+          "descriptionDefault": "Gets versions in other languages. Pick another language for an entry that exists only there.",
+          "descriptionOnly": "Exists only in this language. Switch to the default language to give it versions in other languages.",
+          "hasTranslations": "Has versions in other languages, so it keeps its language.",
+          "saveFirst": "Save your changes before you switch the language.",
+          "confirmOnlyTitle": "Switch to {language} only?",
+          "confirmOnly": "The entry moves to {language} and gets no versions in other languages. Its URL changes, and the old one redirects to it.",
+          "confirmDefaultTitle": "Switch to {language}?",
+          "confirmDefault": "The entry moves to {language} and can get versions in other languages. Its content stays as written. Its URL changes, and the old one redirects to it.",
+          "confirmLabel": "Switch language"
         }
       },
       "tabs": {

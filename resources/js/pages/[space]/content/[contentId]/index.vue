@@ -1000,7 +1000,10 @@ provide('reloadServerContent', reloadServerContent)
         value="config"
         :class="['p-4', showPreview ? '' : 'mx-auto max-w-3xl']"
       >
-        <ContentSettings v-model="content" />
+        <ContentSettings
+          v-model="content"
+          :is-dirty="isDirty"
+        />
       </TabsContent>
       <TabsContent
         value="comments"

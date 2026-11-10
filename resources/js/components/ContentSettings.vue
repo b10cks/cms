@@ -12,12 +12,17 @@ import {
   TagsInputItemText,
 } from '~/components/ui/tags-input'
 import { resolveAllowedChildContentBlocks } from '~/lib/content-children'
+import { languageName } from '~/lib/languageNames'
 import type { ContentResource } from '~/types/contents'
 
 import ConfigRow from './content/ConfigRow.vue'
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const content = defineModel<ContentResource>()
+const props = defineProps<{
+  /** A language switch saves right away, so it waits until local edits are saved. */
+  isDirty?: boolean
+}>()
 const spaceId = inject<string>('spaceId')
 const { useAccessControl } = useAuthorization()
 const access = useAccessControl(computed(() => ({ space_id: spaceId || undefined })))
@@ -34,6 +39,76 @@ const canManageChildSettings = computed(() => canManageContent.value && isCanoni
 const effectiveMode = computed(
   () => content.value?.effective_i18n_mode || space.value?.settings.i18n_mode || 'overlay'
 )
+
+const defaultLanguage = computed(() => space.value?.settings.default_language ?? null)
+const nameOfLanguage = (code: string) =>
+  languageName(code, space.value?.settings.languages, locale.value)
+const isOtherLanguage = computed(
+  () => !!content.value && content.value.language_iso !== defaultLanguage.value
+)
+/** Versions in other languages hang off a default-language original, so it keeps its language. */
+const hasTranslations = computed(
+  () => content.value?.language_versions?.some((version) => version.exists && !version.is_canonical) ?? false
+)
+const languageOptions = computed(() => {
+  const settings = space.value?.settings
+  if (!settings?.default_language || !content.value) return []
+
+  const codes = settings.language_only_entries
+    ? [settings.default_language, ...(settings.languages ?? []).map(({ code }) => code)]
+    : [...new Set([settings.default_language, content.value.language_iso])]
+
+  return codes.map((code) => ({
+    value: code,
+    label:
+      code === settings.default_language
+        ? nameOfLanguage(code)
+        : t('labels.contents.settings.language.only', { language: nameOfLanguage(code) }),
+  }))
+})
+const showLanguageRow = computed(() => isCanonical.value && languageOptions.value.length > 1)
+const languageSummary = computed(() =>
+  content.value
+    ? isOtherLanguage.value
+      ? t('labels.contents.settings.language.only', {
+          language: nameOfLanguage(content.value.language_iso),
+        })
+      : nameOfLanguage(content.value.language_iso)
+    : ''
+)
+const languageLockReason = computed(() => {
+  if (hasTranslations.value) return t('labels.contents.settings.language.hasTranslations')
+  if (props.isDirty) return t('labels.contents.settings.language.saveFirst')
+  return null
+})
+
+const { useUpdateContentMutation } = useContent(spaceId || '')
+const { mutateAsync: updateContent, isPending: isSwitchingLanguage } = useUpdateContentMutation()
+const { alert } = useAlertDialog()
+
+const switchLanguage = async (languageIso: string) => {
+  const entry = content.value
+  if (!entry || languageIso === entry.language_iso) return
+
+  const language = nameOfLanguage(languageIso)
+  const toDefault = languageIso === defaultLanguage.value
+  const confirmed = await alert.confirm(
+    t(`labels.contents.settings.language.${toDefault ? 'confirmDefault' : 'confirmOnly'}`, {
+      language,
+    }),
+    {
+      title: t(
+        `labels.contents.settings.language.${toDefault ? 'confirmDefaultTitle' : 'confirmOnlyTitle'}`,
+        { language }
+      ),
+      confirmLabel: t('labels.contents.settings.language.confirmLabel'),
+    }
+  )
+  if (!confirmed) return
+
+  // Metadata only: no `content` key, so no new version.
+  await updateContent({ id: entry.id, payload: { language_iso: languageIso } })
+}
 
 const overrideOptions = computed(() => [
   { value: 'inherit', label: t('labels.contents.settings.i18n.override.inherit') },
@@ -177,7 +252,7 @@ watch(
   { immediate: true }
 )
 
-const openRows = ref<Partial<Record<'preview' | 'translations' | 'children' | 'cache' | 'externalId', boolean>>>({})
+const openRows = ref<Partial<Record<'language' | 'preview' | 'translations' | 'children' | 'cache' | 'externalId', boolean>>>({})
 
 const optionLabel = (options: { value: string; label: string }[], value?: string | null) =>
   options.find((option) => option.value === value)?.label
@@ -261,6 +336,33 @@ const cacheSummary = computed(() => {
     />
 
     <div class="overflow-hidden rounded-lg border border-border bg-card shadow-soft-sm">
+      <ConfigRow
+        v-if="showLanguageRow"
+        v-model:open="openRows.language"
+        data-config-row="language"
+        icon="lucide:globe"
+        :label="$t('labels.contents.settings.rows.language')"
+        :summary="languageSummary"
+      >
+        <SelectField
+          :model-value="content.language_iso"
+          name="languageIso"
+          :label="$t('labels.contents.settings.language.label')"
+          hide-label
+          :description="
+            languageLockReason ??
+            $t(
+              isOtherLanguage
+                ? 'labels.contents.settings.language.descriptionOnly'
+                : 'labels.contents.settings.language.descriptionDefault'
+            )
+          "
+          :disabled="!canManageContent || !!languageLockReason || isSwitchingLanguage"
+          :options="languageOptions"
+          @update:model-value="switchLanguage(String($event))"
+        />
+      </ConfigRow>
+
       <ConfigRow
         v-model:open="openRows.preview"
         data-config-row="preview"

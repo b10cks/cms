@@ -977,10 +977,12 @@
         "slugFromPattern": "Construido a partir del patrón de este tipo de contenido: {pattern}",
         "slugAuto": "Generado automáticamente — escribe el tuyo para anularlo.",
         "slugManual": "Slug personalizado.",
-        "languageOnly": "Solo en {language}. No tendrá versiones en otros idiomas.",
+        "languageOnly": "No recibe versiones en otros idiomas. Puedes cambiar su idioma más tarde en Configuración.",
         "slugReset": "Usar el slug automático",
         "slugPending": "Generado al crear la entrada",
-        "languageHint": "Idioma de la entrada. Elige otro para una entrada que solo exista en ese idioma."
+        "languageHint": "Idioma de la entrada. Elige otro para una entrada que solo exista en ese idioma.",
+        "languageOnlyTitle": "Solo en {language}",
+        "submitOnly": "Crear solo en {language}"
       },
       "blankTemplate": "En blanco",
       "templates": "Plantillas",
@@ -1073,7 +1075,21 @@
           "minutes": "{count} minuto | {count} minutos",
           "seconds": "{count} segundo | {count} segundos",
           "tags": "{count} etiqueta | {count} etiquetas",
-          "notSet": "Sin definir"
+          "notSet": "Sin definir",
+          "language": "Idioma"
+        },
+        "language": {
+          "label": "Idioma",
+          "only": "Solo en {language}",
+          "descriptionDefault": "Recibe versiones en otros idiomas. Elige otro idioma para una entrada que solo exista en él.",
+          "descriptionOnly": "Solo existe en este idioma. Cambia al idioma predeterminado para darle versiones en otros idiomas.",
+          "hasTranslations": "Tiene versiones en otros idiomas, así que conserva su idioma.",
+          "saveFirst": "Guarda tus cambios antes de cambiar el idioma.",
+          "confirmOnlyTitle": "¿Cambiar a solo {language}?",
+          "confirmOnly": "La entrada pasa a {language} y no recibe versiones en otros idiomas. Su URL cambia y la antigua redirige a la nueva.",
+          "confirmDefaultTitle": "¿Cambiar a {language}?",
+          "confirmDefault": "La entrada pasa a {language} y puede recibir versiones en otros idiomas. Su contenido queda como está. Su URL cambia y la antigua redirige a la nueva.",
+          "confirmLabel": "Cambiar idioma"
         }
       },
       "tabs": {

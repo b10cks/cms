@@ -986,10 +986,12 @@
         "slugFromPattern": "Aus dem Muster dieses Inhaltstyps: {pattern}",
         "slugAuto": "Wird automatisch erzeugt – zum Überschreiben einfach eintippen.",
         "slugManual": "Eigener Slug.",
-        "languageOnly": "Nur auf {language}. Andere Sprachen bekommen keine Version davon.",
+        "languageOnly": "Andere Sprachen bekommen keine Version davon. Die Sprache kannst du später unter Konfiguration wechseln.",
         "slugReset": "Automatischen Slug verwenden",
         "slugPending": "Wird beim Anlegen erzeugt",
-        "languageHint": "Sprache des Eintrags. Wähle eine andere für einen Eintrag, der nur in dieser Sprache existiert."
+        "languageHint": "Sprache des Eintrags. Wähle eine andere für einen Eintrag, der nur in dieser Sprache existiert.",
+        "languageOnlyTitle": "Nur auf {language}",
+        "submitOnly": "Nur auf {language} anlegen"
       },
       "blankTemplate": "Leer",
       "templates": "Vorlagen",
@@ -1082,7 +1084,21 @@
           "minutes": "{count} Minute | {count} Minuten",
           "seconds": "{count} Sekunde | {count} Sekunden",
           "tags": "{count} Tag | {count} Tags",
-          "notSet": "Nicht gesetzt"
+          "notSet": "Nicht gesetzt",
+          "language": "Sprache"
+        },
+        "language": {
+          "label": "Sprache",
+          "only": "Nur auf {language}",
+          "descriptionDefault": "Bekommt Versionen in anderen Sprachen. Wähle eine andere Sprache für einen Eintrag, der nur dort existiert.",
+          "descriptionOnly": "Existiert nur in dieser Sprache. Wechsle zur Standardsprache, damit er Versionen in anderen Sprachen bekommen kann.",
+          "hasTranslations": "Hat Versionen in anderen Sprachen und behält deshalb seine Sprache.",
+          "saveFirst": "Speichere deine Änderungen, bevor du die Sprache wechselst.",
+          "confirmOnlyTitle": "Nur auf {language} umstellen?",
+          "confirmOnly": "Der Eintrag wechselt zu {language} und bekommt keine Versionen in anderen Sprachen. Seine URL ändert sich, die alte leitet auf die neue weiter.",
+          "confirmDefaultTitle": "Auf {language} umstellen?",
+          "confirmDefault": "Der Eintrag wechselt zu {language} und kann Versionen in anderen Sprachen bekommen. Sein Inhalt bleibt, wie er ist. Seine URL ändert sich, die alte leitet auf die neue weiter.",
+          "confirmLabel": "Sprache wechseln"
         }
       },
       "tabs": {

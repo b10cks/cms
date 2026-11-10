@@ -2,6 +2,7 @@
 import { refDebounced } from '@vueuse/core'
 
 import Icon from '~/components/Icon.vue'
+import { Alert } from '~/components/ui/alert'
 import { Button } from '~/components/ui/button'
 import {
   DropdownMenu,
@@ -13,7 +14,6 @@ import {
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -345,10 +345,17 @@ watch(open, (isOpen, wasOpen) => {
       >
         <DialogHeader>
           <DialogTitle>{{ $t('labels.contents.createContent') }}</DialogTitle>
-          <DialogDescription v-if="isOtherLanguage">
-            {{ $t('labels.contents.create.languageOnly', { language: contentLanguageLabel }) }}
-          </DialogDescription>
         </DialogHeader>
+        <Alert
+          v-if="isOtherLanguage"
+          color="info"
+          icon="lucide:languages"
+        >
+          <p class="font-semibold">
+            {{ $t('labels.contents.create.languageOnlyTitle', { language: contentLanguageLabel }) }}
+          </p>
+          <p class="text-sm">{{ $t('labels.contents.create.languageOnly') }}</p>
+        </Alert>
         <div class="grid gap-6">
           <div
             v-if="props.parentId && isLoadingParentRestrictions"
@@ -536,7 +543,7 @@ watch(open, (isOpen, wasOpen) => {
                   type="button"
                   variant="ghost"
                   size="sm"
-                  class="mr-auto text-muted"
+                  :class="['mr-auto', isOtherLanguage ? 'text-primary' : 'text-muted']"
                   :aria-label="$t('labels.contents.localization.language')"
                 >
                   <Icon name="lucide:languages" />
@@ -577,7 +584,11 @@ watch(open, (isOpen, wasOpen) => {
               !content.block_id
             "
           >
-            {{ $t('actions.create') }}
+            {{
+              isOtherLanguage
+                ? $t('labels.contents.create.submitOnly', { language: contentLanguageLabel })
+                : $t('actions.create')
+            }}
           </Button>
         </DialogFooter>
       </form>
