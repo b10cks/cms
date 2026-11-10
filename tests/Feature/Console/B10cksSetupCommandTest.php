@@ -83,6 +83,20 @@ class B10cksSetupCommandTest extends TestCase
     }
 
     #[Test]
+    public function setup_refuses_the_public_reverb_secret_in_production(): void
+    {
+        $this->app['env'] = 'production';
+        config(['edition.edition' => 'self-hosted', 'reverb.apps.apps.0.secret' => 'b10cks-local-secret']);
+
+        try {
+            $this->makeCommand('standard')->handle();
+            $this->fail('Setup ran with the public Reverb secret.');
+        } catch (RuntimeException $exception) {
+            $this->assertStringContainsString('REVERB_APP_SECRET', $exception->getMessage());
+        }
+    }
+
+    #[Test]
     public function setup_refuses_to_install_without_an_explicit_edition(): void
     {
         config(['edition.edition' => null]);

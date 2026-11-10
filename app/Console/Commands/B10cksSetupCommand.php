@@ -29,6 +29,7 @@ class B10cksSetupCommand extends Command
     public function handle(): int
     {
         $this->assertEditionChosen();
+        $this->assertRealtimeSecretIsPrivate();
 
         $profile = $this->profileResolver->resolve($this->option('profile'));
 
@@ -72,6 +73,23 @@ class B10cksSetupCommand extends Command
         throw new RuntimeException(
             'B10CKS_EDITION is not set. Add B10CKS_EDITION=self-hosted to .env for your own '
             .'installation (or B10CKS_EDITION=saas for the hosted service) and rerun setup.'
+        );
+    }
+
+    /**
+     * .env.example ships a Reverb key and secret for local development. They
+     * are public, and whoever knows the secret can sign a subscription to any
+     * private channel and push events into open sessions.
+     */
+    private function assertRealtimeSecretIsPrivate(): void
+    {
+        if (! app()->isProduction() || config('reverb.apps.apps.0.secret') !== 'b10cks-local-secret') {
+            return;
+        }
+
+        throw new RuntimeException(
+            'REVERB_APP_SECRET still holds the value from .env.example, which is public. Set your own '
+            .'REVERB_APP_KEY and REVERB_APP_SECRET, or set BROADCAST_DRIVER=null to run without realtime, and rerun setup.'
         );
     }
 

@@ -86,10 +86,11 @@ bun install
 bun run build
 cp .env.example .env
 # set B10CKS_EDITION=self-hosted, APP_ENV=production, APP_DEBUG=false and your database credentials
+# set your own REVERB_APP_KEY and REVERB_APP_SECRET, or BROADCAST_DRIVER=null to run without realtime
 php artisan b10cks:setup
 ```
 
-`.env.example` is the development template, so it leaves the edition unset and debugging on. `b10cks:setup` refuses to run until `B10CKS_EDITION` is set.
+`.env.example` is the development template, so it leaves the edition unset and debugging on. `b10cks:setup` refuses to run until `B10CKS_EDITION` is set. Its Reverb key and secret are public development values: in production, `b10cks:setup` refuses to run while `REVERB_APP_SECRET` still holds that value.
 
 Serve `public/` with your web server of choice, then work through the [configuration reference](configuration.md).
 
