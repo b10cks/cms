@@ -3,6 +3,10 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.11.10-bf446a04] — 2026-11-10
+
+- 🐛 Serve a delivery revision from the future with a short cache lifetime instead of a redirect
+
 ## [v2026.11.10-d42176ea] — 2026-11-10
 
 - 📝 Drop the stale language-only amendments entry from the status
