@@ -19,7 +19,8 @@ class ContentPositionServiceTest extends TestCase
     #[Test]
     public function a_wide_reorder_batches_writes_and_preserves_untouched_rows(): void
     {
-        $this->setUpSpaceTesting(Space::factory()->create());
+        $space = Space::factory()->create();
+        $this->setUpSpaceTesting($space);
         $this->travelTo(now()->startOfSecond());
         $previousTimestamp = now()->subDay()->format('Y-m-d H:i:s');
         $ids = [];
@@ -35,6 +36,8 @@ class ContentPositionServiceTest extends TestCase
                 'full_slug' => 'item-'.$position,
                 'position' => $position,
                 'language_iso' => $position === 205 ? 'de' : 'en',
+                // A translation: its own sequence, untouched by the move.
+                'i18n_parent_id' => $position === 205 ? $ids[0] : null,
                 'deleted_at' => $position === 206 ? $previousTimestamp : null,
                 'updated_at' => $previousTimestamp,
             ]);
@@ -45,7 +48,7 @@ class ContentPositionServiceTest extends TestCase
         $connection->enableQueryLog();
         $connection->flushQueryLog();
 
-        app(ContentPositionService::class)->moveItemToPosition($moving, null, 1);
+        app(ContentPositionService::class)->moveItemToPosition($space, $moving, null, 1);
 
         $updates = collect($connection->getQueryLog())
             ->filter(fn (array $query): bool => str_starts_with(strtolower($query['query']), 'update'));
@@ -63,7 +66,7 @@ class ContentPositionServiceTest extends TestCase
 
         $connection->enableQueryLog();
         $connection->flushQueryLog();
-        app(ContentPositionService::class)->moveItemToPosition($moving, null, 1);
+        app(ContentPositionService::class)->moveItemToPosition($space, $moving, null, 1);
         $updates = collect($connection->getQueryLog())
             ->filter(fn (array $query): bool => str_starts_with(strtolower($query['query']), 'update'));
         $connection->disableQueryLog();

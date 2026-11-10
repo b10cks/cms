@@ -80,7 +80,7 @@ class CreateContent
                 : null;
             if ($sortingEnabled) {
                 $data['position'] = $requestedPosition
-                    ?? $this->contentPositionService->nextPosition($data['parent_id'] ?? null, $data['language_iso']);
+                    ?? $this->contentPositionService->nextPosition($space, $data['parent_id'] ?? null, $isTranslation ? $data['language_iso'] : null);
             } else {
                 // Sorting disabled: leave position at the column default (0) so ordering falls back to name.
                 unset($data['position']);
@@ -159,7 +159,7 @@ class CreateContent
             }
 
             if ($sortingEnabled && $requestedPosition !== null) {
-                $this->contentPositionService->placeNewContent($content, $requestedPosition);
+                $this->contentPositionService->placeNewContent($space, $content, $requestedPosition);
             }
 
             if ($touchSpace) {

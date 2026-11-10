@@ -30,53 +30,57 @@ class ContentPositionService
             : $column === 'position';
     }
 
-    public function nextPosition(?string $parentId, string $languageIso): int
+    /**
+     * The next free position for a new row. A new entry joins the tree's
+     * siblings whatever its language; a new translation joins its language's.
+     */
+    public function nextPosition(Space $space, ?string $parentId, ?string $translationLanguage): int
     {
-        $maxPosition = $this->baseQuery($parentId, $languageIso)->max('position');
+        $maxPosition = $this->baseQuery($space, $parentId, $translationLanguage)->max('position');
 
         return $maxPosition === null ? 0 : ((int) $maxPosition) + 1;
     }
 
-    public function placeNewContent(Content $content, ?int $position = null): void
+    public function placeNewContent(Space $space, Content $content, ?int $position = null): void
     {
-        $this->resequence(
-            collect([$content]),
-            $content->parent_id,
-            $content->language_iso,
-            null,
-            $position,
-        );
+        $this->moveItems($space, collect([$content]), $content->parent_id, null, $position);
     }
 
     public function moveItems(
+        Space $space,
         Collection $items,
         ?string $parentId,
         ?string $afterId = null,
         ?int $position = null,
     ): void {
+        $items = $items->filter(fn (Content $content): bool => $content->exists)->values();
+        if ($items->isEmpty()) {
+            return;
+        }
+
+        $treeIds = Content::query()
+            ->whereKey($items->pluck('id'))
+            ->shownInTree($space->settings->getDefaultLanguage())
+            ->pluck('id')
+            ->flip();
+
         $items
-            ->filter(fn (Content $content): bool => $content->exists)
-            ->groupBy('language_iso')
-            ->each(function (Collection $languageItems, string $languageIso) use ($parentId, $afterId, $position): void {
-                $this->resequence($languageItems->values(), $parentId, $languageIso, $afterId, $position);
+            ->groupBy(fn (Content $content): string => $treeIds->has($content->id) ? '' : $content->language_iso)
+            ->each(function (Collection $sequenceItems, string $translationLanguage) use ($space, $parentId, $afterId, $position): void {
+                $this->resequence($space, $sequenceItems->values(), $parentId, $translationLanguage ?: null, $afterId, $position);
             });
     }
 
-    public function moveItemToPosition(Content $content, ?string $parentId, ?int $position): void
+    public function moveItemToPosition(Space $space, Content $content, ?string $parentId, ?int $position): void
     {
-        $this->resequence(
-            collect([$content]),
-            $parentId,
-            $content->language_iso,
-            null,
-            $position,
-        );
+        $this->moveItems($space, collect([$content]), $parentId, null, $position);
     }
 
     private function resequence(
+        Space $space,
         Collection $items,
         ?string $parentId,
-        string $languageIso,
+        ?string $translationLanguage,
         ?string $afterId = null,
         ?int $position = null,
     ): void {
@@ -86,7 +90,7 @@ class ContentPositionService
 
         $movingIds = $items->pluck('id')->filter()->unique()->values();
         $movingIdSet = $movingIds->flip();
-        $siblings = $this->baseQuery($parentId, $languageIso)
+        $siblings = $this->baseQuery($space, $parentId, $translationLanguage)
             ->whereNotIn('id', $movingIds)
             ->orderBy('position')
             ->orderBy('name')
@@ -138,11 +142,25 @@ class ContentPositionService
         }
     }
 
-    private function baseQuery(?string $parentId, string $languageIso): Builder
+    /**
+     * One sibling sequence: the rows the tree shows under `$parentId` when
+     * `$translationLanguage` is null, else that language's other rows there.
+     * An entry made in German sorts among its English siblings, where the
+     * tree shows it, not among the German translations.
+     */
+    private function baseQuery(Space $space, ?string $parentId, ?string $translationLanguage): Builder
     {
+        $defaultLanguage = $space->settings->getDefaultLanguage();
+
         return Content::query()
             ->whereNull('deleted_at')
-            ->where('language_iso', $languageIso)
+            ->when(
+                $translationLanguage === null,
+                fn (Builder $query) => $query->shownInTree($defaultLanguage),
+                fn (Builder $query) => $query
+                    ->where('language_iso', $translationLanguage)
+                    ->whereNot(fn (Builder $query) => $query->shownInTree($defaultLanguage)),
+            )
             ->when(
                 $parentId === null,
                 fn ($query) => $query->whereNull('parent_id'),

@@ -63,11 +63,11 @@ class MoveContent
             // Decided once from the canonical destination; translations follow suit.
             $sortingEnabled = $this->contentPositionService->allowsManualSort($space, $parent);
             if ($sortingEnabled) {
-                $this->contentPositionService->moveItemToPosition($content, $parentId, $position);
+                $this->contentPositionService->moveItemToPosition($space, $content, $parentId, $position);
             }
 
             if ($content->i18n_parent_id === null) {
-                $this->moveTranslations($content, $parentId, $position, $sortingEnabled);
+                $this->moveTranslations($space, $content, $parentId, $position, $sortingEnabled);
             }
 
             $space->touchContentUpdatedAt();
@@ -78,7 +78,7 @@ class MoveContent
      * Translations follow their canonical entry, as in a tree move, each under
      * the destination's translation in its language or the destination itself.
      */
-    protected function moveTranslations(Content $content, ?string $parentId, ?int $position, bool $sortingEnabled): void
+    protected function moveTranslations(Space $space, Content $content, ?string $parentId, ?int $position, bool $sortingEnabled): void
     {
         foreach (Content::query()->where('i18n_parent_id', $content->id)->get() as $translation) {
             $translationParentId = $this->contentI18nService->parentForLanguage($parentId, $translation->language_iso);
@@ -89,7 +89,7 @@ class MoveContent
             }
 
             if ($sortingEnabled) {
-                $this->contentPositionService->moveItemToPosition($translation, $translationParentId, $position);
+                $this->contentPositionService->moveItemToPosition($space, $translation, $translationParentId, $position);
             }
         }
     }

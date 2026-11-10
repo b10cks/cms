@@ -426,6 +426,27 @@ class Content extends SpaceModel
             ->whereNotNull($query->qualifyColumn('published_version_id'));
     }
 
+    /**
+     * The rows the content tree shows, one per family: its default-language
+     * row, or the entry itself when the family has none (an entry made in
+     * another language). Manual positions are numbered across these rows.
+     *
+     * @param  Builder<Content>  $query
+     */
+    public function scopeShownInTree(Builder $query, string $defaultLanguage): void
+    {
+        $query->where(fn (Builder $query) => $query
+            ->where($query->qualifyColumn('language_iso'), $defaultLanguage)
+            ->orWhere(fn (Builder $query) => $query
+                ->whereNull($query->qualifyColumn('i18n_parent_id'))
+                ->whereNotExists(fn ($sub) => $sub
+                    ->selectRaw('1')
+                    ->from($this->getTable().' as default_translations')
+                    ->whereColumn('default_translations.i18n_parent_id', $query->qualifyColumn('id'))
+                    ->where('default_translations.language_iso', $defaultLanguage)
+                    ->whereNull('default_translations.deleted_at'))));
+    }
+
     public function assets(): HasManyFromArray
     {
         return $this->hasManyFromArray(Asset::class, 'asset_ids');

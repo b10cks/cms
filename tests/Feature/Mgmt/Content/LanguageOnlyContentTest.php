@@ -40,6 +40,7 @@ class LanguageOnlyContentTest extends TestCase
             'settings' => [
                 'default_language' => 'en',
                 'i18n_mode' => 'overlay',
+                'content_sorting' => true,
                 'languages' => [
                     ['code' => 'de', 'name' => 'German', 'fallback_language' => null],
                 ],
@@ -86,6 +87,58 @@ class LanguageOnlyContentTest extends TestCase
             'language_iso' => 'en',
             'i18n_parent_id' => $campaign->id,
         ])->assertJsonValidationErrors(['i18n_parent_id']);
+    }
+
+    #[Test]
+    public function an_entry_in_another_language_sorts_among_its_tree_siblings(): void
+    {
+        $home = $this->createContent('en', 'home', position: 0);
+        $about = $this->createContent('en', 'about', position: 1);
+        $this->createContent('de', 'startseite', i18nParent: $home, position: 0);
+
+        $created = $this->postJson(route('mgmt.contents.tree-operations', ['space' => $this->space->id]), [
+            'operations' => [[
+                'type' => 'create',
+                'temp_id' => 'tmp-1',
+                'block_id' => $this->block->id,
+                'name' => 'Sommeraktion',
+                'slug' => 'sommeraktion',
+                'language_iso' => 'de',
+            ]],
+        ])->assertOk();
+        $campaign = Content::query()->where('slug', 'sommeraktion')->sole();
+        $this->assertSame(2, $campaign->position);
+
+        $this->postJson(route('mgmt.contents.tree-operations', ['space' => $this->space->id]), [
+            'operations' => [[
+                'type' => 'move',
+                'ids' => [$campaign->id],
+                'parent_id' => null,
+                'after_id' => $home->id,
+            ]],
+        ])->assertOk();
+
+        $tree = Content::query()->whereNull('parent_id')->shownInTree('en')->orderBy('position')->pluck('id')->all();
+        $this->assertSame([$home->id, $campaign->id, $about->id], $tree);
+        $this->assertNull($campaign->fresh()->parent_id);
+    }
+
+    #[Test]
+    public function moving_an_entry_in_another_language_keeps_it_under_the_tree_parent(): void
+    {
+        $product = $this->createContent('en', 'product');
+        $this->createContent('de', 'produkt', i18nParent: $product);
+        $campaign = $this->createContent('de', 'sommeraktion');
+
+        $this->postJson(route('mgmt.contents.tree-operations', ['space' => $this->space->id]), [
+            'operations' => [[
+                'type' => 'move',
+                'ids' => [$campaign->id],
+                'parent_id' => $product->id,
+            ]],
+        ])->assertOk();
+
+        $this->assertSame($product->id, $campaign->fresh()->parent_id);
     }
 
     #[Test]
@@ -159,7 +212,7 @@ class LanguageOnlyContentTest extends TestCase
         $this->assertTrue($versions['de']['is_canonical']);
     }
 
-    private function createContent(string $languageIso, string $slug, ?Content $i18nParent = null): Content
+    private function createContent(string $languageIso, string $slug, ?Content $i18nParent = null, int $position = 0): Content
     {
         $content = new Content;
         $content->forceFill([
@@ -169,6 +222,7 @@ class LanguageOnlyContentTest extends TestCase
             'full_slug' => "/{$slug}",
             'language_iso' => $languageIso,
             'i18n_parent_id' => $i18nParent?->id,
+            'position' => $position,
             'settings' => [],
         ]);
         $content->id = strtolower((string) Str::ulid());

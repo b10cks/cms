@@ -123,7 +123,7 @@ class ContentTreeOperationService
             $this->validateBatchPlacement($orderedItems, $targetParent, $space);
             $this->reassignParent($orderedItems, $targetParent?->id);
             if ($sortingEnabled) {
-                $this->contentPositionService->moveItems($orderedItems, $targetParent?->id, $after?->id, $position);
+                $this->contentPositionService->moveItems($space, $orderedItems, $targetParent?->id, $after?->id, $position);
             }
 
             $familyCache = $this->buildFamilyCache($orderedItems);
@@ -145,7 +145,11 @@ class ContentTreeOperationService
                     ->map(function (Content $item) use ($familyCache, $languageIso): ?Content {
                         $canonicalId = $this->contentI18nService->getCanonicalId($item);
 
-                        return $familyCache[$canonicalId]->firstWhere('language_iso', $languageIso);
+                        // Never the item itself: an entry made in this
+                        // language is a tree row, already placed above.
+                        return $familyCache[$canonicalId]->first(
+                            fn (Content $row): bool => $row->language_iso === $languageIso && $row->id !== $item->id,
+                        );
                     })
                     ->filter()
                     ->values();
@@ -174,6 +178,7 @@ class ContentTreeOperationService
                 $this->reassignParent($translatedItems, $translatedParent?->id);
                 if ($sortingEnabled) {
                     $this->contentPositionService->moveItems(
+                        $space,
                         $translatedItems,
                         $translatedParent?->id,
                         $translatedAfter?->id,
@@ -269,7 +274,7 @@ class ContentTreeOperationService
 
             if ($createdRoots->isNotEmpty()) {
                 if ($this->contentPositionService->allowsManualSort($space, $targetParent)) {
-                    $this->contentPositionService->moveItems($createdRoots, $targetParent?->id, $after?->id, $position);
+                    $this->contentPositionService->moveItems($space, $createdRoots, $targetParent?->id, $after?->id, $position);
                 }
                 $space->touchContentUpdatedAt();
                 $connection->afterCommit(static fn (): mixed => app(ContentMenuCache::class)->invalidate($space->id));

@@ -180,6 +180,7 @@ class UpdateContent
 
             if ($shouldReposition) {
                 $this->contentPositionService->moveItemToPosition(
+                    $space,
                     $content,
                     $content->parent_id,
                     $requestedPosition,
