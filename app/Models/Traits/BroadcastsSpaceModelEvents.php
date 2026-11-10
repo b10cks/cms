@@ -58,7 +58,7 @@ trait BroadcastsSpaceModelEvents
                     return;
                 }
 
-                $space = request('space') ?? SpaceContext::current();
+                $space = SpaceContext::resolve();
                 if (!$space) {
                     return;
                 }

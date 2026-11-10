@@ -93,6 +93,6 @@ class AssetSharePinger
 
     protected static function spaceId(): ?string
     {
-        return (request('space') ?? SpaceContext::current())?->id;
+        return SpaceContext::resolve()?->id;
     }
 }

@@ -63,12 +63,6 @@ class UpdateSpaceRequest extends FormRequest
             // were silently discarded on every save. SpaceSettings owns the
             // shape, so it owns the rules.
             ...SpaceSettings::toValidator('settings', partial: true),
-
-            'state' => [
-                'sometimes',
-                'string',
-                Rule::in(['draft', 'live', 'archived', 'error']),
-            ],
         ];
     }
 

@@ -26,7 +26,7 @@ class LocalizedContentSlugService extends ContentSlugService
      */
     protected function space(): Space
     {
-        $space = $this->space ??= request('space') ?? SpaceContext::current();
+        $space = $this->space ??= SpaceContext::resolve();
 
         if (! $space instanceof Space) {
             throw new RuntimeException(

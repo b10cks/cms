@@ -33,6 +33,18 @@ class SpaceContext
     }
 
     /**
+     * The space a write belongs to: the model bound to the route, else the
+     * ambient one. Never `request('space')`, which reads query and body input
+     * before the route, so `?space=x` would displace the bound model.
+     */
+    public static function resolve(): ?Space
+    {
+        $space = request()?->route('space');
+
+        return $space instanceof Space ? $space : self::current();
+    }
+
+    /**
      * Bind the given space as the current one and return a callable that
      * restores whatever was bound before.
      */

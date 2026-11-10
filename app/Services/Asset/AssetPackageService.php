@@ -133,7 +133,7 @@ class AssetPackageService
 
         // Every caller reaches this exactly when the collection's content
         // changed, so the live-update broadcast rides the same choke point.
-        $space = request('space') ?? SpaceContext::current();
+        $space = SpaceContext::resolve();
         if ($space) {
             broadcast(new AssetCollectionContentChanged($space->id, $collectionId))->toOthers();
         }

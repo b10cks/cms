@@ -13,11 +13,14 @@ use Laravel\Mcp\Response;
 use Laravel\Mcp\Server\Tool;
 
 /**
- * Base for AI tools that act as the token's user in one space they can view,
- * the same gate the in-app skill catalog uses.
+ * Base for AI tools that act as the token's user in one space. The gate is
+ * the ability the Management API asks for the same data: billing and inherited
+ * team roles see a space without its skills and knowledge.
  */
 abstract class AiSpaceTool extends Tool
 {
+    protected string $ability = 'ai.view';
+
     abstract protected function run(Space $space, User $user, Request $request): Response;
 
     /**
@@ -49,7 +52,7 @@ abstract class AiSpaceTool extends Tool
 
         $space = Space::query()->find((string) $request->get('spaceId'));
 
-        if ($space === null || ! $auth->canInSpace($user, $space, 'space.view')) {
+        if ($space === null || ! $auth->canInSpace($user, $space, $this->ability)) {
             return Response::error('Space not found.');
         }
 
