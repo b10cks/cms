@@ -3,6 +3,17 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.11.10-9efad849] — 2026-11-10
+
+- ♻️ Define the content detail query once
+- 🐛 Show the latest source language values in the localization view
+- 📝 Record the language-only entries PR
+- 📝 Record the language-only entry rules
+- ✨ Create, find and edit entries that exist in one language
+- ✨ Allow entries that exist in one non-default language only
+- 🐛 Keep other-language entries out of fallback listings
+- 📝 Record the glossary removal release and the branch cleanup
+
 ## [v2026.11.10-191e959a] — 2026-11-10
 
 - 📝 Record the glossary removal branch
