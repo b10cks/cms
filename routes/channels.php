@@ -57,8 +57,11 @@ Broadcast::channel('presence-spaces.{space}.content', function (User $user, Spac
     ];
 });
 
+// Editors apply the whispers of these two channels to their open document,
+// and a whisper carries no proof of who sent it. Only people who may edit
+// content join.
 Broadcast::channel('presence-spaces.{space}.content.{contentId}', function (User $user, Space $space, string $contentId) use ($canView) {
-    if (! $canView($user, $space, 'content.view')) {
+    if (! $canView($user, $space, 'content.manage')) {
         return false;
     }
 
@@ -73,7 +76,7 @@ Broadcast::channel('presence-spaces.{space}.content.{contentId}', function (User
 });
 
 Broadcast::channel('presence-spaces.{space}.content-canvas', function (User $user, Space $space) use ($canView) {
-    if (! $canView($user, $space, 'content.view')) {
+    if (! $canView($user, $space, 'content.manage')) {
         return false;
     }
 
