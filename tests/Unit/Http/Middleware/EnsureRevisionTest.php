@@ -2,6 +2,7 @@
 
 namespace Tests\Unit\Http\Middleware;
 
+use App\Http\Middleware\CacheDataApi;
 use App\Http\Middleware\EnsureRevision;
 use App\Models\Management\Space;
 use App\Providers\AppServiceProvider;
@@ -64,23 +65,19 @@ class EnsureRevisionTest extends TestCase
     }
 
     #[Test]
-    public function it_redirects_a_revision_from_the_future_to_the_current_one(): void
+    public function a_revision_from_the_future_is_served_but_only_cached_briefly(): void
     {
         $current = app('currentSpace')->rv;
+        $serve = function (int $rv): string {
+            $request = Request::create("http://localhost:8000/contents/home?rv={$rv}");
 
-        $response = $this->middleware->handle(
-            Request::create('http://localhost:8000/contents/home?rv='.($current + 3600)),
-            fn () => response('unreachable'),
-        );
+            return (new CacheDataApi)->handle(
+                $request,
+                fn () => $this->middleware->handle($request, fn () => response('served')),
+            )->headers->get('cache-control');
+        };
 
-        $this->assertSame(301, $response->getStatusCode());
-        $this->assertStringContainsString("rv={$current}", $response->getTargetUrl());
-
-        $served = $this->middleware->handle(
-            Request::create("http://localhost:8000/contents/home?rv={$current}"),
-            fn () => response('served'),
-        );
-
-        $this->assertSame('served', $served->getContent());
+        $this->assertStringContainsString('s-maxage=10,', $serve($current + 3600));
+        $this->assertStringContainsString('s-maxage=86400,', $serve($current));
     }
 }

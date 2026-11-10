@@ -8,6 +8,9 @@ class CacheDataApi
 
     public const string TAGS_ATTRIBUTE = 'api.cache.tags';
 
+    /** An upper bound in seconds that holds whatever TTL the controller sets. */
+    public const string MAX_TTL_ATTRIBUTE = 'api.cache.max_ttl';
+
     public function handle($request, \Closure $next, $maxAge = 3600, $serverMaxAge = 86400, $staleWhileRevalidate = 60)
     {
         $response = $next($request);
@@ -16,6 +19,12 @@ class CacheDataApi
         if (\is_int($ttl)) {
             $maxAge = min((int) $maxAge, $ttl);
             $serverMaxAge = $ttl;
+        }
+
+        $maxTtl = $request->attributes->get(self::MAX_TTL_ATTRIBUTE);
+        if (\is_int($maxTtl)) {
+            $maxAge = min((int) $maxAge, $maxTtl);
+            $serverMaxAge = min((int) $serverMaxAge, $maxTtl);
         }
 
         $response->header(
