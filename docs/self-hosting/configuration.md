@@ -181,7 +181,9 @@ IMAGE_DEFAULT_FORMAT=webp      # output format when a transformation omits one
 IMAGE_MAX_WIDTH=5000           # requested dimensions are clamped to these
 IMAGE_MAX_HEIGHT=5000
 IMAGE_MAX_SOURCE_PIXELS=100000000  # decompression-bomb guard; 0 disables it
-IMAGE_WEBP_QUALITY=85          # per-format encoder quality (also AVIF/JPG/PNG)
+IMAGE_WEBP_QUALITY=80          # default encoder quality, each on its own scale
+IMAGE_AVIF_QUALITY=65
+IMAGE_JPG_QUALITY=80
 ```
 
 `vips` is considerably faster and leaner than `imagick`; use `imagick` only where the libvips extension is unavailable.

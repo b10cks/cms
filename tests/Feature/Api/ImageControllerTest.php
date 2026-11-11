@@ -75,6 +75,21 @@ class ImageControllerTest extends TestCase
     }
 
     #[Test]
+    public function it_accepts_jpeg_as_another_name_for_jpg(): void
+    {
+        $service = Mockery::mock(ImageTransformationService::class);
+        $service->shouldReceive('processImage')
+            ->once()
+            ->withArgs(fn ($disk, $fullPath, $transformation): bool => $transformation->format === 'jpg')
+            ->andReturn(['data' => 'transformed-image', 'format' => 'jpg', 'mime' => 'image/jpeg']);
+        $this->app->instance(ImageTransformationService::class, $service);
+
+        $this->get('/ilum/storage/users/avatars/image.jpg/w_200?format=jpeg')
+            ->assertOk()
+            ->assertHeader('Content-Type', 'image/jpeg');
+    }
+
+    #[Test]
     public function it_returns_not_found_for_missing_local_files(): void
     {
         $service = Mockery::mock(ImageTransformationService::class);

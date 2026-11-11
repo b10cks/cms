@@ -53,7 +53,7 @@ class ProcessImageRequest extends FormRequest
 
         $this->merge([
             ...$this->clampDimensions($params),
-            'format' => $this->query('format'),
+            'format' => $this->query('format') === 'jpeg' ? 'jpg' : $this->query('format'),
             'quality' => $this->query('quality'),
             'frame' => $this->query('frame'),
         ]);
