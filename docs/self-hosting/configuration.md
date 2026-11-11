@@ -85,6 +85,16 @@ MGMT_ALLOWED_ORIGINS=https://cms.example.com
 MGMT_RATE_LIMIT=1000           # management API requests per minute
 ```
 
+## Delivery API rate limit
+
+```bash
+DATA_API_RATE_LIMIT=3000       # delivery requests per minute per token
+```
+
+One client address may send twice this. Only requests that reach the application count. Behind a CDN that is every cache miss, so the number has to cover a crawl of pages nobody has requested since the last publish: each of those costs a few requests, and a publish changes the revision and with it every cache key. Without a CDN every request counts, so size it for your page traffic.
+
+A throttled request answers `429` with `Retry-After`, `X-RateLimit-Limit`, `X-RateLimit-Remaining` and `X-RateLimit-Reset`. `GET /api/v1/spaces/me`, which clients call for the current revision, is not rate limited.
+
 ## Reverse proxy & trusted hosts
 
 Required when the instance runs behind a load balancer, CDN, or any reverse proxy.

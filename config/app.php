@@ -103,6 +103,12 @@ return [
     // Per-user/IP request cap per minute for the authenticated management API.
     'mgmt_rate_limit' => env('MGMT_RATE_LIMIT', 1000),
 
+    // Delivery API requests per minute that one token may send to the origin.
+    // One client address gets twice this. Responses the CDN answers never
+    // count, so this bounds cache misses: a crawl of pages nobody has
+    // requested since the last publish costs a few of them per page.
+    'data_api_rate_limit' => (int) env('DATA_API_RATE_LIMIT', 3000),
+
     'asset_url' => env('ASSET_URL'),
 
     /*

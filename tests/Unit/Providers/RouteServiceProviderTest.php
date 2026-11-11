@@ -3,6 +3,7 @@
 namespace Tests\Unit\Providers;
 
 use App\Http\Middleware\AuthenticateDataApi;
+use Illuminate\Cache\RateLimiting\Unlimited;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Middleware\ThrottleRequests;
 use Illuminate\Routing\Middleware\ThrottleRequestsWithRedis;
@@ -19,10 +20,22 @@ class RouteServiceProviderTest extends TestCase
         $request->server->set('REMOTE_ADDR', '192.0.2.10');
         $request->headers->set('Authorization', 'Bearer attacker-controlled');
         $request->attributes->set(AuthenticateDataApi::TOKEN_ID_ATTRIBUTE, 'token-id');
+        config(['app.data_api_rate_limit' => 50]);
 
         $limits = RateLimiter::limiter('api')($request);
 
         $this->assertSame(['api|token|token-id', 'api|ip|192.0.2.10'], array_column($limits, 'key'));
+        $this->assertSame([50, 100], array_column($limits, 'maxAttempts'));
+    }
+
+    #[Test]
+    public function the_delivery_revision_endpoint_is_not_limited(): void
+    {
+        $request = Request::create('/api/v1/spaces/me?token=secret', 'GET');
+        $request->setRouteResolver(fn () => app('router')->getRoutes()->match($request));
+        $request->attributes->set(AuthenticateDataApi::TOKEN_ID_ATTRIBUTE, 'token-id');
+
+        $this->assertInstanceOf(Unlimited::class, RateLimiter::limiter('api')($request));
     }
 
     #[Test]

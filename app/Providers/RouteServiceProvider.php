@@ -47,15 +47,25 @@ class RouteServiceProvider extends ServiceProvider
         });
 
         RateLimiter::for('api', function (Request $request) {
+            // Clients read the revision before every render and the CDN holds
+            // it for seconds only, so a throttled token would also fail the
+            // renders whose content the CDN still serves. Answering costs no
+            // more than the 429 would: the token lookup has already run.
+            if ($request->routeIs('api.spaces.show')) {
+                return Limit::none();
+            }
+
             $tokenId = $request->attributes->get(AuthenticateDataApi::TOKEN_ID_ATTRIBUTE);
 
             if ($tokenId === null) {
                 return Limit::perMinute(600)->by("api|ip|{$request->ip()}");
             }
 
+            $perMinute = config('app.data_api_rate_limit');
+
             return [
-                Limit::perMinute(600)->by("api|token|{$tokenId}"),
-                Limit::perMinute(1200)->by("api|ip|{$request->ip()}"),
+                Limit::perMinute($perMinute)->by("api|token|{$tokenId}"),
+                Limit::perMinute($perMinute * 2)->by("api|ip|{$request->ip()}"),
             ];
         });
 
