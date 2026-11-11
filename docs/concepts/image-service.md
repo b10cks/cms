@@ -106,14 +106,24 @@ When any transformation is requested and no `format` is given, Ilum re-encodes t
 
 | Format | Default quality | Notes |
 | --- | --- | --- |
-| `webp` | 85 | Default output; broad support, good compression |
-| `avif` | 85 | Best compression; encoding is slower (first request only) |
-| `jpg` | 85 | For consumers that need universal support (e.g. some OG-image scrapers) |
-| `png` | 90 | Lossless-ish; use for screenshots/diagrams with hard edges |
+| `webp` | 80 | Default output; broad support, good compression |
+| `avif` | 65 | Smallest files, about 20% below webp at the same visual quality |
+| `jpg` | 80 | For consumers that need universal support (e.g. some OG-image scrapers). `jpeg` is accepted as well |
+| `png` | none | Lossless, so `quality` has no effect; use for screenshots/diagrams with hard edges |
 
 Animated sources (GIF, animated webp) keep their animation: if the target format can't animate, Ilum falls back to `gif` automatically.
 
-`quality` trades file size against fidelity. For photographic content `quality=60`–`75` in webp/avif is usually indistinguishable at display size; the default 85 is conservative.
+`quality` trades file size against fidelity. Each format reads it on its own encoder's scale, so the same number does not mean the same result: the three defaults above look alike, and `avif` at 80 is a much larger file than `webp` at 80. To go lower, `webp` and `jpg` hold up to about 70 and `avif` to about 55 for photos.
+
+The format comes from the URL alone. Ilum does not look at the `Accept` header, so one URL is one cached file for every visitor. To serve `avif` where it is supported, list both formats in a `<picture>` element or let your image component do it.
+
+### Metadata and colour
+
+Derivatives carry pixels only. EXIF, XMP, IPTC and comments are removed, which keeps camera serial numbers, capture times and editing history off public URLs, and saves up to 80 KB per image for camera originals. The EXIF orientation is applied to the pixels first, so nothing ends up rotated.
+
+Colour profiles are removed too. A source with a profile (Display P3, Adobe RGB, ProPhoto, CMYK) is converted to sRGB first, which is what browsers assume for an image without a profile, so colours stay correct. With the ImageMagick driver the profile is kept instead of converted.
+
+The URL without operations still returns the uploaded file byte for byte, metadata included.
 
 ## Recipes
 

@@ -10,17 +10,16 @@ use Jcupitt\Vips\Image as VipsImageLib;
 class VipsDriver implements ImageDriverInterface
 {
     /**
-     * Load an image from a file path. Single-page images are auto-rotated
-     * per their EXIF orientation; multi-page (animated) loads are not, as
-     * autorot would treat the joined frame strip as one image.
+     * Load an image from a file path. Stills are rotated upright per their
+     * EXIF orientation, because the tag itself is stripped on output.
      */
     public function loadFromFile(string $path, bool $firstFrameOnly = false): ImageInterface
     {
         $vipsImage = ! $firstFrameOnly && $this->shouldLoadAllPages($path)
             ? VipsImageLib::newFromFile($path, ['n' => -1])
-            : VipsImageLib::newFromFile($path)->autorot();
+            : VipsImageLib::newFromFile($path);
 
-        return new VipsImage($vipsImage);
+        return new VipsImage($this->upright($vipsImage));
     }
 
     /**
@@ -30,9 +29,20 @@ class VipsDriver implements ImageDriverInterface
     {
         $vipsImage = $this->shouldLoadAllPagesFromBuffer($buffer)
             ? VipsImageLib::newFromBuffer($buffer, '', ['n' => -1])
-            : VipsImageLib::newFromBuffer($buffer)->autorot();
+            : VipsImageLib::newFromBuffer($buffer);
 
-        return new VipsImage($vipsImage);
+        return new VipsImage($this->upright($vipsImage));
+    }
+
+    /**
+     * An animation is loaded as one tall strip of frames, which autorot would
+     * turn as a whole, so only stills are rotated.
+     */
+    private function upright(VipsImageLib $image): VipsImageLib
+    {
+        $isFrameStrip = $image->getType('page-height') !== 0 && $image->get('page-height') < $image->height;
+
+        return $isFrameStrip ? $image : $image->autorot();
     }
 
     /**

@@ -297,6 +297,19 @@ class ImagickImage implements ImageInterface
     {
         $frame->setImageFormat($format);
 
+        // Drop EXIF, XMP, IPTC and comments. The colour profile stays: Imagick
+        // ships no sRGB profile to convert a wide-gamut source to, and
+        // stripImage() would take the profile along.
+        foreach ($frame->getImageProfiles('*', false) as $profile) {
+            if ($profile !== 'icc') {
+                $frame->removeImageProfile($profile);
+            }
+        }
+
+        foreach ($frame->getImageProperties('*', false) as $property) {
+            $frame->deleteImageProperty($property);
+        }
+
         switch ($format) {
             case 'webp':
             case 'jpg':

@@ -25,21 +25,22 @@ return [
         ],
     ],
 
+    // Each quality is on its encoder's own scale. The defaults land on the same
+    // perceived quality: AVIF 65 looks like WebP 80 and JPEG 80.
     'formats' => [
         'webp' => [
-            'quality' => env('IMAGE_WEBP_QUALITY', 85),
+            'quality' => env('IMAGE_WEBP_QUALITY', 80),
             'mime' => 'image/webp',
         ],
         'avif' => [
-            'quality' => env('IMAGE_AVIF_QUALITY', 85),
+            'quality' => env('IMAGE_AVIF_QUALITY', 65),
             'mime' => 'image/avif',
         ],
         'jpg' => [
-            'quality' => env('IMAGE_JPG_QUALITY', 85),
+            'quality' => env('IMAGE_JPG_QUALITY', 80),
             'mime' => 'image/jpeg',
         ],
         'png' => [
-            'quality' => env('IMAGE_PNG_QUALITY', 90),
             'mime' => 'image/png',
         ],
         'gif' => [
