@@ -3,6 +3,11 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.11.11-1e529ab0] — 2026-11-11
+
+- 🐛 Raise the delivery rate limit, make it configurable and keep the revision endpoint out of it
+- 📝 Record the round 4 release, the rolled back attempt and the open follow-up branch
+
 ## [v2026.11.10-bf446a04] — 2026-11-10
 
 - 🐛 Serve a delivery revision from the future with a short cache lifetime instead of a redirect
