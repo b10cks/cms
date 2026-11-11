@@ -3,6 +3,13 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.11.11-c3bffb30] — 2026-11-11
+
+- 📝 Record the ilum derivatives branch and the pending CDN invalidation
+- 🐛 Accept format=jpeg on ilum URLs as another name for jpg
+- ⚡ Strip metadata from ilum derivatives, convert colours to sRGB and tune the encoders
+- 📝 Record the delivery rate limit release
+
 ## [v2026.11.11-1e529ab0] — 2026-11-11
 
 - 🐛 Raise the delivery rate limit, make it configurable and keep the revision endpoint out of it
