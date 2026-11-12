@@ -29,6 +29,8 @@ The public, read-only content delivery API. Base path: `/api/v1`. Every request 
   "slug": "home",
   "full_slug": "home",
   "language_iso": "en",
+  "resolved_language_iso": "en",
+  "is_fallback": false,
   "block": "page",
   "content": { "…fields…": "…", "nested": [{ "id": "…", "block": "teaser", "…": "…" }] },
   "position": 0,
@@ -40,6 +42,8 @@ The public, read-only content delivery API. Base path: `/api/v1`. Every request 
 ```
 
 `id` is the row that was served, which differs per language. `canonical_id` is the id of the canonical entry, the same in every language and on fallback responses. References, links and `parent_id` store that id, so match fetched entries against them by `canonical_id`.
+
+`language_iso` is the requested language. `resolved_language_iso` is the language the served row is actually in, and `is_fallback` is `true` when the two differ: the entry has no translation in the requested language that the scope may serve (none exists, or in the published scope it is unpublished), so the fallback language's row and content answer instead. An entry that exists only in a non-default language is served in that language with `is_fallback: false`.
 
 `content` contains the field values including the full nested block tree; referenced entries, assets, and links are resolved into the payload. Per-entry cache hints (TTL, tags) configured in the entry's Config tab are delivered as response headers.
 
