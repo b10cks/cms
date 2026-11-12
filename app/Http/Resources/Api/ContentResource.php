@@ -28,6 +28,8 @@ use Illuminate\Support\Collection;
  * @resourceProperty cache type=object Cache settings for this content entry: `ttl` in seconds (null = default) and `tags` for tag-based invalidation.
  * @resourceProperty relations type=array items=ContentResource First-level related content entries when explicitly requested.
  * @resourceProperty language_iso Requested language ISO code used for content resolution.
+ * @resourceProperty resolved_language_iso ISO code of the language the served row is in. Differs from `language_iso` when the entry fell back to another language.
+ * @resourceProperty is_fallback type=boolean nullable=false Whether the entry was served from another language than the requested one, because it has no servable translation in it.
  * @resourceProperty translations type=array items=SimpleContentResource Published sibling translations of the resolved content.
  * @resourceProperty published_at format=date-time Publication timestamp in ISO 8601 format.
  * @resourceProperty first_published_at format=date-time First publication timestamp in ISO 8601 format.
@@ -67,6 +69,8 @@ class ContentResource extends JsonResource
                 fn (): array => $this->resolveRelations($request, $resolved),
             ),
             'language_iso' => $resolved->requestedLanguage,
+            'resolved_language_iso' => $resolved->resolvedLanguage,
+            'is_fallback' => $resolved->resolvedLanguage !== $resolved->requestedLanguage,
             'translations' => $this->handleTranslations($resolved, $row),
             'published_at' => $row->published_at?->toIso8601String(),
             'first_published_at' => $row->first_published_at?->toIso8601String(),
