@@ -402,6 +402,15 @@
                                                         "type": "string",
                                                         "description": "Requested language ISO code used for content resolution."
                                                     },
+                                                    "resolved_language_iso": {
+                                                        "type": "string",
+                                                        "description": "ISO code of the language the served row is in. Differs from `language_iso` when the entry fell back to another language."
+                                                    },
+                                                    "is_fallback": {
+                                                        "nullable": false,
+                                                        "description": "Whether the entry was served from another language than the requested one, because it has no servable translation in it.",
+                                                        "type": "boolean"
+                                                    },
                                                     "translations": {
                                                         "type": "array",
                                                         "description": "Published sibling translations of the resolved content.",
