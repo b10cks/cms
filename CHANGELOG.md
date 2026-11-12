@@ -3,6 +3,13 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.11.12-6c57e90e] — 2026-11-12
+
+- 📝 Record the content resolved language branch
+- 📝 Regenerate the Data API spec for the content language fields
+- ✨ Tell delivery clients which language a content entry was served in
+- 📝 Record the ilum derivatives release
+
 ## [v2026.11.11-c3bffb30] — 2026-11-11
 
 - 📝 Record the ilum derivatives branch and the pending CDN invalidation
