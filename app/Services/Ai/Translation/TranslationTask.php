@@ -37,12 +37,14 @@ final readonly class TranslationTask
     /**
      * @param  array<string, array{id: string, field: string, label: string, type: string, reason: string, source: string, current: string, previous_source?: string}>  $units  work, by unit ID
      * @param  array<string, string>  $held  unit ID => HELD_* reason
+     * @param  array<string, string>  $origins  unit ID => lineage origin of the saved text, for units with a known one
      */
     public function __construct(
         public TranslationDestination $destination,
         public array $units,
         public array $held,
         public bool $createApproved,
+        public array $origins = [],
     ) {}
 
     public function status(): string

@@ -100,7 +100,7 @@ class TranslationWork
                 }
             }
 
-            return new TranslationTask($destination, $units, $held, $plan->includes(TranslationPlan::MISSING));
+            return new TranslationTask($destination, $units, $held, $plan->includes(TranslationPlan::MISSING), $translation ? array_map(fn (array $row) => $row['origin'], $lineage[$translation->id] ?? []) : []);
         }, $destinations);
     }
 

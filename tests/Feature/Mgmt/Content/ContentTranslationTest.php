@@ -128,6 +128,55 @@ class ContentTranslationTest extends TestCase
     }
 
     #[Test]
+    public function review_flags_ai_text_until_a_person_reviews_it(): void
+    {
+        $source = $this->entry('en', ['title' => 'About us', 'summary' => 'We build things']);
+        $this->entry('de', ['title' => 'Über uns', 'summary' => 'Wir bauen Dinge'], $source);
+
+        $this->postJson($this->url("contents/{$source->id}/translation-review"), ['locale' => 'de', 'ai' => ['title', 'nope']])
+            ->assertOk()
+            ->assertJsonPath('data.units', [
+                'title' => ['status' => 'current', 'review' => true],
+                'summary' => ['status' => 'current'],
+            ]);
+
+        $this->postJson($this->url("contents/{$source->id}/translation-review"), ['locale' => 'de', 'reviewed' => ['title']])
+            ->assertOk()
+            ->assertJsonPath('data.units.title', ['status' => 'current']);
+        $this->getJson($this->url("contents/{$source->id}/translation-status?locale=de"))->assertJsonPath('data.units.title', ['status' => 'current']);
+    }
+
+    #[Test]
+    public function a_hand_edit_clears_the_review_flag(): void
+    {
+        $source = $this->entry('en', ['title' => 'About us']);
+        $translation = $this->entry('de', ['title' => 'Über uns'], $source);
+
+        $this->postJson($this->url("contents/{$source->id}/translation-review"), ['locale' => 'de', 'ai' => ['title']])
+            ->assertJsonPath('data.units.title.review', true);
+
+        Carbon::setTestNow('2026-10-01 10:00:00');
+        app(UpdateContent::class)->execute(['content' => ['title' => 'Über unser Team'], 'force' => true], $translation, $this->space, $this->user);
+
+        $this->getJson($this->url("contents/{$source->id}/translation-status?locale=de"))
+            ->assertJsonPath('data.units.title', ['status' => 'current']);
+    }
+
+    #[Test]
+    public function review_needs_edit_rights_a_unit_and_a_translation(): void
+    {
+        $source = $this->entry('en', ['title' => 'About us']);
+
+        $this->postJson($this->url("contents/{$source->id}/translation-review"), ['locale' => 'de'])->assertUnprocessable()->assertJsonValidationErrors(['ai', 'reviewed']);
+        $this->postJson($this->url("contents/{$source->id}/translation-review"), ['locale' => 'de', 'ai' => ['title']])->assertUnprocessable();
+
+        $viewer = User::factory()->create();
+        $this->assignSpaceRole($this->space, $viewer, 'viewer');
+        $this->actingAs($viewer);
+        $this->postJson($this->url("contents/{$source->id}/translation-review"), ['locale' => 'de', 'ai' => ['title']])->assertForbidden();
+    }
+
+    #[Test]
     public function both_endpoints_require_space_membership(): void
     {
         $source = $this->entry('en', ['title' => 'About us']);

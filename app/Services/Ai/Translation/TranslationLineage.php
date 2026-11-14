@@ -106,6 +106,51 @@ class TranslationLineage
     }
 
     /**
+     * Mark units of a translation as written by AI or reviewed by a person, against the
+     * source as it stands now. Units the translation or the source holds no text for are skipped.
+     *
+     * @param  list<string>  $unitIds
+     * @param  string  $origin  a TranslationSource::ORIGIN_* value
+     */
+    public function recordOrigins(TranslationDestination $destination, array $unitIds, string $origin): void
+    {
+        $translation = $destination->translation;
+        $source = $destination->source;
+        if ($translation === null || $unitIds === []) {
+            return;
+        }
+
+        $schema = $source->block?->schema?->toArray() ?? [];
+        $sourceTexts = $this->units->texts($source->getCurrentContent(), $schema);
+        $targetTexts = $this->units->texts($translation->getCurrentContent(), $schema);
+
+        $rows = [];
+        foreach (array_unique($unitIds) as $unitId) {
+            $sourceText = $sourceTexts[$unitId] ?? '';
+            $targetText = $targetTexts[$unitId] ?? '';
+            if (TranslationUnits::isBlank($sourceText) || TranslationUnits::isBlank($targetText)) {
+                continue;
+            }
+
+            $rows[] = [
+                'content_id' => $translation->id,
+                'changeset_item_id' => null,
+                'source_content_id' => $source->id,
+                'field_path' => $unitId,
+                'source_version_id' => $source->current_version_id,
+                'source_hash' => TranslationMemory::hash($sourceText),
+                'source_text' => $sourceText,
+                'target_hash' => TranslationMemory::hash($targetText),
+                'origin' => $origin,
+                'reason' => null,
+                'previous_source_text' => null,
+            ];
+        }
+
+        $this->insert($rows);
+    }
+
+    /**
      * What people need beside an AI translation item: per unit why it was
      * written, the source it was translated from and, for stale units, the
      * source text the replaced translation was made from.

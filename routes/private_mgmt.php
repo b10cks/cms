@@ -436,6 +436,8 @@ Route::group(['prefix' => 'spaces/{space}', 'middleware' => 'space.member'], fun
         ->name('contents.move');
     Route::get('contents/{content}/translation-status', [ContentTranslationController::class, 'status'])
         ->name('contents.translation-status');
+    Route::post('contents/{content}/translation-review', [ContentTranslationController::class, 'review'])
+        ->name('contents.translation-review');
     Route::post('contents/{content}/translation-assist', [ContentTranslationController::class, 'assist'])
         ->name('contents.translation-assist');
 

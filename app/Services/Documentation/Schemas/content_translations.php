@@ -13,6 +13,7 @@ return [
     ],
     'ContentTranslationUnitStatus' => [
         'status' => 'enum:missing|empty|stale|same_as_source|current|inherited|not_in_translation',
+        'review' => 'boolean? -- Present and true while the saved text was written by AI and no person has reviewed it since.',
         'previous_source' => 'string? -- stale only: the source the translation was written against.',
     ],
     'ContentTranslationAssist' => [
