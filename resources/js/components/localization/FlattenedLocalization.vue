@@ -33,6 +33,7 @@ import {
   type LocalizedFieldUpdatePayload,
 } from '~/lib/localizationCollab'
 import { idFieldPath } from '~/lib/aiChangesets'
+import { editorOrderedKeys } from '~/lib/editorFieldOrder'
 import { ensureTableValue, getTableColumns } from '~/lib/tableField'
 import type { FieldUpdateEvent } from '~/utils/preview-bridge'
 
@@ -131,11 +132,15 @@ const props = defineProps<{
   originalContent: Record<string, unknown>
   translationContent: Record<string, unknown>
   blockSchema: Record<string, LocalizableSchema>
+  /** The entry block's editor pages, so fields list in the order the editor shows them. */
+  blockEditor?: EditorPage[] | null
   spaceId: string
   targetLanguage: string
   getBlockSchema?: (
     blockSlug: string
-  ) => { schema: Record<string, LocalizableSchema>; name: string } | undefined
+  ) =>
+    | { schema: Record<string, LocalizableSchema>; name: string; editor?: EditorPage[] | null }
+    | undefined
   getFieldCollaborators?: (key: string) => CollaborationPresenceUser[]
   getFieldDraftOwners?: (key: string) => CollaborationPresenceUser[]
   // The entry name pair: when given, AI translation also covers the name (the
@@ -611,9 +616,11 @@ const traverseContent = (
 
   const normalizedSchema = normalizeSchema(schema)
   const originalScope = original as Record<string, unknown>
+  editor: EditorPage[] | null | undefined,
   const translationScope = translation as Record<string, unknown>
 
-  Object.entries(normalizedSchema).forEach(([key, schemaItem]) => {
+  editorOrderedKeys(normalizedSchema, editor).forEach((key) => {
+    const schemaItem = normalizedSchema[key]
     const path = [...currentPath, key]
     if (!isFieldVisible(schemaItem, normalizedSchema, originalScope, originalScope)) return
 
@@ -686,6 +693,7 @@ const traverseContent = (
       // This catches both blocks with foreign IDs and duplicates (same ID used twice).
       translatedBlockItems.forEach((translatedBlockItem, translatedItemIndex) => {
         if (claimedTranslationIndices.has(translatedItemIndex)) return
+          blockSchemaItem.editor,
         if (!isObjectRecord(translatedBlockItem)) return
 
         const translatedBlockId = getBlockItemId(translatedBlockItem)
@@ -802,7 +810,7 @@ const traverseContent = (
 }
 
 watch(
-  [() => props.originalContent, translationDraft, () => props.blockSchema],
+  [() => props.originalContent, translationDraft, () => props.blockSchema, () => props.blockEditor],
   () => {
     if (!props.originalContent || !props.blockSchema) {
       translatableFields.value = []
@@ -812,7 +820,8 @@ watch(
     translatableFields.value = traverseContent(
       props.originalContent as Record<string, unknown>,
       translationDraft.value,
-      props.blockSchema
+      props.blockSchema,
+      props.blockEditor
     )
   },
   { immediate: true, deep: true }

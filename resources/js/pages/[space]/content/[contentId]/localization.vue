@@ -92,6 +92,7 @@ watch(
         id: blockItem.id,
         name: blockItem.name,
         schema: blockItem.schema,
+        editor: blockItem.editor,
       })
     })
   },
@@ -927,6 +928,7 @@ useSeoMeta({
                 :translation-name="translatableContent.name"
                 @update:translation-name="handleTranslatedName"
                 :block-schema="block.schema"
+                :block-editor="block.editor"
                 :space-id="spaceId"
                 :get-block-schema="getBlockSchemaFn"
                 :target-language="resolvedLanguage"
