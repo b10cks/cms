@@ -196,8 +196,18 @@ const { data: translationStatus } = useTranslationStatus(
   () => props.targetLanguage
 )
 const editedSinceStatus = ref(new Set<string>())
+/**
+ * Fields edited while they matched the status filter. They stay listed until
+ * the next save or filter change, so translating a "missing" field does not
+ * pull it out from under the cursor.
+ */
+const keptInFilter = ref(new Set<string>())
 watch(translationStatus, () => {
   editedSinceStatus.value = new Set()
+  keptInFilter.value = new Set()
+})
+watch(statusFilter, () => {
+  keptInFilter.value = new Set()
 })
 
 /**
@@ -606,6 +616,7 @@ const traverseContent = (
   original: Record<string, unknown>,
   translation: Record<string, unknown>,
   schema: Record<string, LocalizableSchema>,
+  editor: EditorPage[] | null | undefined,
   currentPath: Array<string | number> = [],
   result: TranslatableField[] = [],
   blockStamps: BlockStamp[] = []
@@ -616,7 +627,6 @@ const traverseContent = (
 
   const normalizedSchema = normalizeSchema(schema)
   const originalScope = original as Record<string, unknown>
-  editor: EditorPage[] | null | undefined,
   const translationScope = translation as Record<string, unknown>
 
   editorOrderedKeys(normalizedSchema, editor).forEach((key) => {
@@ -683,6 +693,7 @@ const traverseContent = (
           originalBlockItem as Record<string, unknown>,
           translatedBlockItem as Record<string, unknown>,
           blockSchemaItem.schema,
+          blockSchemaItem.editor,
           blockPath,
           result,
           nextBlockStamps
@@ -693,7 +704,6 @@ const traverseContent = (
       // This catches both blocks with foreign IDs and duplicates (same ID used twice).
       translatedBlockItems.forEach((translatedBlockItem, translatedItemIndex) => {
         if (claimedTranslationIndices.has(translatedItemIndex)) return
-          blockSchemaItem.editor,
         if (!isObjectRecord(translatedBlockItem)) return
 
         const translatedBlockId = getBlockItemId(translatedBlockItem)
@@ -827,11 +837,25 @@ watch(
   { immediate: true, deep: true }
 )
 
+const matchesStatusFilter = (field: TranslatableField): boolean => {
+  if (!statusFilter.value.length) return true
+
+  const status = fieldStatus(field)
+  return !!status && statusFilter.value.includes(status)
+}
+
+/** Call before the edit lands: the field's status is judged as it was. */
+const keepInFilter = (field: TranslatableField) => {
+  const id = getFieldIdentifier(field)
+  if (statusFilter.value.length && !keptInFilter.value.has(id) && matchesStatusFilter(field)) {
+    keptInFilter.value.add(id)
+  }
+}
+
 const filteredFields = computed(() => {
   return translatableFields.value.filter((field) => {
-    if (statusFilter.value.length) {
-      const status = fieldStatus(field)
-      if (!status || !statusFilter.value.includes(status)) return false
+    if (!keptInFilter.value.has(getFieldIdentifier(field)) && !matchesStatusFilter(field)) {
+      return false
     }
 
     if (searchQuery.value) {
@@ -1203,6 +1227,7 @@ const updateTranslatedValue = (field: TranslatableField, newValue: unknown): voi
     (f) => f.key === field.key && JSON.stringify(f.path) === JSON.stringify(field.path)
   )
 
+  keepInFilter(field)
   if (fieldToUpdate) {
     fieldToUpdate.translatedValue = newValue
     fieldToUpdate.isTranslated = isFieldTranslated(field.schemaItem, field.originalValue, newValue)
@@ -1414,6 +1439,7 @@ const applyTranslatedValues = (
     }
 
     try {
+      if (unit.field) keepInFilter(unit.field)
       unit.apply(nextTranslationContent, translation)
       machineTranslatedFields.value.add(unit.fieldIdentifier)
       editedSinceStatus.value.add(unit.fieldIdentifier)
