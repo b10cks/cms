@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { Component, Ref } from 'vue'
-import { computed, inject, onBeforeUnmount, ref, watch } from 'vue'
+import { computed, inject, nextTick, onBeforeUnmount, ref, watch } from 'vue'
 import { toast } from 'vue-sonner'
 
 import type { SpaceAiConfig } from '~/api/resources/ai'
@@ -34,8 +34,9 @@ import {
 } from '~/lib/localizationCollab'
 import { idFieldPath } from '~/lib/aiChangesets'
 import { editorOrderedKeys } from '~/lib/editorFieldOrder'
+import { buildTranslationStructure, collectBlockPositions } from '~/lib/translationStructure'
 import { ensureTableValue, getTableColumns } from '~/lib/tableField'
-import type { FieldUpdateEvent } from '~/utils/preview-bridge'
+import type { FieldSelectEvent, FieldUpdateEvent } from '~/utils/preview-bridge'
 
 import DateLocalization from './DateLocalization.vue'
 import LinkLocalization from './LinkLocalization.vue'
@@ -159,6 +160,10 @@ const emit = defineEmits<{
   'update:translationName': [value: string]
   'field-update': [payload: LocalizedFieldUpdatePayload]
   'field-focus': [payload: LocalizedFieldFocusPayload]
+  /** The block a field in use sits in, for the preview to outline; `itemId` null is the entry itself, `null` clears. */
+  'highlight-item': [target: { itemId: string | null } | null]
+  /** Review marks were queued; the page sends them now or with the next save. */
+  'review-change': []
 }>()
 
 const { useSpaceQuery } = useSpaces()
@@ -174,9 +179,11 @@ const shouldShowFieldError = inject<((path: string) => boolean) | undefined>(
 )
 
 type FieldStatus = 'current' | 'outdated' | 'missing'
+/** A legend toggle: a translation status, or AI output nobody has reviewed yet. */
+type StatusFilter = FieldStatus | 'review'
 
 /** Statuses the list is narrowed to; empty shows every field. */
-const statusFilter = ref<FieldStatus[]>([])
+const statusFilter = ref<StatusFilter[]>([])
 const searchQuery = ref('')
 const { t, locale } = useI18n()
 const { showAiError } = useAiErrorToast()
@@ -197,14 +204,17 @@ const { data: translationStatus } = useTranslationStatus(
 )
 const editedSinceStatus = ref(new Set<string>())
 /**
- * Fields edited while they matched the status filter. They stay listed until
- * the next save or filter change, so translating a "missing" field does not
- * pull it out from under the cursor.
+ * Fields edited or reviewed while they matched the status filter. They stay
+ * listed until the next save or filter change, so translating a "missing"
+ * field does not pull it out from under the cursor. The page calls
+ * `releaseKeptFields` after a save.
  */
 const keptInFilter = ref(new Set<string>())
+const releaseKeptFields = () => {
+  keptInFilter.value = new Set()
+}
 watch(translationStatus, () => {
   editedSinceStatus.value = new Set()
-  keptInFilter.value = new Set()
 })
 watch(statusFilter, () => {
   keptInFilter.value = new Set()
@@ -243,15 +253,6 @@ const languageName = (iso: string): string => {
   } catch {
     return iso
   }
-}
-
-/** The block a field sits in: "Hero 2" for the second top-level block. Null at the entry's top level. */
-const fieldContext = (field: TranslatableField): string | null => {
-  const stamp = field.blockStamps?.at(-1)
-  if (!stamp) return null
-  const name = props.getBlockSchema?.(stamp.block)?.name ?? stamp.block
-  const position = field.path[stamp.pathIndex]
-  return typeof position === 'number' ? `${name} ${position + 1}` : name
 }
 
 const needsTranslation = (field: TranslatableField): boolean =>
@@ -841,7 +842,9 @@ const matchesStatusFilter = (field: TranslatableField): boolean => {
   if (!statusFilter.value.length) return true
 
   const status = fieldStatus(field)
-  return !!status && statusFilter.value.includes(status)
+  return statusFilter.value.some((filter) =>
+    filter === 'review' ? needsReview(field) : filter === status
+  )
 }
 
 /** Call before the edit lands: the field's status is judged as it was. */
@@ -853,20 +856,19 @@ const keepInFilter = (field: TranslatableField) => {
 }
 
 const filteredFields = computed(() => {
+  const searchLower = searchQuery.value.toLowerCase()
+
   return translatableFields.value.filter((field) => {
     if (!keptInFilter.value.has(getFieldIdentifier(field)) && !matchesStatusFilter(field)) {
       return false
     }
 
-    if (searchQuery.value) {
-      const searchLower = searchQuery.value.toLowerCase()
-      return (
-        field.fieldName.toLowerCase().includes(searchLower) ||
-        field.path.join(' > ').toLowerCase().includes(searchLower)
-      )
-    }
-
-    return true
+    // A field matches by its name or the blocks it sits in ("Hero 2").
+    return (
+      !searchLower ||
+      field.fieldName.toLowerCase().includes(searchLower) ||
+      sectionTrail(field).some((label) => label.toLowerCase().includes(searchLower))
+    )
   })
 })
 
@@ -977,10 +979,6 @@ const getValidationError = (field: TranslatableField): string | null =>
 
 const shouldShowValidationError = (field: TranslatableField): boolean =>
   shouldShowFieldError?.(getValidationPath(field)) || false
-
-const isMachineTranslated = (field: TranslatableField): boolean => {
-  return machineTranslatedFields.value.has(getFieldIdentifier(field))
-}
 
 // Live-collaboration wiring: field updates are whispered at the granularity of
 // the value actually written to the draft — whole table values for table
@@ -1228,6 +1226,7 @@ const updateTranslatedValue = (field: TranslatableField, newValue: unknown): voi
   )
 
   keepInFilter(field)
+  forgetAiOutput(field)
   if (fieldToUpdate) {
     fieldToUpdate.translatedValue = newValue
     fieldToUpdate.isTranslated = isFieldTranslated(field.schemaItem, field.originalValue, newValue)
@@ -1253,11 +1252,12 @@ const updateTranslatedValue = (field: TranslatableField, newValue: unknown): voi
 // they land in the translation draft and go through the usual dirty/whisper
 // pipeline. Returns false for fields this view doesn't own (non-translatable
 // ones — those belong to the source content).
-const applyPreviewFieldUpdate = ({ itemId, path, field, value }: FieldUpdateEvent): boolean => {
-  const targetPath = path && path.length > 0 ? path : field !== undefined ? [field] : null
-  if (!targetPath) return false
-
-  const match = translatableFields.value.find((candidate) => {
+/** The translatable field the preview addresses as `path` within block `itemId`. */
+const findPreviewField = (
+  itemId: string,
+  targetPath: Array<string | number>
+): TranslatableField | undefined =>
+  translatableFields.value.find((candidate) => {
     if (candidate.isOrphanedBlock || candidate.tablePath) return false
 
     const stamps = candidate.blockStamps || []
@@ -1278,6 +1278,11 @@ const applyPreviewFieldUpdate = ({ itemId, path, field, value }: FieldUpdateEven
       : (props.rootItemIds?.includes(itemId) ?? false)
   })
 
+const applyPreviewFieldUpdate = ({ itemId, path, field, value }: FieldUpdateEvent): boolean => {
+  const targetPath = path && path.length > 0 ? path : field !== undefined ? [field] : null
+  if (!targetPath) return false
+
+  const match = findPreviewField(itemId, targetPath)
   if (!match) return false
 
   switch (normalizeSchemaType(match.schemaItem.type)) {
@@ -1298,7 +1303,6 @@ const applyPreviewFieldUpdate = ({ itemId, path, field, value }: FieldUpdateEven
   return true
 }
 
-defineExpose({ applyPreviewFieldUpdate })
 
 const buildTranslationUnits = (scope: TranslationScope): TranslationUnit[] => {
   // Whether a unit that already holds a translation is sent again.
@@ -1442,6 +1446,7 @@ const applyTranslatedValues = (
       if (unit.field) keepInFilter(unit.field)
       unit.apply(nextTranslationContent, translation)
       machineTranslatedFields.value.add(unit.fieldIdentifier)
+      if (unit.field) queueReviewMarks('ai', fieldUnitIds(unit.field))
       editedSinceStatus.value.add(unit.fieldIdentifier)
       // Field-less units (the entry name) apply via their own emit and must
       // not mark the content payload as updated.
@@ -1635,10 +1640,10 @@ const statusSegments = computed(() =>
   ).map((segment) => ({ ...segment, count: translationStats.value[segment.status] }))
 )
 
-const isStatusFaded = (status: FieldStatus): boolean =>
+const isStatusFaded = (status: StatusFilter): boolean =>
   statusFilter.value.length > 0 && !statusFilter.value.includes(status)
 
-const toggleStatus = (status: FieldStatus) => {
+const toggleStatus = (status: StatusFilter) => {
   statusFilter.value = statusFilter.value.includes(status)
     ? statusFilter.value.filter((value) => value !== status)
     : [...statusFilter.value, status]
@@ -1660,6 +1665,245 @@ const scopeLabels: Record<TranslationScope, string> = {
 
 const selectScope = (value: unknown) => {
   if (isTranslationScope(value)) translationScope.value = value
+}
+
+// Sections: the list breaks at each editor tab and block item, in list order.
+const structure = computed(() =>
+  buildTranslationStructure(
+    translatableFields.value.map((field) => ({
+      id: getFieldIdentifier(field),
+      path: field.path,
+      blockStamps: field.blockStamps,
+      status: fieldStatus(field),
+    })),
+    {
+      editor: props.blockEditor,
+      blockName: (slug) => props.getBlockSchema?.(slug)?.name ?? slug,
+      positions: collectBlockPositions(props.originalContent),
+    }
+  )
+)
+
+const sectionOf = (field: TranslatableField) =>
+  structure.value.nodeById.get(structure.value.sectionOf.get(getFieldIdentifier(field)) ?? '')
+
+/** Labels from the outermost section down to the field's own. */
+const sectionTrail = (field: TranslatableField): string[] =>
+  (sectionOf(field)?.chain ?? []).flatMap((id) => {
+    const label = structure.value.nodeById.get(id)?.label
+    return label ? [label] : []
+  })
+
+const ENTRY_SECTION = '__entry__'
+const collapsedSections = ref(new Set<string>())
+
+const toggleSection = (id: string) => {
+  const next = new Set(collapsedSections.value)
+  if (next.has(id)) next.delete(id)
+  else next.add(id)
+  collapsedSections.value = next
+}
+
+const isRowCollapsed = (field: TranslatableField) =>
+  !!sectionOf(field)?.chain.some((id) => collapsedSections.value.has(id))
+
+const expandSectionsOf = (field: TranslatableField) => {
+  const chain = sectionOf(field)?.chain ?? []
+  if (chain.some((id) => collapsedSections.value.has(id))) {
+    collapsedSections.value = new Set(
+      [...collapsedSections.value].filter((id) => !chain.includes(id))
+    )
+  }
+}
+
+/**
+ * Rows of the list, each with the section heading shown above it when the
+ * section changes there. Fields of the entry itself that follow a block get
+ * an "Entry" heading, so they do not read as part of that block.
+ */
+const listRows = computed(() =>
+  filteredFields.value.map((field, index) => {
+    const section = sectionOf(field)
+    const previous = index > 0 ? sectionOf(filteredFields.value[index - 1]) : undefined
+    const startsSection = index === 0 ? !!section : section?.id !== previous?.id
+    const id = section?.id ?? ENTRY_SECTION
+
+    return {
+      field,
+      collapsed: isRowCollapsed(field),
+      heading: startsSection
+        ? {
+            id,
+            label: section?.label ?? t('components.flattenedLocalization.entrySection'),
+            trail: sectionTrail(field).slice(0, -1),
+            open: section ? section.counts.missing + section.counts.outdated : 0,
+            collapsed: collapsedSections.value.has(id),
+          }
+        : null,
+    }
+  })
+)
+
+// Review: AI output stays marked until a person edits it or marks it reviewed.
+// The mark lives on the server per unit (`review` in the status); output from
+// this session is marked at once and reported after the next save.
+const reviewedHere = ref(new Set<string>())
+const pendingReview = { ai: new Set<string>(), reviewed: new Set<string>() }
+
+watch(translationStatus, () => {
+  reviewedHere.value = new Set()
+})
+
+const queueReviewMarks = (kind: 'ai' | 'reviewed', unitIds: string[]) => {
+  if (!unitIds.length) return
+
+  const other = kind === 'ai' ? pendingReview.reviewed : pendingReview.ai
+  unitIds.forEach((id) => {
+    pendingReview[kind].add(id)
+    other.delete(id)
+  })
+  emit('review-change')
+}
+
+/** A hand edit is the review: the field is no longer the AI's text. */
+const forgetAiOutput = (field: TranslatableField) => {
+  const id = getFieldIdentifier(field)
+  if (machineTranslatedFields.value.delete(id)) {
+    fieldUnitIds(field).forEach((unitId) => pendingReview.ai.delete(unitId))
+  }
+  reviewedHere.value.add(id)
+}
+
+const needsReview = (field: TranslatableField): boolean => {
+  if (field.isOrphaned || !field.isTranslated) return false
+
+  const id = getFieldIdentifier(field)
+  if (machineTranslatedFields.value.has(id)) return true
+  if (reviewedHere.value.has(id) || editedSinceStatus.value.has(id)) return false
+
+  return fieldUnitIds(field).some((unitId) => translationStatus.value?.units[unitId]?.review)
+}
+
+const markReviewed = (field: TranslatableField) => {
+  const unitIds = fieldUnitIds(field)
+  keepInFilter(field)
+  machineTranslatedFields.value.delete(getFieldIdentifier(field))
+  reviewedHere.value.add(getFieldIdentifier(field))
+  unitIds.forEach((unitId) => pendingReview.ai.delete(unitId))
+  queueReviewMarks('reviewed', unitIds)
+}
+
+/** Marks queued since the last call, for the page to send to the server. */
+const takeReviewMarks = (): { ai: string[]; reviewed: string[] } => {
+  const marks = { ai: [...pendingReview.ai], reviewed: [...pendingReview.reviewed] }
+  pendingReview.ai.clear()
+  pendingReview.reviewed.clear()
+  return marks
+}
+
+/** Back to the saved state: marks for output that was thrown away go too. */
+const discardReviewMarks = () => {
+  machineTranslatedFields.value = new Set()
+  reviewedHere.value = new Set()
+  takeReviewMarks()
+}
+
+const reviewCount = computed(() => translatableFields.value.filter(needsReview).length)
+
+// Moving through the list: the next field that still needs work.
+const isOpenField = (field: TranslatableField): boolean =>
+  needsReview(field) || fieldStatus(field) === 'missing' || fieldStatus(field) === 'outdated'
+
+const rowElement = (field: TranslatableField) =>
+  document.querySelector<HTMLElement>(`[data-field-id="${CSS.escape(getFieldIdentifier(field))}"]`)
+
+const translationControl =
+  'input:not([readonly]):not([disabled]), textarea:not([readonly]):not([disabled]), [contenteditable="true"], button[role="combobox"]:not([disabled])'
+
+/** Scroll a field into view, opening its sections, and put the cursor in its translation. */
+const revealField = async (field: TranslatableField) => {
+  expandSectionsOf(field)
+  await nextTick()
+
+  const row = rowElement(field)
+  if (!row) return
+  row.scrollIntoView({ block: 'center', behavior: 'smooth' })
+  // Source values are read-only, so the first live control is the translation's.
+  row.querySelector<HTMLElement>(translationControl)?.focus({ preventScroll: true })
+}
+
+const goToOpenField = (direction: 1 | -1) => {
+  const fields = filteredFields.value
+  if (!fields.length) return
+
+  const current = focused.value
+    ? fields.findIndex((field) => getFieldIdentifier(field) === focused.value!.id)
+    : -1
+  for (let step = 1; step <= fields.length; step++) {
+    const index = (((current + step * direction) % fields.length) + fields.length) % fields.length
+    const field = fields[index]
+    if (index !== current && isOpenField(field)) {
+      void revealField(field)
+      return
+    }
+  }
+}
+
+useShortcut({
+  keys: 'mod+enter',
+  scope: 'translation',
+  description: () => t('shortcuts.translation.nextOpen'),
+  allowInInput: true,
+  handler: (event) => {
+    event.preventDefault()
+    const field = focusedField.value
+    if (field && needsReview(field)) markReviewed(field)
+    goToOpenField(1)
+  },
+})
+
+useShortcut({
+  keys: 'shift+mod+enter',
+  scope: 'translation',
+  description: () => t('shortcuts.translation.previousOpen'),
+  allowInInput: true,
+  handler: (event) => {
+    event.preventDefault()
+    goToOpenField(-1)
+  },
+})
+
+// Linking with the preview: the block in use is outlined there, and a click
+// in the preview opens the matching field here.
+const hoveredField = ref<TranslatableField | null>(null)
+const focusedField = computed(() =>
+  focused.value
+    ? translatableFields.value.find((field) => getFieldIdentifier(field) === focused.value!.id)
+    : undefined
+)
+
+watch(
+  () => hoveredField.value ?? focusedField.value ?? null,
+  (field) => {
+    emit('highlight-item', field ? { itemId: field.blockStamps?.at(-1)?.id ?? null } : null)
+  }
+)
+
+const revealPreviewField = ({ itemId, path }: FieldSelectEvent) => {
+  const match = findPreviewField(itemId, path)
+  if (match) void revealField(match)
+}
+
+/** A block picked in the preview: its first field. */
+const revealPreviewItem = (itemId: string | null) => {
+  if (!itemId) return
+
+  const match = translatableFields.value.find((field) =>
+    field.blockStamps?.length
+      ? field.blockStamps.some((stamp) => stamp.id === itemId)
+      : !!props.rootItemIds?.includes(itemId)
+  )
+  if (match) void revealField(match)
 }
 
 const removeAllOrphanedBlocks = (): void => {
@@ -1694,6 +1938,14 @@ const removeAllOrphanedBlocks = (): void => {
     emitFieldUpdate(path, blockStamps, previousDraft, nextDraft, 0)
   })
 }
+defineExpose({
+  applyPreviewFieldUpdate,
+  releaseKeptFields,
+  revealPreviewField,
+  revealPreviewItem,
+  takeReviewMarks,
+  discardReviewMarks,
+})
 </script>
 
 <template>
@@ -1812,6 +2064,24 @@ const removeAllOrphanedBlocks = (): void => {
                 <span class="font-semibold text-primary tabular-nums">{{ segment.count }}</span>
                 {{ $t(`components.flattenedLocalization.status.${segment.status}`) }}
               </button>
+              <button
+                v-if="reviewCount > 0 || statusFilter.includes('review')"
+                type="button"
+                class="flex h-8 items-center gap-1.5 rounded-md px-2 text-sm text-muted transition-[opacity,background-color] duration-100 hover:bg-state-hover"
+                :class="[
+                  statusFilter.includes('review') && 'bg-state-selected',
+                  isStatusFaded('review') && 'opacity-30 hover:opacity-100',
+                ]"
+                :aria-pressed="statusFilter.includes('review')"
+                @click="toggleStatus('review')"
+              >
+                <Icon
+                  name="lucide:sparkles"
+                  class="size-3.5 shrink-0 text-ai"
+                />
+                <span class="font-semibold text-primary tabular-nums">{{ reviewCount }}</span>
+                {{ $t('components.flattenedLocalization.status.review') }}
+              </button>
             </div>
             <div
               class="ml-auto flex h-2.5 w-full max-w-40 min-w-16 gap-0.5 pl-2"
@@ -1859,27 +2129,60 @@ const removeAllOrphanedBlocks = (): void => {
           </button>
         </div>
         <div class="grid gap-3">
-          <div
-            v-for="field in filteredFields"
-            :key="`${field.path.join('-')}-${field.key}`"
-            :data-field-path="getValidationPath(field)"
-            :data-validation-visible="shouldShowValidationError(field) ? 'true' : undefined"
-            :class="[
-              'group/row relative',
-              field.isOrphaned ? 'rounded-md border border-amber-500/40 bg-amber-500/5 px-3 pb-1' : '',
-              fieldDraftOwners(field).length ? 'collaboration-field-dirty' : '',
-              fieldCollaborators(field).length ? 'collaboration-field-active' : '',
-            ]"
-            :style="getCollaborationStyle(field)"
-            @focusin="handleFieldFocusIn(field, $event)"
-            @focusout="handleFieldFocusOut(field, $event)"
+          <template
+            v-for="row in listRows"
+            :key="getFieldIdentifier(row.field)"
           >
+            <button
+              v-if="row.heading"
+              type="button"
+              class="flex min-w-0 items-center gap-2 border-b border-border pt-4 pb-2 text-left text-sm"
+              :aria-expanded="!row.heading.collapsed"
+              data-section-heading
+              @click="toggleSection(row.heading.id)"
+            >
+              <Icon
+                name="lucide:chevron-down"
+                class="size-4 shrink-0 text-muted transition-transform"
+                :class="row.heading.collapsed && '-rotate-90'"
+              />
+              <span
+                v-if="row.heading.trail.length"
+                class="min-w-0 truncate text-muted"
+                >{{ row.heading.trail.join(' › ') }} ›</span
+              >
+              <span class="shrink-0 font-semibold text-primary">{{ row.heading.label }}</span>
+              <span
+                v-if="row.heading.open"
+                class="ml-auto shrink-0 text-warning-ink tabular-nums"
+                >{{ $t('components.flattenedLocalization.sectionOpen', { count: row.heading.open }) }}</span
+              >
+            </button>
             <div
-              v-if="fieldCollaborators(field).length"
+              v-if="!row.collapsed"
+              :data-field-id="getFieldIdentifier(row.field)"
+              :data-field-path="getValidationPath(row.field)"
+              :data-validation-visible="shouldShowValidationError(row.field) ? 'true' : undefined"
+              :class="[
+                'group/row relative',
+                row.field.isOrphaned
+                  ? 'rounded-md border border-amber-500/40 bg-amber-500/5 px-3 pb-1'
+                  : '',
+                fieldDraftOwners(row.field).length ? 'collaboration-field-dirty' : '',
+                fieldCollaborators(row.field).length ? 'collaboration-field-active' : '',
+              ]"
+              :style="getCollaborationStyle(row.field)"
+              @focusin="handleFieldFocusIn(row.field, $event)"
+              @focusout="handleFieldFocusOut(row.field, $event)"
+              @mouseenter="hoveredField = row.field"
+              @mouseleave="hoveredField = null"
+            >
+            <div
+              v-if="fieldCollaborators(row.field).length"
               class="absolute top-1 right-1 z-20"
             >
               <AvatarList
-                :users="fieldCollaborators(field)"
+                :users="fieldCollaborators(row.field)"
                 :max="3"
                 size="sm"
                 tooltip-side="left"
@@ -1888,16 +2191,9 @@ const removeAllOrphanedBlocks = (): void => {
             </div>
             <div class="-mb-2 pt-2">
               <h4 class="flex items-baseline gap-2">
-                <span class="font-semibold text-primary">{{ field.fieldName }}</span>
+                <span class="font-semibold text-primary">{{ row.field.fieldName }}</span>
                 <span
-                  v-if="fieldContext(field)"
-                  class="text-sm text-muted"
-                  :title="field.path.join('.')"
-                >
-                  {{ fieldContext(field) }}
-                </span>
-                <span
-                  v-if="needsTranslation(field)"
+                  v-if="needsTranslation(row.field)"
                   class="ml-auto flex items-center gap-1 text-sm text-warning-ink"
                 >
                   <Icon
@@ -1907,9 +2203,9 @@ const removeAllOrphanedBlocks = (): void => {
                   {{ $t('components.flattenedLocalization.missing') }}
                 </span>
                 <span
-                  v-else-if="isOutdated(field)"
+                  v-else-if="isOutdated(row.field)"
                   class="ml-auto flex items-center gap-1 text-sm text-warning-ink"
-                  :title="outdatedTitle(field)"
+                  :title="outdatedTitle(row.field)"
                 >
                   <Icon
                     name="lucide:history"
@@ -1918,7 +2214,27 @@ const removeAllOrphanedBlocks = (): void => {
                   {{ $t('components.flattenedLocalization.outdated') }}
                 </span>
                 <span
-                  v-if="field.isOrphaned"
+                  v-if="needsReview(row.field)"
+                  class="flex items-center gap-1 text-sm text-ai-tint-foreground"
+                  :class="!isOutdated(row.field) && 'ml-auto'"
+                >
+                  <Icon
+                    name="lucide:sparkles"
+                    class="size-3.5"
+                  />
+                  {{ $t('components.flattenedLocalization.aiOutput') }}
+                  <button
+                    type="button"
+                    class="ml-1 flex h-7 items-center gap-1 rounded-md px-1.5 text-muted hover:bg-state-hover hover:text-primary"
+                    :title="$t('components.flattenedLocalization.markReviewedHint')"
+                    @click="markReviewed(row.field)"
+                  >
+                    <Icon name="lucide:check" />
+                    {{ $t('components.flattenedLocalization.markReviewed') }}
+                  </button>
+                </span>
+                <span
+                  v-if="row.field.isOrphaned"
                   class="ml-auto flex items-center gap-2"
                 >
                   <span
@@ -1930,7 +2246,7 @@ const removeAllOrphanedBlocks = (): void => {
                     type="button"
                     class="flex items-center gap-1 rounded px-1.5 py-0.5 text-2xs font-medium text-amber-500 hover:bg-amber-500/15 transition-colors"
                     :title="$t('components.flattenedLocalization.removeOrphanedField')"
-                    @click="removeOrphanedEntry(field)"
+                    @click="removeOrphanedEntry(row.field)"
                   >
                     <Icon
                       name="lucide:trash-2"
@@ -1943,61 +2259,62 @@ const removeAllOrphanedBlocks = (): void => {
             </div>
             <div>
               <div
-                v-if="field.isOrphanedBlock"
+                v-if="row.field.isOrphanedBlock"
                 class="py-2 text-sm text-muted"
               >
                 {{ $t('components.flattenedLocalization.orphanedBlockDescription') }}
               </div>
               <component
-                :is="resolveLocalizerComponent(field.schemaItem.type)"
-                v-else-if="resolveLocalizerComponent(field.schemaItem.type)"
-                :item="field.schemaItem"
-                :original-value="field.originalValue"
-                :model-value="field.translatedValue"
+                :is="resolveLocalizerComponent(row.field.schemaItem.type)"
+                v-else-if="resolveLocalizerComponent(row.field.schemaItem.type)"
+                :item="row.field.schemaItem"
+                :original-value="row.field.originalValue"
+                :model-value="row.field.translatedValue"
                 :disabled="isTranslating"
-                :is-machine-translated="isMachineTranslated(field)"
+                :is-machine-translated="needsReview(row.field)"
                 :space-id="props.spaceId"
-                :error="shouldShowValidationError(field) ? getValidationError(field) : null"
-                @update:model-value="(newValue: unknown) => updateTranslatedValue(field, newValue)"
+                :error="shouldShowValidationError(row.field) ? getValidationError(row.field) : null"
+                @update:model-value="(newValue: unknown) => updateTranslatedValue(row.field, newValue)"
               />
               <div
                 v-else
                 class="grid grid-cols-2 gap-4 px-4 py-2 text-muted italic"
               >
                 <div class="rounded border border-border bg-card p-2">
-                  {{ field.originalValue }}
+                  {{ row.field.originalValue }}
                 </div>
                 <div class="rounded border border-border bg-card p-2">
                   <Input
-                    :value="field.translatedValue"
+                    :value="row.field.translatedValue"
                     @input="
-                      (e: Event) => updateTranslatedValue(field, (e.target as HTMLInputElement).value)
+                      (e: Event) => updateTranslatedValue(row.field, (e.target as HTMLInputElement).value)
                     "
                   />
                   <div class="mt-2 text-sm text-muted">
-                    No specialized editor for type: {{ field.schemaItem.type }}
+                    No specialized editor for type: {{ row.field.schemaItem.type }}
                   </div>
                 </div>
               </div>
             </div>
             <div
-              v-if="fieldOverLength(field)"
+              v-if="fieldOverLength(row.field)"
               class="-mt-1 grid grid-cols-2 gap-4 pb-1"
             >
               <div />
-              <TranslationChecks :length="fieldOverLength(field)" />
+              <TranslationChecks :length="fieldOverLength(row.field)" />
             </div>
             <div
               v-if="
-                !resolveLocalizerComponent(field.schemaItem.type) &&
-                shouldShowValidationError(field) &&
-                getValidationError(field)
+                !resolveLocalizerComponent(row.field.schemaItem.type) &&
+                shouldShowValidationError(row.field) &&
+                getValidationError(row.field)
               "
               class="mt-2 rounded-md border border-destructive/20 bg-destructive/5 px-3 py-2 text-sm text-destructive"
             >
-              {{ getValidationError(field) }}
+              {{ getValidationError(row.field) }}
             </div>
           </div>
+          </template>
           <div
             v-if="filteredFields.length === 0"
             class="p-8 text-center text-muted"

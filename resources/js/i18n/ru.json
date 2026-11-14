@@ -5165,7 +5165,8 @@
       "status": {
         "current": "актуальны",
         "outdated": "устарели",
-        "missing": "отсутствуют"
+        "missing": "отсутствуют",
+        "review": "на проверку"
       },
       "noStatusMatches": "Нет полей с этим статусом.",
       "translateFields": "Перевести поля: {count}",
@@ -5181,7 +5182,13 @@
       "orphanedField": "Нет исходного значения",
       "removeOrphanedField": "Удалить",
       "orphanedBlockDescription": "Этот блок был удалён из исходного контента. Его данные перевода больше не нужны.",
-      "removeAllOrphanedBlocks": "Удалить {count} сиротских блоков"
+      "removeAllOrphanedBlocks": "Удалить {count} сиротских блоков",
+      "entrySection": "Запись",
+      "sectionOpen": "{count} открыто",
+      "aiOutput": "Перевод ИИ",
+      "markReviewed": "Проверено",
+      "markReviewedHint": "Отметить как проверенное (⌘↵ также переходит дальше)",
+      "reviewSaveFailed": "Не удалось сохранить, какие переводы проверены."
     },
     "tableBlock": {
       "columnsBadge": "{count} столбцов",
@@ -6534,7 +6541,8 @@
       "assets": "Библиотека активов",
       "table": "Таблицы",
       "dialog": "Диалоги",
-      "fields": "Поля блоков"
+      "fields": "Поля блоков",
+      "translation": "Режим перевода"
     },
     "global": {
       "commandPalette": "Открыть палитру команд",
@@ -6608,6 +6616,10 @@
     },
     "dialog": {
       "submit": "Подтвердить этот диалог"
+    },
+    "translation": {
+      "nextOpen": "Следующее открытое поле, отмечает перевод ИИ как проверенный",
+      "previousOpen": "Предыдущее открытое поле"
     }
   },
   "providerDashboard": {

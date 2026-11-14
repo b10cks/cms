@@ -15,6 +15,7 @@ const scopeLabels: Record<string, () => string> = {
   table: () => t('shortcuts.scopes.table'),
   dialog: () => t('shortcuts.scopes.dialog'),
   fields: () => t('shortcuts.scopes.fields'),
+  translation: () => t('shortcuts.scopes.translation'),
 }
 
 const sections = computed(() =>

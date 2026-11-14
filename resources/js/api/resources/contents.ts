@@ -164,6 +164,20 @@ export class Contents extends BaseResource<
     )
   }
 
+  /**
+   * Record who wrote the saved text of units: `ai` output still to review, or
+   * `reviewed` by a person. Answers with the status after the change.
+   */
+  public async translationReview(
+    contentId: string,
+    payload: { locale: string; ai?: string[]; reviewed?: string[] }
+  ): Promise<ApiResponse<ContentTranslationStatus>> {
+    return this.client.post<ApiResponse<ContentTranslationStatus>>(
+      `${this.basePath}/${contentId}/translation-review`,
+      payload
+    )
+  }
+
   /** Memory and other locales for one unit. */
   public async translationAssist(
     contentId: string,

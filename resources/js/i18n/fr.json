@@ -5165,7 +5165,8 @@
       "status": {
         "current": "à jour",
         "outdated": "obsolètes",
-        "missing": "manquants"
+        "missing": "manquants",
+        "review": "à relire"
       },
       "noStatusMatches": "Aucun champ avec ce statut.",
       "translateFields": "Traduire {count} champ | Traduire {count} champs",
@@ -5181,7 +5182,13 @@
       "orphanedField": "Aucune valeur source",
       "removeOrphanedField": "Supprimer",
       "orphanedBlockDescription": "Ce bloc a été supprimé du contenu source. Ses données de traduction ne sont plus nécessaires.",
-      "removeAllOrphanedBlocks": "Supprimer {count} bloc(s) orphelin(s)"
+      "removeAllOrphanedBlocks": "Supprimer {count} bloc(s) orphelin(s)",
+      "entrySection": "Entrée",
+      "sectionOpen": "{count} ouverts",
+      "aiOutput": "Traduction IA",
+      "markReviewed": "Relu",
+      "markReviewedHint": "Marquer comme relu (⌘↵ passe aussi au suivant)",
+      "reviewSaveFailed": "Impossible d’enregistrer les traductions relues."
     },
     "tableBlock": {
       "columnsBadge": "{count} colonnes",
@@ -6534,7 +6541,8 @@
       "assets": "Bibliothèque d'actifs",
       "table": "Tableaux",
       "dialog": "Boîtes de dialogue",
-      "fields": "Champs de bloc"
+      "fields": "Champs de bloc",
+      "translation": "Vue de traduction"
     },
     "global": {
       "commandPalette": "Ouvrir la palette de commandes",
@@ -6608,6 +6616,10 @@
     },
     "dialog": {
       "submit": "Confirmer cette boîte de dialogue"
+    },
+    "translation": {
+      "nextOpen": "Champ ouvert suivant, marque une traduction IA comme relue",
+      "previousOpen": "Champ ouvert précédent"
     }
   },
   "providerDashboard": {
