@@ -1429,7 +1429,8 @@ const buildTranslationUnits = (scope: TranslationScope): TranslationUnit[] => {
 
 const applyTranslatedValues = (
   translatedTexts: Record<string, string>,
-  translationUnitsById: Map<string, TranslationUnit>
+  translationUnitsById: Map<string, TranslationUnit>,
+  fromMemory: ReadonlySet<string> = new Set()
 ) => {
   const previousDraft = translationDraft.value
   const nextTranslationContent = cloneTranslationContent(translationDraft.value)
@@ -1445,8 +1446,11 @@ const applyTranslatedValues = (
     try {
       if (unit.field) keepInFilter(unit.field)
       unit.apply(nextTranslationContent, translation)
-      machineTranslatedFields.value.add(unit.fieldIdentifier)
-      if (unit.field) queueReviewMarks('ai', fieldUnitIds(unit.field))
+      // Memory text was published before; only the model's output needs a review.
+      if (!fromMemory.has(translationUnitId)) {
+        machineTranslatedFields.value.add(unit.fieldIdentifier)
+        if (unit.field) queueReviewMarks('ai', unit.changesetPath ? [unit.changesetPath] : fieldUnitIds(unit.field))
+      }
       editedSinceStatus.value.add(unit.fieldIdentifier)
       // Field-less units (the entry name) apply via their own emit and must
       // not mark the content payload as updated.
@@ -1536,7 +1540,7 @@ const translateWithAI = async (configId: string | null = selectedConfigId.value)
   translationProgress.value = { applied: 0, total: fieldCount }
 
   // Apply only entries not yet applied — let updateTranslatedValues handle field matching
-  const applyNew = (entries: Record<string, string>) => {
+  const applyNew = (entries: Record<string, string>, fromMemory?: ReadonlySet<string>) => {
     const fresh: Record<string, string> = {}
     for (const [k, v] of Object.entries(entries)) {
       if (!appliedKeys.has(k)) {
@@ -1545,7 +1549,7 @@ const translateWithAI = async (configId: string | null = selectedConfigId.value)
       }
     }
     if (Object.keys(fresh).length > 0) {
-      applyTranslatedValues(fresh, translationUnitsById)
+      applyTranslatedValues(fresh, translationUnitsById, fromMemory)
       translationProgress.value = { applied: appliedKeys.size, total: fieldCount }
     }
   }
@@ -1594,7 +1598,7 @@ const translateWithAI = async (configId: string | null = selectedConfigId.value)
 
   const translations = outcome.result?.data ? findTranslationsObject(outcome.result.data) : null
   if (translations) {
-    applyNew(translations)
+    applyNew(translations, new Set(outcome.result?.memory ?? []))
   }
 
   const count = appliedKeys.size
