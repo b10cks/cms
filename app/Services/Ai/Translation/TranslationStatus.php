@@ -3,6 +3,7 @@
 namespace App\Services\Ai\Translation;
 
 use App\Models\Management\Space;
+use App\Models\Space\TranslationSource;
 use App\Services\Ai\Run\ToolError;
 
 /**
@@ -22,9 +23,9 @@ class TranslationStatus
      * (with `previous_source`, the text it was translated from), `same_as_source`,
      * `current`, `inherited` (empty, a fallback locale fills it) or
      * `not_in_translation` (a standalone translation lacks the block). Units with
-     * an empty source are left out.
+     * an empty source are left out. `review` is true while the saved text was written by AI and no person has reviewed it since.
      *
-     * @return array{locale: string, source_locale: string, translation_id: string|null, units: array<string, array{status: string, previous_source?: string}>}
+     * @return array{locale: string, source_locale: string, translation_id: string|null, units: array<string, array{status: string, previous_source?: string, review?: true}>}
      *
      * @throws ToolError for an unknown locale or an entry with no source to translate from
      */
@@ -35,11 +36,12 @@ class TranslationStatus
 
         $units = array_map(fn (array $unit) => [
             'status' => $unit['reason'],
+            ...$this->review($task, $unit['id']),
             ...(isset($unit['previous_source']) ? ['previous_source' => $unit['previous_source']] : []),
         ], $task->units);
 
         foreach ($task->held as $id => $reason) {
-            $units[$id] = ['status' => $reason];
+            $units[$id] = ['status' => $reason, ...$this->review($task, $id)];
         }
 
         return [
@@ -48,5 +50,11 @@ class TranslationStatus
             'translation_id' => $destination->translation?->id,
             'units' => $units,
         ];
+    }
+
+    /** @return array{review?: true} */
+    private function review(TranslationTask $task, string $unitId): array
+    {
+        return ($task->origins[$unitId] ?? null) === TranslationSource::ORIGIN_AI ? ['review' => true] : [];
     }
 }

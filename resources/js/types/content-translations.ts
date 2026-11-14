@@ -50,6 +50,8 @@ export interface ContentTranslationUnitStatus {
   status: ContentTranslationUnitState
   /** For `stale`: the source text the saved translation was written against. */
   previous_source?: string
+  /** The saved text is AI output nobody has reviewed yet. */
+  review?: true
 }
 
 export interface ContentTranslationStatus {

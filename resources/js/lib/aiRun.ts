@@ -30,6 +30,8 @@ export type AiQuestionnaireAnswers = Record<string, string | null>
 export interface AiRunResult<TData = unknown> {
   text: string
   data: TData | null
+  /** Translation runs: keys of `data` filled from translation memory, earlier published text rather than AI output. */
+  memory?: string[]
 }
 
 export interface AiRunUsage {

@@ -119,6 +119,36 @@ class AiTranslationMemoryTest extends TestCase
     }
 
     #[Test]
+    public function an_editor_translation_names_the_fields_memory_filled_and_records_only_the_model_output_as_ai(): void
+    {
+        $canonical = $this->entry('en', ['title' => 'Shopping cart', 'summary' => 'Pay securely']);
+        $german = $this->entry('de', ['title' => '', 'summary' => ''], $canonical);
+        app(PublishContent::class)->execute(['content' => ['title' => 'Warenkorb', 'summary' => '']], $german, $this->space, $this->user);
+        $this->driver->push(FakeAiDriver::text('{"f2": "Sicher bezahlen"}'));
+
+        $service = app(AiRunService::class);
+        $run = $service->start(new StartRun(
+            $this->space,
+            $this->user,
+            'translate',
+            skill: app(SkillResolver::class)->resolve($this->space)['translate-fields'],
+            context: [
+                'source' => 'en',
+                'target' => 'de',
+                'fields' => ['f1' => 'Shopping cart', 'f2' => 'Pay securely'],
+                'content_id' => $german->id,
+                'paths' => ['f1' => 'title', 'f2' => 'summary'],
+            ],
+        ));
+        iterator_to_array($service->advance($run), false);
+
+        $run->refresh();
+        $this->assertSame(['f1' => 'Warenkorb', 'f2' => 'Sicher bezahlen'], $run->result['data']);
+        $this->assertSame(['f1'], $run->result['memory']);
+        $this->assertSame(['summary'], AiChangesetItem::query()->where('target_id', $german->id)->pluck('path')->all());
+    }
+
+    #[Test]
     public function republishing_an_unchanged_translation_after_the_source_moved_on_keeps_the_pair_it_was_written_against(): void
     {
         [$canonical, $german] = $this->publishedPair('Shopping cart', 'Warenkorb');

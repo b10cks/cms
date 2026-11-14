@@ -5019,7 +5019,8 @@
       "status": {
         "current": "aktuell",
         "outdated": "veraltet",
-        "missing": "fehlen"
+        "missing": "fehlen",
+        "review": "zu prüfen"
       },
       "noStatusMatches": "Keine Felder mit diesem Status.",
       "translateFields": "{count} Feld übersetzen | {count} Felder übersetzen",
@@ -5035,7 +5036,13 @@
       "orphanedField": "Kein Quellwert",
       "removeOrphanedField": "Entfernen",
       "orphanedBlockDescription": "Dieser Block wurde aus dem Quellinhalt entfernt. Die Übersetzungsdaten werden nicht mehr benötigt.",
-      "removeAllOrphanedBlocks": "{count} verwaiste(n) Block(s) entfernen"
+      "removeAllOrphanedBlocks": "{count} verwaiste(n) Block(s) entfernen",
+      "entrySection": "Eintrag",
+      "sectionOpen": "{count} offen",
+      "aiOutput": "KI-Übersetzung",
+      "markReviewed": "Geprüft",
+      "markReviewedHint": "Als geprüft markieren (⌘↵ geht auch weiter)",
+      "reviewSaveFailed": "Konnte nicht speichern, welche Übersetzungen geprüft sind."
     },
     "tableBlock": {
       "columnsBadge": "{count} Spalten",
@@ -6550,7 +6557,8 @@
       "assets": "Medienbibliothek",
       "table": "Tabellen",
       "dialog": "Dialoge",
-      "fields": "Block-Felder"
+      "fields": "Block-Felder",
+      "translation": "Übersetzungsansicht"
     },
     "global": {
       "commandPalette": "Befehlspalette öffnen",
@@ -6624,6 +6632,10 @@
     },
     "dialog": {
       "submit": "Diesen Dialog bestätigen"
+    },
+    "translation": {
+      "nextOpen": "Nächstes offenes Feld, markiert eine KI-Übersetzung als geprüft",
+      "previousOpen": "Vorheriges offenes Feld"
     }
   },
   "providerDashboard": {

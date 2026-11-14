@@ -665,18 +665,20 @@ class AiRunService
         if ($remembered !== [] && \is_array($data)) {
             $data = array_replace($remembered, $data);
         }
+        // Keys still holding the memory text: earlier published translations, not AI output.
+        $fromMemory = \is_array($data) ? array_keys(array_filter($remembered, fn ($text, $key) => ($data[$key] ?? null) === $text, ARRAY_FILTER_USE_BOTH)) : [];
 
-        $events = $this->fenced($run, function () use ($run, $transcript, $text, $data, $partial) {
+        $events = $this->fenced($run, function () use ($run, $transcript, $text, $data, $partial, $fromMemory) {
             $events = [];
             if ($run->surface === self::SELECTION_SURFACE && trim($text) !== '') {
                 $events[] = $this->emit($run, RunEventType::Proposal, ['proposal' => $this->proposeSelection($run, $text)]);
             }
 
             if ($run->surface === self::TRANSLATE_SURFACE && \is_array($data)) {
-                $this->recordTranslations($run, $data);
+                $this->recordTranslations($run, array_diff_key($data, array_flip($fromMemory)));
             }
 
-            $run->result = ['text' => $text, 'data' => $data];
+            $run->result = ['text' => $text, 'data' => $data, ...($fromMemory !== [] ? ['memory' => array_map('strval', $fromMemory)] : [])];
             $run->partial = $partial;
             $this->finish($run, AiRunState::Completed);
             $this->checkpoint($run, $transcript);

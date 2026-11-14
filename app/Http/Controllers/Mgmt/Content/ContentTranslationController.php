@@ -4,11 +4,15 @@ namespace App\Http\Controllers\Mgmt\Content;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Content\ContentTranslationAssistRequest;
+use App\Http\Requests\Content\ContentTranslationReviewRequest;
 use App\Http\Requests\Content\ContentTranslationStatusRequest;
 use App\Models\Management\Space;
 use App\Models\Space\Content;
+use App\Models\Space\TranslationSource;
 use App\Services\Ai\Run\ToolError;
 use App\Services\Ai\Translation\TranslationAssist;
+use App\Services\Ai\Translation\TranslationDestinations;
+use App\Services\Ai\Translation\TranslationLineage;
 use App\Services\Ai\Translation\TranslationStatus;
 use Illuminate\Http\JsonResponse;
 
@@ -31,6 +35,32 @@ class ContentTranslationController extends Controller
 
         try {
             return response()->json(['data' => $status->of($space, $content->id, $request->validated('locale'))]);
+        } catch (ToolError $error) {
+            abort(422, $error->getMessage());
+        }
+    }
+
+    /**
+     * Mark the saved text of units as written by AI (`ai`) or reviewed by a person (`reviewed`), as `translation-status` flags them with `review`. Unit IDs are those of `translation-status`; units with no saved text or no source text are skipped. Returns the recomputed status.
+     *
+     * @apiResponse 200 data:@ContentTranslationStatus
+     * @apiResponse 422 @Error Unknown locale, the default language, an entry with no source to translate from, or no translation entry in this locale yet.
+     */
+    public function review(ContentTranslationReviewRequest $request, Space $space, Content $content, TranslationDestinations $destinations, TranslationLineage $lineage, TranslationStatus $status): JsonResponse
+    {
+        $this->authorize('update', [$content, $space]);
+
+        try {
+            $locale = $request->validated('locale');
+            $destination = $destinations->resolve($space, $content->id, $locale);
+            if ($destination->translation === null) {
+                throw new ToolError("This entry has no translation in \"{$destination->locale}\" yet.");
+            }
+
+            $lineage->recordOrigins($destination, $request->validated('ai', []), TranslationSource::ORIGIN_AI);
+            $lineage->recordOrigins($destination, $request->validated('reviewed', []), TranslationSource::ORIGIN_REVIEW);
+
+            return response()->json(['data' => $status->of($space, $content->id, $locale)]);
         } catch (ToolError $error) {
             abort(422, $error->getMessage());
         }

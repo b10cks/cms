@@ -5165,7 +5165,8 @@
       "status": {
         "current": "güncel",
         "outdated": "eski",
-        "missing": "eksik"
+        "missing": "eksik",
+        "review": "incelenecek"
       },
       "noStatusMatches": "Bu durumda alan yok.",
       "translateFields": "{count} alanı çevir",
@@ -5181,7 +5182,13 @@
       "orphanedField": "Kaynak değer yok",
       "removeOrphanedField": "Kaldır",
       "orphanedBlockDescription": "Bu blok kaynak içerikten kaldırılmış. Çeviri verisine artık ihtiyaç yok.",
-      "removeAllOrphanedBlocks": "{count} terk edilmiş bloğu kaldır | {count} terk edilmiş bloğu kaldır"
+      "removeAllOrphanedBlocks": "{count} terk edilmiş bloğu kaldır | {count} terk edilmiş bloğu kaldır",
+      "entrySection": "Girdi",
+      "sectionOpen": "{count} açık",
+      "aiOutput": "YZ çevirisi",
+      "markReviewed": "İncelendi",
+      "markReviewedHint": "İncelendi olarak işaretle (⌘↵ ayrıca ilerler)",
+      "reviewSaveFailed": "Hangi çevirilerin incelendiği kaydedilemedi."
     },
     "tableBlock": {
       "columnsBadge": "{count} sütun",
@@ -6534,7 +6541,8 @@
       "assets": "Varlık kitaplığı",
       "table": "Tablolar",
       "dialog": "Açılır pencereler",
-      "fields": "Blok alanları"
+      "fields": "Blok alanları",
+      "translation": "Çeviri görünümü"
     },
     "global": {
       "commandPalette": "Komut paletini aç",
@@ -6608,6 +6616,10 @@
     },
     "dialog": {
       "submit": "Bu açılır pencereyi onayla"
+    },
+    "translation": {
+      "nextOpen": "Sonraki açık alan, bir YZ çevirisini incelendi olarak işaretler",
+      "previousOpen": "Önceki açık alan"
     }
   },
   "providerDashboard": {

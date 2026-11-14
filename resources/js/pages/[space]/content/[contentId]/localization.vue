@@ -2,6 +2,9 @@
 import { useQueries, useQueryClient } from '@tanstack/vue-query'
 import { refDebounced, useStorage } from '@vueuse/core'
 import { toRaw } from 'vue'
+import { toast } from 'vue-sonner'
+
+import { api } from '~/api'
 
 import ContentPageHeaderPortals from '~/components/content/ContentPageHeaderPortals.vue'
 import Icon from '~/components/Icon.vue'
@@ -92,6 +95,7 @@ watch(
         id: blockItem.id,
         name: blockItem.name,
         schema: blockItem.schema,
+        editor: blockItem.editor,
       })
     })
   },
@@ -123,6 +127,7 @@ const {
   onDiscardChanges: () => {
     discardLocalContentChanges()
     discardOwnDrafts()
+    localizationRef.value?.discardReviewMarks()
   },
 })
 
@@ -707,11 +712,45 @@ watch(previewItemPayload, (item) => {
 })
 
 const queryClient = useQueryClient()
+
+/**
+ * Send the review marks the fields queued: AI output is reported once it is
+ * saved, so the server records the text it wrote, and a reviewed mark clears it.
+ */
+const flushReviewMarks = async () => {
+  const contentId = translatableContent.value?.id
+  const locale = resolvedLanguage.value
+  if (!contentId || !locale) return
+
+  const marks = localizationRef.value?.takeReviewMarks()
+  if (!marks || (!marks.ai.length && !marks.reviewed.length)) return
+
+  try {
+    const response = await api
+      .forSpace(spaceId.value)
+      .contents.translationReview(contentId, { locale, ...marks })
+    queryClient.setQueryData(
+      [...translationStatusKey(spaceId.value), contentId, locale],
+      response.data
+    )
+  } catch {
+    toast.error(t('components.flattenedLocalization.reviewSaveFailed'))
+  }
+}
+
+// A mark on saved text goes out at once; with unsaved edits it waits for the save.
+const handleReviewChange = () => {
+  if (!isDirty.value) void flushReviewMarks()
+}
+
 provide(
   'commitPersistedContent',
   (nextContent: ContentResource, action: ContentCommitAction = 'save') => {
     syncPersistedContent(nextContent)
-    queryClient.invalidateQueries({ queryKey: translationStatusKey(spaceId.value) })
+    localizationRef.value?.releaseKeptFields()
+    void flushReviewMarks().finally(() =>
+      queryClient.invalidateQueries({ queryKey: translationStatusKey(spaceId.value) })
+    )
     // The slug is persisted now; further name edits must not move it.
     slugMode.value = 'manual'
     clearServerErrors()
@@ -776,6 +815,8 @@ useSeoMeta({
           :full-slug="translatableContent.full_slug"
           :updated-at="translatableContent.updated_at"
           @update-field="handlePreviewFieldUpdate"
+          @select-field="localizationRef?.revealPreviewField($event)"
+          @select-item="localizationRef?.revealPreviewItem($event)"
         />
       </ResizablePanel>
       <ResizableHandle
@@ -927,6 +968,7 @@ useSeoMeta({
                 :translation-name="translatableContent.name"
                 @update:translation-name="handleTranslatedName"
                 :block-schema="block.schema"
+                :block-editor="block.editor"
                 :space-id="spaceId"
                 :get-block-schema="getBlockSchemaFn"
                 :target-language="resolvedLanguage"
@@ -937,6 +979,8 @@ useSeoMeta({
                 @update:translation-content="updateTranslationContent"
                 @field-update="handleLocalizedFieldUpdate"
                 @field-focus="handleLocalizedFieldFocus"
+                @highlight-item="previewRef?.updateHover($event ? ($event.itemId ?? previewRootId) : null)"
+                @review-change="handleReviewChange"
               />
             </div>
           </div>
