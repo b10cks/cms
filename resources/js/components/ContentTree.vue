@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useIsPhone } from '~/lib/viewport'
 import {
   draggable,
   dropTargetForElements,
@@ -208,6 +209,12 @@ const openMenuId = ref<MenuOwnerId | null>(null)
 const activeClipboardItem = ref<ContentTreeClipboardItem | null>(null)
 const activeMenuAnchor = ref<HTMLElement | null>(null)
 const activeMenuTrigger = ref<HTMLElement | null>(null)
+
+// The row menu is taller than the room beside most rows, so a phone opens it under the app header.
+const isPhone = useIsPhone()
+const phoneMenuAnchor = {
+  getBoundingClientRect: () => new DOMRect(window.innerWidth - 8, 56, 0, 0),
+}
 let lastDragEndedAt = 0
 
 const { useReleasesQuery, useAssignContentsMutation, getReleaseState } = useReleases(props.spaceId)
@@ -2819,7 +2826,7 @@ defineExpose({ initCreate })
             v-if="buildRootMenuActions().length > 0"
             variant="ghost"
             size="toolbar"
-            class="opacity-0 transition-opacity duration-200 group-hover:opacity-100 group-focus-within:opacity-100"
+            class="opacity-0 touch:opacity-100 transition-opacity duration-200 group-hover:opacity-100 group-focus-within:opacity-100"
             :aria-label="$t('labels.contentTree.actions.more')"
             @click.stop="handleRootMenuTrigger"
           >
@@ -2971,7 +2978,7 @@ defineExpose({ initCreate })
             :data-content-id="item.value.id"
             :data-renaming="currentlyEditingId === item.value.id || undefined"
             :class="[
-              'group relative my-0.5 flex items-center gap-2 rounded-md border border-transparent py-1 pr-2 pl-0 outline-none',
+              'group relative my-0.5 flex items-center gap-2 rounded-md border border-transparent py-1 pr-2 pl-0 outline-none touch:py-2 touch:pr-0.5',
               'transition-colors duration-150 hover:bg-tree-hover',
               'focus-visible:ring-2 focus-visible:ring-ring',
               'cursor-pointer text-sm font-medium',
@@ -3019,7 +3026,7 @@ defineExpose({ initCreate })
               v-if="
                 filterVisibleIds ? getVisibleChildren(item.value).length > 0 : item.value.children
               "
-              class="z-10 h-4 w-3 cursor-pointer text-muted transition-colors duration-100 hover:text-primary"
+              class="z-10 h-4 w-3 cursor-pointer text-muted transition-colors duration-100 hover:text-primary touch:-my-2 touch:-mr-2 touch:h-9 touch:w-7"
               :aria-label="$t('actions.toggleExpand')"
               :aria-expanded="isExpanded"
               @click.stop.prevent="toggleExpanded(item.value.id)"
@@ -3076,7 +3083,7 @@ defineExpose({ initCreate })
                 v-if="getUsersForContent(item.value.id).length > 0"
                 :users="getUsersForContent(item.value.id)"
                 size="sm"
-                :class="[isItemSelected(item.value.id) ? 'mr-4' : 'mr-1  group-hover:mr-4']"
+                :class="[isItemSelected(item.value.id) ? 'mr-4' : 'mr-1  group-hover:mr-4', 'touch:mr-0']"
               />
               <SimpleTooltip
                 v-if="rowFlags(item.value)"
@@ -3115,15 +3122,15 @@ defineExpose({ initCreate })
               </SimpleTooltip>
             </div>
 
-            <div class="absolute right-4">
+            <div class="absolute right-4 touch:static touch:-my-2 touch:shrink-0">
               <button
                 type="button"
                 :aria-label="$t('labels.contentTree.actions.more')"
                 :class="[
-                  'cursor-pointer flex items-center rounded-sm p-1 text-muted transition-[opacity,background-color,color] duration-100 hover:bg-state-hover hover:text-primary focus-visible:opacity-100',
+                  'cursor-pointer flex items-center rounded-sm p-1 text-muted transition-[opacity,background-color,color] duration-100 hover:bg-state-hover hover:text-primary focus-visible:opacity-100 touch:p-2.5',
                   isItemSelected(item.value.id) || openMenuId === item.value.id
                     ? 'opacity-100'
-                    : 'opacity-0 group-hover:opacity-100 group-focus-within:opacity-100',
+                    : 'opacity-0 touch:opacity-100 group-hover:opacity-100 group-focus-within:opacity-100',
                 ]"
                 @pointerdown.stop.prevent
                 @click.stop.prevent="handleItemMenuTrigger($event, item.value.id)"
@@ -3197,7 +3204,8 @@ defineExpose({ initCreate })
       <DropdownMenuContent
         v-if="activeMenuActions.length > 0"
         align="end"
-        :reference="activeMenuAnchor ?? undefined"
+        :collision-padding="8"
+        :reference="isPhone ? phoneMenuAnchor : (activeMenuAnchor ?? undefined)"
       >
         <template
           v-for="action in activeMenuActions"

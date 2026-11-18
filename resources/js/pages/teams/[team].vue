@@ -57,7 +57,7 @@ provide('teamId', teamId)
 
 <template>
   <div class="flex min-h-full w-full flex-col bg-background md:flex-row">
-    <aside class="min-w-0 shrink-0 p-3 md:p-6 xl:w-1/5">
+    <aside class="min-w-0 shrink-0 p-2 md:p-6 xl:w-1/5">
       <nav class="flex gap-1 overflow-x-auto md:sticky md:top-20 md:flex-col md:overflow-visible">
         <RouterLink
           v-for="item in items"

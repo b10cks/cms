@@ -239,12 +239,12 @@ const handleFolderChange = (folderId: string | null) => {
             v-if="!props.readOnly"
             :data-asset-handle="sortId"
             :label="$t('actions.assets.reorder')"
-            class="-mr-1.5 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100"
+            class="-mr-1.5 opacity-0 touch:opacity-100 group-hover:opacity-100 group-focus-within:opacity-100"
             @move="(delta) => moveAsset(index, delta)"
           />
           <AssetRow :asset="asset" />
           <div
-            class="absolute top-1/2 right-1.5 flex -translate-y-1/2 rounded-md bg-card opacity-0 group-hover:opacity-100 group-focus-within:opacity-100"
+            class="absolute top-1/2 right-1.5 flex -translate-y-1/2 rounded-md bg-card opacity-0 touch:static touch:translate-y-0 touch:opacity-100 group-hover:opacity-100 group-focus-within:opacity-100"
           >
             <button
               v-if="!props.readOnly"

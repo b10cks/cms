@@ -25,7 +25,7 @@ const copy = async () => {
     type="button"
     variant="ghost"
     size="toolbar"
-    class="text-muted opacity-0 transition-opacity group-hover/row:opacity-100 group-focus-within/row:opacity-100 hover:text-primary"
+    class="text-muted opacity-0 touch:opacity-100 transition-opacity group-hover/row:opacity-100 group-focus-within/row:opacity-100 hover:text-primary"
     :aria-label="t('components.flattenedLocalization.copySource')"
     :title="t('components.flattenedLocalization.copySource')"
     tabindex="-1"

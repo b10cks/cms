@@ -15,6 +15,7 @@ import {
 } from '~/components/ui/dropdown-menu'
 import IconName from '~/components/ui/IconName.vue'
 import type { ItemBlock } from '~/lib/blockItemTitle'
+import { useIsTouch } from '~/lib/viewport'
 
 /** The "more actions" menu of one item in a blocks field. */
 const props = defineProps<{
@@ -29,15 +30,21 @@ const props = defineProps<{
   pagePath?: string | null
   canManageBlock?: boolean
   readOnly?: boolean
+  hiddenItem?: boolean
 }>()
 
 const emit = defineEmits<{
   switchType: [blockSlug: string]
   createTemplate: []
+  toggleHidden: []
+  copyItem: []
+  cutItem: []
+  deleteItem: []
 }>()
 
 const { $t } = useI18n()
 const router = useRouter()
+const isTouch = useIsTouch()
 
 const switchTargets = computed(() =>
   props.readOnly ? [] : props.allowedBlocks.filter((block) => block.slug !== props.block.slug)
@@ -62,7 +69,7 @@ const manageBlock = () => {
 </script>
 
 <template>
-  <DropdownMenu v-if="itemId || switchTargets.length > 0 || hasBlockActions">
+  <DropdownMenu v-if="itemId || switchTargets.length > 0 || hasBlockActions || (isTouch && !readOnly)">
     <DropdownMenuTrigger as-child>
       <button
         type="button"
@@ -81,6 +88,31 @@ const manageBlock = () => {
     >
       <template v-if="itemId">
         <DropdownMenuLabel class="select-text">{{ itemId }}</DropdownMenuLabel>
+        <DropdownMenuSeparator />
+      </template>
+      <template v-if="isTouch && !readOnly">
+        <DropdownMenuItem @select="emit('toggleHidden')"
+        >
+          <Icon :name="hiddenItem ? 'lucide:eye-off' : 'lucide:eye'" />
+          <span>{{ hiddenItem ? $t('actions.blocks.tooltips.show') : $t('actions.blocks.tooltips.hide') }}</span>
+        </DropdownMenuItem>
+        <DropdownMenuItem @select="emit('copyItem')"
+        >
+          <Icon name="lucide:copy" />
+          <span>{{ $t('actions.blocks.tooltips.copy') }}</span>
+        </DropdownMenuItem>
+        <DropdownMenuItem @select="emit('cutItem')"
+        >
+          <Icon name="lucide:scissors" />
+          <span>{{ $t('actions.blocks.tooltips.cut') }}</span>
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          class="text-destructive"
+          @select="emit('deleteItem')"
+        >
+          <Icon name="lucide:trash-2" />
+          <span>{{ $t('actions.blocks.tooltips.delete') }}</span>
+        </DropdownMenuItem>
         <DropdownMenuSeparator />
       </template>
       <template v-if="switchTargets.length > 0">

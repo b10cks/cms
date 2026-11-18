@@ -42,7 +42,7 @@ provide('spaceId', spaceId)
 
 <template>
   <div class="flex h-full w-full flex-col bg-background md:flex-row">
-    <aside class="min-w-0 px-4 pt-4 md:shrink-0 md:p-6 xl:w-1/5">
+    <aside class="min-w-0 px-2 pt-2 md:shrink-0 md:p-6 xl:w-1/5">
       <nav class="flex gap-1 overflow-x-auto pb-2 md:sticky md:top-20 md:flex-col md:overflow-visible md:pb-0">
         <RouterLink
           v-for="item in items"

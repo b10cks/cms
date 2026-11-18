@@ -2200,6 +2200,13 @@ onBeforeUnmount(() => {
       </div>
     </Teleport>
 
+    <p class="hidden items-center gap-2 border-b border-border bg-surface px-4 py-2 text-sm text-muted phone:flex">
+      <Icon
+        name="lucide:monitor"
+        class="shrink-0"
+      />
+      {{ $t('labels.phoneLimitedEditing') }}
+    </p>
     <main class="relative min-h-0 flex-1 overflow-hidden">
       <div
         v-if="isLoading || isTreeBooting"

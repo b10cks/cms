@@ -226,7 +226,7 @@ const handleBlockChange = (value: AcceptableValue) => {
             'cursor-grab absolute top-1/2 -left-2 z-10 flex w-4 h-6 -translate-y-1/2 items-center justify-center rounded-md border border-border bg-background text-muted shadow-sm transition',
             selected || focused || dropActive
               ? 'opacity-100'
-              : 'pointer-events-none opacity-0 group-hover:pointer-events-auto group-hover:opacity-100'
+              : 'pointer-events-none opacity-0 group-hover:pointer-events-auto group-hover:opacity-100 touch:pointer-events-auto touch:opacity-100'
           )
         "
         tabindex="-1"

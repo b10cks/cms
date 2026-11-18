@@ -117,7 +117,7 @@ const handleLanguageChange = async (value: string | number | null) => {
     @update:model-value="(value) => handleLanguageChange(value == null ? '' : String(value))"
   >
     <SelectTrigger
-      class="w-56"
+      class="w-56 phone:w-auto"
       :disabled="isSwitcherDisabled"
     >
       <SelectValue :placeholder="$t('labels.contents.localization.language')">
@@ -125,8 +125,12 @@ const handleLanguageChange = async (value: string | number | null) => {
           v-if="currentLanguage"
           class="flex min-w-0 items-center justify-between gap-2"
         >
-          <Icon name="lucide:languages" />
-          <span class="truncate">{{ currentLanguage.label }}</span>
+          <Icon
+            name="lucide:languages"
+            class="phone:hidden"
+          />
+          <span class="truncate phone:hidden">{{ currentLanguage.label }}</span>
+          <span class="hidden uppercase phone:inline">{{ currentLanguage.language_iso }}</span>
         </div>
       </SelectValue>
     </SelectTrigger>

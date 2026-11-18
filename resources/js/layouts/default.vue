@@ -69,7 +69,7 @@ useShortcut({
 </script>
 
 <template>
-  <div class="flex min-h-svh flex-col pt-14">
+  <div class="flex min-h-svh flex-col pt-14 phone:pb-(--phone-tabbar)">
     <a
       href="#main-content"
       class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:rounded-md focus:bg-background focus:px-3 focus:py-2 focus:text-sm focus:font-semibold focus:text-primary focus:shadow-soft-lg focus:ring-1 focus:ring-ring focus:outline-none"
@@ -88,7 +88,7 @@ useShortcut({
       <main
         id="main-content"
         tabindex="-1"
-        class="flex min-h-0 min-w-0 grow w-[calc(100%-3.5rem)] overflow-x-clip focus:outline-none"
+        class="flex min-h-0 min-w-0 grow w-[calc(100%-3.5rem)] overflow-x-clip focus:outline-none phone:w-full"
       >
         <slot />
       </main>

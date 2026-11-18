@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useIsPhone } from '~/lib/viewport'
 import { computed, ref } from 'vue'
 
 import Icon from '~/components/Icon.vue'
@@ -62,6 +63,8 @@ const onMarkAllRead = () => {
     markAllAsRead.mutate()
   }
 }
+
+const isPhone = useIsPhone()
 </script>
 
 <template>
@@ -79,11 +82,11 @@ const onMarkAllRead = () => {
       </span>
     </PopoverTrigger>
     <PopoverContent
-      side="right"
+      :side="isPhone ? 'top' : 'right'"
       align="end"
       :side-offset="8"
       :collision-padding="16"
-      class="w-104 max-h-none! overflow-hidden border-popover-border! p-0!"
+      class="w-104 max-w-[calc(100vw-2rem)] max-h-none! overflow-hidden border-popover-border! p-0!"
     >
       <div class="flex h-11 items-center justify-between border-b border-popover-border pr-2 pl-3">
         <div class="flex items-center gap-2">

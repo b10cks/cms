@@ -357,7 +357,7 @@ const onKeydown = (event: KeyboardEvent) => {
                 type="button"
                 :data-sections-for="item.id"
                 :class="[
-                  'flex size-6 shrink-0 cursor-pointer items-center justify-center rounded-sm text-muted opacity-0 group-hover:opacity-100 group-data-[highlighted]:opacity-100 hover:bg-state-hover hover:text-primary',
+                  'flex size-6 shrink-0 cursor-pointer items-center justify-center rounded-sm text-muted opacity-0 touch:opacity-100 group-hover:opacity-100 group-data-[highlighted]:opacity-100 hover:bg-state-hover hover:text-primary',
                   item.id === content && !anchor ? '' : 'ml-auto',
                 ]"
                 :aria-label="t('labels.link.showSections', { name: item.name })"

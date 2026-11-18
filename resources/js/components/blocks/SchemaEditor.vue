@@ -626,6 +626,13 @@ watch(
     ref="editorRoot"
     class="schema-editor"
   >
+    <p class="hidden items-center gap-2 mb-2 rounded-lg bg-surface px-3 py-2 text-sm text-muted phone:flex">
+      <Icon
+        name="lucide:monitor"
+        class="shrink-0"
+      />
+      {{ $t('labels.phoneLimitedEditing') }}
+    </p>
     <div class="mb-2">
       <div
         ref="tabsContainer"
@@ -660,7 +667,7 @@ watch(
             type="button"
             :aria-label="$t('actions.blocks.deletePage')"
             :title="$t('actions.blocks.deletePage')"
-            class="absolute top-1/2 right-4 z-10 -translate-y-1/2 transform cursor-pointer opacity-0 transition-opacity group-hover:opacity-100 hover:text-destructive"
+            class="absolute top-1/2 right-4 z-10 -translate-y-1/2 transform cursor-pointer opacity-0 touch:opacity-100 transition-opacity group-hover:opacity-100 hover:text-destructive"
             @click.stop="deletePage(index)"
           >
             <Icon

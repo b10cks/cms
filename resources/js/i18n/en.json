@@ -1,6 +1,7 @@
 {
   "labels": {
     "mainNavigation": "Main navigation",
+    "phoneLimitedEditing": "Viewing works here. Use a larger screen to change the layout or structure.",
     "queryError": "This could not be loaded. Nothing has changed, you can try again.",
     "importDialog": {
       "preparing": "Uploading and preparing file…",
@@ -1295,6 +1296,7 @@
     },
     "navigation": {
       "home": "Home",
+      "more": "More",
       "canvas": "Canvas",
       "content": "Content",
       "blocks": "Blocks",

@@ -144,7 +144,7 @@ const openDetails = () => {
 
     <button
       v-if="canRemove"
-      class="flex size-5 shrink-0 cursor-pointer items-center justify-center text-muted opacity-0 transition-opacity duration-200 group-hover:opacity-100 hover:text-destructive focus:opacity-100"
+      class="flex size-5 shrink-0 cursor-pointer items-center justify-center text-muted opacity-0 touch:opacity-100 transition-opacity duration-200 group-hover:opacity-100 hover:text-destructive focus:opacity-100"
       :aria-label="$t('actions.remove')"
       @click.stop="emit('remove', file.id)"
     >

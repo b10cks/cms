@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { createReusableTemplate } from '@vueuse/core'
 import { TreeItem, TreeRoot } from 'reka-ui'
 import { RouterLink, type LocationQueryRaw } from 'vue-router'
 
@@ -7,6 +8,8 @@ import CreateBlockFolderDialog from '~/components/blocks/CreateBlockFolderDialog
 import Icon from '~/components/Icon.vue'
 import { Button } from '~/components/ui/button'
 import { ScrollArea } from '~/components/ui/scroll-area'
+import { Sheet, SheetContent, SheetTitle, SheetTrigger } from '~/components/ui/sheet'
+import { useIsPhone } from '~/lib/viewport'
 
 const mode = defineModel<'list' | 'tags'>('mode', {
   default: 'list',
@@ -20,6 +23,18 @@ const props = defineProps<{
 
 const route = useRoute()
 const { $t } = useI18n()
+
+/** On a phone the folders open in a sheet from the header, so the list keeps the full width. */
+const isPhone = useIsPhone()
+const foldersOpen = ref(false)
+const [DefineFolders, ReuseFolders] = createReusableTemplate()
+watch(
+  () => route.fullPath,
+  () => {
+    foldersOpen.value = false
+  }
+)
+
 const { alert } = useAlertDialog()
 const { useAccessControl } = useAuthorization()
 const access = useAccessControl(computed(() => ({ space_id: props.spaceId })))
@@ -97,7 +112,8 @@ const initDeleteFolder = async (folder: BlockFolderResource) => {
 </script>
 
 <template>
-  <div class="sticky top-14 flex h-[calc(100vh-3.5rem)] min-w-2xs flex-col overflow-hidden bg-sidebar p-2">
+  <DefineFolders>
+  <div class="sticky top-14 flex h-[calc(100vh-3.5rem)] min-w-2xs flex-col overflow-hidden bg-sidebar p-2 phone:static phone:h-full phone:min-w-0">
     <div class="flex min-h-0 flex-1 flex-col">
       <ScrollArea class="min-h-0 flex-1">
         <TreeRoot
@@ -157,7 +173,7 @@ const initDeleteFolder = async (folder: BlockFolderResource) => {
               {{ item.value.name }}
             </div>
             <div
-              class="absolute right-2 flex items-center gap-1 overflow-clip bg-border opacity-0 transition-opacity duration-200 group-hover:w-auto group-hover:opacity-100"
+              class="absolute right-2 flex items-center gap-1 overflow-clip bg-border opacity-0 touch:opacity-100 transition-opacity duration-200 group-hover:w-auto group-hover:opacity-100"
             >
               <button
                 v-if="canManageBlockFolders"
@@ -181,4 +197,28 @@ const initDeleteFolder = async (folder: BlockFolderResource) => {
       :space-id="spaceId"
     />
   </div>
+  </DefineFolders>
+
+  <Teleport
+    v-if="isPhone"
+    defer
+    to="#appHeader"
+  >
+    <Sheet v-model:open="foldersOpen">
+      <SheetTrigger as-child>
+        <Button size="sm">
+          <Icon name="lucide:folder" />
+          {{ $t('labels.blockFolders.title') }}
+        </Button>
+      </SheetTrigger>
+      <SheetContent
+        side="left"
+        class="w-72! max-w-[85vw] bg-sidebar p-0! pt-10!"
+      >
+        <SheetTitle class="sr-only">{{ $t('labels.blockFolders.title') }}</SheetTitle>
+        <ReuseFolders />
+      </SheetContent>
+    </Sheet>
+  </Teleport>
+  <ReuseFolders v-else />
 </template>

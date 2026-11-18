@@ -1,6 +1,7 @@
 {
   "labels": {
     "mainNavigation": "Hauptnavigation",
+    "phoneLimitedEditing": "Ansehen funktioniert hier. Layout oder Struktur änderst du auf einem größeren Bildschirm.",
     "queryError": "Das konnte nicht geladen werden. Es wurde nichts geändert, du kannst es erneut versuchen.",
     "importDialog": {
       "preparing": "Datei wird hochgeladen und vorbereitet…",
@@ -1304,6 +1305,7 @@
     },
     "navigation": {
       "home": "Startseite",
+      "more": "Mehr",
       "canvas": "Canvas",
       "content": "Inhalt",
       "blocks": "Blocks",

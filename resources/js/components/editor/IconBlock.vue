@@ -175,7 +175,7 @@ const openPicker = () => {
         <p class="truncate font-semibold text-primary">{{ displayName }}</p>
         <p class="truncate text-sm text-muted">{{ localValue }}</p>
       </div>
-      <div class="ml-auto flex items-center gap-2 opacity-0 group-hover:opacity-100">
+      <div class="ml-auto flex items-center gap-2 opacity-0 touch:opacity-100 group-hover:opacity-100">
         <button
           v-if="!readOnly"
           type="button"

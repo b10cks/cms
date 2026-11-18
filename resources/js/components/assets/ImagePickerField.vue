@@ -80,7 +80,7 @@ const handleRemove = () => {
       />
       <div
         v-if="!readOnly"
-        class="absolute inset-0 flex items-center justify-center gap-2 bg-background/70 opacity-0 transition-opacity group-hover:opacity-100"
+        class="absolute inset-0 flex items-center justify-center gap-2 bg-background/70 opacity-0 transition-opacity group-hover:opacity-100 touch:static touch:bg-transparent touch:py-2 touch:opacity-100"
       >
         <Button
           type="button"

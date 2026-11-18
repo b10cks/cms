@@ -161,7 +161,7 @@ const hasItems = computed(() => (props.changeset?.items?.length ?? 0) > 0)
       />
       <div
         v-if="state !== 'running'"
-        class="flex opacity-0 transition-opacity group-hover/answer:opacity-100 focus-within:opacity-100"
+        class="flex opacity-0 touch:opacity-100 transition-opacity group-hover/answer:opacity-100 focus-within:opacity-100"
       >
         <Button
           size="toolbar"

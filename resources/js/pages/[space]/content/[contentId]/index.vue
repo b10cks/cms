@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { closePhonePreview, phonePreviewOpen, useIsPhone } from '~/lib/viewport'
 import { useQueryClient } from '@tanstack/vue-query'
 import { watchDebounced } from '@vueuse/core'
 import { useRouteQuery } from '@vueuse/router'
@@ -539,9 +540,13 @@ const isPreviewDisabled = computed(() => {
   )
 })
 
+const isPhone = useIsPhone()
 const showPreview = computed(() => {
-  return !isPreviewDisabled.value && settings.value.content.showPreview
+  if (isPreviewDisabled.value) return false
+
+  return isPhone.value ? phonePreviewOpen.value : settings.value.content.showPreview
 })
+
 
 const isVisualEditorAvailable = computed(() => {
   if (!spaceData.value) return false
@@ -695,6 +700,7 @@ const openField = async ({ itemId, path }: FieldSelectEvent, history: 'push' | '
 
 /** FIELD_SELECT: open the block and focus the field the preview points at. */
 const selectField = async (event: FieldSelectEvent) => {
+  closePhonePreview()
   offerRichTextEditing(event)
   await openField(event)
 }
@@ -943,13 +949,16 @@ provide('reloadServerContent', reloadServerContent)
   />
   <TabsRoot
     v-model="mode"
-    :class="['flex min-h-0', showPreview ? 'w-132' : 'w-full']"
-    orientation="vertical"
+    :class="[
+      'flex min-h-0 phone:w-full phone:flex-col',
+      showPreview ? 'w-132 phone:hidden' : 'w-full',
+    ]"
+    :orientation="isPhone ? 'horizontal' : 'vertical'"
   >
     <ScrollArea
       v-if="content"
       :class="[
-        'grow overflow-y-auto bg-background',
+        'grow overflow-y-auto bg-background phone:h-auto phone:max-h-none phone:min-h-0 phone:flex-1 phone:border-l-0',
         showPreview
           ? 'max-h-[calc(100svh-3.5rem)] border-l border-border'
           : 'h-[calc(100svh-3.5rem)]',
@@ -957,7 +966,7 @@ provide('reloadServerContent', reloadServerContent)
     >
       <TabsContent
         value="edit"
-        :class="['min-w-0! p-4', showPreview ? '' : 'mx-auto max-w-4xl', 'pb-8']"
+        :class="['min-w-0! p-4 phone:px-2', showPreview ? '' : 'mx-auto max-w-4xl', 'pb-8']"
       >
         <EditorComponent
           v-if="content.block"
@@ -1008,13 +1017,13 @@ provide('reloadServerContent', reloadServerContent)
       </TabsContent>
       <TabsContent
         value="info"
-        :class="['p-4', showPreview ? '' : 'mx-auto max-w-3xl']"
+        :class="['p-4 phone:px-2', showPreview ? '' : 'mx-auto max-w-3xl']"
       >
         <ContentInfo :content="content" />
       </TabsContent>
       <TabsContent
         value="config"
-        :class="['p-4', showPreview ? '' : 'mx-auto max-w-3xl']"
+        :class="['p-4 phone:px-2', showPreview ? '' : 'mx-auto max-w-3xl']"
       >
         <ContentSettings
           v-model="content"
@@ -1023,7 +1032,7 @@ provide('reloadServerContent', reloadServerContent)
       </TabsContent>
       <TabsContent
         value="comments"
-        :class="['p-4', showPreview ? '' : 'mx-auto max-w-3xl']"
+        :class="['p-4 phone:px-2', showPreview ? '' : 'mx-auto max-w-3xl']"
       >
         <CommentsSidebar
           v-model:tab="commentsTab"
@@ -1058,14 +1067,14 @@ provide('reloadServerContent', reloadServerContent)
     </div>
     <TabsList
       :class="[
-        'flex h-full flex-col shrink-0 border-l border-l-sidebar-border bg-sidebar text-sidebar-foreground select-none transition-[width,padding] duration-200 ease-butter',
+        'flex h-full flex-col shrink-0 border-l border-l-sidebar-border bg-sidebar text-sidebar-foreground select-none transition-[width,padding] duration-200 ease-butter phone:order-first phone:h-auto phone:w-full phone:border-b phone:border-l-0 phone:border-b-sidebar-border phone:p-1',
         isExtendedSidebar ? 'w-18 p-1' : 'w-14 p-3',
       ]"
     >
       <div class="flex min-h-0 flex-1 flex-col">
         <div
           :class="[
-            'relative flex w-full min-w-0 flex-col transition-[gap] duration-200 ease-butter',
+            'relative flex w-full min-w-0 flex-col transition-[gap] duration-200 ease-butter phone:flex-row phone:gap-1',
             isExtendedSidebar ? 'gap-1' : 'gap-2',
           ]"
         >
@@ -1082,7 +1091,7 @@ provide('reloadServerContent', reloadServerContent)
               :value="tab.value"
               :aria-label="tab.label"
               :class="[
-                'icon-anim relative flex w-full cursor-pointer flex-col items-center justify-center rounded-lg text-center transition-[padding,gap,background-color,color] duration-200 ease-butter hover:bg-sidebar-accent/60',
+                'icon-anim relative flex w-full min-w-0 cursor-pointer flex-col items-center justify-center rounded-lg text-center transition-[padding,gap,background-color,color] duration-200 ease-butter hover:bg-sidebar-accent/60 phone:h-10 phone:flex-1 phone:flex-row phone:gap-1.5 phone:px-1 phone:py-0',
                 isExtendedSidebar ? 'gap-1 p-2' : 'gap-0 p-1.5',
                 mode === tab.value ? 'bg-sidebar-accent text-sidebar-accent-foreground' : '',
               ]"
@@ -1099,12 +1108,12 @@ provide('reloadServerContent', reloadServerContent)
               />
               <span
                 :class="[
-                  'grid w-full transition-[grid-template-rows,opacity] duration-200 ease-butter',
+                  'grid w-full transition-[grid-template-rows,opacity] duration-200 ease-butter phone:w-auto phone:min-w-0 phone:grid-rows-[1fr]! phone:opacity-100!',
                   isExtendedSidebar ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0',
                 ]"
-                :aria-hidden="!isExtendedSidebar"
+                :aria-hidden="!isExtendedSidebar && !isPhone"
               >
-                <span class="line-clamp-2 min-h-0 overflow-hidden text-[10px] leading-tight">
+                <span class="line-clamp-2 min-h-0 overflow-hidden text-[10px] leading-tight phone:truncate phone:text-sm">
                   {{ tab.label }}
                 </span>
               </span>

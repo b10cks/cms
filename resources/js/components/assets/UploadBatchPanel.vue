@@ -44,7 +44,7 @@ const hasRetryable = computed(() => failures.value.some((item) => !item.permanen
   >
     <section
       v-if="visible"
-      class="fixed right-4 bottom-4 z-40 w-96 max-w-[calc(100vw-2rem)] rounded-xl border border-border bg-popover text-popover-foreground shadow-soft-lg"
+      class="fixed right-4 bottom-4 z-40 phone:right-2 phone:bottom-[calc(var(--phone-tabbar)+0.5rem)] w-96 max-w-[calc(100vw-2rem)] rounded-xl border border-border bg-popover text-popover-foreground shadow-soft-lg"
       :aria-label="String($t('labels.assets.batch.title'))"
     >
       <header class="flex items-center justify-between gap-2 border-b border-border px-4 py-3">

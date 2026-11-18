@@ -352,7 +352,7 @@ watch(
                         class="ml-2 flex gap-1 transition-opacity"
                         :class="{
                           'opacity-100': selectedVersionId === version.id,
-                          'opacity-0 group-focus-within:opacity-100 group-hover:opacity-100': selectedVersionId !== version.id,
+                          'opacity-0 touch:opacity-100 group-focus-within:opacity-100 group-hover:opacity-100': selectedVersionId !== version.id,
                         }"
                       >
                         <SimpleTooltip :tooltip="$t('labels.blockVersions.restoreTooltip')" as-child>

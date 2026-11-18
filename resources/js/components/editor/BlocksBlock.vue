@@ -984,7 +984,7 @@ const getItemRingStyle = (content: Record<string, unknown>, index: number) => {
               "
             />
             <div
-              class="absolute left-6 top-1/2 z-10 -translate-y-1/2"
+              class="absolute left-6 top-1/2 z-10 -translate-y-1/2 touch:hidden"
               @click.stop
             >
               <Checkbox
@@ -1035,7 +1035,7 @@ const getItemRingStyle = (content: Record<string, unknown>, index: number) => {
                 />
               </AccordionTrigger>
               <div
-                class="flex items-center opacity-0 group-focus-within:opacity-100 group-hover:opacity-100 has-[[data-state=open]]:opacity-100"
+                class="flex items-center opacity-0 touch:opacity-100 group-focus-within:opacity-100 group-hover:opacity-100 has-[[data-state=open]]:opacity-100"
               >
                 <button
                   v-if="!props.readOnly"
@@ -1050,7 +1050,7 @@ const getItemRingStyle = (content: Record<string, unknown>, index: number) => {
                       ? $t('actions.blocks.tooltips.show')
                       : $t('actions.blocks.tooltips.hide')
                   "
-                  class="row-action"
+                  class="row-action touch:hidden"
                   @click.stop="toggleHidden(i)"
                 >
                   <Icon :name="content.hidden ? 'lucide:eye-off' : 'lucide:eye'" />
@@ -1070,7 +1070,7 @@ const getItemRingStyle = (content: Record<string, unknown>, index: number) => {
                   type="button"
                   :aria-label="$t('actions.blocks.tooltips.copy')"
                   :title="$t('actions.blocks.tooltips.copy')"
-                  class="row-action"
+                  class="row-action touch:hidden"
                   @click.stop="copyItems(i)"
                 >
                   <Icon name="lucide:copy" />
@@ -1080,7 +1080,7 @@ const getItemRingStyle = (content: Record<string, unknown>, index: number) => {
                   type="button"
                   :aria-label="$t('actions.blocks.tooltips.cut')"
                   :title="$t('actions.blocks.tooltips.cut')"
-                  class="row-action"
+                  class="row-action touch:hidden"
                   @click.stop="cutItems(i)"
                 >
                   <Icon name="lucide:scissors" />
@@ -1090,7 +1090,7 @@ const getItemRingStyle = (content: Record<string, unknown>, index: number) => {
                   type="button"
                   :aria-label="$t('actions.blocks.tooltips.delete')"
                   :title="$t('actions.blocks.tooltips.delete')"
-                  class="row-action hover:text-destructive-ink"
+                  class="row-action hover:text-destructive-ink touch:hidden"
                   @click.stop="deleteItem(i)"
                 >
                   <Icon name="lucide:trash-2" />
@@ -1104,6 +1104,11 @@ const getItemRingStyle = (content: Record<string, unknown>, index: number) => {
                   :page-path="pageLinks.path"
                   :can-manage-block="canManageBlocks"
                   :read-only="props.readOnly"
+                  :hidden-item="Boolean(content.hidden)"
+                  @toggle-hidden="toggleHidden(i)"
+                  @copy-item="copyItems(i)"
+                  @cut-item="cutItems(i)"
+                  @delete-item="deleteItem(i)"
                   @switch-type="(slug: string) => switchItemType(i, slug)"
                   @create-template="handleTemplateTrigger(content)"
                 />

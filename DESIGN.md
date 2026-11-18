@@ -81,7 +81,7 @@ Settled 2026-11-05.
 - All trees (content, asset folders, tags, collections, block folders) share the tree tokens. The selected row is the field fill (`bg-tree-selected`) with the strongest ink, hover is a lighter step of the same fill (`bg-tree-hover`), drop targets are the blue wash (`bg-tree-drop ring-1 ring-ring/40`). No blue selection border. Settled 2026-10-22, taking the asset tree as the model.
 - A tree row is one line. The name truncates, counts and actions keep their place.
 - Tree navs (content tree, asset library, blocks) sit on the rail tone `bg-sidebar` (gray-100 in light). Rejected, Mike 2026-11-05: `bg-surface` gray-50, rated 7. The Blocks page switches between Blocks and Block tags with the kit tabs above the page title; the nav shows only folders and is hidden in Block tags. Settled 2026-11-05 (9). Rejected: a boxed segmented switch in the nav (3), the switch as nav rows like the asset nav (8 and 5), and the kit tabs at the top of the nav (7 and 5).
-- From `md` up the content tree opens at 320px and can't go below 200px. Below `md` it opens at 120px and its width isn't saved.
+- From `md` up the content tree opens at 320px and can't go below 200px. On a phone it fills the screen, see Narrow screens.
 
 - The tree row menu runs in groups split by hairlines: View and Edit; Publish, Publish options (with message, with children, schedule, unpublish) and Add to release; Ask AI and Automations, the latter only when one applies; New sub item, Rename, Duplicate; Copy, Cut and Paste (in, after); Delete last.
 
@@ -216,7 +216,16 @@ Settled 2026-11-10. An entry created in a language other than the space default 
 
 ## Narrow screens
 
-- Below `md` the asset folders, tags and collections move into a left sheet opened by "Browse folders". Below `md` the team nav is a horizontal scroller above the page. The content editor has no phone layout yet.
+- Below `md` the asset folders, tags and collections move into a left sheet opened by "Browse folders". Below `md` the team nav is a horizontal scroller above the page.
+- `phone` is below `md`, plus a coarse pointer under 500px high, so a rotated phone keeps the phone layout. `touch` is a device with no hover. Both are Tailwind variants, and `lib/viewport.ts` holds the same queries for the few places that need them in script. Nothing here changes a layout from `md` up.
+- The main rail becomes a bottom tab bar: Home, Content, Assets, Releases and More, each filtered by access. More opens a bottom sheet with every other destination, notifications and the account menu. An open entry or thread is a detail view with its own back button and has no tab bar, and the bar steps aside while the on-screen keyboard is up.
+- Page gutters are 12px, the entry form 8px.
+- The content area shows the tree or the open entry, never both. The tree stays mounted and keeps its position, and leaving an entry with unsaved edits asks first. The header keeps Save and Publish. A bar under it holds back, title, status dot, preview toggle, validation, language code and history. The editor tabs run along the top with their names.
+- The preview is off by default on a phone and replaces the form on request. The saved desktop preference is not touched.
+- Actions that appear on hover are always visible on touch. A block row is the exception to the Blocks block rule: Hide, Copy, Cut and Delete move into the row menu on touch, because six icons leave no room for the title.
+- On touch, fields are 16px so iOS doesn't zoom on focus, `menu-row` and `nav-row` are 40px, `row-action` and `overlay-close` are 36px, and field hints open on tap.
+- On touch a tree row puts its status dot and menu button side by side at the right edge. On a phone the row menu opens under the app header, and any menu taller than the screen scrolls.
+- Canvas and the block schema editor stay reachable and say that layout and structure changes need a larger screen.
 
 ## Glossary editor
 

@@ -8,6 +8,7 @@ import ImportContentTranslationsDialog from '~/components/content/ImportContentT
 import { Button } from '~/components/ui/button'
 import QueryErrorState from '~/components/ui/QueryErrorState.vue'
 import { getActionAccessRequirement } from '~/lib/access-control'
+import { useIsPhone } from '~/lib/viewport'
 
 const route = useRoute()
 const { t } = useI18n()
@@ -22,6 +23,8 @@ const canManageContent = computed(() => access.hasAbility('content.manage'))
 
 const createRootContent = inject<() => void>('createRootContent', () => {})
 
+// This pane is hidden behind the tree on a phone, so its file actions move under the tree.
+const isPhone = useIsPhone()
 const exportDialogOpen = ref(false)
 const importDialogOpen = ref(false)
 
@@ -36,7 +39,7 @@ const rootItems = computed(() => getRootItems(data.value) || [])
 </script>
 
 <template>
-  <div class="flex h-full grow bg-background p-6">
+  <div class="flex h-full grow bg-background p-6 phone:p-3">
     <QueryErrorState
       v-if="isError && !data"
       class="m-auto"
@@ -74,6 +77,11 @@ const rootItems = computed(() => getRootItems(data.value) || [])
           <Icon name="lucide:network" />
           {{ $t('labels.contents.canvas.entry') }}
         </Button>
+        <Teleport
+          defer
+          to="#contentPhoneTreeActions"
+          :disabled="!isPhone"
+        >
         <Button
           v-if="canViewContent"
           variant="outline"
@@ -90,6 +98,7 @@ const rootItems = computed(() => getRootItems(data.value) || [])
           <Icon name="lucide:upload" />
           {{ $t('labels.contents.translationImport.entry') }}
         </Button>
+        </Teleport>
       </div>
     </div>
 

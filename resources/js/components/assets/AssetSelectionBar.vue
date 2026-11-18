@@ -61,7 +61,7 @@ const selectionCount = computed(() => props.assetCount + props.folderCount)
   >
     <div
       v-if="selectionCount > 0"
-      class="fixed bottom-6 left-1/2 z-40 flex -translate-x-1/2 items-center gap-1 rounded-full border border-border bg-popover py-1.5 pr-2 pl-4 text-popover-foreground shadow-soft-lg"
+      class="fixed bottom-6 phone:bottom-[calc(var(--phone-tabbar)+0.5rem)] left-1/2 z-40 flex -translate-x-1/2 items-center gap-1 rounded-full phone:right-2 phone:left-2 phone:translate-x-0 phone:overflow-x-auto phone:rounded-xl phone:[&>*]:shrink-0 border border-border bg-popover py-1.5 pr-2 pl-4 text-popover-foreground shadow-soft-lg"
       role="toolbar"
       :aria-label="String($t('labels.assets.selection.toolbar'))"
     >

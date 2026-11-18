@@ -441,7 +441,7 @@ watchEffect((onCleanup) => {
         <div
           v-if="displayCheckbox"
           class="absolute top-2 left-2 transition-opacity"
-          :class="selected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100 group-focus-within:opacity-100'"
+          :class="selected ? 'opacity-100' : 'opacity-0 touch:opacity-100 group-hover:opacity-100 group-focus-within:opacity-100'"
         >
           <Checkbox
             :model-value="selected"

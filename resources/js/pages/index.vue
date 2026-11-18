@@ -284,8 +284,8 @@ const showGroupHeaders = computed(() => hasSubTeams.value && scope.value !== 'di
     @update:open="handleBlueprintDialogOpenChange"
   />
 
-  <div class="flex w-full grow bg-background pt-14">
-    <aside class="w-56 shrink-0 bg-surface">
+  <div class="flex w-full grow bg-background pt-14 phone:flex-col-reverse phone:justify-end">
+    <aside class="w-56 shrink-0 bg-surface phone:w-full">
       <div class="flex flex-col gap-4 p-3">
         <div
           v-if="isRootUser || hasTeams"
@@ -330,7 +330,7 @@ const showGroupHeaders = computed(() => hasSubTeams.value && scope.value !== 'di
       </div>
     </aside>
 
-    <main class="content-grid mx-auto">
+    <main class="content-grid mx-auto phone:mx-0 phone:w-full">
       <div class="flex flex-col gap-8">
         <ContentHeader :header="$t('labels.spaces.title')">
           <Select v-model="sort">
@@ -355,7 +355,7 @@ const showGroupHeaders = computed(() => hasSubTeams.value && scope.value !== 'di
           v-if="spaces?.length"
           class="flex flex-wrap items-center gap-3"
         >
-          <div class="flex h-9 w-72 items-center gap-2 rounded-md border border-input-border bg-input px-3 shadow-sm focus-within:ring-1 focus-within:ring-ring">
+          <div class="flex h-9 w-72 items-center gap-2 phone:w-full rounded-md border border-input-border bg-input px-3 shadow-sm focus-within:ring-1 focus-within:ring-ring">
             <Icon
               name="lucide:search"
               class="shrink-0 text-muted"

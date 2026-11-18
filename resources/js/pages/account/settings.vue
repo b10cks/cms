@@ -33,9 +33,9 @@ const { preloadRoute, cancelPreload } = useRoutePreload()
 <template>
   <AppHeader />
 
-  <div class="flex w-full grow bg-background pt-14">
-    <aside class="w-64 bg-surface">
-      <nav class="sticky top-20 flex flex-col space-y-1 p-1">
+  <div class="flex w-full grow flex-col bg-background pt-14 md:flex-row">
+    <aside class="min-w-0 bg-surface md:w-64">
+      <nav class="flex gap-1 overflow-x-auto p-1 md:sticky md:top-20 md:flex-col md:gap-0 md:space-y-1 md:overflow-visible">
         <RouterLink
           v-for="item in items"
           :key="item.name"
@@ -54,7 +54,7 @@ const { preloadRoute, cancelPreload } = useRoutePreload()
         </RouterLink>
       </nav>
     </aside>
-    <div class="flex-1">
+    <div class="min-w-0 flex-1">
       <RouterView />
     </div>
   </div>

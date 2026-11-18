@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { phonePreviewOpen, useIsPhone } from '~/lib/viewport'
 import { useQueries, useQueryClient } from '@tanstack/vue-query'
 import { refDebounced, useStorage } from '@vueuse/core'
 import { toRaw } from 'vue'
@@ -576,14 +577,17 @@ const isPreviewDisabled = computed(
     currentSpace.value?.settings?.visual_editor === false ||
     translatableContent.value?.settings?.disablePreview === true
 )
+const isPhone = useIsPhone()
 const showPreview = computed(() => {
   return (
     currentSpace.value?.settings?.visual_editor !== false &&
-    settings.value.content.showPreview &&
+    (isPhone.value ? phonePreviewOpen.value : settings.value.content.showPreview) &&
     translatableContent.value?.settings?.disablePreview !== true
   )
 })
-const showPreviewPane = computed(() => showPreview.value && viewMode.value !== 'localize')
+const showPreviewPane = computed(
+  () => showPreview.value && (isPhone.value || viewMode.value !== 'localize')
+)
 const editorPanel = useTemplateRef<InstanceType<typeof ResizablePanel>>('editorPanel')
 
 const toggleEditorPanel = () => {
@@ -827,7 +831,7 @@ useSeoMeta({
       <ResizablePanel
         v-if="showPreviewPane && translatableContent"
         id="localization-panel-1"
-        class="min-h-0 h-full max-h-[calc(100svh-3.5rem)] overflow-hidden"
+        class="min-h-0 h-full max-h-[calc(100svh-3.5rem)] overflow-hidden phone:flex-[1_1_100%]!"
       >
         <Preview
           ref="previewRef"
@@ -844,11 +848,15 @@ useSeoMeta({
       <ResizableHandle
         v-if="showPreviewPane && translatableContent"
         id="content-handle-1"
+        class="phone:hidden"
       />
       <ResizablePanel
         id="localization-panel-2"
         ref="editorPanel"
-        class="flex min-h-0 h-full max-h-[calc(100svh-3.5rem)] overflow-hidden bg-background"
+        :class="[
+          'flex min-h-0 h-full max-h-[calc(100svh-3.5rem)] overflow-hidden bg-background phone:flex-[1_1_100%]!',
+          showPreviewPane && 'phone:hidden',
+        ]"
       >
         <div
           v-if="isLoading"

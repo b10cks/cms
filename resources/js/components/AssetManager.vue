@@ -80,7 +80,7 @@ watch(selectedCollection, (collectionId) => {
 
 <template>
   <div
-    class="flex h-[calc(100svh-3.5rem)] max-h-[calc(100svh-3.5rem)] w-full flex-col overflow-hidden"
+    class="flex h-[calc(100svh-3.5rem)] max-h-[calc(100svh-3.5rem)] w-full flex-col overflow-hidden phone:h-[calc(100dvh-3.5rem-var(--phone-tabbar))] phone:max-h-none"
   >
     <div class="flex min-h-0 flex-1 overflow-hidden">
       <div

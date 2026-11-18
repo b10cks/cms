@@ -93,9 +93,9 @@ const planIcons: Partial<Record<SpacePlanSummary['status'], string>> = {
           </p>
         </RouterLink>
 
-        <div class="ml-auto grid shrink-0">
+        <div class="ml-auto grid shrink-0 touch:flex touch:items-center touch:gap-2">
           <div
-            class="grid-area-stack flex items-center gap-2 group-focus-within:hidden group-hover:hidden"
+            class="grid-area-stack flex items-center gap-2 group-focus-within:hidden group-hover:hidden touch:flex!"
             :class="[open ? 'hidden' : '']"
           >
             <Badge
@@ -116,7 +116,7 @@ const planIcons: Partial<Record<SpacePlanSummary['status'], string>> = {
             <Button
               variant="outline"
               size="icon"
-              class="grid-area-stack opacity-0 transition-opacity duration-200 group-hover:opacity-100 focus-visible:opacity-100"
+              class="grid-area-stack opacity-0 touch:opacity-100 transition-opacity duration-200 group-hover:opacity-100 focus-visible:opacity-100"
               :class="[open ? 'opacity-100' : '']"
               :aria-label="$t('actions.moreActions')"
             >

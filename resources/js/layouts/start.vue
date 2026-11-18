@@ -7,7 +7,7 @@ useSeoMeta({
 </script>
 
 <template>
-  <div class="flex min-h-svh w-full flex-col">
+  <div class="flex min-h-svh w-full flex-col phone:pb-(--phone-tabbar)">
     <slot />
   </div>
 </template>

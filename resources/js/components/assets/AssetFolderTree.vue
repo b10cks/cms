@@ -358,7 +358,7 @@ const toggleExpanded = (folderId: string) => {
         </h2>
         <Button
           v-if="canManageFolders"
-          class="ml-auto opacity-0 transition-opacity duration-200 group-hover:opacity-100"
+          class="ml-auto opacity-0 touch:opacity-100 transition-opacity duration-200 group-hover:opacity-100"
           size="toolbar"
           :aria-label="$t('actions.assetFolders.create')"
           @click="openCreateFolderDialog(null)"
@@ -428,7 +428,7 @@ const toggleExpanded = (folderId: string) => {
         </span>
         <DropdownMenu v-if="canManageFolders || canRunAiOperation">
           <DropdownMenuTrigger
-            class="opacity-0 transition-all duration-200 group-hover:opacity-100 hover:text-primary data-[state=open]:opacity-100"
+            class="opacity-0 touch:opacity-100 transition-all duration-200 group-hover:opacity-100 hover:text-primary data-[state=open]:opacity-100"
             :aria-label="$t('actions.moreActions')"
           >
             <Icon name="lucide:ellipsis-vertical" />

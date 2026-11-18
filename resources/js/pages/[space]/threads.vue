@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import AiThreadList from '~/components/ai/threads/AiThreadList.vue'
 import AiThreadView from '~/components/ai/threads/AiThreadView.vue'
+import Icon from '~/components/Icon.vue'
 import { aiDock, selectThread, startThread } from '~/lib/aiDock'
 
 const route = useRoute()
@@ -20,6 +21,14 @@ const show = (id: string) => {
 
 const created = (id: string) => {
   void router.replace({ name: 'space-ai-threads', params: { space: spaceId.value, thread: id } })
+}
+
+/** A phone shows the list or one thread. */
+const showsThread = computed(() => aiDock.state.composing || routeThread.value !== null)
+
+const backToList = () => {
+  selectThread(null)
+  void router.push({ name: 'space-ai-threads', params: { space: spaceId.value } })
 }
 
 useSeoMeta({
@@ -42,17 +51,26 @@ useSeoMeta({
   </div>
   <div
     v-else
-    class="flex h-[calc(100svh-3.5rem)] w-full min-w-0"
+    class="flex h-[calc(100svh-3.5rem)] w-full min-w-0 phone:h-[calc(100dvh-3.5rem-var(--phone-tabbar))]"
   >
     <AiThreadList
-      class="w-80 shrink-0 border-r border-border"
+      :class="['w-80 shrink-0 border-r border-border phone:w-full phone:border-r-0', showsThread && 'phone:hidden']"
       :space-id="spaceId"
       :active-id="threadId"
       @select="show"
       @new="startThread()"
     />
-    <div class="min-w-0 flex-1">
+    <div :class="['flex min-w-0 flex-1 flex-col', !showsThread && 'phone:hidden']">
+      <button
+        type="button"
+        class="hidden h-11 shrink-0 cursor-pointer items-center gap-2 border-b border-border bg-sidebar px-3 text-sm font-medium phone:flex"
+        @click="backToList"
+      >
+        <Icon name="lucide:arrow-left" />
+        {{ $t('components.aiThreads.title') }}
+      </button>
       <AiThreadView
+        class="min-h-0 flex-1"
         :key="threadId ?? 'new'"
         :space-id="spaceId"
         :thread-id="threadId"
