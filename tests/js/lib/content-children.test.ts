@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest'
 
 import {
+  findDroppedFieldLabels,
   getEligibleChildContentBlocks,
   getRootCreateContentBlocks,
   resolveAllowedChildContentBlocks,
+  resolveBlockChangeOptions,
   resolveCreateContentBlocks,
   resolvePreferredCreateContentBlock,
 } from '~/lib/content-children'
@@ -33,6 +35,44 @@ const universal = block('id-universal', 'universal', 'universal', ['news'])
 const nestable = block('id-nestable', 'hero', 'nestable')
 const single = block('id-single', 'settings', 'single')
 const blocks = [page, universal, nestable, single]
+
+describe('resolveBlockChangeOptions', () => {
+  const slugs = (options: Partial<Parameters<typeof resolveBlockChangeOptions>[0]>) =>
+    resolveBlockChangeOptions({ blocks, isChild: false, hasChildren: false, ...options }).map(
+      (entry) => entry.slug
+    )
+
+  it('offers single blocks only to a root entry without children', () => {
+    expect(slugs({})).toEqual(['page', 'universal', 'settings'])
+    expect(slugs({ hasChildren: true })).toEqual(['page', 'universal'])
+    expect(slugs({ isChild: true })).toEqual(['page', 'universal'])
+  })
+
+  it('follows the parent restrictions but keeps the current type listed', () => {
+    expect(
+      slugs({
+        isChild: true,
+        currentBlockId: page.id,
+        parentSettings: { restrict_child_blocks: true, child_tag_whitelist: ['news'] },
+      })
+    ).toEqual(['page', 'universal'])
+  })
+})
+
+describe('findDroppedFieldLabels', () => {
+  it('names filled fields the target block does not have', () => {
+    const current = {
+      title: { type: 'text', name: 'Title' },
+      intro: { type: 'text', name: 'Intro' },
+      empty: { type: 'text', name: 'Empty' },
+    } as unknown as BlockResource['schema']
+    const target = { title: { type: 'text', name: 'Title' } } as unknown as BlockResource['schema']
+
+    expect(
+      findDroppedFieldLabels({ title: 'Kept', intro: 'Lost', empty: '' }, current, target)
+    ).toEqual(['Intro'])
+  })
+})
 
 describe('getEligibleChildContentBlocks', () => {
   it('keeps only root and universal blocks', () => {

@@ -15,6 +15,7 @@ use App\Http\Resources\Management\ContentResource;
 use App\Http\Resources\Management\ContentVersionResource;
 use App\Models\Management\Space;
 use App\Models\Space\Content;
+use App\Services\Content\BlockTranslations;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\ResourceCollection;
@@ -49,7 +50,8 @@ class ContentController extends Controller
     {
         $this->authorize('create', [Content::class, $space]);
 
-        $data = $request->validated();
+        // A new entry has no translations that pasted blocks could be written to.
+        $data = $request->safe()->except('block_translations');
         if (($data['translations'] ?? []) !== []) {
             $content = $familyAction->execute($data, $space, $request->user());
         } else {
@@ -87,11 +89,13 @@ class ContentController extends Controller
         Content $content,
         UpdateContent $action,
         UpdateContentFamily $familyAction,
+        BlockTranslations $blockTranslations,
     ): ContentResource|JsonResponse
     {
         $this->authorize('update', [$content, $space]);
 
-        $data = $request->validated();
+        $data = $request->safe()->except('block_translations');
+        $pastedTranslations = $request->validated('block_translations', []);
         try {
             if (($data['translations'] ?? []) !== []) {
                 $content = $familyAction->execute($data, $content, $space, $request->user());
@@ -110,7 +114,14 @@ class ContentController extends Controller
         $content->load(['block', 'parent', 'i18n_parent', 'i18n_children', 'i18n_siblings', 'current_version']);
 //        broadcast(new ContentUpdated($content, $space));
 
-        return new ContentResource($content);
+        if ($pastedTranslations === []) {
+            return new ContentResource($content);
+        }
+
+        // After the entry itself: the translations are matched to the blocks it now holds.
+        return (new ContentResource($content))->additional([
+            'block_translations' => $blockTranslations->apply($space, $content, $pastedTranslations, $request->user()),
+        ]);
     }
 
     /**

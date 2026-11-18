@@ -1065,6 +1065,7 @@
             "overlay": "overlay",
             "independent": "independent"
           },
+          "blockType": "Block type",
           "onDefaultLanguage": "Set on the default language",
           "anyType": "Any type",
           "typesAllowed": "{count} type allowed | {count} types allowed",
@@ -1077,6 +1078,16 @@
           "tags": "{count} tag | {count} tags",
           "notSet": "Not set",
           "language": "Language"
+        },
+        "blockType": {
+          "label": "Block type",
+          "description": "Fields with the same name keep their content.",
+          "saveFirst": "Save your changes before you change the block type.",
+          "confirmTitle": "Change to {block}?",
+          "confirm": "The entry and its translations become {block}.",
+          "confirmDropped": "Content in these fields is left out of the new draft: {fields}. Earlier versions keep it.",
+          "confirmLive": "This entry is live. The site gets the new type right away, with the published content, until you publish again.",
+          "confirmLabel": "Change block type"
         },
         "language": {
           "label": "Language",
@@ -1116,7 +1127,8 @@
       "paste": {
         "otherSpace": "These blocks were copied in another space. Blocks can only be pasted within their space.",
         "blockNotAllowed": "This field does not allow \"{name}\" blocks.",
-        "tooMany": "This field holds at most {max} items."
+        "tooMany": "This field holds at most {max} items.",
+        "translationsNotCopied": "Copied without translations. They could not be read or are too large for the clipboard."
       },
       "translationExport": {
         "entry": "Export translations",
@@ -5986,6 +5998,11 @@
       "createError": "Failed to create content: {error}",
       "updateSuccess": "Content \"{name}\" updated successfully",
       "updateError": "Failed to update content: {error}",
+      "blockTranslations": {
+        "applied": "Translations of the pasted blocks were saved as drafts in {languages}. Publish those translations to put them live.",
+        "missing": "This entry has no translation in {languages}, so the pasted blocks stay untranslated there.",
+        "invalid": "The translations of the pasted blocks do not fit this entry in {languages} and were not saved there."
+      },
       "publishSuccess": "Content \"{name}\" published successfully",
       "publishError": "Failed to publish content: {error}",
       "scheduleSuccess": "Content \"{name}\" scheduled successfully",
@@ -5997,6 +6014,7 @@
       "deleteSuccess": "Content deleted successfully",
       "deleteError": "Failed to delete content: {error}",
       "bulkCreateError": "Failed to create content items: {error}",
+      "blockChangeError": "Failed to change the block type: {error}",
       "moveError": "Failed to move content: {error}",
       "translationExportError": "Failed to export content translations: {error}",
       "translationImportSuccess": "Content translations imported successfully",

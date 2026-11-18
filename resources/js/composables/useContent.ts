@@ -10,6 +10,11 @@ import { toast } from 'vue-sonner'
 import { api } from '~/api'
 import type { ContentsQueryParams } from '~/api/resources/contents'
 import {
+  type BlockTranslationReport,
+  forgetBlockTranslations,
+  pendingBlockTranslations,
+} from '~/lib/blockTranslations'
+import {
   collectSubtreeIds,
   type ContentMenu,
   withMovedItems,
@@ -49,6 +54,31 @@ export function useContent(spaceId: MaybeRef<string>) {
   const { t } = useI18n()
   const queryClient = useQueryClient()
   const spaceAPI = computed(() => api.forSpace(toValue(spaceId)))
+
+  const reportBlockTranslations = ({ applied, skipped }: BlockTranslationReport) => {
+    const languages = (reason: 'missing' | 'invalid') =>
+      skipped
+        .filter((entry) => entry.reason === reason)
+        .map((entry) => entry.language.toUpperCase())
+        .join(', ')
+
+    if (applied.length > 0) {
+      toast.info(
+        t('composables.content.blockTranslations.applied', {
+          languages: applied.map((language) => language.toUpperCase()).join(', '),
+        }) as string
+      )
+    }
+    for (const reason of ['missing', 'invalid'] as const) {
+      if (languages(reason)) {
+        toast.warning(
+          t(`composables.content.blockTranslations.${reason}`, {
+            languages: languages(reason),
+          }) as string
+        )
+      }
+    }
+  }
 
   const hasFullDetail = (content: ContentResource) =>
     content.content !== undefined &&
@@ -208,7 +238,20 @@ export function useContent(spaceId: MaybeRef<string>) {
   const useUpdateContentMutation = () => {
     return useMutation({
       mutationFn: async ({ id, payload }: { id: string; payload: UpdateContentPayload }) => {
-        const response = await spaceAPI.value.contents.update(id, payload)
+        // Blocks pasted with translations: the save delivers what waits for them.
+        const blockTranslations = await pendingBlockTranslations(payload.content)
+        const response: ApiResponse<ContentResource> & {
+          block_translations?: BlockTranslationReport
+        } = await spaceAPI.value.contents.update(
+          id,
+          Object.keys(blockTranslations).length > 0
+            ? { ...payload, block_translations: blockTranslations }
+            : payload
+        )
+
+        forgetBlockTranslations(blockTranslations)
+        if (response.block_translations) reportBlockTranslations(response.block_translations)
+
         return response.data
       },
       // A rename shows in the tree right away and rolls back if the save fails.
@@ -722,12 +765,15 @@ export function useContent(spaceId: MaybeRef<string>) {
           queryClient.invalidateQueries({ queryKey: queryKeys.contents(spaceId).detail(id) })
         )
       },
-      onError: (error: Error, _variables, context) => {
+      onError: (error: Error, { operations }, context) => {
         if (context?.previous) queryClient.setQueryData(menuKey(), context.previous)
         queryClient.invalidateQueries({ queryKey: menuKey() })
 
+        const changesBlockOnly =
+          operations.length > 0 &&
+          operations.every((operation) => operation.type === 'update_block')
         toast.error(
-          t('composables.content.moveError', {
+          t(`composables.content.${changesBlockOnly ? 'blockChangeError' : 'moveError'}`, {
             error: error.message || 'Unknown error',
           }) as string
         )

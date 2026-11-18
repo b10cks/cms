@@ -6,6 +6,7 @@ import { TabsContent, TabsList, TabsRoot, TabsTrigger } from 'reka-ui'
 import { TransitionGroup } from 'vue'
 import { toast } from 'vue-sonner'
 
+import { api } from '~/api'
 import BlockTemplateCreateDialog from '~/components/blocks/BlockTemplateCreateDialog.vue'
 import CommentsSidebar from '~/components/comments/CommentsSidebar.vue'
 import ContentPageHeaderPortals from '~/components/content/ContentPageHeaderPortals.vue'
@@ -35,6 +36,7 @@ import type { ContentTreeItem } from '~/composables/useContentTree'
 import { useGlobalClipboard } from '~/composables/useGlobalClipboard'
 import { queryKeys } from '~/composables/useQueryClient'
 import { hydrateContentWithSchema } from '~/composables/useSchemaDefaults'
+import { carryBlockTranslations, loadBlockTranslations } from '~/lib/blockTranslations'
 import {
   findBlock,
   findBlockPath,
@@ -782,11 +784,25 @@ const applyBlockPlan = async (plan: BlockPlan | null) => {
 const runBlockAction = ({ itemId, action }: BlockActionEvent) => {
   if (!canManageContent.value) return
 
-  applyBlockPlan(
-    planBlockAction(editorContentModel.value, itemId, action, blockListRules, newBlockId, {
-      skipHidden: spaceData.value?.settings.filter_hidden_blocks ?? false,
-    })
-  )
+  const plan = planBlockAction(editorContentModel.value, itemId, action, blockListRules, newBlockId, {
+    skipHidden: spaceData.value?.settings.filter_hidden_blocks ?? false,
+  })
+
+  // A duplicate starts with the translations of its original.
+  const edit = action === 'duplicate' && plan?.kind === 'edit' ? plan.edits[0] : null
+  const original = edit?.previous.find((item) => item.id === itemId)
+  if (edit?.operation.type === 'add' && original) {
+    carryBlockTranslations(
+      loadBlockTranslations(content.value, [original], async (contentId, blockIds) => {
+        const response = await api.forSpace(spaceId.value).contents.blockTranslations(contentId, blockIds)
+        return response.data
+      }),
+      [original],
+      edit.operation.items
+    )
+  }
+
+  applyBlockPlan(plan)
 }
 
 const moveBlock = ({ itemId, targetId, position }: BlockMoveEvent) => {

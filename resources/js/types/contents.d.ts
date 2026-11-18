@@ -312,6 +312,8 @@ export interface UpdateContentPayload {
   parent_version_id?: string | null
   force_conflict?: boolean
   translations?: ContentTranslationMutationPayload[]
+  /** Translations of blocks pasted into the entry, written to its translations. */
+  block_translations?: import('~/lib/blockTranslations').BlockTranslations
 }
 
 export interface ContentVersionConflictResponse {

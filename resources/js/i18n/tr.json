@@ -1065,6 +1065,7 @@
             "overlay": "katmanlı",
             "independent": "bağımsız"
           },
+          "blockType": "Blok türü",
           "onDefaultLanguage": "Varsayılan dilde ayarlanır",
           "anyType": "Her tür",
           "typesAllowed": "{count} türe izin var",
@@ -1077,6 +1078,16 @@
           "tags": "{count} etiket",
           "notSet": "Ayarlanmadı",
           "language": "Dil"
+        },
+        "blockType": {
+          "label": "Blok türü",
+          "description": "Aynı ada sahip alanlar içeriklerini korur.",
+          "saveFirst": "Blok türünü değiştirmeden önce değişikliklerinizi kaydedin.",
+          "confirmTitle": "{block} türüne geçilsin mi?",
+          "confirm": "Girdi ve çevirileri {block} türüne geçer.",
+          "confirmDropped": "Bu alanların içeriği yeni taslağa alınmaz: {fields}. Önceki sürümler bu içeriği korur.",
+          "confirmLive": "Bu girdi yayında. Site, yeniden yayınlayana kadar yeni türü yayınlanmış içerikle hemen alır.",
+          "confirmLabel": "Blok türünü değiştir"
         },
         "language": {
           "label": "Dil",
@@ -1116,7 +1127,8 @@
       "paste": {
         "otherSpace": "Bu bloklar başka bir çalışma alanında kopyalandı. Bloklar yalnızca kendi çalışma alanlarına yapıştırılabilir.",
         "blockNotAllowed": "Bu alan \"{name}\" bloklarına izin vermiyor.",
-        "tooMany": "Bu alan en fazla {max} öğe içerebilir."
+        "tooMany": "Bu alan en fazla {max} öğe içerebilir.",
+        "translationsNotCopied": "Çeviriler olmadan kopyalandı. Okunamadılar veya pano için çok büyükler."
       },
       "translationExport": {
         "entry": "Çevirileri dışa aktar",
@@ -5986,6 +5998,11 @@
       "createError": "İçerik oluşturulamadı: {error}",
       "updateSuccess": "\"{name}\" içeriği başarıyla güncellendi",
       "updateError": "İçerik güncellenemedi: {error}",
+      "blockTranslations": {
+        "applied": "Yapıştırılan blokların çevirileri {languages} için taslak olarak kaydedildi. Yayına almak için bu çevirileri yayınlayın.",
+        "missing": "Bu girdinin {languages} çevirisi yok. Yapıştırılan bloklar orada çevrilmemiş kalır.",
+        "invalid": "Yapıştırılan blokların çevirileri {languages} için bu girdiye uymuyor ve orada kaydedilmedi."
+      },
       "publishSuccess": "\"{name}\" içeriği başarıyla yayınlandı",
       "publishError": "İçerik yayınlanamadı: {error}",
       "scheduleSuccess": "\"{name}\" içeriği başarıyla zamanlandı",
@@ -5997,6 +6014,7 @@
       "deleteSuccess": "İçerik başarıyla silindi",
       "deleteError": "İçerik silinemedi: {error}",
       "bulkCreateError": "İçerik öğeleri oluşturulamadı: {error}",
+      "blockChangeError": "Blok türü değiştirilemedi: {error}",
       "moveError": "İçerik taşınamadı: {error}",
       "translationExportError": "İçerik çevirileri dışa aktarılamadı: {error}",
       "translationImportSuccess": "İçerik çevirileri başarıyla içe aktarıldı",

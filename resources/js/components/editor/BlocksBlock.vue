@@ -10,6 +10,7 @@ import {
 } from 'reka-ui'
 import { toast } from 'vue-sonner'
 
+import { api } from '~/api'
 import AddDropdown from '~/components/editor/AddDropdown.vue'
 import BlockHeader from '~/components/editor/BlockHeader.vue'
 import BlockItemMenu from '~/components/editor/BlockItemMenu.vue'
@@ -35,6 +36,7 @@ import {
   switchBlockItemType,
 } from '~/composables/useSchemaDefaults'
 import { blockItemPlainTitle, resolveItemBlock } from '~/lib/blockItemTitle'
+import { loadBlockTranslations } from '~/lib/blockTranslations'
 import {
   type BlockListViewState,
   type BlockPasteRejection,
@@ -575,6 +577,22 @@ const normalizeClipboardItems = (
   return [pastedItem]
 }
 
+/**
+ * What the entry's translations hold for `items`, to go on the clipboard with
+ * them. A failed lookup must not block the copy: the blocks then go alone.
+ */
+const translationsOf = async (items: Record<string, unknown>[]) => {
+  try {
+    return await loadBlockTranslations(editedContent.value, items, async (contentId, blockIds) => {
+      const response = await api.forSpace(props.spaceId).contents.blockTranslations(contentId, blockIds)
+      return response.data
+    })
+  } catch {
+    toast.warning(String($t('labels.contents.paste.translationsNotCopied')))
+    return undefined
+  }
+}
+
 const copyItems = async (index?: number) => {
   const indexes = getActionIndexes(index)
   if (indexes.length === 0) return
@@ -582,7 +600,13 @@ const copyItems = async (index?: number) => {
   const itemsToCopy = indexes.map((itemIndex) => ({ ...blockItems.value[itemIndex] }))
   const payload = itemsToCopy.length === 1 ? itemsToCopy[0] : itemsToCopy
 
-  await globalCopyItem(payload, props.spaceId, getClipboardLabel(itemsToCopy))
+  const kept = await globalCopyItem(
+    payload,
+    props.spaceId,
+    getClipboardLabel(itemsToCopy),
+    await translationsOf(itemsToCopy)
+  )
+  if (!kept) toast.warning(String($t('labels.contents.paste.translationsNotCopied')))
 }
 
 const cutItems = async (index?: number) => {
@@ -592,7 +616,13 @@ const cutItems = async (index?: number) => {
   const itemsToCut = indexes.map((itemIndex) => ({ ...blockItems.value[itemIndex] }))
   const payload = itemsToCut.length === 1 ? itemsToCut[0] : itemsToCut
 
-  await globalCutItem(payload, props.spaceId, getClipboardLabel(itemsToCut))
+  const kept = await globalCutItem(
+    payload,
+    props.spaceId,
+    getClipboardLabel(itemsToCut),
+    await translationsOf(itemsToCut)
+  )
+  if (!kept) toast.warning(String($t('labels.contents.paste.translationsNotCopied')))
 
   const previousItems = [...blockItems.value]
   const updatedItems = [...previousItems]

@@ -1074,6 +1074,7 @@
             "overlay": "Overlay",
             "independent": "unabhängig"
           },
+          "blockType": "Blocktyp",
           "onDefaultLanguage": "In der Standardsprache festgelegt",
           "anyType": "Jeder Typ",
           "typesAllowed": "{count} Typ erlaubt | {count} Typen erlaubt",
@@ -1086,6 +1087,16 @@
           "tags": "{count} Tag | {count} Tags",
           "notSet": "Nicht gesetzt",
           "language": "Sprache"
+        },
+        "blockType": {
+          "label": "Blocktyp",
+          "description": "Felder mit gleichem Namen behalten ihren Inhalt.",
+          "saveFirst": "Speichere deine Änderungen, bevor du den Blocktyp änderst.",
+          "confirmTitle": "Zu {block} wechseln?",
+          "confirm": "Der Eintrag und seine Übersetzungen werden zu {block}.",
+          "confirmDropped": "Der Inhalt dieser Felder fehlt im neuen Entwurf: {fields}. Frühere Versionen behalten ihn.",
+          "confirmLive": "Dieser Eintrag ist live. Die Website erhält den neuen Typ sofort, mit dem veröffentlichten Inhalt, bis du erneut veröffentlichst.",
+          "confirmLabel": "Blocktyp ändern"
         },
         "language": {
           "label": "Sprache",
@@ -1125,7 +1136,8 @@
       "paste": {
         "otherSpace": "Diese Blöcke wurden in einem anderen Space kopiert. Blöcke lassen sich nur im selben Space einfügen.",
         "blockNotAllowed": "Dieses Feld erlaubt keine Blöcke vom Typ \"{name}\".",
-        "tooMany": "Dieses Feld fasst höchstens {max} Elemente."
+        "tooMany": "Dieses Feld fasst höchstens {max} Elemente.",
+        "translationsNotCopied": "Ohne Übersetzungen kopiert. Sie konnten nicht gelesen werden oder sind zu groß für die Zwischenablage."
       },
       "translationExport": {
         "entry": "Übersetzungen exportieren",
@@ -6002,6 +6014,11 @@
       "createError": "Fehler beim Erstellen des Inhalts: {error}",
       "updateSuccess": "Inhalt \"{name}\" erfolgreich aktualisiert",
       "updateError": "Fehler beim Aktualisieren des Inhalts: {error}",
+      "blockTranslations": {
+        "applied": "Die Übersetzungen der eingefügten Blöcke wurden in {languages} als Entwurf gespeichert. Veröffentliche diese Übersetzungen, damit sie live gehen.",
+        "missing": "Dieser Eintrag hat keine Übersetzung in {languages}. Die eingefügten Blöcke bleiben dort unübersetzt.",
+        "invalid": "Die Übersetzungen der eingefügten Blöcke passen in {languages} nicht zu diesem Eintrag und wurden dort nicht gespeichert."
+      },
       "publishSuccess": "Inhalt \"{name}\" erfolgreich veröffentlicht",
       "publishError": "Fehler beim Veröffentlichen des Inhalts: {error}",
       "scheduleSuccess": "Inhalt \"{name}\" erfolgreich zeitgeplant",
@@ -6013,6 +6030,7 @@
       "deleteSuccess": "Inhalt erfolgreich gelöscht",
       "deleteError": "Fehler beim Löschen des Inhalts: {error}",
       "bulkCreateError": "Fehler beim Erstellen mehrerer Inhalte: {error}",
+      "blockChangeError": "Der Blocktyp konnte nicht geändert werden: {error}",
       "moveError": "Fehler beim Verschieben des Inhalts: {error}",
       "translationExportError": "Fehler beim Exportieren der Inhaltsübersetzungen: {error}",
       "translationImportSuccess": "Inhaltsübersetzungen erfolgreich importiert",

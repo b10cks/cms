@@ -154,6 +154,55 @@ class ContentChildPlacementTest extends TestCase
         $response->assertJsonValidationErrors(['block_id']);
     }
 
+    #[Test]
+    public function tree_update_block_keeps_shared_fields_and_leaves_new_required_fields_empty(): void
+    {
+        $this->actingAs($this->owner);
+        $source = Block::query()->create([
+            'external_id' => (string) Str::uuid(),
+            'name' => 'Source',
+            'slug' => 'source',
+            'type' => 'root',
+            'schema' => [
+                'title' => ['type' => 'text', 'name' => 'Title'],
+                'intro' => ['type' => 'text', 'name' => 'Intro'],
+            ],
+        ]);
+        $target = Block::query()->create([
+            'external_id' => (string) Str::uuid(),
+            'name' => 'Target',
+            'slug' => 'target',
+            'type' => 'root',
+            'schema' => [
+                'title' => ['type' => 'text', 'name' => 'Title'],
+                'headline' => ['type' => 'text', 'name' => 'Headline', 'required' => true],
+            ],
+        ]);
+        $entry = new Content();
+        app(CreateContent::class)->execute([
+            'block_id' => $source->id,
+            'name' => 'Entry',
+            'slug' => 'entry',
+            'language_iso' => 'en',
+            'content' => ['title' => 'Kept', 'intro' => 'Dropped'],
+        ], $entry, $this->space, $this->owner);
+
+        $this->postJson(route('mgmt.contents.tree-operations', [
+            'space' => $this->space->id,
+        ]), [
+            'operations' => [[
+                'type' => 'update_block',
+                'id' => $entry->id,
+                'block_id' => $target->id,
+            ]],
+        ])->assertOk();
+
+        $entry = $entry->fresh();
+        $this->assertSame($target->id, $entry->block_id);
+        $this->assertSame('Kept', $entry->getCurrentContent()['title']);
+        $this->assertArrayNotHasKey('intro', $entry->getCurrentContent());
+    }
+
     private function createRestrictedParent(): Content
     {
         return $this->createContent('parent', $this->pageBlock, null, 'en', [

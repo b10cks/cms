@@ -16,6 +16,7 @@ import {
   watch,
 } from 'vue'
 
+import { type BlockTranslations, carryBlockTranslations } from '~/lib/blockTranslations'
 import { withFreshIds } from '~/lib/blockTreeEdits'
 
 export interface ClipboardSingleItem {
@@ -24,6 +25,8 @@ export interface ClipboardSingleItem {
   timestamp: number
   spaceId: string
   blockType?: string
+  /** What the translations of the source entry store for the copied blocks. */
+  translations?: BlockTranslations
   _isCut?: boolean
 }
 
@@ -33,6 +36,8 @@ export interface ClipboardMultipleItems {
   timestamp: number
   spaceId: string
   blockType?: string
+  /** What the translations of the source entry store for the copied blocks. */
+  translations?: BlockTranslations
   _isCut?: boolean
 }
 
@@ -201,6 +206,17 @@ export const useGlobalClipboard = () => {
     })
   }
 
+  // The storage mirror writes later and swallows a full quota, which would
+  // leave an older item to be pasted.
+  const fitsStorage = (clipboardItem: ClipboardItem): boolean => {
+    try {
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(clipboardItem))
+      return true
+    } catch {
+      return false
+    }
+  }
+
   const writeClipboardItem = async (clipboardItem: ClipboardItem) => {
     const serializedItem = JSON.stringify(clipboardItem)
 
@@ -216,55 +232,55 @@ export const useGlobalClipboard = () => {
     }
   }
 
-  const copyItem = async (
+  /**
+   * Put blocks on the clipboard. Translations are left out when the item
+   * would not fit the storage with them; false then, so the caller can say so.
+   */
+  const writeBlocks = async (
     item: Record<string, unknown> | Record<string, unknown>[],
     spaceId: string,
-    blockType?: string
-  ) => {
-    const clipboardItem: ClipboardItem = Array.isArray(item)
-      ? {
-          type: 'blocks-editor-clipboard-items',
-          data: item.map((entry) => ({ ...entry })),
-          timestamp: Date.now(),
-          spaceId,
-          blockType,
-        }
-      : {
-          type: 'blocks-editor-clipboard-item',
-          data: { ...item },
-          timestamp: Date.now(),
-          spaceId,
-          blockType,
-        }
+    blockType: string | undefined,
+    translations: BlockTranslations | undefined,
+    isCut: boolean
+  ): Promise<boolean> => {
+    const build = (carried: BlockTranslations | undefined): ClipboardItem => {
+      const shared = {
+        timestamp: Date.now(),
+        spaceId,
+        blockType,
+        ...(carried && Object.keys(carried).length > 0 ? { translations: carried } : {}),
+        ...(isCut ? { _isCut: true } : {}),
+      }
 
-    await writeClipboardItem(clipboardItem)
+      return Array.isArray(item)
+        ? {
+            type: 'blocks-editor-clipboard-items',
+            data: item.map((entry) => ({ ...entry })),
+            ...shared,
+          }
+        : { type: 'blocks-editor-clipboard-item', data: { ...item }, ...shared }
+    }
+
+    const full = build(translations)
+    const fits = !full.translations || fitsStorage(full)
+    await writeClipboardItem(fits ? full : build(undefined))
+
+    return fits
   }
 
-  const cutItem = async (
+  const copyItem = (
     item: Record<string, unknown> | Record<string, unknown>[],
     spaceId: string,
-    blockType?: string
-  ) => {
-    const clipboardItem: ClipboardItem = Array.isArray(item)
-      ? {
-          type: 'blocks-editor-clipboard-items',
-          data: item.map((entry) => ({ ...entry })),
-          timestamp: Date.now(),
-          spaceId,
-          blockType,
-          _isCut: true,
-        }
-      : {
-          type: 'blocks-editor-clipboard-item',
-          data: { ...item },
-          timestamp: Date.now(),
-          spaceId,
-          blockType,
-          _isCut: true,
-        }
+    blockType?: string,
+    translations?: BlockTranslations
+  ) => writeBlocks(item, spaceId, blockType, translations, false)
 
-    await writeClipboardItem(clipboardItem)
-  }
+  const cutItem = (
+    item: Record<string, unknown> | Record<string, unknown>[],
+    spaceId: string,
+    blockType?: string,
+    translations?: BlockTranslations
+  ) => writeBlocks(item, spaceId, blockType, translations, true)
 
   /** Whether the system clipboard currently holds one of *our* serialized items. */
   const holdsOwnClipboardItem = (): boolean => {
@@ -310,7 +326,8 @@ export const useGlobalClipboard = () => {
   /**
    * A copy of `item`, by default the current clipboard item, with fresh ids
    * for every block in it. Pass the item a paste was checked against, so the
-   * check and the paste see the same clipboard.
+   * check and the paste see the same clipboard. The translations the item
+   * carries wait for the save of the entry the copy goes into.
    */
   const pasteItem = async (
     item?: ClipboardItem | null
@@ -321,7 +338,12 @@ export const useGlobalClipboard = () => {
       return null
     }
 
-    return withFreshIds(clipboardItem.data, ulid)
+    const copy = withFreshIds(clipboardItem.data, ulid)
+    if (clipboardItem.translations) {
+      carryBlockTranslations(clipboardItem.translations, clipboardItem.data, copy)
+    }
+
+    return copy
   }
 
   const clearClipboard = async () => {
