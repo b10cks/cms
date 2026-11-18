@@ -1116,7 +1116,8 @@
       "paste": {
         "otherSpace": "Ces blocs ont été copiés dans un autre espace. Les blocs ne peuvent être collés que dans leur espace.",
         "blockNotAllowed": "Ce champ n'autorise pas les blocs \"{name}\".",
-        "tooMany": "Ce champ contient au plus {max} éléments."
+        "tooMany": "Ce champ contient au plus {max} éléments.",
+        "translationsNotCopied": "Copié sans traductions. Elles n'ont pas pu être lues ou sont trop volumineuses pour le presse-papiers."
       },
       "translationExport": {
         "entry": "Exporter les traductions",
@@ -5986,6 +5987,11 @@
       "createError": "Échec de la création du contenu : {error}",
       "updateSuccess": "Contenu « {name} » mis à jour avec succès",
       "updateError": "Échec de la mise à jour du contenu : {error}",
+      "blockTranslations": {
+        "applied": "Les traductions des blocs collés ont été enregistrées comme brouillons en {languages}. Publiez ces traductions pour les mettre en ligne.",
+        "missing": "Cette entrée n'a pas de traduction en {languages}. Les blocs collés y restent non traduits.",
+        "invalid": "Les traductions des blocs collés ne conviennent pas à cette entrée en {languages} et n'y ont pas été enregistrées."
+      },
       "publishSuccess": "Contenu « {name} » publié avec succès",
       "publishError": "Échec de la publication du contenu : {error}",
       "scheduleSuccess": "Contenu « {name} » planifié avec succès",

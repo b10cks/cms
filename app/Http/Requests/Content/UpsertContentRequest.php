@@ -85,6 +85,7 @@ class UpsertContentRequest extends FormRequest
             'parent_version_id' => 'sometimes|nullable|string',
             'force_conflict' => 'sometimes|boolean',
             ...$this->translationRules(),
+            ...$this->blockTranslationRules(),
         ];
     }
 
@@ -149,6 +150,27 @@ class UpsertContentRequest extends FormRequest
             'translations.*.language_iso' => 'sometimes|required|string|min:2|max:5',
             'translations.*.content' => 'nullable|array',
             'translations.*.force' => 'sometimes|boolean',
+        ];
+    }
+
+    /**
+     * Translations of blocks pasted into the entry, by block ID and language.
+     * `item` is the override a translation stores for the block.
+     *
+     * @return array<string, ValidationRule|array<mixed>|string>
+     */
+    protected function blockTranslationRules(): array
+    {
+        return [
+            'block_translations' => 'sometimes|array',
+            'block_translations.*' => 'array',
+            'block_translations.*.*' => 'array',
+            'block_translations.*.*.item' => 'required|array',
+            'block_translations.*.*.lineage' => 'sometimes|array',
+            'block_translations.*.*.lineage.*.unit' => 'required|string|max:400',
+            'block_translations.*.*.lineage.*.source_hash' => 'required|string|size:64',
+            'block_translations.*.*.lineage.*.source_text' => 'present|nullable|string',
+            'block_translations.*.*.lineage.*.origin' => 'required|string|max:20',
         ];
     }
 }

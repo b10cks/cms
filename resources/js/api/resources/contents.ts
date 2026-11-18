@@ -1,3 +1,4 @@
+import type { BlockTranslations } from '~/lib/blockTranslations'
 import { requestExportBlob, requestImportStream } from '~/lib/import-export'
 import type {
   ContentBulkPublishRun,
@@ -175,6 +176,20 @@ export class Contents extends BaseResource<
     return this.client.post<ApiResponse<ContentTranslationStatus>>(
       `${this.basePath}/${contentId}/translation-review`,
       payload
+    )
+  }
+
+  /**
+   * What each translation of an overlay entry stores for nested blocks, to
+   * take along when they are copied.
+   */
+  public async blockTranslations(
+    contentId: string,
+    blockIds: string[]
+  ): Promise<ApiResponse<BlockTranslations>> {
+    return this.client.get<ApiResponse<BlockTranslations>>(
+      `${this.basePath}/${contentId}/block-translations`,
+      { ids: blockIds }
     )
   }
 

@@ -1116,7 +1116,8 @@
       "paste": {
         "otherSpace": "These blocks were copied in another space. Blocks can only be pasted within their space.",
         "blockNotAllowed": "This field does not allow \"{name}\" blocks.",
-        "tooMany": "This field holds at most {max} items."
+        "tooMany": "This field holds at most {max} items.",
+        "translationsNotCopied": "Copied without translations. They could not be read or are too large for the clipboard."
       },
       "translationExport": {
         "entry": "Export translations",
@@ -5986,6 +5987,11 @@
       "createError": "Failed to create content: {error}",
       "updateSuccess": "Content \"{name}\" updated successfully",
       "updateError": "Failed to update content: {error}",
+      "blockTranslations": {
+        "applied": "Translations of the pasted blocks were saved as drafts in {languages}. Publish those translations to put them live.",
+        "missing": "This entry has no translation in {languages}, so the pasted blocks stay untranslated there.",
+        "invalid": "The translations of the pasted blocks do not fit this entry in {languages} and were not saved there."
+      },
       "publishSuccess": "Content \"{name}\" published successfully",
       "publishError": "Failed to publish content: {error}",
       "scheduleSuccess": "Content \"{name}\" scheduled successfully",

@@ -1116,7 +1116,8 @@
       "paste": {
         "otherSpace": "Bu bloklar başka bir çalışma alanında kopyalandı. Bloklar yalnızca kendi çalışma alanlarına yapıştırılabilir.",
         "blockNotAllowed": "Bu alan \"{name}\" bloklarına izin vermiyor.",
-        "tooMany": "Bu alan en fazla {max} öğe içerebilir."
+        "tooMany": "Bu alan en fazla {max} öğe içerebilir.",
+        "translationsNotCopied": "Çeviriler olmadan kopyalandı. Okunamadılar veya pano için çok büyükler."
       },
       "translationExport": {
         "entry": "Çevirileri dışa aktar",
@@ -5986,6 +5987,11 @@
       "createError": "İçerik oluşturulamadı: {error}",
       "updateSuccess": "\"{name}\" içeriği başarıyla güncellendi",
       "updateError": "İçerik güncellenemedi: {error}",
+      "blockTranslations": {
+        "applied": "Yapıştırılan blokların çevirileri {languages} için taslak olarak kaydedildi. Yayına almak için bu çevirileri yayınlayın.",
+        "missing": "Bu girdinin {languages} çevirisi yok. Yapıştırılan bloklar orada çevrilmemiş kalır.",
+        "invalid": "Yapıştırılan blokların çevirileri {languages} için bu girdiye uymuyor ve orada kaydedilmedi."
+      },
       "publishSuccess": "\"{name}\" içeriği başarıyla yayınlandı",
       "publishError": "İçerik yayınlanamadı: {error}",
       "scheduleSuccess": "\"{name}\" içeriği başarıyla zamanlandı",

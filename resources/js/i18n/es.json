@@ -1116,7 +1116,8 @@
       "paste": {
         "otherSpace": "Estos bloques se copiaron en otro espacio. Los bloques solo se pueden pegar dentro de su espacio.",
         "blockNotAllowed": "Este campo no permite bloques \"{name}\".",
-        "tooMany": "Este campo admite como máximo {max} elementos."
+        "tooMany": "Este campo admite como máximo {max} elementos.",
+        "translationsNotCopied": "Copiado sin traducciones. No se pudieron leer o son demasiado grandes para el portapapeles."
       },
       "translationExport": {
         "entry": "Exportar traducciones",
@@ -5986,6 +5987,11 @@
       "createError": "Error al crear el contenido: {error}",
       "updateSuccess": "Contenido \"{name}\" actualizado correctamente",
       "updateError": "Error al actualizar el contenido: {error}",
+      "blockTranslations": {
+        "applied": "Las traducciones de los bloques pegados se guardaron como borradores en {languages}. Publica esas traducciones para ponerlas en línea.",
+        "missing": "Esta entrada no tiene traducción en {languages}. Los bloques pegados quedan sin traducir allí.",
+        "invalid": "Las traducciones de los bloques pegados no encajan con esta entrada en {languages} y no se guardaron allí."
+      },
       "publishSuccess": "Contenido \"{name}\" publicado correctamente",
       "publishError": "Error al publicar el contenido: {error}",
       "scheduleSuccess": "Contenido \"{name}\" programado correctamente",

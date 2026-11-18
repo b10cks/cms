@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Mgmt\Content;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Content\ContentBlockTranslationsRequest;
 use App\Http\Requests\Content\ContentTranslationAssistRequest;
 use App\Http\Requests\Content\ContentTranslationReviewRequest;
 use App\Http\Requests\Content\ContentTranslationStatusRequest;
@@ -14,6 +15,7 @@ use App\Services\Ai\Translation\TranslationAssist;
 use App\Services\Ai\Translation\TranslationDestinations;
 use App\Services\Ai\Translation\TranslationLineage;
 use App\Services\Ai\Translation\TranslationStatus;
+use App\Services\Content\BlockTranslations;
 use Illuminate\Http\JsonResponse;
 
 /**
@@ -92,5 +94,21 @@ class ContentTranslationController extends Controller
         abort_if($data === null, 404, 'This entry has no such unit.');
 
         return response()->json(['data' => $data]);
+    }
+
+    /**
+     * What each translation of an overlay entry stores for the given nested blocks, with the source text each value was written against. The editor takes this along when blocks are copied, and sends it back as `block_translations` when it saves the entry they were pasted into. Empty for a translation, an independent entry, and blocks the saved entry does not hold.
+     *
+     * @apiQuery ids string[] required IDs of nested blocks of the entry.
+     *
+     * @apiResponse 200 data:object Block ID => language => `{ item, lineage }`.
+     */
+    public function blocks(ContentBlockTranslationsRequest $request, Space $space, Content $content, BlockTranslations $blockTranslations): JsonResponse
+    {
+        $this->authorize('view', [$content, $space]);
+
+        $content->loadMissing(['block', 'current_version']);
+
+        return response()->json(['data' => (object) $blockTranslations->collect($space, $content, $request->validated('ids'))]);
     }
 }

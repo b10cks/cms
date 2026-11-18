@@ -440,6 +440,8 @@ Route::group(['prefix' => 'spaces/{space}', 'middleware' => 'space.member'], fun
         ->name('contents.translation-review');
     Route::post('contents/{content}/translation-assist', [ContentTranslationController::class, 'assist'])
         ->name('contents.translation-assist');
+    Route::get('contents/{content}/block-translations', [ContentTranslationController::class, 'blocks'])
+        ->name('contents.block-translations');
 
     Route::apiResource('tokens', SpaceTokenController::class)->only(['index', 'store', 'destroy']);
     Route::get('audit-logs', [AuditLogController::class, 'index'])->name('space-audit-logs');
