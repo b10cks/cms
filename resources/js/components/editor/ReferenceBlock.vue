@@ -199,7 +199,7 @@ const entryRoute = (id: string) => ({
             v-if="!readOnly"
             :data-reference-handle="sortId"
             :label="$t('actions.dragToReorder')"
-            class="-mr-1.5 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100"
+            class="-mr-1.5 opacity-0 touch:opacity-100 group-hover:opacity-100 group-focus-within:opacity-100"
             @move="(delta) => move(index, delta)"
           />
           <ReferenceRow
@@ -207,7 +207,7 @@ const entryRoute = (id: string) => ({
             :path="paths.get(reference)"
           />
           <div
-            class="absolute top-1/2 right-1.5 flex -translate-y-1/2 rounded-md bg-card opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 has-[[data-state=open]]:opacity-100"
+            class="absolute top-1/2 right-1.5 flex -translate-y-1/2 rounded-md bg-card opacity-0 touch:static touch:translate-y-0 touch:opacity-100 group-hover:opacity-100 group-focus-within:opacity-100 has-[[data-state=open]]:opacity-100"
           >
             <LinkEntryPicker
               v-if="!readOnly"

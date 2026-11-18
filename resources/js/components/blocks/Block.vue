@@ -506,7 +506,7 @@ const updateConditionOperator = (index: number, value: unknown) => {
         </div>
       </AccordionTrigger>
       <div
-        class="ml-auto flex items-center gap-3 opacity-0 transition-opacity duration-200 ease-in-out group-hover:opacity-100"
+        class="ml-auto flex items-center gap-3 opacity-0 touch:opacity-100 transition-opacity duration-200 ease-in-out group-hover:opacity-100"
       >
         <DropdownMenu>
           <DropdownMenuTrigger

@@ -97,7 +97,7 @@ async function handleDelete(collection: AssetCollectionResource) {
         </h2>
         <Button
           v-if="canManageCollections"
-          class="ml-auto opacity-0 transition-opacity duration-200 group-hover:opacity-100"
+          class="ml-auto opacity-0 touch:opacity-100 transition-opacity duration-200 group-hover:opacity-100"
           size="toolbar"
           :aria-label="$t('labels.assetCollections.createCollection')"
           @click="openCreateDialog"

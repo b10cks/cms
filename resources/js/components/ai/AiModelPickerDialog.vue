@@ -321,7 +321,7 @@ const paneClass = (key: string) => [
                 <button
                   type="button"
                   class="absolute top-1/2 right-2 flex size-7 -translate-y-1/2 cursor-pointer items-center justify-center rounded-md transition-colors hover:bg-secondary"
-                  :class="row.entry.model.is_favourite ? 'text-ai-tint-foreground' : 'text-muted opacity-0 group-hover/row:opacity-100 focus-visible:opacity-100'"
+                  :class="row.entry.model.is_favourite ? 'text-ai-tint-foreground' : 'text-muted opacity-0 touch:opacity-100 group-hover/row:opacity-100 focus-visible:opacity-100'"
                   :aria-pressed="row.entry.model.is_favourite"
                   :aria-label="t('components.aiModelSelector.toggleFavourite', { name: row.entry.label })"
                   @click="toggleFavourite(row.entry.model.full_id)"

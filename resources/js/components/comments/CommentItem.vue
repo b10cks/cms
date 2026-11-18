@@ -150,7 +150,7 @@ const toggleResolved = () => {
         </span>
         <div
           v-if="!isEditing"
-          class="ml-auto flex shrink-0 items-center opacity-0 transition-opacity group-focus-within/comment:opacity-100 group-hover/comment:opacity-100 has-[[data-state=open]]:opacity-100"
+          class="ml-auto flex shrink-0 items-center opacity-0 touch:opacity-100 transition-opacity group-focus-within/comment:opacity-100 group-hover/comment:opacity-100 has-[[data-state=open]]:opacity-100"
         >
           <EmojiPicker @select="(emoji: string) => actions.addReaction(comment.id, emoji)" />
           <Button

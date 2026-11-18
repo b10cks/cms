@@ -174,7 +174,7 @@ watchEffect((onCleanup) => {
           :class="
             selected
               ? 'opacity-100'
-              : 'opacity-0 group-hover:opacity-100 group-focus-within:opacity-100'
+              : 'opacity-0 touch:opacity-100 group-hover:opacity-100 group-focus-within:opacity-100'
           "
           @click.stop="handleCheckboxSelect"
           @dblclick.stop

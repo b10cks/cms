@@ -123,7 +123,7 @@ watchEffect((onCleanup) => {
       </span>
       <DropdownMenu v-if="canManageCollections || canShareCollections">
         <DropdownMenuTrigger
-          class="opacity-0 transition-all duration-200 group-hover:opacity-100 hover:text-primary data-[state=open]:opacity-100"
+          class="opacity-0 touch:opacity-100 transition-all duration-200 group-hover:opacity-100 hover:text-primary data-[state=open]:opacity-100"
           :aria-label="$t('actions.moreActions')"
           @click.stop
         >

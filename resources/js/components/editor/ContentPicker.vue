@@ -197,7 +197,7 @@
                       </div>
                       <Icon
                         name="lucide:link"
-                        class="shrink-0 text-muted opacity-0 transition-opacity group-hover/anchor:opacity-100 group-focus-visible/anchor:opacity-100"
+                        class="shrink-0 text-muted opacity-0 touch:opacity-100 transition-opacity group-hover/anchor:opacity-100 group-focus-visible/anchor:opacity-100"
                       />
                     </button>
                   </div>
