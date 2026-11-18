@@ -1065,6 +1065,7 @@
             "overlay": "superpuesto",
             "independent": "independiente"
           },
+          "blockType": "Tipo de bloque",
           "onDefaultLanguage": "Se define en el idioma predeterminado",
           "anyType": "Cualquier tipo",
           "typesAllowed": "{count} tipo permitido | {count} tipos permitidos",
@@ -1077,6 +1078,16 @@
           "tags": "{count} etiqueta | {count} etiquetas",
           "notSet": "Sin definir",
           "language": "Idioma"
+        },
+        "blockType": {
+          "label": "Tipo de bloque",
+          "description": "Los campos con el mismo nombre conservan su contenido.",
+          "saveFirst": "Guarda tus cambios antes de cambiar el tipo de bloque.",
+          "confirmTitle": "¿Cambiar a {block}?",
+          "confirm": "La entrada y sus traducciones pasan a ser {block}.",
+          "confirmDropped": "El contenido de estos campos no se incluye en el nuevo borrador: {fields}. Las versiones anteriores lo conservan.",
+          "confirmLive": "Esta entrada está publicada. El sitio recibe el nuevo tipo de inmediato, con el contenido publicado, hasta que vuelvas a publicar.",
+          "confirmLabel": "Cambiar tipo de bloque"
         },
         "language": {
           "label": "Idioma",
@@ -6003,6 +6014,7 @@
       "deleteSuccess": "Contenido eliminado correctamente",
       "deleteError": "Error al eliminar el contenido: {error}",
       "bulkCreateError": "Error al crear los elementos de contenido: {error}",
+      "blockChangeError": "No se pudo cambiar el tipo de bloque: {error}",
       "moveError": "Error al mover el contenido: {error}",
       "translationExportError": "Error al exportar las traducciones de contenido: {error}",
       "translationImportSuccess": "Traducciones de contenido importadas correctamente",

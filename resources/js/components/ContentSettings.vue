@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useQueryClient } from '@tanstack/vue-query'
 import { computed, inject } from 'vue'
 
 import { CheckboxField, FormField, InputField, SelectField } from '~/components/ui/form'
@@ -11,7 +12,12 @@ import {
   TagsInputItemDelete,
   TagsInputItemText,
 } from '~/components/ui/tags-input'
-import { resolveAllowedChildContentBlocks } from '~/lib/content-children'
+import type { ContentCommitAction } from '~/composables/useContentLiveCollaboration'
+import {
+  findDroppedFieldLabels,
+  resolveAllowedChildContentBlocks,
+  resolveBlockChangeOptions,
+} from '~/lib/content-children'
 import { languageName } from '~/lib/languageNames'
 import type { ContentResource } from '~/types/contents'
 
@@ -82,7 +88,12 @@ const languageLockReason = computed(() => {
   return null
 })
 
-const { useUpdateContentMutation } = useContent(spaceId || '')
+const {
+  contentQueryOptions,
+  useContentQuery,
+  useTreeOperationsMutation,
+  useUpdateContentMutation,
+} = useContent(spaceId || '')
 const { mutateAsync: updateContent, isPending: isSwitchingLanguage } = useUpdateContentMutation()
 const { alert } = useAlertDialog()
 
@@ -252,7 +263,69 @@ watch(
   { immediate: true }
 )
 
-const openRows = ref<Partial<Record<'language' | 'preview' | 'translations' | 'children' | 'cache' | 'externalId', boolean>>>({})
+const openRows = ref<Partial<Record<'blockType' | 'language' | 'preview' | 'translations' | 'children' | 'cache' | 'externalId', boolean>>>({})
+
+const queryClient = useQueryClient()
+const commitPersistedContent = inject<
+  ((nextContent: ContentResource, action?: ContentCommitAction) => void) | undefined
+>('commitPersistedContent', undefined)
+const { useContentMenuQuery } = useContentMenu(spaceId || '')
+const { data: contentMenu } = useContentMenuQuery(computed(() => !!openRows.value.blockType))
+const { data: parentContent } = useContentQuery(
+  computed(() => (openRows.value.blockType ? content.value?.parent_id : null))
+)
+const { mutateAsync: runTreeOperations, isPending: isChangingBlock } = useTreeOperationsMutation()
+
+const blockTypeOptions = computed(() => {
+  const menu = Object.values(contentMenu.value || {})
+
+  return resolveBlockChangeOptions({
+    blocks: blocks.value?.data,
+    currentBlockId: content.value?.block?.id,
+    parentSettings: parentContent.value?.settings,
+    isChild: !!content.value?.parent_id,
+    hasChildren: !!content.value && !!contentMenu.value?.[content.value.id]?.children,
+    takenSingleBlockIds: new Set(
+      menu.filter((item) => item.type === 'single').map((item) => item.block_id)
+    ),
+  })
+    .map(({ id, name }) => ({ value: id, label: name }))
+    .sort((a, b) => a.label.localeCompare(b.label))
+})
+
+const changeBlockType = async (blockId: string) => {
+  const entry = content.value
+  const target = blocks.value?.data.find((block) => block.id === blockId)
+  if (!entry || !target || blockId === entry.block?.id) return
+
+  const droppedFields = findDroppedFieldLabels(entry.content, entry.block_schema, target.schema)
+  const message = [
+    t('labels.contents.settings.blockType.confirm', { block: target.name }),
+    droppedFields.length > 0
+      ? t('labels.contents.settings.blockType.confirmDropped', { fields: droppedFields.join(', ') })
+      : null,
+    entry.published_at ? t('labels.contents.settings.blockType.confirmLive') : null,
+  ]
+    .filter(Boolean)
+    .join(' ')
+
+  const confirmed = await alert.confirm(message, {
+    title: t('labels.contents.settings.blockType.confirmTitle', { block: target.name }),
+    confirmLabel: t('labels.contents.settings.blockType.confirmLabel'),
+  })
+  if (!confirmed) return
+
+  try {
+    await runTreeOperations({
+      operations: [{ type: 'update_block', id: entry.id, block_id: blockId }],
+    })
+  } catch {
+    // The mutation already told the user.
+    return
+  }
+
+  commitPersistedContent?.(await queryClient.fetchQuery(contentQueryOptions(entry.id)))
+}
 
 const optionLabel = (options: { value: string; label: string }[], value?: string | null) =>
   options.find((option) => option.value === value)?.label
@@ -336,6 +409,38 @@ const cacheSummary = computed(() => {
     />
 
     <div class="overflow-hidden rounded-lg border border-border bg-card shadow-soft-sm">
+      <ConfigRow
+        v-model:open="openRows.blockType"
+        data-config-row="blockType"
+        icon="lucide:blocks"
+        :label="$t('labels.contents.settings.rows.blockType')"
+        :summary="content.block?.name ?? $t('labels.contents.settings.rows.notSet')"
+      >
+        <SelectField
+          v-if="isCanonical"
+          :model-value="content.block?.id"
+          name="blockType"
+          :label="$t('labels.contents.settings.blockType.label')"
+          hide-label
+          :description="
+            $t(
+              isDirty
+                ? 'labels.contents.settings.blockType.saveFirst'
+                : 'labels.contents.settings.blockType.description'
+            )
+          "
+          :disabled="!canManageContent || isDirty || isChangingBlock"
+          :options="blockTypeOptions"
+          @update:model-value="changeBlockType(String($event))"
+        />
+        <p
+          v-else
+          class="text-sm text-muted"
+        >
+          {{ $t('labels.contents.settings.rows.onDefaultLanguage') }}
+        </p>
+      </ConfigRow>
+
       <ConfigRow
         v-if="showLanguageRow"
         v-model:open="openRows.language"

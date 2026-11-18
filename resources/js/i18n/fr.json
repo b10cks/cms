@@ -1065,6 +1065,7 @@
             "overlay": "superposé",
             "independent": "indépendant"
           },
+          "blockType": "Type de bloc",
           "onDefaultLanguage": "Défini dans la langue par défaut",
           "anyType": "Tout type",
           "typesAllowed": "{count} type autorisé | {count} types autorisés",
@@ -1077,6 +1078,16 @@
           "tags": "{count} tag | {count} tags",
           "notSet": "Non défini",
           "language": "Langue"
+        },
+        "blockType": {
+          "label": "Type de bloc",
+          "description": "Les champs portant le même nom conservent leur contenu.",
+          "saveFirst": "Enregistrez vos modifications avant de changer le type de bloc.",
+          "confirmTitle": "Passer à {block} ?",
+          "confirm": "L'entrée et ses traductions deviennent {block}.",
+          "confirmDropped": "Le contenu de ces champs ne figure pas dans le nouveau brouillon : {fields}. Les versions précédentes le conservent.",
+          "confirmLive": "Cette entrée est en ligne. Le site reçoit le nouveau type immédiatement, avec le contenu publié, jusqu'à la prochaine publication.",
+          "confirmLabel": "Changer le type de bloc"
         },
         "language": {
           "label": "Langue",
@@ -6003,6 +6014,7 @@
       "deleteSuccess": "Contenu supprimé avec succès",
       "deleteError": "Échec de la suppression du contenu : {error}",
       "bulkCreateError": "Échec de la création des éléments de contenu : {error}",
+      "blockChangeError": "Impossible de changer le type de bloc : {error}",
       "moveError": "Échec du déplacement du contenu : {error}",
       "translationExportError": "Échec de l'exportation des traductions du contenu : {error}",
       "translationImportSuccess": "Traductions du contenu importées avec succès",

@@ -765,12 +765,13 @@ export function useContent(spaceId: MaybeRef<string>) {
           queryClient.invalidateQueries({ queryKey: queryKeys.contents(spaceId).detail(id) })
         )
       },
-      onError: (error: Error, _variables, context) => {
+      onError: (error: Error, { operations }, context) => {
         if (context?.previous) queryClient.setQueryData(menuKey(), context.previous)
         queryClient.invalidateQueries({ queryKey: menuKey() })
 
+        const changesBlockOnly = operations.every((operation) => operation.type === 'update_block')
         toast.error(
-          t('composables.content.moveError', {
+          t(`composables.content.${changesBlockOnly ? 'blockChangeError' : 'moveError'}`, {
             error: error.message || 'Unknown error',
           }) as string
         )

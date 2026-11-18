@@ -66,6 +66,44 @@ export function resolveCreateContentBlocks(options: {
   return getRootCreateContentBlocks(options.blocks, options.takenSingleBlockIds)
 }
 
+/** The block types an existing entry can switch to. Its current type always stays listed. */
+export function resolveBlockChangeOptions(options: {
+  blocks: BlockResource[] | null | undefined
+  currentBlockId?: string
+  parentSettings?: Partial<ContentSettings> | null
+  isChild: boolean
+  hasChildren: boolean
+  takenSingleBlockIds?: ReadonlySet<string>
+}) {
+  const allowed = new Set(
+    resolveCreateContentBlocks(options)
+      .filter((block) => !(block.type === 'single' && options.hasChildren))
+      .map((block) => block.id)
+  )
+
+  return (options.blocks || []).filter(
+    (block) => block.id === options.currentBlockId || allowed.has(block.id)
+  )
+}
+
+const hasFieldValue = (value: unknown) => {
+  if (value === null || value === undefined || value === '') return false
+  if (Array.isArray(value)) return value.length > 0
+  return typeof value !== 'object' || Object.keys(value).length > 0
+}
+
+/** Labels of the filled fields that a switch to `targetSchema` leaves behind. */
+export function findDroppedFieldLabels(
+  values: Record<string, unknown> | null | undefined,
+  currentSchema: BlockResource['schema'] | null | undefined,
+  targetSchema: BlockResource['schema'] | null | undefined
+) {
+  return Object.entries(values || {}).flatMap(([key, value]) => {
+    const field = currentSchema?.[key]
+    return field && !targetSchema?.[key] && hasFieldValue(value) ? [field.name || key] : []
+  })
+}
+
 export function resolvePreferredCreateContentBlock(options: {
   availableBlocks: BlockResource[]
   parentSettings?: Partial<ContentSettings> | null

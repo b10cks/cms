@@ -1074,6 +1074,7 @@
             "overlay": "Overlay",
             "independent": "unabhängig"
           },
+          "blockType": "Blocktyp",
           "onDefaultLanguage": "In der Standardsprache festgelegt",
           "anyType": "Jeder Typ",
           "typesAllowed": "{count} Typ erlaubt | {count} Typen erlaubt",
@@ -1086,6 +1087,16 @@
           "tags": "{count} Tag | {count} Tags",
           "notSet": "Nicht gesetzt",
           "language": "Sprache"
+        },
+        "blockType": {
+          "label": "Blocktyp",
+          "description": "Felder mit gleichem Namen behalten ihren Inhalt.",
+          "saveFirst": "Speichere deine Änderungen, bevor du den Blocktyp änderst.",
+          "confirmTitle": "Zu {block} wechseln?",
+          "confirm": "Der Eintrag und seine Übersetzungen werden zu {block}.",
+          "confirmDropped": "Der Inhalt dieser Felder fehlt im neuen Entwurf: {fields}. Frühere Versionen behalten ihn.",
+          "confirmLive": "Dieser Eintrag ist live. Die Website erhält den neuen Typ sofort, mit dem veröffentlichten Inhalt, bis du erneut veröffentlichst.",
+          "confirmLabel": "Blocktyp ändern"
         },
         "language": {
           "label": "Sprache",
@@ -6019,6 +6030,7 @@
       "deleteSuccess": "Inhalt erfolgreich gelöscht",
       "deleteError": "Fehler beim Löschen des Inhalts: {error}",
       "bulkCreateError": "Fehler beim Erstellen mehrerer Inhalte: {error}",
+      "blockChangeError": "Der Blocktyp konnte nicht geändert werden: {error}",
       "moveError": "Fehler beim Verschieben des Inhalts: {error}",
       "translationExportError": "Fehler beim Exportieren der Inhaltsübersetzungen: {error}",
       "translationImportSuccess": "Inhaltsübersetzungen erfolgreich importiert",
