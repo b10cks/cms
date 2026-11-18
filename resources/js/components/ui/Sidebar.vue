@@ -27,6 +27,13 @@ import { spaceNavigationItems } from '~/lib/access-control'
 import { runtimeConfig } from '~/lib/runtime-config'
 import { getLocale, locales } from '~/plugins/i18n'
 
+const props = defineProps<{
+  /** Full-width rows with visible names, for the phone navigation sheet. */
+  labelled?: boolean
+  /** Destinations another surface already offers, such as the phone tab bar. */
+  excludeRoutes?: string[]
+}>()
+
 const router = useRouter()
 const route = useRoute()
 const { t } = useI18n()
@@ -38,7 +45,7 @@ const { user, logout } = useAuth()
 const { settings, extendedSidebar } = useUserSettings()
 const { useProviderNotesQuery } = useProvider()
 
-const isExtendedSidebar = computed(() => extendedSidebar.value)
+const isExtendedSidebar = computed(() => props.labelled || extendedSidebar.value)
 
 const spaceId = inject<Ref<string | undefined>>('spaceId')
 const { useAccessControl } = useAuthorization()
@@ -60,6 +67,10 @@ const menu = computed(() => {
   }
 
   return access.filterVisibleItems(spaceNavigationItems).filter((item) => {
+    if (props.excludeRoutes?.includes(item.routeName)) {
+      return false
+    }
+
     if (item.routeName === 'space-onboarding') {
       // Only decide once the space is loaded — showing the link while the
       // dismissal state is unknown makes it flash and vanish.
@@ -129,8 +140,10 @@ const availableLocales = locales
 <template>
   <div
     :class="[
-      'flex h-full flex-col overflow-hidden border-r border-r-sidebar-border bg-sidebar text-sidebar-foreground select-none transition-[width,padding] duration-200 ease-butter',
-      isExtendedSidebar ? 'w-18 p-1 pb-3' : 'w-14 py-3 pr-[11px] pl-3',
+      'flex h-full flex-col overflow-hidden bg-sidebar text-sidebar-foreground select-none transition-[width,padding] duration-200 ease-butter',
+      labelled
+        ? 'min-h-0 w-full px-2 pb-3'
+        : ['border-r border-r-sidebar-border', isExtendedSidebar ? 'w-18 p-1 pb-3' : 'w-14 py-3 pr-[11px] pl-3'],
     ]"
   >
     <div class="flex min-h-0 flex-1 flex-col overflow-y-auto">
@@ -168,7 +181,11 @@ const availableLocales = locales
               :aria-label="menuLabel(m.label)"
               :class="[
                 'icon-anim flex w-full flex-col items-center justify-center rounded-lg text-center transition-[padding,gap,background-color,color] duration-200 ease-butter hover:bg-sidebar-accent/60 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none focus-visible:ring-inset',
-                isExtendedSidebar ? 'gap-1 p-2' : 'gap-0 p-1.5',
+                labelled
+                  ? 'flex-row! justify-start! gap-3 px-3 py-2.5 text-left!'
+                  : isExtendedSidebar
+                    ? 'gap-1 p-2'
+                    : 'gap-0 p-1.5',
               ]"
               active-class="text-sidebar-accent-foreground bg-sidebar-accent"
               @mouseenter="preloadRoute(buildLink(m.routeName))"
@@ -193,7 +210,12 @@ const availableLocales = locales
                 ]"
                 :aria-hidden="!isExtendedSidebar"
               >
-                <span class="line-clamp-2 min-h-0 overflow-hidden text-2xs leading-tight">
+                <span
+                  :class="[
+                    'line-clamp-2 min-h-0 overflow-hidden leading-tight',
+                    labelled ? 'text-base font-medium' : 'text-2xs',
+                  ]"
+                >
                   {{ menuLabel(m.label) }}
                 </span>
               </span>
@@ -204,7 +226,7 @@ const availableLocales = locales
             type="button"
             :title="t('labels.onboarding.dismiss')"
             :aria-label="t('labels.onboarding.dismiss')"
-            class="absolute -top-1 -right-1 flex size-4 cursor-pointer items-center justify-center rounded-full bg-sidebar-accent text-sidebar-muted opacity-0 transition-opacity duration-200 group-hover/nav:opacity-100 hover:text-sidebar-accent-foreground focus-visible:opacity-100"
+            class="absolute -top-1 -right-1 flex size-4 cursor-pointer items-center justify-center rounded-full bg-sidebar-accent text-sidebar-muted opacity-0 touch:opacity-100 transition-opacity duration-200 group-hover/nav:opacity-100 hover:text-sidebar-accent-foreground focus-visible:opacity-100"
             @click.stop.prevent="handleDismissOnboarding"
           >
             <Icon
@@ -215,7 +237,12 @@ const availableLocales = locales
         </div>
       </nav>
     </div>
-    <div class="flex flex-col items-center gap-2">
+    <div
+      :class="[
+        'flex items-center gap-2',
+        labelled ? 'flex-row border-t border-t-sidebar-border px-2 pt-3' : 'flex-col',
+      ]"
+    >
       <DropdownMenu>
         <DropdownMenuTrigger
           class="icon-anim relative flex size-8 cursor-pointer items-center justify-center rounded-lg text-sidebar-muted transition-colors duration-100 hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
@@ -279,7 +306,12 @@ const availableLocales = locales
         </DropdownMenuTrigger>
       </DropdownMenu>
       <NotificationBell />
-      <div class="flex w-full flex-col items-center gap-2 border-t border-t-sidebar-border pt-3">
+      <div
+        :class="[
+          'flex flex-col items-center gap-2',
+          labelled ? 'ml-auto' : 'w-full border-t border-t-sidebar-border pt-3',
+        ]"
+      >
         <DropdownMenu v-if="user">
           <DropdownMenuTrigger
             class="cursor-pointer rounded-xl transition-opacity duration-100 hover:opacity-85 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring"
@@ -296,8 +328,8 @@ const availableLocales = locales
             <DropdownMenuItem disabled>{{ user?.email }}</DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuCheckboxItem
-              :model-value="isExtendedSidebar"
-              @select="settings.extendedSidebar = !isExtendedSidebar"
+              :model-value="extendedSidebar"
+              @select="settings.extendedSidebar = !extendedSidebar"
             >
               <span>{{ $t('labels.navigation.extendedSidebar', 'Extended sidebar') }}</span>
             </DropdownMenuCheckboxItem>

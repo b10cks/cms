@@ -1,6 +1,7 @@
 {
   "labels": {
     "mainNavigation": "Navigation principale",
+    "phoneLimitedEditing": "La consultation fonctionne ici. Utilisez un écran plus grand pour modifier la mise en page ou la structure.",
     "queryError": "Impossible de charger cet élément. Rien n'a été modifié, vous pouvez réessayer.",
     "importDialog": {
       "preparing": "Envoi et préparation du fichier…",
@@ -1283,6 +1284,7 @@
     },
     "navigation": {
       "home": "Accueil",
+      "more": "Plus",
       "canvas": "Toile",
       "content": "Contenu",
       "blocks": "Blocs",

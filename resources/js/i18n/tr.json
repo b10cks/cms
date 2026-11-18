@@ -1,6 +1,7 @@
 {
   "labels": {
     "mainNavigation": "Ana gezinme",
+    "phoneLimitedEditing": "Burada görüntüleyebilirsiniz. Düzeni veya yapıyı değiştirmek için daha büyük bir ekran kullanın.",
     "queryError": "Bu yüklenemedi. Hiçbir şey değişmedi, yeniden deneyebilirsiniz.",
     "importDialog": {
       "preparing": "Dosya yükleniyor ve hazırlanıyor…",
@@ -1283,6 +1284,7 @@
     },
     "navigation": {
       "home": "Anasayfa",
+      "more": "Daha fazla",
       "canvas": "Tuval",
       "content": "İçerik",
       "blocks": "Bloklar",

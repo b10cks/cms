@@ -7,6 +7,7 @@ import AiDockButton from '~/components/ai/threads/AiDockButton.vue'
 import Icon from '~/components/Icon.vue'
 import NuxtImg from '~/components/NuxtImg.vue'
 import RootContextBanner from '~/components/root/RootContextBanner.vue'
+import PhoneTabBar from '~/components/PhoneTabBar.vue'
 import SpaceBadge from '~/components/space/SpaceBadge.vue'
 import {
   DropdownMenu,
@@ -21,6 +22,7 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from '~/components/ui/dropdown-menu'
+import { useIsPhone } from '~/lib/viewport'
 
 const { useSpacesQuery, prefetchSpace } = useSpaces()
 const { data: spaces } = useSpacesQuery({ per_page: 1000 })
@@ -33,6 +35,8 @@ const canCreateSpace = computed(() => access.canAccessRoute('spaces-new'))
 
 const route = useRoute()
 const commandOpen = inject<Ref<boolean>>('commandOpen')
+
+const isPhone = useIsPhone()
 
 const selectedSpaceId = computed(() => route.params?.space as string | undefined)
 const aiEnabled = useAiEnabled(selectedSpaceId)
@@ -63,9 +67,9 @@ const logout = () => {
 
 <template>
   <div
-    class="fixed top-0 z-20 flex h-14 w-full items-center gap-3 border-b border-sidebar-border bg-sidebar text-sidebar-foreground p-3 select-none [--button-active:var(--header-button-active)] [--button-hover:var(--header-button-hover)] [--badge:var(--header-badge)] [--button:var(--header-button)]"
+    class="fixed top-0 z-20 flex h-14 w-full items-center gap-3 phone:gap-2 phone:px-2 border-b border-sidebar-border bg-sidebar text-sidebar-foreground p-3 select-none [--button-active:var(--header-button-active)] [--button-hover:var(--header-button-hover)] [--badge:var(--header-badge)] [--button:var(--header-button)]"
   >
-    <div class="flex items-center gap-3">
+    <div class="flex shrink-0 items-center gap-3 phone:gap-1">
       <DropdownMenu>
         <DropdownMenuTrigger
           class="flex cursor-pointer gap-2 rounded-lg bg-sidebar-accent/60 p-2 transition-colors duration-100 hover:bg-sidebar-accent focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring data-[state=open]:bg-sidebar-accent"
@@ -76,7 +80,7 @@ const logout = () => {
           />
           <Icon
             name="lucide:chevron-down"
-            class="-mr-1 text-sidebar-muted"
+            class="-mr-1 text-sidebar-muted phone:hidden"
           />
         </DropdownMenuTrigger>
         <DropdownMenuContent
@@ -135,7 +139,7 @@ const logout = () => {
               <DropdownMenuSubTrigger>
                 {{ $t('actions.spaces.switch') }}
               </DropdownMenuSubTrigger>
-              <DropdownMenuSubContent>
+              <DropdownMenuSubContent class="max-h-(--reka-dropdown-menu-content-available-height) max-w-[calc(100vw-1rem)] overflow-y-auto!">
                 <DropdownMenuItem
                   v-for="space in spaces"
                   :key="space.id"
@@ -203,10 +207,16 @@ const logout = () => {
       </DropdownMenu>
     </div>
     <slot>
-      <div id="appHeader" />
+      <div
+        id="appHeader"
+        class="phone:min-w-0"
+      />
     </slot>
-    <div class="ml-auto flex items-center gap-2">
-      <div id="appHeaderActions">
+    <div class="ml-auto flex items-center gap-2 phone:min-w-0">
+      <div
+        id="appHeaderActions"
+        class="phone:min-w-0 phone:overflow-x-auto"
+      >
         <slot name="headerActions" />
       </div>
       <AiDockButton
@@ -216,4 +226,5 @@ const logout = () => {
     </div>
   </div>
   <RootContextBanner />
+  <PhoneTabBar v-if="isPhone" />
 </template>

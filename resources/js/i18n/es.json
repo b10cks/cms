@@ -1,6 +1,7 @@
 {
   "labels": {
     "mainNavigation": "Navegación principal",
+    "phoneLimitedEditing": "Aquí puedes consultar el contenido. Usa una pantalla más grande para cambiar el diseño o la estructura.",
     "queryError": "No se ha podido cargar. No ha cambiado nada, puedes volver a intentarlo.",
     "importDialog": {
       "preparing": "Subiendo y preparando el archivo…",
@@ -1283,6 +1284,7 @@
     },
     "navigation": {
       "home": "Inicio",
+      "more": "Más",
       "canvas": "Lienzo",
       "content": "Contenido",
       "blocks": "Bloques",

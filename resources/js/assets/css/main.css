@@ -1,6 +1,14 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
 
+/* Keep in sync with lib/viewport.ts. Landscape phones stay phones, so rotating never swaps the layout. */
+@custom-variant phone {
+  @media (max-width: 767px), (pointer: coarse) and (max-height: 500px) {
+    @slot;
+  }
+}
+@custom-variant touch (@media (hover: none) and (pointer: coarse));
+
 @theme {
   --font-sans:
     ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
@@ -441,6 +449,17 @@
     --grid-margin: 0px;
     --content-max-width: 1296px;
     @apply lg:[--grid-margin:2rem];
+
+    --phone-tabbar: 0px;
+
+    @media (max-width: 767px), (pointer: coarse) and (max-height: 500px) {
+      --grid-margin: 0.75rem;
+    }
+  }
+
+  /* Full-height phone pages subtract this, and it is 0 on detail views, which have no tab bar. */
+  :root:has([data-phone-tabbar]) {
+    --phone-tabbar: 3.5rem;
   }
 
   /* Native date and time pickers and their icons follow the theme. Only on inputs: on the
@@ -459,6 +478,11 @@
 
   .content-grid {
     @apply gap-4 lg:gap-x-8;
+
+    /* The gap also sits between the margin and content columns, which doubles a phone's gutter. */
+    @media (max-width: 767px), (pointer: coarse) and (max-height: 500px) {
+      column-gap: 0;
+    }
 
     display: grid;
     grid-template-columns:
@@ -616,6 +640,23 @@
   .overlay-close {
     @apply flex size-7 cursor-pointer items-center justify-center rounded-md text-muted outline-none transition-colors duration-100;
     @apply hover:bg-state-hover hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring;
+  }
+
+  /* A finger needs more room than a pointer. */
+  @media (pointer: coarse) {
+    .menu-row {
+      min-height: 2.5rem;
+    }
+
+    .nav-row {
+      height: 2.5rem;
+    }
+
+    .row-action,
+    .overlay-close {
+      width: 2.25rem;
+      height: 2.25rem;
+    }
   }
 
   .checkerboard {
@@ -957,4 +998,21 @@
 .sortable-drag {
   box-shadow: var(--shadow-soft-lg);
   cursor: grabbing;
+}
+
+/* iOS zooms the page when a focused field is under 16px. Unlayered, so it beats text utilities. */
+@media (pointer: coarse) {
+  input:not([type='checkbox'], [type='radio'], [type='range'], [type='color'], [type='file']),
+  textarea,
+  select,
+  [contenteditable='true'] {
+    font-size: 16px;
+  }
+}
+
+/* The on-screen keyboard needs the room, and Android would lift the bar on top of it. */
+@media (pointer: coarse) {
+  :root:has(input:focus, textarea:focus, [contenteditable='true']:focus) [data-phone-tabbar] {
+    display: none;
+  }
 }
