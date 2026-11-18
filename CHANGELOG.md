@@ -3,6 +3,22 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.11.18-8d87c0f0] — 2026-11-18
+
+- 🐛 Keep the move error for an empty tree operation batch
+- 📝 Record the block type change
+- ✨ Change an entry's block type from its config pane
+- 🐛 Let a block type change drop old fields and keep required gaps for publish
+- 📝 Record the block translation copy branch
+- ✨ Take a block's translations along when it is copied, cut or duplicated
+- 🐛 Refuse a translation save that would overwrite a newer version
+- 🐛 Keep translation memory hits out of the AI review marks
+- ✨ Break the translation view into sections and step through open fields
+- ✨ Track AI translations until a person reviews them
+- 🚸 Keep edited fields in the status filter until the next save
+- 🐛 List translation fields in the order the editor shows them
+- 📝 Record the resolved language release
+
 ## [v2026.11.12-6c57e90e] — 2026-11-12
 
 - 📝 Record the content resolved language branch
