@@ -2,6 +2,7 @@
 import ContentHeader from '~/components/content/ContentHeader.vue'
 import HeaderActions from '~/components/content/HeaderActions.vue'
 import type { CollaborationPresenceUser } from '~/composables/useContentLiveCollaboration'
+import { closePhonePreview, useIsPhone } from '~/lib/viewport'
 import type { ContentResource } from '~/types/contents'
 
 /**
@@ -17,12 +18,18 @@ defineProps<{
   presentUsers: CollaborationPresenceUser[]
   remoteDraftUsers: CollaborationPresenceUser[]
 }>()
+
+const isPhone = useIsPhone()
+
+const route = useRoute()
+watch(() => route.params.contentId, closePhonePreview)
+onBeforeUnmount(closePhonePreview)
 </script>
 
 <template>
   <Teleport
     defer
-    to="#appHeader"
+    :to="isPhone ? '#contentPhoneTitle' : '#appHeader'"
   >
     <ContentHeader
       v-if="content"

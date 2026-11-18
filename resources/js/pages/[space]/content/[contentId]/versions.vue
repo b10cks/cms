@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useIsPhone } from '~/lib/viewport'
 import { useRouteQuery } from '@vueuse/router'
 
 import ContentHeader from '~/components/content/ContentHeader.vue'
@@ -201,6 +202,8 @@ useSeoMeta({
     activeContent.value?.name ? `History: ${activeContent.value.name}` : 'Version History'
   ),
 })
+
+const isPhone = useIsPhone()
 </script>
 
 <template>
@@ -218,7 +221,7 @@ useSeoMeta({
 
   <Teleport
     defer
-    to="#appHeader"
+    :to="isPhone ? '#contentPhoneTitle' : '#appHeader'"
   >
     <ContentHeader
       v-if="activeContent"

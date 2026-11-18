@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { closePhonePreview, useIsPhone } from '~/lib/viewport'
 import { toast } from 'vue-sonner'
 
 import { ContentModel } from '~/api/resources/content-model'
@@ -243,6 +244,7 @@ const handleMutationError = (error: unknown) => {
       ?.errors
   if (errorData) {
     setValidationErrors?.(errorData)
+    closePhonePreview()
     focusFirstValidationError?.()
   }
 }
@@ -291,6 +293,7 @@ const confirmSoftValidation = async (errors: Record<string, string[]>) => {
 }
 
 const revealAndFocusValidationIssues = async () => {
+  closePhonePreview()
   await revealValidationState?.()
   await focusFirstValidationError?.()
 }
@@ -701,10 +704,17 @@ const handleConfirmAssign = (versionIds: string[]) => {
     }
   )
 }
+
+const isPhone = useIsPhone()
 </script>
 
 <template>
-  <div class="flex items-center gap-3">
+  <div class="flex items-center gap-3 phone:gap-2">
+    <Teleport
+      defer
+      to="#contentPhoneActions"
+      :disabled="!isPhone"
+    >
     <SimpleTooltip
       v-if="props.remoteDraftUsers?.length"
       :tooltip="t('labels.contents.collaboration.unsavedFrom', { names: remoteDraftUserNames })"
@@ -773,6 +783,7 @@ const handleConfirmAssign = (versionIds: string[]) => {
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>
+    </Teleport>
     <Button
       v-if="canSaveContent"
       :loading="isSaving"
