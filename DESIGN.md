@@ -221,6 +221,7 @@ Settled 2026-11-10. An entry created in a language other than the space default 
 - The preview is off by default on a phone and replaces the form on request. The saved desktop preference is not touched.
 - Actions that appear on hover are always visible on touch. A block row is the exception to the Blocks block rule: Hide, Copy, Cut and Delete move into the row menu on touch, because six icons leave no room for the title.
 - On touch, fields are 16px so iOS doesn't zoom on focus, `menu-row` and `nav-row` are 40px, `row-action` and `overlay-close` are 36px, and field hints open on tap.
+- On touch a tree row puts its status dot and menu button side by side at the right edge. On a phone the row menu opens under the app header, and any menu taller than the screen scrolls.
 - Canvas and the block schema editor stay reachable and say that layout and structure changes need a larger screen.
 
 ## Glossary editor
