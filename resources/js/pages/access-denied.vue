@@ -63,7 +63,7 @@ useSeoMeta({
 
 <template>
   <AppHeader />
-  <div class="flex min-h-[calc(100vh-3.5rem)] items-center justify-center bg-background px-6 py-12">
+  <div class="flex min-h-[calc(100vh-3.5rem)] items-center justify-center bg-background px-6 py-12 phone:px-3">
     <Card class="w-full max-w-2xl">
       <CardHeader class="space-y-4">
         <div

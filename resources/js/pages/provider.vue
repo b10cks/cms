@@ -29,9 +29,9 @@ const linkTo = (routeName: string) => ({ name: routeName })
       {{ $t('providerConsole.badge') }}
     </Badge>
   </Teleport>
-  <div class="flex h-full w-full bg-background">
-    <aside class="p-6 xl:w-1/5">
-      <nav class="sticky top-20 flex flex-col space-y-1">
+  <div class="flex h-full w-full flex-col bg-background md:flex-row">
+    <aside class="min-w-0 px-2 pt-2 md:shrink-0 md:p-6 xl:w-1/5">
+      <nav class="flex gap-1 overflow-x-auto pb-2 md:sticky md:top-20 md:flex-col md:gap-0 md:space-y-1 md:overflow-visible md:pb-0">
         <RouterLink
           v-for="item in items"
           :key="item.routeName"

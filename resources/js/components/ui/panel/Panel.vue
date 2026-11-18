@@ -31,7 +31,7 @@ const props = defineProps<{
   >
     <header
       v-if="title || $slots.title || $slots.actions"
-      class="flex h-14 shrink-0 items-center gap-2.5 pr-3 pl-5 select-none"
+      class="flex h-14 shrink-0 items-center gap-2.5 pr-3 pl-5 select-none phone:pr-2 phone:pl-3"
     >
       <slot name="title">
         <h2
@@ -59,7 +59,7 @@ const props = defineProps<{
       :class="
         flush
           ? 'min-w-0 flex-1 [&_td:first-child]:pl-5 [&_td:last-child]:pr-5 [&_th:first-child]:pl-5 [&_th:last-child]:pr-5'
-          : cn('min-w-0 flex-1 px-5 pb-5', !(title || $slots.title || $slots.actions) && 'pt-5')
+          : cn('min-w-0 flex-1 px-5 pb-5 phone:px-3 phone:pb-3', !(title || $slots.title || $slots.actions) && 'pt-5')
       "
     >
       <slot />
