@@ -31,7 +31,7 @@ describe('rendering', () => {
       'translateX(-75%)'
     )
     expect(mountProgress({ modelValue: 100 }).indicator.attributes('style')).toContain(
-      'translateX(-0%)'
+      'translateX(0%)'
     )
   })
 
@@ -50,7 +50,7 @@ describe('clamping', () => {
     // reports data-state="complete".
     expect(wrapper.attributes('aria-valuenow')).toBe('100')
     expect(wrapper.attributes('data-state')).toBe('complete')
-    expect(indicator.attributes('style')).toContain('translateX(-0%)')
+    expect(indicator.attributes('style')).toContain('translateX(0%)')
   })
 
   it('floors a negative value at zero', () => {
