@@ -300,17 +300,24 @@ class ContentTreeOperationService
         Space $space,
         Authenticatable|User|null $owner,
     ): array {
-        return $content->getConnection()->transaction(function () use ($content, $blockId, $space, $owner): array {
+        $targetFields = Block::query()->findOrFail($blockId)->schema?->getFields()->all() ?? [];
+
+        return $content->getConnection()->transaction(function () use ($content, $blockId, $targetFields, $space, $owner): array {
             $family = $this->contentI18nService->getFamily($content);
 
             foreach ($family as $familyItem) {
+                $droppedFields = array_diff_key($familyItem->block?->schema?->getFields()->all() ?? [], $targetFields);
+
                 $this->updateContent->execute(
                     [
                         'block_id' => $blockId,
-                        // Submitted on purpose: the new block's schema prunes
-                        // whatever it does not know, and that reshaped payload
+                        // Submitted on purpose: fields the new block does not
+                        // have leave the payload, and that reshaped payload
                         // belongs in a version of its own.
-                        'content' => $familyItem->getCurrentContent(),
+                        'content' => array_diff_key($familyItem->getCurrentContent(), $droppedFields),
+                        // Required fields the new block adds start empty. That
+                        // is fine for a draft, publishing still enforces them.
+                        'force' => true,
                     ],
                     $familyItem,
                     $space,
