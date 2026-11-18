@@ -769,7 +769,9 @@ export function useContent(spaceId: MaybeRef<string>) {
         if (context?.previous) queryClient.setQueryData(menuKey(), context.previous)
         queryClient.invalidateQueries({ queryKey: menuKey() })
 
-        const changesBlockOnly = operations.every((operation) => operation.type === 'update_block')
+        const changesBlockOnly =
+          operations.length > 0 &&
+          operations.every((operation) => operation.type === 'update_block')
         toast.error(
           t(`composables.content.${changesBlockOnly ? 'blockChangeError' : 'moveError'}`, {
             error: error.message || 'Unknown error',
