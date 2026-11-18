@@ -21,6 +21,7 @@ import {
   type ContentCommitAction,
 } from '~/composables/useContentLiveCollaboration'
 import { useContentSchemaState } from '~/composables/useContentSchemaState'
+import { queryKeys } from '~/composables/useQueryClient'
 import { translationStatusKey } from '~/composables/useTranslationStatus'
 import {
   buildMissingLanguageDraft,
@@ -28,7 +29,7 @@ import {
   resolveContentRouteName,
   withContentLanguageQuery,
 } from '~/lib/content-i18n'
-import { isSameJsonValue } from '~/lib/contentEditorState'
+import { createVersionConflictState, isSameJsonValue } from '~/lib/contentEditorState'
 import {
   applyLocalizedFieldValue,
   getLocalizedFieldValue,
@@ -147,6 +148,11 @@ const fallbackLanguageVersion = computed(
     ) || null
 )
 const { data: translatableOriginalContent } = useContentQuery(translatableId)
+const versionConflict = createVersionConflictState({
+  contentId: translatableId,
+  serverVersionId: computed(() => translatableOriginalContent.value?.current_version_id),
+  persistedVersionId: computed(() => persistedContent.value?.current_version_id),
+})
 const sourceChainVersions = computed(() => {
   if (!canonicalContent.value || !selectedLanguageVersion.value) {
     return []
@@ -454,6 +460,8 @@ watch(
         !persistedContent.value || persistedContent.value.id !== existingTranslation.id
       if (isNewContent || !isDirty.value) {
         syncPersistedContent(existingTranslation)
+        // A clean view now shows the newest version, so a later save has nothing to conflict with.
+        versionConflict.anchor(existingTranslation.current_version_id)
         // A persisted slug must not silently move when the name changes.
         slugMode.value = 'manual'
       }
@@ -746,6 +754,7 @@ const handleReviewChange = () => {
 provide(
   'commitPersistedContent',
   (nextContent: ContentResource, action: ContentCommitAction = 'save') => {
+    versionConflict.anchor(nextContent.current_version_id)
     syncPersistedContent(nextContent)
     localizationRef.value?.releaseKeptFields()
     void flushReviewMarks().finally(() =>
@@ -787,6 +796,19 @@ provide('resetDirtyState', () => {
   resetValidationState()
 })
 provide('content', previewContentRef)
+// A save names the version it was edited from, so one that someone else, or a
+// paste of translated blocks on the canonical entry, moved on from is refused.
+provide('editingFromVersionId', versionConflict.editingFromVersionId)
+provide('reloadServerContent', () => {
+  versionConflict.reset()
+  discardLocalContentChanges()
+  const translationId = translatableOriginalContent.value?.id
+  if (translationId) {
+    queryClient.invalidateQueries({
+      queryKey: queryKeys.contents(spaceId.value).detail(translationId),
+    })
+  }
+})
 
 useSeoMeta({
   title: computed(
