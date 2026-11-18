@@ -86,6 +86,9 @@ class DatabaseConnectionServiceTest extends TestCase
             ->once()
             ->with($connection->id);
 
+        // Laravel's test teardown disconnects every connection on the mocked manager.
+        DB::shouldReceive('getConnections')->andReturn([]);
+
         // Act
         $this->service->clearConnection($connection);
     }
