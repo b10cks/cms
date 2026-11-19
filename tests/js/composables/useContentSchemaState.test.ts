@@ -1490,6 +1490,14 @@ describe('useContentSchemaState', () => {
         ).toEqual({ 'content.d': ['d must be on or before 2026-06-01.'] })
       })
 
+      it('reads a time field value and its bounds', () => {
+        const schema = { t: field('date', { format: 'time', min: '09:00', max: '17:00' }) }
+        expect(errorsFor({ content: { t: '12:30' }, schema })).toEqual({})
+        expect(errorsFor({ content: { t: '20:00' }, schema })).toEqual({
+          'content.t': ['t must be on or before 17:00.'],
+        })
+      })
+
       it('accepts a date inside the bounds', () => {
         expect(
           errorsFor({
