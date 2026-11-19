@@ -131,7 +131,7 @@ function clear(): void {
     :class="props.class"
   >
     <template #default="{ id: fieldId, 'aria-describedby': describedBy, 'aria-invalid': invalid }">
-      <div :class="cn('flex w-full items-center gap-2', inputClass)">
+      <div :class="cn('flex w-full flex-wrap items-center gap-2', inputClass)">
         <Popover
           v-if="hasDate"
           v-model:open="open"
@@ -144,7 +144,7 @@ function clear(): void {
               :aria-describedby="describedBy"
               :aria-invalid="invalid"
               :aria-required="required || undefined"
-              class="flex h-9 min-w-0 flex-1 cursor-pointer items-center gap-2 rounded-lg border border-input-border bg-input px-3 text-start text-sm text-primary shadow-sm transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:cursor-not-allowed disabled:text-input-muted aria-invalid:border-destructive data-[state=open]:ring-2 data-[state=open]:ring-ring"
+              class="flex h-9 min-w-40 flex-1 cursor-pointer items-center gap-2 rounded-lg border border-input-border bg-input px-3 text-start text-sm text-primary shadow-sm transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:cursor-not-allowed disabled:text-input-muted aria-invalid:border-destructive data-[state=open]:ring-2 data-[state=open]:ring-ring"
             >
               <Icon
                 name="lucide:calendar"
