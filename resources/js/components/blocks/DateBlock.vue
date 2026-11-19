@@ -2,7 +2,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
-import { CheckboxField, FormField, InputField } from '~/components/ui/form'
+import { CheckboxField, DatePickerField, FormField } from '~/components/ui/form'
 import {
   Select,
   SelectContent,
@@ -52,21 +52,21 @@ const formatOptions = computed(() => [
       </Select>
     </FormField>
 
-    <InputField
+    <DatePickerField
       :model-value="value.min"
       name="min"
       :label="$t('labels.blocks.fields.date.min')"
       :description="$t('labels.blocks.fields.date.minDescription')"
-      :type="value.format || 'date'"
+      :format="value.format || 'date'"
       @update:model-value="emit('update:item-value', 'min', $event)"
     />
 
-    <InputField
+    <DatePickerField
       :model-value="value.max"
       name="max"
       :label="$t('labels.blocks.fields.date.max')"
       :description="$t('labels.blocks.fields.date.maxDescription')"
-      :type="value.format || 'date'"
+      :format="value.format || 'date'"
       @update:model-value="emit('update:item-value', 'max', $event)"
     />
 
