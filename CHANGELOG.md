@@ -3,6 +3,12 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.11.19-1a68a417] — 2026-11-19
+
+- 📝 Record the large image fix branch
+- 🐛 Resize images of 100 megapixels and more
+- 📝 Record the date field picker release
+
 ## [v2026.11.19-0bb8af3f] — 2026-11-19
 
 - 📝 Record the finished date field picker branch
