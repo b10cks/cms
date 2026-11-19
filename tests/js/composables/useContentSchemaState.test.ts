@@ -346,6 +346,10 @@ describe('normalizeSchemaField', () => {
       })
     })
 
+    it('keeps the declared format of a date field', () => {
+      expect(normalized('date', { format: 'datetime-local' }).format).toBe('datetime-local')
+    })
+
     it('leaves the serial keys undefined on other types and honours readonly there', () => {
       expect(normalized('text', { readonly: true })).toMatchObject({
         format: undefined,
@@ -1484,6 +1488,24 @@ describe('useContentSchemaState', () => {
             schema: { d: field('date', { validation: { max: '2026-06-01' } }) },
           })
         ).toEqual({ 'content.d': ['d must be on or before 2026-06-01.'] })
+      })
+
+      it('reads a time field value and its bounds', () => {
+        const schema = { t: field('date', { format: 'time', min: '09:00', max: '17:00' }) }
+        expect(errorsFor({ content: { t: '12:30' }, schema })).toEqual({})
+        expect(errorsFor({ content: { t: '20:00' }, schema })).toEqual({
+          'content.t': ['t must be on or before 17:00.'],
+        })
+      })
+
+      it('compares a datetime with date-only bounds at midnight, like the backend', () => {
+        const schema = {
+          d: field('date', { format: 'datetime-local', min: '2026-06-01', max: '2026-06-30' }),
+        }
+        expect(errorsFor({ content: { d: '2026-06-01T08:00' }, schema })).toEqual({})
+        expect(errorsFor({ content: { d: '2026-06-30T08:00' }, schema })).toEqual({
+          'content.d': ['d must be on or before 2026-06-30.'],
+        })
       })
 
       it('accepts a date inside the bounds', () => {

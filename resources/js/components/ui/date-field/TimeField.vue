@@ -9,8 +9,11 @@ const props = withDefaults(
     modelValue?: TimeValue
     locale?: string
     hourCycle?: 12 | 24
+    minValue?: TimeValue
+    maxValue?: TimeValue
+    disabled?: boolean
+    readonly?: boolean
     class?: HTMLAttributes['class']
-    'aria-label'?: string
   }>(),
   {
     locale: 'en',
@@ -29,8 +32,11 @@ defineEmits<{
     :model-value="props.modelValue"
     :locale="props.locale"
     :hour-cycle="props.hourCycle"
+    :min-value="props.minValue"
+    :max-value="props.maxValue"
+    :disabled="props.disabled"
+    :readonly="props.readonly"
     granularity="minute"
-    :aria-label="props['aria-label']"
     :class="
       cn(
         'inline-flex h-8 items-center rounded-md border border-input-border bg-input px-2 text-sm font-medium text-primary shadow-sm transition-colors focus-within:ring-2 focus-within:ring-ring',

@@ -1,6 +1,7 @@
 export { default as ArrayInputField } from './ArrayInputField.vue'
 export { default as CheckboxField } from './CheckboxField.vue'
 export { default as ComboboxField } from './ComboboxField.vue'
+export { default as DatePickerField } from './DatePickerField.vue'
 export { default as DateTimeField } from './DateTimeField.vue'
 export { default as DateTimeFormField } from './DateTimeFormField.vue'
 export { default as FormField } from './FormField.vue'

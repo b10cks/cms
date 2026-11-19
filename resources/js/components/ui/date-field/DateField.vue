@@ -10,7 +10,6 @@ const props = withDefaults(
     modelValue?: DateValue
     locale?: string
     class?: HTMLAttributes['class']
-    'aria-label'?: string
   }>(),
   {
     locale: 'en',
@@ -28,7 +27,6 @@ defineEmits<{
     :model-value="props.modelValue"
     :locale="props.locale"
     granularity="day"
-    :aria-label="props['aria-label']"
     :class="
       cn(
         'inline-flex h-8 items-center rounded-md border border-input-border bg-input px-2 text-sm font-medium text-primary shadow-sm transition-colors focus-within:ring-2 focus-within:ring-ring',

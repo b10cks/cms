@@ -3977,6 +3977,11 @@
       "updatedAt": "Aktualisiert am",
       "lastUpdated": "Aktualisiert {timeAgo}"
     },
+    "datePicker": {
+      "placeholder": "Datum wählen",
+      "time": "Uhrzeit",
+      "clear": "Datum leeren"
+    },
     "dateRange": {
       "label": "Nach Zeitraum filtern",
       "placeholder": "Jederzeit",

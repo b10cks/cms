@@ -2,6 +2,7 @@ import { watchDebounced } from '@vueuse/core'
 import type { Ref } from 'vue'
 import { isProxy, toRaw } from 'vue'
 
+import { dateFieldTimestamp } from '~/lib/dateFieldValue'
 import { focusField } from '~/lib/fieldFocus'
 import {
   ensureTableValue,
@@ -167,7 +168,10 @@ export const normalizeSchemaField = (key: string, field: SchemaType | Record<str
       : undefined,
     has_thead: isTable ? Boolean((schemaField as TableSchema).has_thead) : undefined,
     columns: isTable ? getTableColumns(schemaField as TableSchema) : undefined,
-    format: isSerial ? ((schemaField.format as string | undefined) || '{counter}') : undefined,
+    // `format` is shared: serials default it, date fields keep their own.
+    format: isSerial
+      ? ((schemaField.format as string | undefined) || '{counter}')
+      : schemaField.format,
     scope: isSerial
       ? ((schemaField.scope as SerialScopeDimension[] | undefined) ?? ['block', 'parent'])
       : undefined,
@@ -598,14 +602,14 @@ const validateScope = (
     }
 
     if (type === 'date' && typeof value === 'string') {
-      const timestamp = Date.parse(value)
+      const timestamp = dateFieldTimestamp(value)
       if (Number.isNaN(timestamp)) {
         pushError(path, `${field.name || key} must be a valid date.`)
       } else {
-        if (validation.min && timestamp < Date.parse(String(validation.min))) {
+        if (validation.min && timestamp < dateFieldTimestamp(String(validation.min))) {
           pushError(path, `${field.name || key} must be on or after ${validation.min}.`)
         }
-        if (validation.max && timestamp > Date.parse(String(validation.max))) {
+        if (validation.max && timestamp > dateFieldTimestamp(String(validation.max))) {
           pushError(path, `${field.name || key} must be on or before ${validation.max}.`)
         }
       }

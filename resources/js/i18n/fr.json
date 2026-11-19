@@ -3963,6 +3963,11 @@
       "updatedAt": "Dernière mise à jour",
       "lastUpdated": "Dernière mise à jour {timeAgo}"
     },
+    "datePicker": {
+      "placeholder": "Choisir une date",
+      "time": "Heure",
+      "clear": "Effacer la date"
+    },
     "dateRange": {
       "label": "Filtrer par plage de dates",
       "placeholder": "N'importe quand",
