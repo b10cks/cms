@@ -79,7 +79,9 @@ class VipsImage implements ImageInterface
             ));
         }
 
-        $resized = $this->resizeToCover($width, $height);
+        // smartcrop scans the image more than once, which a streamed source
+        // does not allow. The copy is of the resized image, so it is small.
+        $resized = $this->resizeToCover($width, $height)->copyMemory();
         $cropped = $resized->smartcrop($width, $height, [
             'interesting' => Interesting::ATTENTION,
         ]);

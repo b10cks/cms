@@ -12,7 +12,7 @@ This design has a few practical consequences:
 - **Variants are free until used.** Because nothing is pre-generated, adding a new breakpoint to your frontend doesn't require reprocessing your media library.
 - **URLs are immutable per asset version.** Replacing an asset produces a new asset path, so transformed URLs can be cached forever (`Cache-Control: immutable`, 1-year max-age) and put behind any CDN.
 
-Under the hood Ilum uses [libvips](https://www.libvips.org/) (with an ImageMagick fallback), which streams pixels instead of loading full bitmaps — resizing a 40-megapixel photo takes tens of milliseconds and little memory. Oversized sources (>100 MP by default) are rejected before decoding as a decompression-bomb guard.
+Under the hood Ilum uses [libvips](https://www.libvips.org/) (with an ImageMagick fallback), which streams pixels instead of loading full bitmaps — resizing a 40-megapixel photo takes tens of milliseconds and little memory. Oversized sources (>300 MP by default) are rejected before decoding as a decompression-bomb guard: a transformation of one answers `422`, the untransformed file is still served.
 
 ## URL anatomy
 

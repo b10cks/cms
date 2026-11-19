@@ -2,6 +2,7 @@
 
 namespace Tests\Unit\Services\Image;
 
+use App\Exceptions\ImageSourceTooLargeException;
 use App\Services\Image\Dto\ImageTransformation;
 use App\Services\Image\ImageTransformationManager;
 use Illuminate\Support\Facades\Storage;
@@ -26,7 +27,7 @@ class SourcePixelLimitTest extends TestCase
             $this->markTestSkipped('libvips is not available.');
         }
 
-        config(['ilum.driver' => 'vips', 'ilum.max_source_pixels' => 300]);
+        config(['ilum.driver' => 'vips', 'ilum.max_source_pixels' => 300, 'ilum.max_animation_pixels' => 300]);
         Storage::fake('images');
     }
 
@@ -48,7 +49,7 @@ class SourcePixelLimitTest extends TestCase
     #[Test]
     public function an_animation_within_the_cap_keeps_every_frame(): void
     {
-        config(['ilum.max_source_pixels' => 500]);
+        config(['ilum.max_animation_pixels' => 500]);
         $this->putGif('animation.gif', 10, 10, frames: 5);
 
         $result = $this->process('animation.gif');
@@ -62,7 +63,9 @@ class SourcePixelLimitTest extends TestCase
     {
         $this->putGif('still.gif', 20, 20, frames: 1);
 
-        $this->assertNull($this->process('still.gif'));
+        $this->expectException(ImageSourceTooLargeException::class);
+
+        $this->process('still.gif');
     }
 
     #[Test]
