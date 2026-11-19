@@ -13,9 +13,7 @@ const props = withDefaults(
     maxValue?: TimeValue
     disabled?: boolean
     readonly?: boolean
-    id?: string
     class?: HTMLAttributes['class']
-    'aria-label'?: string
   }>(),
   {
     locale: 'en',
@@ -38,9 +36,7 @@ defineEmits<{
     :max-value="props.maxValue"
     :disabled="props.disabled"
     :readonly="props.readonly"
-    :id="props.id"
     granularity="minute"
-    :aria-label="props['aria-label']"
     :class="
       cn(
         'inline-flex h-8 items-center rounded-md border border-input-border bg-input px-2 text-sm font-medium text-primary shadow-sm transition-colors focus-within:ring-2 focus-within:ring-ring',

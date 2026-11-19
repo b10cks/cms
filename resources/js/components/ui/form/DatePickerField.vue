@@ -44,6 +44,8 @@ const props = withDefaults(
 
 const modelValue = defineModel<string | null>()
 
+const { t } = useI18n()
+
 const locale = computed(() => getLocale())
 const hasDate = computed(() => props.format !== 'time')
 const hasTime = computed(() => props.format !== 'date')
@@ -82,6 +84,13 @@ const dateLabel = computed(() => {
     date.value.toDate('UTC')
   )
 })
+
+// reka puts an `id` on its hidden form input, so the visible time group is named directly.
+const timeLabel = computed(() =>
+  hasDate.value
+    ? [props.label, t('labels.datePicker.time')].filter(Boolean).join(', ')
+    : props.label
+)
 
 const hasValue = computed(() => Boolean(date.value || time.value))
 
@@ -167,7 +176,6 @@ function clear(): void {
 
         <TimeField
           v-if="hasTime"
-          :id="hasDate ? undefined : fieldId"
           :model-value="time"
           :locale="locale"
           :hour-cycle="hourCycle"
@@ -175,7 +183,7 @@ function clear(): void {
           :max-value="maxTime"
           :disabled="disabled"
           :readonly="readonly"
-          :aria-label="hasDate ? $t('labels.datePicker.time') : undefined"
+          :aria-label="timeLabel"
           :aria-describedby="describedBy"
           :aria-invalid="invalid"
           :class="cn('!h-9 !rounded-lg !px-3', hasDate ? 'w-30 shrink-0' : 'flex-1')"
