@@ -346,6 +346,10 @@ describe('normalizeSchemaField', () => {
       })
     })
 
+    it('keeps the declared format of a date field', () => {
+      expect(normalized('date', { format: 'datetime-local' }).format).toBe('datetime-local')
+    })
+
     it('leaves the serial keys undefined on other types and honours readonly there', () => {
       expect(normalized('text', { readonly: true })).toMatchObject({
         format: undefined,

@@ -167,7 +167,10 @@ export const normalizeSchemaField = (key: string, field: SchemaType | Record<str
       : undefined,
     has_thead: isTable ? Boolean((schemaField as TableSchema).has_thead) : undefined,
     columns: isTable ? getTableColumns(schemaField as TableSchema) : undefined,
-    format: isSerial ? ((schemaField.format as string | undefined) || '{counter}') : undefined,
+    // `format` is shared: serials default it, date fields keep their own.
+    format: isSerial
+      ? ((schemaField.format as string | undefined) || '{counter}')
+      : schemaField.format,
     scope: isSerial
       ? ((schemaField.scope as SerialScopeDimension[] | undefined) ?? ['block', 'parent'])
       : undefined,
