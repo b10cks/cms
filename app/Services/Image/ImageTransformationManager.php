@@ -4,6 +4,7 @@ namespace App\Services\Image;
 
 use App\Contracts\Image\ImageDriverInterface;
 use App\Contracts\Image\ImageInterface;
+use App\Exceptions\ImageSourceTooLargeException;
 use App\Services\Image\Drivers\ImagickDriver;
 use App\Services\Image\Drivers\VipsDriver;
 use App\Services\Image\Dto\ImageTransformation;
@@ -53,10 +54,11 @@ class ImageTransformationManager extends Manager
      * header, so this is cheap.
      *
      * Returns null when even a single frame is over the cap, true when only the
-     * first frame fits (a long animation decodes every frame into memory), and
-     * false when the whole source can be decoded. Unknown dimensions pass, so
-     * the driver can still try formats getimagesize doesn't understand. SVG is
-     * the exception, see svgPixels().
+     * first frame fits (a long animation decodes every frame into memory, so
+     * its frames share the smaller max_animation_pixels budget), and false
+     * when the whole source can be decoded. Unknown dimensions pass, so the
+     * driver can still try formats getimagesize doesn't understand. SVG is the
+     * exception, see svgPixels().
      */
     private function firstFrameOnly(string $tempFile): ?bool
     {
@@ -64,7 +66,7 @@ class ImageTransformationManager extends Manager
             return null;
         }
 
-        $maxPixels = (int) $this->config->get('ilum.max_source_pixels', 100_000_000);
+        $maxPixels = (int) $this->config->get('ilum.max_animation_pixels', 100_000_000);
         $info = @getimagesize($tempFile);
 
         if ($maxPixels <= 0 || $info === false || ! isset($info[0], $info[1])) {
@@ -78,7 +80,7 @@ class ImageTransformationManager extends Manager
 
     public function exceedsSourcePixelLimit(string $path): bool
     {
-        $maxPixels = (int) $this->config->get('ilum.max_source_pixels', 100_000_000);
+        $maxPixels = (int) $this->config->get('ilum.max_source_pixels', 300_000_000);
 
         if ($maxPixels <= 0) {
             return false;
@@ -173,21 +175,26 @@ class ImageTransformationManager extends Manager
     }
 
     /**
-     * Process an image using the specified operation
+     * Process an image using the specified operation. Null means the source
+     * file is missing. A source that exists and cannot be processed throws.
+     *
+     * @throws ImageSourceTooLargeException
      */
     public function processImage(
         FilesystemAdapter $disk,
         string $fullPath,
         ImageTransformation $transformation,
     ): ?array {
+        if (! $disk->exists($fullPath)) {
+            Log::error("Image not found: {$fullPath}");
+
+            return null;
+        }
+
         try {
-            if (! $disk->exists($fullPath)) {
-                Log::error("Image not found: {$fullPath}");
-
-                return null;
-            }
-
             return ExecutionTime::extend(self::MAX_PROCESSING_SECONDS, fn (): ?array => $this->transform($fullPath, $disk, $transformation));
+        } catch (ImageSourceTooLargeException $e) {
+            throw $e;
         } catch (\Throwable $e) {
             Log::error("Image processing error: {$e->getMessage()}", [
                 'path' => $fullPath,
@@ -196,7 +203,7 @@ class ImageTransformationManager extends Manager
                 'driver' => $this->getDefaultDriver(),
             ]);
 
-            return null;
+            throw $e;
         }
     }
 
@@ -217,16 +224,19 @@ class ImageTransformationManager extends Manager
             $firstFrameOnly = $this->firstFrameOnly($tempFile);
 
             if ($firstFrameOnly === null) {
+                $maxPixels = (int) $this->config->get('ilum.max_source_pixels');
+
                 Log::warning('Rejected oversized source image (possible decompression bomb)', [
                     'path' => $fullPath,
+                    'max_source_pixels' => $maxPixels,
                 ]);
 
-                return null;
+                throw new ImageSourceTooLargeException($maxPixels);
             }
 
             // An animation too long to decode whole is still a legitimate image:
             // deliver its first frame instead of failing on every request.
-            $image = $driver->loadFromFile($tempFile, $firstFrameOnly);
+            $image = $driver->loadFromFile($tempFile, $firstFrameOnly, $this->loadShrink($tempFile, $transformation));
             $outputFormat = $this->determineOutputFormat($transformation->format, $driver, $image);
             $processedImage = $this->applyOperation($image, $transformation);
             $options = $this->getFormatOptions($outputFormat, $transformation->quality);
@@ -242,6 +252,38 @@ class ImageTransformationManager extends Manager
                 unlink($tempFile);
             }
         }
+    }
+
+    /**
+     * How far the source can be shrunk while it is decoded: 1, 2, 4 or 8. A
+     * 100 MP photo scaled to a thumbnail then never exists as a full bitmap.
+     * At least a factor of two is left for the resize itself, which filters
+     * better than the decoder. Crops address source pixels, so they load at
+     * full size.
+     */
+    private function loadShrink(string $tempFile, ImageTransformation $transformation): int
+    {
+        if (! \in_array($transformation->operation, ['resize', 'fit', 'smartfit', 'fitfocus'], true)) {
+            return 1;
+        }
+
+        $info = @getimagesize($tempFile);
+        $target = max((int) ($transformation->params['width'] ?? 0), (int) ($transformation->params['height'] ?? 0));
+
+        if ($info === false || ! isset($info[0], $info[1]) || $target < 1) {
+            return 1;
+        }
+
+        // The shorter source edge against the longer target edge never
+        // overestimates, whatever the operation and the EXIF orientation.
+        $factor = min($info[0], $info[1]) / $target;
+
+        return match (true) {
+            $factor >= 16 => 8,
+            $factor >= 8 => 4,
+            $factor >= 4 => 2,
+            default => 1,
+        };
     }
 
     /**

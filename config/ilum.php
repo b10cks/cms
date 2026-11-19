@@ -14,7 +14,14 @@ return [
 
     // Reject source images whose pixel count (width × height) exceeds this cap
     // before decoding, to guard against decompression bombs. 0 disables it.
-    'max_source_pixels' => (int) env('IMAGE_MAX_SOURCE_PIXELS', 100_000_000),
+    // 300 MP leaves room for medium format (100 to 150 MP) and pixel-shift
+    // (240 MP) photos. A source that is not a JPEG being scaled down decodes
+    // in full: about 1 GB at the cap.
+    'max_source_pixels' => (int) env('IMAGE_MAX_SOURCE_PIXELS', 300_000_000),
+
+    // An animation decodes every frame into memory, so its frames together get
+    // a tighter budget. Over it, only the first frame is delivered.
+    'max_animation_pixels' => (int) env('IMAGE_MAX_ANIMATION_PIXELS', 100_000_000),
 
     'drivers' => [
         'vips' => [

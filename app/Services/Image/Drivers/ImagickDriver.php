@@ -12,7 +12,7 @@ class ImagickDriver implements ImageDriverInterface
     /**
      * Load an image from a file path
      */
-    public function loadFromFile(string $path, bool $firstFrameOnly = false): ImageInterface
+    public function loadFromFile(string $path, bool $firstFrameOnly = false, int $shrink = 1): ImageInterface
     {
         $imagick = new Imagick();
         $imagick->readImage($firstFrameOnly ? $path.'[0]' : $path);

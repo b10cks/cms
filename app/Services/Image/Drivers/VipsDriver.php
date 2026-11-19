@@ -12,12 +12,27 @@ class VipsDriver implements ImageDriverInterface
     /**
      * Load an image from a file path. Stills are rotated upright per their
      * EXIF orientation, because the tag itself is stripped on output.
+     *
+     * A still streams through the pipeline top to bottom, so memory does not
+     * grow with the source. It can be read once only, which every caller does
+     * by encoding it. A rotation reads out of order and needs the whole image.
      */
-    public function loadFromFile(string $path, bool $firstFrameOnly = false): ImageInterface
+    public function loadFromFile(string $path, bool $firstFrameOnly = false, int $shrink = 1): ImageInterface
     {
-        $vipsImage = ! $firstFrameOnly && $this->shouldLoadAllPages($path)
-            ? VipsImageLib::newFromFile($path, ['n' => -1])
-            : VipsImageLib::newFromFile($path);
+        if (! $firstFrameOnly && $this->shouldLoadAllPages($path)) {
+            $frames = VipsImageLib::newFromFile($path, ['n' => -1]);
+
+            if ($frames->getType('n-pages') !== 0 && $frames->get('n-pages') > 1) {
+                return new VipsImage($this->upright($frames));
+            }
+        }
+
+        $options = $this->shrinkOptions($path, $shrink);
+        $vipsImage = VipsImageLib::newFromFile($path, [...$options, 'access' => 'sequential']);
+
+        if ($vipsImage->getType('orientation') !== 0 && $vipsImage->get('orientation') > 1) {
+            $vipsImage = VipsImageLib::newFromFile($path, $options);
+        }
 
         return new VipsImage($this->upright($vipsImage));
     }
@@ -32,6 +47,25 @@ class VipsDriver implements ImageDriverInterface
             : VipsImageLib::newFromBuffer($buffer);
 
         return new VipsImage($this->upright($vipsImage));
+    }
+
+    /**
+     * Loader options that decode at 1/$shrink of the size, so a large source
+     * never exists as a full bitmap. Other formats decode at full size.
+     *
+     * @return array<string, int|float>
+     */
+    private function shrinkOptions(string $path, int $shrink): array
+    {
+        if ($shrink <= 1) {
+            return [];
+        }
+
+        return match (VipsImageLib::findLoad($path)) {
+            'VipsForeignLoadJpegFile' => ['shrink' => $shrink],
+            'VipsForeignLoadWebpFile' => ['scale' => 1 / $shrink],
+            default => [],
+        };
     }
 
     /**

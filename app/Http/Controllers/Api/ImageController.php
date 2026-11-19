@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Exceptions\ImageSourceTooLargeException;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\ProcessImageRequest;
 use App\Models\Space\Asset;
@@ -143,7 +144,7 @@ class ImageController extends Controller
             $result = $this->imageService->processImage($source->disk, $source->file->path, $transformation);
 
             if (! $result) {
-                return response()->json(['error' => 'Image not found or processing failed'], 404);
+                return $this->notFound();
             }
 
             return $this->responder->respondWithBody(
@@ -154,9 +155,12 @@ class ImageController extends Controller
                 $maxAge,
                 $this->transformedDownloadName($source, $result['format']),
             );
-        } catch (\Exception $e) {
+        } catch (ImageSourceTooLargeException $e) {
+            return response()->json(['error' => $e->getMessage()], $e->getStatusCode());
+        } catch (\Throwable $e) {
             Log::error('Image processing error: '.$e->getMessage(), [
                 'path' => $source->file->path,
+                'url' => $request->path(),
                 'exception' => $e,
             ]);
 

@@ -2,9 +2,11 @@
 
 namespace Tests\Feature\Api;
 
+use App\Exceptions\ImageSourceTooLargeException;
 use App\Services\Image\Dto\ImageTransformation;
 use App\Services\Image\ImageTransformationService;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Mockery;
 use PHPUnit\Framework\Attributes\Test;
@@ -87,6 +89,37 @@ class ImageControllerTest extends TestCase
         $this->get('/ilum/storage/users/avatars/image.jpg/w_200?format=jpeg')
             ->assertOk()
             ->assertHeader('Content-Type', 'image/jpeg');
+    }
+
+    #[Test]
+    public function a_source_over_the_pixel_limit_is_unprocessable_not_missing(): void
+    {
+        $service = Mockery::mock(ImageTransformationService::class);
+        $service->shouldReceive('processImage')->once()->andThrow(new ImageSourceTooLargeException(300_000_000));
+        $this->app->instance(ImageTransformationService::class, $service);
+
+        $this->getJson('/ilum/storage/users/avatars/image.jpg/w_200')
+            ->assertUnprocessable()
+            ->assertExactJson(['error' => 'Image exceeds the 300 megapixel limit for transformations']);
+    }
+
+    #[Test]
+    public function a_failed_transformation_is_a_server_error_with_the_reason_logged(): void
+    {
+        Log::spy();
+
+        $service = Mockery::mock(ImageTransformationService::class);
+        $service->shouldReceive('processImage')->once()->andThrow(new \RuntimeException('VipsJpeg: premature end of JPEG image'));
+        $this->app->instance(ImageTransformationService::class, $service);
+
+        $this->getJson('/ilum/storage/users/avatars/image.jpg/w_200')
+            ->assertStatus(500)
+            ->assertExactJson(['error' => 'Error processing image']);
+
+        Log::shouldHaveReceived('error')
+            ->withArgs(fn (string $message, array $context): bool => str_contains($message, 'premature end of JPEG image')
+                && $context['path'] === 'users/avatars/image.jpg')
+            ->once();
     }
 
     #[Test]
