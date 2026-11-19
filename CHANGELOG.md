@@ -3,6 +3,10 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.11.19-935be76e] — 2026-11-19
+
+- 📝 Record the large image fix release
+
 ## [v2026.11.19-1a68a417] — 2026-11-19
 
 - 📝 Record the large image fix branch
