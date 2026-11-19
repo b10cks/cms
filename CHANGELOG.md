@@ -3,6 +3,33 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.11.19-0bb8af3f] — 2026-11-19
+
+- 📝 Record the finished date field picker branch
+- 💄 Wrap the date and time inputs in narrow columns
+- ♿️ Give date and time segment fields an accessible name
+- 🐛 Compare date field bounds the way the backend does
+- 📝 Record the date field picker branch
+- ✨ Pick date and time fields with a calendar instead of the native input
+- 🐛 Accept time field values in the editor's date validation
+- 🐛 Keep a date field's format when the editor normalizes its schema
+- 📝 Record the block type release
+- 📝 Record the dependency update and the open Dependabot PRs
+- ⬆️ Update the PHP dependencies
+- ⬆️ Update the JavaScript dependencies
+- 📝 Record the block type release
+- 🐛 Stop the plan badge and actions overlapping on touch space cards
+- 🐛 Keep the content tree's status dot and row menu usable on phones
+- 💄 Fit the remaining admin areas on phone screens
+- 🚸 Show hover-only actions and field hints on touch screens
+- ✨ Make entries editable and publishable on a phone
+- ✨ Give phones a bottom tab bar and tighter page gutters
+- Bump docker/login-action from 4.6.0 to 4.7.0
+- Bump actions/setup-node from 7.0.0 to 7.1.0
+- Bump aws-actions/amazon-ecs-render-task-definition from 1.9.0 to 1.9.1
+- Bump shivammathur/setup-php from 2.37.2 to 2.40.0
+- Bump aws-actions/amazon-ecs-deploy-task-definition from 2.6.3 to 2.6.4
+
 ## [v2026.11.18-8d87c0f0] — 2026-11-18
 
 - 🐛 Keep the move error for an empty tree operation batch
