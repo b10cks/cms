@@ -2,6 +2,7 @@ import { watchDebounced } from '@vueuse/core'
 import type { Ref } from 'vue'
 import { isProxy, toRaw } from 'vue'
 
+import { dateFieldTimestamp } from '~/lib/dateFieldValue'
 import { focusField } from '~/lib/fieldFocus'
 import {
   ensureTableValue,
@@ -76,10 +77,6 @@ const TRANSLATABLE_TYPES: CanonicalSchemaTypeName[] = [
 ]
 
 export const normalizeSchemaType = normalizeSchemaTypeName
-
-/** `Date.parse` cannot read a bare `HH:mm` time field value, so it is read on a fixed day. */
-const parseDateFieldTimestamp = (value: string) =>
-  Date.parse(/^\d{2}:\d{2}/.test(value) ? `1970-01-01T${value}` : value)
 
 const ICON_SOURCES: IconFieldSource[] = ['registry', 'all', 'collections']
 
@@ -605,14 +602,14 @@ const validateScope = (
     }
 
     if (type === 'date' && typeof value === 'string') {
-      const timestamp = parseDateFieldTimestamp(value)
+      const timestamp = dateFieldTimestamp(value)
       if (Number.isNaN(timestamp)) {
         pushError(path, `${field.name || key} must be a valid date.`)
       } else {
-        if (validation.min && timestamp < parseDateFieldTimestamp(String(validation.min))) {
+        if (validation.min && timestamp < dateFieldTimestamp(String(validation.min))) {
           pushError(path, `${field.name || key} must be on or after ${validation.min}.`)
         }
-        if (validation.max && timestamp > parseDateFieldTimestamp(String(validation.max))) {
+        if (validation.max && timestamp > dateFieldTimestamp(String(validation.max))) {
           pushError(path, `${field.name || key} must be on or before ${validation.max}.`)
         }
       }

@@ -9,6 +9,7 @@ import { Calendar } from '~/components/ui/calendar'
 import { TimeField } from '~/components/ui/date-field'
 import { Popover, PopoverContent, PopoverTrigger } from '~/components/ui/popover'
 import {
+  boundTimeOn,
   type DateFieldFormat,
   parseDateFieldValue,
   serializeDateFieldValue,
@@ -66,15 +67,8 @@ watch(
 const minParts = computed(() => parseDateFieldValue(props.min))
 const maxParts = computed(() => parseDateFieldValue(props.max))
 
-/** A datetime bound limits the time only on the bound's own day. */
-const boundTime = (bound: { date?: CalendarDate; time?: Time }) => {
-  if (!bound.time) return undefined
-  if (props.format === 'time') return bound.time
-  return bound.date && date.value?.compare(bound.date) === 0 ? bound.time : undefined
-}
-
-const minTime = computed(() => boundTime(minParts.value))
-const maxTime = computed(() => boundTime(maxParts.value))
+const minTime = computed(() => boundTimeOn(props.format, date.value, minParts.value))
+const maxTime = computed(() => boundTimeOn(props.format, date.value, maxParts.value))
 
 const hourCycle = computed(() => {
   const cycle = new Intl.DateTimeFormat(locale.value, { hour: 'numeric' }).resolvedOptions()

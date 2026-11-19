@@ -1498,6 +1498,16 @@ describe('useContentSchemaState', () => {
         })
       })
 
+      it('compares a datetime with date-only bounds at midnight, like the backend', () => {
+        const schema = {
+          d: field('date', { format: 'datetime-local', min: '2026-06-01', max: '2026-06-30' }),
+        }
+        expect(errorsFor({ content: { d: '2026-06-01T08:00' }, schema })).toEqual({})
+        expect(errorsFor({ content: { d: '2026-06-30T08:00' }, schema })).toEqual({
+          'content.d': ['d must be on or before 2026-06-30.'],
+        })
+      })
+
       it('accepts a date inside the bounds', () => {
         expect(
           errorsFor({
