@@ -62,6 +62,7 @@ The scheme in `APP_URL` decides the scheme every generated URL gets — assets, 
 
 ```bash
 AUTH_2FA_GRACE_PERIOD=30       # minutes a verified 2FA session stays verified
+AUTH_PASSKEY_CONFIRMATION_WINDOW=5  # minutes a passkey confirmation counts as the step-up
 
 # Optional social login (both providers are off unless configured)
 GOOGLE_CLIENT_ID=…
@@ -71,6 +72,8 @@ GITHUB_CLIENT_ID=…
 GITHUB_CLIENT_SECRET=…
 GITHUB_REDIRECT_URI=https://cms.example.com/auth/v1/social/github/callback
 ```
+
+Passkeys need HTTPS (or `localhost`) and are bound to the host of `APP_FRONTEND_URL`, falling back to `APP_URL`. Settle that host before people add passkeys: changing it later makes every registered passkey unusable, and people have to sign in another way and add them again.
 
 SAML single sign-on needs no `.env` entries — it is configured per team in the app ([Teams → Single sign-on](../ui/account.md#single-sign-on-saml)).
 

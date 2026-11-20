@@ -10,6 +10,7 @@ Some settings sit above any single space: your own account, the teams you belong
 
 - **Profile**: your name and profile picture. Your email address and your user identifier are shown but cannot be changed here.
 - **Security**: change your password and set up **two-factor authentication**, which asks for a six-digit code from an app on your phone in addition to your password. When you switch it on you are shown a set of **recovery codes**. Save them somewhere safe. They are how you get back in if you ever lose the phone.
+- **Passkeys**: sign in with your fingerprint, face or device PIN instead of a password and code. Add one under **Security** and give it a name you recognise, such as the laptop or password manager it lives in. On the login page, pick **Sign in with a passkey**, or choose the passkey your browser offers in the email field. Where the app asks for your password or a code to confirm a sensitive change, **Use a passkey** works too. Adding or removing a passkey needs that confirmation, and you get an email each time.
 - **Personal access tokens**: passwords for programs rather than people. A script or another tool can use one to act on your behalf through the API. Treat them exactly like passwords, and delete the ones you no longer use.
 - **Invitations**: invitations to spaces and teams that are waiting for you. Accept or decline them here.
 - **Notifications**: which events you want to hear about in the app and by email.

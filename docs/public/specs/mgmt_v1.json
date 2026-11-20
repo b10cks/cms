@@ -260,6 +260,213 @@
                 ]
             }
         },
+        "/mgmt/v1/users/me/passkeys": {
+            "get": {
+                "summary": "List the passkeys of the current user",
+                "description": "List the passkeys of the current user.",
+                "tags": [
+                    "Passkeys"
+                ],
+                "operationId": "get_users_me_passkeys",
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "description": "Paginated resource collection",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "description": "Collection of resources",
+                                            "items": {
+                                                "$ref": "#/components/schemas/UserPasskeyResource"
+                                            }
+                                        },
+                                        "links": {
+                                            "type": "object",
+                                            "description": "Pagination links",
+                                            "properties": {
+                                                "first": {
+                                                    "type": "string",
+                                                    "format": "uri",
+                                                    "description": "URL to the first page"
+                                                },
+                                                "last": {
+                                                    "type": "string",
+                                                    "format": "uri",
+                                                    "description": "URL to the last page"
+                                                },
+                                                "prev": {
+                                                    "type": "string",
+                                                    "format": "uri",
+                                                    "nullable": true,
+                                                    "description": "URL to the previous page"
+                                                },
+                                                "next": {
+                                                    "type": "string",
+                                                    "format": "uri",
+                                                    "nullable": true,
+                                                    "description": "URL to the next page"
+                                                }
+                                            }
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "description": "Pagination metadata",
+                                            "properties": {
+                                                "current_page": {
+                                                    "type": "integer",
+                                                    "description": "Current page number"
+                                                },
+                                                "from": {
+                                                    "type": "integer",
+                                                    "nullable": true,
+                                                    "description": "Index of first item on current page"
+                                                },
+                                                "last_page": {
+                                                    "type": "integer",
+                                                    "description": "Total number of pages"
+                                                },
+                                                "per_page": {
+                                                    "type": "integer",
+                                                    "description": "Number of items per page"
+                                                },
+                                                "to": {
+                                                    "type": "integer",
+                                                    "nullable": true,
+                                                    "description": "Index of last item on current page"
+                                                },
+                                                "total": {
+                                                    "type": "integer",
+                                                    "description": "Total number of items"
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "links",
+                                        "meta"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "summary": "Finish adding a passkey with the browser's answer to the creation options",
+                "description": "Finish adding a passkey with the browser's answer to the creation options.",
+                "tags": [
+                    "Passkeys"
+                ],
+                "operationId": "post_users_me_passkeys",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/mgmt/v1/users/me/passkeys/options": {
+            "post": {
+                "summary": "Start adding a passkey",
+                "description": "Start adding a passkey. Returns WebAuthn creation options; the route\nasks for the TOTP code or password first.",
+                "tags": [
+                    "Passkeys"
+                ],
+                "operationId": "post_users_me_passkeys_options",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/mgmt/v1/users/me/passkeys/{passkey}": {
+            "patch": {
+                "summary": "Rename a passkey of the current user",
+                "description": "Rename a passkey of the current user.",
+                "tags": [
+                    "Passkeys"
+                ],
+                "operationId": "patch_users_me_passkeys_by_passkey",
+                "parameters": [
+                    {
+                        "name": "passkey",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "The passkey identifier"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/UserPasskeyResource"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "summary": "Remove a passkey of the current user",
+                "description": "Remove a passkey of the current user. The route asks for a step-up first.",
+                "tags": [
+                    "Passkeys"
+                ],
+                "operationId": "delete_users_me_passkeys_by_passkey",
+                "parameters": [
+                    {
+                        "name": "passkey",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "The passkey identifier"
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Resource deleted successfully"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/mgmt/v1/users/me/password": {
             "post": {
                 "summary": "Create password",
@@ -4298,7 +4505,7 @@
         "/mgmt/v1/teams/{team}/move-preview": {
             "get": {
                 "summary": "What a move to `parent_id` would change",
-                "description": "What a move to `parent_id` would change. Authorized like the move itself\n(TeamController::update): update on the team, createChild on the target,\nand the top level is root-only.",
+                "description": "What a move to `parent_id` would change. Authorized like the move itself\n(TeamController::update), see TeamPolicy::move.",
                 "tags": [
                     "Move Preview"
                 ],
@@ -7058,15 +7265,6 @@
                                                 }
                                             }
                                         }
-                                    },
-                                    "state": {
-                                        "type": "string",
-                                        "enum": [
-                                            "draft",
-                                            "live",
-                                            "archived",
-                                            "error"
-                                        ]
                                     }
                                 },
                                 "required": [
@@ -15767,6 +15965,106 @@
                 ]
             }
         },
+        "/mgmt/v1/spaces/{space}/contents/{content}/translation-review": {
+            "post": {
+                "summary": "Mark the saved text of units as written by AI (`ai`) or reviewed by a person (`reviewed`), as `translation-status` flags them with `review`",
+                "description": "Mark the saved text of units as written by AI (`ai`) or reviewed by a person (`reviewed`), as `translation-status` flags them with `review`. Unit IDs are those of `translation-status`; units with no saved text or no source text are skipped. Returns the recomputed status.",
+                "tags": [
+                    "Contents"
+                ],
+                "operationId": "post_spaces_by_space_contents_by_content_translation_review",
+                "parameters": [
+                    {
+                        "name": "space",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "The space identifier"
+                    },
+                    {
+                        "name": "content",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "The content identifier"
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "locale": {
+                                        "type": "string",
+                                        "maxLength": 20
+                                    },
+                                    "ai": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string",
+                                            "maxLength": 500
+                                        }
+                                    },
+                                    "reviewed": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string",
+                                            "maxLength": 500
+                                        }
+                                    }
+                                },
+                                "required": [
+                                    "locale"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/ContentTranslationStatus"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Unknown locale, the default language, an entry with no source to translate from, or no translation entry in this locale yet.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/mgmt/v1/spaces/{space}/contents/{content}/translation-assist": {
             "post": {
                 "summary": "What helps translate one unit by hand: similar translation memory pairs and the unit's text in other locales",
@@ -15861,6 +16159,77 @@
                             "application/json": {
                                 "schema": {
                                     "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/mgmt/v1/spaces/{space}/contents/{content}/block-translations": {
+            "get": {
+                "summary": "What each translation of an overlay entry stores for the given nested blocks, with the source text each value was written against",
+                "description": "What each translation of an overlay entry stores for the given nested blocks, with the source text each value was written against. The editor takes this along when blocks are copied, and sends it back as `block_translations` when it saves the entry they were pasted into. Empty for a translation, an independent entry, and blocks the saved entry does not hold.",
+                "tags": [
+                    "Contents"
+                ],
+                "operationId": "get_spaces_by_space_contents_by_content_block_translations",
+                "parameters": [
+                    {
+                        "name": "space",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "The space identifier"
+                    },
+                    {
+                        "name": "content",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "The content identifier"
+                    },
+                    {
+                        "name": "ids",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "string",
+                                "maxLength": 36
+                            }
+                        },
+                        "description": "required IDs of nested blocks of the entry."
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Block ID => language => `{ item, lineage }`.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object",
+                                            "additionalProperties": true
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
                                 }
                             }
                         }
@@ -27328,6 +27697,26 @@
     },
     "components": {
         "schemas": {
+            "UserPasskeyResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "aaguid": {
+                        "type": "string"
+                    },
+                    "created_at": {
+                        "type": "string"
+                    },
+                    "last_used_at": {
+                        "type": "string"
+                    }
+                }
+            },
             "PersonalAccessTokenListResource": {
                 "type": "object",
                 "properties": {
@@ -32236,6 +32625,11 @@
                             "inherited",
                             "not_in_translation"
                         ]
+                    },
+                    "review": {
+                        "type": "boolean",
+                        "nullable": true,
+                        "description": "Present and true while the saved text was written by AI and no person has reviewed it since."
                     },
                     "previous_source": {
                         "type": "string",
