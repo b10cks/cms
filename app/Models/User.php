@@ -7,6 +7,7 @@ use App\Models\Management\Space;
 use App\Models\Management\Team;
 use App\Models\Management\UserSamlIdentity;
 use App\Models\Traits\HasPurifiedAttributes;
+use App\Models\User\UserPasskey;
 use App\Models\User\UserSettings;
 use App\Models\User\UserSocialLink;
 use App\Notifications\User\ResetPasswordNotification;
@@ -248,6 +249,11 @@ class User extends Authenticatable implements HasLocalePreference, MustVerifyEma
     public function socialLinks(): HasMany
     {
         return $this->hasMany(UserSocialLink::class, 'user_id', 'id');
+    }
+
+    public function passkeys(): HasMany
+    {
+        return $this->hasMany(UserPasskey::class);
     }
 
     protected function name(): Attribute

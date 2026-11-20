@@ -8,6 +8,8 @@ use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Auth\ImpersonationController;
 use App\Http\Controllers\Auth\IssueTokenController;
 use App\Http\Controllers\Auth\LoginOneTimeTokenController;
+use App\Http\Controllers\Auth\PasskeyConfirmController;
+use App\Http\Controllers\Auth\PasskeyLoginController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Auth\ResetPasswordController;
 use App\Http\Controllers\Auth\SocialLoginController;
@@ -63,6 +65,30 @@ Route::post('one-time-token/create', CreateOneTimeTokenController::class)
 Route::post('one-time-token/login', LoginOneTimeTokenController::class)
     ->middleware('throttle:one-time')
     ->name('one-time-token.login');
+
+// The challenge of each ceremony lives in the session, so every passkey
+// route is stateful. Confirming proves the signed-in owner is present and
+// counts as the step-up for the `2fa` and `password` middleware for a few
+// minutes (auth.passkeys.confirmation_window). Confirming sits in the `login`
+// bucket, not `crucial`: an assertion cannot be guessed, and the action it
+// unlocks already spends the user's `crucial` budget.
+Route::group(['prefix' => 'passkeys'], function () {
+    Route::post('login/options', [PasskeyLoginController::class, 'options'])
+        ->middleware(['throttle:login', 'stateful'])
+        ->name('passkeys.login.options');
+
+    Route::post('login', [PasskeyLoginController::class, 'login'])
+        ->middleware(['throttle:login', 'stateful'])
+        ->name('passkeys.login');
+
+    Route::post('confirm/options', [PasskeyConfirmController::class, 'options'])
+        ->middleware(['auth:sanctum', 'stateful', 'throttle:login'])
+        ->name('passkeys.confirm.options');
+
+    Route::post('confirm', [PasskeyConfirmController::class, 'confirm'])
+        ->middleware(['auth:sanctum', 'stateful', 'throttle:login'])
+        ->name('passkeys.confirm');
+});
 
 Route::post('email/verify/send', [EmailVerificationController::class, 'send'])
     ->middleware(['auth:sanctum', 'throttle:login'])

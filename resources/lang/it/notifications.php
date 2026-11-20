@@ -50,6 +50,18 @@ return [
         'intro' => 'L\'autenticazione a due fattori è stata disattivata sul tuo account.',
         'outro' => 'Se non sei stato tu, contatta subito l\'assistenza.',
     ],
+    'passkeyAdded' => [
+        'subject' => 'Passkey aggiunta',
+        'greeting' => 'Ciao :name,',
+        'intro' => 'La passkey ":passkey" è stata aggiunta al tuo account.',
+        'outro' => 'Se non hai aggiunto questa passkey, rimuovila nelle impostazioni di sicurezza e contatta subito l\'assistenza.',
+    ],
+    'passkeyRemoved' => [
+        'subject' => 'Passkey rimossa',
+        'greeting' => 'Ciao :name,',
+        'intro' => 'La passkey ":passkey" è stata rimossa dal tuo account.',
+        'outro' => 'Se non hai rimosso questa passkey, contatta subito l\'assistenza.',
+    ],
     'twoFactorBackupCodesRegenerated' => [
         'subject' => 'Nuovi codici di backup per l\'autenticazione a due fattori',
         'greeting' => 'Ciao :name,',

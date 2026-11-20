@@ -50,6 +50,18 @@ return [
         'intro' => 'Tofaktorgodkendelse er blevet deaktiveret på din konto.',
         'outro' => 'Hvis det ikke var dig, så kontakt support med det samme.',
     ],
+    'passkeyAdded' => [
+        'subject' => 'Adgangsnøgle tilføjet',
+        'greeting' => 'Hej :name,',
+        'intro' => 'Adgangsnøglen ":passkey" er blevet tilføjet til din konto.',
+        'outro' => 'Hvis du ikke har tilføjet denne adgangsnøgle, så fjern den i dine sikkerhedsindstillinger og kontakt support med det samme.',
+    ],
+    'passkeyRemoved' => [
+        'subject' => 'Adgangsnøgle fjernet',
+        'greeting' => 'Hej :name,',
+        'intro' => 'Adgangsnøglen ":passkey" er blevet fjernet fra din konto.',
+        'outro' => 'Hvis du ikke har fjernet denne adgangsnøgle, så kontakt support med det samme.',
+    ],
     'twoFactorBackupCodesRegenerated' => [
         'subject' => 'Nye backupkoder til tofaktorgodkendelse',
         'greeting' => 'Hej :name,',

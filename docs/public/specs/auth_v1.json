@@ -287,6 +287,70 @@
                 "security": []
             }
         },
+        "/auth/v1/passkeys/login/options": {
+            "post": {
+                "summary": "Start a passkey sign-in",
+                "description": "Start a passkey sign-in. Returns WebAuthn request options for any\npasskey registered on this instance.",
+                "tags": [
+                    "Passkeys"
+                ],
+                "operationId": "post_passkeys_login_options",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "security": []
+            }
+        },
+        "/auth/v1/passkeys/login": {
+            "post": {
+                "summary": "Finish a passkey sign-in",
+                "description": "Finish a passkey sign-in. A passkey proves possession and user\nverification, so no TOTP code is asked for.",
+                "tags": [
+                    "Passkeys"
+                ],
+                "operationId": "post_passkeys_login",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "security": []
+            }
+        },
+        "/auth/v1/passkeys/confirm/options": {
+            "post": {
+                "summary": "Start a passkey confirmation for the signed-in user",
+                "description": "Start a passkey confirmation for the signed-in user. Returns WebAuthn\nrequest options limited to the user's own passkeys.",
+                "tags": [
+                    "Passkeys"
+                ],
+                "operationId": "post_passkeys_confirm_options",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "security": []
+            }
+        },
+        "/auth/v1/passkeys/confirm": {
+            "post": {
+                "summary": "Finish a passkey confirmation",
+                "description": "Finish a passkey confirmation. For the next few minutes the session\npasses the TOTP and password step-up checks without a code.",
+                "tags": [
+                    "Passkeys"
+                ],
+                "operationId": "post_passkeys_confirm",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "security": []
+            }
+        },
         "/auth/v1/email/verify/send": {
             "post": {
                 "summary": "Create send",

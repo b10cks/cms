@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import PasskeyConfirmButton from '~/components/account/PasskeyConfirmButton.vue'
 import Icon from '~/components/Icon.vue'
 import { Alert } from '~/components/ui/alert'
 import { Button } from '~/components/ui/button'
@@ -26,6 +27,8 @@ const { mutate: confirm, isPending: isConfirming } = useTwoFactorConfirmMutation
 const step = ref<'initial' | 'scan' | 'verify' | 'backup'>('initial')
 const verificationCode = ref('')
 const password = ref('')
+/** A passkey confirmation replaces the password for the confirm request. */
+const passkeyConfirmed = ref(false)
 const backupCodes = ref<string[]>([])
 const error = ref<string | null>(null)
 const hasConfirmedBackupCodes = ref(false)
@@ -43,13 +46,13 @@ const handleVerify = async () => {
     return
   }
 
-  if (!password.value) {
+  if (!password.value && !passkeyConfirmed.value) {
     error.value = t('labels.twoFactor.setup.confirmPasswordRequired') as string
     return
   }
 
   confirm(
-    { code: verificationCode.value, password: password.value },
+    { code: verificationCode.value, password: passkeyConfirmed.value ? undefined : password.value },
     {
       onSuccess: (data) => {
         backupCodes.value = data.backup_codes
@@ -68,6 +71,7 @@ const handleClose = () => {
   step.value = 'initial'
   verificationCode.value = ''
   password.value = ''
+  passkeyConfirmed.value = false
   backupCodes.value = []
   error.value = null
   hasConfirmedBackupCodes.value = false
@@ -147,15 +151,26 @@ const handleClose = () => {
           :placeholder="$t('labels.twoFactor.setup.codePlaceholder')"
         />
 
-        <InputField
-          v-model="password"
-          type="password"
-          name="current-password"
-          autocomplete="current-password"
-          :label="$t('labels.twoFactor.setup.confirmPassword')"
-          :description="$t('labels.twoFactor.setup.confirmPasswordDescription')"
-          required
-        />
+        <Alert
+          v-if="passkeyConfirmed"
+          color="success"
+          variant="modern"
+          icon="lucide:key-round"
+        >
+          {{ $t('labels.account.passkeys.confirmed') }}
+        </Alert>
+        <template v-else>
+          <InputField
+            v-model="password"
+            type="password"
+            name="current-password"
+            autocomplete="current-password"
+            :label="$t('labels.twoFactor.setup.confirmPassword')"
+            :description="$t('labels.twoFactor.setup.confirmPasswordDescription')"
+            required
+          />
+          <PasskeyConfirmButton @confirmed="passkeyConfirmed = true" />
+        </template>
 
         <div
           v-if="error"

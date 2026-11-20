@@ -50,6 +50,18 @@ return [
         'intro' => 'Za vaš račun isključena je dvofaktorska autentifikacija.',
         'outro' => 'Ako to niste bili vi, odmah se javite podršci.',
     ],
+    'passkeyAdded' => [
+        'subject' => 'Pristupni ključ dodan',
+        'greeting' => 'Pozdrav :name,',
+        'intro' => 'Pristupni ključ „:passkey” dodan je vašem računu.',
+        'outro' => 'Ako niste dodali ovaj pristupni ključ, uklonite ga u sigurnosnim postavkama i odmah se obratite podršci.',
+    ],
+    'passkeyRemoved' => [
+        'subject' => 'Pristupni ključ uklonjen',
+        'greeting' => 'Pozdrav :name,',
+        'intro' => 'Pristupni ključ „:passkey” uklonjen je s vašeg računa.',
+        'outro' => 'Ako niste uklonili ovaj pristupni ključ, odmah se obratite podršci.',
+    ],
     'twoFactorBackupCodesRegenerated' => [
         'subject' => 'Novi rezervni kodovi za dvofaktorsku autentifikaciju',
         'greeting' => 'Pozdrav, :name,',

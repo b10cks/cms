@@ -50,6 +50,18 @@ return [
         'intro' => 'Für dein Konto wurde die Zwei-Faktor-Authentifizierung deaktiviert.',
         'outro' => 'Falls du das nicht warst, wende dich bitte sofort an den Support.',
     ],
+    'passkeyAdded' => [
+        'subject' => 'Passkey hinzugefügt',
+        'greeting' => 'Hallo :name,',
+        'intro' => 'Der Passkey „:passkey“ wurde deinem Konto hinzugefügt.',
+        'outro' => 'Falls du diesen Passkey nicht hinzugefügt hast, entferne ihn in deinen Sicherheitseinstellungen und kontaktiere sofort den Support.',
+    ],
+    'passkeyRemoved' => [
+        'subject' => 'Passkey entfernt',
+        'greeting' => 'Hallo :name,',
+        'intro' => 'Der Passkey „:passkey“ wurde aus deinem Konto entfernt.',
+        'outro' => 'Falls du diesen Passkey nicht entfernt hast, kontaktiere bitte sofort den Support.',
+    ],
     'twoFactorBackupCodesRegenerated' => [
         'subject' => 'Neue Backup-Codes für die Zwei-Faktor-Authentifizierung',
         'greeting' => 'Hallo :name,',

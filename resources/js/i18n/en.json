@@ -62,7 +62,8 @@
         "asFeatured": "As featured on",
         "footer": "By using b10cks, you agree to our [Terms of Service](https://www.b10cks.com/en/legal/terms-of-service) and [Privacy Policy](https://www.b10cks.com/en/legal/privacy-policy), and to receive periodic emails with updates."
       },
-      "registrationClosed": "Registration is closed on this instance. Ask an administrator for an invite."
+      "registrationClosed": "Registration is closed on this instance. Ask an administrator for an invite.",
+      "passkey": "Sign in with a passkey"
     },
     "command": {
       "title": "Command palette",
@@ -2749,6 +2750,38 @@
         "toast": {
           "passwordChanged": "Password changed successfully",
           "passwordChangeFailed": "Failed to change password: {error}"
+        }
+      },
+      "passkeys": {
+        "title": "Passkeys",
+        "description": "Sign in with your fingerprint, face or device PIN instead of a password and code. A passkey also confirms sensitive actions.",
+        "unsupported": "This browser does not support passkeys.",
+        "empty": "No passkeys yet",
+        "add": "Add passkey",
+        "rename": "Rename",
+        "renameTitle": "Rename passkey",
+        "nameDescription": "A name helps you tell your passkeys apart, for example the device or password manager it lives in.",
+        "nameLabel": "Name",
+        "namePlaceholder": "e.g. MacBook or 1Password",
+        "continue": "Continue",
+        "removeTitle": "Remove passkey",
+        "removeConfirm": "Remove the passkey '{name}'? You can no longer sign in with it.",
+        "stepUpAddDescription": "A passkey signs you in on its own, so confirm it's you before adding one.",
+        "stepUpRemoveDescription": "Removing a passkey changes how you can sign in, so confirm it's you first.",
+        "useInstead": "Use a passkey",
+        "confirmed": "Confirmed with your passkey.",
+        "table": {
+          "name": "Name",
+          "createdAt": "Added",
+          "lastUsedAt": "Last used"
+        },
+        "toast": {
+          "added": "Passkey '{name}' added",
+          "addFailed": "The passkey could not be added: {error}",
+          "renameFailed": "The passkey could not be renamed: {error}",
+          "removed": "Passkey removed",
+          "removeFailed": "The passkey could not be removed: {error}",
+          "confirmFailed": "The passkey could not be confirmed: {error}"
         }
       },
       "social": {
@@ -6207,7 +6240,8 @@
       "resetPasswordFailed": "We couldn't reset your password. Please try again.",
       "tokenRefreshFailed": "Session expired. Please log in again.",
       "sessionExpired": "We signed you out after a while of inactivity to keep your account safe. Sign in again and pick up right where you left off.",
-      "failedToLoadUser": "Couldn't load your profile. Refresh the page?"
+      "failedToLoadUser": "Couldn't load your profile. Refresh the page?",
+      "passkeyLoginFailed": "Signing in with the passkey failed. Please try again."
     },
     "icons": {
       "updateSuccess": "Icon \"{name}\" updated",

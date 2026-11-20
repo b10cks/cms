@@ -150,6 +150,7 @@ export const queryKeys = {
     context: (params: unknown = {}) => ['authorization', params] as const,
   },
   personalAccessTokens: listKeys(() => ['users', 'me', 'tokens'] as const),
+  passkeys: () => ['users', 'me', 'passkeys'] as const,
   twoFactor: {
     all: () => ['two-factor'] as const,
     status: () => ['two-factor', 'status'] as const,

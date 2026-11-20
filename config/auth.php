@@ -135,4 +135,21 @@ return [
 
     '2fa_grace_period' => env('AUTH_2FA_GRACE_PERIOD', 30),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Passkeys
+    |--------------------------------------------------------------------------
+    |
+    | Passkeys are bound to the host of APP_URL (the relying party id), so
+    | changing that host later makes every registered passkey unusable.
+    | A passkey confirmation counts as the step-up for TOTP and password
+    | checks for `confirmation_window` minutes in the same session.
+    |
+    */
+
+    'passkeys' => [
+        'confirmation_window' => env('AUTH_PASSKEY_CONFIRMATION_WINDOW', 5),
+        'timeout' => 120_000,
+    ],
+
 ];

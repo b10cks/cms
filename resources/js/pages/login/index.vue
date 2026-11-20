@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import Logo from '~/assets/logo.svg'
+import Icon from '~/components/Icon.vue'
 import Markdown from '~/components/Markdown.vue'
 import SocialLoginButtons from '~/components/SocialLoginButtons.vue'
 import TwoFactorVerifyDialog from '~/components/TwoFactorVerifyDialog.vue'
 import { Alert } from '~/components/ui/alert'
 import { Button } from '~/components/ui/button'
 import { InputField } from '~/components/ui/form'
+import { conditionalMediationAvailable, passkeysSupported } from '~/lib/passkeys'
 import { runtimeConfig } from '~/lib/runtime-config'
 import { safeReturnPath } from '~/lib/safeReturnPath'
 
@@ -15,6 +17,7 @@ const {
   requiresTwoFactor,
   verifyTwoFactorAndLogin,
   verifySocialTwoFactorAndLogin,
+  loginWithPasskey,
   cancelTwoFactorLogin,
 } = useAuth()
 const { t } = useI18n()
@@ -70,6 +73,46 @@ const handleCancel = () => {
   cancelTwoFactorLogin()
 }
 
+const showPasskeyLogin = passkeysSupported()
+
+// The autofill request waits for the user to pick a passkey in the email
+// field. A button press replaces it with the regular prompt, and a failed
+// button sign-in offers the autofill again. The server forgets a challenge
+// after five minutes, so the autofill renews itself before that.
+const AUTOFILL_RENEW_MS = 4 * 60 * 1000
+
+let autofill: AbortController | null = null
+let renewTimer: ReturnType<typeof setTimeout> | undefined
+
+const stopPasskeyAutofill = () => {
+  clearTimeout(renewTimer)
+  autofill?.abort()
+  autofill = null
+}
+
+const startPasskeyAutofill = async () => {
+  if (!(await conditionalMediationAvailable())) return
+
+  stopPasskeyAutofill()
+  const controller = new AbortController()
+  autofill = controller
+  renewTimer = setTimeout(() => {
+    if (autofill === controller) void startPasskeyAutofill()
+  }, AUTOFILL_RENEW_MS)
+
+  await loginWithPasskey({ conditional: true, signal: controller.signal })
+}
+
+const handlePasskeyLogin = async () => {
+  stopPasskeyAutofill()
+
+  if (!(await loginWithPasskey())) {
+    void startPasskeyAutofill()
+  }
+}
+
+onBeforeUnmount(stopPasskeyAutofill)
+
 // A closed instance (self-hosted after the first account exists) still allows
 // invite-based signups, so the link stays when invite params are present.
 const showSignup = computed(() => {
@@ -116,6 +159,8 @@ onMounted(() => {
     isSocialTwoFactor.value = true
     twoFactorDialogOpen.value = true
   }
+
+  void startPasskeyAutofill()
 })
 </script>
 
@@ -157,7 +202,7 @@ onMounted(() => {
         v-model="formData.email"
         type="email"
         name="email"
-        autocomplete="username"
+        autocomplete="username webauthn"
         :label="$t('labels.login.fields.emailLabel')"
         :placeholder="$t('labels.login.fields.emailPlaceholder')"
         required
@@ -177,6 +222,15 @@ onMounted(() => {
         </div>
       </div>
       <Button variant="primary">{{ $t('actions.login') }}</Button>
+      <Button
+        v-if="showPasskeyLogin"
+        type="button"
+        variant="outline"
+        @click="handlePasskeyLogin"
+      >
+        <Icon name="lucide:key-round" />
+        {{ $t('labels.login.passkey') }}
+      </Button>
       <Markdown
         v-if="showSignup"
         :content="$t('labels.login.signup', { url: signupUrl })"

@@ -1,6 +1,7 @@
 import { computed, readonly, ref } from 'vue'
 
 import { isClient } from '~/lib/env'
+import { getPasskey, isPasskeyCancellation } from '~/lib/passkeys'
 import { safeReturnPath } from '~/lib/safeReturnPath'
 import { useI18n } from '~/plugins/i18n'
 import { getPosthog } from '~/plugins/posthog'
@@ -60,6 +61,7 @@ const UNAUTHENTICATED_ENDPOINTS = [
   '/auth/v1/password/',
   '/auth/v1/one-time-token/',
   '/auth/v1/email/verify',
+  '/auth/v1/passkeys/login',
 ]
 
 const isUnauthenticatedEndpoint = (endpoint: string): boolean =>
@@ -266,6 +268,59 @@ export function useAuth() {
     }
   }
 
+  /**
+   * Signs in with a passkey. `conditional` waits for the user to pick one
+   * from the email field's autofill and stays pending until then, so it
+   * takes a `signal` to stop it when the page goes away or a button press
+   * starts the regular prompt. A passkey is both factors, so no TOTP follows.
+   */
+  const loginWithPasskey = async (
+    options: { conditional?: boolean; signal?: AbortSignal } = {}
+  ): Promise<boolean> => {
+    const { conditional = false, signal } = options
+
+    if (!conditional) {
+      isLoading.value = true
+      error.value = null
+    }
+
+    // The autofill starts with the page: until the user picks a passkey, its
+    // failures are nobody's business.
+    let picked = !conditional
+
+    try {
+      const { api } = await import('~/api')
+      await ensureCsrfCookie()
+
+      const requestOptions = await api.passkeys.loginOptions()
+      const credential = await getPasskey(requestOptions, { conditional, signal })
+      picked = true
+
+      isLoading.value = true
+      error.value = null
+      await api.passkeys.login(credential)
+
+      return await handleAuthResponse(() => {
+        const currentRoute = router.currentRoute.value
+        router.push(safeReturnPath(currentRoute.query.return))
+      })
+    } catch (err: unknown) {
+      if (!picked || isPasskeyCancellation(err)) return false
+
+      const { status, errorCode, message } = parseErrorResponse(err)
+
+      if (status === 409 && errorCode === 'EMAIL_NOT_VERIFIED') {
+        error.value = t('composables.auth.emailNotVerified') as string
+      } else {
+        error.value = message ?? (t('composables.auth.passkeyLoginFailed') as string)
+      }
+
+      return false
+    } finally {
+      isLoading.value = false
+    }
+  }
+
   const cancelTwoFactorLogin = () => {
     requiresTwoFactor.value = false
     pendingLoginPayload.value = null
@@ -462,6 +517,7 @@ export function useAuth() {
     login,
     verifyTwoFactorAndLogin,
     verifySocialTwoFactorAndLogin,
+    loginWithPasskey,
     cancelTwoFactorLogin,
     forgotPassword,
     resetPassword,

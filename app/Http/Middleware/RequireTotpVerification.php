@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Http\Middleware\Concerns\ThrottlesStepUpVerification;
+use App\Services\Auth\PasskeyService;
 use App\Services\Auth\TwoFactorAuthService;
 use Closure;
 use Illuminate\Http\Request;
@@ -12,7 +13,10 @@ class RequireTotpVerification
 {
     use ThrottlesStepUpVerification;
 
-    public function __construct(private TwoFactorAuthService $twoFactorService) {}
+    public function __construct(
+        private TwoFactorAuthService $twoFactorService,
+        private PasskeyService $passkeys,
+    ) {}
 
     public function handle(Request $request, Closure $next): Response
     {
@@ -22,6 +26,12 @@ class RequireTotpVerification
             return response()->json([
                 'message' => __('auth.unauthenticated'),
             ], 401);
+        }
+
+        // A passkey confirmation proves possession and user verification,
+        // which covers both the TOTP code and the password.
+        if ($this->passkeys->hasRecentConfirmation($request, $user)) {
+            return $next($request);
         }
 
         if (! $user->hasEnabledTwoFactor()) {

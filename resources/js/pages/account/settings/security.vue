@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import ApiTokenSettings from '~/components/account/ApiTokenSettings.vue'
+import PasskeyConfirmButton from '~/components/account/PasskeyConfirmButton.vue'
+import PasskeySettings from '~/components/account/PasskeySettings.vue'
 import SocialProfileSettings from '~/components/account/SocialProfileSettings.vue'
 import BackupCodesDisplay from '~/components/BackupCodesDisplay.vue'
 import Icon from '~/components/Icon.vue'
@@ -66,8 +68,9 @@ const handleChangePassword = async () => {
   confirmPassword.value = ''
 }
 
-const handleDisable2FA = async () => {
-  if (!disablePassword.value) return
+/** Without a password the session was just confirmed with a passkey. */
+const handleDisable2FA = async (withPasskey = false) => {
+  if (!withPasskey && !disablePassword.value) return
 
   const confirmed = await alert.confirm(
     'Are you sure you want to disable two-factor authentication? This will make your account less secure.',
@@ -81,7 +84,7 @@ const handleDisable2FA = async () => {
 
   if (confirmed) {
     disable2FA(
-      { password: disablePassword.value },
+      { password: withPasskey ? undefined : disablePassword.value },
       {
         onSuccess: () => {
           showDisableDialog.value = false
@@ -97,11 +100,11 @@ const handleRegenerateBackupCodes = () => {
   showRegenerateDialog.value = true
 }
 
-const handleConfirmRegenerate = () => {
-  if (!regeneratePassword.value) return
+const handleConfirmRegenerate = (withPasskey = false) => {
+  if (!withPasskey && !regeneratePassword.value) return
 
   regenerateBackupCodes(
-    { password: regeneratePassword.value },
+    { password: withPasskey ? undefined : regeneratePassword.value },
     {
       onSuccess: () => {
         showRegenerateDialog.value = false
@@ -162,6 +165,8 @@ const handleConfirmRegenerate = () => {
           </Button>
         </template>
       </SettingsSection>
+
+      <PasskeySettings />
 
       <ApiTokenSettings />
 
@@ -245,6 +250,10 @@ const handleConfirmRegenerate = () => {
         />
 
         <DialogFooter>
+          <PasskeyConfirmButton
+            class="sm:mr-auto"
+            @confirmed="handleDisable2FA(true)"
+          />
           <Button
             variant="outline"
             @click="showDisableDialog = false"
@@ -255,7 +264,7 @@ const handleConfirmRegenerate = () => {
             variant="destructive"
             :loading="isDisabling"
             :disabled="!disablePassword"
-            @click="handleDisable2FA"
+            @click="handleDisable2FA()"
           >
             {{ $t('labels.twoFactor.disableConfirm') }}
           </Button>
@@ -288,6 +297,10 @@ const handleConfirmRegenerate = () => {
         />
 
         <DialogFooter>
+          <PasskeyConfirmButton
+            class="sm:mr-auto"
+            @confirmed="handleConfirmRegenerate(true)"
+          />
           <Button
             variant="outline"
             @click="showRegenerateDialog = false"
@@ -298,7 +311,7 @@ const handleConfirmRegenerate = () => {
             variant="primary"
             :loading="isRegenerating"
             :disabled="!regeneratePassword"
-            @click="handleConfirmRegenerate"
+            @click="handleConfirmRegenerate()"
           >
             {{ $t('labels.twoFactor.backupCodes.regenerateConfirm') }}
           </Button>

@@ -51,6 +51,18 @@ return [
         'intro' => 'Two-factor authentication has been disabled for your account.',
         'outro' => 'If you did not disable two-factor authentication, please contact support immediately.',
     ],
+    'passkeyAdded' => [
+        'subject' => 'Passkey added',
+        'greeting' => 'Hello :name,',
+        'intro' => 'The passkey ":passkey" was added to your account.',
+        'outro' => 'If you did not add this passkey, remove it in your security settings and contact support immediately.',
+    ],
+    'passkeyRemoved' => [
+        'subject' => 'Passkey removed',
+        'greeting' => 'Hello :name,',
+        'intro' => 'The passkey ":passkey" was removed from your account.',
+        'outro' => 'If you did not remove this passkey, please contact support immediately.',
+    ],
     'twoFactorBackupCodesRegenerated' => [
         'subject' => 'Two-factor authentication backup codes regenerated',
         'greeting' => 'Hello :name,',

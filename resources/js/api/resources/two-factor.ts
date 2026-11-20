@@ -5,11 +5,11 @@ import { BaseResource } from './base-resource'
 /**
  * The password travels in `x-password-confirmation`, where the step-up
  * middleware verifies it and counts failures, rather than in the body where
- * each endpoint would have to re-check it for itself.
+ * each endpoint would have to re-check it for itself. No password means the
+ * session was just confirmed with a passkey, which the middleware accepts.
  */
-const stepUpOptions = (password: string): RequestOptions => ({
-  headers: { 'x-password-confirmation': password },
-})
+const stepUpOptions = (password?: string): RequestOptions =>
+  password ? { headers: { 'x-password-confirmation': password } } : {}
 
 export interface TwoFactorSetupResponse {
   secret: string
@@ -18,11 +18,11 @@ export interface TwoFactorSetupResponse {
 
 export interface TwoFactorConfirmPayload {
   code: string
-  password: string
+  password?: string
 }
 
 export interface TwoFactorRegenerateBackupCodesPayload {
-  password: string
+  password?: string
 }
 
 export interface TwoFactorConfirmResponse {
@@ -35,7 +35,7 @@ export interface TwoFactorVerifyPayload {
 }
 
 export interface TwoFactorDisablePayload {
-  password: string
+  password?: string
 }
 
 export interface TwoFactorBackupCodesResponse {

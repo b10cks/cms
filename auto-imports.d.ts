@@ -192,6 +192,7 @@ declare global {
   const useNotificationPresentation: typeof import('./resources/js/composables/useNotificationPresentation').useNotificationPresentation
   const useNotifications: typeof import('./resources/js/composables/useNotifications').useNotifications
   const useOnboarding: typeof import('./resources/js/composables/useOnboarding').useOnboarding
+  const usePasskeys: typeof import('./resources/js/composables/usePasskeys').usePasskeys
   const usePeople: typeof import('./resources/js/composables/usePeople').usePeople
   const usePersonalAccessTokens: typeof import('./resources/js/composables/usePersonalAccessTokens').usePersonalAccessTokens
   const usePlanPricing: typeof import('./resources/js/composables/usePlanPricing').usePlanPricing
@@ -532,6 +533,7 @@ declare module 'vue' {
     readonly useNotificationPresentation: UnwrapRef<typeof import('./resources/js/composables/useNotificationPresentation')['useNotificationPresentation']>
     readonly useNotifications: UnwrapRef<typeof import('./resources/js/composables/useNotifications')['useNotifications']>
     readonly useOnboarding: UnwrapRef<typeof import('./resources/js/composables/useOnboarding')['useOnboarding']>
+    readonly usePasskeys: UnwrapRef<typeof import('./resources/js/composables/usePasskeys')['usePasskeys']>
     readonly usePeople: UnwrapRef<typeof import('./resources/js/composables/usePeople')['usePeople']>
     readonly usePersonalAccessTokens: UnwrapRef<typeof import('./resources/js/composables/usePersonalAccessTokens')['usePersonalAccessTokens']>
     readonly usePlanPricing: UnwrapRef<typeof import('./resources/js/composables/usePlanPricing')['usePlanPricing']>

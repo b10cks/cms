@@ -50,6 +50,18 @@ return [
         'intro' => '회원님의 계정에서 2단계 인증이 꺼졌습니다.',
         'outro' => '본인이 하지 않았다면 즉시 고객지원에 문의해 주세요.',
     ],
+    'passkeyAdded' => [
+        'subject' => '패스키가 추가되었습니다',
+        'greeting' => '안녕하세요 :name님,',
+        'intro' => '패스키 ":passkey"이(가) 계정에 추가되었습니다.',
+        'outro' => '이 패스키를 추가하지 않았다면 보안 설정에서 삭제하고 즉시 지원팀에 문의하세요.',
+    ],
+    'passkeyRemoved' => [
+        'subject' => '패스키가 삭제되었습니다',
+        'greeting' => '안녕하세요 :name님,',
+        'intro' => '패스키 ":passkey"이(가) 계정에서 삭제되었습니다.',
+        'outro' => '이 패스키를 삭제하지 않았다면 즉시 지원팀에 문의하세요.',
+    ],
     'twoFactorBackupCodesRegenerated' => [
         'subject' => '2단계 인증 백업 코드가 재발급되었습니다',
         'greeting' => ':name 님, 안녕하세요.',
