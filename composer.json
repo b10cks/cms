@@ -36,7 +36,8 @@
     "smalot/pdfparser": "^2.13",
     "staudenmeir/eloquent-json-relations": "^1.15",
     "symfony/http-client": "^8.1",
-    "symfony/yaml": "^8.1"
+    "symfony/yaml": "^8.1",
+    "web-auth/webauthn-lib": "^5.3"
   },
   "require-dev": {
     "barryvdh/laravel-debugbar": "^4.1",
