@@ -51,6 +51,18 @@ return [
         'intro' => 'Hesabınız için iki faktörlü kimlik doğrulama devre dışı bırakıldı.',
         'outro' => 'İki faktörlü kimlik doğrulamayı siz devre dışı bırakmadıysanız, lütfen hemen destekle iletişime geçin.',
     ],
+    'passkeyAdded' => [
+        'subject' => 'Geçiş anahtarı eklendi',
+        'greeting' => 'Merhaba :name,',
+        'intro' => 'Hesabınıza ":passkey" geçiş anahtarı eklendi.',
+        'outro' => 'Bu geçiş anahtarını siz eklemediyseniz, güvenlik ayarlarınızdan kaldırın ve hemen destekle iletişime geçin.',
+    ],
+    'passkeyRemoved' => [
+        'subject' => 'Geçiş anahtarı kaldırıldı',
+        'greeting' => 'Merhaba :name,',
+        'intro' => 'Hesabınızdan ":passkey" geçiş anahtarı kaldırıldı.',
+        'outro' => 'Bu geçiş anahtarını siz kaldırmadıysanız, hemen destekle iletişime geçin.',
+    ],
     'twoFactorBackupCodesRegenerated' => [
         'subject' => 'İki faktörlü kimlik doğrulama yedek kodları yeniden oluşturuldu',
         'greeting' => 'Merhaba :name,',

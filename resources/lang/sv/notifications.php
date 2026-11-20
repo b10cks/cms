@@ -50,6 +50,18 @@ return [
         'intro' => 'Tvåfaktorsautentisering har inaktiverats för ditt konto.',
         'outro' => 'Om det inte var du, kontakta supporten omedelbart.',
     ],
+    'passkeyAdded' => [
+        'subject' => 'Lösennyckel tillagd',
+        'greeting' => 'Hej :name,',
+        'intro' => 'Lösennyckeln ":passkey" har lagts till i ditt konto.',
+        'outro' => 'Om du inte lade till den här lösennyckeln, ta bort den i dina säkerhetsinställningar och kontakta supporten omedelbart.',
+    ],
+    'passkeyRemoved' => [
+        'subject' => 'Lösennyckel borttagen',
+        'greeting' => 'Hej :name,',
+        'intro' => 'Lösennyckeln ":passkey" har tagits bort från ditt konto.',
+        'outro' => 'Om du inte tog bort den här lösennyckeln, kontakta supporten omedelbart.',
+    ],
     'twoFactorBackupCodesRegenerated' => [
         'subject' => 'Nya reservkoder för tvåfaktorsautentisering',
         'greeting' => 'Hej :name,',

@@ -50,6 +50,18 @@ return [
         'intro' => 'お使いのアカウントで二要素認証が無効になりました。',
         'outro' => 'お心当たりがない場合は、ただちにサポートまでご連絡ください。',
     ],
+    'passkeyAdded' => [
+        'subject' => 'パスキーが追加されました',
+        'greeting' => ':name 様',
+        'intro' => 'パスキー「:passkey」がアカウントに追加されました。',
+        'outro' => 'このパスキーを追加した覚えがない場合は、セキュリティ設定から削除し、すぐにサポートへご連絡ください。',
+    ],
+    'passkeyRemoved' => [
+        'subject' => 'パスキーが削除されました',
+        'greeting' => ':name 様',
+        'intro' => 'パスキー「:passkey」がアカウントから削除されました。',
+        'outro' => 'このパスキーを削除した覚えがない場合は、すぐにサポートへご連絡ください。',
+    ],
     'twoFactorBackupCodesRegenerated' => [
         'subject' => '二要素認証のバックアップコードを再生成しました',
         'greeting' => ':name さん、こんにちは。',

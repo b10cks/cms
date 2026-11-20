@@ -50,6 +50,18 @@ return [
         'intro' => 'L\'authentification à deux facteurs a été désactivée sur votre compte.',
         'outro' => 'Si vous n\'êtes pas à l\'origine de ce changement, contactez immédiatement le support.',
     ],
+    'passkeyAdded' => [
+        'subject' => 'Clé d\'accès ajoutée',
+        'greeting' => 'Bonjour :name,',
+        'intro' => 'La clé d\'accès « :passkey » a été ajoutée à votre compte.',
+        'outro' => 'Si vous n\'avez pas ajouté cette clé d\'accès, supprimez-la dans vos paramètres de sécurité et contactez immédiatement le support.',
+    ],
+    'passkeyRemoved' => [
+        'subject' => 'Clé d\'accès supprimée',
+        'greeting' => 'Bonjour :name,',
+        'intro' => 'La clé d\'accès « :passkey » a été supprimée de votre compte.',
+        'outro' => 'Si vous n\'avez pas supprimé cette clé d\'accès, contactez immédiatement le support.',
+    ],
     'twoFactorBackupCodesRegenerated' => [
         'subject' => 'Nouveaux codes de secours pour l\'authentification à deux facteurs',
         'greeting' => 'Bonjour :name,',

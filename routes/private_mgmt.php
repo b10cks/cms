@@ -130,6 +130,7 @@ use App\Http\Controllers\Mgmt\TeamUserController;
 use App\Http\Controllers\Mgmt\User\UserAvatarController;
 use App\Http\Controllers\Mgmt\User\UserController;
 use App\Http\Controllers\Mgmt\User\UserInviteController;
+use App\Http\Controllers\Mgmt\User\UserPasskeyController;
 use App\Http\Controllers\Mgmt\User\UserPasswordController;
 use App\Http\Controllers\Mgmt\User\UserSettingsController;
 use App\Http\Controllers\Mgmt\User\UserSocialLinkController;
@@ -153,6 +154,25 @@ Route::group(['prefix' => 'users'], function () {
         Route::delete('/social-links/{provider}', [UserSocialLinkController::class, 'destroy'])
             ->middleware(['throttle:crucial'])
             ->name('users.me.social-links.destroy');
+
+        // A passkey is a credential that signs in without password or TOTP,
+        // so adding or removing one needs the same step-up as minting a token.
+        // `store` needs no step-up of its own: it only accepts the answer to
+        // creation options issued to this session, which already passed it.
+        Route::get('/passkeys', [UserPasskeyController::class, 'index'])
+            ->name('users.me.passkeys.index');
+        Route::post('/passkeys/options', [UserPasskeyController::class, 'options'])
+            ->middleware(['throttle:crucial', 'not-impersonating', '2fa'])
+            ->name('users.me.passkeys.options');
+        Route::post('/passkeys', [UserPasskeyController::class, 'store'])
+            ->middleware(['throttle:crucial', 'not-impersonating'])
+            ->name('users.me.passkeys.store');
+        Route::patch('/passkeys/{passkey}', [UserPasskeyController::class, 'update'])
+            ->middleware(['not-impersonating'])
+            ->name('users.me.passkeys.update');
+        Route::delete('/passkeys/{passkey}', [UserPasskeyController::class, 'destroy'])
+            ->middleware(['throttle:crucial', 'not-impersonating', '2fa'])
+            ->name('users.me.passkeys.destroy');
 
         // An operator impersonating a user must not be able to take the
         // account over: no password changes, no minting API tokens as them.

@@ -50,6 +50,18 @@ return [
         'intro' => 'Na Twoim koncie wyłączono uwierzytelnianie dwuskładnikowe.',
         'outro' => 'Jeśli to nie Ty, natychmiast skontaktuj się ze wsparciem.',
     ],
+    'passkeyAdded' => [
+        'subject' => 'Dodano klucz dostępu',
+        'greeting' => 'Cześć :name,',
+        'intro' => 'Do Twojego konta dodano klucz dostępu „:passkey”.',
+        'outro' => 'Jeśli to nie Ty dodałeś ten klucz dostępu, usuń go w ustawieniach bezpieczeństwa i natychmiast skontaktuj się z pomocą techniczną.',
+    ],
+    'passkeyRemoved' => [
+        'subject' => 'Usunięto klucz dostępu',
+        'greeting' => 'Cześć :name,',
+        'intro' => 'Z Twojego konta usunięto klucz dostępu „:passkey”.',
+        'outro' => 'Jeśli to nie Ty usunąłeś ten klucz dostępu, natychmiast skontaktuj się z pomocą techniczną.',
+    ],
     'twoFactorBackupCodesRegenerated' => [
         'subject' => 'Nowe kody zapasowe do uwierzytelniania dwuskładnikowego',
         'greeting' => 'Cześć :name,',

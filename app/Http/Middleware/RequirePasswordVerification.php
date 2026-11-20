@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Http\Middleware\Concerns\ThrottlesStepUpVerification;
+use App\Services\Auth\PasskeyService;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -10,6 +11,8 @@ use Symfony\Component\HttpFoundation\Response;
 class RequirePasswordVerification
 {
     use ThrottlesStepUpVerification;
+
+    public function __construct(private PasskeyService $passkeys) {}
 
     public function handle(Request $request, Closure $next): Response
     {
@@ -19,6 +22,11 @@ class RequirePasswordVerification
             return response()->json([
                 'message' => __('auth.unauthenticated'),
             ], 401);
+        }
+
+        // A passkey confirmation is a stronger proof than the password.
+        if ($this->passkeys->hasRecentConfirmation($request, $user)) {
+            return $next($request);
         }
 
         return $this->handlePasswordVerification($request, $next, $user);

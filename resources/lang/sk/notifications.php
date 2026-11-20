@@ -50,6 +50,18 @@ return [
         'intro' => 'Pri vašom účte bolo vypnuté dvojfaktorové overovanie.',
         'outro' => 'Ak ste to neboli vy, obráťte sa prosím ihneď na podporu.',
     ],
+    'passkeyAdded' => [
+        'subject' => 'Prístupový kľúč pridaný',
+        'greeting' => 'Dobrý deň, :name,',
+        'intro' => 'K vášmu účtu bol pridaný prístupový kľúč „:passkey“.',
+        'outro' => 'Ak ste tento prístupový kľúč nepridali, odstráňte ho v nastaveniach zabezpečenia a ihneď kontaktujte podporu.',
+    ],
+    'passkeyRemoved' => [
+        'subject' => 'Prístupový kľúč odstránený',
+        'greeting' => 'Dobrý deň, :name,',
+        'intro' => 'Z vášho účtu bol odstránený prístupový kľúč „:passkey“.',
+        'outro' => 'Ak ste tento prístupový kľúč neodstránili, ihneď kontaktujte podporu.',
+    ],
     'twoFactorBackupCodesRegenerated' => [
         'subject' => 'Nové záložné kódy pre dvojfaktorové overovanie',
         'greeting' => 'Dobrý deň, :name,',

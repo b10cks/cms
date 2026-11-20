@@ -50,6 +50,18 @@ return [
         'intro' => 'A fiókodon kikapcsolt a kétlépcsős azonosítás.',
         'outro' => 'Ha nem te voltál, azonnal fordulj az ügyfélszolgálathoz.',
     ],
+    'passkeyAdded' => [
+        'subject' => 'Jelkulcs hozzáadva',
+        'greeting' => 'Kedves :name!',
+        'intro' => 'A(z) „:passkey” jelkulcs hozzá lett adva a fiókodhoz.',
+        'outro' => 'Ha nem te adtad hozzá ezt a jelkulcsot, távolítsd el a biztonsági beállításokban, és azonnal vedd fel a kapcsolatot az ügyfélszolgálattal.',
+    ],
+    'passkeyRemoved' => [
+        'subject' => 'Jelkulcs eltávolítva',
+        'greeting' => 'Kedves :name!',
+        'intro' => 'A(z) „:passkey” jelkulcs el lett távolítva a fiókodból.',
+        'outro' => 'Ha nem te távolítottad el ezt a jelkulcsot, azonnal vedd fel a kapcsolatot az ügyfélszolgálattal.',
+    ],
     'twoFactorBackupCodesRegenerated' => [
         'subject' => 'Új tartalék kódok a kétlépcsős azonosításhoz',
         'greeting' => 'Szia :name!',

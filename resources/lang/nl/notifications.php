@@ -50,6 +50,18 @@ return [
         'intro' => 'Voor je account is tweefactorauthenticatie uitgeschakeld.',
         'outro' => 'Was jij dit niet? Neem dan direct contact op met support.',
     ],
+    'passkeyAdded' => [
+        'subject' => 'Passkey toegevoegd',
+        'greeting' => 'Hallo :name,',
+        'intro' => 'De passkey ":passkey" is aan je account toegevoegd.',
+        'outro' => 'Heb je deze passkey niet toegevoegd? Verwijder hem in je beveiligingsinstellingen en neem direct contact op met support.',
+    ],
+    'passkeyRemoved' => [
+        'subject' => 'Passkey verwijderd',
+        'greeting' => 'Hallo :name,',
+        'intro' => 'De passkey ":passkey" is uit je account verwijderd.',
+        'outro' => 'Heb je deze passkey niet verwijderd? Neem dan direct contact op met support.',
+    ],
     'twoFactorBackupCodesRegenerated' => [
         'subject' => 'Nieuwe back-upcodes voor tweefactorauthenticatie',
         'greeting' => 'Hallo :name,',

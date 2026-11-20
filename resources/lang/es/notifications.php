@@ -50,6 +50,18 @@ return [
         'intro' => 'Se ha desactivado la autenticación en dos pasos en tu cuenta.',
         'outro' => 'Si no has sido tú, ponte en contacto con el soporte de inmediato.',
     ],
+    'passkeyAdded' => [
+        'subject' => 'Clave de acceso añadida',
+        'greeting' => 'Hola :name,',
+        'intro' => 'Se añadió la clave de acceso ":passkey" a tu cuenta.',
+        'outro' => 'Si no añadiste esta clave de acceso, elimínala en tu configuración de seguridad y contacta con soporte de inmediato.',
+    ],
+    'passkeyRemoved' => [
+        'subject' => 'Clave de acceso eliminada',
+        'greeting' => 'Hola :name,',
+        'intro' => 'Se eliminó la clave de acceso ":passkey" de tu cuenta.',
+        'outro' => 'Si no eliminaste esta clave de acceso, contacta con soporte de inmediato.',
+    ],
     'twoFactorBackupCodesRegenerated' => [
         'subject' => 'Nuevos códigos de recuperación para la autenticación en dos pasos',
         'greeting' => 'Hola :name:',
