@@ -62,7 +62,8 @@
         "asFeatured": "Comme présenté sur",
         "footer": "En utilisant b10cks, vous acceptez nos [Conditions d'utilisation](https://www.b10cks.com/en/legal/terms-of-service) et notre [Politique de confidentialité](https://www.b10cks.com/en/legal/privacy-policy), et de recevoir périodiquement des e-mails avec des mises à jour."
       },
-      "registrationClosed": "L'inscription est fermée sur cette instance. Demandez une invitation à un administrateur."
+      "registrationClosed": "L'inscription est fermée sur cette instance. Demandez une invitation à un administrateur.",
+      "passkey": "Se connecter avec une clé d'accès"
     },
     "command": {
       "title": "Command palette",
@@ -2749,6 +2750,38 @@
         "toast": {
           "passwordChanged": "Mot de passe changé avec succès",
           "passwordChangeFailed": "Échec du changement de mot de passe : {error}"
+        }
+      },
+      "passkeys": {
+        "title": "Clés d'accès",
+        "description": "Connectez-vous avec votre empreinte, votre visage ou le code de l'appareil au lieu d'un mot de passe et d'un code. Une clé d'accès confirme aussi les actions sensibles.",
+        "unsupported": "Ce navigateur ne prend pas en charge les clés d'accès.",
+        "empty": "Aucune clé d'accès pour l'instant",
+        "add": "Ajouter une clé d'accès",
+        "rename": "Renommer",
+        "renameTitle": "Renommer la clé d'accès",
+        "nameDescription": "Un nom vous aide à distinguer vos clés d'accès, par exemple l'appareil ou le gestionnaire de mots de passe qui la contient.",
+        "nameLabel": "Nom",
+        "namePlaceholder": "p. ex. MacBook ou 1Password",
+        "continue": "Continuer",
+        "removeTitle": "Supprimer la clé d'accès",
+        "removeConfirm": "Supprimer la clé d'accès « {name} » ? Vous ne pourrez plus vous connecter avec.",
+        "stepUpAddDescription": "Une clé d'accès vous connecte sans mot de passe ni second facteur, son ajout demande donc votre second facteur.",
+        "stepUpRemoveDescription": "Supprimer une clé d'accès change votre façon de vous connecter, cela demande donc votre second facteur.",
+        "useInstead": "Utiliser une clé d'accès",
+        "confirmed": "Confirmé avec votre clé d'accès.",
+        "table": {
+          "name": "Nom",
+          "createdAt": "Ajoutée",
+          "lastUsedAt": "Dernière utilisation"
+        },
+        "toast": {
+          "added": "Clé d'accès « {name} » ajoutée",
+          "addFailed": "La clé d'accès n'a pas pu être ajoutée : {error}",
+          "renameFailed": "La clé d'accès n'a pas pu être renommée : {error}",
+          "removed": "Clé d'accès supprimée",
+          "removeFailed": "La clé d'accès n'a pas pu être supprimée : {error}",
+          "confirmFailed": "La clé d'accès n'a pas pu être confirmée : {error}"
         }
       },
       "social": {
@@ -6207,7 +6240,8 @@
       "resetPasswordFailed": "Nous n'avons pas pu réinitialiser votre mot de passe. Veuillez réessayer.",
       "tokenRefreshFailed": "Session expirée. Veuillez vous reconnecter.",
       "sessionExpired": "Nous vous avons déconnecté après un certain temps d'inactivité pour assurer la sécurité de votre compte. Reconnectez-vous et reprenez là où vous en étiez.",
-      "failedToLoadUser": "Impossible de charger votre profil. Actualiser la page ?"
+      "failedToLoadUser": "Impossible de charger votre profil. Actualiser la page ?",
+      "passkeyLoginFailed": "La connexion avec la clé d'accès a échoué. Veuillez réessayer."
     },
     "icons": {
       "updateSuccess": "Icône « {name} » mise à jour",

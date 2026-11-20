@@ -71,7 +71,8 @@
         "asFeatured": "Bekannt von",
         "footer": "Mit der Nutzung von b10cks akzeptierst du unsere [Nutzungsbedingungen](https://www.b10cks.com/legal/terms-of-service) und [Datenschutzerklärung](https://www.b10cks.com/legal/privacy-policy), und periodische Updates per Email zu erhalten."
       },
-      "registrationClosed": "Die Registrierung ist auf dieser Instanz geschlossen. Bitte einen Administrator um eine Einladung."
+      "registrationClosed": "Die Registrierung ist auf dieser Instanz geschlossen. Bitte einen Administrator um eine Einladung.",
+      "passkey": "Mit Passkey anmelden"
     },
     "command": {
       "title": "Befehlspalette",
@@ -2763,6 +2764,38 @@
         "toast": {
           "passwordChanged": "Passwort erfolgreich geändert",
           "passwordChangeFailed": "Fehler beim Ändern des Passworts: {error}"
+        }
+      },
+      "passkeys": {
+        "title": "Passkeys",
+        "description": "Melde dich mit Fingerabdruck, Gesicht oder Geräte-PIN an statt mit Passwort und Code. Ein Passkey bestätigt auch sensible Aktionen.",
+        "unsupported": "Dieser Browser unterstützt keine Passkeys.",
+        "empty": "Noch keine Passkeys",
+        "add": "Passkey hinzufügen",
+        "rename": "Umbenennen",
+        "renameTitle": "Passkey umbenennen",
+        "nameDescription": "Ein Name hilft dir, deine Passkeys auseinanderzuhalten, zum Beispiel das Gerät oder der Passwortmanager, in dem er liegt.",
+        "nameLabel": "Name",
+        "namePlaceholder": "z.B. MacBook oder 1Password",
+        "continue": "Weiter",
+        "removeTitle": "Passkey entfernen",
+        "removeConfirm": "Den Passkey '{name}' entfernen? Du kannst dich dann nicht mehr damit anmelden.",
+        "stepUpAddDescription": "Ein Passkey meldet dich ohne Passwort und zweiten Faktor an, deshalb braucht das Hinzufügen deinen zweiten Faktor.",
+        "stepUpRemoveDescription": "Das Entfernen eines Passkeys ändert, wie du dich anmelden kannst, deshalb braucht es deinen zweiten Faktor.",
+        "useInstead": "Passkey verwenden",
+        "confirmed": "Mit deinem Passkey bestätigt.",
+        "table": {
+          "name": "Name",
+          "createdAt": "Hinzugefügt",
+          "lastUsedAt": "Zuletzt verwendet"
+        },
+        "toast": {
+          "added": "Passkey '{name}' hinzugefügt",
+          "addFailed": "Der Passkey konnte nicht hinzugefügt werden: {error}",
+          "renameFailed": "Der Passkey konnte nicht umbenannt werden: {error}",
+          "removed": "Passkey entfernt",
+          "removeFailed": "Der Passkey konnte nicht entfernt werden: {error}",
+          "confirmFailed": "Der Passkey konnte nicht bestätigt werden: {error}"
         }
       },
       "social": {
@@ -6223,7 +6256,8 @@
       "resetPasswordFailed": "Das Passwort konnte nicht zurückgesetzt werden. Bitte versuche es erneut.",
       "tokenRefreshFailed": "Sitzung abgelaufen. Bitte melde dich erneut an.",
       "sessionExpired": "Wir haben dich nach einer Weile Inaktivität abgemeldet, um dein Konto zu schützen. Melde dich einfach wieder an und mach dort weiter, wo du aufgehört hast.",
-      "failedToLoadUser": "Konnte dein Profil nicht laden. Aktualisiere die Seite?"
+      "failedToLoadUser": "Konnte dein Profil nicht laden. Aktualisiere die Seite?",
+      "passkeyLoginFailed": "Die Anmeldung mit dem Passkey ist fehlgeschlagen. Bitte versuche es erneut."
     },
     "icons": {
       "updateSuccess": "Icon „{name}“ aktualisiert",

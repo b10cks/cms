@@ -3,6 +3,7 @@ import { useClipboard } from '@vueuse/core'
 import dayjs from 'dayjs'
 import { toast } from 'vue-sonner'
 
+import StepUpDialog from '~/components/account/StepUpDialog.vue'
 import Icon from '~/components/Icon.vue'
 import { Badge } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
@@ -37,7 +38,6 @@ const tokenName = ref('')
 const expiresIn = ref('31')
 const showStepUpDialog = ref(false)
 const stepUpFactor = ref<StepUpCredential['factor']>('password')
-const stepUpValue = ref('')
 const stepUpError = ref<string | null>(null)
 const showTokenDialog = ref(false)
 const newTokenValue = ref('')
@@ -74,12 +74,10 @@ const submitToken = async (credential?: StepUpCredential) => {
     newTokenValue.value = response.plain_text_token
     showTokenDialog.value = true
     showStepUpDialog.value = false
-    stepUpValue.value = ''
     tokenName.value = ''
   } catch (error: any) {
     if (error?.status === 423) {
       stepUpFactor.value = error?.data?.requires_2fa ? 'totp' : 'password'
-      stepUpValue.value = ''
       stepUpError.value = null
       showStepUpDialog.value = true
 
@@ -102,11 +100,7 @@ const handleCreateToken = async () => {
   await submitToken()
 }
 
-const handleConfirmStepUp = async () => {
-  if (!stepUpValue.value || isCreating.value) return
-
-  await submitToken({ factor: stepUpFactor.value, value: stepUpValue.value })
-}
+const handleConfirmStepUp = (credential?: StepUpCredential) => submitToken(credential)
 
 const handleCopyToken = async () => {
   await copy()
@@ -237,55 +231,20 @@ const handleDeleteToken = async (id: number, tokenName: string) => {
     </div>
   </SettingsSection>
 
-  <Dialog v-model:open="showStepUpDialog">
-    <DialogContent class="sm:max-w-md">
-      <DialogHeaderCombined
-        :title="$t('labels.account.apiTokens.stepUpTitle')"
-        :description="
-          stepUpFactor === 'totp'
-            ? $t('labels.account.apiTokens.stepUpTotpDescription')
-            : $t('labels.account.apiTokens.stepUpPasswordDescription')
-        "
-      />
-
-      <InputField
-        v-if="stepUpFactor === 'totp'"
-        v-model="stepUpValue"
-        name="step-up-code"
-        autocomplete="one-time-code"
-        inputmode="numeric"
-        :label="$t('labels.account.apiTokens.stepUpTotpLabel')"
-        :error="stepUpError ?? undefined"
-        @keyup.enter="handleConfirmStepUp"
-      />
-      <InputField
-        v-else
-        v-model="stepUpValue"
-        name="step-up-password"
-        type="password"
-        autocomplete="current-password"
-        :label="$t('labels.account.apiTokens.stepUpPasswordLabel')"
-        :error="stepUpError ?? undefined"
-        @keyup.enter="handleConfirmStepUp"
-      />
-
-      <DialogFooter>
-        <Button
-          variant="outline"
-          @click="showStepUpDialog = false"
-        >
-          {{ $t('actions.cancel') }}
-        </Button>
-        <Button
-          :loading="isCreating"
-          :disabled="!stepUpValue"
-          @click="handleConfirmStepUp"
-        >
-          {{ $t('labels.account.apiTokens.stepUpConfirm') }}
-        </Button>
-      </DialogFooter>
-    </DialogContent>
-  </Dialog>
+  <StepUpDialog
+    v-model:open="showStepUpDialog"
+    :factor="stepUpFactor"
+    :description="
+      stepUpFactor === 'totp'
+        ? $t('labels.account.apiTokens.stepUpTotpDescription')
+        : $t('labels.account.apiTokens.stepUpPasswordDescription')
+    "
+    :confirm-label="$t('labels.account.apiTokens.stepUpConfirm')"
+    :error="stepUpError"
+    :loading="isCreating"
+    @submit="handleConfirmStepUp"
+    @passkey-confirmed="handleConfirmStepUp()"
+  />
 
   <Dialog v-model:open="showTokenDialog">
     <DialogContent class="max-w-lg">

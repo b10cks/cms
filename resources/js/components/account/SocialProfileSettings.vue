@@ -3,11 +3,10 @@ import { toast } from 'vue-sonner'
 
 import GithubIcon from '~/assets/icons/github.svg?component'
 import GoogleIcon from '~/assets/icons/google.svg?component'
+import StepUpDialog from '~/components/account/StepUpDialog.vue'
 import Icon from '~/components/Icon.vue'
 import { Alert } from '~/components/ui/alert'
 import { Button } from '~/components/ui/button'
-import { Dialog, DialogContent, DialogFooter, DialogHeaderCombined } from '~/components/ui/dialog'
-import { InputField } from '~/components/ui/form'
 import { SettingsSection } from '~/components/ui/settings-section'
 import type { StepUpCredential } from '~/api/resources/personal-access-tokens'
 import { useAlertDialog } from '~/composables/useAlertDialog'
@@ -26,7 +25,6 @@ const { mutate: unlinkProvider, isPending: isUnlinking } = useUnlinkSocialProvid
 const linkingProvider = ref<string | null>(null)
 const showStepUpDialog = ref(false)
 const stepUpFactor = ref<StepUpCredential['factor']>('password')
-const stepUpValue = ref('')
 const stepUpError = ref<string | null>(null)
 
 const providerMeta: Record<string, { icon: Component; labelKey: string }> = {
@@ -57,7 +55,6 @@ const submitLink = async (provider: string, credential?: StepUpCredential) => {
   } catch (error: any) {
     if (error?.status === 423) {
       stepUpFactor.value = error?.data?.requires_2fa ? 'totp' : 'password'
-      stepUpValue.value = ''
       stepUpError.value = null
       showStepUpDialog.value = true
     } else if (error?.status === 403 && showStepUpDialog.value) {
@@ -66,10 +63,10 @@ const submitLink = async (provider: string, credential?: StepUpCredential) => {
   }
 }
 
-const handleConfirmStepUp = async () => {
-  if (!linkingProvider.value || !stepUpValue.value || isStarting.value) return
+const handleConfirmStepUp = async (credential?: StepUpCredential) => {
+  if (!linkingProvider.value || isStarting.value) return
 
-  await submitLink(linkingProvider.value, { factor: stepUpFactor.value, value: stepUpValue.value })
+  await submitLink(linkingProvider.value, credential)
 }
 
 const handleUnlink = async (provider: string) => {
@@ -172,53 +169,18 @@ onMounted(() => {
     </div>
   </SettingsSection>
 
-  <Dialog v-model:open="showStepUpDialog">
-    <DialogContent class="sm:max-w-md">
-      <DialogHeaderCombined
-        :title="$t('labels.account.apiTokens.stepUpTitle')"
-        :description="
-          stepUpFactor === 'totp'
-            ? $t('labels.account.social.stepUpTotpDescription')
-            : $t('labels.account.social.stepUpPasswordDescription')
-        "
-      />
-
-      <InputField
-        v-if="stepUpFactor === 'totp'"
-        v-model="stepUpValue"
-        name="social-step-up-code"
-        autocomplete="one-time-code"
-        inputmode="numeric"
-        :label="$t('labels.account.apiTokens.stepUpTotpLabel')"
-        :error="stepUpError ?? undefined"
-        @keyup.enter="handleConfirmStepUp"
-      />
-      <InputField
-        v-else
-        v-model="stepUpValue"
-        name="social-step-up-password"
-        type="password"
-        autocomplete="current-password"
-        :label="$t('labels.account.apiTokens.stepUpPasswordLabel')"
-        :error="stepUpError ?? undefined"
-        @keyup.enter="handleConfirmStepUp"
-      />
-
-      <DialogFooter>
-        <Button
-          variant="outline"
-          @click="showStepUpDialog = false"
-        >
-          {{ $t('actions.cancel') }}
-        </Button>
-        <Button
-          :loading="isStarting"
-          :disabled="!stepUpValue"
-          @click="handleConfirmStepUp"
-        >
-          {{ $t('labels.account.social.stepUpConfirm') }}
-        </Button>
-      </DialogFooter>
-    </DialogContent>
-  </Dialog>
+  <StepUpDialog
+    v-model:open="showStepUpDialog"
+    :factor="stepUpFactor"
+    :description="
+      stepUpFactor === 'totp'
+        ? $t('labels.account.social.stepUpTotpDescription')
+        : $t('labels.account.social.stepUpPasswordDescription')
+    "
+    :confirm-label="$t('labels.account.social.stepUpConfirm')"
+    :error="stepUpError"
+    :loading="isStarting"
+    @submit="handleConfirmStepUp"
+    @passkey-confirmed="handleConfirmStepUp()"
+  />
 </template>

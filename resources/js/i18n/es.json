@@ -62,7 +62,8 @@
         "asFeatured": "Como aparece en",
         "footer": "Al usar b10cks, aceptas nuestros [Términos del servicio](https://www.b10cks.com/en/legal/terms-of-service) y la [Política de privacidad](https://www.b10cks.com/en/legal/privacy-policy), y recibir correos periódicos con actualizaciones."
       },
-      "registrationClosed": "El registro está cerrado en esta instancia. Pide una invitación a un administrador."
+      "registrationClosed": "El registro está cerrado en esta instancia. Pide una invitación a un administrador.",
+      "passkey": "Iniciar sesión con una clave de acceso"
     },
     "command": {
       "title": "Command palette",
@@ -2749,6 +2750,38 @@
         "toast": {
           "passwordChanged": "Contraseña cambiada exitosamente",
           "passwordChangeFailed": "Error al cambiar la contraseña: {error}"
+        }
+      },
+      "passkeys": {
+        "title": "Claves de acceso",
+        "description": "Inicia sesión con tu huella, tu cara o el PIN del dispositivo en lugar de contraseña y código. Una clave de acceso también confirma acciones sensibles.",
+        "unsupported": "Este navegador no admite claves de acceso.",
+        "empty": "Aún no hay claves de acceso",
+        "add": "Añadir clave de acceso",
+        "rename": "Cambiar nombre",
+        "renameTitle": "Cambiar nombre de la clave de acceso",
+        "nameDescription": "Un nombre te ayuda a distinguir tus claves de acceso, por ejemplo el dispositivo o el gestor de contraseñas donde está.",
+        "nameLabel": "Nombre",
+        "namePlaceholder": "p. ej. MacBook o 1Password",
+        "continue": "Continuar",
+        "removeTitle": "Eliminar clave de acceso",
+        "removeConfirm": "¿Eliminar la clave de acceso '{name}'? Ya no podrás iniciar sesión con ella.",
+        "stepUpAddDescription": "Una clave de acceso inicia sesión sin tu contraseña ni tu segundo factor, así que añadirla requiere tu segundo factor.",
+        "stepUpRemoveDescription": "Eliminar una clave de acceso cambia cómo puedes iniciar sesión, así que requiere tu segundo factor.",
+        "useInstead": "Usar una clave de acceso",
+        "confirmed": "Confirmado con tu clave de acceso.",
+        "table": {
+          "name": "Nombre",
+          "createdAt": "Añadida",
+          "lastUsedAt": "Último uso"
+        },
+        "toast": {
+          "added": "Clave de acceso '{name}' añadida",
+          "addFailed": "No se pudo añadir la clave de acceso: {error}",
+          "renameFailed": "No se pudo cambiar el nombre de la clave de acceso: {error}",
+          "removed": "Clave de acceso eliminada",
+          "removeFailed": "No se pudo eliminar la clave de acceso: {error}",
+          "confirmFailed": "No se pudo confirmar la clave de acceso: {error}"
         }
       },
       "social": {
@@ -6207,7 +6240,8 @@
       "resetPasswordFailed": "No pudimos restablecer su contraseña. Por favor, inténtelo de nuevo.",
       "tokenRefreshFailed": "Sesión expirada. Por favor, inicie sesión de nuevo.",
       "sessionExpired": "Le cerramos la sesión tras un tiempo de inactividad para mantener su cuenta segura. Inicie sesión de nuevo y continúe donde lo dejó.",
-      "failedToLoadUser": "No se pudo cargar su perfil. ¿Actualice la página?"
+      "failedToLoadUser": "No se pudo cargar su perfil. ¿Actualice la página?",
+      "passkeyLoginFailed": "No se pudo iniciar sesión con la clave de acceso. Inténtalo de nuevo."
     },
     "icons": {
       "updateSuccess": "Icono \"{name}\" actualizado",

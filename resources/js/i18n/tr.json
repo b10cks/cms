@@ -62,7 +62,8 @@
         "asFeatured": "Yayınlandığı yerler",
         "footer": "b10cks'ı kullanarak [Kullanım Şartları](https://www.b10cks.com/en/legal/terms-of-service) ve [Gizlilik Politikası](https://www.b10cks.com/en/legal/privacy-policy)'nı kabul etmiş ve periyodik güncelleme e-postaları almayı onaylamış olursunuz."
       },
-      "registrationClosed": "Bu örnekte kayıt işlemi kapalıdır. Davet için bir yöneticiyle iletişime geçin."
+      "registrationClosed": "Bu örnekte kayıt işlemi kapalıdır. Davet için bir yöneticiyle iletişime geçin.",
+      "passkey": "Geçiş anahtarıyla giriş yap"
     },
     "command": {
       "title": "Command palette",
@@ -2749,6 +2750,38 @@
         "toast": {
           "passwordChanged": "Şifre başarıyla değiştirildi",
           "passwordChangeFailed": "Şifre değiştirilemedi: {error}"
+        }
+      },
+      "passkeys": {
+        "title": "Geçiş anahtarları",
+        "description": "Parola ve kod yerine parmak iziniz, yüzünüz veya cihaz PIN'inizle giriş yapın. Geçiş anahtarı hassas işlemleri de onaylar.",
+        "unsupported": "Bu tarayıcı geçiş anahtarlarını desteklemiyor.",
+        "empty": "Henüz geçiş anahtarı yok",
+        "add": "Geçiş anahtarı ekle",
+        "rename": "Yeniden adlandır",
+        "renameTitle": "Geçiş anahtarını yeniden adlandır",
+        "nameDescription": "Bir ad, geçiş anahtarlarınızı ayırt etmenize yardımcı olur; örneğin bulunduğu cihaz veya parola yöneticisi.",
+        "nameLabel": "Ad",
+        "namePlaceholder": "örn. MacBook veya 1Password",
+        "continue": "Devam",
+        "removeTitle": "Geçiş anahtarını kaldır",
+        "removeConfirm": "'{name}' geçiş anahtarı kaldırılsın mı? Artık onunla giriş yapamazsınız.",
+        "stepUpAddDescription": "Geçiş anahtarı parolanız ve ikinci faktörünüz olmadan giriş yapar, bu yüzden eklemek ikinci faktörünüzü gerektirir.",
+        "stepUpRemoveDescription": "Bir geçiş anahtarını kaldırmak giriş yönteminizi değiştirir, bu yüzden ikinci faktörünüzü gerektirir.",
+        "useInstead": "Geçiş anahtarı kullan",
+        "confirmed": "Geçiş anahtarınızla onaylandı.",
+        "table": {
+          "name": "Ad",
+          "createdAt": "Eklendi",
+          "lastUsedAt": "Son kullanım"
+        },
+        "toast": {
+          "added": "'{name}' geçiş anahtarı eklendi",
+          "addFailed": "Geçiş anahtarı eklenemedi: {error}",
+          "renameFailed": "Geçiş anahtarı yeniden adlandırılamadı: {error}",
+          "removed": "Geçiş anahtarı kaldırıldı",
+          "removeFailed": "Geçiş anahtarı kaldırılamadı: {error}",
+          "confirmFailed": "Geçiş anahtarı onaylanamadı: {error}"
         }
       },
       "social": {
@@ -6207,7 +6240,8 @@
       "resetPasswordFailed": "Şifrenizi sıfırlayamadık. Lütfen tekrar deneyin.",
       "tokenRefreshFailed": "Oturum süresi doldu. Lütfen tekrar giriş yapın.",
       "sessionExpired": "Hesabınızı güvende tutmak için bir süre hareketsiz kaldıktan sonra sizi çıkış yaptırdık. Tekrar giriş yapın ve kaldığınız yerden devam edin.",
-      "failedToLoadUser": "Profiliniz yüklenemedi. Sayfayı yenilemek ister misiniz?"
+      "failedToLoadUser": "Profiliniz yüklenemedi. Sayfayı yenilemek ister misiniz?",
+      "passkeyLoginFailed": "Geçiş anahtarıyla giriş başarısız oldu. Lütfen tekrar deneyin."
     },
     "icons": {
       "updateSuccess": "\"{name}\" simgesi güncellendi",

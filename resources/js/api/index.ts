@@ -12,6 +12,7 @@ import { BlockVersions } from '~/api/resources/block-versions'
 import { Comments } from '~/api/resources/comments'
 import { DataSources } from '~/api/resources/data-sources'
 import { FieldPlugins } from '~/api/resources/field-plugins'
+import { Passkeys } from '~/api/resources/passkeys'
 import { PersonalAccessTokens } from '~/api/resources/personal-access-tokens'
 import { Plans } from '~/api/resources/plans'
 import { Provider } from '~/api/resources/provider'
@@ -66,6 +67,7 @@ export class API {
   private readonly _notifications: Notifications
   private readonly _users: Users
   private readonly _twoFactor: TwoFactorAuth
+  private readonly _passkeys: Passkeys
   private readonly _personalAccessTokens: PersonalAccessTokens
 
   constructor(
@@ -87,6 +89,7 @@ export class API {
     this._notifications = new Notifications(this.client)
     this._users = new Users(this.client)
     this._twoFactor = new TwoFactorAuth(this.client)
+    this._passkeys = new Passkeys(this.client)
     this._personalAccessTokens = new PersonalAccessTokens(this.client)
   }
 
@@ -144,6 +147,10 @@ export class API {
 
   public get twoFactor(): TwoFactorAuth {
     return this._twoFactor
+  }
+
+  public get passkeys(): Passkeys {
+    return this._passkeys
   }
 
   public get personalAccessTokens(): PersonalAccessTokens {
