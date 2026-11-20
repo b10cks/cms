@@ -8,6 +8,8 @@ use App\Models\User\UserPasskey;
 use Cose\Algorithms;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\Serializer\Normalizer\AbstractObjectNormalizer;
@@ -36,8 +38,8 @@ use Webauthn\PublicKeyCredentialUserEntity;
  * Runs the WebAuthn ceremonies behind passkeys.
  *
  * Every ceremony is two requests: the options carry a fresh challenge that is
- * kept in the session, and the browser's answer is checked against them. The
- * pending options are single-use, so a replayed answer fails. User
+ * kept in the session, and the browser's answer is checked against them. Each
+ * challenge works once, so a replayed answer fails. User
  * verification is required throughout, which is why a passkey sign-in stands
  * in for both the password and the TOTP code.
  *
@@ -50,8 +52,12 @@ class PasskeyService
 
     private const string CONFIRMED_KEY = 'auth.passkey.confirmed_until.';
 
-    /** Seconds a challenge stays valid. Long enough for the sign-in autofill to sit open a while. */
+    private const string USED_KEY = 'auth.passkey.used.';
+
+    /** Seconds a challenge stays valid. The sign-in autofill renews itself before that. */
     private const int PENDING_TTL = 300;
+
+    private const int MAX_PENDING = 5;
 
     private ?SerializerInterface $serializer = null;
 
@@ -88,11 +94,11 @@ class PasskeyService
      */
     public function register(Request $request, User $user, array $credential, string $name): UserPasskey
     {
-        $options = $this->pull($request, PasskeyCeremony::Register, $user);
-        \assert($options instanceof PublicKeyCredentialCreationOptions);
-
         $response = $this->credential($credential)->response;
         $response instanceof AuthenticatorAttestationResponse || throw $this->invalid();
+
+        $options = $this->pull($request, PasskeyCeremony::Register, $user, $response->clientDataJSON->challenge);
+        \assert($options instanceof PublicKeyCredentialCreationOptions);
 
         try {
             $record = AuthenticatorAttestationResponseValidator::create($this->ceremonies()->creationCeremony())
@@ -146,34 +152,42 @@ class PasskeyService
      */
     public function verify(Request $request, PasskeyCeremony $ceremony, array $credential, ?User $user = null): UserPasskey
     {
-        $options = $this->pull($request, $ceremony, $user);
-        \assert($options instanceof PublicKeyCredentialRequestOptions);
-
         $publicKeyCredential = $this->credential($credential);
         $response = $publicKeyCredential->response;
         $response instanceof AuthenticatorAssertionResponse || throw $this->invalid();
 
-        $passkey = UserPasskey::query()
-            ->where('credential_hash', $this->hash($publicKeyCredential->rawId))
-            ->first();
+        $options = $this->pull($request, $ceremony, $user, $response->clientDataJSON->challenge);
+        \assert($options instanceof PublicKeyCredentialRequestOptions);
 
-        if (! $passkey || ($user && $passkey->user_id !== $user->id)) {
-            throw $this->invalid();
-        }
+        // The row stays locked from the read to the counter update, so two
+        // assertions cannot both pass against the same counter and a passkey
+        // deleted meanwhile is not found.
+        return DB::connection((new UserPasskey)->getConnectionName())->transaction(function () use ($publicKeyCredential, $response, $options, $user) {
+            $passkey = UserPasskey::query()
+                ->where('credential_hash', $this->hash($publicKeyCredential->rawId))
+                ->lockForUpdate()
+                ->first();
 
-        try {
-            $record = AuthenticatorAssertionResponseValidator::create($this->ceremonies()->requestCeremony())
-                ->check($this->record($passkey), $response, $options, $this->relyingPartyId(), $response->userHandle);
-        } catch (Throwable $e) {
-            throw $this->invalid($e);
-        }
+            if (! $passkey || ($user && $passkey->user_id !== $user->id)) {
+                throw $this->invalid();
+            }
 
-        $passkey->forceFill([
-            'record' => $this->serialize($record),
-            'last_used_at' => now(),
-        ])->save();
+            // A confirmation already knows the user, so the authenticator may
+            // leave the user handle out. A sign-in has to return it.
+            try {
+                $record = AuthenticatorAssertionResponseValidator::create($this->ceremonies()->requestCeremony())
+                    ->check($this->record($passkey), $response, $options, $this->relyingPartyId(), $user?->id);
+            } catch (Throwable $e) {
+                throw $this->invalid($e);
+            }
 
-        return $passkey;
+            $passkey->forceFill([
+                'record' => $this->serialize($record),
+                'last_used_at' => now(),
+            ])->save();
+
+            return $passkey;
+        });
     }
 
     /**
@@ -204,46 +218,81 @@ class PasskeyService
         return (string) parse_url((string) config('app.frontend_url'), PHP_URL_HOST);
     }
 
-    /** @return array<string, mixed> */
+    /**
+     * Keeps the options in the session under their challenge. Several can be
+     * pending at once (two tabs, the sign-in autofill next to the button), up
+     * to {@see MAX_PENDING} per ceremony.
+     *
+     * @return array<string, mixed>
+     */
     private function remember(Request $request, PasskeyCeremony $ceremony, PublicKeyCredentialOptions $options, ?User $user): array
     {
-        $json = $this->serialize($options);
+        $this->requireSession($request);
 
-        $request->session()->put(self::PENDING_KEY.$ceremony->value, [
+        $json = $this->serialize($options);
+        $key = self::PENDING_KEY.$ceremony->value;
+        $now = now()->getTimestamp();
+
+        $pending = array_filter(
+            (array) $request->session()->get($key, []),
+            fn (mixed $entry) => \is_array($entry) && ($entry['expires_at'] ?? 0) >= $now,
+        );
+        $pending[$this->hash($options->challenge)] = [
             'user_id' => $user?->id,
             'options' => $json,
-            'expires_at' => now()->addSeconds(self::PENDING_TTL)->getTimestamp(),
-        ]);
+            'expires_at' => $now + self::PENDING_TTL,
+        ];
+
+        $request->session()->put($key, \array_slice($pending, -self::MAX_PENDING, preserve_keys: true));
 
         return json_decode($json, true, flags: JSON_THROW_ON_ERROR);
     }
 
     /**
-     * Takes the pending options of a ceremony out of the session. Expired
-     * options and options issued to another user (a sign-out and sign-in in
-     * between) do not count.
+     * Takes the options the browser answered (found by their challenge) out
+     * of the session. Expired options and options issued to another user (a
+     * sign-out and sign-in in between) do not count.
+     *
+     * Two requests can read the same session before either writes it back,
+     * so the session alone would let one answer through twice. The cache
+     * marker makes using a challenge atomic.
      *
      * @throws ValidationException
      */
-    private function pull(Request $request, PasskeyCeremony $ceremony, ?User $user): PublicKeyCredentialOptions
+    private function pull(Request $request, PasskeyCeremony $ceremony, ?User $user, string $challenge): PublicKeyCredentialOptions
     {
-        $pending = $request->session()->pull(self::PENDING_KEY.$ceremony->value);
+        $this->requireSession($request);
+
+        $key = self::PENDING_KEY.$ceremony->value;
+        $id = $this->hash($challenge);
+
+        $pending = (array) $request->session()->get($key, []);
+        $entry = $pending[$id] ?? null;
+        unset($pending[$id]);
+        $request->session()->put($key, $pending);
 
         if (
-            ! \is_array($pending)
-            || ($pending['user_id'] ?? null) !== $user?->id
-            || ($pending['expires_at'] ?? 0) < now()->getTimestamp()
+            ! \is_array($entry)
+            || ($entry['user_id'] ?? null) !== $user?->id
+            || ($entry['expires_at'] ?? 0) < now()->getTimestamp()
+            || ! Cache::add(self::USED_KEY.$id, true, self::PENDING_TTL)
         ) {
             throw ValidationException::withMessages(['credential' => __('auth.passkey_expired')]);
         }
 
         return $this->serializer()->deserialize(
-            $pending['options'],
+            $entry['options'],
             $ceremony === PasskeyCeremony::Register
                 ? PublicKeyCredentialCreationOptions::class
                 : PublicKeyCredentialRequestOptions::class,
             'json',
         );
+    }
+
+    /** Ceremonies keep their challenge in the session; a request without one cannot run them. */
+    private function requireSession(Request $request): void
+    {
+        $request->hasSession() || abort(400, __('auth.passkey_expired'));
     }
 
     /** @param array<string, mixed> $credential */

@@ -31,7 +31,8 @@ class SoftwareAuthenticator
 
     private int $counter = 0;
 
-    public function __construct(private readonly string $origin)
+    /** @param  bool  $counts  Synced passkeys (iCloud, Google, 1Password) always report 0 */
+    public function __construct(private readonly string $origin, private readonly bool $counts = true)
     {
         $this->credentialId = random_bytes(32);
         $this->key = openssl_pkey_new(['curve_name' => 'prime256v1', 'private_key_type' => OPENSSL_KEYTYPE_EC]);
@@ -66,9 +67,10 @@ class SoftwareAuthenticator
 
     /**
      * @param  array<string, mixed>  $options  Request options as the server sent them
+     * @param  bool  $withUserHandle  Authenticators may leave it out when the user is already known
      * @return array<string, mixed>
      */
-    public function get(array $options): array
+    public function get(array $options, bool $withUserHandle = true): array
     {
         $clientData = $this->clientData('webauthn.get', $options['challenge']);
         $authData = $this->authData($options['rpId'], 0);
@@ -79,7 +81,7 @@ class SoftwareAuthenticator
             'clientDataJSON' => Base64UrlSafe::encodeUnpadded($clientData),
             'authenticatorData' => Base64UrlSafe::encodeUnpadded($authData),
             'signature' => Base64UrlSafe::encodeUnpadded($signature),
-            'userHandle' => Base64UrlSafe::encodeUnpadded((string) $this->userHandle),
+            'userHandle' => $withUserHandle ? Base64UrlSafe::encodeUnpadded((string) $this->userHandle) : null,
         ]);
     }
 
@@ -95,7 +97,9 @@ class SoftwareAuthenticator
 
     private function authData(string $rpId, int $extraFlags): string
     {
-        $this->counter++;
+        if ($this->counts) {
+            $this->counter++;
+        }
 
         return hash('sha256', $rpId, true)
             .\chr(self::FLAG_USER_PRESENT | self::FLAG_USER_VERIFIED | $extraFlags)

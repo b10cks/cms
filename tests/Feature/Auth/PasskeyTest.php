@@ -52,9 +52,9 @@ class PasskeyTest extends TestCase
         return User::factory()->create(['password' => Hash::make(self::PASSWORD), ...$attributes])->fresh();
     }
 
-    private function register(User $user): SoftwareAuthenticator
+    private function register(User $user, bool $counts = true): SoftwareAuthenticator
     {
-        $authenticator = new SoftwareAuthenticator(self::ORIGIN);
+        $authenticator = new SoftwareAuthenticator(self::ORIGIN, $counts);
 
         [$header, $value] = $user->hasEnabledTwoFactor()
             ? ['x-totp-code', self::BACKUP_CODE]
@@ -155,6 +155,52 @@ class PasskeyTest extends TestCase
         $this->assertGuest('web');
     }
 
+    /**
+     * Two requests can read the same session before either writes it back.
+     * Replaying the pending options into the session stands in for that.
+     */
+    #[Test]
+    public function a_sign_in_answer_cannot_be_used_twice_from_a_stale_session(): void
+    {
+        $user = $this->user();
+        // A synced passkey's counter stays 0, so the counter check cannot catch the replay.
+        $authenticator = $this->register($user, counts: false);
+        $this->signOut();
+
+        $options = $this->postJson(route('auth.passkeys.login.options'))->json();
+        $snapshot = session()->get('auth.passkey.pending.login');
+        $credential = $authenticator->get($options);
+
+        $this->postJson(route('auth.passkeys.login'), ['credential' => $credential])->assertOk();
+        $this->signOut();
+        session()->put('auth.passkey.pending.login', $snapshot);
+
+        $this->postJson(route('auth.passkeys.login'), ['credential' => $credential])->assertUnprocessable();
+        $this->assertGuest('web');
+    }
+
+    #[Test]
+    public function an_older_pending_sign_in_still_works_after_a_newer_one_started(): void
+    {
+        $user = $this->user();
+        $authenticator = $this->register($user);
+        $this->signOut();
+
+        $first = $this->postJson(route('auth.passkeys.login.options'))->json();
+        $this->postJson(route('auth.passkeys.login.options'))->assertOk();
+
+        $this->postJson(route('auth.passkeys.login'), ['credential' => $authenticator->get($first)])
+            ->assertOk();
+    }
+
+    #[Test]
+    public function passkey_ceremonies_need_a_browser_session(): void
+    {
+        $this->withoutHeader('Referer')
+            ->postJson(route('auth.passkeys.login.options'))
+            ->assertStatus(400);
+    }
+
     #[Test]
     public function a_suspended_user_cannot_sign_in_with_a_passkey(): void
     {
@@ -193,6 +239,17 @@ class PasskeyTest extends TestCase
         $this->travel(6)->minutes();
 
         $this->postJson(route('auth.2fa.backup-codes.regenerate'))->assertStatus(423);
+    }
+
+    #[Test]
+    public function a_confirmation_accepts_an_assertion_without_a_user_handle(): void
+    {
+        $user = $this->user();
+        $authenticator = $this->register($user);
+
+        $options = $this->postJson(route('auth.passkeys.confirm.options'))->json();
+        $this->postJson(route('auth.passkeys.confirm'), ['credential' => $authenticator->get($options, withUserHandle: false)])
+            ->assertOk();
     }
 
     #[Test]

@@ -77,30 +77,41 @@ const showPasskeyLogin = passkeysSupported()
 
 // The autofill request waits for the user to pick a passkey in the email
 // field. A button press replaces it with the regular prompt, and a failed
-// button sign-in offers the autofill again.
+// button sign-in offers the autofill again. The server forgets a challenge
+// after five minutes, so the autofill renews itself before that.
+const AUTOFILL_RENEW_MS = 4 * 60 * 1000
+
 let autofill: AbortController | null = null
+let renewTimer: ReturnType<typeof setTimeout> | undefined
+
+const stopPasskeyAutofill = () => {
+  clearTimeout(renewTimer)
+  autofill?.abort()
+  autofill = null
+}
 
 const startPasskeyAutofill = async () => {
   if (!(await conditionalMediationAvailable())) return
 
-  autofill?.abort()
-  autofill = new AbortController()
-  await loginWithPasskey({ conditional: true, signal: autofill.signal })
+  stopPasskeyAutofill()
+  const controller = new AbortController()
+  autofill = controller
+  renewTimer = setTimeout(() => {
+    if (autofill === controller) void startPasskeyAutofill()
+  }, AUTOFILL_RENEW_MS)
+
+  await loginWithPasskey({ conditional: true, signal: controller.signal })
 }
 
 const handlePasskeyLogin = async () => {
-  autofill?.abort()
-  autofill = null
+  stopPasskeyAutofill()
 
   if (!(await loginWithPasskey())) {
     void startPasskeyAutofill()
   }
 }
 
-onBeforeUnmount(() => {
-  autofill?.abort()
-  autofill = null
-})
+onBeforeUnmount(stopPasskeyAutofill)
 
 // A closed instance (self-hosted after the first account exists) still allows
 // invite-based signups, so the link stays when invite params are present.
