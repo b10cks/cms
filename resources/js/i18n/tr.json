@@ -2766,8 +2766,8 @@
         "continue": "Devam",
         "removeTitle": "Geçiş anahtarını kaldır",
         "removeConfirm": "'{name}' geçiş anahtarı kaldırılsın mı? Artık onunla giriş yapamazsınız.",
-        "stepUpAddDescription": "Geçiş anahtarı parolanız ve ikinci faktörünüz olmadan giriş yapar, bu yüzden eklemek ikinci faktörünüzü gerektirir.",
-        "stepUpRemoveDescription": "Bir geçiş anahtarını kaldırmak giriş yönteminizi değiştirir, bu yüzden ikinci faktörünüzü gerektirir.",
+        "stepUpAddDescription": "Geçiş anahtarı tek başına giriş yapar, bu yüzden eklemeden önce siz olduğunuzu onaylayın.",
+        "stepUpRemoveDescription": "Bir geçiş anahtarını kaldırmak giriş yönteminizi değiştirir, bu yüzden önce siz olduğunuzu onaylayın.",
         "useInstead": "Geçiş anahtarı kullan",
         "confirmed": "Geçiş anahtarınızla onaylandı.",
         "table": {

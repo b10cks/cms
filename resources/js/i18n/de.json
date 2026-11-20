@@ -2780,8 +2780,8 @@
         "continue": "Weiter",
         "removeTitle": "Passkey entfernen",
         "removeConfirm": "Den Passkey '{name}' entfernen? Du kannst dich dann nicht mehr damit anmelden.",
-        "stepUpAddDescription": "Ein Passkey meldet dich ohne Passwort und zweiten Faktor an, deshalb braucht das Hinzufügen deinen zweiten Faktor.",
-        "stepUpRemoveDescription": "Das Entfernen eines Passkeys ändert, wie du dich anmelden kannst, deshalb braucht es deinen zweiten Faktor.",
+        "stepUpAddDescription": "Ein Passkey meldet dich allein an, deshalb bestätige vor dem Hinzufügen, dass du es bist.",
+        "stepUpRemoveDescription": "Das Entfernen eines Passkeys ändert, wie du dich anmelden kannst, deshalb bestätige zuerst, dass du es bist.",
         "useInstead": "Passkey verwenden",
         "confirmed": "Mit deinem Passkey bestätigt.",
         "table": {

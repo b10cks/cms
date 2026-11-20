@@ -2766,8 +2766,8 @@
         "continue": "Continue",
         "removeTitle": "Remove passkey",
         "removeConfirm": "Remove the passkey '{name}'? You can no longer sign in with it.",
-        "stepUpAddDescription": "A passkey signs you in without your password or second factor, so adding one needs your second factor.",
-        "stepUpRemoveDescription": "Removing a passkey changes how you can sign in, so it needs your second factor.",
+        "stepUpAddDescription": "A passkey signs you in on its own, so confirm it's you before adding one.",
+        "stepUpRemoveDescription": "Removing a passkey changes how you can sign in, so confirm it's you first.",
         "useInstead": "Use a passkey",
         "confirmed": "Confirmed with your passkey.",
         "table": {

@@ -108,7 +108,6 @@ declare global {
   const useLink: typeof import('vue-router').useLink
   const useModel: typeof import('vue').useModel
   const useOnboarding: typeof import('./composables/useOnboarding').useOnboarding
-  const usePasskeys: typeof import('./composables/usePasskeys').usePasskeys
   const usePersonalAccessTokens: typeof import('./composables/usePersonalAccessTokens').usePersonalAccessTokens
   const usePlanPricing: typeof import('./composables/usePlanPricing').usePlanPricing
   const usePresence: typeof import('./composables/usePresence').usePresence
@@ -335,7 +334,6 @@ declare module 'vue' {
     readonly useLink: UnwrapRef<(typeof import('vue-router'))['useLink']>
     readonly useModel: UnwrapRef<(typeof import('vue'))['useModel']>
     readonly useOnboarding: UnwrapRef<(typeof import('./composables/useOnboarding'))['useOnboarding']>
-    readonly usePasskeys: UnwrapRef<(typeof import('./composables/usePasskeys'))['usePasskeys']>
     readonly usePersonalAccessTokens: UnwrapRef<
       (typeof import('./composables/usePersonalAccessTokens'))['usePersonalAccessTokens']
     >

@@ -2766,8 +2766,8 @@
         "continue": "Continuer",
         "removeTitle": "Supprimer la clé d'accès",
         "removeConfirm": "Supprimer la clé d'accès « {name} » ? Vous ne pourrez plus vous connecter avec.",
-        "stepUpAddDescription": "Une clé d'accès vous connecte sans mot de passe ni second facteur, son ajout demande donc votre second facteur.",
-        "stepUpRemoveDescription": "Supprimer une clé d'accès change votre façon de vous connecter, cela demande donc votre second facteur.",
+        "stepUpAddDescription": "Une clé d'accès vous connecte à elle seule, confirmez donc votre identité avant d'en ajouter une.",
+        "stepUpRemoveDescription": "Supprimer une clé d'accès change votre façon de vous connecter, confirmez donc d'abord votre identité.",
         "useInstead": "Utiliser une clé d'accès",
         "confirmed": "Confirmé avec votre clé d'accès.",
         "table": {

@@ -2766,8 +2766,8 @@
         "continue": "Continuar",
         "removeTitle": "Eliminar clave de acceso",
         "removeConfirm": "¿Eliminar la clave de acceso '{name}'? Ya no podrás iniciar sesión con ella.",
-        "stepUpAddDescription": "Una clave de acceso inicia sesión sin tu contraseña ni tu segundo factor, así que añadirla requiere tu segundo factor.",
-        "stepUpRemoveDescription": "Eliminar una clave de acceso cambia cómo puedes iniciar sesión, así que requiere tu segundo factor.",
+        "stepUpAddDescription": "Una clave de acceso inicia sesión por sí sola, así que confirma que eres tú antes de añadirla.",
+        "stepUpRemoveDescription": "Eliminar una clave de acceso cambia cómo puedes iniciar sesión, así que confirma primero que eres tú.",
         "useInstead": "Usar una clave de acceso",
         "confirmed": "Confirmado con tu clave de acceso.",
         "table": {
